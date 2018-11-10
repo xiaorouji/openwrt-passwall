@@ -1,0 +1,14 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@ipsec[-1]
+	add ucitrack ipsec
+	set ucitrack.@ipsec[-1].exec='/etc/init.d/ipsecvpn start'
+	commit ucitrack
+EOF
+
+/etc/init.d/ipsec disable && /etc/init.d/ipsec stop
+rm -f /etc/init.d/ipsec
+
+rm -f /tmp/luci-indexcache
+exit 0
