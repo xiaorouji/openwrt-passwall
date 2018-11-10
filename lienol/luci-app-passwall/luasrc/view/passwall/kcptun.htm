@@ -1,0 +1,205 @@
+<%#
+ Copyright 2017 Hsing-wang Liao <kuoruan@gmail.com>
+ Copyright 2018 <lienol@qq.com>
+ Licensed to the public under the Apache License 2.0.
+-%>
+
+<%
+local kcp = require "luci.model.cbi.passwall.kcptun"
+local dsp = require "luci.dispatcher"
+-%>
+
+<script type="text/javascript">//<![CDATA[
+  var kcptunInfo, luciInfo;
+
+  var tokenStr = '<%=token%>';
+
+  var noUpdateText = '<%:已是最新版本%>';
+  var updateSuccessText = '<%:更新成功.%>';
+  var clickToUpdateText = '<%:点击更新%>';
+  var inProgressText = '<%:正在更新...%>';
+  var unexpectedErrorText = '<%:意外错误.%>';
+  var updateInProgressNotice = '<%:正在更新，你确认要关闭吗？%>';
+
+  window.onload = function () {
+    var checkKcptunBtn = document.getElementById('_kcptun-check_kcptun');
+    var kcptunDetailElm = document.getElementById('_kcptun-check_kcptun-detail');
+  };
+
+  function addPageNotice() {
+    window.onbeforeunload = function(e) {
+      e.returnValue = updateInProgressNotice;
+      return updateInProgressNotice;
+    };
+  }
+
+  function removePageNotice() {
+    window.onbeforeunload = undefined;
+  }
+
+  function onUpdateSuccess(btn) {
+    alert(updateSuccessText);
+
+    if (btn) {
+      btn.value = updateSuccessText;
+      btn.placeholder = updateSuccessText;
+      btn.disabled = true;
+    }
+
+    window.setTimeout(function () {
+      window.location.reload();
+    }, 1000);
+  }
+
+  function onRequestError(btn, errorMessage) {
+    btn.disabled = false;
+    btn.value = btn.placeholder;
+
+    if (errorMessage) {
+      alert(errorMessage);
+    }
+  }
+
+  function doAjaxGet(url, data, onResult) {
+    new XHR().get(url, data, function(_, json) {
+      var resultJson = json || {
+        'code': 1,
+        'error': unexpectedErrorText
+      };
+
+      if (typeof onResult === 'function') {
+        onResult(resultJson);
+      }
+    })
+  }
+
+  function onKcptunBtnClick(type, btn) {
+    if (type === 'kcptun') {
+      if (kcptunInfo === undefined) {
+        checkUpdate(type, btn);
+      } else {
+        doKcptunUpdate(btn);
+      }
+    } else if (type === 'luci') {
+      if (luciInfo === undefined) {
+        checkUpdate(type, btn);
+      } else {
+        doLuciUpdate(btn);
+      }
+    } else {
+      alert(unexpectedErrorText);
+    }
+  }
+
+  function checkUpdate(type, btn) {
+    btn.disabled = true;
+    btn.value = inProgressText;
+
+    addPageNotice();
+
+    var ckeckDetailElm = document.getElementById(btn.id + '-detail');
+
+    doAjaxGet('<%=dsp.build_url("admin/vpn/passwall/kcp_check")%>/' + type, {
+      token: tokenStr,
+      arch: ''
+    }, function (json) {
+      removePageNotice();
+
+      if (json.code) {
+        eval(type + 'Info = undefined');
+
+        onRequestError(btn, json.error);
+      } else {
+        if (json.update) {
+          eval(type + 'Info = json');
+
+          btn.disabled = false;
+          btn.value = clickToUpdateText;
+          btn.placeholder = clickToUpdateText;
+        } else {
+          btn.disabled = true;
+          btn.value = noUpdateText;
+        }
+      }
+
+      if (ckeckDetailElm) {
+        var urlNode = '';
+
+        if (json.version) {
+          urlNode = '<em style="color:red;">最新版本号：' + json.version + '</em>';
+
+          if (json.url && json.url.html) {
+            urlNode = '<a href="' + json.url.html + '" target="_blank">' + urlNode + '</a>';
+          }
+        }
+        ckeckDetailElm.innerHTML = urlNode;
+      }
+    });
+  }
+
+  function doKcptunUpdate(btn) {
+    btn.disabled = true;
+    btn.value = '<%:下载中...%>';
+
+    addPageNotice();
+
+    var kcptunUpdateUrl = '<%=dsp.build_url("admin/vpn/passwall/kcp_update")%>';
+
+    // Download file
+    doAjaxGet(kcptunUpdateUrl, {
+      token: tokenStr,
+      url: kcptunInfo ? kcptunInfo.url.download : ''
+    }, function (json) {
+      if (json.code) {
+        removePageNotice();
+        onRequestError(btn, json.error);
+      } else {
+        btn.value = '<%:解压中...%>';
+
+        // Extract file
+        doAjaxGet(kcptunUpdateUrl, {
+          token: tokenStr,
+          task: 'extract',
+          file: json.file,
+          subfix: kcptunInfo ? kcptunInfo.type : ''
+        }, function (json) {
+          if (json.code) {
+            removePageNotice();
+            onRequestError(btn, json.error);
+          } else {
+            btn.value = '<%:移动中...%>';
+
+            // Move file to target dir
+            doAjaxGet(kcptunUpdateUrl, {
+              token: tokenStr,
+              task: 'move',
+              file: json.file
+            }, function (json) {
+              removePageNotice();
+              if (json.code) {
+                onRequestError(btn, json.error);
+              } else {
+                onUpdateSuccess(btn);
+              }
+            })
+          }
+        })
+      }
+    })
+  }
+//]]></script>
+
+<%+cbi/valueheader%>
+	<% if self:cfgvalue(section) ~= false then %>
+		<input class="cbi-button cbi-input-<%=self.inputstyle or "button" %>" type="button"<%=
+			attr("name", cbid) ..
+			attr("id", self.id or cbid) ..
+			attr("value", self.inputtitle or self.title) ..
+			ifattr(self.btnclick, "onclick", self.btnclick) ..
+			ifattr(self.placeholder, "placeholder")
+		%> />
+		<span id="<%=self.id or cbid%>-detail"></span>
+	<% else %>
+		-
+	<% end %>
+<%+cbi/valuefooter%>

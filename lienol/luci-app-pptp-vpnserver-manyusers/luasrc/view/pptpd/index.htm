@@ -1,0 +1,16 @@
+<%#
+ Copyright 2018 Lienol
+ Licensed to the public under the Apache License 2.0.
+-%>
+
+<% include("cbi/map") %>
+<script type="text/javascript">//<![CDATA[
+	XHR.poll(2, '<%=luci.dispatcher.build_url("admin", "vpn", "pptpd", "status")%>', null,
+		function(x, result)
+		{
+			var status = document.getElementsByClassName('pptpd_status');
+			status[0].innerHTML = result.pptpd?'<b><font color=green><%=translate("RUNNING")%></font></b>':'<b><font color=red><%=translate("NOT RUNNING")%></font></b>';
+		}
+	)
+//]]>
+</script>

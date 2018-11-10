@@ -1,0 +1,31 @@
+#!/bin/sh /etc/rc.common
+
+
+START=99
+
+enable=$(uci get sp_dial.@config[0].enable)
+wait_time=$(uci get sp_dial.@config[0].wait_time)
+num=$(uci get sp_dial.@config[0].num)
+boot_delay=$(uci get sp_dial.@config[0].boot_delay)
+
+boot() {
+	sleep $boot_delay
+	start
+}
+
+start() {
+	[ $enable = 1 ] && {
+		[ ! `pidof ip_check.sh` > 0 ] && /usr/bin/ip_check.sh start &
+	}
+}
+
+stop() {
+	ps | grep ip_check.sh | grep -v "grep ip_check.sh" | awk '{print $1}'|xargs kill -9 &
+}
+
+restart(){
+	[ $enable = 1 ] && start
+	sleep 1
+	[ $enable = 0 ] && stop
+}
+

@@ -1,0 +1,4 @@
+
+config global
+	option time '30'
+	option enabled '0'

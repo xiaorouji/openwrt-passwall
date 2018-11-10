@@ -1,0 +1,29 @@
+msgid "Net Status"
+msgstr "网络监测"
+
+msgid "Network status monitor and restart."
+msgstr "网络状态监测和重启"
+
+msgid "Monitor network status,and restart network when offline."
+msgstr "监视网络在线状态，如果检测到掉线会自动尝试重新连接（不要在多拨时开启）。"
+
+msgid "config"
+msgstr "设置"
+
+msgid "Enable"
+msgstr "启用"
+
+msgid "Enable or Disable network status monitor."
+msgstr "启用网络状态监测。"
+
+msgid "Boot_time"
+msgstr "启动时间"
+
+msgid "Delayed time while booting(seconds)."
+msgstr "启动延时（秒）"
+
+msgid "Check_interval"
+msgstr "监测间隔时间"
+
+msgid "Check interval for network status check."
+msgstr "检测网络在线状态的间隔时间（秒）。"
