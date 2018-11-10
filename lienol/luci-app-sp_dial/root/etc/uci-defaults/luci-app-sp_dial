@@ -1,0 +1,11 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@sp_dial[-1]
+	add ucitrack sp_dial
+	set ucitrack.@sp_dial[-1].init=sp_dial
+	commit ucitrack
+EOF
+
+rm -f /tmp/luci-indexcache
+exit 0

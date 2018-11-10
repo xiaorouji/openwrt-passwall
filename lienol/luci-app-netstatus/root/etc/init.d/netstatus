@@ -1,0 +1,30 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2015 writen by rapistor(明月永在）
+# Must keep author's information if you use this file.
+
+START=99
+
+boot_time=$(uci get netstatus.@netstatus[0].boot_time)
+enable=$(uci get netstatus.@netstatus[0].enable)
+
+boot() {
+    [ $enable = 0 ] && exit 0
+    sleep $boot_time
+    start
+}
+
+start() {
+    [ $enable = 1 ] && {
+		/usr/bin/net_check start >/dev/null 2>&1 &
+    }
+}
+
+stop() {
+    killall -9 net_check
+	ps | grep net_check | grep -v "grep net_check" | awk '{print $1}' | xargs kill -9
+}
+
+restart() {
+    stop
+	start
+}

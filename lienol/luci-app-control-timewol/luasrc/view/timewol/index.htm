@@ -1,0 +1,16 @@
+<%#
+ Copyright 2016 Chen RuiWei <crwbak@gmail.com>
+ Licensed to the public under the Apache License 2.0.
+-%>
+
+<% include("cbi/map") %>
+<script type="text/javascript">//<![CDATA[
+	XHR.poll(2, '<%=luci.dispatcher.build_url("admin", "control", "timewol", "status")%>', null,
+		function(x, result)
+		{
+			var status = document.getElementsByClassName('timewol_status');
+			status[0].innerHTML = result.timewol?'<b><font color=green><%=translate("RUNNING")%></font></b>':'<b><font color=red><%=translate("NOT RUNNING")%></font></b>';
+		}
+	)
+//]]>
+</script>

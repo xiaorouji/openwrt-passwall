@@ -1,0 +1,15 @@
+<%#
+ Copyright 2018 Lienol
+-%>
+
+<% include("cbi/map") %>
+<script type="text/javascript">//<![CDATA[
+	XHR.poll(2, '<%=luci.dispatcher.build_url("admin", "vpn", "softethervpn", "status")%>', null,
+		function(x, result)
+		{
+			var status = document.getElementsByClassName('softethervpn_status');
+			status[0].innerHTML = result.softethervpn?'<b><font color=green><%=translate("RUNNING")%></font></b>':'<b><font color=red><%=translate("NOT RUNNING")%></font></b>';
+		}
+	)
+//]]>
+</script>
