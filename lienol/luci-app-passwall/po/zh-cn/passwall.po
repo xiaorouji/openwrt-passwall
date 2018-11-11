@@ -511,17 +511,20 @@ msgstr "默认KCP和SS服务器相同IP,参数中无需配置服务器IP和本�
 msgid "Note: UDP cannot be forwarded after KCP is turned on."
 msgstr "注意:打开KCP后无法转发UDP。"
 
-msgid "Alter Id"
-msgstr "额外ID"
+msgid "V2ray Protocol"
+msgstr "V2ray协议"
 
-msgid "Network Type"
-msgstr "传输协议"
+msgid "Alter ID"
+msgstr "额外ID(alterId)"
 
-msgid "TCP Obfs"
-msgstr "TCP混淆"
+msgid "User Level"
+msgstr "用户等级(level)"
 
-msgid "UDP Obfs"
-msgstr "UDP混淆"
+msgid "Transport"
+msgstr "传输方式"
+
+msgid "Camouflage Type"
+msgstr "伪装类型"
 
 msgid "Using TLS must use the domain name as the server address"
 msgstr "使用TLS必须使用域名作为服务器地址"

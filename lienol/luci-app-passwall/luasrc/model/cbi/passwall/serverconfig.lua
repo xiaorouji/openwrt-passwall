@@ -219,11 +219,11 @@ e.password=true
 e.rmempty=false
 e:depends("v2ray_protocol","vmess")
 
-e=t:option(Value,"v2ray_VMess_alterId",translate("Alter Id"))
+e=t:option(Value,"v2ray_VMess_alterId",translate("Alter ID"))
 e.rmempty=false
 e:depends("v2ray_protocol","vmess")
 
-e=t:option(Value,"v2ray_VMess_level",translate("User level"))
+e=t:option(Value,"v2ray_VMess_level",translate("User Level"))
 e.default=1
 e:depends("server_type","v2ray")
 
@@ -239,8 +239,8 @@ e:depends("server_type","v2ray")
 -- TCP伪装
 e = t:option(ListValue, "v2ray_tcp_guise", translate("Camouflage Type"))
 e:depends("v2ray_transport", "tcp")
-e:value("none", translate("None"))
-e:value("http", "HTTP")
+e:value("none", "none")
+e:value("http", "http")
 
 -- HTTP域名
 e = t:option(DynamicList, "v2ray_tcp_guise_http_host", translate("HTTP Host"))
