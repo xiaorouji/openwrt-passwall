@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
 PKG_VERSION:=1.0
-PKG_RELEASE:=20181111-2
+PKG_RELEASE:=20181112
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PO2LMO:=$(BUILD_DIR)/luci-base/po2lmo
@@ -98,7 +98,6 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/share/passwall
 	$(INSTALL_CONF) ./root/etc/config/passwall $(1)/etc/config/passwall
 	$(INSTALL_CONF) ./root/etc/uci-defaults/* $(1)/etc/uci-defaults
-	$(INSTALL_BIN) ./root/etc/init.d/passwall $(1)/etc/init.d/passwall
 	
 	cp -pR ./root/usr/share/passwall/* $(1)/usr/share/passwall
 	
@@ -108,6 +107,8 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/i18n
 	$(PO2LMO) ./po/zh-cn/passwall.po $(1)/usr/lib/lua/luci/i18n/passwall.zh-cn.lmo
 	
+	if [ -n "$(command -v gzexe)" ]; then gzexe ./root/etc/init.d/passwall; fi
+	$(INSTALL_BIN) ./root/etc/init.d/passwall $(1)/etc/init.d/passwall
 #	find $(1) -name *.lua -exec luac -s -o {} {} \;
 	
 ifdef CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Pcap_dnsproxy
