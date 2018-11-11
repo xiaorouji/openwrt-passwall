@@ -98,8 +98,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/share/passwall
 	$(INSTALL_CONF) ./root/etc/config/passwall $(1)/etc/config/passwall
 	$(INSTALL_CONF) ./root/etc/uci-defaults/* $(1)/etc/uci-defaults
-	
-	cp -pR ./root/usr/share/passwall/* $(1)/usr/share/passwall
+	$(INSTALL_BIN) ./root/etc/init.d/passwall $(1)/etc/init.d/passwall
 	
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci
 	cp -pR ./luasrc/* $(1)/usr/lib/lua/luci/
@@ -107,8 +106,8 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/i18n
 	$(PO2LMO) ./po/zh-cn/passwall.po $(1)/usr/lib/lua/luci/i18n/passwall.zh-cn.lmo
 	
-	if [ -n "$(command -v gzexe)" ]; then gzexe ./root/etc/init.d/passwall; fi
-	$(INSTALL_BIN) ./root/etc/init.d/passwall $(1)/etc/init.d/passwall
+	if [ -n "$(command -v gzexe)" ]; then gzexe ./root/usr/share/passwall/app.sh && rm -f ./root/usr/share/passwall/app.sh~; fi
+	cp -pR ./root/usr/share/passwall/* $(1)/usr/share/passwall
 #	find $(1) -name *.lua -exec luac -s -o {} {} \;
 	
 ifdef CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Pcap_dnsproxy
