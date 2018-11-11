@@ -87,7 +87,7 @@ local ssr_obfs={
 "tls1.2_ticket_auth",
 }
 
-local v2ray_encrypt_method={
+local v2ray_security={
 "none",
 "auto",
 "aes-128-gcm",
@@ -96,11 +96,7 @@ local v2ray_encrypt_method={
 "chacha20-poly1305",
 }
 
-local v2ray_tcp_obfs={
-"none",
-"http",
-}
-local v2ray_kcp_obfs={
+local v2ray_mkcp_obfs={
 "none",
 "srtp",
 "utp",
@@ -117,6 +113,7 @@ t.dynamic=false
 e=t:option(Value,"remarks",translate("Node Remarks"))
 e.default=translate("Node Remarks")
 e.rmempty=false
+
 serverType=t:option(ListValue,"server_type",translate("Server Type"))
 if is_finded("ss-redir") then
 serverType:value("ss",translate("Shadowsocks Server"))
@@ -130,6 +127,10 @@ end
 if is_installed("brook") or is_finded("brook") then
 serverType:value("brook",translate("Brook Server"))
 end
+
+e=t:option(ListValue,"v2ray_protocol",translate("V2ray Protocol"))
+e:value("vmess",translate("Vmess"))
+e:depends("server_type","v2ray")
 
 e.rmempty=false
 e=t:option(Value,"server",translate("Server Address"))
@@ -157,8 +158,8 @@ e=t:option(ListValue,"ssr_encrypt_method",translate("Encrypt Method"))
 for a,t in ipairs(ssr_encrypt_method)do e:value(t)end
 e:depends("server_type","ssr")
 
-e=t:option(ListValue,"v2ray_encrypt_method",translate("Encrypt Method"))
-for a,t in ipairs(v2ray_encrypt_method)do e:value(t)end
+e=t:option(ListValue,"v2ray_security",translate("Encrypt Method"))
+for a,t in ipairs(v2ray_security)do e:value(t)end
 e:depends("server_type","v2ray")
 
 e=t:option(ListValue,"protocol",translate("Protocol"))
@@ -213,59 +214,84 @@ e=t:option(TextValue,"kcp_opts",translate("KCP Config"),translate("--crypt aes19
 e.placeholder="--crypt aes192 --key koolshare --mtu 1350 --sndwnd 128 --rcvwnd 1024 --mode fast"
 e:depends("use_kcp","1")
 
-e=t:option(Value,"v2ray_id",translate("ID"))
+e=t:option(Value,"v2ray_VMess_id",translate("ID"))
 e.password=true
 e.rmempty=false
-e:depends("server_type","v2ray")
+e:depends("v2ray_protocol","vmess")
 
-e=t:option(Value,"v2ray_alterId",translate("Alter Id"))
+e=t:option(Value,"v2ray_VMess_alterId",translate("Alter Id"))
 e.rmempty=false
+e:depends("v2ray_protocol","vmess")
+
+e=t:option(Value,"v2ray_VMess_level",translate("User level"))
+e.default=1
 e:depends("server_type","v2ray")
 
-e=t:option(ListValue,"v2ray_network_type",translate("Network Type"))
+e=t:option(ListValue,"v2ray_transport",translate("Transport"))
 e:value("tcp","TCP")
 e:value("mkcp", "mKCP")
 e:value("ws", "WebSocket")
 e:value("h2", "HTTP/2")
 e:depends("server_type","v2ray")
 
-e=t:option(ListValue,"v2ray_tcp_obfs",translate("TCP Obfs"))
-for a,t in ipairs(v2ray_tcp_obfs)do e:value(t)end
-e:depends("v2ray_network_type","tcp")
+-- [[ TCP部分 ]]--
 
-e=t:option(ListValue,"v2ray_kcp_obfs",translate("KCP Obfs"))
-for a,t in ipairs(v2ray_kcp_obfs)do e:value(t)end
-e:depends("v2ray_network_type","mkcp")
+-- TCP伪装
+e = t:option(ListValue, "v2ray_tcp_guise", translate("Camouflage Type"))
+e:depends("v2ray_transport", "tcp")
+e:value("none", translate("None"))
+e:value("http", "HTTP")
 
-e=t:option(Value,"v2ray_kcp_mtu",translate("KCP MTU"))
-e:depends("v2ray_network_type","mkcp")
+-- HTTP域名
+e = t:option(DynamicList, "v2ray_tcp_guise_http_host", translate("HTTP Host"))
+e:depends("v2ray_tcp_guise", "http")
 
-e=t:option(Value,"v2ray_kcp_tti",translate("KCP TTI"))
-e:depends("v2ray_network_type","mkcp")
+-- HTTP路径
+e = t:option(DynamicList, "v2ray_tcp_guise_http_path", translate("HTTP Path"))
+e:depends("v2ray_tcp_guise", "http")
 
-e=t:option(Value,"v2ray_kcp_uplinkCapacity",translate("KCP uplinkCapacity"))
-e:depends("v2ray_network_type","mkcp")
+-- [[ mKCP部分 ]]--
 
-e=t:option(Value,"v2ray_kcp_downlinkCapacity",translate("KCP downlinkCapacity"))
-e:depends("v2ray_network_type","mkcp")
+e=t:option(ListValue,"v2ray_mkcp_guise",translate("Camouflage Type"))
+for a,t in ipairs(v2ray_mkcp_obfs)do e:value(t)end
+e:depends("v2ray_transport","mkcp")
 
-e=t:option(Value,"v2ray_kcp_readBufferSize",translate("KCP readBufferSize"))
-e:depends("v2ray_network_type","mkcp")
+e=t:option(Value,"v2ray_mkcp_mtu",translate("KCP MTU"))
+e:depends("v2ray_transport","mkcp")
 
-e=t:option(Value,"v2ray_kcp_writeBufferSize",translate("KCP writeBufferSize"))
-e:depends("v2ray_network_type","mkcp")
+e=t:option(Value,"v2ray_mkcp_tti",translate("KCP TTI"))
+e:depends("v2ray_transport","mkcp")
 
-e=t:option(Flag,"v2ray_kcp_congestion",translate("KCP Congestion"))
-e:depends("v2ray_network_type","mkcp")
+e=t:option(Value,"v2ray_mkcp_uplinkCapacity",translate("KCP uplinkCapacity"))
+e:depends("v2ray_transport","mkcp")
+
+e=t:option(Value,"v2ray_mkcp_downlinkCapacity",translate("KCP downlinkCapacity"))
+e:depends("v2ray_transport","mkcp")
+
+e=t:option(Flag,"v2ray_mkcp_congestion",translate("KCP Congestion"))
+e:depends("v2ray_transport","mkcp")
+
+e=t:option(Value,"v2ray_mkcp_readBufferSize",translate("KCP readBufferSize"))
+e:depends("v2ray_transport","mkcp")
+
+e=t:option(Value,"v2ray_mkcp_writeBufferSize",translate("KCP writeBufferSize"))
+e:depends("v2ray_transport","mkcp")
+
+-- [[ WebSocket部分 ]]--
+
+e=t:option(Value,"v2ray_ws_host",translate("WebSocket Host"))
+e:depends("v2ray_transport","ws")
 
 e=t:option(Value,"v2ray_ws_path",translate("WebSocket Path"))
-e:depends("v2ray_network_type","ws")
+e:depends("v2ray_transport","ws")
+
+-- [[ HTTP/2部分 ]]--
 
 e = t:option(DynamicList, "v2ray_h2_host", translate("HTTP/2 Host"))
-e:depends("v2ray_network_type", "h2")
+e:depends("v2ray_transport", "h2")
 
 e = t:option(Value, "v2ray_h2_path", translate("HTTP/2 Path"))
-e:depends("v2ray_network_type", "h2")
+e:depends("v2ray_transport", "h2")
 
 e=t:option(Flag,"v2ray_mux",translate("Mux"))
 e:depends("server_type","v2ray")
