@@ -149,7 +149,7 @@ if type == "ssr" then
 elseif type == "ss" then
 	return a.uci:get(i,n,"ss_encrypt_method") or ""
 elseif type == "v2ray" then
-	return a.uci:get(i,n,"v2ray_encrypt_method") or ""
+	return a.uci:get(i,n,"v2ray_security") or ""
 end
 return "无"
 end
