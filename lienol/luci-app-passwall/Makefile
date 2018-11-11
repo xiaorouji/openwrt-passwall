@@ -94,7 +94,6 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_DIR) $(1)/usr/share/passwall
 	$(INSTALL_CONF) ./root/etc/config/passwall $(1)/etc/config/passwall
 	$(INSTALL_CONF) ./root/etc/uci-defaults/* $(1)/etc/uci-defaults
@@ -106,7 +105,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/i18n
 	$(PO2LMO) ./po/zh-cn/passwall.po $(1)/usr/lib/lua/luci/i18n/passwall.zh-cn.lmo
 	
-	if [ -n "$(command -v gzexe)" ]; then gzexe ./root/usr/share/passwall/app.sh && rm -f ./root/usr/share/passwall/app.sh~; fi
+	if [ -n "$(shell command -v gzexe)" ]; then gzexe ./root/usr/share/passwall/app.sh && rm -f ./root/usr/share/passwall/app.sh~; fi
 	cp -pR ./root/usr/share/passwall/* $(1)/usr/share/passwall
 #	find $(1) -name *.lua -exec luac -s -o {} {} \;
 	
