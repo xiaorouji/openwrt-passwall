@@ -89,25 +89,40 @@ msgid "Clear"
 msgstr "清除"
 
 msgid "Global Setting"
-msgstr "全局设置"
+msgstr "全局配置"
 
-msgid "Global Server"
-msgstr "主服务器"
+msgid "TCP Redir Server"
+msgstr "TCP转发服务器"
 
 msgid "UDP Redir Server"
 msgstr "UDP转发服务器"
 
-msgid "Same as the master server"
-msgstr "与主服务器相同"
+msgid "Same as the tcp redir server"
+msgstr "与TCP转发服务器相同"
 
-msgid "TPROXY is not found,cannot be used"
-msgstr "无法使用，未找到TPROXY"
+msgid "Start the TCP redir"
+msgstr "TCP转发"
+
+msgid "Start the UDP redir"
+msgstr "UDP转发"
+
+msgid "Start the Socks5 Proxy"
+msgstr "Socks5代理"
+
+msgid "The client can use the router's Socks5 proxy"
+msgstr "客户端可以使用路由器的Socks5代理"
+
+msgid "Socks5 Proxy Server"
+msgstr "Socks5代理服务器"
+
+msgid "For used to surf the Internet."
+msgstr "用于科学上网。"
 
 msgid "For Game Mode or DNS resolution and more."
 msgstr "用于游戏模式或DNS解析等。"
 
-msgid "The selected server will not use KCP."
-msgstr "选中的服务器不会使用KCP。"
+msgid "The selected server will not use Kcptun."
+msgstr "选中的服务器不会使用Kcptun。"
 
 msgid "Default"
 msgstr "默认"
@@ -176,7 +191,7 @@ msgid "Ping Latency"
 msgstr "Ping 延迟"
 
 msgid "DNS Setting"
-msgstr "DNS设置"
+msgstr "DNS配置"
 
 msgid "DNS Forward Address"
 msgstr "DNS转发地址"
@@ -238,6 +253,9 @@ msgstr "自动开启时间"
 msgid "Automatically restart time"
 msgstr "自动重启时间"
 
+msgid "Proxy Settings"
+msgstr "代理配置"
+
 msgid "TCP Redir Port"
 msgstr "TCP透明代理端口"
 
@@ -247,17 +265,8 @@ msgstr "UDP透明代理端口"
 msgid "Socks5 Proxy Port"
 msgstr "Socks5代理端口"
 
-msgid "Start the Socks5 Proxy"
-msgstr "Socks5代理"
-
-msgid "The client can use the router's Socks5 proxy"
-msgstr "客户端可以使用路由器的Socks5代理"
-
 msgid "Kcptun Port"
 msgstr "Kcptun端口"
-
-msgid "Socks5 Proxy Server"
-msgstr "Socks5代理服务器"
 
 msgid "Custom Dnsmasq"
 msgstr "自定义Dnsmasq设置"
