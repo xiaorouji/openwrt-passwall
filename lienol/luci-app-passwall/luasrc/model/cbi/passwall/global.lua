@@ -38,22 +38,37 @@ t=a:section(TypedSection,"global",translate("Global Setting"))
 t.anonymous=true
 t.addremove=false
 
-e=t:option(ListValue,"global_server",translate("Global Server"))
-e.default="nil"
+e=t:option(Flag,"tcp_redir",translate("Start the TCP redir"))
+e.default=0
 e.rmempty=false
-e:value("nil",translate("Disable"))
-for a,t in pairs(n)do e:value(a,t)end
 
-e=t:option(ListValue,"udp_redir_server",translate("UDP Redir Server"),translate("For Game Mode or DNS resolution and more.")..translate("The selected server will not use KCP."))
-e.default="nil"
-e.rmempty=false
+e=t:option(ListValue,"tcp_redir_server",translate("TCP Redir Server"))
+for a,t in pairs(n)do e:value(a,t)end
+e:depends("tcp_redir",1)
+
 if has_udp_relay() then
-	e:value("nil",translate("Disable"))
+	e=t:option(Flag,"udp_redir",translate("Start the UDP redir"),translate("For Game Mode or DNS resolution and more.")..translate("The selected server will not use KCP."))
+	e.default=0
+	e.rmempty=false
+end
+
+e=t:option(ListValue,"udp_redir_server",translate("UDP Redir Server"))
+e:value("default",translate("Same as the master server"))
+for a,t in pairs(n)do e:value(a,t)end
+e:depends("udp_redir",1)
+
+e=t:option(Flag,"socks5_proxy",translate("Start the Socks5 Proxy"),translate("The client can use the router's Socks5 proxy"))
+e.default=0
+e.rmempty=false
+
+e=t:option(ListValue,"socks5_proxy_server",translate("Socks5 Proxy Server"))
+if has_udp_relay() then
 	e:value("default",translate("Same as the master server"))
 	for a,t in pairs(n)do e:value(a,t)end
 else
 	e:value("nil",translate("TPROXY is not found,cannot be used"))
 end
+e:depends("socks5_proxy",1)
 
 e=t:option(ListValue,"proxy_mode",translate("Default")..translate("Proxy Mode"))
 e.default="gfwlist"
@@ -98,68 +113,6 @@ end
 	
 e=t:option(Flag,"ssr_server_passwall",translate("SSR Client")..translate("Pass Wall"),translate("Check to make the SSR server client")..translate("Pass Wall"))
 e.default="0"
-
-t=a:section(TypedSection,"servers",translate("Servers List"),translate("Make sure that the KCP parameters are configured under the corresponding SS server to use the KCP fast switch.")..
-"<br><font style='color:red'>"..
-translate("Note: UDP cannot be forwarded after KCP is turned on.")..
-"</font>")
-t.anonymous=true
-t.addremove=true
-t.template="cbi/tblsection"
-t.extedit=o.build_url("admin","vpn","passwall","serverconfig","%s")
-function t.create(e,t)
-	local e=TypedSection.create(e,t)
-	luci.http.redirect(o.build_url("admin","vpn","passwall","serverconfig",e))
-end
-
-function t.remove(t,a)
-	t.map.proceed=true
-	t.map:del(a)
-	luci.http.redirect(o.build_url("admin","vpn","passwall"))
-end
-
-e=t:option(DummyValue,"remarks",translate("Node Remarks"))
-e.width="15%"
-
-e=t:option(DummyValue,"server_type",translate("Server Type"))
-e.width="10%"
-e.cfgvalue=function(t,n)
-local t=a.uci:get(i,n,"server_type")or""
-local b=t
-if t=="ssr" then b="SSR"
-elseif t=="ss" then b="SS"
-elseif t=="v2ray" then b="V2ray"
-elseif t=="brook" then b="Brook"
-end
-return b
-end
-
-e=t:option(DummyValue,"server",translate("Server Address"))
-e.width="15%"
-
-e=t:option(DummyValue,"server_port",translate("Server Port"))
-e.width="10%"
-
-e=t:option(DummyValue,"encrypt_method",translate("Encrypt Method"))
-e.width="15%"
-e.cfgvalue=function(t,n)
-local type=a.uci:get(i,n,"server_type") or ""
-if type == "ssr" then
-	return a.uci:get(i,n,"ssr_encrypt_method") or ""
-elseif type == "ss" then
-	return a.uci:get(i,n,"ss_encrypt_method") or ""
-elseif type == "v2ray" then
-	return a.uci:get(i,n,"v2ray_security") or ""
-end
-return "无"
-end
-
-e=t:option(Flag,"use_kcp",translate("KCPTUN Switch"))
-e.width="10%"
-
-e=t:option(DummyValue,"server",translate("Ping Latency"))
-e.template="passwall/ping"
-e.width="10%"
 
 local apply = luci.http.formvalue("cbi.apply")
 if apply then

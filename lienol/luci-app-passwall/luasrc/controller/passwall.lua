@@ -9,6 +9,7 @@ function index()
 	entry({"admin", "vpn"}, firstchild(), "VPN", 45).dependent = false
 	entry({"admin","vpn","passwall"},alias("admin","vpn","passwall","settings"),_("Pass Wall"),2).dependent=true
 	entry({"admin","vpn","passwall","settings"},cbi("passwall/global"),_("Basic Settings"),1).dependent=true
+	entry({"admin","vpn","passwall","server_list"},cbi("passwall/server_list"),_("Server List"),2).dependent=true
 	entry({"admin","vpn","passwall","other"},cbi("passwall/other"),_("Other Settings"),94).leaf=true
 	if luci.model.ipkg.installed("haproxy") or nixio.fs.access("/usr/bin/haproxy") or nixio.fs.access("/usr/sbin/haproxy") then
 		entry({"admin","vpn","passwall","balancing"},cbi("passwall/balancing"),_("Load Balancing"),95).leaf=true
