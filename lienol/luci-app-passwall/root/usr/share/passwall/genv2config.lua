@@ -1,14 +1,29 @@
 local ucursor = require "luci.model.uci"
 local json = require "luci.jsonc"
 local server_section = arg[1]
-local proto = arg[2] 
-local redir_port = arg[3] 
+local proto = arg[2]
+local redir_port = arg[3]
+local socks5_proxy_port = arg[4]
 
 local server = ucursor:get_all("passwall", server_section)
 
-local v2ray = {
-    -- 传入连接
-    inbound = {
+local inbound_json={}
+
+if socks5_proxy_port ~="nil" then
+	inbound_json = {
+		listen = "0.0.0.0",
+        port = socks5_proxy_port,
+        protocol = "socks",
+        settings = {
+            auth = "noauth",
+            udp = true,
+            ip = "127.0.0.1"
+        }
+    }
+end
+
+if redir_port ~="nil" then
+	inbound_json = {
         port = redir_port,
         protocol = "dokodemo-door",
         settings = {
@@ -19,7 +34,17 @@ local v2ray = {
             enabled = true,
             destOverride = { "http", "tls" }
         }
-    },
+    }
+end
+
+local v2ray = {
+	log = {
+		--error = "/var/log/v2ray.log",
+		loglevel = "warning"
+	},
+    -- 传入连接
+    inbound = inbound_json,
+	
     -- 传出连接
     outbound = {
         protocol = server.v2ray_protocol,

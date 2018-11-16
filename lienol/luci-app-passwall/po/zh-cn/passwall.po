@@ -244,14 +244,20 @@ msgstr "TCP透明代理端口"
 msgid "UDP Redir Port"
 msgstr "UDP透明代理端口"
 
-msgid "Start the Socks5 proxy"
+msgid "Socks5 Proxy Port"
+msgstr "Socks5代理端口"
+
+msgid "Start the Socks5 Proxy"
 msgstr "Socks5代理"
 
-msgid "Socks5 Port"
-msgstr "Socks5代理端口"
+msgid "The client can use the router's Socks5 proxy"
+msgstr "客户端可以使用路由器的Socks5代理"
 
 msgid "Kcptun Port"
 msgstr "Kcptun端口"
+
+msgid "Socks5 Proxy Server"
+msgstr "Socks5代理服务器"
 
 msgid "Custom Dnsmasq"
 msgstr "自定义Dnsmasq设置"

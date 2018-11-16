@@ -142,19 +142,14 @@ o.datatype="port"
 o.default=1032
 o.rmempty=true
 
+o=s:option(Value,"socks5_port",translate("Socks5 Port"))
+o.datatype="port"
+o.default=1033
+
 o=s:option(Value,"kcptun_port",translate("Kcptun Port"))
 o.datatype="port"
 o.default=11183
 o.rmempty=true
-
-o=s:option(Flag,"socks5",translate("Start the Socks5 proxy"))
-o.default=0
-o.rmempty=true
-
-o=s:option(Value,"socks5_port",translate("Socks5 Port"))
-o.datatype="port"
-o.default=1033
-o:depends("socks5",1)
 
 -- [[ Custom Dnsmasq Settings ]]--
 s=m:section(TypedSection,"global",translate("Custom Dnsmasq"))
