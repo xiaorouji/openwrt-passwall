@@ -21,10 +21,7 @@ end)
 a=Map(i)
 a.template="passwall/index"
 
-t=a:section(TypedSection,"servers",translate("Servers List"),translate("Make sure that the KCP parameters are configured under the corresponding SS server to use the KCP fast switch.")..
-"<br><font style='color:red'>"..
-translate("Note: UDP cannot be forwarded after KCP is turned on.")..
-"</font>")
+t=a:section(TypedSection,"servers",translate("Servers List"),translate("Make sure that the Kcptun parameters are configured under the servers to use the Kcptun fast switch."))
 t.anonymous=true
 t.addremove=true
 t.template="cbi/tblsection"
@@ -76,7 +73,7 @@ end
 return "无"
 end
 
-e=t:option(Flag,"use_kcp",translate("KCPTUN Switch"))
+e=t:option(Flag,"use_kcp",translate("Kcptun Switch"))
 e.width="10%"
 
 e=t:option(DummyValue,"server",translate("Ping Latency"))

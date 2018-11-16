@@ -5,12 +5,16 @@
 
 <%
 local ipkg=require"luci.model.ipkg"
-function is_finded(e)
+local function is_finded(e)
 	local result=luci.sys.exec("find /usr/*bin -iname "..e.." -type f")
 	if result~="" then
 		return true
 	end
 	return false
+end
+
+local function has_udp_relay()
+    return luci.sys.call("lsmod | grep TPROXY >/dev/null") == 0
 end
 -%>
 
@@ -18,8 +22,18 @@ end
 	<legend><%:Running Status%></legend>
 	<fieldset class="cbi-section">
 		<div class="cbi-value">
-			<label class="cbi-value-title"><%:Transparent Proxy%></label>
-			<div class="cbi-value-field" id="_ss_redir_status"><%:Collecting data...%></div>
+			<label class="cbi-value-title">TCP<%:Status%></label>
+			<div class="cbi-value-field" id="_tcp_redir_status"><%:Collecting data...%></div>
+		</div>
+		<% if has_udp_relay() then %>
+		<div class="cbi-value">
+			<label class="cbi-value-title">UDP<%:Status%></label>
+			<div class="cbi-value-field" id="_udp_redir_status"><%:Collecting data...%></div>
+		</div>
+		<% end %>
+		<div class="cbi-value">
+			<label class="cbi-value-title">Socks5<%:Status%></label>
+			<div class="cbi-value-field" id="_socks5_proxy_status"><%:Collecting data...%></div>
 		</div>
 		<% if ipkg.installed("haproxy") or is_finded("haproxy*") then %>
 		<div class="cbi-value">
@@ -29,8 +43,8 @@ end
 		<% end %>
 		<% if ipkg.installed("kcptun") or is_finded("kcptun*") then %>
 		<div class="cbi-value">
-			<label class="cbi-value-title"><%:Kcp Client%></label>
-			<div class="cbi-value-field" id="_kcp_status"><%:Collecting data...%></div>
+			<label class="cbi-value-title"><%:Kcptun Client%></label>
+			<div class="cbi-value-field" id="_kcptun_status"><%:Collecting data...%></div>
 		</div>
 		<% end %>
 		<div class="cbi-value">

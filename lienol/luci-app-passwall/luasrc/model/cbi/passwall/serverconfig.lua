@@ -195,22 +195,22 @@ e.rmempty=false
 e:depends("server_type","ss")
 e:depends("server_type","ssr")
 
-e=t:option(Flag,"use_kcp",translate("Use KCPTUN"),"<span style='color:red'>"..translate("Please confirm whether the KCP is installed. If not, please go to Rule Update download installation.").."</span>")
+e=t:option(Flag,"use_kcp",translate("Use Kcptun"),"<span style='color:red'>"..translate("Please confirm whether the Kcptun is installed. If not, please go to Rule Update download installation.").."</span>")
 e.default=0
 e:depends("server_type","ss")
 e:depends("server_type","ssr")
 e:depends("server_type","brook")
 
-e=t:option(Value,"kcp_server",translate("KCP Server"))
+e=t:option(Value,"kcp_server",translate("Kcptun Server"))
 e.placeholder=translate("Default:Current Server")
 e:depends("use_kcp","1")
 e=t:option(Flag,"kcp_use_ipv6",translate("Use IPv6"))
 e.default=0
 e:depends("use_kcp","1")
-e=t:option(Value,"kcp_port",translate("KCP Port"))
+e=t:option(Value,"kcp_port",translate("Kcptun Port"))
 e.datatype="port"
 e:depends("use_kcp","1")
-e=t:option(TextValue,"kcp_opts",translate("KCP Config"),translate("--crypt aes192 --key koolshare --mtu 1350 --sndwnd 128 --rcvwnd 1024 --mode fast").."<br><font style='color:red'>"..translate("Note: UDP cannot be forwarded after KCP is turned on.").."</font>")
+e=t:option(TextValue,"kcp_opts",translate("Kcptun Config"),translate("--crypt aes192 --key koolshare --mtu 1350 --sndwnd 128 --rcvwnd 1024 --mode fast").."<br><font style='color:red'>"..translate("Note: UDP cannot be forwarded after Kcptun is turned on.").."</font>")
 e.placeholder="--crypt aes192 --key koolshare --mtu 1350 --sndwnd 128 --rcvwnd 1024 --mode fast"
 e:depends("use_kcp","1")
 
@@ -298,8 +298,5 @@ e:depends("server_type","v2ray")
 
 e=t:option(Flag,"v2ray_tls",translate("TLS"),translate("Using TLS must use the domain name as the server address"))
 e:depends("server_type","v2ray")
-
-e=t:option(Flag,"forwarding_ipv6",translate("Forwarding IPv6"),translate("The IPv6 traffic can be forwarded when selected"))
-e.default=0
 
 return a

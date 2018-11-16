@@ -192,6 +192,7 @@ load_config() {
 	UDP_REDIR_PORT=$(config_t_get global_proxy udp_redir_port 1032)
 	SOCKS5_PROXY_PORT=$(config_t_get global_proxy socks5_proxy_port 1033)
 	KCPTUN_REDIR_PORT=$(config_t_get global_proxy kcptun_port 11183)
+	PROXY_IPV6=$(config_t_get global_proxy proxy_ipv6 0)
 	config_load $CONFIG
 	[ "$TCP_REDIR_SERVER" != "nil" ] && gen_config_file $TCP_REDIR_SERVER TCP
 	[ "$UDP_REDIR_SERVER" != "nil" ] && gen_config_file $UDP_REDIR_SERVER UDP
@@ -234,7 +235,7 @@ gen_ss_ssr_config_file() {
 }
 
 gen_config_file() {
-	local server_host server_ip server_type use_ipv6 forwarding_ipv6 network_type
+	local server_host server_ip server_type use_ipv6 network_type
 	server_host=$(config_get $1 server)
 	use_ipv6=$(config_get $1 use_ipv6)
 	network_type="ipv4"
@@ -242,7 +243,6 @@ gen_config_file() {
 	server_ip=$(get_host_ip $network_type $server_host)
 	server_type=$(config_get $1 server_type)
 	echolog "$2服务器IP地址:$server_ip"
-	forwarding_ipv6=$(config_get $1 forwarding_ipv6)
 	
 	if [ "$2" == "UDP" ]; then
 		REDIR_PORT=$UDP_REDIR_PORT
@@ -1143,7 +1143,6 @@ EOF
 	#  忽略特殊IP段
 	lan_ip=`ifconfig br-lan | grep "inet addr" | awk '{print $2}' | awk -F : '{print $2}'` #路由器lan IP
 	lan_ipv4=`ip address show br-lan | grep -w "inet" |awk '{print $2}'`  #当前LAN IPv4段
-	lan_ipv6=`ip address show br-lan | grep -w "inet6" |awk '{print $2}'`  #当前LAN IPv6段
 	[ -n "$lan_ipv4" ] && {
 		ipset add $IPSET_LANIPLIST $lan_ipv4
 	}
@@ -1152,23 +1151,10 @@ EOF
 	$iptables_mangle -N SS
 	$iptables_mangle -A SS -m set --match-set $IPSET_LANIPLIST dst -j RETURN
 	$iptables_mangle -A SS -m set --match-set $IPSET_WHITELIST dst -j RETURN
-	$ip6tables_nat -N SS
-	$ip6tables_nat -A PREROUTING -j SS
-	[ -n "$lan_ipv6" ] && {
-		for ip in $lan_ipv6
-		do
-			$ip6tables_nat -A SS -d $ip -j RETURN
-		done
-	}
-	[ "$use_ipv6" == "1" -a -n "$server_ip" ] && $ip6tables_nat -A SS -d $server_ip -j RETURN
 	$iptables_mangle -N SS_GLO
-	$ip6tables_nat -N SS_GLO
 	$iptables_mangle -N SS_GFW
-	$ip6tables_nat -N SS_GFW
 	$iptables_mangle -N SS_CHN
-	$ip6tables_nat -N SS_CHN
 	$iptables_mangle -N SS_HOME
-	$ip6tables_nat -N SS_HOME
 	$iptables_mangle -N SS_GAME
 	
 	ip rule add fwmark 1 lookup 100
@@ -1211,7 +1197,6 @@ EOF
 			$iptables_mangle -A SS -p tcp -m set --match-set $IPSET_BLACKLIST dst -j TTL --ttl-set 188
 			#  全局模式
 			$iptables_mangle -A SS_GLO -p tcp -j TTL --ttl-set 188
-			$ip6tables_nat -A SS_GLO -p tcp -j REDIRECT --to $TCP_REDIR_PORT
 			
 			#  GFWLIST模式
 			$iptables_mangle -A SS_GFW -p tcp -m set --match-set $IPSET_GFW dst -j TTL --ttl-set 188
@@ -1312,9 +1297,24 @@ EOF
 	#  加载默认代理模式
 		$iptables_mangle -A SS -j $(get_action_chain $PROXY_MODE)
 	
-	if [ "$forwarding_ipv6" == "1" ];then
+	if [ "$PROXY_IPV6" == "1" ];then
+		lan_ipv6=`ip address show br-lan | grep -w "inet6" |awk '{print $2}'`  #当前LAN IPv6段
+		$ip6tables_nat -N SS
 		$ip6tables_nat -A PREROUTING -j SS
-		#$ip6tables_nat -A SS -p tcp -j REDIRECT --to-ports $TCP_REDIR_PORT
+		[ -n "$lan_ipv6" ] && {
+			for ip in $lan_ipv6
+			do
+				$ip6tables_nat -A SS -d $ip -j RETURN
+			done
+		}
+		[ "$use_ipv6" == "1" -a -n "$server_ip" ] && $ip6tables_nat -A SS -d $server_ip -j RETURN
+		$ip6tables_nat -N SS_GLO
+		$ip6tables_nat -N SS_GFW
+		$ip6tables_nat -N SS_CHN
+		$ip6tables_nat -N SS_HOME
+		$ip6tables_nat -A SS_GLO -p tcp -j REDIRECT --to $TCP_REDIR_PORT
+		$ip6tables_nat -A PREROUTING -j SS
+		$ip6tables_nat -A SS -j SS_GLO
 		$ip6tables_nat -I OUTPUT -p tcp -j SS
 		echolog "IPv6防火墙规则加载完成！" 
 	fi

@@ -1,4 +1,5 @@
 module("luci.controller.passwall",package.seeall)
+local appname = "passwall"
 local http = require "luci.http"
 local kcp  = require "luci.model.cbi.passwall.kcptun"
 
@@ -27,8 +28,8 @@ function index()
 	entry({"admin","vpn","passwall","check_port"},call("check_port")).leaf=true
 	entry({"admin","vpn","passwall","ping"},call("act_ping")).leaf=true
 	entry({"admin","vpn","passwall","update_rules"},call("update_rules")).leaf=true
-	entry({"admin", "vpn", "passwall", "kcp_check"}, call("kcp_check")).leaf = true
-	entry({"admin", "vpn", "passwall", "kcp_update"}, call("kcp_update")).leaf = true
+	entry({"admin", "vpn", "passwall", "kcptun_check"}, call("kcptun_check")).leaf = true
+	entry({"admin", "vpn", "passwall", "kcptun_update"}, call("kcptun_update")).leaf = true
 end
 
 local function http_write_json(content)
@@ -47,9 +48,11 @@ end
 
 function server_status()
 	local e={}
-	e.ss_redir_status=luci.sys.call("pgrep ss-redir >/dev/null || pgrep ssr-redir >/dev/null || pgrep v2ray >/dev/null || pgrep brook >/dev/null")==0
+	e.tcp_redir_status=luci.sys.call("ps | grep -v grep | grep '" .. appname .. "_TCP' >/dev/null")==0
+	e.udp_redir_status=luci.sys.call("ps | grep -v grep | grep '" .. appname .. "_UDP' >/dev/null")==0
+	e.socks5_proxy_status=luci.sys.call("ps | grep -v grep | grep '" .. appname .. "_SOCKS5' >/dev/null")==0
 	e.haproxy_status=luci.sys.call("pgrep haproxy >/dev/null")==0
-	e.kcp_status=luci.sys.call("pgrep kcp >/dev/null")==0
+	e.kcptun_status=luci.sys.call("pgrep kcptun >/dev/null")==0
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
 end
@@ -74,19 +77,21 @@ function act_ping()
 end
 
 function check_port()
-	local set=""
-	local retstring="<br /><br />"
+	local set = ""
+	local retstring = "<br /><br />"
 	local s
 	local server_name = ""
-	local server_host = ""
 	local uci = luci.model.uci.cursor()
 
 	uci:foreach("passwall", "servers", function(s)
-		if s.remarks then
-			server_name = s.remarks
+		local server_type
+		if s.server_type == "ssr" then server_type = "SSR"
+		elseif s.server_type == "ss" then server_type = "SS"
+		elseif s.server_type == "v2ray" then server_type = "V2ray"
+		elseif s.server_type == "brook" then server_type = "Brook"
 		end
-		if s.server and s.server_port then
-			server_host = "%s:%s" %{s.server, s.server_port}
+		if server_type and s.server and s.server_port and s.remarks then
+			server_name = "%s：[%s] %s:%s"%{server_type , s.remarks , s.server , s.server_port}
 		end
 		socket = nixio.socket("inet", "stream")
 		socket:setopt("socket", "rcvtimeo", 3)
@@ -94,9 +99,9 @@ function check_port()
 		ret=socket:connect(s.server,s.server_port)
 		if tostring(ret) == "true" then
 			socket:close()
-			retstring =retstring .. "<font color='green'>[" .. server_name .. "] " .. server_host .. " OK.</font><br />"
+			retstring = retstring .. "<font color='green'>" .. server_name .. "   OK.</font><br />"
 		else
-			retstring =retstring .. "<font color='red'>[" .. server_name .. "] " .. server_host .. " Error.</font><br />"
+			retstring = retstring .. "<font color='red'>" .. server_name .. "   Error.</font><br />"
 		end
 	end)
 	luci.http.prepare_content("application/json")
@@ -108,7 +113,7 @@ function update_rules()
 	luci.sys.call("nohup /usr/share/passwall/rule_update.sh '"..update.."' 2>&1 &")
 end
 
-function kcp_check(type)
+function kcptun_check(type)
 	local json = nil
 	if type == "kcptun" then
 		json = kcp.check_kcptun("")
@@ -120,7 +125,7 @@ function kcp_check(type)
 	http_write_json(json)
 end
 
-function kcp_update(type)
+function kcptun_update(type)
 	local json = nil
 	local task = http.formvalue("task")
 	if task == "extract" then
