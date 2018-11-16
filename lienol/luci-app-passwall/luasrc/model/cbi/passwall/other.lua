@@ -151,6 +151,9 @@ o.datatype="port"
 o.default=11183
 o.rmempty=true
 
+o=s:option(Flag,"proxy_ipv6",translate("Proxy IPv6"),translate("The IPv6 traffic can be proxyed when selected"))
+o.default=0
+
 -- [[ Custom Dnsmasq Settings ]]--
 s=m:section(TypedSection,"global",translate("Custom Dnsmasq"))
 s.anonymous=true

@@ -68,7 +68,7 @@ local v2ray = {
         streamSettings = {
             network = server.v2ray_transport,
             security = (server.v2ray_tls == '1') and "tls" or "none",
-            kcpSettings = (server.v2ray_transport == "kcp") and {
+            kcpSettings = (server.v2ray_transport == "mkcp") and {
               mtu = tonumber(server.v2ray_mkcp_mtu),
               tti = tonumber(server.v2ray_mkcp_tti),
               uplinkCapacity = tonumber(server.v2ray_mkcp_uplinkCapacity),

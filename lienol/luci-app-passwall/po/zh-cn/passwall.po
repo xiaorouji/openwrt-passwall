@@ -64,14 +64,8 @@ msgstr "一个轻量级安全SOCKS5代理"
 msgid "Running Status"
 msgstr "运行状态"
 
-msgid "Transparent Proxy"
-msgstr "透明代理"
-
 msgid "Load Balancing"
 msgstr "负载均衡"
-
-msgid "Kcp Client"
-msgstr "KCP加速"
 
 msgid "China Connection"
 msgstr "国内连接"
@@ -160,11 +154,8 @@ msgstr "勾选后可让SSR服务器的客户端"
 msgid "Servers List"
 msgstr "服务器列表"
 
-msgid "Make sure that the KCP parameters are configured under the corresponding SS server to use the KCP fast switch."
-msgstr "确保相应SS服务器下KCP参数已配置才可以使用KCP快速开关，负载均衡不能使用KCP加速。"
-
-msgid "Note: UDP cannot be forwarded after KCP is turned on."
-msgstr "注意:打开KCP后无法转发UDP。"
+msgid "Make sure that the Kcptun parameters are configured under the servers to use the Kcptun fast switch."
+msgstr "确保服务器下的Kcptun参数已配置才可以使用快速开关，负载均衡不能使用Kcptun加速。"
 
 msgid "Node Remarks"
 msgstr "节点备注"
@@ -181,11 +172,8 @@ msgstr "端口"
 msgid "Encrypt Method"
 msgstr "加密"
 
-msgid "KCPTUN Switch"
-msgstr "KCP开关"
-
-msgid "Forwarding IPv6 Switch"
-msgstr "IPv6流量开关"
+msgid "Kcptun Switch"
+msgstr "Kcptun开关"
 
 msgid "Ping Latency"
 msgstr "Ping 延迟"
@@ -496,35 +484,29 @@ msgstr "插件名称"
 msgid "Plugin Arguments"
 msgstr "插件参数"
 
-msgid "Forwarding IPv6"
-msgstr "转发IPv6流量"
+msgid "Proxy IPv6"
+msgstr "代理IPv6"
 
-msgid "The IPv6 traffic can be forwarded when selected"
+msgid "The IPv6 traffic can be proxyed when selected"
 msgstr "选中后可以转发IPv6流量"
 
-msgid "Use KCPTUN"
-msgstr "使用KCP加速"
+msgid "Use Kcptun"
+msgstr "使用Kcptun"
 
-msgid "Please confirm whether the KCP is installed. If not, please go to Rule Update download installation."
+msgid "Please confirm whether the Kcptun is installed. If not, please go to Rule Update download installation."
 msgstr "请确认KCP是否已安装，若没有请到自动更新下载安装。"
 
-msgid "KCP Server"
-msgstr "KCP服务器"
+msgid "Kcptun Server"
+msgstr "Kcptun服务器"
 
 msgid "Default:Current Server"
 msgstr "留空则使用当前服务器"
 
-msgid "KCP Port"
-msgstr "KCP服务器端口"
-
-msgid "KCP Config"
-msgstr "KCP参数配置"
+msgid "Kcptun Config"
+msgstr "Kcptun参数配置"
 
 msgid "--crypt aes192 --key koolshare --mtu 1350 --sndwnd 128 --rcvwnd 1024 --mode fast"
-msgstr "默认KCP和SS服务器相同IP,参数中无需配置服务器IP和本地端口，需要配置的参数和格式如：--crypt aes192 --key koolshare --mtu 1350 --sndwnd 128 --rcvwnd 1024 --mode fast"
-
-msgid "Note: UDP cannot be forwarded after KCP is turned on."
-msgstr "注意:打开KCP后无法转发UDP。"
+msgstr "默认Kcptun和SS服务器相同IP,参数中无需配置服务器IP和本地端口，需要配置的参数和格式如：--crypt aes192 --key koolshare --mtu 1350 --sndwnd 128 --rcvwnd 1024 --mode fast"
 
 msgid "V2ray Protocol"
 msgstr "V2ray协议"
