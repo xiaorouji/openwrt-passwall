@@ -142,7 +142,7 @@ o.datatype="port"
 o.default=1032
 o.rmempty=true
 
-o=s:option(Value,"socks5_port",translate("Socks5 Port"))
+o=s:option(Value,"socks5_port",translate("Socks5 Proxy Port"))
 o.datatype="port"
 o.default=1033
 
