@@ -9,20 +9,26 @@ local dsp = require "luci.dispatcher"
 
 <% include("cbi/map") %>
 <script type="text/javascript">//<![CDATA[
-	var ss_redir_status = document.getElementById('_ss_redir_status');
+	var tcp_redir_status = document.getElementById('_tcp_redir_status');
+	var udp_redir_status = document.getElementById('_udp_redir_status');
+	var socks5_proxy_status = document.getElementById('_socks5_proxy_status');
 	var haproxy_status = document.getElementById('_haproxy_status');
-	var kcp_status = document.getElementById('_kcp_status');
+	var kcptun_status = document.getElementById('_kcptun_status');
 	var china_status = document.getElementById('_china_status');
 	var foreign_status = document.getElementById('_foreign_status');
 	XHR.poll(3,'<%=dsp.build_url("admin/vpn/passwall/server_status")%>', null,
 		function(x, json) {
 			if (x && x.status == 200) {
-				if (ss_redir_status)
-					ss_redir_status.innerHTML = json.ss_redir_status ? '<font color=green><%:RUNNING%> ✓</font>' : '<font color=red><%:NOT RUNNING%> X</font>';
+				if (tcp_redir_status)
+					tcp_redir_status.innerHTML = json.tcp_redir_status ? '<font color=green><%:RUNNING%> ✓</font>' : '<font color=red><%:NOT RUNNING%> X</font>';
+				if (udp_redir_status)
+					udp_redir_status.innerHTML = json.udp_redir_status ? '<font color=green><%:RUNNING%> ✓</font>' : '<font color=red><%:NOT RUNNING%> X</font>';
+				if (socks5_proxy_status)
+					socks5_proxy_status.innerHTML = json.socks5_proxy_status ? '<font color=green><%:RUNNING%> ✓</font>' : '<font color=red><%:NOT RUNNING%> X</font>';
 				if (haproxy_status)
 					haproxy_status.innerHTML = json.haproxy_status ? '<font color=green><%:RUNNING%> ✓</font>' : '<font color=red><%:NOT RUNNING%> X</font>';
-				if (kcp_status)
-					kcp_status.innerHTML = json.kcp_status ? '<font color=green><%:RUNNING%> ✓</font>' : '<font color=red><%:NOT RUNNING%> X</font>';
+				if (kcptun_status)
+					kcptun_status.innerHTML = json.kcptun_status ? '<font color=green><%:RUNNING%> ✓</font>' : '<font color=red><%:NOT RUNNING%> X</font>';
 			}
 		});
 	var pings = document.getElementsByClassName('pingtime');
