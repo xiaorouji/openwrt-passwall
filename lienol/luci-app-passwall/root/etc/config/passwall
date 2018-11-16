@@ -36,10 +36,10 @@ config global_proxy
 	option socks5_port '1033'
 
 config global_rules
-	option gfwlist_version '2018-09-30'
-	option chnroute_version '2018-10-17'
-	option pcap_Routing_version '2018-10-17'
-	option pcap_WhiteList_version '2018-10-17'
+	option gfwlist_version '2018-11-15'
+	option chnroute_version '2018-11-15'
+	option pcap_Routing_version '2018-11-15'
+	option pcap_WhiteList_version '2018-11-15'
 	option gfwlist_update '1'
 	option chnroute_update '1'
 	option Pcap_Routing_update '1'
