@@ -38,7 +38,7 @@ t=a:section(TypedSection,"global",translate("Global Setting"))
 t.anonymous=true
 t.addremove=false
 
-e=t:option(Flag,"tcp_redir",translate("Start the TCP redir"))
+e=t:option(Flag,"tcp_redir",translate("Start the TCP redir"),translate("For used to surf the Internet."))
 e.default=0
 e.rmempty=false
 
@@ -47,13 +47,13 @@ for a,t in pairs(n)do e:value(a,t)end
 e:depends("tcp_redir",1)
 
 if has_udp_relay() then
-	e=t:option(Flag,"udp_redir",translate("Start the UDP redir"),translate("For Game Mode or DNS resolution and more.")..translate("The selected server will not use KCP."))
+	e=t:option(Flag,"udp_redir",translate("Start the UDP redir"),translate("For Game Mode or DNS resolution and more.")..translate("The selected server will not use Kcptun."))
 	e.default=0
 	e.rmempty=false
 end
 
 e=t:option(ListValue,"udp_redir_server",translate("UDP Redir Server"))
-e:value("default",translate("Same as the master server"))
+e:value("default",translate("Same as the tcp redir server"))
 for a,t in pairs(n)do e:value(a,t)end
 e:depends("udp_redir",1)
 
@@ -63,7 +63,7 @@ e.rmempty=false
 
 e=t:option(ListValue,"socks5_proxy_server",translate("Socks5 Proxy Server"))
 if has_udp_relay() then
-	e:value("default",translate("Same as the master server"))
+	e:value("default",translate("Same as the tcp redir server"))
 	for a,t in pairs(n)do e:value(a,t)end
 else
 	e:value("nil",translate("TPROXY is not found,cannot be used"))
