@@ -4,8 +4,9 @@
 . $IPKG_INSTROOT/lib/functions/service.sh
 
 CONFIG=passwall
-CONFIG_FILE=/var/etc/$CONFIG.json
+CONFIG_TCP_FILE=/var/etc/${CONFIG}_TCP.json
 CONFIG_UDP_FILE=/var/etc/${CONFIG}_UDP.json
+CONFIG_SOCKS5_FILE=/var/etc/${CONFIG}_SOCKS5.json
 LOCK_FILE=/var/lock/$CONFIG.lock
 lb_FILE=/var/etc/haproxy.cfg
 RUN_PID_PATH=/var/run/$CONFIG
@@ -143,14 +144,38 @@ echolog()
 	echo -e "$Date: $1" >> $LOG_FILE
 }
 
-GLOBAL_SERVER=$(config_t_get global global_server nil)
-UDP_REDIR_SERVER=$(config_t_get global udp_redir_server nil)
+TCP_REDIR=$(config_t_get global tcp_redir 0)
+TCP_REDIR_SERVER=""
+UDP_REDIR=$(config_t_get global udp_redir 0)
+UDP_REDIR_SERVER=""
+SOCKS5_PROXY=$(config_t_get global socks5_proxy 0)
+SOCKS5_PROXY_SERVER=""
+
+if [ "$TCP_REDIR" == "1" ]; then
+	TCP_REDIR_SERVER=$(config_t_get global tcp_redir_server nil)
+else
+	TCP_REDIR_SERVER="nil"
+fi
+
+if [ "$UDP_REDIR" == "1" ]; then
+	UDP_REDIR_SERVER=$(config_t_get global udp_redir_server nil)
+	[ "$UDP_REDIR_SERVER" == "default" ] && UDP_REDIR_SERVER=$TCP_REDIR_SERVER
+else
+	UDP_REDIR_SERVER="nil"
+fi
+
+if [ "$SOCKS5_PROXY" == "1" ]; then
+	SOCKS5_PROXY_SERVER=$(config_t_get global socks5_proxy_server nil)
+	[ "$SOCKS5_PROXY_SERVER" == "default" ] && SOCKS5_PROXY_SERVER=$TCP_REDIR_SERVER
+else
+	SOCKS5_PROXY_SERVER="nil"
+fi
 TCPSSBIN=""
 UDPSSBIN=""
+SOCKS5SSBIN=""
 
 load_config() {
-	[ "$UDP_REDIR_SERVER" == "default" ] && UDP_REDIR_SERVER=$GLOBAL_SERVER
-	[ "$GLOBAL_SERVER" == "nil" -a "$UDP_REDIR_SERVER" == "nil" ] && {
+	[ "$TCP_REDIR_SERVER" == "nil" -a "$UDP_REDIR_SERVER" == "nil" -a "$SOCKS5_PROXY_SERVER" == "nil" ] && {
 		echolog "没有选择服务器！" 
 		return 1
 	}
@@ -165,12 +190,12 @@ load_config() {
 	DNS2=$(config_t_get global_dns dns_2)
 	TCP_REDIR_PORT=$(config_t_get global_proxy tcp_redir_port 1031)
 	UDP_REDIR_PORT=$(config_t_get global_proxy udp_redir_port 1032)
+	SOCKS5_PROXY_PORT=$(config_t_get global_proxy socks5_proxy_port 1033)
 	KCPTUN_REDIR_PORT=$(config_t_get global_proxy kcptun_port 11183)
-	SOCKS5_ENABLE=$(config_t_get global_proxy socks5 0)
-	SOCKS5_PORT=$(config_t_get global_proxy socks5_port 1033)
 	config_load $CONFIG
-	gen_config_file $GLOBAL_SERVER
+	[ "$TCP_REDIR_SERVER" != "nil" ] && gen_config_file $TCP_REDIR_SERVER TCP
 	[ "$UDP_REDIR_SERVER" != "nil" ] && gen_config_file $UDP_REDIR_SERVER UDP
+	[ "$SOCKS5_PROXY_SERVER" != "nil" ] && gen_config_file $SOCKS5_PROXY_SERVER Socks5
 	return 0
 }
 
@@ -216,79 +241,93 @@ gen_config_file() {
 	[ "$use_ipv6" == "1" ] && network_type="ipv6"
 	server_ip=$(get_host_ip $network_type $server_host)
 	server_type=$(config_get $1 server_type)
-	echolog "$server_type $2服务器IP地址:$server_ip"
+	echolog "$2服务器IP地址:$server_ip"
 	forwarding_ipv6=$(config_get $1 forwarding_ipv6)
 	
 	if [ "$2" == "UDP" ]; then
 		REDIR_PORT=$UDP_REDIR_PORT
-		echolog "生成$server_type $2转发配置文件" 
+		echolog "生成$2转发配置文件" 
 		if [ "$server_type" == "ss" -o "$server_type" == "ssr" ]; then
 			UDPSSBIN=$server_type
 			gen_ss_ssr_config_file $server_type $UDP_REDIR_SERVER $CONFIG_UDP_FILE
 		fi
 		if [ "$server_type" == "v2ray" ]; then
-			lua $SS_PATH/genv2config.lua $UDP_REDIR_SERVER udp $REDIR_PORT > $CONFIG_UDP_FILE
+			lua $SS_PATH/genv2config.lua $UDP_REDIR_SERVER udp $REDIR_PORT nil > $CONFIG_UDP_FILE
 		fi
-		return 0
 	fi
-		
-	if [ "$server_type" == "v2ray" ]; then
-		lua $SS_PATH/genv2config.lua $GLOBAL_SERVER tcp $TCP_REDIR_PORT > $CONFIG_FILE
-	else
-		local kcptun_use kcptun_server_host kcptun_port kcptun_config
-		kcptun_use=$(config_get $1 use_kcp)
-		kcptun_server_host=$(config_get $1 kcp_server)
-		kcptun_port=$(config_get $1 kcp_port)
-		kcptun_config=$(config_get $1 kcp_opts)
-		
-		lbenabled=$(config_t_get global_haproxy balancing_enable 0)
-		USEKCP=$kcptun_use
-		kcptun_path=""
-		if [ "$kcptun_use" == "1" ] && ([ -z "$kcptun_port" ] || [ -z "$kcptun_config" ]); then
-			echolog "【检测到启用KCP，但未配置KCP参数】，跳过~"
+	
+	if [ "$2" == "Socks5" ]; then
+		REDIR_PORT=$SOCKS5_PROXY_PORT
+		echolog "生成$2代理配置文件" 
+		if [ "$server_type" == "ss" -o "$server_type" == "ssr" ]; then
+			SOCKS5SSBIN=$server_type
+			gen_ss_ssr_config_file $server_type $SOCKS5_PROXY_SERVER $CONFIG_SOCKS5_FILE
 		fi
-		if [ "$kcptun_use" == "1" -a -n "$kcptun_port" -a -n "$kcptun_config" -a "$lbenabled" == "1" ];then
-			echolog "【检测到启用KCP，但KCP与负载均衡二者不能同时开启】，跳过~"
+		if [ "$server_type" == "v2ray" ]; then
+			lua $SS_PATH/genv2config.lua $SOCKS5_PROXY_SERVER nil nil $REDIR_PORT > $CONFIG_SOCKS5_FILE
 		fi
-		
-		if [ -f "$(config_t_get global_kcptun kcptun_client_file)" ];then
-			kcptun_path=$(config_t_get global_kcptun kcptun_client_file)
+	fi
+	
+	if [ "$2" == "TCP" ]; then
+		if [ "$server_type" == "v2ray" ]; then
+			lua $SS_PATH/genv2config.lua $TCP_REDIR_SERVER tcp $TCP_REDIR_PORT nil > $CONFIG_TCP_FILE
 		else
-			temp=$(find_bin kcptun_client)
-			[ -n "$temp" ] && kcptun_path=$temp
-		fi
-		
-		if [ "$kcptun_use" == "1" -a -z "$kcptun_path" ] && ([ -n "$kcptun_port" ] || [ -n "$kcptun_config" ]);then
-			echolog "【检测到启用KCP，但未安装KCP主程序，请自行到自动更新下载KCP】，跳过~"
-		fi
-		
-		if [ "$kcptun_use" == "1" -a -n "$kcptun_port" -a -n "$kcptun_config" -a "$lbenabled" == "0" -a -n "$kcptun_path" ];then
-			if [ -z "$kcptun_server_host" ]; then
-				start_kcptun "$kcptun_path" $server_ip $kcptun_port "$kcptun_config"
+			local kcptun_use kcptun_server_host kcptun_port kcptun_config
+			kcptun_use=$(config_get $1 use_kcp)
+			kcptun_server_host=$(config_get $1 kcp_server)
+			kcptun_port=$(config_get $1 kcp_port)
+			kcptun_config=$(config_get $1 kcp_opts)
+			
+			lbenabled=$(config_t_get global_haproxy balancing_enable 0)
+			USEKCP=$kcptun_use
+			kcptun_path=""
+			if [ "$kcptun_use" == "1" ] && ([ -z "$kcptun_port" ] || [ -z "$kcptun_config" ]); then
+				echolog "【检测到启用KCP，但未配置KCP参数】，跳过~"
+			fi
+			if [ "$kcptun_use" == "1" -a -n "$kcptun_port" -a -n "$kcptun_config" -a "$lbenabled" == "1" ];then
+				echolog "【检测到启用KCP，但KCP与负载均衡二者不能同时开启】，跳过~"
+			fi
+			
+			if [ -f "$(config_t_get global_kcptun kcptun_client_file)" ];then
+				kcptun_path=$(config_t_get global_kcptun kcptun_client_file)
 			else
-				kcptun_use_ipv6=$(config_get $1 kcp_use_ipv6)
-				network_type="ipv4"
-				[ "$kcptun_use_ipv6" == "1" ] && network_type="ipv6"
-				kcptun_server_ip=$(get_host_ip $network_type $kcptun_server_host)
-				echolog "KCP服务器IP地址:$kcptun_server_ip"
-				start_kcptun "$kcptun_path" $kcptun_server_ip $kcptun_port "$kcptun_config"
+				temp=$(find_bin kcptun_client)
+				[ -n "$temp" ] && kcptun_path=$temp
 			fi
-			echolog "运行Kcptun..." 
-			if [ "$server_type" == "ss" -o "$server_type" == "ssr" ]; then
-				echolog "生成KCP加速$server_type配置文件"
-				TCPSSBIN=$server_type
-				REDIR_PORT=$TCP_REDIR_PORT
-				gen_ss_ssr_config_file $server_type $GLOBAL_SERVER $CONFIG_FILE "kcptun"
+			
+			if [ "$kcptun_use" == "1" -a -z "$kcptun_path" ] && ([ -n "$kcptun_port" ] || [ -n "$kcptun_config" ]);then
+				echolog "【检测到启用KCP，但未安装KCP主程序，请自行到自动更新下载KCP】，跳过~"
 			fi
-		else
-			if [ "$server_type" == "ss" -o "$server_type" == "ssr" ]; then
-				echolog "生成$server_type配置文件"
-				TCPSSBIN=$server_type
-				REDIR_PORT=$TCP_REDIR_PORT
-				gen_ss_ssr_config_file $server_type $GLOBAL_SERVER $CONFIG_FILE
+			
+			if [ "$kcptun_use" == "1" -a -n "$kcptun_port" -a -n "$kcptun_config" -a "$lbenabled" == "0" -a -n "$kcptun_path" ];then
+				if [ -z "$kcptun_server_host" ]; then
+					start_kcptun "$kcptun_path" $server_ip $kcptun_port "$kcptun_config"
+				else
+					kcptun_use_ipv6=$(config_get $1 kcp_use_ipv6)
+					network_type="ipv4"
+					[ "$kcptun_use_ipv6" == "1" ] && network_type="ipv6"
+					kcptun_server_ip=$(get_host_ip $network_type $kcptun_server_host)
+					echolog "KCP服务器IP地址:$kcptun_server_ip"
+					start_kcptun "$kcptun_path" $kcptun_server_ip $kcptun_port "$kcptun_config"
+				fi
+				echolog "运行Kcptun..." 
+				if [ "$server_type" == "ss" -o "$server_type" == "ssr" ]; then
+					echolog "生成KCP加速$2转发配置文件"
+					TCPSSBIN=$server_type
+					REDIR_PORT=$TCP_REDIR_PORT
+					gen_ss_ssr_config_file $server_type $TCP_REDIR_SERVER $CONFIG_TCP_FILE "kcptun"
+				fi
+			else
+				if [ "$server_type" == "ss" -o "$server_type" == "ssr" ]; then
+					echolog "生成$2转发配置文件"
+					TCPSSBIN=$server_type
+					REDIR_PORT=$TCP_REDIR_PORT
+					gen_ss_ssr_config_file $server_type $TCP_REDIR_SERVER $CONFIG_TCP_FILE
+				fi
 			fi
 		fi
 	fi
+	return 0
 }
 
 start_kcptun() {
@@ -300,21 +339,20 @@ start_kcptun() {
 	fi
 }
 
-start_redir() {
+start_tcp_redir() {
 	config_load $CONFIG
-	config_get server_type $GLOBAL_SERVER server_type
-	config_get server_port $GLOBAL_SERVER server_port
-	config_get server_password $GLOBAL_SERVER password
-	config_get kcptun_use $GLOBAL_SERVER use_kcp 0
+	config_get server_type $TCP_REDIR_SERVER server_type
+	config_get server_port $TCP_REDIR_SERVER server_port
+	config_get server_password $TCP_REDIR_SERVER password
+	config_get kcptun_use $TCP_REDIR_SERVER use_kcp 0
 	fail=0
-	#temp=$(nmap $server_ip -p $server_port | grep -E "open|filtered" | wc -l)
 	if [ "$server_type" == "v2ray" ]; then
 		v2ray_bin=$(find_bin v2ray)
 		if [ -z "$v2ray_bin" ]; then
 			echolog "找不到V2ray主程序，无法启用！！！" 
 			fail=1
 		else
-			$v2ray_bin -config=$CONFIG_FILE > /var/log/v2ray_tcp.log &
+			$v2ray_bin -config=$CONFIG_TCP_FILE > /var/log/v2ray_tcp.log &
 		fi
 	elif [ "$server_type" == "brook" ]; then
 		brook_bin=$(find_bin brook)
@@ -324,34 +362,30 @@ start_redir() {
 		else
 			if [ "$kcptun_use" == "1" ]; then
 				$brook_bin tproxy -l 0.0.0.0:$TCP_REDIR_PORT -s 127.0.0.1:$KCPTUN_REDIR_PORT -p $server_password &>/dev/null &
-				[ "$SOCKS5_ENABLE" == "1" ] && $brook_bin client -l 0.0.0.0:$SOCKS5_PORT -i 0.0.0.0. -s 127.0.0.1:$KCPTUN_REDIR_PORT -p $server_password &>/dev/null &
 			else
 				$brook_bin tproxy -l 0.0.0.0:$TCP_REDIR_PORT -s $server_host:$server_port -p $server_password &>/dev/null &
-				[ "$SOCKS5_ENABLE" == "1" ] && $brook_bin client -l 0.0.0.0:$SOCKS5_PORT -i 0.0.0.0. -s $server_host:$server_port -p $server_password &>/dev/null &
 			fi
 		fi
 	else
 		ss_bin=$(find_bin "$TCPSSBIN"-redir)
-		sslocal_bin=$(find_bin "$TCPSSBIN"-local)
 		if [ -z "$ss_bin" ]; then
 			echolog "找不到SS主程序，无法启用！！！" 
 			fail=1
 		else
-			$ss_bin -c $CONFIG_FILE -b 0.0.0.0 > /dev/null 2>&1 &
-			[ -n "$sslocal_bin" -a "$SOCKS5_ENABLE" == "1" ] && $sslocal_bin -c $CONFIG_FILE -b 0.0.0.0 -l $SOCKS5_PORT > /dev/null 2>&1 &
+			$ss_bin -c $CONFIG_TCP_FILE > /dev/null 2>&1 &
 		fi
 	fi
-	[ "$fail" == "0" ] && echolog "运行$server_type透明代理..." 
+	[ "$fail" == "0" ] && echolog "运行$server_type TCP透明代理..." 
 	[ "$fail" == "1" ] && {
-		uci set $CONFIG.@global[0].global_server=nil
+		uci set $CONFIG.@global[0].tcp_redir_server=nil
 		uci commit $CONFIG
 	}
 }
 
 start_udp_redir() {
-	config_load $CONFIG
-	config_get server_type $UDP_REDIR_SERVER server_type
 	if [ "$UDP_REDIR_SERVER" != "nil" ];then
+		config_load $CONFIG
+		config_get server_type $UDP_REDIR_SERVER server_type
 		fail=0
 		if [ "$server_type" == "v2ray" ]; then
 			v2ray_bin=$(find_bin v2ray)
@@ -375,12 +409,51 @@ start_udp_redir() {
 				echolog "找不到SS主程序，无法启用！！！" 
 				fail=1
 			else
-				$ss_bin -c $CONFIG_UDP_FILE -U -b 0.0.0.0 > /dev/null 2>&1 &
+				$ss_bin -c $CONFIG_UDP_FILE -U > /dev/null 2>&1 &
 			fi
 		fi
-		[ "$fail" == "0" ] && echolog "运行$server_type透明代理UDP..." 
+		[ "$fail" == "0" ] && echolog "运行$server_type UDP透明代理..." 
 		[ "$fail" == "1" ] && {
-			uci set $CONFIG.@global[0].udp_redir_server=nil && uci commit $CONFIG
+			uci set $CONFIG.@global[0].udp_redir=0
+			uci commit $CONFIG
+		}
+	fi
+}
+
+start_socks5_proxy() {
+	if [ "$SOCKS5_PROXY_SERVER" != "nil" ];then
+		config_load $CONFIG
+		config_get server_type $SOCKS5_PROXY_SERVER server_type
+		fail=0
+		if [ "$server_type" == "v2ray" ]; then
+			v2ray_bin=$(find_bin v2ray)
+			if [ -z "$v2ray_bin" ]; then
+				echolog "找不到V2ray主程序，无法启用！！！" 
+				fail=1
+			else
+				$v2ray_bin -config=$CONFIG_SOCKS5_FILE > /var/log/v2ray_socks5.log &
+			fi
+		elif [ "$server_type" == "brook" ]; then
+			brook_bin=$(find_bin brook)
+			if [ -z "$brook_bin" ]; then
+				echolog "找不到Brook主程序，无法启用！！！" 
+				fail=1
+			else
+				$brook_bin client -l 0.0.0.0:$SOCKS5_PROXY_PORT -i 0.0.0.0 -s $server_host:$server_port -p $server_password &>/dev/null &
+			fi
+		else
+			ss_bin=$(find_bin "$SOCKS5SSBIN"-local)
+			if [ -z "$ss_bin" ]; then
+				echolog "找不到SS主程序，无法启用！！！" 
+				fail=1
+			else
+				$ss_bin -c $CONFIG_SOCKS5_FILE -b 0.0.0.0 > /dev/null 2>&1 &
+			fi
+		fi
+		[ "$fail" == "0" ] && echolog "运行$server_type Socks5代理..." 
+		[ "$fail" == "1" ] && {
+			uci set $CONFIG.@global[0].socks5_proxy=0
+			uci commit $CONFIG
 		}
 	fi
 }
@@ -489,7 +562,7 @@ start_dns() {
 				echolog "找不到dns2socks或$ssbin-local主程序，无法启用！！！" 
 			else
 				nohup $sslocal_bin \
-				-c $CONFIG_FILE \
+				-c $CONFIG_TCP_FILE \
 				-l 3080 \
 				-f $RUN_PID_PATH/$ssbin-local.pid \
 				>/dev/null 2>&1 &
@@ -816,7 +889,7 @@ start_pdnsd() {
 }
 
 stop_dnsmasq() {
-	if [ "$GLOBAL_SERVER" == "nil" ]; then
+	if [ "$TCP_REDIR_SERVER" == "nil" ]; then
 		rm -rf $TMP_DNSMASQ_PATH/*
 		rm -rf $DNSMASQ_PATH/*
 		/etc/init.d/dnsmasq restart  2>/dev/null
@@ -1102,7 +1175,7 @@ EOF
 	ip route add local 0.0.0.0/0 dev lo table 100
 	
 	#  生成TCP转发规则
-	if [ "$GLOBAL_SERVER" != "nil" ];then
+	if [ "$TCP_REDIR_SERVER" != "nil" ];then
 		if [ "$server_type" == "brook" ]; then
 			$iptables_mangle -A PREROUTING -p tcp -m socket -j MARK --set-mark 1
 			$iptables_mangle -A PREROUTING -p tcp -j SS
@@ -1390,7 +1463,7 @@ kill_all() {
 boot() {
 	local delay=$(config_t_get global_delay start_delay 0)
 	if [ "$delay" -gt 0 ]; then
-		[ "$GLOBAL_SERVER" != "nil" -o "$UDP_REDIR_SERVER" != "nil" ] && {
+		[ "$TCP_REDIR_SERVER" != "nil" -o "$UDP_REDIR_SERVER" != "nil" ] && {
 			echolog "执行启动延时 $delay 秒后再启动!" 
 			sleep $delay && start >/dev/null 2>&1
 		}
@@ -1409,8 +1482,9 @@ start() {
 	[ -f "$LOCK_FILE" ] && return 3
 	touch "$LOCK_FILE"
 	mkdir -p $RUN_PID_PATH /var/etc
-	start_redir
+	start_tcp_redir
 	start_udp_redir
+	start_socks5_proxy
 	start_dns
 	add_dnsmasq
 	add_firewall_rule
@@ -1437,6 +1511,9 @@ stop() {
 	kill_all pdnsd cdns Pcap_DNSProxy ss-redir ss-local ssr-redir ssr-local v2ray v2ctl brook dns2socks kcptun_client haproxy dns-forwarder chinadns dnsproxy redsocks2
 	rm -rf /var/pdnsd/pdnsd.cache
 	rm -rf $RUN_PID_PATH
+	rm -rf $CONFIG_TCP_FILE
+	rm -rf $CONFIG_UDP_FILE
+	rm -rf $CONFIG_SOCKS5_FILE
 	unset $ssbin
 	stop_dnsmasq
 	stop_cru

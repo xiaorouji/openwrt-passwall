@@ -167,14 +167,14 @@ del_config(){
 del_all_config(){
 	get_server_index
 	[ "`uci show $CONFIG|grep -c "group="`" -eq 0 ] && exit 0
-	current_global_server=$(config_t_get global global_server)
-	is_sub_server=`uci -q get $CONFIG.$current_global_server.group`
+	current_tcp_redir_server=$(config_t_get global tcp_redir_server)
+	is_sub_server=`uci -q get $CONFIG.$current_tcp_redir_server.group`
 	for i in `seq $ssindex -1 1`
 	do
 		[ "$(uci show $CONFIG.@servers[$(($i-1))]|grep -c "group=")" -eq 1 ] && uci delete $CONFIG.@servers[$(($i-1))] && uci commit $CONFIG
 	done
 	[ -n "$is_sub_server" ] && {
-		config_t_set global global_server 0 'nil'
+		config_t_set global tcp_redir_server 0 'nil'
 		uci commit $CONFIG && /etc/init.d/$CONFIG stop
 	}
 }
@@ -182,16 +182,16 @@ del_all_config(){
 set_firstserver(){
 
 	serverindex=$(uci show $CONFIG|grep "group=" | head -1 | awk -F'.' '{print $2}')
-	[ -n "$serverindex" ] && new_global_server=$(uci show $CONFIG.$serverindex.server | awk -F'.' '{print $2}') || exit 0
-	config_t_set global global_server 0 $new_global_server
+	[ -n "$serverindex" ] && new_tcp_redir_server=$(uci show $CONFIG.$serverindex.server | awk -F'.' '{print $2}') || exit 0
+	config_t_set global tcp_redir_server 0 $new_tcp_redir_server
 	uci commit $CONFIG
 	echo "$Date: 原服务器已被删除，更换使用新的服务器地址：$(uci get $CONFIG.$serverindex.server)" >> $LOG_FILE
 	/etc/init.d/$CONFIG restart
 }
 
-update_global_server(){
-	current_global_server=$(config_t_get global global_server)
-	if [ "$current_global_server" != "nil" ]; then
+update_tcp_redir_server(){
+	current_tcp_redir_server=$(config_t_get global tcp_redir_server)
+	if [ "$current_tcp_redir_server" != "nil" ]; then
 		[ -f "/var/etc/$CONFIG.json" ] && current_server=$(cat /var/etc/$CONFIG.json| grep "_comment\""| awk -F'"' '{print $4}') || exit 0
 		tempindex=$(uci show $CONFIG|grep "$current_server" | awk -F'.' '{print $2}')
 		if [ -n "$tempindex" ]; then
@@ -297,7 +297,7 @@ start() {
 	[ -f "/usr/share/$CONFIG/serverconfig/all_localservers" ] && del_config
 	echo "$Date: 本次更新，新增服务器节点 $addnum 个，修改 $updatenum 个，删除 $delnum 个；现共有节点：$(uci show $CONFIG|grep -c "group=") 个。" >> $LOG_FILE
 	echo "$Date: 在线订阅列表更新完成" >> $LOG_FILE
-	update_global_server
+	update_tcp_redir_server
 	rm -f "$LOCK_FILE"
 }
 
