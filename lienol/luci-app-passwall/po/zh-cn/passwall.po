@@ -34,6 +34,9 @@ msgstr "域名解析IP"
 msgid "Basic Settings"
 msgstr "基本设置"
 
+msgid "Server List"
+msgstr "服务端列表"
+
 msgid "Other Settings"
 msgstr "高级设置"
 
@@ -64,8 +67,8 @@ msgstr "一个轻量级安全SOCKS5代理"
 msgid "Running Status"
 msgstr "运行状态"
 
-msgid "Load Balancing"
-msgstr "负载均衡"
+msgid "Kcptun Client"
+msgstr "Kcptun客户端"
 
 msgid "China Connection"
 msgstr "国内连接"
@@ -261,9 +264,6 @@ msgstr "自定义Dnsmasq设置"
 
 msgid "Setting a parameter error will cause dnsmasq fail to start."
 msgstr "参数设置错误将会导致Dnsmasq无法启动。"
-
-msgid "Load Balancing"
-msgstr "负载均衡"
 
 msgid "Click here to setting your Load Balancing"
 msgstr "点击这里查看负载均衡设置教程。"
