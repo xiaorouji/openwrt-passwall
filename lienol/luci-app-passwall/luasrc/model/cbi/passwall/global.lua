@@ -30,7 +30,7 @@ cursor:foreach(i,"servers",function(e)
 	end
 end)
 
-a=Map(i,translate("Pass Wall"),translate("A lightweight secured SOCKS5 proxy"))
+a=Map(i)
 a.template="passwall/index"
 a:append(Template("passwall/status"))
 
@@ -46,6 +46,14 @@ e=t:option(ListValue,"tcp_redir_server",translate("TCP Redir Server"))
 for a,t in pairs(n)do e:value(a,t)end
 e:depends("tcp_redir",1)
 
+e=t:option(Value,"tcp_redir_ports",translate("TCP Redir Ports"))
+e.default="1:65535"
+e:value("1:65535",translate("All"))
+e:value("80,443","80,443")
+e:value("80:","80 "..translate("or more"))
+e:value(":443","443 "..translate("or less"))
+e:depends("tcp_redir",1)
+
 if has_udp_relay() then
 	e=t:option(Flag,"udp_redir",translate("Start the UDP redir"),translate("For Game Mode or DNS resolution and more.")..translate("The selected server will not use Kcptun."))
 	e.default=0
@@ -55,6 +63,12 @@ end
 e=t:option(ListValue,"udp_redir_server",translate("UDP Redir Server"))
 e:value("default",translate("Same as the tcp redir server"))
 for a,t in pairs(n)do e:value(a,t)end
+e:depends("udp_redir",1)
+
+e=t:option(Value,"udp_redir_ports",translate("UDP Redir Ports"))
+e.default="1:65535"
+e:value("1:65535",translate("All"))
+e:value("53","53")
 e:depends("udp_redir",1)
 
 e=t:option(Flag,"socks5_proxy",translate("Start the Socks5 Proxy"),translate("The client can use the router's Socks5 proxy"))

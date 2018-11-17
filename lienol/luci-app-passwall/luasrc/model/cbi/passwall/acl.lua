@@ -34,6 +34,16 @@ o:value("gfwlist",translate("GFW List"))
 o:value("chnroute",translate("China WhiteList"))
 o:value("gamemode",translate("Game Mode"))
 o:value("returnhome",translate("Return Home"))
-o=s:option(Value,"ports",translate("Dest Ports"))
-o.placeholder="80,443"
+
+o=s:option(Value,"tcp_redir_ports",translate("TCP Redir Ports"))
+o.default="1:65535"
+o:value("1:65535",translate("All"))
+o:value("80,443","80,443")
+o:value("80:","80 "..translate("or more"))
+o:value(":443","443 "..translate("or less"))
+
+o=s:option(Value,"udp_redir_ports",translate("UDP Redir Ports"))
+o.default="1:65535"
+o:value("1:65535",translate("All"))
+o:value("53","53")
 return m
