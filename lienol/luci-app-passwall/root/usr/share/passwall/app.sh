@@ -173,6 +173,12 @@ fi
 TCPSSBIN=""
 UDPSSBIN=""
 SOCKS5SSBIN=""
+TCP_REDIR_SERVER_IP=""
+UDP_REDIR_SERVER_IP=""
+SOCKS5_PROXY_SERVER_IP=""
+TCP_REDIR_SERVER_IPV6=""
+UDP_REDIR_SERVER_IPV6=""
+SOCKS5_PROXY_SERVER_IPV6=""
 
 load_config() {
 	[ "$TCP_REDIR_SERVER" == "nil" -a "$UDP_REDIR_SERVER" == "nil" -a "$SOCKS5_PROXY_SERVER" == "nil" ] && {
@@ -245,6 +251,11 @@ gen_config_file() {
 	echolog "$2服务器IP地址:$server_ip"
 	
 	if [ "$2" == "UDP" ]; then
+		if [ "$network_type" == "ipv6" ];then
+			UDP_REDIR_SERVER_IPV6=$server_ip
+		else
+			UDP_REDIR_SERVER_IP=$server_ip
+		fi
 		REDIR_PORT=$UDP_REDIR_PORT
 		echolog "生成$2转发配置文件" 
 		if [ "$server_type" == "ss" -o "$server_type" == "ssr" ]; then
@@ -257,6 +268,11 @@ gen_config_file() {
 	fi
 	
 	if [ "$2" == "Socks5" ]; then
+		if [ "$network_type" == "ipv6" ];then
+			SOCKS5_PROXY_SERVER_IPV6=$server_ip
+		else
+			SOCKS5_PROXY_SERVER_IP=$server_ip
+		fi
 		REDIR_PORT=$SOCKS5_PROXY_PORT
 		echolog "生成$2代理配置文件" 
 		if [ "$server_type" == "ss" -o "$server_type" == "ssr" ]; then
@@ -269,6 +285,11 @@ gen_config_file() {
 	fi
 	
 	if [ "$2" == "TCP" ]; then
+		if [ "$network_type" == "ipv6" ];then
+			TCP_REDIR_SERVER_IPV6=$server_ip
+		else
+			TCP_REDIR_SERVER_IP=$server_ip
+		fi
 		if [ "$server_type" == "v2ray" ]; then
 			lua $SS_PATH/genv2config.lua $TCP_REDIR_SERVER tcp $TCP_REDIR_PORT nil > $CONFIG_TCP_FILE
 		else
@@ -308,6 +329,7 @@ gen_config_file() {
 					[ "$kcptun_use_ipv6" == "1" ] && network_type="ipv6"
 					kcptun_server_ip=$(get_host_ip $network_type $kcptun_server_host)
 					echolog "KCP服务器IP地址:$kcptun_server_ip"
+					TCP_REDIR_SERVER_IP=$kcptun_server_ip
 					start_kcptun "$kcptun_path" $kcptun_server_ip $kcptun_port "$kcptun_config"
 				fi
 				echolog "运行Kcptun..." 
@@ -1075,32 +1097,27 @@ load_acl(){
 	local ipaddr
 	local macaddr
 	local proxy_mode
-	local ports
+	local tcp_redir_ports
+	local udp_redir_ports
 	config_get enabled $1 enabled
 	config_get ipaddr $1 ipaddr
 	config_get macaddr $1 macaddr
 	config_get acl_mode $1 proxy_mode
-	config_get ports $1 ports
+	config_get tcp_redir_ports $1 tcp_redir_ports
+	config_get udp_redir_ports $1 udp_redir_ports
+	[ -z "$tcp_redir_ports" ] && tcp_redir_ports="1:65535"
+	[ -z "$udp_redir_ports" ] && udp_redir_ports="1:65535"
 	local ip_mark=`get_ip_mark $ipaddr`								 
 	[ "$enabled" == "1" -a -n "$acl_mode" ] && {
 		if [ -n "$ipaddr" ] || [ -n "$macaddr" ]; then
-			if [ -n "$ports" ]; then
-				if [ -n "$ipaddr" -a -n "$macaddr" ]; then
-					echolog "加载ACL规则：IP为$ipaddr，MAC为$macaddr，端口为$ports，模式为：$acl_mode" 
-				else
-					[ -n "$ipaddr" ] && echolog "加载ACL规则：IP为$ipaddr，端口为$ports，模式为：$acl_mode" 
-					[ -n "$macaddr" ] && echolog "加载ACL规则：MAC为$macaddr，端口为$ports，模式为：$acl_mode" 
-				fi
+			if [ -n "$ipaddr" -a -n "$macaddr" ]; then
+				echolog "加载ACL规则：IP为$ipaddr，MAC为$macaddr，端口为$ports，模式为：$acl_mode" 
 			else
-				if [ -n "$ipaddr" -a -n "$macaddr" ]; then
-					echolog "加载ACL规则：IP为$ipaddr，MAC为$macaddr，模式为：$acl_mode" 
-				else
-					[ -n "$ipaddr" ] && echolog "加载ACL规则：IP为$ipaddr，模式为：$acl_mode" 
-					[ -n "$macaddr" ] && echolog "加载ACL规则：MAC为$macaddr，模式为：$acl_mode" 
-				fi
-				
+				[ -n "$ipaddr" ] && echolog "加载ACL规则：IP为$ipaddr，端口为$ports，模式为：$acl_mode" 
+				[ -n "$macaddr" ] && echolog "加载ACL规则：MAC为$macaddr，端口为$ports，模式为：$acl_mode" 
 			fi
-			$iptables_mangle -A SS $(factor $ipaddr "-s") $(factor $macaddr "-m mac --mac-source") $(factor $ports "-m multiport --dport") -$(get_jump_mode $acl_mode) $(get_action_chain $acl_mode)
+			$iptables_mangle -A SS $(factor $ipaddr "-s") -p tcp $(factor $macaddr "-m mac --mac-source") $(factor $tcp_redir_ports "-m multiport --dport") -$(get_jump_mode $acl_mode) $(get_action_chain $acl_mode)
+			$iptables_mangle -A SS $(factor $ipaddr "-s") -p udp $(factor $macaddr "-m mac --mac-source") $(factor $udp_redir_ports "-m multiport --dport") -$(get_jump_mode $acl_mode) $(get_action_chain $acl_mode)
 			[ -z "$ipaddr" ] && {
 				lower_macaddr=`echo $macaddr | tr '[A-Z]' '[a-z]'`
 				ipaddr=`ip neigh show | grep -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}" | grep $lower_macaddr | awk '{print $1}'`
@@ -1140,14 +1157,18 @@ EOF
 		done
 	}
 		
-	#  忽略特殊IP段
+	#	忽略特殊IP段
 	lan_ip=`ifconfig br-lan | grep "inet addr" | awk '{print $2}' | awk -F : '{print $2}'` #路由器lan IP
 	lan_ipv4=`ip address show br-lan | grep -w "inet" |awk '{print $2}'`  #当前LAN IPv4段
 	[ -n "$lan_ipv4" ] && {
 		ipset add $IPSET_LANIPLIST $lan_ipv4
 	}
-		
-	[ "$use_ipv6" != "1" -a -n "$server_ip" ] && ipset add $IPSET_LANIPLIST $server_ip
+	[ "$use_ipv6" != "1" ] && {
+		[ -n "$TCP_REDIR_SERVER_IP" ] && ipset add $IPSET_LANIPLIST $TCP_REDIR_SERVER_IP
+		[ -n "$UDP_REDIR_SERVER_IP" ] && ipset add $IPSET_LANIPLIST $UDP_REDIR_SERVER_IP
+		[ -n "$SOCKS5_PROXY_SERVER_IP" ] && ipset add $IPSET_LANIPLIST $SOCKS5_PROXY_SERVER_IP
+	}
+	
 	$iptables_mangle -N SS
 	$iptables_mangle -A SS -m set --match-set $IPSET_LANIPLIST dst -j RETURN
 	$iptables_mangle -A SS -m set --match-set $IPSET_WHITELIST dst -j RETURN
@@ -1157,64 +1178,67 @@ EOF
 	$iptables_mangle -N SS_HOME
 	$iptables_mangle -N SS_GAME
 	
+	tcp_redir_ports=$(config_t_get global tcp_redir_ports)
+	udp_redir_ports=$(config_t_get global udp_redir_ports)
+	
 	ip rule add fwmark 1 lookup 100
 	ip route add local 0.0.0.0/0 dev lo table 100
 	
-	#  生成TCP转发规则
+	#	生成TCP转发规则
 	if [ "$TCP_REDIR_SERVER" != "nil" ];then
 		if [ "$server_type" == "brook" ]; then
 			$iptables_mangle -A PREROUTING -p tcp -m socket -j MARK --set-mark 1
 			$iptables_mangle -A PREROUTING -p tcp -j SS
 			
-			$iptables_mangle -A SS -p tcp -m set --match-set $IPSET_BLACKLIST dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
-			#  全局模式
-			$iptables_mangle -A SS_GLO -p tcp -j TPROXY --tproxy-mark 0x1/0x1 --on-port $TCP_REDIR_PORT
+			$iptables_mangle -A SS -p tcp -m multiport -–dport $tcp_redir_ports -m set --match-set $IPSET_BLACKLIST dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
+			#	全局模式
+			$iptables_mangle -A SS_GLO -p tcp -m multiport -–dport $tcp_redir_ports -j TPROXY --tproxy-mark 0x1/0x1 --on-port $TCP_REDIR_PORT
 			
-			#  GFWLIST模式
-			$iptables_mangle -A SS_GFW -p tcp -m set --match-set $IPSET_GFW dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
-			$iptables_mangle -A SS_GFW -p tcp -m set --match-set $IPSET_ROUTER dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
+			#	GFWLIST模式
+			$iptables_mangle -A SS_GFW -p tcp -m multiport -–dport $tcp_redir_ports -m set --match-set $IPSET_GFW dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
+			$iptables_mangle -A SS_GFW -p tcp -m multiport -–dport $tcp_redir_ports -m set --match-set $IPSET_ROUTER dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
 			
-			#  大陆白名单模式
-			$iptables_mangle -A SS_CHN -p tcp -m set --match-set $IPSET_CHN dst -j RETURN
-			$iptables_mangle -A SS_CHN -p tcp -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
+			#	大陆白名单模式
+			$iptables_mangle -A SS_CHN -p tcp -m multiport -–dport $tcp_redir_ports -m set --match-set $IPSET_CHN dst -j RETURN
+			$iptables_mangle -A SS_CHN -p tcp -m multiport -–dport $tcp_redir_ports -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
 			
-			#  回国模式
-			$iptables_mangle -A SS_HOME -p tcp -m set --match-set $IPSET_CHN dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
+			#	回国模式
+			$iptables_mangle -A SS_HOME -p tcp -m multiport -–dport $tcp_redir_ports -m set --match-set $IPSET_CHN dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
 			
-			#  游戏模式
-			$iptables_mangle -A SS_GAME -p tcp -m set --match-set $IPSET_CHN dst -j RETURN
+			#	游戏模式
+			$iptables_mangle -A SS_GAME -p tcp -m multiport -–dport $tcp_redir_ports -m set --match-set $IPSET_CHN dst -j RETURN
 			
-			#  用于本机流量转发，默认只走router
-			$iptables_mangle -A SS -s $lan_ip -p tcp -m set --match-set $IPSET_ROUTER dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
-			$iptables_mangle -A OUTPUT -p tcp -m set --match-set $IPSET_ROUTER dst -j MARK --set-mark 1
+			#	用于本机流量转发，默认只走router
+			$iptables_mangle -A SS -s $lan_ip -p tcp -m multiport -–dport $tcp_redir_ports -m set --match-set $IPSET_ROUTER dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
+			$iptables_mangle -A OUTPUT -p tcp -m multiport -–dport $tcp_redir_ports -m set --match-set $IPSET_ROUTER dst -j MARK --set-mark 1
 			[ "$SSR_SERVER_PASSWALL" == "1" ] && {
-				$iptables_mangle -A SS -s $lan_ip -p tcp -m set --match-set $IPSET_GFW dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
-				$iptables_mangle -A OUTPUT -p tcp -m set --match-set $IPSET_GFW dst -j MARK --set-mark 1
+				$iptables_mangle -A SS -s $lan_ip -p tcp -m multiport -–dport $tcp_redir_ports -m set --match-set $IPSET_GFW dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
+				$iptables_mangle -A OUTPUT -p tcp -m multiport -–dport $tcp_redir_ports -m set --match-set $IPSET_GFW dst -j MARK --set-mark 1
 			}
 		else
 			$iptables_mangle -A PREROUTING -j SS
 			#$iptables_mangle -A SS -p tcp -d $server_ip -m multiport --dports 22 -j TTL --ttl-set 188
 			$iptables_mangle -A SS -p tcp -m set --match-set $IPSET_BLACKLIST dst -j TTL --ttl-set 188
-			#  全局模式
+			#	全局模式
 			$iptables_mangle -A SS_GLO -p tcp -j TTL --ttl-set 188
 			
-			#  GFWLIST模式
+			#	GFWLIST模式
 			$iptables_mangle -A SS_GFW -p tcp -m set --match-set $IPSET_GFW dst -j TTL --ttl-set 188
 			$iptables_mangle -A SS_GFW -p tcp -m set --match-set $IPSET_ROUTER dst -j TTL --ttl-set 188
 			
-			#  大陆白名单模式
+			#	大陆白名单模式
 			$iptables_mangle -A SS_CHN -p tcp -m set --match-set $IPSET_CHN dst -j RETURN
 			#$iptables_mangle -A SS_CHN -p tcp -m geoip ! --destination-country CN -j TTL --ttl-set 188
 			$iptables_mangle -A SS_CHN -p tcp -j TTL --ttl-set 188
 			
-			#  回国模式
+			#	回国模式
 			#$iptables_mangle -A SS_HOME -p tcp -m geoip --destination-country CN -j TTL --ttl-set 188
 			$iptables_mangle -A SS_HOME -p tcp -m set --match-set $IPSET_CHN dst -j TTL --ttl-set 188
 			
-			#  游戏模式
+			#	游戏模式
 			$iptables_mangle -A SS_GAME -p tcp -m set --match-set $IPSET_CHN dst -j RETURN
 			
-			# 重定所有流量到透明代理端口
+			#	重定所有流量到透明代理端口
 			$iptables_nat -N SS
 			$iptables_nat -A SS -p tcp -m ttl --ttl-eq 188 -j REDIRECT --to $TCP_REDIR_PORT
 			
@@ -1249,10 +1273,10 @@ EOF
 		
 			#  用于本机流量转发，默认只走router
 			$iptables_nat -I OUTPUT -j SS
-			$iptables_nat -A OUTPUT -p tcp -m set --match-set $IPSET_ROUTER dst -j REDIRECT --to-ports $TCP_REDIR_PORT
+			$iptables_nat -A OUTPUT -p tcp -m multiport --dport $tcp_redir_ports -m set --match-set $IPSET_ROUTER dst -j REDIRECT --to-ports $TCP_REDIR_PORT
 			
 			if [ "$SSR_SERVER_PASSWALL" == "1" ];then
-				$iptables_nat -A OUTPUT -p tcp -m set --match-set $IPSET_GFW dst -j REDIRECT --to-ports $TCP_REDIR_PORT
+				$iptables_nat -A OUTPUT -p tcp -m multiport --dport $tcp_redir_ports -m set --match-set $IPSET_GFW dst -j REDIRECT --to-ports $TCP_REDIR_PORT
 			fi
 			echolog "IPv4 防火墙TCP转发规则加载完成！" 
 		fi
@@ -1295,7 +1319,8 @@ EOF
 		config_foreach load_acl acl_rule
 		
 	#  加载默认代理模式
-		$iptables_mangle -A SS -j $(get_action_chain $PROXY_MODE)
+		$iptables_mangle -A SS -p tcp -m multiport --dport $tcp_redir_ports -j $(get_action_chain $PROXY_MODE)
+		$iptables_mangle -A SS -p udp -m multiport --dport $udp_redir_ports -j $(get_action_chain $PROXY_MODE)
 	
 	if [ "$PROXY_IPV6" == "1" ];then
 		lan_ipv6=`ip address show br-lan | grep -w "inet6" |awk '{print $2}'`  #当前LAN IPv6段
