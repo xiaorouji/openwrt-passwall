@@ -61,9 +61,6 @@ msgstr "查看日志"
 msgid "ShadowSocks Server Config"
 msgstr "服务器配置"
 
-msgid "A lightweight secured SOCKS5 proxy"
-msgstr "一个轻量级安全SOCKS5代理"
-
 msgid "Running Status"
 msgstr "运行状态"
 
@@ -120,6 +117,21 @@ msgstr "用于游戏模式或DNS解析等。"
 
 msgid "The selected server will not use Kcptun."
 msgstr "选中的服务器不会使用Kcptun。"
+
+msgid "TCP Redir Ports"
+msgstr "TCP代理转发端口"
+
+msgid "UDP Redir Ports"
+msgstr "UDP代理转发端口"
+
+msgid "All"
+msgstr "所有"
+
+msgid "or more"
+msgstr "或更多"
+
+msgid "or less"
+msgstr "或更少"
 
 msgid "Default"
 msgstr "默认"
@@ -488,7 +500,7 @@ msgid "Proxy IPv6"
 msgstr "代理IPv6"
 
 msgid "The IPv6 traffic can be proxyed when selected"
-msgstr "选中后可以转发IPv6流量"
+msgstr "选中后可以代理IPv6流量"
 
 msgid "Use Kcptun"
 msgstr "使用Kcptun"

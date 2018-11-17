@@ -91,29 +91,4 @@ end
 o.default=0
 o:depends("auto_update_subscribe",1)
 
--- [[ SS/SSR link Settings ]]--
-s=m:section(TypedSection,"global",translate("Add the server via the SS/SSR link"))
-s.anonymous=true
-
-local i="/usr/share/passwall/ssr_link.conf"
-o=s:option(TextValue,"ssr_link",translate("SS/SSR Link"),translate("Please fill in the SS/SSR link and then click Add; each line of a link."))
-o.rows=1
-o.wrap="off"
-o.cfgvalue=function(s,s)
-return nixio.fs.readfile(i)or""
-end
-o.write=function(s,s,o)
-nixio.fs.writefile("/tmp/ssr_link",o:gsub("\r\n","\n"))
-if(luci.sys.call("cmp -s /tmp/ssr_link /usr/share/passwall/ssr_link.conf")==1)then
-nixio.fs.writefile(i,o:gsub("\r\n","\n"))
-end
-nixio.fs.remove("/tmp/ssr_link")
-end
-
-o=s:option(Button,"_add",translate("Add Server"))
-o.inputtitle=translate("Add")
-o.inputstyle="apply"
-function o.write(e,e)
-luci.sys.exec("/usr/share/passwall/onlineconfig.sh add")
-end
 return m
