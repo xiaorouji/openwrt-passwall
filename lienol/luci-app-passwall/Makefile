@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
 PKG_VERSION:=1.0
-PKG_RELEASE:=20181117-2
+PKG_RELEASE:=20181118
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PO2LMO:=$(BUILD_DIR)/luci-base/po2lmo
@@ -66,7 +66,7 @@ define Package/$(PKG_NAME)
   SUBMENU:=3. Applications
   TITLE:=LuCI support for PassWall(fanqiang) By Lienol
   PKGARCH:=all
-  DEPENDS:=+curl +libcurl +libmbedtls +ca-bundle +ca-certificates +resolveip +iptables-mod-tproxy +kmod-ipt-tproxy +ip +ipset-lists +coreutils +coreutils-base64 +coreutils-nohup \
+  DEPENDS:=+curl +libcurl +libmbedtls +ca-bundle +ca-certificates +resolveip +iptables-mod-tproxy +kmod-ipt-tproxy +iptables-mod-ipopt +kmod-ipt-ipopt +ip +ipset-lists +coreutils +coreutils-base64 +coreutils-nohup \
   +dnsmasq-full \
   +PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks:shadowsocks-libev-ss-local \
   +PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks:shadowsocks-libev-ss-redir \
@@ -106,7 +106,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/i18n
 	$(PO2LMO) ./po/zh-cn/passwall.po $(1)/usr/lib/lua/luci/i18n/passwall.zh-cn.lmo
 	
-	if [ -n "$(shell command -v gzexe)" ]; then gzexe ./root/usr/share/passwall/app.sh && rm -f ./root/usr/share/passwall/app.sh~; fi
+#	if [ -n "$(shell command -v gzexe)" ]; then gzexe ./root/usr/share/passwall/app.sh && rm -f ./root/usr/share/passwall/app.sh~; fi
 	cp -pR ./root/usr/share/passwall/* $(1)/usr/share/passwall
 #	find $(1) -name *.lua -exec luac -s -o {} {} \;
 	
