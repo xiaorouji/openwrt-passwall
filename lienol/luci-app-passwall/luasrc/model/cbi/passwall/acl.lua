@@ -36,7 +36,7 @@ o:value("gamemode",translate("Game Mode"))
 o:value("returnhome",translate("Return Home"))
 
 o=s:option(Value,"tcp_redir_ports",translate("TCP Redir Ports"))
-o.default="1:65535"
+o.default="80,443"
 o:value("1:65535",translate("All"))
 o:value("80,443","80,443")
 o:value("80:","80 "..translate("or more"))

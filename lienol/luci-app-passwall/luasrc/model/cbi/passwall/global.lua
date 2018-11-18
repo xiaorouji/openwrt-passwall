@@ -47,7 +47,7 @@ for a,t in pairs(n)do e:value(a,t)end
 e:depends("tcp_redir",1)
 
 e=t:option(Value,"tcp_redir_ports",translate("TCP Redir Ports"))
-e.default="1:65535"
+e.default="80,443"
 e:value("1:65535",translate("All"))
 e:value("80,443","80,443")
 e:value("80:","80 "..translate("or more"))
