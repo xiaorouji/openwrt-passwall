@@ -1,9 +1,0 @@
-
-config config
-	option enable '0'
-	option begin_a '180'
-	option begin_b '114'
-	option begin_c ''
-	option wait_time '30'
-	option num '100'
-	option boot_delay '30'
