@@ -104,7 +104,7 @@ if is_installed("ChinaDNS") or is_finded("chinadns") then
 	e:value("chinadns","ChinaDNS")
 end
 if (is_installed("dns2socks") or is_finded("dns2socks")) and (is_finded("ss-local") or is_finded("ssr-local")) then
-	e:value("dns2socks","dns2socks")
+	e:value("dns2socks","dns2socks"..translate("仅支持SS/R服务器"))
 end
 if is_installed("pcap-dnsproxy") or is_finded("Pcap_DNSProxy") then
 	e:value("Pcap_DNSProxy","Pcap_DNSProxy")
