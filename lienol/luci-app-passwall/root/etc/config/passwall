@@ -9,12 +9,8 @@ config global
 	option socks5_proxy '0'
 
 config global_haproxy
-	option admin_port '1188'
-	option haproxy_port '6688'
 	option admin_enable '0'
 	option balancing_enable '0'
-	option admin_user 'admin'
-	option admin_password 'admin'
 
 config global_delay
 	option disconnect_reconnect_on '0'

@@ -1,5 +1,0 @@
-
-config netstatus
-	option enable '0'
-	option check_interval '50'
-	option boot_time '50'

@@ -24,16 +24,16 @@ e.default=false
 
 e=t:option(Value,"admin_port",translate("Admin Status port setting"))
 e.default="1188"
-e.rmempty=false
+e:depends("admin_enable",1)
 
 e=t:option(Value,"admin_user",translate("Admin Status User"))
 e.default="admin"
-e.rmempty=false
+e:depends("admin_enable",1)
 
 e=t:option(Value,"admin_password",translate("Admin Status Password"))
 e.password=true
 e.default="admin"
-e.rmempty=false
+e:depends("admin_enable",1)
 
 e=t:option(Flag,"balancing_enable",translate("Enable or Disable Load Balancing"))
 e.rmempty=false
@@ -41,7 +41,7 @@ e.default=false
 
 e=t:option(Value,"haproxy_port",translate("Haproxy port setting"))
 e.default="1181"
-e.rmempty=false
+e:depends("balancing_enable",1)
 
 t=a:section(TypedSection,"balancing",translate("Load Balancing Server Setting"),
 translate("Add a load balancing server, note reading above requirements."))
