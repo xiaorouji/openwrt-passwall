@@ -49,6 +49,10 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_ChinaDNS
 config PACKAGE_$(PKG_NAME)_INCLUDE_pdnsd
 	bool "Include pdnsd"
 	default y
+	
+config PACKAGE_$(PKG_NAME)_INCLUDE_cdns
+	bool "Include cdns"
+	default n
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_Pcap_dnsproxy
 	bool "Include pcap-dnsproxy"
@@ -78,6 +82,7 @@ define Package/$(PKG_NAME)
   +PACKAGE_$(PKG_NAME)_INCLUDE_haproxy:haproxy \
   +PACKAGE_$(PKG_NAME)_INCLUDE_ChinaDNS:ChinaDNS \
   +PACKAGE_$(PKG_NAME)_INCLUDE_pdnsd:pdnsd-alt \
+  +PACKAGE_$(PKG_NAME)_INCLUDE_cdns:cdns \
   +PACKAGE_$(PKG_NAME)_INCLUDE_dns-forwarder:dns-forwarder \
   +PACKAGE_$(PKG_NAME)_INCLUDE_Pcap_dnsproxy:pcap-dnsproxy
 endef
@@ -109,7 +114,12 @@ define Package/$(PKG_NAME)/install
 #	if [ -n "$(shell command -v gzexe)" ]; then gzexe ./root/usr/share/passwall/app.sh && rm -f ./root/usr/share/passwall/app.sh~; fi
 	cp -pR ./root/usr/share/passwall/* $(1)/usr/share/passwall
 #	find $(1) -name *.lua -exec luac -s -o {} {} \;
-	
+
+ifdef CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_cdns
+	$(INSTALL_DIR) $(1)/etc
+	$(INSTALL_CONF) ./config/cdns/etc/cdns.json $(1)/etc/cdns.json
+endif
+
 ifdef CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Pcap_dnsproxy
 	$(INSTALL_DIR) $(1)/etc/pcap-dnsproxy
 	$(INSTALL_BIN) ./config/pcap-dnsproxy/etc/pcap-dnsproxy/* $(1)/etc/pcap-dnsproxy
