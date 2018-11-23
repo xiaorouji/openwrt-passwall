@@ -579,21 +579,21 @@ start_dns() {
 	case "$DNS_MODE" in
 		dns2socks)
 			dns2socks_bin=$(find_bin dns2socks)
-			sslocal_bin=$(find_bin "$ssbin"-local)
+			sslocal_bin=$(find_bin "$TCPSSBIN"-local)
 			if [ -z "$dns2socks_bin" ] || [ -z "$sslocal_bin" ]; then
-				echolog "找不到dns2socks或$ssbin-local主程序，无法启用！！！" 
+				echolog "找不到dns2socks或$TCPSSBIN-local主程序，无法启用！！！" 
 			else
 				nohup $sslocal_bin \
 				-c $CONFIG_TCP_FILE \
 				-l 3080 \
-				-f $RUN_PID_PATH/$ssbin-local.pid \
+				-f $RUN_PID_PATH/$TCPSSBIN-local.pid \
 				>/dev/null 2>&1 &
 				nohup $dns2socks_bin \
 				127.0.0.1:3080 \
 				$DNS_FORWARD \
 				127.0.0.1:7913 \
 				>/dev/null 2>&1 &
-				echolog "运行DNS转发方案：dns2socks+$ssbin-local..." 
+				echolog "运行DNS转发方案：dns2socks+$TCPSSBIN-local..." 
 			fi
 		;;
 		Pcap_DNSProxy)
@@ -1539,7 +1539,6 @@ stop() {
 	rm -rf $CONFIG_TCP_FILE
 	rm -rf $CONFIG_UDP_FILE
 	rm -rf $CONFIG_SOCKS5_FILE
-	unset $ssbin
 	stop_dnsmasq
 	stop_cru
 	auto_stop
