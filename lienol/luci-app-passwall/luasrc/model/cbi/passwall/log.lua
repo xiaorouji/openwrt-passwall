@@ -1,3 +1,3 @@
 m=Map("passwall")
-m.template="passwall/log"
+m:append(Template("passwall/log"))
 return m

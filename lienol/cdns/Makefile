@@ -38,8 +38,8 @@ endef
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cdns $(1)/usr/bin
-	#$(INSTALL_DIR) $(1)/etc
-	#$(INSTALL_CONF) ./files/cdns.json $(1)/etc/cdns.json
+	$(INSTALL_DIR) $(1)/etc
+	$(INSTALL_CONF) ./files/cdns.json $(1)/etc/cdns.json
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))

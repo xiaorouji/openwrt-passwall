@@ -410,7 +410,7 @@ msgid "ACLs"
 msgstr "访问控制"
 
 msgid "ACLs is a tools which used to designate specific IP proxy mode"
-msgstr "访问控制列表是用于指定特殊IP代理模式的工具。IP地址、MAC、端口可只填写一项，端口留空为所有端口。"
+msgstr "访问控制列表是用于指定特殊IP代理模式的工具。IP、MAC地址可只填写一项。"
 
 msgid "ACL Remarks"
 msgstr "主机备注"

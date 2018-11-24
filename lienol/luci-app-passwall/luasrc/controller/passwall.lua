@@ -48,9 +48,11 @@ end
 
 function server_status()
 	local e={}
-	e.tcp_redir_status=luci.sys.call("ps | grep -v grep | grep '" .. appname .. "_TCP' >/dev/null")==0
-	e.udp_redir_status=luci.sys.call("ps | grep -v grep | grep '" .. appname .. "_UDP' >/dev/null")==0
-	e.socks5_proxy_status=luci.sys.call("ps | grep -v grep | grep '" .. appname .. "_SOCKS5' >/dev/null")==0
+	e.tcp_redir_status=luci.sys.call("ps | grep -v grep | grep -i '" .. appname .. "_TCP' >/dev/null")==0
+	e.udp_redir_status=luci.sys.call("ps | grep -v grep | grep -i '" .. appname .. "_UDP' >/dev/null")==0
+	e.socks5_proxy_status=luci.sys.call("ps | grep -v grep | grep -i '" .. appname .. "_SOCKS5' >/dev/null")==0
+	local dns_mode = luci.sys.exec("echo -n `uci get " .. appname .. ".@global[0].dns_mode`")
+	e.dns_mode_status=luci.sys.call("ps | grep -v grep | grep -i "..dns_mode.." >/dev/null")==0
 	e.haproxy_status=luci.sys.call("pgrep haproxy >/dev/null")==0
 	e.kcptun_status=luci.sys.call("pgrep kcptun >/dev/null")==0
 	luci.http.prepare_content("application/json")
