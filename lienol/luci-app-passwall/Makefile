@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
 PKG_VERSION:=2.0
-PKG_RELEASE:=1-20181123-2
+PKG_RELEASE:=1-20181124
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PO2LMO:=$(BUILD_DIR)/luci-base/po2lmo
@@ -117,7 +117,7 @@ define Package/$(PKG_NAME)/install
 
 ifdef CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_cdns
 	$(INSTALL_DIR) $(1)/etc
-	$(INSTALL_CONF) ./config/cdns/etc/cdns.json $(1)/etc/cdns.json
+	$(INSTALL_CONF) ./config/cdns/etc/* $(1)/etc
 endif
 
 ifdef CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Pcap_dnsproxy

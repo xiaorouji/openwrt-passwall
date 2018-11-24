@@ -96,6 +96,29 @@ get_action_chain() {
 	esac
 }
 
+get_action_chain_name() {
+	case "$1" in
+		disable)
+			echo "不代理"
+		;;
+		global)
+			echo "全局"
+		;;
+		gfwlist)
+			echo "GFW"
+		;;
+		chnroute)
+			echo "大陆白名单"
+		;;
+		gamemode)
+			echo "游戏"
+		;;
+		returnhome)
+			echo "回国"
+		;;
+	esac
+}
+
 gen_laniplist() {
 	cat <<-EOF
 		0.0.0.0/8
@@ -1111,10 +1134,10 @@ load_acl(){
 	[ "$enabled" == "1" -a -n "$acl_mode" ] && {
 		if [ -n "$ipaddr" ] || [ -n "$macaddr" ]; then
 			if [ -n "$ipaddr" -a -n "$macaddr" ]; then
-				echolog "加载ACL规则：IP为$ipaddr，MAC为$macaddr，TCP代理转发端口为$tcp_redir_ports，UDP代理转发端口为$udp_redir_ports，模式为：$acl_mode" 
+				echolog "加载ACL规则：IP为$ipaddr，MAC为$macaddr，TCP代理转发端口为$tcp_redir_ports，UDP代理转发端口为$udp_redir_ports，模式为：$(get_action_chain_name $acl_mode)" 
 			else
-				[ -n "$ipaddr" ] && echolog "加载ACL规则：IP为$ipaddr，TCP代理转发端口为$tcp_redir_ports，UDP代理转发端口为$udp_redir_ports，模式为：$acl_mode" 
-				[ -n "$macaddr" ] && echolog "加载ACL规则：MAC为$macaddr，TCP代理转发端口为$tcp_redir_ports，UDP代理转发端口为$udp_redir_ports，模式为：$acl_mode" 
+				[ -n "$ipaddr" ] && echolog "加载ACL规则：IP为$ipaddr，TCP代理转发端口为$tcp_redir_ports，UDP代理转发端口为$udp_redir_ports，模式为：$(get_action_chain_name $acl_mode)" 
+				[ -n "$macaddr" ] && echolog "加载ACL规则：MAC为$macaddr，TCP代理转发端口为$tcp_redir_ports，UDP代理转发端口为$udp_redir_ports，模式为：$(get_action_chain_name $acl_mode)" 
 			fi
 			$iptables_mangle -A SS $(factor $ipaddr "-s") -p tcp $(factor $macaddr "-m mac --mac-source") $(factor $tcp_redir_ports "-m multiport --dport") -$(get_jump_mode $acl_mode) $(get_action_chain $acl_mode)
 			$iptables_mangle -A SS $(factor $ipaddr "-s") -p udp $(factor $macaddr "-m mac --mac-source") $(factor $udp_redir_ports "-m multiport --dport") -$(get_jump_mode $acl_mode) $(get_action_chain $acl_mode)
@@ -1133,7 +1156,7 @@ load_acl(){
 
 add_firewall_rule() {
 	echolog "开始加载防火墙规则..." 
-	echolog "默认模式：$PROXY_MODE" 
+	echolog "默认模式：$(get_action_chain_name $PROXY_MODE)" 
 	ipset -! create $IPSET_LANIPLIST nethash && ipset flush $IPSET_LANIPLIST
 	ipset -! create $IPSET_ROUTER nethash && ipset flush $IPSET_ROUTER
 	ipset -! create $IPSET_GFW nethash && ipset flush $IPSET_GFW

@@ -6,7 +6,6 @@ local appname="passwall"
 local a,t,e
 
 a=Map(appname)
-a.template="passwall/index"
 
 -- [[ SS/SSR link Settings ]]--
 t=a:section(TypedSection,"global",translate("Add the server via the SS/SSR link"))
@@ -92,9 +91,6 @@ e=t:option(DummyValue,"server",translate("Ping Latency"))
 e.template="passwall/ping"
 e.width="10%"
 
-local apply = luci.http.formvalue("cbi.apply")
-if apply then
---os.execute("/etc/init.d/passwall restart")
-end
+a:append(Template("passwall/server_list_ping"))
 
 return a

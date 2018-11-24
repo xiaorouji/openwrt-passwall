@@ -33,11 +33,7 @@ local dsp = require "luci.dispatcher"
 	);
 //]]></script>
 <fieldset class="cbi-section" id="_log_fieldset" >
-	<div class="cbi-value cbi-value-last" data-index="2" data-depends="[]">
-		<div>
-			<legend style="float:left"><%:These is logs.%></legend>
-			<input style="float:right" class="cbi-button cbi-input-apply" type="button" onclick="clearlog()" value="<%:Clear logs%>" >
-		</div>
-		<textarea id="log_textarea" class="cbi-input-textarea" style="width: 100%;margin-top: 10px;" data-update="change" rows="40" wrap="off" readonly="readonly"></textarea>
-	</div>
+	<legend><%:These is logs.%></legend>
+	<input class="cbi-button cbi-input-apply" type="button" onclick="clearlog()" value="<%:Clear logs%>">
+	<textarea id="log_textarea" class="cbi-input-textarea" style="width: 100%;margin-top: 10px;" data-update="change" rows="40" wrap="off" readonly="readonly"></textarea>
 </fieldset>
