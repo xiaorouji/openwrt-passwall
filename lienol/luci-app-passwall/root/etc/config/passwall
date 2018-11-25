@@ -4,7 +4,7 @@ config global
 	option dns_mode 'chinadns'
 	option up_dns_mode 'OpenDNS_443'
 	option ssr_server_passwall '1'
-	option auto_switch '1'
+	option auto_switch '0'
 	option tcp_redir '0'
 	option udp_redir '0'
 	option socks5_proxy '0'
