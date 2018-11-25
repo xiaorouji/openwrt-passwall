@@ -41,6 +41,11 @@ e=t:option(Flag,"tcp_redir",translate("Start the TCP redir"),translate("For used
 e.default=0
 e.rmempty=false
 
+e=t:option(Flag,"auto_switch",translate("Use Auto Switch"),translate("Please switch the configuration of the standby server to the automatic interface"))
+e.default=0
+e.rmempty=false
+e:depends("tcp_redir",1)
+
 e=t:option(ListValue,"tcp_redir_server",translate("TCP Redir Server"))
 for a,t in pairs(n)do e:value(a,t)end
 e:depends("tcp_redir",1)

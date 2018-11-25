@@ -173,6 +173,7 @@ UDP_REDIR=$(config_t_get global udp_redir 0)
 UDP_REDIR_SERVER=""
 SOCKS5_PROXY=$(config_t_get global socks5_proxy 0)
 SOCKS5_PROXY_SERVER=""
+AUTO_SWITCH=$(config_t_get global auto_switch 0)
 
 if [ "$TCP_REDIR" == "1" ]; then
 	TCP_REDIR_SERVER=$(config_t_get global tcp_redir_server nil)
@@ -223,9 +224,18 @@ load_config() {
 	KCPTUN_REDIR_PORT=$(config_t_get global_proxy kcptun_port 11183)
 	PROXY_IPV6=$(config_t_get global_proxy proxy_ipv6 0)
 	config_load $CONFIG
-	[ "$TCP_REDIR_SERVER" != "nil" ] && gen_config_file $TCP_REDIR_SERVER TCP
-	[ "$UDP_REDIR_SERVER" != "nil" ] && gen_config_file $UDP_REDIR_SERVER UDP
-	[ "$SOCKS5_PROXY_SERVER" != "nil" ] && gen_config_file $SOCKS5_PROXY_SERVER Socks5
+	[ "$TCP_REDIR_SERVER" != "nil" ] && {
+		gen_config_file $TCP_REDIR_SERVER TCP
+		echo "$TCP_REDIR_SERVER" > /var/etc/passwall_current_tcp_server
+	}
+	[ "$UDP_REDIR_SERVER" != "nil" ] && {
+		gen_config_file $UDP_REDIR_SERVER UDP
+		echo "$UDP_REDIR_SERVER" > /var/etc/passwall_current_udp_server
+	}
+	[ "$SOCKS5_PROXY_SERVER" != "nil" ] && {
+		gen_config_file $SOCKS5_PROXY_SERVER Socks5
+		echo "$SOCKS5_PROXY_SERVER" > /var/etc/passwall_current_socks5_server
+	}
 	return 0
 }
 
@@ -272,6 +282,7 @@ gen_config_file() {
 	server_ip=$(get_host_ip $network_type $server_host)
 	server_type=$(config_get $1 server_type)
 	echolog "$2服务器IP地址:$server_ip"
+	echolog "生成$2转发配置文件" 
 	
 	if [ "$2" == "UDP" ]; then
 		if [ "$network_type" == "ipv6" ];then
@@ -280,13 +291,12 @@ gen_config_file() {
 			UDP_REDIR_SERVER_IP=$server_ip
 		fi
 		REDIR_PORT=$UDP_REDIR_PORT
-		echolog "生成$2转发配置文件" 
 		if [ "$server_type" == "ss" -o "$server_type" == "ssr" ]; then
 			UDPSSBIN=$server_type
 			gen_ss_ssr_config_file $server_type $UDP_REDIR_SERVER $CONFIG_UDP_FILE
 		fi
 		if [ "$server_type" == "v2ray" ]; then
-			lua $SS_PATH/genv2config.lua $UDP_REDIR_SERVER udp $REDIR_PORT nil > $CONFIG_UDP_FILE
+			lua $SS_PATH/genv2rayconfig.lua $UDP_REDIR_SERVER udp $REDIR_PORT nil > $CONFIG_UDP_FILE
 		fi
 	fi
 	
@@ -297,13 +307,12 @@ gen_config_file() {
 			SOCKS5_PROXY_SERVER_IP=$server_ip
 		fi
 		REDIR_PORT=$SOCKS5_PROXY_PORT
-		echolog "生成$2代理配置文件" 
 		if [ "$server_type" == "ss" -o "$server_type" == "ssr" ]; then
 			SOCKS5SSBIN=$server_type
 			gen_ss_ssr_config_file $server_type $SOCKS5_PROXY_SERVER $CONFIG_SOCKS5_FILE
 		fi
 		if [ "$server_type" == "v2ray" ]; then
-			lua $SS_PATH/genv2config.lua $SOCKS5_PROXY_SERVER nil nil $REDIR_PORT > $CONFIG_SOCKS5_FILE
+			lua $SS_PATH/genv2rayconfig.lua $SOCKS5_PROXY_SERVER nil nil $REDIR_PORT > $CONFIG_SOCKS5_FILE
 		fi
 	fi
 	
@@ -314,7 +323,7 @@ gen_config_file() {
 			TCP_REDIR_SERVER_IP=$server_ip
 		fi
 		if [ "$server_type" == "v2ray" ]; then
-			lua $SS_PATH/genv2config.lua $TCP_REDIR_SERVER tcp $TCP_REDIR_PORT nil > $CONFIG_TCP_FILE
+			lua $SS_PATH/genv2rayconfig.lua $TCP_REDIR_SERVER tcp $TCP_REDIR_PORT nil > $CONFIG_TCP_FILE
 		else
 			local kcptun_use kcptun_server_host kcptun_port kcptun_config
 			kcptun_use=$(config_get $1 use_kcp)
@@ -558,10 +567,9 @@ auto_stop() {
 		sed -i '/$CONFIG start/d' /etc/crontabs/root >/dev/null 2>&1 &
 		sed -i '/$CONFIG restart/d' /etc/crontabs/root >/dev/null 2>&1 &
 	fi
-	disconnect_reconnect_on=$(config_t_get global_delay disconnect_reconnect_on)
-	if [ "$disconnect_reconnect_on" = "0" ];then
-		sed -i '$SS_PATH/reconnection.sh/d' /etc/crontabs/root >/dev/null 2>&1 &
-	fi
+	disconnect_reconnect_on=$(config_t_get auto_switch disconnect_reconnect_on)
+	[ "$disconnect_reconnect_on" = "0" ] && sed -i '$SS_PATH/reconnection.sh/d' /etc/crontabs/root >/dev/null 2>&1 &
+	[ "$AUTO_SWITCH" = "0" ] && sed -i '$SS_PATH/auto_switch.sh/d' /etc/crontabs/root >/dev/null 2>&1 &
 	/etc/init.d/cron restart
 	echolog "清理定时自动开关设置。" 
 }
@@ -587,14 +595,22 @@ auto_start() {
 		}
 	fi
 	
-	disconnect_reconnect_on=$(config_t_get global_delay disconnect_reconnect_on)
+	disconnect_reconnect_on=$(config_t_get auto_switch disconnect_reconnect_on)
 	if [ "$disconnect_reconnect_on" = "1" ];then
-		disconnect_reconnect_time=$(config_t_get global_delay disconnect_reconnect_time)
+		disconnect_reconnect_time=$(config_t_get auto_switch disconnect_reconnect_time)
 		[ -n "$disconnect_reconnect_time" ] && {
 			echo "*/$disconnect_reconnect_time * * * * $SS_PATH/reconnection.sh" >> /etc/crontabs/root
-			echolog "设置每$disconnect_reconnect_time分钟检测一次是否断线。" 
+			echolog "设置每$disconnect_reconnect_time分钟检测是否已掉线。" 
 		}
 	fi
+	
+	[ "$AUTO_SWITCH" = "1" ] && {
+		testing_time=$(config_t_get auto_switch testing_time)
+		[ -n "$testing_time" ] && {
+			echo "*/$testing_time * * * * $SS_PATH/auto_switch.sh" >> /etc/crontabs/root
+			echolog "设置每$testing_time分钟检测是否已掉线并自动切换。" 
+		}
+	}
 	/etc/init.d/cron restart
 }
 

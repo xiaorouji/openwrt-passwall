@@ -128,10 +128,10 @@ msgid "All"
 msgstr "所有"
 
 msgid "or more"
-msgstr "或更多"
+msgstr "及以上"
 
 msgid "or less"
-msgstr "或更少"
+msgstr "及以下"
 
 msgid "Default"
 msgstr "默认"
@@ -238,12 +238,6 @@ msgstr "单位：秒"
 msgid "Units:minutes"
 msgstr "单位：分钟"
 
-msgid "Disconnection auto reconnection"
-msgstr "掉线自动重连"
-
-msgid "How often is a diagnosis made"
-msgstr "多久检测一次"
-
 msgid "Open and close automatically"
 msgstr "定时自动开关"
 
@@ -279,6 +273,27 @@ msgstr "参数设置错误将会导致Dnsmasq无法启动。"
 
 msgid "Click here to setting your Load Balancing"
 msgstr "点击这里查看负载均衡设置教程。"
+
+msgid "Auto Switch"
+msgstr "自动切换"
+
+msgid "Use Auto Switch"
+msgstr "使用自动切换"
+
+msgid "Please switch the configuration of the standby server to the automatic interface"
+msgstr "备用服务器请到自动切换界面配置"
+
+msgid "Disconnection auto reconnection"
+msgstr "掉线自动重连"
+
+msgid "How often is a diagnosis made"
+msgstr "检测时间"
+
+msgid "Automatic switching cannot be used when this option is checked"
+msgstr "当勾选此选项时，不能使用自动切换"
+
+msgid "List of alternate TCP forwarding servers"
+msgstr "备用TCP转发服务器的列表"
 
 msgid "Load Balancing Setting"
 msgstr "负载均衡设置"
