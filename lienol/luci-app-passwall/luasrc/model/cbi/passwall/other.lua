@@ -12,15 +12,6 @@ o=s:option(Value,"start_delay",translate("Delay Start"),translate("Units:seconds
 o.default="0"
 o.rmempty=true
 
-o=s:option(Flag,"disconnect_reconnect_on",translate("Disconnection auto reconnection"))
-o.default=0
-o.rmempty=false
-
-o=s:option(Value,"disconnect_reconnect_time",translate("How often is a diagnosis made"),translate("Units:minutes"))
-o:depends("disconnect_reconnect_on","1")
-o.default="10"
-o.rmempty=true
-
 o=s:option(Flag,"auto_on",translate("Open and close automatically"))
 o.default=0
 o.rmempty=false
