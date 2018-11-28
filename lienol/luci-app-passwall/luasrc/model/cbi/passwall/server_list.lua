@@ -53,16 +53,6 @@ e.width="15%"
 
 e=t:option(DummyValue,"server_type",translate("Server Type"))
 e.width="10%"
-e.cfgvalue=function(t,n)
-local t=a.uci:get(appname,n,"server_type") or ""
-local b=t
-if t=="ssr" then b="SSR"
-elseif t=="ss" then b="SS"
-elseif t=="v2ray" then b="V2ray"
-elseif t=="brook" then b="Brook"
-end
-return b
-end
 
 e=t:option(DummyValue,"server",translate("Server Address"))
 e.width="15%"
@@ -73,15 +63,16 @@ e.width="10%"
 e=t:option(DummyValue,"encrypt_method",translate("Encrypt Method"))
 e.width="15%"
 e.cfgvalue=function(t,n)
-local type=a.uci:get(i,n,"server_type") or ""
-if type == "ssr" then
-	return a.uci:get(i,n,"ssr_encrypt_method") or ""
-elseif type == "ss" then
-	return a.uci:get(i,n,"ss_encrypt_method") or ""
-elseif type == "v2ray" then
-	return a.uci:get(i,n,"v2ray_security") or ""
+local str="无"
+local type = a.uci:get(appname,n,"server_type") or ""
+if type == "SSR" then
+	return a.uci:get(appname,n,"ssr_encrypt_method")
+elseif type == "SS" then
+	return a.uci:get(appname,n,"ss_encrypt_method")
+elseif type == "V2ray" then
+	return a.uci:get(appname,n,"v2ray_security")
 end
-return "无"
+return str
 end
 
 e=t:option(Flag,"use_kcp",translate("Kcptun Switch"))

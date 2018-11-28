@@ -134,6 +134,7 @@ EOF
 }
 
 get_host_ip() {
+	local network_type host isip
 	network_type=$1
 	host=$2
 	isip=""
@@ -166,43 +167,30 @@ echolog()
 {
 	echo -e "$Date: $1" >> $LOG_FILE
 }
-
 TCP_REDIR=$(config_t_get global tcp_redir 0)
-TCP_REDIR_SERVER=""
 UDP_REDIR=$(config_t_get global udp_redir 0)
-UDP_REDIR_SERVER=""
 SOCKS5_PROXY=$(config_t_get global socks5_proxy 0)
-SOCKS5_PROXY_SERVER=""
-AUTO_SWITCH=$(config_t_get global auto_switch 0)
-
-if [ "$TCP_REDIR" == "1" ]; then
-	TCP_REDIR_SERVER=$(config_t_get global tcp_redir_server nil)
-else
-	TCP_REDIR_SERVER="nil"
-fi
-
-if [ "$UDP_REDIR" == "1" ]; then
+TCP_REDIR_SERVER="nil"
+UDP_REDIR_SERVER="nil"
+SOCKS5_PROXY_SERVER="nil"
+[ "$SOCKS5_PROXY" == "1" ] && SOCKS5_PROXY_SERVER=$(config_t_get global socks5_proxy_server nil)
+[ "$TCP_REDIR" == "1" ] && TCP_REDIR_SERVER=$(config_t_get global tcp_redir_server nil)
+[ "$UDP_REDIR" == "1" ] && {
 	UDP_REDIR_SERVER=$(config_t_get global udp_redir_server nil)
 	[ "$UDP_REDIR_SERVER" == "default" ] && UDP_REDIR_SERVER=$TCP_REDIR_SERVER
-else
-	UDP_REDIR_SERVER="nil"
-fi
-
-if [ "$SOCKS5_PROXY" == "1" ]; then
-	SOCKS5_PROXY_SERVER=$(config_t_get global socks5_proxy_server nil)
-	[ "$SOCKS5_PROXY_SERVER" == "default" ] && SOCKS5_PROXY_SERVER=$TCP_REDIR_SERVER
-else
-	SOCKS5_PROXY_SERVER="nil"
-fi
-TCPSSBIN=""
-UDPSSBIN=""
-SOCKS5SSBIN=""
+}
+TCP_REDIR_SERVER_TYPE=""
+UDP_REDIR_SERVER_TYPE=""
+SOCKS5_PROXY_SERVER_TYPE=""
 TCP_REDIR_SERVER_IP=""
 UDP_REDIR_SERVER_IP=""
 SOCKS5_PROXY_SERVER_IP=""
 TCP_REDIR_SERVER_IPV6=""
 UDP_REDIR_SERVER_IPV6=""
 SOCKS5_PROXY_SERVER_IPV6=""
+AUTO_SWITCH=$(config_t_get global auto_switch 0)
+TCP_REDIR_PORTS=$(config_t_get global tcp_redir_ports '80,443')
+UDP_REDIR_PORTS=$(config_t_get global udp_redir_ports '80,443')
 
 load_config() {
 	[ "$TCP_REDIR_SERVER" == "nil" -a "$UDP_REDIR_SERVER" == "nil" -a "$SOCKS5_PROXY_SERVER" == "nil" ] && {
@@ -225,14 +213,17 @@ load_config() {
 	PROXY_IPV6=$(config_t_get global_proxy proxy_ipv6 0)
 	config_load $CONFIG
 	[ "$TCP_REDIR_SERVER" != "nil" ] && {
+		TCP_REDIR_SERVER_TYPE=`echo $(config_get $TCP_REDIR_SERVER server_type) | tr 'A-Z' 'a-z'`
 		gen_config_file $TCP_REDIR_SERVER TCP
 		echo "$TCP_REDIR_SERVER" > /var/etc/passwall_current_tcp_server
 	}
 	[ "$UDP_REDIR_SERVER" != "nil" ] && {
+		UDP_REDIR_SERVER_TYPE=`echo $(config_get $UDP_REDIR_SERVER server_type) | tr 'A-Z' 'a-z'`
 		gen_config_file $UDP_REDIR_SERVER UDP
 		echo "$UDP_REDIR_SERVER" > /var/etc/passwall_current_udp_server
 	}
 	[ "$SOCKS5_PROXY_SERVER" != "nil" ] && {
+		SOCKS5_PROXY_SERVER_TYPE=`echo $(config_get $SOCKS5_PROXY_SERVER server_type) | tr 'A-Z' 'a-z'`
 		gen_config_file $SOCKS5_PROXY_SERVER Socks5
 		echo "$SOCKS5_PROXY_SERVER" > /var/etc/passwall_current_socks5_server
 	}
@@ -240,37 +231,43 @@ load_config() {
 }
 
 gen_ss_ssr_config_file() {
+	local server_type local_port kcptun server configfile
+	server_type=$1
+	local_port=$2
+	kcptun=$3
+	server=$4
+	configfile=$5
 	local server_port encrypt_method
-	server_port=$(config_get $2 server_port)
-	encrypt_method=$(config_get $2 ss_encrypt_method)
-	[ "$1" == "ssr" ] && encrypt_method=$(config_get $2 ssr_encrypt_method)
-	[ "$4" == "kcptun" ] && {
+	server_port=$(config_get $server server_port)
+	encrypt_method=$(config_get $server ss_encrypt_method)
+	[ "$server_type" == "ssr" ] && encrypt_method=$(config_get $server ssr_encrypt_method)
+	[ "$kcptun" == "1" ] && {
 		server_ip=127.0.0.1
 		server_host=127.0.0.1
 		server_port=$KCPTUN_REDIR_PORT
 	}
-	cat <<-EOF >$3
+	cat <<-EOF >$configfile
 	{
 		"server": "$server_host",
 		"_comment": "$server_ip",
 		"server_port": $server_port,
 		"local_address": "0.0.0.0",
-		"local_port": $REDIR_PORT,
-		"password": "$(config_get $2 password)",
-		"timeout": $(config_get $2 timeout),
+		"local_port": $local_port,
+		"password": "$(config_get $server password)",
+		"timeout": $(config_get $server timeout),
 		"method": "$encrypt_method",
-		"fast_open": $(config_get $2 fast_open),
+		"fast_open": $(config_get $server fast_open),
 		"reuse_port": true,
 	EOF
 	[ "$1" == "ssr" ] && {
-		cat <<-EOF >>$3
-		"protocol": "$(config_get $2 protocol)",
-		"protocol_param": "$(config_get $2 protocol_param)",
-		"obfs": "$(config_get $2 obfs)",
-		"obfs_param": "$(config_get $2 obfs_param)"
+		cat <<-EOF >>$configfile
+		"protocol": "$(config_get $server protocol)",
+		"protocol_param": "$(config_get $server protocol_param)",
+		"obfs": "$(config_get $server obfs)",
+		"obfs_param": "$(config_get $server obfs_param)"
 		EOF
 	}
-	echo -e "}" >> $3
+	echo -e "}" >> $configfile
 }
 
 gen_config_file() {
@@ -280,25 +277,8 @@ gen_config_file() {
 	network_type="ipv4"
 	[ "$use_ipv6" == "1" ] && network_type="ipv6"
 	server_ip=$(get_host_ip $network_type $server_host)
-	server_type=$(config_get $1 server_type)
+	server_type=`echo $(config_get $1 server_type) | tr 'A-Z' 'a-z'`
 	echolog "$2服务器IP地址:$server_ip"
-	echolog "生成$2转发配置文件" 
-	
-	if [ "$2" == "UDP" ]; then
-		if [ "$network_type" == "ipv6" ];then
-			UDP_REDIR_SERVER_IPV6=$server_ip
-		else
-			UDP_REDIR_SERVER_IP=$server_ip
-		fi
-		REDIR_PORT=$UDP_REDIR_PORT
-		if [ "$server_type" == "ss" -o "$server_type" == "ssr" ]; then
-			UDPSSBIN=$server_type
-			gen_ss_ssr_config_file $server_type $UDP_REDIR_SERVER $CONFIG_UDP_FILE
-		fi
-		if [ "$server_type" == "v2ray" ]; then
-			lua $SS_PATH/genv2rayconfig.lua $UDP_REDIR_SERVER udp $REDIR_PORT nil > $CONFIG_UDP_FILE
-		fi
-	fi
 	
 	if [ "$2" == "Socks5" ]; then
 		if [ "$network_type" == "ipv6" ];then
@@ -306,13 +286,25 @@ gen_config_file() {
 		else
 			SOCKS5_PROXY_SERVER_IP=$server_ip
 		fi
-		REDIR_PORT=$SOCKS5_PROXY_PORT
 		if [ "$server_type" == "ss" -o "$server_type" == "ssr" ]; then
-			SOCKS5SSBIN=$server_type
-			gen_ss_ssr_config_file $server_type $SOCKS5_PROXY_SERVER $CONFIG_SOCKS5_FILE
+			gen_ss_ssr_config_file $server_type $SOCKS5_PROXY_PORT 0 $SOCKS5_PROXY_SERVER $CONFIG_SOCKS5_FILE
 		fi
 		if [ "$server_type" == "v2ray" ]; then
-			lua $SS_PATH/genv2rayconfig.lua $SOCKS5_PROXY_SERVER nil nil $REDIR_PORT > $CONFIG_SOCKS5_FILE
+			lua $SS_PATH/genv2rayconfig.lua $SOCKS5_PROXY_SERVER nil nil $SOCKS5_PROXY_PORT > $CONFIG_SOCKS5_FILE
+		fi
+	fi
+	
+	if [ "$2" == "UDP" ]; then
+		if [ "$network_type" == "ipv6" ];then
+			UDP_REDIR_SERVER_IPV6=$server_ip
+		else
+			UDP_REDIR_SERVER_IP=$server_ip
+		fi
+		if [ "$server_type" == "ss" -o "$server_type" == "ssr" ]; then
+			gen_ss_ssr_config_file $server_type $UDP_REDIR_PORT 0 $UDP_REDIR_SERVER $CONFIG_UDP_FILE
+		fi
+		if [ "$server_type" == "v2ray" ]; then
+			lua $SS_PATH/genv2rayconfig.lua $UDP_REDIR_SERVER udp $UDP_REDIR_PORT nil > $CONFIG_UDP_FILE
 		fi
 	fi
 	
@@ -330,10 +322,8 @@ gen_config_file() {
 			kcptun_server_host=$(config_get $1 kcp_server)
 			kcptun_port=$(config_get $1 kcp_port)
 			kcptun_config=$(config_get $1 kcp_opts)
-			
-			lbenabled=$(config_t_get global_haproxy balancing_enable 0)
-			USEKCP=$kcptun_use
 			kcptun_path=""
+			lbenabled=$(config_t_get global_haproxy balancing_enable 0)
 			if [ "$kcptun_use" == "1" ] && ([ -z "$kcptun_port" ] || [ -z "$kcptun_config" ]); then
 				echolog "【检测到启用KCP，但未配置KCP参数】，跳过~"
 			fi
@@ -366,17 +356,11 @@ gen_config_file() {
 				fi
 				echolog "运行Kcptun..." 
 				if [ "$server_type" == "ss" -o "$server_type" == "ssr" ]; then
-					echolog "生成KCP加速$2转发配置文件"
-					TCPSSBIN=$server_type
-					REDIR_PORT=$TCP_REDIR_PORT
-					gen_ss_ssr_config_file $server_type $TCP_REDIR_SERVER $CONFIG_TCP_FILE "kcptun"
+					gen_ss_ssr_config_file $server_type $TCP_REDIR_PORT 1 $TCP_REDIR_SERVER $CONFIG_TCP_FILE
 				fi
 			else
 				if [ "$server_type" == "ss" -o "$server_type" == "ssr" ]; then
-					echolog "生成$2转发配置文件"
-					TCPSSBIN=$server_type
-					REDIR_PORT=$TCP_REDIR_PORT
-					gen_ss_ssr_config_file $server_type $TCP_REDIR_SERVER $CONFIG_TCP_FILE
+					gen_ss_ssr_config_file $server_type $TCP_REDIR_PORT 0 $TCP_REDIR_SERVER $CONFIG_TCP_FILE
 				fi
 			fi
 		fi
@@ -394,13 +378,12 @@ start_kcptun() {
 }
 
 start_tcp_redir() {
-	config_load $CONFIG
-	config_get server_type $TCP_REDIR_SERVER server_type
-	config_get server_port $TCP_REDIR_SERVER server_port
-	config_get server_password $TCP_REDIR_SERVER password
-	config_get kcptun_use $TCP_REDIR_SERVER use_kcp 0
+	local server_port server_password kcptun_use
+	server_port=$(config_get $TCP_REDIR_SERVER server_port)
+	server_password=$(config_get $TCP_REDIR_SERVER password)
+	kcptun_use=$(config_get $TCP_REDIR_SERVER use_kcp)
 	fail=0
-	if [ "$server_type" == "v2ray" ]; then
+	if [ "$TCP_REDIR_SERVER_TYPE" == "v2ray" ]; then
 		v2ray_bin=$(find_bin v2ray)
 		if [ -z "$v2ray_bin" ]; then
 			echolog "找不到V2ray主程序，无法启用！！！" 
@@ -408,7 +391,7 @@ start_tcp_redir() {
 		else
 			$v2ray_bin -config=$CONFIG_TCP_FILE > /var/log/v2ray_tcp.log &
 		fi
-	elif [ "$server_type" == "brook" ]; then
+	elif [ "$TCP_REDIR_SERVER_TYPE" == "brook" ]; then
 		brook_bin=$(find_bin brook)
 		if [ -z "$brook_bin" ]; then
 			echolog "找不到Brook主程序，无法启用！！！" 
@@ -421,7 +404,7 @@ start_tcp_redir() {
 			fi
 		fi
 	else
-		ss_bin=$(find_bin "$TCPSSBIN"-redir)
+		ss_bin=$(find_bin "$TCP_REDIR_SERVER_TYPE"-redir)
 		if [ -z "$ss_bin" ]; then
 			echolog "找不到SS主程序，无法启用！！！" 
 			fail=1
@@ -429,7 +412,7 @@ start_tcp_redir() {
 			$ss_bin -c $CONFIG_TCP_FILE > /dev/null 2>&1 &
 		fi
 	fi
-	[ "$fail" == "0" ] && echolog "运行$server_type TCP透明代理..." 
+	[ "$fail" == "0" ] && echolog "运行TCP透明代理..." 
 	[ "$fail" == "1" ] && {
 		uci set $CONFIG.@global[0].tcp_redir_server=nil
 		uci commit $CONFIG
@@ -438,10 +421,8 @@ start_tcp_redir() {
 
 start_udp_redir() {
 	if [ "$UDP_REDIR_SERVER" != "nil" ];then
-		config_load $CONFIG
-		config_get server_type $UDP_REDIR_SERVER server_type
 		fail=0
-		if [ "$server_type" == "v2ray" ]; then
+		if [ "$UDP_REDIR_SERVER_TYPE" == "v2ray" ]; then
 			v2ray_bin=$(find_bin v2ray)
 			if [ -z "$v2ray_bin" ]; then
 				echolog "找不到V2ray主程序，无法启用！！！" 
@@ -449,7 +430,7 @@ start_udp_redir() {
 			else
 				$v2ray_bin -config=$CONFIG_UDP_FILE > /var/log/v2ray_udp.log &
 			fi
-		elif [ "$server_type" == "brook" ]; then
+		elif [ "$UDP_REDIR_SERVER_TYPE" == "brook" ]; then
 			brook_bin=$(find_bin brook)
 			if [ -z "$brook_bin" ]; then
 				echolog "找不到Brook主程序，无法启用！！！" 
@@ -458,7 +439,7 @@ start_udp_redir() {
 				$brook_bin tproxy -l 0.0.0.0:$UDP_REDIR_PORT -s $server_host:$server_port -p $server_password &>/dev/null &
 			fi
 		else
-			ss_bin=$(find_bin "$UDPSSBIN"-redir)
+			ss_bin=$(find_bin "$UDP_REDIR_SERVER_TYPE"-redir)
 			if [ -z "$ss_bin" ]; then
 				echolog "找不到SS主程序，无法启用！！！" 
 				fail=1
@@ -466,7 +447,7 @@ start_udp_redir() {
 				$ss_bin -c $CONFIG_UDP_FILE -U > /dev/null 2>&1 &
 			fi
 		fi
-		[ "$fail" == "0" ] && echolog "运行$server_type UDP透明代理..." 
+		[ "$fail" == "0" ] && echolog "运行UDP透明代理..." 
 		[ "$fail" == "1" ] && {
 			uci set $CONFIG.@global[0].udp_redir=0
 			uci commit $CONFIG
@@ -476,10 +457,8 @@ start_udp_redir() {
 
 start_socks5_proxy() {
 	if [ "$SOCKS5_PROXY_SERVER" != "nil" ];then
-		config_load $CONFIG
-		config_get server_type $SOCKS5_PROXY_SERVER server_type
 		fail=0
-		if [ "$server_type" == "v2ray" ]; then
+		if [ "$SOCKS5_PROXY_SERVER_TYPE" == "v2ray" ]; then
 			v2ray_bin=$(find_bin v2ray)
 			if [ -z "$v2ray_bin" ]; then
 				echolog "找不到V2ray主程序，无法启用！！！" 
@@ -487,7 +466,7 @@ start_socks5_proxy() {
 			else
 				$v2ray_bin -config=$CONFIG_SOCKS5_FILE > /var/log/v2ray_socks5.log &
 			fi
-		elif [ "$server_type" == "brook" ]; then
+		elif [ "$SOCKS5_PROXY_SERVER_TYPE" == "brook" ]; then
 			brook_bin=$(find_bin brook)
 			if [ -z "$brook_bin" ]; then
 				echolog "找不到Brook主程序，无法启用！！！" 
@@ -496,7 +475,7 @@ start_socks5_proxy() {
 				$brook_bin client -l 0.0.0.0:$SOCKS5_PROXY_PORT -i 0.0.0.0 -s $server_host:$server_port -p $server_password &>/dev/null &
 			fi
 		else
-			ss_bin=$(find_bin "$SOCKS5SSBIN"-local)
+			ss_bin=$(find_bin "$SOCKS5_PROXY_SERVER_TYPE"-local)
 			if [ -z "$ss_bin" ]; then
 				echolog "找不到SS主程序，无法启用！！！" 
 				fail=1
@@ -504,7 +483,7 @@ start_socks5_proxy() {
 				$ss_bin -c $CONFIG_SOCKS5_FILE -b 0.0.0.0 > /dev/null 2>&1 &
 			fi
 		fi
-		[ "$fail" == "0" ] && echolog "运行$server_type Socks5代理..." 
+		[ "$fail" == "0" ] && echolog "运行Socks5代理..." 
 		[ "$fail" == "1" ] && {
 			uci set $CONFIG.@global[0].socks5_proxy=0
 			uci commit $CONFIG
@@ -618,21 +597,21 @@ start_dns() {
 	case "$DNS_MODE" in
 		dns2socks)
 			dns2socks_bin=$(find_bin dns2socks)
-			sslocal_bin=$(find_bin "$TCPSSBIN"-local)
+			sslocal_bin=$(find_bin "$TCP_REDIR_SERVER_TYPE"-local)
 			if [ -z "$dns2socks_bin" ] || [ -z "$sslocal_bin" ]; then
-				echolog "找不到dns2socks或$TCPSSBIN-local主程序，无法启用！！！" 
+				echolog "找不到dns2socks或$TCP_REDIR_SERVER_TYPE-local主程序，无法启用！！！" 
 			else
 				nohup $sslocal_bin \
 				-c $CONFIG_TCP_FILE \
 				-l 3080 \
-				-f $RUN_PID_PATH/$TCPSSBIN-local.pid \
+				-f $RUN_PID_PATH/$TCP_REDIR_SERVER_TYPE-local.pid \
 				>/dev/null 2>&1 &
 				nohup $dns2socks_bin \
 				127.0.0.1:3080 \
 				$DNS_FORWARD \
 				127.0.0.1:7913 \
 				>/dev/null 2>&1 &
-				echolog "运行DNS转发方案：dns2socks+$TCPSSBIN-local..." 
+				echolog "运行DNS转发方案：dns2socks+$TCP_REDIR_SERVER_TYPE-local..." 
 			fi
 		;;
 		Pcap_DNSProxy)
@@ -1217,42 +1196,39 @@ EOF
 	$iptables_mangle -N SS_HOME
 	$iptables_mangle -N SS_GAME
 	
-	tcp_redir_ports=$(config_t_get global tcp_redir_ports)
-	udp_redir_ports=$(config_t_get global udp_redir_ports)
-	
 	ip rule add fwmark 1 lookup 100
 	ip route add local 0.0.0.0/0 dev lo table 100
 	
 	#	生成TCP转发规则
 	if [ "$TCP_REDIR_SERVER" != "nil" ];then
-		if [ "$server_type" == "brook" ]; then
+		if [ "$TCP_REDIR_SERVER_TYPE" == "brook" ]; then
 			$iptables_mangle -A PREROUTING -p tcp -m socket -j MARK --set-mark 1
 			$iptables_mangle -A PREROUTING -p tcp -j SS
 			
-			$iptables_mangle -A SS -p tcp -m multiport -–dport $tcp_redir_ports -m set --match-set $IPSET_BLACKLIST dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
+			$iptables_mangle -A SS -p tcp -m set --match-set $IPSET_BLACKLIST dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
 			#	全局模式
-			$iptables_mangle -A SS_GLO -p tcp -m multiport -–dport $tcp_redir_ports -j TPROXY --tproxy-mark 0x1/0x1 --on-port $TCP_REDIR_PORT
+			$iptables_mangle -A SS_GLO -p tcp -j TPROXY --tproxy-mark 0x1/0x1 --on-port $TCP_REDIR_PORT
 			
 			#	GFWLIST模式
-			$iptables_mangle -A SS_GFW -p tcp -m multiport -–dport $tcp_redir_ports -m set --match-set $IPSET_GFW dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
-			$iptables_mangle -A SS_GFW -p tcp -m multiport -–dport $tcp_redir_ports -m set --match-set $IPSET_ROUTER dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
+			$iptables_mangle -A SS_GFW -p tcp -m set --match-set $IPSET_GFW dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
+			$iptables_mangle -A SS_GFW -p tcp -m set --match-set $IPSET_ROUTER dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
 			
 			#	大陆白名单模式
-			$iptables_mangle -A SS_CHN -p tcp -m multiport -–dport $tcp_redir_ports -m set --match-set $IPSET_CHN dst -j RETURN
-			$iptables_mangle -A SS_CHN -p tcp -m multiport -–dport $tcp_redir_ports -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
+			$iptables_mangle -A SS_CHN -p tcp -m set --match-set $IPSET_CHN dst -j RETURN
+			$iptables_mangle -A SS_CHN -p tcp -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
 			
 			#	回国模式
-			$iptables_mangle -A SS_HOME -p tcp -m multiport -–dport $tcp_redir_ports -m set --match-set $IPSET_CHN dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
+			$iptables_mangle -A SS_HOME -p tcp -m set --match-set $IPSET_CHN dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
 			
 			#	游戏模式
-			$iptables_mangle -A SS_GAME -p tcp -m multiport -–dport $tcp_redir_ports -m set --match-set $IPSET_CHN dst -j RETURN
+			$iptables_mangle -A SS_GAME -p tcp -m set --match-set $IPSET_CHN dst -j RETURN
 			
 			#	用于本机流量转发，默认只走router
-			$iptables_mangle -A SS -s $lan_ip -p tcp -m multiport -–dport $tcp_redir_ports -m set --match-set $IPSET_ROUTER dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
-			$iptables_mangle -A OUTPUT -p tcp -m multiport -–dport $tcp_redir_ports -m set --match-set $IPSET_ROUTER dst -j MARK --set-mark 1
+			$iptables_mangle -A SS -s $lan_ip -p tcp -m set --match-set $IPSET_ROUTER dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
+			$iptables_mangle -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_ROUTER dst -j MARK --set-mark 1
 			[ "$SSR_SERVER_PASSWALL" == "1" ] && {
-				$iptables_mangle -A SS -s $lan_ip -p tcp -m multiport -–dport $tcp_redir_ports -m set --match-set $IPSET_GFW dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
-				$iptables_mangle -A OUTPUT -p tcp -m multiport -–dport $tcp_redir_ports -m set --match-set $IPSET_GFW dst -j MARK --set-mark 1
+				$iptables_mangle -A SS -s $lan_ip -p tcp -m set --match-set $IPSET_GFW dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
+				$iptables_mangle -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_GFW dst -j MARK --set-mark 1
 			}
 		else
 			$iptables_mangle -A PREROUTING -j SS
@@ -1312,10 +1288,10 @@ EOF
 		
 			#  用于本机流量转发，默认只走router
 			$iptables_nat -I OUTPUT -j SS
-			$iptables_nat -A OUTPUT -p tcp -m multiport --dport $tcp_redir_ports -m set --match-set $IPSET_ROUTER dst -j REDIRECT --to-ports $TCP_REDIR_PORT
+			$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_ROUTER dst -j REDIRECT --to-ports $TCP_REDIR_PORT
 			
 			if [ "$SSR_SERVER_PASSWALL" == "1" ];then
-				$iptables_nat -A OUTPUT -p tcp -m multiport --dport $tcp_redir_ports -m set --match-set $IPSET_GFW dst -j REDIRECT --to-ports $TCP_REDIR_PORT
+				$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_GFW dst -j REDIRECT --to-ports $TCP_REDIR_PORT
 			fi
 			echolog "IPv4 防火墙TCP转发规则加载完成！" 
 		fi
@@ -1325,7 +1301,7 @@ EOF
 		
 	#  生成UDP转发规则
 	if [ "$UDP_REDIR_SERVER" != "nil" ];then
-		if [ "$server_type" == "brook" ]; then
+		if [ "$UDP_REDIR_SERVER_TYPE" == "brook" ]; then
 			$iptables_mangle -A PREROUTING -p udp -m socket -j MARK --set-mark 1
 			$iptables_mangle -A PREROUTING -p udp -j SS
 		fi
@@ -1358,8 +1334,8 @@ EOF
 		config_foreach load_acl acl_rule
 		
 	#  加载默认代理模式
-		$iptables_mangle -A SS -p tcp -m multiport --dport $tcp_redir_ports -j $(get_action_chain $PROXY_MODE)
-		$iptables_mangle -A SS -p udp -m multiport --dport $udp_redir_ports -j $(get_action_chain $PROXY_MODE)
+		$iptables_mangle -A SS -p tcp -m multiport --dport $TCP_REDIR_PORTS -j $(get_action_chain $PROXY_MODE)
+		$iptables_mangle -A SS -p udp -m multiport --dport $UDP_REDIR_PORTS -j $(get_action_chain $PROXY_MODE)
 	
 	if [ "$PROXY_IPV6" == "1" ];then
 		lan_ipv6=`ip address show br-lan | grep -w "inet6" |awk '{print $2}'`  #当前LAN IPv6段
@@ -1490,8 +1466,8 @@ del_firewall_rule() {
 	fi
 	$iptables_mangle -D PREROUTING -p tcp -m socket -j MARK --set-mark 1 2>/dev/null
 	$iptables_mangle -D PREROUTING -p udp -m socket -j MARK --set-mark 1 2>/dev/null
-	$iptables_mangle -D OUTPUT -p tcp -m set --match-set $IPSET_ROUTER dst -j MARK --set-mark 1 2>/dev/null
-	$iptables_mangle -D OUTPUT -p tcp -m set --match-set $IPSET_GFW dst -j MARK --set-mark 1 2>/dev/null
+	$iptables_mangle -D OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_ROUTER dst -j MARK --set-mark 1 2>/dev/null
+	$iptables_mangle -D OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_GFW dst -j MARK --set-mark 1 2>/dev/null
 	
 	$iptables_nat -F SS 2>/dev/null && $iptables_nat -X SS 2>/dev/null
 	$iptables_mangle -D PREROUTING -j SS 2>/dev/null
