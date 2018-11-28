@@ -48,11 +48,13 @@ function clear_log()
 end
 
 function server_status()
-	local e={}
-	e.tcp_redir_status=luci.sys.call("ps | grep -v grep | grep -i '" .. appname .. "_TCP' >/dev/null")==0
-	e.udp_redir_status=luci.sys.call("ps | grep -v grep | grep -i '" .. appname .. "_UDP' >/dev/null")==0
-	e.socks5_proxy_status=luci.sys.call("ps | grep -v grep | grep -i '" .. appname .. "_SOCKS5' >/dev/null")==0
+	local tcp_redir_port = luci.sys.exec("echo -n `uci get " .. appname .. ".@global_proxy[0].tcp_redir_port`")
+	local udp_redir_port = luci.sys.exec("echo -n `uci get " .. appname .. ".@global_proxy[0].udp_redir_port`")
 	local dns_mode = luci.sys.exec("echo -n `uci get " .. appname .. ".@global[0].dns_mode`")
+	local e={}
+	e.tcp_redir_status=luci.sys.call("ps | grep -v grep | grep -i -E '" .. appname .. "_TCP|brook tproxy -l 0.0.0.0:" .. tcp_redir_port .. "' >/dev/null")==0
+	e.udp_redir_status=luci.sys.call("ps | grep -v grep | grep -i -E '" .. appname .. "_UDP|brook tproxy -l 0.0.0.0:" .. udp_redir_port .. "' >/dev/null")==0
+	e.socks5_proxy_status=luci.sys.call("ps | grep -v grep | grep -i -E '" .. appname .. "_SOCKS5|brook client' >/dev/null")==0
 	e.dns_mode_status=luci.sys.call("ps | grep -v grep | grep -i "..dns_mode.." >/dev/null")==0
 	e.haproxy_status=luci.sys.call("pgrep haproxy >/dev/null")==0
 	e.kcptun_status=luci.sys.call("pgrep kcptun >/dev/null")==0
@@ -87,14 +89,8 @@ function check_port()
 	local uci = luci.model.uci.cursor()
 
 	uci:foreach("passwall", "servers", function(s)
-		local server_type
-		if s.server_type == "ssr" then server_type = "SSR"
-		elseif s.server_type == "ss" then server_type = "SS"
-		elseif s.server_type == "v2ray" then server_type = "V2ray"
-		elseif s.server_type == "brook" then server_type = "Brook"
-		end
-		if server_type and s.server and s.server_port and s.remarks then
-			server_name = "%s：[%s] %s:%s"%{server_type , s.remarks , s.server , s.server_port}
+		if s.server_type and s.server and s.server_port and s.remarks then
+			server_name = "%s：[%s] %s:%s"%{s.server_type , s.remarks , s.server , s.server_port}
 		end
 		socket = nixio.socket("inet", "stream")
 		socket:setopt("socket", "rcvtimeo", 3)
