@@ -3,14 +3,8 @@ local i="passwall"
 
 local n={}
 cursor:foreach(i,"servers",function(e)
-	local server_type
-	if e.server_type == "ssr" then server_type = "SSR"
-	elseif e.server_type == "ss" then server_type = "SS"
-	elseif e.server_type == "v2ray" then server_type = "V2ray"
-	elseif e.server_type == "brook" then server_type = "Brook"
-	end
 	if e.server_type and e.server and e.remarks then
-		n[e[".name"]]="%s：[%s] %s"%{server_type,e.remarks,e.server}
+		n[e[".name"]]="%s：[%s] %s"%{e.server_type,e.remarks,e.server}
 	end
 end)
 

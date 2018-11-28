@@ -19,14 +19,8 @@ end
 
 local n={}
 cursor:foreach(i,"servers",function(e)
-	local server_type
-	if e.server_type == "ssr" then server_type = "SSR"
-	elseif e.server_type == "ss" then server_type = "SS"
-	elseif e.server_type == "v2ray" then server_type = "V2ray"
-	elseif e.server_type == "brook" then server_type = "Brook"
-	end
 	if e.server_type and e.server and e.remarks then
-		n[e[".name"]]="%s：[%s] %s"%{server_type,e.remarks,e.server}
+		n[e[".name"]]="%s：[%s] %s"%{e.server_type,e.remarks,e.server}
 	end
 end)
 
@@ -80,12 +74,7 @@ e.default=0
 e.rmempty=false
 
 e=t:option(ListValue,"socks5_proxy_server",translate("Socks5 Proxy Server"))
-if has_udp_relay() then
-	e:value("default",translate("Same as the tcp redir server"))
-	for a,t in pairs(n)do e:value(a,t)end
-else
-	e:value("nil",translate("TPROXY is not found,cannot be used"))
-end
+for a,t in pairs(n)do e:value(a,t)end
 e:depends("socks5_proxy",1)
 
 e=t:option(ListValue,"proxy_mode",translate("Default")..translate("Proxy Mode"))
