@@ -580,15 +580,17 @@ start_dns() {
 			[ -n "$chinadns_bin" ] && {
 				other=1
 				echolog "运行DNS转发方案：ChinaDNS..." 
+				dns1=$(config_t_get global_dns dns_1)
+				[ "$dns1" = "dnsbyisp" ] && dns1=`cat /tmp/resolv.conf.auto 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" |sort -u |grep -v 0.0.0.0 |grep -v 127.0.0.1|sed -n '2P'`
 				case "$UP_DNS_MODE" in
 					OpenDNS_443)
 						other=0
-						nohup $chinadns_bin -p 7913 -c $SS_PATH_RULE/chnroute -m -d -s $DNS1,208.67.222.222:443 >/dev/null 2>&1 &
+						nohup $chinadns_bin -p 7913 -c $SS_PATH_RULE/chnroute -m -d -s $dns1,208.67.222.222:443 >/dev/null 2>&1 &
 						echolog "运行ChinaDNS上游转发方案：OpenDNS：208.67.222.222:443..." 
 					;;
 					OpenDNS_5353)
 						other=0
-						nohup $chinadns_bin -p 7913 -c $SS_PATH_RULE/chnroute -m -d -s $DNS1,208.67.222.222:5353 >/dev/null 2>&1 &
+						nohup $chinadns_bin -p 7913 -c $SS_PATH_RULE/chnroute -m -d -s $dns1,208.67.222.222:5353 >/dev/null 2>&1 &
 						echolog "运行ChinaDNS上游转发方案：OpenDNS：208.67.222.222:5353..." 
 					;;
 					dnsproxy)
@@ -607,7 +609,7 @@ start_dns() {
 					;;
 				esac
 				if [ "$other" = "1" ];then
-					nohup $chinadns_bin -p 7923 -c $SS_PATH_RULE/chnroute -m -d -s $DNS1,127.0.0.1:7913 >/dev/null 2>&1 &
+					nohup $chinadns_bin -p 7923 -c $SS_PATH_RULE/chnroute -m -d -s $dns1,127.0.0.1:7913 >/dev/null 2>&1 &
 				fi
 			}
 		;;
@@ -634,7 +636,7 @@ EOF
 		echolog "生成Dnsmasq配置文件。" 
 		
 		if [ "$dnsport" != "0" ]; then
-			isp_dns=`cat /tmp/resolv.conf.auto 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" |sort -u |grep -v 0.0.0.0 |grep -v 127.0.0.1`
+			isp_dns=`cat /tmp/resolv.conf.auto 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | sort -u | grep -v 0.0.0.0 | grep -v 127.0.0.1`
 			failcount=0
 			while [ "$failcount" -lt "10" ]
 			do
@@ -667,7 +669,7 @@ EOF
 				fi
 			done
 		else
-			isp_dns=`cat /tmp/resolv.conf.auto 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" |sort -u |grep -v 0.0.0.0 |grep -v 127.0.0.1`
+			isp_dns=`cat /tmp/resolv.conf.auto 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | sort -u | grep -v 0.0.0.0 | grep -v 127.0.0.1`
 			[ -n "$isp_dns" ] && {
 				for isp_ip in $isp_dns
 				do

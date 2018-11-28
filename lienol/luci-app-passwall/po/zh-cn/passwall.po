@@ -13,6 +13,9 @@ msgstr "V2ray 服务器"
 msgid "Brook Server"
 msgstr "Brook 服务器"
 
+msgid "Auto"
+msgstr "自动"
+
 msgid "RUNNING"
 msgstr "运行中"
 
