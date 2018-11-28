@@ -83,9 +83,9 @@ o:value("180.76.76.76","180.76.76.76("..translate("Baidu").."DNS)")
 o.rmempty=false
 
 o=s:option(ListValue,"dns_port",translate("DNS Export Of Multi WAN"))
-o:value(0,translate("None specify"))
+o:value(0,translate("Auto"))
 for _, iface in ipairs(ifaces) do
-	if (iface:match("^br*") or iface:match("^eth*") or iface:match("^pppoe*") or iface:match("wlan*")) then
+	if (iface:match("^pppoe*")) then
 		local nets = net:get_interface(iface)
 		nets = nets and nets:get_networks() or {}
 		for k, v in pairs(nets) do
@@ -99,9 +99,9 @@ o.default=0
 o.rmempty=false
 
 o=s:option(ListValue,"wan_port",translate("Designated Export for SS"))
-o:value(0,translate("None specify"))
+o:value(0,translate("Auto"))
 for _, iface in ipairs(ifaces) do
-	if (iface:match("^br*") or iface:match("^eth*") or iface:match("^pppoe*") or iface:match("wlan*")) then
+	if (iface:match("^pppoe*")) then
 		local nets = net:get_interface(iface)
 		nets = nets and nets:get_networks() or {}
 		for k, v in pairs(nets) do

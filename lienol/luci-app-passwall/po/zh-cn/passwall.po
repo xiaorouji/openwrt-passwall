@@ -283,8 +283,8 @@ msgstr "使用自动切换"
 msgid "Please switch the configuration of the standby server to the automatic interface"
 msgstr "备用服务器请到自动切换界面配置"
 
-msgid "Disconnection auto reconnection"
-msgstr "掉线自动重连"
+msgid "When there is no server, an automatic reconnect scheme is used"
+msgstr "当没有服务器时，则使用自动重连方案"
 
 msgid "How often is a diagnosis made"
 msgstr "检测时间"
@@ -333,9 +333,6 @@ msgstr "负载比重"
 
 msgid "Export Of Multi WAN"
 msgstr "多WAN指定出口"
-
-msgid "None specify"
-msgstr "不指定"
 
 msgid "Server Mode"
 msgstr "服务器模式"
