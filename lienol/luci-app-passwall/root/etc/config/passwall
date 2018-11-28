@@ -50,3 +50,6 @@ config global_kcptun
 config global_subscribe
 	option subscribe_by_ss '0'
 	option auto_update_subscribe '0'
+	
+config auto_switch
+	option testing_time '30'
