@@ -62,7 +62,7 @@ e.default="5"
 e.rmempty=false
 
 e=t:option(ListValue,"export",translate("Export Of Multi WAN"))
-e:value(0,translate("None specify"))
+e:value(0,translate("Auto"))
 for _, iface in ipairs(ifaces) do
 	if (iface:match("^pppoe*")) then
 		local nets = net:get_interface(iface)
