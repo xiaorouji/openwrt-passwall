@@ -29,11 +29,17 @@ iptables_nat="iptables -t nat"
 iptables_mangle="iptables -t mangle"
 ip6tables_nat="ip6tables -t nat"
 
+echolog()
+{
+	echo -e "$Date: $1" >> $LOG_FILE
+}
+
 find_bin(){
-	name=$1
-	result=`find /usr/*bin -iname "$name" -type f`
+	bin_name=$1
+	result=`find /usr/*bin -iname "$bin_name" -type f`
 	if [ -z "$result" ]; then
 		echo ""
+		echolog "找不到$bin_name主程序，无法启动！"
 	else
 		echo "$result"
 	fi
@@ -163,10 +169,6 @@ get_host_ip() {
 	echo $ip
 }
 
-echolog()
-{
-	echo -e "$Date: $1" >> $LOG_FILE
-}
 TCP_REDIR=$(config_t_get global tcp_redir 0)
 UDP_REDIR=$(config_t_get global udp_redir 0)
 SOCKS5_PROXY=$(config_t_get global socks5_proxy 0)
@@ -188,6 +190,9 @@ SOCKS5_PROXY_SERVER_IP=""
 TCP_REDIR_SERVER_IPV6=""
 UDP_REDIR_SERVER_IPV6=""
 SOCKS5_PROXY_SERVER_IPV6=""
+brook_socks5_cmd=""
+brook_tcp_cmd=""
+brook_udp_cmd=""
 AUTO_SWITCH=$(config_t_get global auto_switch 0)
 TCP_REDIR_PORTS=$(config_t_get global tcp_redir_ports '80,443')
 UDP_REDIR_PORTS=$(config_t_get global udp_redir_ports '80,443')
@@ -292,6 +297,9 @@ gen_config_file() {
 		if [ "$server_type" == "v2ray" ]; then
 			lua $SS_PATH/genv2rayconfig.lua $SOCKS5_PROXY_SERVER nil nil $SOCKS5_PROXY_PORT > $CONFIG_SOCKS5_FILE
 		fi
+		if [ "$server_type" == "brook" ]; then
+			brook_socks5_cmd="client -l 0.0.0.0:$SOCKS5_PROXY_PORT -i 0.0.0.0 -s $server_ip:$(config_get $SOCKS5_PROXY_SERVER server_port) -p $(config_get $SOCKS5_PROXY_SERVER password)"
+		fi
 	fi
 	
 	if [ "$2" == "UDP" ]; then
@@ -305,6 +313,9 @@ gen_config_file() {
 		fi
 		if [ "$server_type" == "v2ray" ]; then
 			lua $SS_PATH/genv2rayconfig.lua $UDP_REDIR_SERVER udp $UDP_REDIR_PORT nil > $CONFIG_UDP_FILE
+		fi
+		if [ "$server_type" == "brook" ]; then
+			brook_udp_cmd="tproxy -l 0.0.0.0:$UDP_REDIR_PORT -s $server_ip:$(config_get $UDP_REDIR_SERVER server_port) -p $(config_get $UDP_REDIR_SERVER password)"
 		fi
 	fi
 	
@@ -358,9 +369,15 @@ gen_config_file() {
 				if [ "$server_type" == "ss" -o "$server_type" == "ssr" ]; then
 					gen_ss_ssr_config_file $server_type $TCP_REDIR_PORT 1 $TCP_REDIR_SERVER $CONFIG_TCP_FILE
 				fi
+				if [ "$server_type" == "brook" ]; then
+					brook_tcp_cmd="tproxy -l 0.0.0.0:$TCP_REDIR_PORT -s 127.0.0.1:$KCPTUN_REDIR_PORT -p $(config_get $TCP_REDIR_SERVER password)"
+				fi
 			else
 				if [ "$server_type" == "ss" -o "$server_type" == "ssr" ]; then
 					gen_ss_ssr_config_file $server_type $TCP_REDIR_PORT 0 $TCP_REDIR_SERVER $CONFIG_TCP_FILE
+				fi
+				if [ "$server_type" == "brook" ]; then
+					brook_tcp_cmd="tproxy -l 0.0.0.0:$TCP_REDIR_PORT -s $server_ip:$(config_get $TCP_REDIR_SERVER server_port) -p $(config_get $TCP_REDIR_SERVER password)"
 				fi
 			fi
 		fi
@@ -378,116 +395,50 @@ start_kcptun() {
 }
 
 start_tcp_redir() {
-	local server_port server_password kcptun_use
-	server_port=$(config_get $TCP_REDIR_SERVER server_port)
-	server_password=$(config_get $TCP_REDIR_SERVER password)
-	kcptun_use=$(config_get $TCP_REDIR_SERVER use_kcp)
-	fail=0
-	if [ "$TCP_REDIR_SERVER_TYPE" == "v2ray" ]; then
-		v2ray_bin=$(find_bin v2ray)
-		if [ -z "$v2ray_bin" ]; then
-			echolog "找不到V2ray主程序，无法启用！！！" 
-			fail=1
+	if [ "$TCP_REDIR_SERVER" != "nil" ];then
+		echolog "运行TCP透明代理..."
+		if [ "$TCP_REDIR_SERVER_TYPE" == "v2ray" ]; then
+			v2ray_bin=$(find_bin V2ray)
+			[ -n "$v2ray_bin" ] && $v2ray_bin -config=$CONFIG_TCP_FILE > /var/log/v2ray_tcp.log &
+		elif [ "$TCP_REDIR_SERVER_TYPE" == "brook" ]; then
+			brook_bin=$(find_bin Brook)
+			[ -n "$brook_bin" ] && $brook_bin $brook_tcp_cmd &>/dev/null &
 		else
-			$v2ray_bin -config=$CONFIG_TCP_FILE > /var/log/v2ray_tcp.log &
-		fi
-	elif [ "$TCP_REDIR_SERVER_TYPE" == "brook" ]; then
-		brook_bin=$(find_bin brook)
-		if [ -z "$brook_bin" ]; then
-			echolog "找不到Brook主程序，无法启用！！！" 
-			fail=1
-		else
-			if [ "$kcptun_use" == "1" ]; then
-				$brook_bin tproxy -l 0.0.0.0:$TCP_REDIR_PORT -s 127.0.0.1:$KCPTUN_REDIR_PORT -p $server_password &>/dev/null &
-			else
-				$brook_bin tproxy -l 0.0.0.0:$TCP_REDIR_PORT -s $server_host:$server_port -p $server_password &>/dev/null &
-			fi
-		fi
-	else
-		ss_bin=$(find_bin "$TCP_REDIR_SERVER_TYPE"-redir)
-		if [ -z "$ss_bin" ]; then
-			echolog "找不到SS主程序，无法启用！！！" 
-			fail=1
-		else
-			$ss_bin -c $CONFIG_TCP_FILE > /dev/null 2>&1 &
+			ss_bin=$(find_bin "$TCP_REDIR_SERVER_TYPE"-redir)
+			[ -n "$ss_bin" ] && $ss_bin -c $CONFIG_TCP_FILE > /dev/null 2>&1 &
 		fi
 	fi
-	[ "$fail" == "0" ] && echolog "运行TCP透明代理..." 
-	[ "$fail" == "1" ] && {
-		uci set $CONFIG.@global[0].tcp_redir_server=nil
-		uci commit $CONFIG
-	}
 }
 
 start_udp_redir() {
 	if [ "$UDP_REDIR_SERVER" != "nil" ];then
-		fail=0
+		echolog "运行UDP透明代理..." 
 		if [ "$UDP_REDIR_SERVER_TYPE" == "v2ray" ]; then
-			v2ray_bin=$(find_bin v2ray)
-			if [ -z "$v2ray_bin" ]; then
-				echolog "找不到V2ray主程序，无法启用！！！" 
-				fail=1
-			else
-				$v2ray_bin -config=$CONFIG_UDP_FILE > /var/log/v2ray_udp.log &
-			fi
+			v2ray_bin=$(find_bin V2ray)
+			[ -n "$v2ray_bin" ] && $v2ray_bin -config=$CONFIG_UDP_FILE > /var/log/v2ray_udp.log &
 		elif [ "$UDP_REDIR_SERVER_TYPE" == "brook" ]; then
 			brook_bin=$(find_bin brook)
-			if [ -z "$brook_bin" ]; then
-				echolog "找不到Brook主程序，无法启用！！！" 
-				fail=1
-			else
-				$brook_bin tproxy -l 0.0.0.0:$UDP_REDIR_PORT -s $server_host:$server_port -p $server_password &>/dev/null &
-			fi
+			[ -n "$brook_bin" ] && $brook_bin $brook_udp_cmd &>/dev/null &
 		else
 			ss_bin=$(find_bin "$UDP_REDIR_SERVER_TYPE"-redir)
-			if [ -z "$ss_bin" ]; then
-				echolog "找不到SS主程序，无法启用！！！" 
-				fail=1
-			else
-				$ss_bin -c $CONFIG_UDP_FILE -U > /dev/null 2>&1 &
-			fi
+			[ -n "$ss_bin" ] && $ss_bin -c $CONFIG_UDP_FILE -U > /dev/null 2>&1 &
 		fi
-		[ "$fail" == "0" ] && echolog "运行UDP透明代理..." 
-		[ "$fail" == "1" ] && {
-			uci set $CONFIG.@global[0].udp_redir=0
-			uci commit $CONFIG
-		}
 	fi
 }
 
 start_socks5_proxy() {
 	if [ "$SOCKS5_PROXY_SERVER" != "nil" ];then
-		fail=0
+		echolog "运行Socks5代理..."
 		if [ "$SOCKS5_PROXY_SERVER_TYPE" == "v2ray" ]; then
 			v2ray_bin=$(find_bin v2ray)
-			if [ -z "$v2ray_bin" ]; then
-				echolog "找不到V2ray主程序，无法启用！！！" 
-				fail=1
-			else
-				$v2ray_bin -config=$CONFIG_SOCKS5_FILE > /var/log/v2ray_socks5.log &
-			fi
+			[ -n "$v2ray_bin" ] && $v2ray_bin -config=$CONFIG_SOCKS5_FILE > /var/log/v2ray_socks5.log &
 		elif [ "$SOCKS5_PROXY_SERVER_TYPE" == "brook" ]; then
 			brook_bin=$(find_bin brook)
-			if [ -z "$brook_bin" ]; then
-				echolog "找不到Brook主程序，无法启用！！！" 
-				fail=1
-			else
-				$brook_bin client -l 0.0.0.0:$SOCKS5_PROXY_PORT -i 0.0.0.0 -s $server_host:$server_port -p $server_password &>/dev/null &
-			fi
+			[ -n "$brook_bin" ] && $$brook_bin $brook_socks5_cmd &>/dev/null &
 		else
 			ss_bin=$(find_bin "$SOCKS5_PROXY_SERVER_TYPE"-local)
-			if [ -z "$ss_bin" ]; then
-				echolog "找不到SS主程序，无法启用！！！" 
-				fail=1
-			else
-				$ss_bin -c $CONFIG_SOCKS5_FILE -b 0.0.0.0 > /dev/null 2>&1 &
-			fi
+			[ -n "$ss_bin" ] && $ss_bin -c $CONFIG_SOCKS5_FILE -b 0.0.0.0 > /dev/null 2>&1 &
 		fi
-		[ "$fail" == "0" ] && echolog "运行Socks5代理..." 
-		[ "$fail" == "1" ] && {
-			uci set $CONFIG.@global[0].socks5_proxy=0
-			uci commit $CONFIG
-		}
 	fi
 }
 
@@ -546,9 +497,10 @@ auto_stop() {
 		sed -i '/$CONFIG start/d' /etc/crontabs/root >/dev/null 2>&1 &
 		sed -i '/$CONFIG restart/d' /etc/crontabs/root >/dev/null 2>&1 &
 	fi
-	disconnect_reconnect_on=$(config_t_get auto_switch disconnect_reconnect_on)
-	[ "$disconnect_reconnect_on" = "0" ] && sed -i '$SS_PATH/reconnection.sh/d' /etc/crontabs/root >/dev/null 2>&1 &
-	[ "$AUTO_SWITCH" = "0" ] && sed -i '$SS_PATH/auto_switch.sh/d' /etc/crontabs/root >/dev/null 2>&1 &
+	[ "$AUTO_SWITCH" = "0" ] && {
+		sed -i '$SS_PATH/reconnection.sh/d' /etc/crontabs/root >/dev/null 2>&1 &
+		sed -i '$SS_PATH/auto_switch.sh/d' /etc/crontabs/root >/dev/null 2>&1 &
+	}
 	/etc/init.d/cron restart
 	echolog "清理定时自动开关设置。" 
 }
@@ -574,20 +526,17 @@ auto_start() {
 		}
 	fi
 	
-	disconnect_reconnect_on=$(config_t_get auto_switch disconnect_reconnect_on)
-	if [ "$disconnect_reconnect_on" = "1" ];then
-		disconnect_reconnect_time=$(config_t_get auto_switch disconnect_reconnect_time)
-		[ -n "$disconnect_reconnect_time" ] && {
-			echo "*/$disconnect_reconnect_time * * * * $SS_PATH/reconnection.sh" >> /etc/crontabs/root
-			echolog "设置每$disconnect_reconnect_time分钟检测是否已掉线。" 
-		}
-	fi
-	
 	[ "$AUTO_SWITCH" = "1" ] && {
 		testing_time=$(config_t_get auto_switch testing_time)
 		[ -n "$testing_time" ] && {
-			echo "*/$testing_time * * * * $SS_PATH/auto_switch.sh" >> /etc/crontabs/root
-			echolog "设置每$testing_time分钟检测是否已掉线并自动切换。" 
+			has_backup_server=`uci show $CONFIG.@auto_switch[0] | grep "tcp_redir_server"`
+			if [ -z "$has_backup_server" ];then
+				echo "*/$testing_time * * * * $SS_PATH/reconnection.sh" >> /etc/crontabs/root
+				echolog "设置每$testing_time分钟检测是否已掉线。"
+			else
+				echo "*/$testing_time * * * * $SS_PATH/auto_switch.sh" >> /etc/crontabs/root
+				echolog "设置每$testing_time分钟检测是否已掉线并自动切换。"
+			fi
 		}
 	}
 	/etc/init.d/cron restart
@@ -598,108 +547,69 @@ start_dns() {
 		dns2socks)
 			dns2socks_bin=$(find_bin dns2socks)
 			sslocal_bin=$(find_bin "$TCP_REDIR_SERVER_TYPE"-local)
-			if [ -z "$dns2socks_bin" ] || [ -z "$sslocal_bin" ]; then
-				echolog "找不到dns2socks或$TCP_REDIR_SERVER_TYPE-local主程序，无法启用！！！" 
-			else
-				nohup $sslocal_bin \
-				-c $CONFIG_TCP_FILE \
-				-l 3080 \
-				-f $RUN_PID_PATH/$TCP_REDIR_SERVER_TYPE-local.pid \
-				>/dev/null 2>&1 &
-				nohup $dns2socks_bin \
-				127.0.0.1:3080 \
-				$DNS_FORWARD \
-				127.0.0.1:7913 \
-				>/dev/null 2>&1 &
+			[ -n "$dns2socks_bin" -a -n "$sslocal_bin" ] && {
+				nohup $sslocal_bin -c $CONFIG_TCP_FILE -l 3080 -f $RUN_PID_PATH/$TCP_REDIR_SERVER_TYPE-local.pid >/dev/null 2>&1 &
+				nohup $dns2socks_bin 127.0.0.1:3080 $DNS_FORWARD 127.0.0.1:7913 >/dev/null 2>&1 &
 				echolog "运行DNS转发方案：dns2socks+$TCP_REDIR_SERVER_TYPE-local..." 
-			fi
+			}
 		;;
 		Pcap_DNSProxy)
 			pcapDnsproxy_bin=$(find_bin Pcap_DNSProxy)
-			if [ -z "$pcapDnsproxy_bin" ]; then
-				echolog "找不到Pcap_DNSProxy主程序，无法启用！！！" 
-			else
+			[ -n "$pcapDnsproxy_bin" ] && {
 				nohup $pcapDnsproxy_bin -c /etc/pcap-dnsproxy >/dev/null 2>&1 &
-				echolog "运行DNS转发方案：Pcap_DNSProxy..." 
-			fi
+				echolog "运行DNS转发方案：Pcap_DNSProxy..."
+			}
 		;;
 		pdnsd)
-			start_pdnsd		
-			echolog "运行DNS转发方案：Pdnsd..." 
+			pdnsd_bin=$(find_bin pdnsd)
+			[ -n "$pdnsd_bin" ] && {
+				gen_pdnsd_config
+				nohup $pdnsd_bin --daemon -c $CACHEDIR/pdnsd.conf -p $RUN_PID_PATH/pdnsd.pid -d
+				echolog "运行DNS转发方案：Pdnsd..." 
+			}
 		;;
 		cdns)
 			cdns_bin=$(find_bin cdns)
-			if [ -z "$cdns_bin" ]; then
-				echolog "找不到cdns主程序，无法启用！！！" 
-			else
+			[ -n "$cdns_bin" ] && {
 				nohup $cdns_bin -c /etc/cdns.json >/dev/null 2>&1 &
 				echolog "运行DNS转发方案：cdns..." 
-			fi
+			}
 		;;
 		chinadns)
-			chinadns_bin=$(find_bin chinadns)
-			if [ -z "$chinadns_bin" ]; then
-				echolog "找不到ChinaDNS主程序，无法启用！！！" 
-			else
+			chinadns_bin=$(find_bin ChinaDNS)
+			[ -n "$chinadns_bin" ] && {
 				other=1
 				echolog "运行DNS转发方案：ChinaDNS..." 
 				case "$UP_DNS_MODE" in
 					OpenDNS_443)
 						other=0
-						nohup $chinadns_bin \
-						-p 7913 \
-						-c $SS_PATH_RULE/chnroute \
-						-m -d \
-						-s $DNS1,208.67.222.222:443 \
-						>/dev/null 2>&1 &
+						nohup $chinadns_bin -p 7913 -c $SS_PATH_RULE/chnroute -m -d -s $DNS1,208.67.222.222:443 >/dev/null 2>&1 &
 						echolog "运行ChinaDNS上游转发方案：OpenDNS：208.67.222.222:443..." 
 					;;
 					OpenDNS_5353)
 						other=0
-						nohup $chinadns_bin \
-						-p 7913 \
-						-c $SS_PATH_RULE/chnroute \
-						-m -d \
-						-s $DNS1,208.67.222.222:5353 \
-						>/dev/null 2>&1 &
+						nohup $chinadns_bin -p 7913 -c $SS_PATH_RULE/chnroute -m -d -s $DNS1,208.67.222.222:5353 >/dev/null 2>&1 &
 						echolog "运行ChinaDNS上游转发方案：OpenDNS：208.67.222.222:5353..." 
 					;;
 					dnsproxy)
 						dnsproxy_bin=$(find_bin dnsproxy)
-						if [ -z "$dnsproxy_bin" ]; then
-							echolog "找不到dnsproxy主程序，无法启用！！！" 
-						else
-							nohup $dnsproxy_bin \
-							-d -T \
-							-p 7913 \
-							-R $DNS_FORWARD_IP \
-							-P $DNS_FORWARD_PORT \
-							>/dev/null 2>&1 &
+						[ -n "$dnsproxy_bin" ] && {
+							nohup $dnsproxy_bin -d -T -p 7913 -R $DNS_FORWARD_IP -P $DNS_FORWARD_PORT >/dev/null 2>&1 &
 							echolog "运行ChinaDNS上游转发方案：dnsproxy..." 
-						fi
+						}
 					;;
 					dns-forwarder)
 						dnsforwarder_bin=$(find_bin dns-forwarder)
-						if [ -z "$dnsforwarder_bin" ]; then
-							echolog "找不到dns-forwarder主程序，无法启用！！！" 
-						else
-							nohup $dnsforwarder_bin \
-							-p 7913 \
-							-s $DNS_FORWARD \
-							>/dev/null 2>&1 &
+						[ -n "$dnsforwarder_bin" ] && {
+							nohup $dnsforwarder_bin -p 7913 -s $DNS_FORWARD >/dev/null 2>&1 &
 							echolog "运行ChinaDNS上游转发方案：dns-forwarder..." 
-						fi
+						}
 					;;
 				esac
 				if [ "$other" = "1" ];then
-					nohup $chinadns_bin \
-					-p 7923 \
-					-c $SS_PATH_RULE/chnroute \
-					-m -d \
-					-s $DNS1,127.0.0.1:7913 \
-					>/dev/null 2>&1 &
+					nohup $chinadns_bin -p 7923 -c $SS_PATH_RULE/chnroute -m -d -s $DNS1,127.0.0.1:7913 >/dev/null 2>&1 &
 				fi
-			fi
+			}
 		;;
 	esac
 	echolog "若无法使用，请尝试其他方案！" 
@@ -739,17 +649,17 @@ EOF
 						for isp_ip in $isp_dns
 						do
 							echo server=$isp_ip >> /etc/dnsmasq.conf
-							route add -net ${isp_ip} netmask 255.255.255.255 ${dnsport}
+							route add -host ${isp_ip} dev ${dnsport}
 							echolog "添加运营商DNS出口路由表：$dnsport" 
 						done
 					}
 					[ "$DNS1" != "dnsbyisp" ] && {
-						route add -net ${DNS1} netmask 255.255.255.255 ${dnsport}
+						route add -host ${DNS1} dev ${dnsport}
 						echolog "添加DNS1出口路由表：$dnsport" 
 						echo server=$DNS1 >> /etc/dnsmasq.conf
 					}
 					[ "$DNS2" != "dnsbyisp" ] && {
-						route add -net ${DNS2} netmask 255.255.255.255 ${dnsport}
+						route add -host ${DNS2} dev ${dnsport}
 						echolog "添加DNS2出口路由表：$dnsport" 
 						echo server=$DNS2 >> /etc/dnsmasq.conf
 					}
@@ -785,9 +695,9 @@ EOF
 					[ "$failcount" -ge 10 ] && exit 0
 					sleep 1m
 				else
-					route add -net ${DNS1} netmask 255.255.255.255 ${dnsport}
+					route add -host ${DNS1} dev ${dnsport}
 					echolog "添加DNS1出口路由表：$dnsport" 
-					route add -net ${DNS2} netmask 255.255.255.255 ${dnsport}
+					route add -host ${DNS2} dev ${dnsport}
 					echolog "添加DNS2出口路由表：$dnsport" 
 					break
 				fi
@@ -877,55 +787,49 @@ EOF
 	fi
 }
 
-start_pdnsd() {
-	pdnsd_bin=$(find_bin pdnsd)
-	if [ -z "$pdnsd_bin" ]; then
-		echolog "找不到pdnsd主程序，无法启用！！！" 
-	else
-		CACHEDIR=/var/pdnsd
-		CACHE=$CACHEDIR/pdnsd.cache
-		if ! test -f "$CACHE"; then
-			mkdir -p `dirname $CACHE`
-			touch $CACHE
-			chown -R root.nogroup $CACHEDIR
-		fi
-		cat > $CACHEDIR/pdnsd.conf <<-EOF
-			global {
-			  perm_cache=1024;
-			  cache_dir="/var/pdnsd";
-			  run_as="root";
-			  server_ip = 127.0.0.1;
-			  server_port=7913;
-			  status_ctl = on;
-			  query_method=tcp_only;
-			  min_ttl=1d;
-			  max_ttl=1w;
-			  timeout=10;
-			  tcp_qtimeout=1;
-			  par_queries=2;
-			  neg_domain_pol=on;
-			  udpbufsize=1024;
-			}
-			server {
-			  label = "opendns";
-			  ip = 208.67.222.222, 208.67.220.220;
-			  edns_query=on;
-			  port = 5353;
-			  timeout = 4;
-			  interval=60;
-			  uptest = none;
-			  purge_cache=off;
-			  caching=on;
-			}
-			source {
-			  ttl=86400;
-			  owner="localhost.";
-			  serve_aliases=on;
-			  file="/etc/hosts";
-			}
-		EOF
-	$pdnsd_bin --daemon -c $CACHEDIR/pdnsd.conf -p $RUN_PID_PATH/pdnsd.pid -d
+gen_pdnsd_config() {
+	CACHEDIR=/var/pdnsd
+	CACHE=$CACHEDIR/pdnsd.cache
+	if ! test -f "$CACHE"; then
+		mkdir -p `dirname $CACHE`
+		touch $CACHE
+		chown -R root.nogroup $CACHEDIR
 	fi
+	cat > $CACHEDIR/pdnsd.conf <<-EOF
+	global {
+		perm_cache=1024;
+		cache_dir="/var/pdnsd";
+		run_as="root";
+		server_ip = 127.0.0.1;
+		server_port=7913;
+		status_ctl = on;
+		query_method=tcp_only;
+		min_ttl=1d;
+		max_ttl=1w;
+		timeout=10;
+		tcp_qtimeout=1;
+		par_queries=2;
+		neg_domain_pol=on;
+		udpbufsize=1024;
+		}
+	server {
+		label = "opendns";
+		ip = 208.67.222.222, 208.67.220.220;
+		edns_query=on;
+		port = 5353;
+		timeout = 4;
+		interval=60;
+		uptest = none;
+		purge_cache=off;
+		caching=on;
+		}
+	source {
+		ttl=86400;
+		owner="localhost.";
+		serve_aliases=on;
+		file="/etc/hosts";
+		}
+EOF
 }
 
 stop_dnsmasq() {
@@ -1012,7 +916,7 @@ gen_lbsscfg(){
 					[ "$failcount" -ge 10 ] && exit 0
 					sleep 1m
 				else
-					route add -net ${bips} netmask 255.255.255.255 ${exports}
+					route add -host ${bips} dev ${exports}
 					echolog "添加SS出口路由表：$exports" 
 					echo "$bips" >> /tmp/balancing_ip
 					break
@@ -1044,15 +948,13 @@ start_sslb(){
 	lbenabled=$(config_t_get global_haproxy balancing_enable 0)
 	if [ "$lbenabled" = "1" ];then
 		haproxy_bin=$(find_bin haproxy)
-		if [ -z "$haproxy_bin" ]; then
-			echolog "找不到haproxy主程序，无法启用！！！" 
-		else
+		[ -n "$haproxy_bin" ] && {
 			gen_basecfg
 			gen_lbsscfg
 			gen_lbadmincfg
 			nohup $haproxy_bin -f $lb_FILE 2>&1 &
 			echolog "负载均衡服务运行成功！" 
-		fi
+		}
 	else
 		echolog "负载均衡服务未启用！"     
 	fi
@@ -1072,7 +974,7 @@ add_vps_port() {
 				[ "$failcount" -ge 10 ] && exit 0
 				sleep 1m
 			else
-				route add -net ${server_ip} netmask 255.255.255.255 ${multiwan}
+				route add -host ${server_ip} dev ${multiwan}
 				echolog "添加SS出口路由表：$multiwan" 
 				echo "$server_ip" > /tmp/ss_ip
 				break
@@ -1084,7 +986,7 @@ add_vps_port() {
 del_vps_port() {
 	ssip=$(cat /tmp/ss_ip 2> /dev/null)
 	if [ ! -z "$ssip" ]; then
-		route del -net ${ssip} netmask 255.255.255.255
+		route del -host ${ssip}
 		echolog "删除SS出口路由表：$multiwan" 
 		rm /tmp/ss_ip
 	fi
@@ -1554,6 +1456,9 @@ stop() {
 	rm -rf $CONFIG_TCP_FILE
 	rm -rf $CONFIG_UDP_FILE
 	rm -rf $CONFIG_SOCKS5_FILE
+	rm -rf /var/log/v2ray_tcp.log
+	rm -rf /var/log/v2ray_udp.log
+	rm -rf /var/log/v2ray_socks5.log
 	stop_dnsmasq
 	stop_cru
 	auto_stop

@@ -64,7 +64,7 @@ e.rmempty=false
 e=t:option(ListValue,"export",translate("Export Of Multi WAN"))
 e:value(0,translate("None specify"))
 for _, iface in ipairs(ifaces) do
-	if (iface:match("^br*") or iface:match("^eth*") or iface:match("^pppoe*") or iface:match("wlan*")) then
+	if (iface:match("^pppoe*")) then
 		local nets = net:get_interface(iface)
 		nets = nets and nets:get_networks() or {}
 		for k, v in pairs(nets) do
