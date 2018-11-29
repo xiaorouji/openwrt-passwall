@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
 PKG_VERSION:=2.0
-PKG_RELEASE:=9-20181129
+PKG_RELEASE:=10-20181129
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PO2LMO:=$(BUILD_DIR)/luci-base/po2lmo
@@ -19,12 +19,20 @@ menu "Configuration"
 	depends on PACKAGE_$(PKG_NAME)
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks
-	bool "Include Shadowsocks"
+	bool "Include Shadowsocks Redir (ss-redir)"
 	default n
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR
-	bool "Include ShadowsocksR"
+	bool "Include ShadowsocksR Redir (ssr-redir)"
 	default y
+
+config PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_socks
+	bool "Include Shadowsocks Socks (ss-local)"
+	default n
+	
+config PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_socks
+	bool "Include ShadowsocksR Socks (ssr-local)"
+	default n
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_V2ray
 	bool "Include V2ray"
@@ -52,14 +60,18 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_pdnsd
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_cdns
 	bool "Include cdns"
-	default n
-
-config PACKAGE_$(PKG_NAME)_INCLUDE_Pcap_dnsproxy
-	bool "Include pcap-dnsproxy"
+	default y
+	
+config PACKAGE_$(PKG_NAME)_INCLUDE_dns2socks
+	bool "Include dns2socks"
 	default n
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_dns-forwarder
 	bool "Include dns-forwarder"
+	default n
+
+config PACKAGE_$(PKG_NAME)_INCLUDE_Pcap_dnsproxy
+	bool "Include pcap-dnsproxy"
 	default n
 
 endmenu
@@ -72,10 +84,10 @@ define Package/$(PKG_NAME)
   PKGARCH:=all
   DEPENDS:=+curl +libcurl +libmbedtls +ca-bundle +ca-certificates +resolveip +iptables-mod-tproxy +kmod-ipt-tproxy +iptables-mod-ipopt +kmod-ipt-ipopt +ip +ipset-lists +coreutils +coreutils-base64 +coreutils-nohup \
   +dnsmasq-full \
-  +PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks:shadowsocks-libev-ss-local \
   +PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks:shadowsocks-libev-ss-redir \
   +PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR:shadowsocksr-libev-alt \
-  +PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR:shadowsocksr-libev-ssr-local \
+  +PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_socks:shadowsocks-libev-ss-local \
+  +PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_socks:shadowsocksr-libev-ssr-local \
   +PACKAGE_$(PKG_NAME)_INCLUDE_V2ray:v2ray \
   +PACKAGE_$(PKG_NAME)_INCLUDE_Brook:brook \
   +PACKAGE_$(PKG_NAME)_INCLUDE_kcptun:kcptun \
@@ -83,6 +95,7 @@ define Package/$(PKG_NAME)
   +PACKAGE_$(PKG_NAME)_INCLUDE_ChinaDNS:ChinaDNS \
   +PACKAGE_$(PKG_NAME)_INCLUDE_pdnsd:pdnsd-alt \
   +PACKAGE_$(PKG_NAME)_INCLUDE_cdns:cdns \
+  +PACKAGE_$(PKG_NAME)_INCLUDE_dns2socks:dns2socks \
   +PACKAGE_$(PKG_NAME)_INCLUDE_dns-forwarder:dns-forwarder \
   +PACKAGE_$(PKG_NAME)_INCLUDE_Pcap_dnsproxy:pcap-dnsproxy
 endef
@@ -104,10 +117,8 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_CONF) ./root/etc/config/passwall $(1)/etc/config/passwall
 	$(INSTALL_CONF) ./root/etc/uci-defaults/* $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./root/etc/init.d/passwall $(1)/etc/init.d/passwall
-	
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci
 	cp -pR ./luasrc/* $(1)/usr/lib/lua/luci/
-	
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/i18n
 	$(PO2LMO) ./po/zh-cn/passwall.po $(1)/usr/lib/lua/luci/i18n/passwall.zh-cn.lmo
 	cp -pR ./root/usr/share/passwall/* $(1)/usr/share/passwall
