@@ -181,6 +181,9 @@ SOCKS5_PROXY_SERVER="nil"
 	UDP_REDIR_SERVER=$(config_t_get global udp_redir_server nil)
 	[ "$UDP_REDIR_SERVER" == "default" ] && UDP_REDIR_SERVER=$TCP_REDIR_SERVER
 }
+TCP_REDIR_SERVER_PORT=""
+UDP_REDIR_SERVER_PORT=""
+SOCKS5_PROXY_SERVER_PORT=""
 TCP_REDIR_SERVER_TYPE=""
 UDP_REDIR_SERVER_TYPE=""
 SOCKS5_PROXY_SERVER_TYPE=""
@@ -276,12 +279,13 @@ gen_ss_ssr_config_file() {
 }
 
 gen_config_file() {
-	local server_host server_ip server_type use_ipv6 network_type
+	local server_host server_ip server_port server_type use_ipv6 network_type
 	server_host=$(config_get $1 server)
 	use_ipv6=$(config_get $1 use_ipv6)
 	network_type="ipv4"
 	[ "$use_ipv6" == "1" ] && network_type="ipv6"
 	server_ip=$(get_host_ip $network_type $server_host)
+	server_port=$(config_get $1 server_port)
 	server_type=`echo $(config_get $1 server_type) | tr 'A-Z' 'a-z'`
 	echolog "$2服务器IP地址:$server_ip"
 	
@@ -291,6 +295,7 @@ gen_config_file() {
 		else
 			SOCKS5_PROXY_SERVER_IP=$server_ip
 		fi
+		SOCKS5_PROXY_SERVER_PORT=$server_port
 		if [ "$server_type" == "ss" -o "$server_type" == "ssr" ]; then
 			gen_ss_ssr_config_file $server_type $SOCKS5_PROXY_PORT 0 $SOCKS5_PROXY_SERVER $CONFIG_SOCKS5_FILE
 		fi
@@ -298,7 +303,7 @@ gen_config_file() {
 			lua $SS_PATH/genv2rayconfig.lua $SOCKS5_PROXY_SERVER nil nil $SOCKS5_PROXY_PORT > $CONFIG_SOCKS5_FILE
 		fi
 		if [ "$server_type" == "brook" ]; then
-			brook_socks5_cmd="client -l 0.0.0.0:$SOCKS5_PROXY_PORT -i 0.0.0.0 -s $server_ip:$(config_get $SOCKS5_PROXY_SERVER server_port) -p $(config_get $SOCKS5_PROXY_SERVER password)"
+			brook_socks5_cmd="client -l 0.0.0.0:$SOCKS5_PROXY_PORT -i 0.0.0.0 -s $server_ip:$server_port -p $(config_get $SOCKS5_PROXY_SERVER password)"
 		fi
 	fi
 	
@@ -308,6 +313,7 @@ gen_config_file() {
 		else
 			UDP_REDIR_SERVER_IP=$server_ip
 		fi
+		UDP_REDIR_SERVER_PORT=$server_port
 		if [ "$server_type" == "ss" -o "$server_type" == "ssr" ]; then
 			gen_ss_ssr_config_file $server_type $UDP_REDIR_PORT 0 $UDP_REDIR_SERVER $CONFIG_UDP_FILE
 		fi
@@ -315,7 +321,7 @@ gen_config_file() {
 			lua $SS_PATH/genv2rayconfig.lua $UDP_REDIR_SERVER udp $UDP_REDIR_PORT nil > $CONFIG_UDP_FILE
 		fi
 		if [ "$server_type" == "brook" ]; then
-			brook_udp_cmd="tproxy -l 0.0.0.0:$UDP_REDIR_PORT -s $server_ip:$(config_get $UDP_REDIR_SERVER server_port) -p $(config_get $UDP_REDIR_SERVER password)"
+			brook_udp_cmd="tproxy -l 0.0.0.0:$UDP_REDIR_PORT -s $server_ip:$server_port -p $(config_get $UDP_REDIR_SERVER password)"
 		fi
 	fi
 	
@@ -325,6 +331,7 @@ gen_config_file() {
 		else
 			TCP_REDIR_SERVER_IP=$server_ip
 		fi
+		TCP_REDIR_SERVER_PORT=$server_port
 		if [ "$server_type" == "v2ray" ]; then
 			lua $SS_PATH/genv2rayconfig.lua $TCP_REDIR_SERVER tcp $TCP_REDIR_PORT nil > $CONFIG_TCP_FILE
 		else
@@ -377,7 +384,7 @@ gen_config_file() {
 					gen_ss_ssr_config_file $server_type $TCP_REDIR_PORT 0 $TCP_REDIR_SERVER $CONFIG_TCP_FILE
 				fi
 				if [ "$server_type" == "brook" ]; then
-					brook_tcp_cmd="tproxy -l 0.0.0.0:$TCP_REDIR_PORT -s $server_ip:$(config_get $TCP_REDIR_SERVER server_port) -p $(config_get $TCP_REDIR_SERVER password)"
+					brook_tcp_cmd="tproxy -l 0.0.0.0:$TCP_REDIR_PORT -s $server_ip:$server_port -p $(config_get $TCP_REDIR_SERVER password)"
 				fi
 			fi
 		fi
@@ -1085,11 +1092,6 @@ EOF
 	[ -n "$lan_ipv4" ] && {
 		ipset add $IPSET_LANIPLIST $lan_ipv4
 	}
-	[ "$use_ipv6" != "1" ] && {
-		[ -n "$TCP_REDIR_SERVER_IP" ] && ipset add $IPSET_LANIPLIST $TCP_REDIR_SERVER_IP
-		[ -n "$UDP_REDIR_SERVER_IP" ] && ipset add $IPSET_LANIPLIST $UDP_REDIR_SERVER_IP
-		[ -n "$SOCKS5_PROXY_SERVER_IP" ] && ipset add $IPSET_LANIPLIST $SOCKS5_PROXY_SERVER_IP
-	}
 	
 	$iptables_mangle -N SS
 	$iptables_mangle -A SS -m set --match-set $IPSET_LANIPLIST dst -j RETURN
@@ -1105,6 +1107,8 @@ EOF
 	
 	#	生成TCP转发规则
 	if [ "$TCP_REDIR_SERVER" != "nil" ];then
+		[ -n "$SOCKS5_PROXY_SERVER_IP" -a -n "$SOCKS5_PROXY_SERVER_PORT" ] && $iptables_mangle -A SS -p tcp -d $SOCKS5_PROXY_SERVER_IP -m multiport --dports $SOCKS5_PROXY_SERVER_PORT -j RETURN
+		[ -n "$TCP_REDIR_SERVER_IP" -a -n "$TCP_REDIR_SERVER_PORT" ] && $iptables_mangle -A SS -p tcp -d $TCP_REDIR_SERVER_IP -m multiport --dports $TCP_REDIR_SERVER_PORT -j RETURN
 		if [ "$TCP_REDIR_SERVER_TYPE" == "brook" ]; then
 			$iptables_mangle -A PREROUTING -p tcp -m socket -j MARK --set-mark 1
 			$iptables_mangle -A PREROUTING -p tcp -j SS
@@ -1136,7 +1140,6 @@ EOF
 			}
 		else
 			$iptables_mangle -A PREROUTING -j SS
-			#$iptables_mangle -A SS -p tcp -d $server_ip -m multiport --dports 22 -j TTL --ttl-set 188
 			$iptables_mangle -A SS -p tcp -m set --match-set $IPSET_BLACKLIST dst -j TTL --ttl-set 188
 			#	全局模式
 			$iptables_mangle -A SS_GLO -p tcp -j TTL --ttl-set 188
@@ -1205,6 +1208,7 @@ EOF
 		
 	#  生成UDP转发规则
 	if [ "$UDP_REDIR_SERVER" != "nil" ];then
+		[ -n "$UDP_REDIR_SERVER_IP" -a -n "$UDP_REDIR_SERVER_PORT" ] && $iptables_mangle -A SS -p udp -d $UDP_REDIR_SERVER_IP -m multiport --dports $UDP_REDIR_SERVER_PORT -j RETURN
 		if [ "$UDP_REDIR_SERVER_TYPE" == "brook" ]; then
 			$iptables_mangle -A PREROUTING -p udp -m socket -j MARK --set-mark 1
 			$iptables_mangle -A PREROUTING -p udp -j SS
@@ -1238,8 +1242,13 @@ EOF
 		config_foreach load_acl acl_rule
 		
 	#  加载默认代理模式
-		$iptables_mangle -A SS -p tcp -m multiport --dport $TCP_REDIR_PORTS -j $(get_action_chain $PROXY_MODE)
-		$iptables_mangle -A SS -p udp -m multiport --dport $UDP_REDIR_PORTS -j $(get_action_chain $PROXY_MODE)
+		if [ "$PROXY_MODE" == "disable" ];then
+			$iptables_mangle -A SS -p tcp -j $(get_action_chain $PROXY_MODE)
+			$iptables_mangle -A SS -p udp -j $(get_action_chain $PROXY_MODE)
+		else
+			$iptables_mangle -A SS -p tcp -m multiport --dport $TCP_REDIR_PORTS -j $(get_action_chain $PROXY_MODE)
+			$iptables_mangle -A SS -p udp -m multiport --dport $UDP_REDIR_PORTS -j $(get_action_chain $PROXY_MODE)
+		fi
 	
 	if [ "$PROXY_IPV6" == "1" ];then
 		lan_ipv6=`ip address show br-lan | grep -w "inet6" |awk '{print $2}'`  #当前LAN IPv6段

@@ -45,7 +45,7 @@ end
 function t.remove(t,a)
 	t.map.proceed=true
 	t.map:del(a)
-	luci.http.redirect(o.build_url("admin","vpn","passwall"))
+	luci.http.redirect(o.build_url("admin","vpn","passwall","server_list"))
 end
 
 e=t:option(DummyValue,"remarks",translate("Node Remarks"))
