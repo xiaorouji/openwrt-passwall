@@ -14,3 +14,9 @@ start() {
 stop() {
 	/usr/share/passwall/app.sh stop
 }
+
+restart() {
+	stop
+	sleep 3
+	start
+}

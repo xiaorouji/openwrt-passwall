@@ -4,12 +4,13 @@
 . $IPKG_INSTROOT/lib/functions/service.sh
 
 CONFIG=passwall
-CONFIG_TCP_FILE=/var/etc/${CONFIG}_TCP.json
-CONFIG_UDP_FILE=/var/etc/${CONFIG}_UDP.json
-CONFIG_SOCKS5_FILE=/var/etc/${CONFIG}_SOCKS5.json
-LOCK_FILE=/var/lock/$CONFIG.lock
-lb_FILE=/var/etc/haproxy.cfg
-RUN_PID_PATH=/var/run/$CONFIG
+CONFIG_PATH=/var/etc/$CONFIG
+RUN_PID_PATH=$CONFIG_PATH/pid
+HAPROXY_FILE=$CONFIG_PATH/haproxy.cfg
+CONFIG_TCP_FILE=$CONFIG_PATH/TCP.json
+CONFIG_UDP_FILE=$CONFIG_PATH/UDP.json
+CONFIG_SOCKS5_FILE=$CONFIG_PATH/SOCKS5.json
+LOCK_FILE=$CONFIG_PATH/$CONFIG.lock
 LOG_FILE=/var/log/$CONFIG.log
 SS_PATH=/usr/share/$CONFIG
 SS_PATH_RULE=$SS_PATH/rule
@@ -17,7 +18,6 @@ SS_PATH_DNSMASQ=$SS_PATH/dnsmasq.d
 TMP_DNSMASQ_PATH=/var/dnsmasq.d
 DNSMASQ_PATH=/etc/dnsmasq.d
 lanip=$(uci get network.lan.ipaddr)
-ip_prefix_hex=$(echo $lanip | awk -F "." '{printf ("0x%02x", $1)} {printf ("%02x", $2)} {printf ("%02x", $3)} {printf ("00/0xffffff00")}')
 Date=$(date "+%Y-%m-%d %H:%M:%S")
 IPSET_LANIPLIST="laniplist"
 IPSET_ROUTER="router"	
@@ -219,21 +219,22 @@ load_config() {
 	SOCKS5_PROXY_PORT=$(config_t_get global_proxy socks5_proxy_port 1033)
 	KCPTUN_REDIR_PORT=$(config_t_get global_proxy kcptun_port 11183)
 	PROXY_IPV6=$(config_t_get global_proxy proxy_ipv6 0)
+	mkdir -p /var/etc $CONFIG_PATH $RUN_PID_PATH
 	config_load $CONFIG
 	[ "$TCP_REDIR_SERVER" != "nil" ] && {
 		TCP_REDIR_SERVER_TYPE=`echo $(config_get $TCP_REDIR_SERVER server_type) | tr 'A-Z' 'a-z'`
 		gen_config_file $TCP_REDIR_SERVER TCP
-		echo "$TCP_REDIR_SERVER" > /var/etc/passwall_current_tcp_server
+		echo "$TCP_REDIR_SERVER" > $CONFIG_PATH/tcp_server_id
 	}
 	[ "$UDP_REDIR_SERVER" != "nil" ] && {
 		UDP_REDIR_SERVER_TYPE=`echo $(config_get $UDP_REDIR_SERVER server_type) | tr 'A-Z' 'a-z'`
 		gen_config_file $UDP_REDIR_SERVER UDP
-		echo "$UDP_REDIR_SERVER" > /var/etc/passwall_current_udp_server
+		echo "$UDP_REDIR_SERVER" > $CONFIG_PATH/udp_server_id
 	}
 	[ "$SOCKS5_PROXY_SERVER" != "nil" ] && {
 		SOCKS5_PROXY_SERVER_TYPE=`echo $(config_get $SOCKS5_PROXY_SERVER server_type) | tr 'A-Z' 'a-z'`
 		gen_config_file $SOCKS5_PROXY_SERVER Socks5
-		echo "$SOCKS5_PROXY_SERVER" > /var/etc/passwall_current_socks5_server
+		echo "$SOCKS5_PROXY_SERVER" > $CONFIG_PATH/socks5_server_id
 	}
 	return 0
 }
@@ -349,11 +350,13 @@ gen_config_file() {
 				echolog "【检测到启用KCP，但KCP与负载均衡二者不能同时开启】，跳过~"
 			fi
 			
-			if [ -f "$(config_t_get global_kcptun kcptun_client_file)" ];then
-				kcptun_path=$(config_t_get global_kcptun kcptun_client_file)
-			else
-				temp=$(find_bin kcptun_client)
-				[ -n "$temp" ] && kcptun_path=$temp
+			if [ "$kcptun_use" == "1" ];then
+				if [ -f "$(config_t_get global_kcptun kcptun_client_file)" ];then
+					kcptun_path=$(config_t_get global_kcptun kcptun_client_file)
+				else
+					temp=$(find_bin kcptun_client)
+					[ -n "$temp" ] && kcptun_path=$temp
+				fi
 			fi
 			
 			if [ "$kcptun_use" == "1" -a -z "$kcptun_path" ] && ([ -n "$kcptun_port" ] || [ -n "$kcptun_config" ]);then
@@ -406,7 +409,7 @@ start_tcp_redir() {
 		echolog "运行TCP透明代理..."
 		if [ "$TCP_REDIR_SERVER_TYPE" == "v2ray" ]; then
 			v2ray_bin=$(find_bin V2ray)
-			[ -n "$v2ray_bin" ] && $v2ray_bin -config=$CONFIG_TCP_FILE > /var/log/v2ray_tcp.log &
+			[ -n "$v2ray_bin" ] && $v2ray_bin -config=$CONFIG_TCP_FILE > /dev/null &
 		elif [ "$TCP_REDIR_SERVER_TYPE" == "brook" ]; then
 			brook_bin=$(find_bin Brook)
 			[ -n "$brook_bin" ] && $brook_bin $brook_tcp_cmd &>/dev/null &
@@ -422,7 +425,7 @@ start_udp_redir() {
 		echolog "运行UDP透明代理..." 
 		if [ "$UDP_REDIR_SERVER_TYPE" == "v2ray" ]; then
 			v2ray_bin=$(find_bin V2ray)
-			[ -n "$v2ray_bin" ] && $v2ray_bin -config=$CONFIG_UDP_FILE > /var/log/v2ray_udp.log &
+			[ -n "$v2ray_bin" ] && $v2ray_bin -config=$CONFIG_UDP_FILE > /dev/null &
 		elif [ "$UDP_REDIR_SERVER_TYPE" == "brook" ]; then
 			brook_bin=$(find_bin brook)
 			[ -n "$brook_bin" ] && $brook_bin $brook_udp_cmd &>/dev/null &
@@ -438,7 +441,7 @@ start_socks5_proxy() {
 		echolog "运行Socks5代理..."
 		if [ "$SOCKS5_PROXY_SERVER_TYPE" == "v2ray" ]; then
 			v2ray_bin=$(find_bin v2ray)
-			[ -n "$v2ray_bin" ] && $v2ray_bin -config=$CONFIG_SOCKS5_FILE > /var/log/v2ray_socks5.log &
+			[ -n "$v2ray_bin" ] && $v2ray_bin -config=$CONFIG_SOCKS5_FILE > /dev/null &
 		elif [ "$SOCKS5_PROXY_SERVER_TYPE" == "brook" ]; then
 			brook_bin=$(find_bin brook)
 			[ -n "$brook_bin" ] && $$brook_bin $brook_socks5_cmd &>/dev/null &
@@ -457,11 +460,8 @@ clean_log() {
 	fi
 }
 
-stop_cru() {
+stop_auto_update() {
 	sed -i "/$CONFIG/d" /etc/crontabs/root >/dev/null 2>&1 &
-	#sed -i "/reconnection.sh/d" /etc/crontabs/root >/dev/null 2>&1 &
-	#sed -i "/ssruleupdate.sh/d" /etc/crontabs/root >/dev/null 2>&1 &
-	#sed -i "/onlineconfig.sh/d" /etc/crontabs/root >/dev/null 2>&1 &
 	echolog "清理自动更新规则。" 
 }
 
@@ -497,7 +497,7 @@ set_cru() {
 	fi
 }
 
-auto_stop() {
+stop_auto_switch() {
 	auto_on=$(config_t_get global_delay auto_on)
 	if [ "$auto_on" = "0" ];then
 		sed -i '/$CONFIG stop/d' /etc/crontabs/root >/dev/null 2>&1 &
@@ -512,7 +512,7 @@ auto_stop() {
 	echolog "清理定时自动开关设置。" 
 }
 
-auto_start() {
+start_auto_switch() {
 	auto_on=$(config_t_get global_delay auto_on)
 	sed -i '/$CONFIG/d' /etc/crontabs/root >/dev/null 2>&1 &
 	if [ "$auto_on" = "1" ];then
@@ -561,9 +561,9 @@ start_dns() {
 			}
 		;;
 		Pcap_DNSProxy)
-			pcapDnsproxy_bin=$(find_bin Pcap_DNSProxy)
-			[ -n "$pcapDnsproxy_bin" ] && {
-				nohup $pcapDnsproxy_bin -c /etc/pcap-dnsproxy >/dev/null 2>&1 &
+			Pcap_DNSProxy_bin=$(find_bin Pcap_DNSProxy)
+			[ -n "$Pcap_DNSProxy_bin" ] && {
+				nohup $Pcap_DNSProxy_bin -c /etc/pcap-dnsproxy >/dev/null 2>&1 &
 				echolog "运行DNS转发方案：Pcap_DNSProxy..."
 			}
 		;;
@@ -571,7 +571,7 @@ start_dns() {
 			pdnsd_bin=$(find_bin pdnsd)
 			[ -n "$pdnsd_bin" ] && {
 				gen_pdnsd_config
-				nohup $pdnsd_bin --daemon -c $CACHEDIR/pdnsd.conf -p $RUN_PID_PATH/pdnsd.pid -d
+				nohup $pdnsd_bin --daemon -c $CACHEDIR/pdnsd.conf -p $RUN_PID_PATH/pdnsd.pid -d >/dev/null 2>&1 &
 				echolog "运行DNS转发方案：Pdnsd..." 
 			}
 		;;
@@ -850,9 +850,13 @@ stop_dnsmasq() {
 	fi
 }
 
-gen_basecfg(){
-	bport=$(config_t_get global_haproxy haproxy_port)
-	cat <<-EOF >$lb_FILE
+start_haproxy(){
+	enabled=$(config_t_get global_haproxy balancing_enable 0)
+	[ "$enabled" = "1" ] && {
+		haproxy_bin=$(find_bin haproxy)
+		[ -n "$haproxy_bin" ] && {
+			bport=$(config_t_get global_haproxy haproxy_port)
+			cat <<-EOF >$HAPROXY_FILE
 global
     log         127.0.0.1 local2
     chroot      /usr/bin
@@ -882,97 +886,77 @@ listen shadowsocks
     bind 0.0.0.0:$bport
     mode tcp
 EOF
-}
-
-gen_lbsscfg(){
-	echolog "负载均衡服务启动中..." 
-	for i in $(seq 0 100)
-	do
-		bips=$(config_t_get balancing lbss '' $i)
-		bports=$(config_t_get balancing lbort '' $i)
-		bweight=$(config_t_get balancing lbweight '' $i)
-		exports=$(config_t_get balancing export '' $i)
-		bbackup=$(config_t_get balancing backup '' $i)
-		if [ -z "$bips" ] || [ -z "$bports" ] ; then
-			break
-		fi
-		if [ "$bbackup" = "1" ] ; then
-			bbackup=" backup"
-			echolog "添加故障转移备服务器$bips" 
-		else
-			bbackup=""
-			echolog "添加负载均衡主服务器$bips" 
-		fi
-		
-		si=`echo $bips|grep -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}"`
-		if [ -z "$si" ];then      
-			bips=`resolveip -4 -t 2 $bips|awk 'NR==1{print}'`
-			if [ -z "$bips" ];then
-				bips=`nslookup $bips localhost | sed '1,4d' | awk '{print $3}' | grep -v :|awk 'NR==1{print}'`
-			fi
-			echolog "服务器IP为：$bips"
-		fi
-		echo "    server ss$i $bips:$bports weight $bweight check inter 1500 rise 1 fall 3 $bbackup" >> $lb_FILE
-		
-		if [ "$exports" != "0" ]; then
-			failcount=0
-			while [ "$failcount" -lt "10" ]
+			for i in $(seq 0 100)
 			do
-				interface=`ifconfig | grep "$exports" | awk '{print $1}'`
-				if [ -z "$interface" ];then
-					echolog "找不到出口接口：$exports，1分钟后再重试" 
-					let "failcount++"
-					[ "$failcount" -ge 10 ] && exit 0
-					sleep 1m
-				else
-					route add -host ${bips} dev ${exports}
-					echolog "添加SS出口路由表：$exports" 
-					echo "$bips" >> /tmp/balancing_ip
+				bips=$(config_t_get balancing lbss '' $i)
+				bports=$(config_t_get balancing lbort '' $i)
+				bweight=$(config_t_get balancing lbweight '' $i)
+				exports=$(config_t_get balancing export '' $i)
+				bbackup=$(config_t_get balancing backup '' $i)
+				if [ -z "$bips" ] || [ -z "$bports" ] ; then
 					break
 				fi
+				if [ "$bbackup" = "1" ] ; then
+					bbackup=" backup"
+					echolog "添加故障转移备服务器$bips" 
+				else
+					bbackup=""
+					echolog "添加负载均衡主服务器$bips" 
+				fi
+				si=`echo $bips|grep -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}"`
+				if [ -z "$si" ];then      
+					bips=`resolveip -4 -t 2 $bips|awk 'NR==1{print}'`
+					if [ -z "$bips" ];then
+						bips=`nslookup $bips localhost | sed '1,4d' | awk '{print $3}' | grep -v :|awk 'NR==1{print}'`
+					fi
+					echolog "服务器IP为：$bips"
+				fi
+				echo "    server ss$i $bips:$bports weight $bweight check inter 1500 rise 1 fall 3 $bbackup" >> $HAPROXY_FILE
+				if [ "$exports" != "0" ]; then
+					failcount=0
+					while [ "$failcount" -lt "10" ]
+					do
+						interface=`ifconfig | grep "$exports" | awk '{print $1}'`
+						if [ -z "$interface" ];then
+							echolog "找不到出口接口：$exports，1分钟后再重试" 
+							let "failcount++"
+							[ "$failcount" -ge 10 ] && exit 0
+							sleep 1m
+						else
+							route add -host ${bips} dev ${exports}
+							echolog "添加SS出口路由表：$exports" 
+							echo "$bips" >> /tmp/balancing_ip
+							break
+						fi
+					done
+				fi
 			done
-		fi
-	done
-}
-gen_lbadmincfg(){
-	adminstatus=$(config_t_get global_haproxy admin_enable)
-	if [ "$adminstatus" = "1" ];then
-		adminport=$(config_t_get global_haproxy admin_port)
-		adminuser=$(config_t_get global_haproxy admin_user)
-		adminpassword=$(config_t_get global_haproxy admin_password)
-	cat <<-EOF >>$lb_FILE
-listen status
-    bind 0.0.0.0:$adminport
-    mode http                   
-    stats refresh 30s
-    stats uri  /  
-    stats auth $adminuser:$adminpassword
-    #stats hide-version
-    stats admin if TRUE
-EOF
-	fi
-}
-
-start_sslb(){
-	lbenabled=$(config_t_get global_haproxy balancing_enable 0)
-	if [ "$lbenabled" = "1" ];then
-		haproxy_bin=$(find_bin haproxy)
-		[ -n "$haproxy_bin" ] && {
-			gen_basecfg
-			gen_lbsscfg
-			gen_lbadmincfg
-			nohup $haproxy_bin -f $lb_FILE 2>&1 &
+			#生成负载均衡控制台
+			adminstatus=$(config_t_get global_haproxy admin_enable)
+			if [ "$adminstatus" = "1" ];then
+				adminport=$(config_t_get global_haproxy admin_port)
+				adminuser=$(config_t_get global_haproxy admin_user)
+				adminpassword=$(config_t_get global_haproxy admin_password)
+			cat <<-EOF >>$HAPROXY_FILE
+		listen status
+			bind 0.0.0.0:$adminport
+			mode http                   
+			stats refresh 30s
+			stats uri  /  
+			stats auth $adminuser:$adminpassword
+			#stats hide-version
+			stats admin if TRUE
+		EOF
+			fi
+			nohup $haproxy_bin -f $HAPROXY_FILE 2>&1 &
 			echolog "负载均衡服务运行成功！" 
 		}
-	else
-		echolog "负载均衡服务未启用！"     
-	fi
+	}
 } 
 
 add_vps_port() {
 	multiwan=$(config_t_get global_dns wan_port 0)
-	lbenabled=$(config_t_get global_haproxy balancing_enable 0)
-	if [ "$lbenabled" == "0" ] && [ "$multiwan" != "0" ]; then
+	if [ "$multiwan" != "0" ]; then
 		failcount=0
 		while [ "$failcount" -lt "10" ]
 		do
@@ -983,9 +967,11 @@ add_vps_port() {
 				[ "$failcount" -ge 10 ] && exit 0
 				sleep 1m
 			else
-				route add -host ${server_ip} dev ${multiwan}
+				route add -host ${TCP_REDIR_SERVER_IP} dev ${multiwan}
+				route add -host ${UDP_REDIR_SERVER_IP} dev ${multiwan}
 				echolog "添加SS出口路由表：$multiwan" 
-				echo "$server_ip" > /tmp/ss_ip
+				echo "$TCP_REDIR_SERVER_IP" > $CONFIG_PATH/tcp_ip
+				echo "$UDP_REDIR_SERVER_IP" > $CONFIG_PATH/udp_ip
 				break
 			fi
 		done
@@ -993,12 +979,10 @@ add_vps_port() {
 }
 
 del_vps_port() {
-	ssip=$(cat /tmp/ss_ip 2> /dev/null)
-	if [ ! -z "$ssip" ]; then
-		route del -host ${ssip}
-		echolog "删除SS出口路由表：$multiwan" 
-		rm /tmp/ss_ip
-	fi
+	tcp_ip=$(cat $CONFIG_PATH/tcp_ip 2> /dev/null)
+	udp_ip=$(cat $CONFIG_PATH/udp_ip 2> /dev/null)
+	[ -n "$tcp_ip" ] && route del -host ${tcp_ip}
+	[ -n "$udp_ip" ] && route del -host ${udp_ip}
 }
 
 dns_hijack(){
@@ -1040,10 +1024,10 @@ load_acl(){
 	[ "$enabled" == "1" -a -n "$acl_mode" ] && {
 		if [ -n "$ipaddr" ] || [ -n "$macaddr" ]; then
 			if [ -n "$ipaddr" -a -n "$macaddr" ]; then
-				echolog "加载ACL规则：IP为$ipaddr，MAC为$macaddr，TCP代理转发端口为$tcp_redir_ports，UDP代理转发端口为$udp_redir_ports，模式为：$(get_action_chain_name $acl_mode)" 
+				echolog "访问控制：IP：$ipaddr，MAC：$macaddr，TCP代理转发端口：tcp_redir_ports，UDP代理转发端口：$udp_redir_ports，代理模式：$(get_action_chain_name $acl_mode)" 
 			else
-				[ -n "$ipaddr" ] && echolog "加载ACL规则：IP为$ipaddr，TCP代理转发端口为$tcp_redir_ports，UDP代理转发端口为$udp_redir_ports，模式为：$(get_action_chain_name $acl_mode)" 
-				[ -n "$macaddr" ] && echolog "加载ACL规则：MAC为$macaddr，TCP代理转发端口为$tcp_redir_ports，UDP代理转发端口为$udp_redir_ports，模式为：$(get_action_chain_name $acl_mode)" 
+				[ -n "$ipaddr" ] && echolog "访问控制：IP：$ipaddr，TCP代理转发端口：$tcp_redir_ports，UDP代理转发端口：$udp_redir_ports，代理模式：$(get_action_chain_name $acl_mode)" 
+				[ -n "$macaddr" ] && echolog "访问控制：MAC：$macaddr，TCP代理转发端口：$tcp_redir_ports，UDP代理转发端口：$udp_redir_ports，代理模式：$(get_action_chain_name $acl_mode)" 
 			fi
 			$iptables_mangle -A SS $(factor $ipaddr "-s") -p tcp $(factor $macaddr "-m mac --mac-source") $(factor $tcp_redir_ports "-m multiport --dport") -$(get_jump_mode $acl_mode) $(get_action_chain $acl_mode)
 			$iptables_mangle -A SS $(factor $ipaddr "-s") -p udp $(factor $macaddr "-m mac --mac-source") $(factor $udp_redir_ports "-m multiport --dport") -$(get_jump_mode $acl_mode) $(get_action_chain $acl_mode)
@@ -1062,7 +1046,7 @@ load_acl(){
 
 add_firewall_rule() {
 	echolog "开始加载防火墙规则..." 
-	echolog "默认模式：$(get_action_chain_name $PROXY_MODE)" 
+	echolog "默认代理模式：$(get_action_chain_name $PROXY_MODE)" 
 	ipset -! create $IPSET_LANIPLIST nethash && ipset flush $IPSET_LANIPLIST
 	ipset -! create $IPSET_ROUTER nethash && ipset flush $IPSET_ROUTER
 	ipset -! create $IPSET_GFW nethash && ipset flush $IPSET_GFW
@@ -1271,79 +1255,24 @@ EOF
 		$ip6tables_nat -I OUTPUT -p tcp -j SS
 		echolog "IPv6防火墙规则加载完成！" 
 	fi
-
 }
 
 del_firewall_rule() {
 	echolog "删除所有防火墙规则..." 
-
-	ipv4_nat_exist=`$iptables_nat -L PREROUTING 2>/dev/null | grep -c "SS"`
-	[ -n "$ipv4_nat_exist" ] && {
-		until [ "$ipv4_nat_exist" = 0 ]
-		do
-			rules=`$iptables_nat -L PREROUTING --line-num 2> /dev/null|grep "SS" |awk '{print $1}'`
-			for rule in $rules
-			do
-				$iptables_nat -D PREROUTING $rule 2> /dev/null
-				break
-			done
-			ipv4_nat_exist=`expr $ipv4_nat_exist - 1`
-		done
-	}
+	ipv4_chromecast_nu=`$iptables_nat -L PREROUTING 2>/dev/null | grep "dpt:53"|awk '{print $1}'`
+	[ -n "$ipv4_chromecast_nu" ] && $iptables_nat -D PREROUTING $ipv4_chromecast_nu 2>/dev/null
 	
-	ipv4_output_gfw_exist=`$iptables_nat -L OUTPUT 2>/dev/null | grep -c "$IPSET_GFW"`
-	[ -n "$ipv4_output_gfw_exist" ] && {
-		until [ "$ipv4_output_gfw_exist" = 0 ]
+	ipv4_output_exist=`$iptables_nat -L OUTPUT 2>/dev/null | grep -c -E "SS|$IPSET_GFW|$IPSET_ROUTER"`
+	[ -n "$ipv4_output_exist" ] && {
+		until [ "$ipv4_output_exist" = 0 ]
 		do
-			rules=`$iptables_nat -L OUTPUT --line-numbers | grep "$IPSET_GFW" | awk '{print $1}'`
+			rules=`$iptables_nat -L OUTPUT --line-numbers | grep -E "SS|$IPSET_GFW|$IPSET_ROUTER" | awk '{print $1}'`
 			for rule in $rules
 			do
 				$iptables_nat -D OUTPUT $rule 2> /dev/null
 				break
 			done
-			ipv4_output_gfw_exist=`expr $ipv4_output_gfw_exist - 1`
-		done
-	}
-	
-	ipv4_output_router_exist=`$iptables_nat -L OUTPUT 2>/dev/null | grep -c "$IPSET_ROUTER"`
-	[ -n "$ipv4_output_router_exist" ] && {
-		until [ "$ipv4_output_router_exist" = 0 ]
-		do
-			rules=`$iptables_nat -L OUTPUT --line-numbers | grep "$IPSET_ROUTER" | awk '{print $1}'`
-			for rule in $rules
-			do
-				$iptables_nat -D OUTPUT $rule 2> /dev/null
-				break
-			done
-			ipv4_output_router_exist=`expr $ipv4_output_router_exist - 1`
-		done
-	}
-	
-	ipv4_output_ss_exist=`$iptables_nat -L OUTPUT 2>/dev/null | grep -c "SS"`
-	[ -n "$ipv4_output_ss_exist" ] && {
-		until [ "$ipv4_output_ss_exist" = 0 ]
-		do
-			rules=`$iptables_nat -L OUTPUT --line-numbers | grep "SS" | awk '{print $1}'`
-			for rule in $rules
-			do
-				$iptables_nat -D OUTPUT $rule 2> /dev/null
-				break
-			done
-			ipv4_output_ss_exist=`expr $ipv4_output_ss_exist - 1`
-		done
-	}
-	
-	ipv6_nat_exist=`$ip6tables_nat -L PREROUTING 2>/dev/null | grep -c "SS"`
-	[ -n "$ipv6_nat_exist" ] && {
-		until [ "$ipv6_nat_exist" = 0 ]
-		do
-			rules=`$iptables_nat -L PREROUTING --line-numbers | grep "SS" | awk '{print $1}'`
-			for rule in $rules
-			do
-				$ip6tables_nat -D PREROUTING $rule 2> /dev/null
-				break
-			done
-			ipv6_nat_exist=`expr $ipv6_nat_exist - 1`
+			ipv4_output_exist=`expr $ipv4_output_exist - 1`
 		done
 	}
 	
@@ -1360,28 +1289,12 @@ del_firewall_rule() {
 			ipv6_output_ss_exist=`expr $ipv6_output_ss_exist - 1`
 		done
 	}
-	
-	ipv4_chromecast_nu=`$iptables_nat -L PREROUTING 2>/dev/null | grep "dpt:53"|awk '{print $1}'`
-	[ -n "$ipv4_chromecast_nu" ] && $iptables_nat -D PREROUTING $ipv4_chromecast_nu 2>/dev/null
-	
-	ss_nums=`$iptables_mangle -L PREROUTING 2>/dev/null | grep -c "SS"`
-	if [ -n "$ss_nums" ]; then
-		until [ "$ss_nums" = 0 ]
-		do
-			rules=`$iptables_mangle -L PREROUTING --line-num 2> /dev/null|grep "SS" |awk '{print $1}'`
-			for rule in $rules
-			do
-				$iptables_mangle -D PREROUTING $rule 2> /dev/null
-				break
-			done
-			ss_nums=`expr $ss_nums - 1`
-		done
-	fi
 	$iptables_mangle -D PREROUTING -p tcp -m socket -j MARK --set-mark 1 2>/dev/null
 	$iptables_mangle -D PREROUTING -p udp -m socket -j MARK --set-mark 1 2>/dev/null
 	$iptables_mangle -D OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_ROUTER dst -j MARK --set-mark 1 2>/dev/null
 	$iptables_mangle -D OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_GFW dst -j MARK --set-mark 1 2>/dev/null
 	
+	$iptables_nat -D PREROUTING -j SS 2> /dev/null
 	$iptables_nat -F SS 2>/dev/null && $iptables_nat -X SS 2>/dev/null
 	$iptables_mangle -D PREROUTING -j SS 2>/dev/null
 	$iptables_mangle -F SS 2>/dev/null && $iptables_mangle -X SS 2>/dev/null
@@ -1390,7 +1303,6 @@ del_firewall_rule() {
 	$iptables_mangle -F SS_CHN 2>/dev/null && $iptables_mangle -X SS_CHN 2>/dev/null
 	$iptables_mangle -F SS_GAME 2>/dev/null && $iptables_mangle -X SS_GAME 2>/dev/null
 	$iptables_mangle -F SS_HOME 2>/dev/null && $iptables_mangle -X SS_HOME 2>/dev/null
-	#for temp in $(seq 1 $($iptables_mangle -L PREROUTING | grep -c SS)) do $iptables_mangle -D PREROUTING -p udp -j SS >/dev/null; done
 	
 	$ip6tables_nat -D PREROUTING -j SS 2>/dev/null
 	$ip6tables_nat -F SS 2>/dev/null && $ip6tables_nat -X SS 2>/dev/null
@@ -1430,11 +1342,10 @@ start() {
 	echolog "开始运行脚本！" 
 	! load_config && return 1
 	add_vps_port
-	start_sslb
+	start_haproxy
 	#防止并发开启服务
 	[ -f "$LOCK_FILE" ] && return 3
 	touch "$LOCK_FILE"
-	mkdir -p $RUN_PID_PATH /var/etc
 	start_tcp_redir
 	start_udp_redir
 	start_socks5_proxy
@@ -1443,7 +1354,7 @@ start() {
 	add_firewall_rule
 	dns_hijack
 	/etc/init.d/dnsmasq restart >/dev/null 2>&1
-	auto_start
+	start_auto_switch
 	set_cru
 	rm -f "$LOCK_FILE"
 	echolog "运行完成！" 
@@ -1457,22 +1368,18 @@ stop() {
 	clean_log
 	del_firewall_rule
 	del_vps_port
-	ipset -F $IPSET_ROUTER >/dev/null 2>&1 &
-	ipset -X $IPSET_ROUTER >/dev/null 2>&1 &
-	ipset -F $IPSET_GFW >/dev/null 2>&1 &
-	ipset -X $IPSET_GFW >/dev/null 2>&1 &		
+	ipset -F $IPSET_ROUTER >/dev/null 2>&1 && ipset -X $IPSET_ROUTER >/dev/null 2>&1
+	ipset -F $IPSET_GFW >/dev/null 2>&1 && ipset -X $IPSET_GFW >/dev/null 2>&1
+	#ipset -F $IPSET_CHN >/dev/null 2>&1 && ipset -X $IPSET_CHN >/dev/null 2>&1
+	ipset -F $IPSET_BLACKLIST >/dev/null 2>&1 && ipset -X $IPSET_BLACKLIST >/dev/null 2>&1
+	ipset -F $IPSET_WHITELIST >/dev/null 2>&1 && ipset -X $IPSET_WHITELIST >/dev/null 2>&1
+	ipset -F $IPSET_LANIPLIST >/dev/null 2>&1 && ipset -X $IPSET_LANIPLIST >/dev/null 2>&1
 	kill_all pdnsd cdns Pcap_DNSProxy ss-redir ss-local ssr-redir ssr-local v2ray v2ctl brook dns2socks kcptun_client haproxy dns-forwarder chinadns dnsproxy redsocks2
 	rm -rf /var/pdnsd/pdnsd.cache
-	rm -rf $RUN_PID_PATH
-	rm -rf $CONFIG_TCP_FILE
-	rm -rf $CONFIG_UDP_FILE
-	rm -rf $CONFIG_SOCKS5_FILE
-	rm -rf /var/log/v2ray_tcp.log
-	rm -rf /var/log/v2ray_udp.log
-	rm -rf /var/log/v2ray_socks5.log
+	rm -rf $CONFIG_PATH
 	stop_dnsmasq
-	stop_cru
-	auto_stop
+	stop_auto_update
+	stop_auto_switch
 	echolog "关闭相关服务，清理相关文件和缓存完成。\n"
 	sleep 1s
 }
