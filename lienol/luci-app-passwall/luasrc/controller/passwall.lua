@@ -1,7 +1,7 @@
 module("luci.controller.passwall",package.seeall)
 local appname = "passwall"
 local http = require "luci.http"
-local kcp  = require "luci.model.cbi.passwall.kcptun"
+local kcptun  = require "luci.model.cbi.passwall.kcptun"
 
 function index()
 	if not nixio.fs.access("/etc/config/passwall") then
@@ -82,26 +82,43 @@ function act_ping()
 end
 
 function check_port()
-	local set = ""
 	local retstring = "<br /><br />"
+	retstring = retstring.."<font color='red'>暂时不支持UDP检测</font><br />"
 	local s
 	local server_name = ""
 	local uci = luci.model.uci.cursor()
 
 	uci:foreach("passwall", "servers", function(s)
-		if s.server_type and s.server and s.server_port and s.remarks then
-			server_name = "%s：[%s] %s:%s"%{s.server_type , s.remarks , s.server , s.server_port}
-		end
-		socket = nixio.socket("inet", "stream")
-		socket:setopt("socket", "rcvtimeo", 3)
-		socket:setopt("socket", "sndtimeo", 3)
-		ret=socket:connect(s.server,s.server_port)
-		if tostring(ret) == "true" then
-			socket:close()
-			retstring = retstring .. "<font color='green'>" .. server_name .. "   OK.</font><br />"
+		local ret=""
+		local tcp_socket
+		local udp_socket
+		if (s.use_kcp and s.use_kcp == "1" and s.kcp_port) or (s.v2ray_transport and s.v2ray_transport == "mkcp" and s.server_port) then
+			--[[local port = (s.use_kcp == "1" and s.kcp_port) and s.kcp_port or (s.v2ray_transport == "mkcp" and s.server_port) and s.server_port or nil
+			if port then
+				udp_socket = nixio.socket("inet", "dgram")
+				udp_socket:setopt("socket", "rcvtimeo", 3)
+				udp_socket:setopt("socket", "sndtimeo", 3)
+				udp_socket:sendto("test", s.server, port)
+				r,c,d=udp_socket:recvfrom(10)
+				ret=""
+			end--]]
 		else
-			retstring = retstring .. "<font color='red'>" .. server_name .. "   Error.</font><br />"
+			if s.server_type and s.server and s.server_port and s.remarks then
+				server_name = "%s：[%s] %s:%s"%{s.server_type , s.remarks , s.server , s.server_port}
+			end
+			tcp_socket = nixio.socket("inet", "stream")
+			tcp_socket:setopt("socket", "rcvtimeo", 3)
+			tcp_socket:setopt("socket", "sndtimeo", 3)
+			ret=tcp_socket:connect(s.server,s.server_port)
+			if tostring(ret) == "true" then
+				retstring = retstring .. "<font color='green'>" .. server_name .. "   OK.</font><br />"
+			else
+				retstring = retstring .. "<font color='red'>" .. server_name .. "   Error.</font><br />"
+			end
+			ret=""
 		end
+		if tcp_socket then tcp_socket:close() end
+		if udp_socket then udp_socket:close() end
 	end)
 	luci.http.prepare_content("application/json")
 	luci.http.write_json({ ret=retstring })
@@ -115,7 +132,7 @@ end
 function kcptun_check(type)
 	local json = nil
 	if type == "kcptun" then
-		json = kcp.check_kcptun("")
+		json = kcptun.check_kcptun("")
 	else
 		http.status(500, "Bad address")
 		return
@@ -128,11 +145,11 @@ function kcptun_update(type)
 	local json = nil
 	local task = http.formvalue("task")
 	if task == "extract" then
-		json = kcp.extract_kcptun(http.formvalue("file"), http.formvalue("subfix"))
+		json = kcptun.extract_kcptun(http.formvalue("file"), http.formvalue("subfix"))
 	elseif task == "move" then
-		json = kcp.move_kcptun(http.formvalue("file"))
+		json = kcptun.move_kcptun(http.formvalue("file"))
 	else
-		json = kcp.download_kcptun(http.formvalue("url"))
+		json = kcptun.download_kcptun(http.formvalue("url"))
 	end
 
 	http_write_json(json)
