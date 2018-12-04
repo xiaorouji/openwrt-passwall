@@ -445,14 +445,14 @@ msgstr "黑白名单"
 msgid "Whitelist Hosts"
 msgstr "域名白名单"
 
-msgid "Whitelist IP/CIDR"
-msgstr "IP/CIDR白名单"
+msgid "Whitelist IP"
+msgstr "IP白名单"
 
 msgid "Blacklist Hosts"
 msgstr "域名黑名单"
 
-msgid "Blacklist IP/CIDR"
-msgstr "IP/CIDR黑名单"
+msgid "Blacklist IP"
+msgstr "IP黑名单"
 
 msgid "router Hosts"
 msgstr "路由器本机黑名单"
