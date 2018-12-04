@@ -52,9 +52,9 @@ function server_status()
 	local udp_redir_port = luci.sys.exec("echo -n `uci get " .. appname .. ".@global_proxy[0].udp_redir_port`")
 	local dns_mode = luci.sys.exec("echo -n `uci get " .. appname .. ".@global[0].dns_mode`")
 	local e={}
-	e.tcp_redir_status=luci.sys.call("ps | grep -v grep | grep -i -E '" .. appname .. "_TCP|brook tproxy -l 0.0.0.0:" .. tcp_redir_port .. "' >/dev/null")==0
-	e.udp_redir_status=luci.sys.call("ps | grep -v grep | grep -i -E '" .. appname .. "_UDP|brook tproxy -l 0.0.0.0:" .. udp_redir_port .. "' >/dev/null")==0
-	e.socks5_proxy_status=luci.sys.call("ps | grep -v grep | grep -i -E '" .. appname .. "_SOCKS5|brook client' >/dev/null")==0
+	e.tcp_redir_status=luci.sys.call("ps | grep -v grep | grep -i -E '" .. appname .. "/TCP|brook tproxy -l 0.0.0.0:" .. tcp_redir_port .. "' >/dev/null")==0
+	e.udp_redir_status=luci.sys.call("ps | grep -v grep | grep -i -E '" .. appname .. "/UDP|brook tproxy -l 0.0.0.0:" .. udp_redir_port .. "' >/dev/null")==0
+	e.socks5_proxy_status=luci.sys.call("ps | grep -v grep | grep -i -E '" .. appname .. "/SOCKS5|brook client' >/dev/null")==0
 	e.dns_mode_status=luci.sys.call("ps | grep -v grep | grep -i "..dns_mode.." >/dev/null")==0
 	e.haproxy_status=luci.sys.call("pgrep haproxy >/dev/null")==0
 	e.kcptun_status=luci.sys.call("pgrep kcptun >/dev/null")==0
