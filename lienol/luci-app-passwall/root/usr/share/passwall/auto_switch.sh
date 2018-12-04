@@ -1,6 +1,6 @@
 #!/bin/sh
 Date=$(date "+%Y-%m-%d %H:%M:%S")
-TCP_REDIR_SERVER=`cat /var/etc/passwall_current_tcp_server`
+TCP_REDIR_SERVER=`cat /var/etc/passwall/tcp_server_id`
 failcount=1
 while [ "$failcount" -lt "6" ]
 do
