@@ -1,26 +1,23 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2018 Lienol <lienol@qq.com>
+# Copyright (C) 2018 Lienol <admin@lienol.cn>
 
 START=99
-STOP=16
+
+CONFIG="pppoe-relay"
 
 setup_service() {
-	local section="$1"
-	config_get enabled "$section" enabled
+	config_get enabled $1 enabled
 	[ "$enabled" -eq 0 ] && return 0
-	config_get server_interface "$section" server_interface
-	config_get client_interface "$section" client_interface
-	[ -n "$server_interface" ] || return 0
-	[ -n "$client_interface" ] || return 0
-	
-	is_run=$(ps | grep "/usr/sbin/pppoe-relay -S $server_interface -C $client_interface" | grep -v "grep")
-	[ -z "$is_run" ] && {
-		/usr/sbin/pppoe-relay -S $server_interface -C $client_interface
+	config_get server_interface $1 server_interface
+	config_get client_interface $1 client_interface
+	[ -n "$server_interface" -a -n "$client_interface" ] && {	
+		is_run=$(ps | grep "/usr/sbin/pppoe-relay -S $server_interface -C $client_interface" | grep -v "grep")
+		[ -z "$is_run" ] && /usr/sbin/pppoe-relay -S $server_interface -C $client_interface
 	}
 }
 
 start() {
-	config_load pppoe-relay
+	config_load $CONFIG
 	config_foreach setup_service service
 }
 

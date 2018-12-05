@@ -408,7 +408,7 @@ EOF
 EOF
 
 	config_load ipsec
-	config_foreach setup_login login
+	config_foreach setup_login users
 	
 	if [ "$vt_is_nat" -eq 1 ];then
 		if [ "$vt_export_interface" != "default" ];then
@@ -468,13 +468,10 @@ del_rule(){
 }
 
 setup_login() {
-	local section="$1"
-
-	## Code by VPN Server ##
-	config_get enabled "$section" enabled
+	config_get enabled $1 enabled
 	[ "$enabled" -eq 0 ] && return 0
-	config_get username "$section" username
-	config_get password "$section" password
+	config_get username $1 username
+	config_get password $1 password
 	[ -n "$username" ] || return 0
 	[ -n "$password" ] || return 0
 	echo "$username : XAUTH '$password'" >> /etc/ipsec.secrets

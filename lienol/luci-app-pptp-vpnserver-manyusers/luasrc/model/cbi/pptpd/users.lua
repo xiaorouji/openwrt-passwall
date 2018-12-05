@@ -1,6 +1,6 @@
 m=Map("pptpd", translate("PPTP VPN Server"))
 m.description = translate("Simple, quick and convenient PPTP VPN, universal across the platform")
-s=m:section(TypedSection,"login",translate("Users Manager"))
+s=m:section(TypedSection,"users",translate("Users Manager"))
 s.addremove=true
 s.anonymous=true
 s.template="cbi/tblsection"
