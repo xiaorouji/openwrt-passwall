@@ -30,16 +30,16 @@ start_server() {
 
 gen_config_file() {
 	config_foreach setup_users users
-	FINAL=`echo ${USERS: -1}`
-	[ "$FINAL" == "," ] && USERS=${USERS:0:${#USERS}-1}
+	FINAL=`echo $USERS | sed 's/\(.*\)\(.\)$/\2/'`
+	[ "$FINAL" == "," ] && USERS=`echo $USERS | sed 's/\(.*\)\(.\)$/\1/'`
 	
 	redirect=$(config_t_get server redirect)
 	for i in $redirect
 	do
 		REDIRECTS="$REDIRECTS\"$i\","
 	done
-	FINAL=`echo ${REDIRECTS: -1}`
-	[ "$FINAL" == "," ] && REDIRECTS=${REDIRECTS:0:${#REDIRECTS}-1}
+	FINAL=`echo $REDIRECTS | sed 's/\(.*\)\(.\)$/\2/'`
+	[ "$FINAL" == "," ] && REDIRECTS=`echo $REDIRECTS | sed 's/\(.*\)\(.\)$/\1/'`
 	cat <<-EOF >$CONFIG_FILE
 		{
 		    "server": "::",
@@ -80,6 +80,7 @@ stop() {
 	ps | grep "/usr/bin/python /usr/share/ssr/shadowsocks/server.py" | grep -v "grep" | awk '{print $1}' | xargs kill -9
 	rm -f $PID_FILE
 	rm -f $LOG_FILE
+	rm -f $CONFIG_FILE
 }
 
 restart() {
