@@ -1,70 +1,63 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2018 Lienol <lienol@qq.com>
+# Copyright (C) 2018 Lienol <admin@lienol.cn>
 
-START=90
-STOP=16
+START=99
 
 CONFIG="pppoe-server"
-CONFIG_FILE=/etc/ppp/pppoe-server-options
+CONFIG_FILE=/etc/ppp/$CONFIG-options
 CHAP_SECRETS=/var/etc/chap-secrets
-TEMP=/tmp/pppoe-server.tmp
-SERVER_NAME="pppoe-server"
+TEMP=/tmp/$CONFIG.tmp
 
-uci_get_by_type() {
+config_t_get() {
 	local index=0
-	if [ -n $4 ]; then
-		index=$4
-	fi
+	[ -n "$4" ] && index=$4
 	local ret=$(uci get $CONFIG.@$1[$index].$2 2>/dev/null)
 	echo ${ret:=$3}
 }
 
 setup_users() {
-	local section="$1"
-	config_get enabled "$section" enabled
+	config_get enabled $1 enabled
 	[ "$enabled" -eq 0 ] && return 0
-	config_get username "$section" username
-	config_get password "$section" password
-	config_get ipaddress "$section" ipaddress
-	[ -n "$username" ] || return 0
-	[ -n "$password" ] || return 0
-	echo "$username $SERVER_NAME $password $ipaddress" >> $CHAP_SECRETS
+	config_get username $1 username
+	config_get password $1 password
+	config_get ipaddress $1 ipaddress
+	[ -n "$username" -a -n "$password" ] && echo "$username $CONFIG $password $ipaddress" >> $CHAP_SECRETS
 }
 
 del_user()
 {
-	cat $CHAP_SECRETS | grep -v $SERVER_NAME > $TEMP
+	cat $CHAP_SECRETS | grep -v $CONFIG > $TEMP
 	cat $TEMP > $CHAP_SECRETS
 	rm $TEMP
 }
 
 start() {
 	config_load pppoe-server
-	enabled=$(uci_get_by_type service enabled)
+	enabled=$(config_t_get service enabled)
 	[ "$enabled" -eq 0 ]  && exit 0
 	cat <<-EOF >$CONFIG_FILE
 # PPP options for the PPPoE server
 # LIC: GPL
-name $SERVER_NAME
+name $CONFIG
 login
 require-mschap-v2
 refuse-chap
 require-pap
 lcp-echo-interval 10
 lcp-echo-failure 2
-mru $(uci_get_by_type service mru 1492)
-mtu $(uci_get_by_type service mtu 1492)
-ms-dns $(uci_get_by_type service dns1 223.5.5.5)
-ms-dns $(uci_get_by_type service dns2 119.29.29.29)
-logfile $(uci_get_by_type service log /var/log/pppoe-server.log)
+mru $(config_t_get service mru 1492)
+mtu $(config_t_get service mtu 1492)
+ms-dns $(config_t_get service dns1 223.5.5.5)
+ms-dns $(config_t_get service dns2 119.29.29.29)
+logfile $(config_t_get service log /var/log/pppoe-server.log)
 EOF
 	del_user
 	config_foreach setup_users user
 	ln -sfn $CHAP_SECRETS /etc/ppp/chap-secrets
-	local is_nat=$(uci_get_by_type service is_nat)
-	local localip=$(uci_get_by_type service localip)
+	local is_nat=$(config_t_get service is_nat)
+	local localip=$(config_t_get service localip)
 	if [ "$is_nat" -eq 1 ];then
-		local export_interface=$(uci_get_by_type service export_interface)
+		local export_interface=$(config_t_get service export_interface)
 		if [ "$export_interface" != "default" ];then
 			iptables -t nat -A POSTROUTING -s ${localip%.*}.0/24 -o ${export_interface} -m comment --comment "Rule For PPPoE Server" -j MASQUERADE
 		else
@@ -72,7 +65,7 @@ EOF
 		fi
 		iptables -A forwarding_rule -s ${localip%.*}.0/24 -m comment --comment "Rule For PPPoE Server" -j ACCEPT
 	fi
-	/usr/sbin/pppoe-server -k -I $(uci_get_by_type service client_interface) -L $(uci_get_by_type service localip) -R $(uci_get_by_type service remoteip) -N $(uci_get_by_type service count)
+	/usr/sbin/pppoe-server -k -I $(config_t_get service client_interface) -L $(config_t_get service localip) -R $(config_t_get service remoteip) -N $(config_t_get service count)
 }
 
 stop() {
@@ -84,8 +77,8 @@ stop() {
 			rules=`iptables -t nat -L POSTROUTING --line-num 2> /dev/null|grep "Rule For PPPoE Server" |awk '{print $1}'`
 			for rule in $rules
 			do
-					iptables -t nat -D POSTROUTING $rule 2> /dev/null
-					break
+				iptables -t nat -D POSTROUTING $rule 2> /dev/null
+				break
 			done
 			nums=`expr $nums - 1`
 		done
@@ -97,8 +90,8 @@ stop() {
 			rules=`iptables -L forwarding_rule --line-num 2> /dev/null|grep "Rule For PPPoE Server" |awk '{print $1}'`
 			for rule in $rules
 			do
-					iptables -D forwarding_rule $rule 2> /dev/null
-					break
+				iptables -D forwarding_rule $rule 2> /dev/null
+				break
 			done
 			nums2=`expr $nums2 - 1`
 		done

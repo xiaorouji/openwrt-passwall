@@ -1,13 +1,7 @@
 #!/bin/sh /etc/rc.common
-#
-# Copyright (C) 2018 Lienol
-#
-# This is free software, licensed under the GNU General Public License v3.
-# See /LICENSE for more information.
-#
+# Copyright (C) 2018 Lienol <admin@lienol.cn>
 
 START=99
-STOP=16
 
 CONFIG=ssr_server
 CONFIG_FILE=/var/etc/$CONFIG.json

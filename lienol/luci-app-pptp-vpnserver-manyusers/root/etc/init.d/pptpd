@@ -1,13 +1,13 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2018 Lienol <lienol@qq.com>
+# Copyright (C) 2018 Lienol <admin@lienol.cn>
 
 START=99
-STOP=16
-BIN=/usr/sbin/pptpd
+CONFIG=pptpd
+CONFIG_FILE=/var/etc/$CONFIG.conf
+BIN=/usr/sbin/$CONFIG
 DEFAULT=/etc/default/$BIN
 RUN_D=/var/run
 PID_F=$RUN_D/$BIN.pid
-CONFIG=/var/etc/pptpd.conf
 CHAP_SECRETS=/var/etc/chap-secrets
 SERVER_NAME="pptp-server"
 TEMP=/tmp/pptpd.tmp
@@ -17,44 +17,38 @@ setup_dns() {
 	echo ms-dns $1>>/etc/ppp/options.pptpd
 }
 setup_login() {
-	local section="$1"
-
-	config_get enabled "$section" enabled
+	config_get enabled $1 enabled
 	[ "$enabled" -eq 0 ] && return 0
-
-	config_get ipaddress "$section" ipaddress
+	config_get ipaddress $1 ipaddress
 	[ -n "$ipaddress" ] || local ipaddress = "*"
-
-	config_get username "$section" username
-	config_get password "$section" password
+	config_get username $1 username
+	config_get password $1 password
 	[ -n "$username" ] || return 0
 	[ -n "$password" ] || return 0
-
-	echo "$username pptp-server $password $ipaddress" >> $CHAP_SECRETS
+	echo "$username $SERVER_NAME $password $ipaddress" >> $CHAP_SECRETS
 }
 
 setup_config() {
-	local section="$1"
-	config_get enabled "$section" enabled
+	config_get enabled $1 enabled
 	[ "$enabled" -eq 0 ] && return 1
 
 	mkdir -p /var/etc
-	cp /etc/pptpd.conf $CONFIG
+	cp /etc/pptpd.conf $CONFIG_FILE
 	
-	config_get localip "$section" localip
-	config_get remoteip "$section" remoteip
-	config_get is_nat "$section" is_nat
+	config_get localip $1 localip
+	config_get remoteip $1 remoteip
+	config_get is_nat $1 is_nat
 
 	[ -z "$localip" ] && localip=$(ifconfig br-lan 2>/dev/null | grep "inet addr:" | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\."|head -1)2
 	[ -z "$localip" ] && remoteip=$(ifconfig br-lan 2>/dev/null | grep "inet addr:" | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\."|head -1)10-20
 	options="cat /etc/pptpd.conf |grep options"
-	[ -n "$localip" ] && echo "localip  $localip" >> $CONFIG
-	[ -n "$remoteip" ] && echo "remoteip  $remoteip" >> $CONFIG
-	[ -n "$options" ] && echo "option /etc/ppp/options.pptpd" >> $CONFIG
+	[ -n "$localip" ] && echo "localip  $localip" >> $CONFIG_FILE
+	[ -n "$remoteip" ] && echo "remoteip  $remoteip" >> $CONFIG_FILE
+	[ -n "$options" ] && echo "option /etc/ppp/options.pptpd" >> $CONFIG_FILE
 
 	del_rule
 	if [ "$is_nat" -eq 1 ];then
-		config_get export_interface "$section" export_interface
+		config_get export_interface $1 export_interface
 		if [ "$export_interface" != "default" ];then
 			iptables -t nat -A POSTROUTING -s ${localip%.*}.0/24 -o ${export_interface} -m comment --comment "Rule For PPTPD" -j MASQUERADE
 		else
@@ -62,19 +56,14 @@ setup_config() {
 		fi
 		iptables -A forwarding_rule -s ${localip%.*}.0/24 -m comment --comment "Rule For PPTPD" -j ACCEPT
 	fi
-	#iptables -I zone_wan_input 2 -p tcp --dport 1723 -j ACCEPT
-	#iptables -A input_rule -i ppp+ -j ACCEPT
-	#iptables -A output_rule -o ppp+ -j ACCEPT
-	#iptables -A forwarding_rule -i ppp+ -j ACCEPT
-	#iptables -A forwarding_rule -o ppp+ -j ACCEPT
-	config_get mppe "$section" mppe
+	config_get mppe $1 mppe
 	[ -n "$(cat "/etc/ppp/options.pptpd" |grep mppe)" ] && sed -i '/mppe/'d /etc/ppp/options.pptpd
 	[ -z "$(cat "/etc/ppp/options.pptpd" |grep mppe)" ] && echo "mppe required,no40,no56,stateless" >> /etc/ppp/options.pptpd
 	if [ "$mppe" -eq 0 ]; then
 		sed -i -e 's/mppe/#mppe/g' /etc/ppp/options.pptpd
 	fi
 	sed -i -e '/ms-dns/d' /etc/ppp/options.pptpd
-	config_get dns "$section" dns
+	config_get dns $1 dns
 	setup_dns $dns
 	echo ms-dns 223.5.5.5 >>/etc/ppp/options.pptpd
 	return 0
@@ -88,7 +77,7 @@ start_pptpd() {
 	done
 	ln -sfn $CHAP_SECRETS /etc/ppp/chap-secrets
 	chmod 600 /etc/ppp/*-secrets
-	service_start $BIN $OPTIONS -c $CONFIG
+	service_start $BIN $OPTIONS -c $CONFIG_FILE
 }
 
 del_rule(){
@@ -118,11 +107,6 @@ del_rule(){
 			nums=`expr $nums - 1`
 		done
 	fi
-	#iptables -D zone_wan_input -p tcp -m tcp --dport 1723 -j ACCEPT  2>/dev/null
-	#iptables -D input_rule -i ppp+ -j ACCEPT 2>/dev/null
-	#iptables -D output_rule -o ppp+ -j ACCEPT 2>/dev/null
-	#iptables -D forwarding_rule -i ppp+ -j ACCEPT 2>/dev/null
-	#iptables -D forwarding_rule -o ppp+ -j ACCEPT 2>/dev/null
 }
 
 del_user()
@@ -133,10 +117,10 @@ del_user()
 }
 
 start() {
-	config_load pptpd
-	setup_config pptpd || return
+	config_load $CONFIG
+	setup_config $CONFIG || return
 	del_user
-	config_foreach setup_login login
+	config_foreach setup_login users
 	start_pptpd
 }
 
