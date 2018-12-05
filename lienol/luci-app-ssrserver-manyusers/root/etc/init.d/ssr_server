@@ -13,93 +13,66 @@ CONFIG=ssr_server
 CONFIG_FILE=/var/etc/$CONFIG.json
 PID_FILE=/var/run/$CONFIG.pid
 LOG_FILE=/var/log/$CONFIG.log
-USERS=''
-REDIRECTS=''
+USERS=""
+REDIRECTS=""
 
-uci_get_by_type() {
+config_t_get() {
 	local index=0
-	if [ -n $4 ]; then
-		index=$4
-	fi
+	[ -n "$4" ] && index=$4
 	local ret=$(uci get $CONFIG.@$1[$index].$2 2>/dev/null)
 	echo ${ret:=$3}
 }
 
-is_true() {
-	case $1 in
-		1|on|true|yes|enabled) echo 0;;
-		*) echo 1;;
-	esac
-}
-
-load_config() {
-	ENABLED=$(uci_get_by_type server enable)
-	return $(is_true $ENABLED)
-}
-
 start_server() {
-	mkdir -p  /var/etc
-	/usr/bin/python \
-		/usr/share/ssr/shadowsocks/server.py  \
-		-c $CONFIG_FILE  \
-		--pid-file $PID_FILE  \
-		--log-file $LOG_FILE  \
-		-d start  \
-		>/dev/null 2>&1 &
+	mkdir -p /var/etc
+	/usr/bin/python /usr/share/ssr/shadowsocks/server.py -c $CONFIG_FILE --pid-file $PID_FILE --log-file $LOG_FILE -d start >/dev/null 2>&1 &
 }
 
 gen_config_file() {
-	local cfg="$1"
-	config_list_foreach "$cfg" redirect setup_redirect
+	config_foreach setup_users users
+	FINAL=`echo ${USERS: -1}`
+	[ "$FINAL" == "," ] && USERS=${USERS:0:${#USERS}-1}
+	
+	redirect=$(config_t_get server redirect)
+	for i in $redirect
+	do
+		REDIRECTS="$REDIRECTS\"$i\","
+	done
 	FINAL=`echo ${REDIRECTS: -1}`
-	if [ "$FINAL" == "," ]; then
-		REDIRECTS=${REDIRECTS:0:${#REDIRECTS}-1}
-	fi
+	[ "$FINAL" == "," ] && REDIRECTS=${REDIRECTS:0:${#REDIRECTS}-1}
 	cat <<-EOF >$CONFIG_FILE
 		{
 		    "server": "::",
 		    "local_address":"127.0.0.1",
 		    "local_port":1086,
 			"port_password": {$USERS},
-		    "timeout": $(uci_get_by_type server timeout 300),
-		    "method": "$(uci_get_by_type server encrypt_method)",
-		    "protocol": "$(uci_get_by_type server protocol)",
-		    "protocol_param": "$(uci_get_by_type server protocol_param)",
-		    "obfs": "$(uci_get_by_type server obfs)",
-		    "obfs_param": "$(uci_get_by_type server obfs_param)",
+		    "timeout": $(config_t_get server timeout 300),
+		    "method": "$(config_t_get server encrypt_method)",
+		    "protocol": "$(config_t_get server protocol)",
+		    "protocol_param": "$(config_t_get server protocol_param)",
+		    "obfs": "$(config_t_get server obfs)",
+		    "obfs_param": "$(config_t_get server obfs_param)",
 			"connect_verbose_info": "1",
 		    "redirect": [$REDIRECTS],
-		    "fast_open": "$(uci_get_by_type server fast_open)"
+		    "fast_open": "$(config_t_get server fast_open)"
 		}
 EOF
 }
 
-setup_redirect() {
-	local redirect="$1"
-	REDIRECTS=$REDIRECTS"\"$redirect\"",
-}
-
 setup_users() {
-	local section="$1"
-	config_get enabled "$section" enabled
+	config_get enabled $1 enabled
 	[ "$enabled" -eq 0 ] && return 0
-	config_get port "$section" port
-	config_get password "$section" password
-	[ -n "$port" ] || return 0
-	[ -n "$password" ] || return 0
-	USERS=$USERS"\"$port\"":"\"$password\"",
+	config_get port $1 port
+	config_get password $1 password
+	[ -n "$port" -a -n "$password" ] && USERS=$USERS"\"$port\"":"\"$password\"",
 }
 
 start() {
 	stop
-	! load_config && exit 0
 	config_load $CONFIG
-	config_foreach setup_users users
-	FINAL=`echo ${USERS: -1}`
-	if [ "$FINAL" == "," ]; then
-		USERS=${USERS:0:${#USERS}-1}
-	fi
-	config_foreach gen_config_file "server"
+	ENABLED=$(config_t_get server enable 0)
+	[ "$ENABLED" = "0" ] && return 0
+	gen_config_file
 	start_server
 }
 
@@ -107,4 +80,10 @@ stop() {
 	ps | grep "/usr/bin/python /usr/share/ssr/shadowsocks/server.py" | grep -v "grep" | awk '{print $1}' | xargs kill -9
 	rm -f $PID_FILE
 	rm -f $LOG_FILE
+}
+
+restart() {
+	stop
+	sleep 1
+	start
 }
