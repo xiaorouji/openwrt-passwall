@@ -9,7 +9,7 @@ LUCI_TITLE:=LuCI support for SSR Server By Lienol
 LUCI_DEPENDS:=+python
 LUCI_PKGARCH:=all
 PKG_VERSION:=1.0
-PKG_RELEASE:=20181106
+PKG_RELEASE:=1-20181205
 
 include $(TOPDIR)/package/lienol/luci_my.mk
 
