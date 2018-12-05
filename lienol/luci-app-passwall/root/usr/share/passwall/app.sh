@@ -18,7 +18,6 @@ SS_PATH_DNSMASQ=$SS_PATH/dnsmasq.d
 TMP_DNSMASQ_PATH=/var/dnsmasq.d
 DNSMASQ_PATH=/etc/dnsmasq.d
 lanip=$(uci get network.lan.ipaddr)
-Date=$(date "+%Y-%m-%d %H:%M:%S")
 IPSET_LANIPLIST="laniplist"
 IPSET_ROUTER="router"	
 IPSET_GFW="gfwlist"
@@ -29,9 +28,13 @@ iptables_nat="iptables -t nat"
 iptables_mangle="iptables -t mangle"
 ip6tables_nat="ip6tables -t nat"
 
+get_date(){
+	echo "$(date "+%Y-%m-%d %H:%M:%S")"
+}
+
 echolog()
 {
-	echo -e "$Date: $1" >> $LOG_FILE
+	echo -e "$(get_date): $1" >> $LOG_FILE
 }
 
 find_bin(){
@@ -460,11 +463,6 @@ clean_log() {
 	fi
 }
 
-stop_auto_update() {
-	sed -i "/$CONFIG/d" /etc/crontabs/root >/dev/null 2>&1 &
-	echolog "清理自动更新规则。" 
-}
-
 set_cru() {
 	autoupdate=$(config_t_get global_rules auto_update)
 	weekupdate=$(config_t_get global_rules week_update)
@@ -497,24 +495,9 @@ set_cru() {
 	fi
 }
 
-stop_auto_switch() {
-	auto_on=$(config_t_get global_delay auto_on)
-	if [ "$auto_on" = "0" ];then
-		sed -i '/$CONFIG stop/d' /etc/crontabs/root >/dev/null 2>&1 &
-		sed -i '/$CONFIG start/d' /etc/crontabs/root >/dev/null 2>&1 &
-		sed -i '/$CONFIG restart/d' /etc/crontabs/root >/dev/null 2>&1 &
-	fi
-	[ "$AUTO_SWITCH" = "0" ] && {
-		sed -i '$SS_PATH/reconnection.sh/d' /etc/crontabs/root >/dev/null 2>&1 &
-		sed -i '$SS_PATH/auto_switch.sh/d' /etc/crontabs/root >/dev/null 2>&1 &
-	}
-	/etc/init.d/cron restart
-	echolog "清理定时自动开关设置。" 
-}
-
-start_auto_switch() {
-	auto_on=$(config_t_get global_delay auto_on)
+start_crontab() {
 	sed -i '/$CONFIG/d' /etc/crontabs/root >/dev/null 2>&1 &
+	auto_on=$(config_t_get global_delay auto_on)
 	if [ "$auto_on" = "1" ];then
 		time_off=$(config_t_get global_delay time_off)
 		time_on=$(config_t_get global_delay time_on)
@@ -549,6 +532,16 @@ start_auto_switch() {
 	/etc/init.d/cron restart
 }
 
+stop_crontab() {
+	sed -i "/$CONFIG/d" /etc/crontabs/root >/dev/null 2>&1 &
+	ps | grep "$SS_PATH/reconnection.sh" | grep -v "grep" | awk '{print $1}' | xargs kill -9 2>&1 &
+	ps | grep "$SS_PATH/auto_switch.sh" | grep -v "grep" | awk '{print $1}' | xargs kill -9 2>&1 &
+	rm -f /var/lock/passwall_reconnection.lock >/dev/null 2>&1 &
+	rm -f /var/lock/passwall_auto_switch.lock >/dev/null 2>&1 &
+	/etc/init.d/cron restart
+	echolog "清除定时执行命令。" 
+}
+
 start_dns() {
 	case "$DNS_MODE" in
 		dns2socks)
@@ -557,14 +550,14 @@ start_dns() {
 			[ -n "$dns2socks_bin" -a -n "$sslocal_bin" ] && {
 				nohup $sslocal_bin -c $CONFIG_TCP_FILE -l 3080 -f $RUN_PID_PATH/$TCP_REDIR_SERVER_TYPE-local.pid >/dev/null 2>&1 &
 				nohup $dns2socks_bin 127.0.0.1:3080 $DNS_FORWARD 127.0.0.1:7913 >/dev/null 2>&1 &
-				echolog "运行DNS转发方案：dns2socks+$TCP_REDIR_SERVER_TYPE-local..." 
+				echolog "运行DNS转发模式：dns2socks+$TCP_REDIR_SERVER_TYPE-local..." 
 			}
 		;;
 		Pcap_DNSProxy)
 			Pcap_DNSProxy_bin=$(find_bin Pcap_DNSProxy)
 			[ -n "$Pcap_DNSProxy_bin" ] && {
 				nohup $Pcap_DNSProxy_bin -c /etc/pcap-dnsproxy >/dev/null 2>&1 &
-				echolog "运行DNS转发方案：Pcap_DNSProxy..."
+				echolog "运行DNS转发模式：Pcap_DNSProxy..."
 			}
 		;;
 		pdnsd)
@@ -572,46 +565,46 @@ start_dns() {
 			[ -n "$pdnsd_bin" ] && {
 				gen_pdnsd_config
 				nohup $pdnsd_bin --daemon -c $CACHEDIR/pdnsd.conf -p $RUN_PID_PATH/pdnsd.pid -d >/dev/null 2>&1 &
-				echolog "运行DNS转发方案：Pdnsd..." 
+				echolog "运行DNS转发模式：Pdnsd..." 
 			}
 		;;
 		cdns)
 			cdns_bin=$(find_bin cdns)
 			[ -n "$cdns_bin" ] && {
 				nohup $cdns_bin -c /etc/cdns.json >/dev/null 2>&1 &
-				echolog "运行DNS转发方案：cdns..." 
+				echolog "运行DNS转发模式：cdns..." 
 			}
 		;;
 		chinadns)
 			chinadns_bin=$(find_bin ChinaDNS)
 			[ -n "$chinadns_bin" ] && {
 				other=1
-				echolog "运行DNS转发方案：ChinaDNS..." 
+				echolog "运行DNS转发模式：ChinaDNS..." 
 				dns1=$(config_t_get global_dns dns_1)
 				[ "$dns1" = "dnsbyisp" ] && dns1=`cat /tmp/resolv.conf.auto 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" |sort -u |grep -v 0.0.0.0 |grep -v 127.0.0.1|sed -n '2P'`
 				case "$UP_DNS_MODE" in
 					OpenDNS_443)
 						other=0
 						nohup $chinadns_bin -p 7913 -c $SS_PATH_RULE/chnroute -m -d -s $dns1,208.67.222.222:443 >/dev/null 2>&1 &
-						echolog "运行ChinaDNS上游转发方案：OpenDNS：208.67.222.222:443..." 
+						echolog "运行ChinaDNS上游转发模式：OpenDNS：208.67.222.222:443..." 
 					;;
 					OpenDNS_5353)
 						other=0
 						nohup $chinadns_bin -p 7913 -c $SS_PATH_RULE/chnroute -m -d -s $dns1,208.67.222.222:5353 >/dev/null 2>&1 &
-						echolog "运行ChinaDNS上游转发方案：OpenDNS：208.67.222.222:5353..." 
+						echolog "运行ChinaDNS上游转发模式：OpenDNS：208.67.222.222:5353..." 
 					;;
 					dnsproxy)
 						dnsproxy_bin=$(find_bin dnsproxy)
 						[ -n "$dnsproxy_bin" ] && {
 							nohup $dnsproxy_bin -d -T -p 7913 -R $DNS_FORWARD_IP -P $DNS_FORWARD_PORT >/dev/null 2>&1 &
-							echolog "运行ChinaDNS上游转发方案：dnsproxy..." 
+							echolog "运行ChinaDNS上游转发模式：dnsproxy..." 
 						}
 					;;
 					dns-forwarder)
 						dnsforwarder_bin=$(find_bin dns-forwarder)
 						[ -n "$dnsforwarder_bin" ] && {
 							nohup $dnsforwarder_bin -p 7913 -s $DNS_FORWARD >/dev/null 2>&1 &
-							echolog "运行ChinaDNS上游转发方案：dns-forwarder..." 
+							echolog "运行ChinaDNS上游转发模式：dns-forwarder..." 
 						}
 					;;
 				esac
@@ -621,7 +614,7 @@ start_dns() {
 			}
 		;;
 	esac
-	echolog "若无法使用，请尝试其他方案！" 
+	echolog "若不正常，请尝试其他模式！" 
 }
 
 add_dnsmasq() {
@@ -1354,7 +1347,7 @@ start() {
 	add_firewall_rule
 	dns_hijack
 	/etc/init.d/dnsmasq restart >/dev/null 2>&1
-	start_auto_switch
+	start_crontab
 	set_cru
 	rm -f "$LOCK_FILE"
 	echolog "运行完成！" 
@@ -1378,8 +1371,7 @@ stop() {
 	rm -rf /var/pdnsd/pdnsd.cache
 	rm -rf $CONFIG_PATH
 	stop_dnsmasq
-	stop_auto_update
-	stop_auto_switch
+	stop_crontab
 	echolog "关闭相关服务，清理相关文件和缓存完成。\n"
 	sleep 1s
 }
