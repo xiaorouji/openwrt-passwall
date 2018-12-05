@@ -418,7 +418,7 @@ start_tcp_redir() {
 			[ -n "$brook_bin" ] && $brook_bin $brook_tcp_cmd &>/dev/null &
 		else
 			ss_bin=$(find_bin "$TCP_REDIR_SERVER_TYPE"-redir)
-			[ -n "$ss_bin" ] && $ss_bin -c $CONFIG_TCP_FILE > /dev/null 2>&1 &
+			[ -n "$ss_bin" ] && $ss_bin -c $CONFIG_TCP_FILE -b ::> /dev/null 2>&1 &
 		fi
 	fi
 }
@@ -447,7 +447,7 @@ start_socks5_proxy() {
 			[ -n "$v2ray_bin" ] && $v2ray_bin -config=$CONFIG_SOCKS5_FILE > /dev/null &
 		elif [ "$SOCKS5_PROXY_SERVER_TYPE" == "brook" ]; then
 			brook_bin=$(find_bin brook)
-			[ -n "$brook_bin" ] && $$brook_bin $brook_socks5_cmd &>/dev/null &
+			[ -n "$brook_bin" ] && $brook_bin $brook_socks5_cmd &>/dev/null &
 		else
 			ss_bin=$(find_bin "$SOCKS5_PROXY_SERVER_TYPE"-local)
 			[ -n "$ss_bin" ] && $ss_bin -c $CONFIG_SOCKS5_FILE -b 0.0.0.0 > /dev/null 2>&1 &
@@ -1243,7 +1243,6 @@ EOF
 		$ip6tables_nat -N SS_CHN
 		$ip6tables_nat -N SS_HOME
 		$ip6tables_nat -A SS_GLO -p tcp -j REDIRECT --to $TCP_REDIR_PORT
-		$ip6tables_nat -A PREROUTING -j SS
 		$ip6tables_nat -A SS -j SS_GLO
 		$ip6tables_nat -I OUTPUT -p tcp -j SS
 		echolog "IPv6防火墙规则加载完成！" 
@@ -1273,7 +1272,7 @@ del_firewall_rule() {
 	[ -n "$ipv6_output_ss_exist" ] && {
 		until [ "$ipv6_output_ss_exist" = 0 ]
 		do
-			rules=`$iptables_nat -L OUTPUT --line-numbers | grep "SS" | awk '{print $1}'`
+			rules=`$ip6tables_nat -L OUTPUT --line-numbers | grep "SS" | awk '{print $1}'`
 			for rule in $rules
 			do
 				$ip6tables_nat -D OUTPUT $rule 2> /dev/null
