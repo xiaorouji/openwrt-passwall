@@ -5,10 +5,10 @@ config service 'pptpd'
 	option remoteip '192.168.2.10-20'
 	option dns '192.168.0.2'
 	option is_nat '1'
-	option enabled '0'
 	option export_interface 'default'
+	option enabled '0'
 
-config login
+config users
 	option enabled '1'
 	option ipaddress '*'
 	option username 'guest'
