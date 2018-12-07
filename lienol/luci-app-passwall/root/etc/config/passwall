@@ -38,10 +38,10 @@ config global_rules
 	option Pcap_Routing_update '1'
 	option Pcap_WhiteList_update '1'
 	option auto_update '0'
-	option gfwlist_version '2018-11-28'
-	option chnroute_version '2018-12-02'
-	option pcap_Routing_version '2018-12-02'
-	option pcap_WhiteList_version '2018-12-02'
+	option gfwlist_version '2018-12-07'
+	option chnroute_version '2018-12-07'
+	option pcap_Routing_version '2018-12-07'
+	option pcap_WhiteList_version '2018-12-07'
 
 config global_kcptun
 	option kcptun_client_file '/usr/bin/kcptun_client'
