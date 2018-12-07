@@ -19,6 +19,7 @@ TMP_DNSMASQ_PATH=/var/dnsmasq.d
 DNSMASQ_PATH=/etc/dnsmasq.d
 lanip=$(uci get network.lan.ipaddr)
 IPSET_LANIPLIST="laniplist"
+IPSET_VPSIPLIST="vpsiplist"
 IPSET_ROUTER="router"	
 IPSET_GFW="gfwlist"
 IPSET_CHN="chnroute"
@@ -534,8 +535,8 @@ start_crontab() {
 
 stop_crontab() {
 	sed -i "/$CONFIG/d" /etc/crontabs/root >/dev/null 2>&1 &
-	ps | grep "$SS_PATH/reconnection.sh" | grep -v "grep" | awk '{print $1}' | xargs kill -9 2>&1 &
-	ps | grep "$SS_PATH/auto_switch.sh" | grep -v "grep" | awk '{print $1}' | xargs kill -9 2>&1 &
+	ps | grep "$SS_PATH/reconnection.sh" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+	ps | grep "$SS_PATH/auto_switch.sh" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
 	rm -f /var/lock/passwall_reconnection.lock >/dev/null 2>&1 &
 	rm -f /var/lock/passwall_auto_switch.lock >/dev/null 2>&1 &
 	/etc/init.d/cron restart
@@ -1037,10 +1038,24 @@ load_acl(){
 	}
 }
 
+filter_vpsip(){
+	local server_host server_ip use_ipv6 network_type
+	server_host=$(config_get $1 server)
+	use_ipv6=$(config_get $1 use_ipv6)
+	network_type="ipv4"
+	[ "$use_ipv6" == "1" ] && network_type="ipv6"
+	server_ip=$(get_host_ip $network_type $server_host)
+	
+	[ -n "$server_ip" -a "$server_ip" != "$TCP_REDIR_SERVER_IP" ] && {
+		[ "$network_type" == "ipv4" ] && ipset add $IPSET_VPSIPLIST $server_ip >/dev/null 2>&1
+	}
+}
+
 add_firewall_rule() {
 	echolog "开始加载防火墙规则..." 
 	echolog "默认代理模式：$(get_action_chain_name $PROXY_MODE)" 
 	ipset -! create $IPSET_LANIPLIST nethash && ipset flush $IPSET_LANIPLIST
+	ipset -! create $IPSET_VPSIPLIST nethash && ipset flush $IPSET_VPSIPLIST
 	ipset -! create $IPSET_ROUTER nethash && ipset flush $IPSET_ROUTER
 	ipset -! create $IPSET_GFW nethash && ipset flush $IPSET_GFW
 	ipset -! create $IPSET_CHN nethash && ipset flush $IPSET_CHN
@@ -1066,12 +1081,14 @@ EOF
 	#	忽略特殊IP段
 	lan_ip=`ifconfig br-lan | grep "inet addr" | awk '{print $2}' | awk -F : '{print $2}'` #路由器lan IP
 	lan_ipv4=`ip address show br-lan | grep -w "inet" |awk '{print $2}'`  #当前LAN IPv4段
-	[ -n "$lan_ipv4" ] && {
-		ipset add $IPSET_LANIPLIST $lan_ipv4
-	}
+	[ -n "$lan_ipv4" ] && ipset add $IPSET_LANIPLIST $lan_ipv4 >/dev/null 2>&1
+	
+	#  过滤所有节点IP
+		config_foreach filter_vpsip "servers"
 	
 	$iptables_mangle -N SS
 	$iptables_mangle -A SS -m set --match-set $IPSET_LANIPLIST dst -j RETURN
+	$iptables_mangle -A SS -m set --match-set $IPSET_VPSIPLIST dst -j RETURN
 	$iptables_mangle -A SS -m set --match-set $IPSET_WHITELIST dst -j RETURN
 	$iptables_mangle -N SS_GLO
 	$iptables_mangle -N SS_GFW
@@ -1216,7 +1233,7 @@ EOF
 	fi
 		
 	#  加载ACLS
-		config_foreach load_acl acl_rule
+		config_foreach load_acl "acl_rule"
 		
 	#  加载默认代理模式
 		if [ "$PROXY_MODE" == "disable" ];then
@@ -1365,6 +1382,7 @@ stop() {
 	#ipset -F $IPSET_CHN >/dev/null 2>&1 && ipset -X $IPSET_CHN >/dev/null 2>&1
 	ipset -F $IPSET_BLACKLIST >/dev/null 2>&1 && ipset -X $IPSET_BLACKLIST >/dev/null 2>&1
 	ipset -F $IPSET_WHITELIST >/dev/null 2>&1 && ipset -X $IPSET_WHITELIST >/dev/null 2>&1
+	ipset -F $IPSET_VPSIPLIST >/dev/null 2>&1 && ipset -X $IPSET_VPSIPLIST >/dev/null 2>&1
 	ipset -F $IPSET_LANIPLIST >/dev/null 2>&1 && ipset -X $IPSET_LANIPLIST >/dev/null 2>&1
 	kill_all pdnsd cdns Pcap_DNSProxy ss-redir ss-local ssr-redir ssr-local v2ray v2ctl brook dns2socks kcptun_client haproxy dns-forwarder chinadns dnsproxy redsocks2
 	rm -rf /var/pdnsd/pdnsd.cache
