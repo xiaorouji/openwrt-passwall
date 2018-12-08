@@ -96,7 +96,7 @@ local v2ray_security={
 "chacha20-poly1305",
 }
 
-local v2ray_mkcp_obfs={
+local v2ray_header_type={
 "none",
 "srtp",
 "utp",
@@ -232,6 +232,7 @@ e:value("tcp","TCP")
 e:value("mkcp", "mKCP")
 e:value("ws", "WebSocket")
 e:value("h2", "HTTP/2")
+e:value("quic", "QUIC")
 e:depends("server_type","V2ray")
 
 -- [[ TCP部分 ]]--
@@ -253,7 +254,7 @@ e:depends("v2ray_tcp_guise", "http")
 -- [[ mKCP部分 ]]--
 
 e=t:option(ListValue,"v2ray_mkcp_guise",translate("Camouflage Type"))
-for a,t in ipairs(v2ray_mkcp_obfs)do e:value(t)end
+for a,t in ipairs(v2ray_header_type)do e:value(t)end
 e:depends("v2ray_transport","mkcp")
 
 e=t:option(Value,"v2ray_mkcp_mtu",translate("KCP MTU"))
@@ -292,6 +293,17 @@ e:depends("v2ray_transport", "h2")
 
 e = t:option(Value, "v2ray_h2_path", translate("HTTP/2 Path"))
 e:depends("v2ray_transport", "h2")
+
+-- [[ QUIC部分 ]]--
+
+e=t:option(Value,"v2ray_quic_key",translate("Encrypt Method")..translate("Key"))
+e:depends("v2ray_transport","quic")
+
+e=t:option(ListValue,"v2ray_quic_guise",translate("Camouflage Type"))
+for a,t in ipairs(v2ray_header_type)do e:value(t)end
+e:depends("v2ray_transport","quic")
+
+-- [[ 其它 ]]--
 
 e=t:option(Flag,"v2ray_mux",translate("Mux"))
 e:depends("server_type","V2ray")

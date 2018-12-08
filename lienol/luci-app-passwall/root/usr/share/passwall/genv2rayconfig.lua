@@ -66,38 +66,44 @@ local v2ray = {
         },
     -- 底层传输配置
         streamSettings = {
-            network = server.v2ray_transport,
-            security = (server.v2ray_tls == '1') and "tls" or "none",
-            kcpSettings = (server.v2ray_transport == "mkcp") and {
-              mtu = tonumber(server.v2ray_mkcp_mtu),
-              tti = tonumber(server.v2ray_mkcp_tti),
-              uplinkCapacity = tonumber(server.v2ray_mkcp_uplinkCapacity),
-              downlinkCapacity = tonumber(server.v2ray_mkcp_downlinkCapacity),
-              congestion = (server.v2ray_mkcp_congestion == "1") and true or false,
-              readBufferSize = tonumber(server.v2ray_mkcp_readBufferSize),
-              writeBufferSize = tonumber(server.v2ray_mkcp_writeBufferSize),
-              header = {
-                  type = server.v2ray_mkcp_guise
-              }
-          } or nil,
-             wsSettings = (server.v2ray_transport == "ws") and {
+			network = server.v2ray_transport,
+			security = (server.v2ray_tls == '1') and "tls" or "none",
+			kcpSettings = (server.v2ray_transport == "mkcp") and {
+				mtu = tonumber(server.v2ray_mkcp_mtu),
+				tti = tonumber(server.v2ray_mkcp_tti),
+				uplinkCapacity = tonumber(server.v2ray_mkcp_uplinkCapacity),
+				downlinkCapacity = tonumber(server.v2ray_mkcp_downlinkCapacity),
+				congestion = (server.v2ray_mkcp_congestion == "1") and true or false,
+				readBufferSize = tonumber(server.v2ray_mkcp_readBufferSize),
+				writeBufferSize = tonumber(server.v2ray_mkcp_writeBufferSize),
+				header = {
+					type = server.v2ray_mkcp_guise
+				}
+			} or nil,
+			wsSettings = (server.v2ray_transport == "ws") and {
                 path = server.v2ray_ws_path,
                 headers = (server.v2ray_ws_host ~= nil) and {
                     Host = server.v2ray_ws_host
                 } or nil,
             } or nil,
-            httpSettings = (server.v2ray_transport == "h2") and {
+			httpSettings = (server.v2ray_transport == "h2") and {
                 path = server.v2ray_h2_path,
                 host = server.v2ray_h2_host,
+            } or nil,
+			quicSettings = (server.v2ray_transport == "quic") and {
+				security = server.v2ray_security,
+				key = server.v2ray_quic_key,
+				header = {
+					type = server.v2ray_quic_guise
+				}
             } or nil
         },
         mux = {
-            enabled = (server.v2ray_mux == "1") and true or false
-      }
-    },
-
+			enabled = (server.v2ray_mux == "1") and true or false
+		}
+	},
     -- 额外传出连接
-    outboundDetour = {
+	outboundDetour = {
         {
             protocol = "freedom",
             tag = "direct",
