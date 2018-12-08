@@ -21,7 +21,7 @@ local function http_write_json(content)
 end
 
 function act_status()
-	local nginx="/usr/share/kodexplorer"
+	local nginx="nginx"
 	local php_fpm="php-fpm"
 	local e={}
 	e.nginx_status=luci.sys.call("ps | grep -v grep | grep '"..nginx.."' >/dev/null")==0

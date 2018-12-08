@@ -5,8 +5,9 @@ START=99
 
 CONFIG="kodexplorer"
 
-NGINX_CONFIG="/usr/share/kodexplorer/nginx.conf"
-PHP_FPM_CONFIG="/usr/share/kodexplorer/php-fpm.conf"
+TEMP_PATH="/var/etc/kodexplorer"
+NGINX_CONFIG="$TEMP_PATH/nginx.conf"
+PHP_FPM_CONFIG="$TEMP_PATH/php-fpm.conf"
 PHP_CONFIG="/etc/php.ini"
 PHP_BACKUP_CONFIG="/etc/php.ini.backup"
 
@@ -140,6 +141,7 @@ EOF
 start() {
 	ENABLED=$(config_t_get global enable 0)
 	[ "$ENABLED" = "0" ] && return 0
+	mkdir -p $TEMP_PATH /var/log/nginx /var/lib/nginx
 	gen_nginx_config
 	gen_php_config
 	/usr/bin/php-fpm -R -y $PHP_FPM_CONFIG -g "/var/run/php7-fpm.pid"
