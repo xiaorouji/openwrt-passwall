@@ -1,4 +1,5 @@
 m = Map("homeassistant",translate("HomeAssistant"))
+m:append(Template("homeassistant/status"))
 
 s = m:section(TypedSection,"global",translate("Global Setting"))
 s.anonymous = true
