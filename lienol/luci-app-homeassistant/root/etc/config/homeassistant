@@ -1,0 +1,5 @@
+
+config global
+	option save_directory '/tmp/homeassistant'
+	option enable '0'
+
