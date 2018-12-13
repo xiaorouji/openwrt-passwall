@@ -1,0 +1,45 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2018 Lienol <admin@lienol.cn>
+
+START=99
+
+CONFIG="homeassistant"
+LOG_FILE=/var/log/$CONFIG.log
+
+config_t_get() {
+	local index=0
+	[ -n "$4" ] && index=$4
+	local ret=$(uci get $CONFIG.@$1[$index].$2 2>/dev/null)
+	echo ${ret:=$3}
+}
+
+get_date(){
+	echo "$(date "+%Y-%m-%d %H:%M:%S")"
+}
+
+echolog()
+{
+	echo -e "$(get_date): $1" >> $LOG_FILE
+}
+
+start() {
+	ENABLED=$(config_t_get global enable 0)
+	[ "$ENABLED" = "0" ] && return 0
+	save_directory=$(config_t_get global save_directory)
+	result=`find $save_directory -iname "hass" -type f`
+	if [ -z "$result" ]; then
+		echolog "找不到hass主程序，无法启动！"
+	else
+		$result >> $LOG_FILE 2>&1 &
+	fi
+}
+
+stop() {
+	killall -9 hass >/dev/null 2>&1 &
+}
+
+restart() {
+	stop
+	sleep 1
+	start
+}
