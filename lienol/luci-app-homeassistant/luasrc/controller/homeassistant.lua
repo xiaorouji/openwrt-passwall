@@ -1,5 +1,5 @@
 module("luci.controller.homeassistant", package.seeall)
-
+local appname = "homeassistant"
 local http = require "luci.http"
 
 function index()
@@ -22,11 +22,9 @@ local function http_write_json(content)
 end
 
 function act_status()
-	local nginx="nginx"
-	local php_fpm="php-fpm"
+	local hass = luci.sys.exec("echo -n `uci get " .. appname .. ".@global[0].save_directory`")
 	local e={}
-	e.nginx_status=luci.sys.call("ps | grep -v grep | grep '"..nginx.."' >/dev/null")==0
-	e.php_status=luci.sys.call("ps | grep -v grep | grep '"..php_fpm.."' >/dev/null")==0
+	e.hass_status=luci.sys.call("ps | grep -v grep | grep '"..hass.."' >/dev/null")==0
 	http_write_json(e)
 end
 

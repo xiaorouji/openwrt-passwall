@@ -1,0 +1,29 @@
+<%#
+ Copyright 2018 Lienol
+ Licensed to the public under the Apache License 2.0.
+-%>
+
+<%
+local dsp = require "luci.dispatcher"
+-%>
+
+<fieldset class="cbi-section">
+	<legend><%:Running Status%></legend>
+	<fieldset class="cbi-section">
+		<div class="cbi-value">
+			<label class="cbi-value-title">HomeAssistant<%:Status%></label>
+			<div class="cbi-value-field" id="_hass_status"><%:Collecting data...%></div>
+		</div>
+	</fieldset>
+</fieldset>
+
+<script type="text/javascript">//<![CDATA[
+	var _hass_status = document.getElementById('_hass_status');
+	XHR.poll(3,'<%=dsp.build_url("admin/services/homeassistant/status")%>', null,
+		function(x, json) {
+			if (x && x.status == 200) {
+				if (_hass_status)
+					_hass_status.innerHTML = json.hass_status ? '<font color=green><%:RUNNING%> ✓</font>' : '<font color=red><%:NOT RUNNING%> X</font>';
+			}
+		});
+//]]></script>
