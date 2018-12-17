@@ -7,10 +7,9 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-homeassistant
 PKG_VERSION:=1.0
-PKG_RELEASE:=2-20181213
+PKG_RELEASE:=5-20181217
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
-PO2LMO:=$(BUILD_DIR)/luci-base/po2lmo
  
 include $(INCLUDE_DIR)/package.mk
 
@@ -19,7 +18,6 @@ define Package/$(PKG_NAME)
   SUBMENU:=3. Applications
   TITLE:=LuCI support for HomeAssistant
   PKGARCH:=all
-  DEPENDS:=+python3 +python3-pip +python3-dev
 endef
 
 define Build/Prepare

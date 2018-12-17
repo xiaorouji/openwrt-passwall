@@ -8,8 +8,8 @@ function index()
 	end
 
 	entry({"admin","services","homeassistant"},alias("admin","services","homeassistant","settings"),_("HomeAssistant"),999).dependent=true
-	entry({"admin","services","homeassistant","settings"},cbi("homeassistant/settings"),_("Basic Settings"),1).dependent=true
-	entry({"admin","services","homeassistant","log"},cbi("homeassistant/log"),_("Watch Logs"),2).leaf=true
+	entry({"admin","services","homeassistant","settings"},cbi("homeassistant/settings"),_("基本设置"),1).dependent=true
+	entry({"admin","services","homeassistant","log"},cbi("homeassistant/log"),_("查看日志"),2).leaf=true
 	entry({"admin","services","homeassistant","status"},call("act_status")).leaf=true
 	entry({"admin","services","homeassistant","download"},call("download")).leaf=true
 	entry({"admin","services","homeassistant","get_log"},call("get_log")).leaf=true
