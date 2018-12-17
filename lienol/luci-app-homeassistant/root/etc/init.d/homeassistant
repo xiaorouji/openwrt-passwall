@@ -30,7 +30,10 @@ start() {
 	if [ -z "$result" ]; then
 		echolog "找不到hass主程序，无法启动！"
 	else
-		$result >> $LOG_FILE 2>&1 &
+		CONFIG_PATH=$save_directory/.homeassistant
+		mkdir -p $CONFIG_PATH
+		FLAGS="-v --config $CONFIG_PATH --pid-file /var/run/hass.pid --log-file $LOG_FILE --daemon"
+		$result $FLAGS 2>&1 &
 	fi
 }
 

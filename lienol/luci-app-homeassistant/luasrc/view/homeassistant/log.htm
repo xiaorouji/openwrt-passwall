@@ -33,7 +33,7 @@ local dsp = require "luci.dispatcher"
 	);
 //]]></script>
 <fieldset class="cbi-section" id="_log_fieldset" >
-	<legend><%:These is logs.%></legend>
-	<input class="cbi-button cbi-input-apply" type="button" onclick="clearlog()" value="<%:Clear logs%>">
-	<textarea id="log_textarea" class="cbi-input-textarea" style="width: 100%;margin-top: 10px;" data-update="change" rows="40" wrap="off" readonly="readonly"></textarea>
+	<legend>这里显示的是最近的日志。</legend>
+	<input class="cbi-button cbi-input-apply" type="button" onclick="clearlog()" value="清空日志">
+	<textarea id="log_textarea" class="cbi-input-textarea" style="width: 100%;margin-top: 10px;" data-update="change" rows="50" wrap="off" readonly="readonly"></textarea>
 </fieldset>
