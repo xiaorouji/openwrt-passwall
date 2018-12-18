@@ -64,6 +64,10 @@ local v2ray = {
                 }
             }
         },
+		mux = {
+			enabled = (server.v2ray_mux == "1") and true or false,
+			concurrency = (server.v2ray_mux_concurrency) and tonumber(server.v2ray_mux_concurrency) or 8
+		},
     -- 底层传输配置
         streamSettings = {
 			network = server.v2ray_transport,
@@ -91,16 +95,13 @@ local v2ray = {
                 host = server.v2ray_h2_host,
             } or nil,
 			quicSettings = (server.v2ray_transport == "quic") and {
-				security = server.v2ray_security,
+				security = server.v2ray_quic_security,
 				key = server.v2ray_quic_key,
 				header = {
 					type = server.v2ray_quic_guise
 				}
             } or nil
-        },
-        mux = {
-			enabled = (server.v2ray_mux == "1") and true or false
-		}
+        }
 	},
     -- 额外传出连接
 	outboundDetour = {
@@ -111,4 +112,4 @@ local v2ray = {
         }
     }
 }
-print(json.stringify(v2ray))
+print(json.stringify(v2ray,1))
