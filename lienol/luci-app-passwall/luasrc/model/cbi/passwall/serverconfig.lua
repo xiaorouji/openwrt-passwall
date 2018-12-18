@@ -91,8 +91,6 @@ local v2ray_security={
 "none",
 "auto",
 "aes-128-gcm",
-"aes-192-gcm",
-"aes-256-gcm",
 "chacha20-poly1305",
 }
 
@@ -295,6 +293,11 @@ e = t:option(Value, "v2ray_h2_path", translate("HTTP/2 Path"))
 e:depends("v2ray_transport", "h2")
 
 -- [[ QUIC部分 ]]--
+e=t:option(ListValue,"v2ray_quic_security",translate("Encrypt Method"))
+e:value("none")
+e:value("aes-128-gcm")
+e:value("chacha20-poly1305")
+e:depends("v2ray_transport","quic")
 
 e=t:option(Value,"v2ray_quic_key",translate("Encrypt Method")..translate("Key"))
 e:depends("v2ray_transport","quic")
@@ -307,6 +310,10 @@ e:depends("v2ray_transport","quic")
 
 e=t:option(Flag,"v2ray_mux",translate("Mux"))
 e:depends("server_type","V2ray")
+
+e=t:option(Value,"v2ray_mux_concurrency",translate("Mux Concurrency"))
+e.default=8
+e:depends("v2ray_mux","1")
 
 e=t:option(Flag,"v2ray_tls",translate("TLS"),translate("Using TLS must use the domain name as the server address"))
 e:depends("server_type","V2ray")
