@@ -137,13 +137,14 @@ input[type=file] { padding: 0; border: 0; }
 
 .cbi-button-reload { background: #118af3; border-color: #118af3; color: #fff; }
 
-.cbi-button-reset { background: #617486; border-color: #617486; color: #fff; }
+.cbi-button-reset, .cbi-input-reset { background: #617486; border-color: #617486; color: #fff; }
 
 .cbi-button-edit { background: #f96f2d; border-color: #f96f2d; color: #fff; }
 
 .cbi-page-actions { text-align: right; padding: 10px 0px; }
-.cbi-button-apply, .cbi-button-save { background: #19a4e6; border-color: #19a4e6; color: #fff; }
+.cbi-button-apply, .cbi-button-save, .cbi-input-apply, .cbi-input-save { background: #19a4e6; border-color: #19a4e6; color: #fff; }
 .cbi-button-apply:active, .cbi-button-apply:focus, .cbi-button-save:active, .cbi-button-save:focus { border-color: #118af3; opacity: .8; }
+.cbi-input-apply:active, .cbi-input-apply:focus, .cbi-input-save:active, .cbi-input-save:focus { border-color: #118af3; opacity: .8; }
 
 /* Input Error */
 .cbi-section-error { background: #fee; border: 2px solid #f00; padding: 10px; }
