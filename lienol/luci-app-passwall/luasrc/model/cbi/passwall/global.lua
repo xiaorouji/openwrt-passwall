@@ -5,16 +5,20 @@ local cursor=luci.model.uci.cursor()
 local i="passwall"
 local a,t,e
 
-local function is_finded(e)
-	return sys.exec("find /usr/*bin -iname "..e.." -type f") ~="" and true or false
-end
-
 local function is_installed(e)
 	return luci.model.ipkg.installed(e)
 end
 
+local function is_finded(e)
+	return sys.exec("find /usr/*bin -iname "..e.." -type f") ~="" and true or false
+end
+
+local function has_multithreading()
+    return tonumber(sys.exec("cat /proc/cpuinfo | grep 'processor' | wc -l")) ==1 and true or false
+end
+
 local function has_udp_relay()
-    return luci.sys.call("lsmod | grep TPROXY >/dev/null") == 0
+    return sys.call("lsmod | grep TPROXY >/dev/null") == 0
 end
 
 local n={}
@@ -97,7 +101,7 @@ if is_installed("ChinaDNS") or is_finded("chinadns") then
 	e:value("chinadns","ChinaDNS")
 end
 if (is_installed("dns2socks") or is_finded("dns2socks")) and (is_finded("ss-local") or is_finded("ssr-local")) then
-	e:value("dns2socks","dns2socks"..translate("仅支持SS/R服务器"))
+	e:value("dns2socks","dns2socks"..translate("Only SS/R servers are supported"))
 end
 if is_installed("pcap-dnsproxy") or is_finded("Pcap_DNSProxy") then
 	e:value("Pcap_DNSProxy","Pcap_DNSProxy")
@@ -117,6 +121,11 @@ if is_installed("dns-forwarder") or is_finded("dns-forwarder") then
 end
 	e:value("OpenDNS_443","OpenDNS(443"..translate("Port")..")")
 	e:value("OpenDNS_5353","OpenDNS(5353"..translate("Port")..")")
+
+if has_multithreading() then
+	e=t:option(Flag,"use_multithreading",translate("Use MultiThreading"),translate("Check to you can start SS/SSR with multiple threads"))
+	e.default="0"
+end
 	
 e=t:option(Flag,"ssr_server_passwall",translate("SSR Client")..translate("Pass Wall"),translate("Check to make the SSR server client")..translate("Pass Wall"))
 e.default="0"

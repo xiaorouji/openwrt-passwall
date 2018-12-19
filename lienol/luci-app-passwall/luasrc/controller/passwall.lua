@@ -1,7 +1,8 @@
 module("luci.controller.passwall",package.seeall)
 local appname = "passwall"
 local http = require "luci.http"
-local kcptun  = require "luci.model.cbi.passwall.kcptun"
+local kcptun  = require "luci.model.cbi.passwall.api.kcptun"
+local v2ray  = require "luci.model.cbi.passwall.api.v2ray"
 
 function index()
 	if not nixio.fs.access("/etc/config/passwall") then
@@ -31,6 +32,8 @@ function index()
 	entry({"admin","vpn","passwall","update_rules"},call("update_rules")).leaf=true
 	entry({"admin", "vpn", "passwall", "kcptun_check"}, call("kcptun_check")).leaf = true
 	entry({"admin", "vpn", "passwall", "kcptun_update"}, call("kcptun_update")).leaf = true
+	entry({"admin", "vpn", "passwall", "v2ray_check"}, call("v2ray_check")).leaf = true
+	entry({"admin", "vpn", "passwall", "v2ray_update"}, call("v2ray_update")).leaf = true
 end
 
 local function http_write_json(content)
@@ -129,27 +132,39 @@ function update_rules()
 	luci.sys.call("nohup /usr/share/passwall/rule_update.sh '"..update.."' 2>&1 &")
 end
 
-function kcptun_check(type)
+function kcptun_check()
+	local json = kcptun.to_check("")
+	http_write_json(json)
+end
+
+function kcptun_update()
 	local json = nil
-	if type == "kcptun" then
-		json = kcptun.check_kcptun("")
+	local task = http.formvalue("task")
+	if task == "extract" then
+		json = kcptun.to_extract(http.formvalue("file"), http.formvalue("subfix"))
+	elseif task == "move" then
+		json = kcptun.to_move(http.formvalue("file"))
 	else
-		http.status(500, "Bad address")
-		return
+		json = kcptun.to_download(http.formvalue("url"))
 	end
 
 	http_write_json(json)
 end
 
-function kcptun_update(type)
+function v2ray_check()
+	local json = v2ray.to_check("")
+	http_write_json(json)
+end
+
+function v2ray_update()
 	local json = nil
 	local task = http.formvalue("task")
 	if task == "extract" then
-		json = kcptun.extract_kcptun(http.formvalue("file"), http.formvalue("subfix"))
+		json = v2ray.to_extract(http.formvalue("file"), http.formvalue("subfix"))
 	elseif task == "move" then
-		json = kcptun.move_kcptun(http.formvalue("file"))
+		json = v2ray.to_move(http.formvalue("file"))
 	else
-		json = kcptun.download_kcptun(http.formvalue("url"))
+		json = v2ray.to_download(http.formvalue("url"))
 	end
 
 	http_write_json(json)

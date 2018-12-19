@@ -4,13 +4,13 @@
 -%>
 
 <%
-local kcptun_version=luci.sys.exec("/usr/bin/kcptun_client -v | awk '{print $3}'")
+local v2ray_version=luci.sys.exec("/usr/bin/v2ray/v2ray -version | awk '{print $2}' | sed -n 1P")
 local dsp = require "luci.dispatcher"
 -%>
 
 <script type="text/javascript">
 	//<![CDATA[
-	var kcptunInfo;
+	var v2rayInfo;
 	var tokenStr = '<%=token%>';
 	var noUpdateText = '<%:已是最新版本%>';
 	var updateSuccessText = '<%:更新成功.%>';
@@ -20,22 +20,22 @@ local dsp = require "luci.dispatcher"
 	var updateInProgressNotice = '<%:正在更新，你确认要关闭吗？%>';
 
 	window.onload = function() {
-		var kcptunCheckBtn = document.getElementById('_kcptun-check_btn');
-		var kcptunDetailElm = document.getElementById('_kcptun-check_btn-detail');
+		var v2rayCheckBtn = document.getElementById('_v2ray-check_btn');
+		var v2rayDetailElm = document.getElementById('_v2ray-check_btn-detail');
 	};
 
-	function addPageNotice_kcptun() {
+	function addPageNotice_v2ray() {
 		window.onbeforeunload = function(e) {
 			e.returnValue = updateInProgressNotice;
 			return updateInProgressNotice;
 		};
 	}
 
-	function removePageNotice_kcptun() {
+	function removePageNotice_v2ray() {
 		window.onbeforeunload = undefined;
 	}
 
-	function onUpdateSuccess_kcptun(btn) {
+	function onUpdateSuccess_v2ray(btn) {
 		alert(updateSuccessText);
 
 		if(btn) {
@@ -49,7 +49,7 @@ local dsp = require "luci.dispatcher"
 		}, 1000);
 	}
 
-	function onRequestError_kcptun(btn, errorMessage) {
+	function onRequestError_v2ray(btn, errorMessage) {
 		btn.disabled = false;
 		btn.value = btn.placeholder;
 
@@ -71,34 +71,34 @@ local dsp = require "luci.dispatcher"
 		})
 	}
 
-	function onBtnClick_kcptun(btn) {
-		if(kcptunInfo === undefined) {
-			checkUpdate_kcptun(btn);
+	function onBtnClick_v2ray(btn) {
+		if(v2rayInfo === undefined) {
+			checkUpdate_v2ray(btn);
 		} else {
-			doUpdate_kcptun(btn);
+			doUpdate_v2ray(btn);
 		}
 	}
 
-	function checkUpdate_kcptun(btn) {
+	function checkUpdate_v2ray(btn) {
 		btn.disabled = true;
 		btn.value = inProgressText;
 
-		addPageNotice_kcptun();
+		addPageNotice_v2ray();
 
 		var ckeckDetailElm = document.getElementById(btn.id + '-detail');
 
-		doAjaxGet('<%=dsp.build_url("admin/vpn/passwall/kcptun_check")%>', {
+		doAjaxGet('<%=dsp.build_url("admin/vpn/passwall/v2ray_check")%>', {
 			token: tokenStr,
 			arch: ''
 		}, function(json) {
-			removePageNotice_kcptun();
+			removePageNotice_v2ray();
 
 			if(json.code) {
-				kcptunInfo = undefined;
-				onRequestError_kcptun(btn, json.error);
+				v2rayInfo = undefined;
+				onRequestError_v2ray(btn, json.error);
 			} else {
 				if(json.update) {
-					kcptunInfo = json;
+					v2rayInfo = json;
 					btn.disabled = false;
 					btn.value = clickToUpdateText;
 					btn.placeholder = clickToUpdateText;
@@ -111,7 +111,7 @@ local dsp = require "luci.dispatcher"
 								urlNode = '<a href="' + json.url.html + '" target="_blank">' + urlNode + '</a>';
 							}
 						}
-						ckeckDetailElm.innerHTML = urlNode;
+					ckeckDetailElm.innerHTML = urlNode;
 					}
 				} else {
 					btn.disabled = true;
@@ -121,48 +121,48 @@ local dsp = require "luci.dispatcher"
 		});
 	}
 
-	function doUpdate_kcptun(btn) {
+	function doUpdate_v2ray(btn) {
 		btn.disabled = true;
 		btn.value = '<%:下载中...%>';
 
-		addPageNotice_kcptun();
+		addPageNotice_v2ray();
 
-		var kcptunUpdateUrl = '<%=dsp.build_url("admin/vpn/passwall/kcptun_update")%>';
+		var v2rayUpdateUrl = '<%=dsp.build_url("admin/vpn/passwall/v2ray_update")%>';
 		// Download file
-		doAjaxGet(kcptunUpdateUrl, {
+		doAjaxGet(v2rayUpdateUrl, {
 			token: tokenStr,
-			url: kcptunInfo ? kcptunInfo.url.download : ''
+			url: v2rayInfo ? v2rayInfo.url.download : ''
 		}, function(json) {
 			if(json.code) {
-				removePageNotice_kcptun();
-				onRequestError_kcptun(btn, json.error);
+				removePageNotice_v2ray();
+				onRequestError_v2ray(btn, json.error);
 			} else {
 				btn.value = '<%:解压中...%>';
 
 				// Extract file
-				doAjaxGet(kcptunUpdateUrl, {
+				doAjaxGet(v2rayUpdateUrl, {
 					token: tokenStr,
 					task: 'extract',
 					file: json.file,
-					subfix: kcptunInfo ? kcptunInfo.type : ''
+					subfix: v2rayInfo ? v2rayInfo.type : ''
 				}, function(json) {
 					if(json.code) {
-						removePageNotice_kcptun();
-						onRequestError_kcptun(btn, json.error);
+						removePageNotice_v2ray();
+						onRequestError_v2ray(btn, json.error);
 					} else {
 						btn.value = '<%:移动中...%>';
 
 						// Move file to target dir
-						doAjaxGet(kcptunUpdateUrl, {
+						doAjaxGet(v2rayUpdateUrl, {
 							token: tokenStr,
 							task: 'move',
 							file: json.file
 						}, function(json) {
-							removePageNotice_kcptun();
+							removePageNotice_v2ray();
 							if(json.code) {
-								onRequestError_kcptun(btn, json.error);
+								onRequestError_v2ray(btn, json.error);
 							} else {
-								onUpdateSuccess_kcptun(btn);
+								onUpdateSuccess_v2ray(btn);
 							}
 						})
 					}
@@ -174,13 +174,13 @@ local dsp = require "luci.dispatcher"
 </script>
 
 <div class="cbi-value">
-	<label class="cbi-value-title">Kcptun
+	<label class="cbi-value-title">V2ray
 		<%:Version%>
 	</label>
 	<div class="cbi-value-field">
 		<div class="cbi-value-description">
 			<img src="/luci-static/resources/cbi/help.gif">
-			<span>【 <%=kcptun_version%>】</span>
+			<span>【 <%=v2ray_version%>】</span>
 		</div>
 	</div>
 </div>
@@ -190,7 +190,7 @@ local dsp = require "luci.dispatcher"
 		<%:Manually update%>
 	</label>
 	<div class="cbi-value-field">
-		<input class="cbi-button cbi-input-apply" type="submit" id="_kcptun-check_btn" onclick="onBtnClick_kcptun(this);" value="<%:Manually update%>">
-		<span id="_kcptun-check_btn-detail"></span>
+		<input class="cbi-button cbi-input-apply" type="submit" id="_v2ray-check_btn" onclick="onBtnClick_v2ray(this);" value="<%:Manually update%>">
+		<span id="_v2ray-check_btn-detail"></span>
 	</div>
 </div>

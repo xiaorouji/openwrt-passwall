@@ -20,28 +20,28 @@ local Pcap_Routing_update = trim(luci.sys.exec("uci get passwall.@global_rules[0
 local Pcap_WhiteList_update = trim(luci.sys.exec("uci get passwall.@global_rules[0].Pcap_WhiteList_update"))=="1" and "checked='checked'" or ""
 -%>
 
-<script type="text/javascript">//<![CDATA[
-	function update_rules(btn)
-	{
+<script type="text/javascript">
+	//<![CDATA[
+	function update_rules(btn) {
 		btn.disabled = true;
 		btn.value = '<%:Update...%>';
 		var table = document.getElementById('_ss_rule_fieldset');
 		var domList = table.getElementsByTagName('input');
 		var checkBoxList = [];
 		var len = domList.length;
-		while (len--) {
-			var dom=domList[len];
-　　		if (dom.type == 'checkbox' && dom.checked) {
-  　　			checkBoxList.push(dom.name);
-　　		}
+		while(len--) {
+			var dom = domList[len];　　
+			if(dom.type == 'checkbox' && dom.checked) {　　
+				checkBoxList.push(dom.name);　　
+			}
 		}
-		XHR.get('<%=dsp.build_url("admin/vpn/passwall/update_rules")%>',{update:checkBoxList},
-			function(x,data)
-			{
-				if (x && x.status == 200) {
-					window.location.href='<%=dsp.build_url("admin/vpn/passwall/log")%>';
-				}
-				else {
+		XHR.get('<%=dsp.build_url("admin/vpn/passwall/update_rules")%>', {
+				update: checkBoxList
+			},
+			function(x, data) {
+				if(x && x.status == 200) {
+					window.location.href = '<%=dsp.build_url("admin/vpn/passwall/log")%>';
+				} else {
 					alert("<%:Error%>");
 					btn.disabled = false;
 					btn.value = '<%:Manually update%>';
@@ -50,11 +50,14 @@ local Pcap_WhiteList_update = trim(luci.sys.exec("uci get passwall.@global_rules
 		);
 		return false;
 	}
-//]]></script>
+	//]]>
+</script>
 <fieldset class="cbi-section">
-	<fieldset class="cbi-section" id="_ss_rule_fieldset" >
+	<fieldset class="cbi-section" id="_ss_rule_fieldset">
 		<div class="cbi-value">
-			<label class="cbi-value-title">gfwlist<%:Version%></label>
+			<label class="cbi-value-title">gfwlist
+				<%:Version%>
+			</label>
 			<div class="cbi-value-field">
 				<div class="cbi-value-description">
 					<img src="/luci-static/resources/cbi/help.gif">
@@ -63,9 +66,11 @@ local Pcap_WhiteList_update = trim(luci.sys.exec("uci get passwall.@global_rules
 				</div>
 			</div>
 		</div>
-		
+
 		<div class="cbi-value">
-			<label class="cbi-value-title">chnroute<%:Version%></label>
+			<label class="cbi-value-title">chnroute
+				<%:Version%>
+			</label>
 			<div class="cbi-value-field">
 				<div class="cbi-value-description">
 					<img src="/luci-static/resources/cbi/help.gif">
@@ -74,10 +79,12 @@ local Pcap_WhiteList_update = trim(luci.sys.exec("uci get passwall.@global_rules
 				</div>
 			</div>
 		</div>
-		
+
 		<% if ipkg.installed("pcap-dnsproxy") then %>
 		<div class="cbi-value">
-			<label class="cbi-value-title">Pcap_Routing<%:Version%></label>
+			<label class="cbi-value-title">Pcap_Routing
+				<%:Version%>
+			</label>
 			<div class="cbi-value-field">
 				<div class="cbi-value-description">
 					<img src="/luci-static/resources/cbi/help.gif">
@@ -86,9 +93,11 @@ local Pcap_WhiteList_update = trim(luci.sys.exec("uci get passwall.@global_rules
 				</div>
 			</div>
 		</div>
-		
+
 		<div class="cbi-value">
-			<label class="cbi-value-title">Pcap_WhiteList<%:Version%></label>
+			<label class="cbi-value-title">Pcap_WhiteList
+				<%:Version%>
+			</label>
 			<div class="cbi-value-field">
 				<div class="cbi-value-description">
 					<img src="/luci-static/resources/cbi/help.gif">
@@ -98,12 +107,15 @@ local Pcap_WhiteList_update = trim(luci.sys.exec("uci get passwall.@global_rules
 			</div>
 		</div>
 		<% end %>
-		
+
 		<div class="cbi-value">
-			<label class="cbi-value-title"><%:Manually update%></label>
+			<label class="cbi-value-title">
+				<%:Manually update%>
+			</label>
 			<div class="cbi-value-field">
-				<input class="cbi-button cbi-input-apply" type="submit" id="update_rules_btn" onclick="update_rules(this)" value="<%:Manually update%>" >
+				<input class="cbi-button cbi-input-apply" type="submit" id="update_rules_btn" onclick="update_rules(this)" value="<%:Manually update%>">
 			</div>
 		</div>
+		
 	</fieldset>
 </fieldset>
