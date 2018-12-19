@@ -163,6 +163,15 @@ msgstr "DNS转发模式"
 msgid "upstreamm DNS Server for ChinaDNS"
 msgstr "ChinaDNS 的上游服务器"
 
+msgid "Only SS/R servers are supported"
+msgstr "仅支持SS/R服务器"
+
+msgid "Use MultiThreading"
+msgstr "使用多线程"
+
+msgid "Check to you can start SS/SSR with multiple threads"
+msgstr "勾选后当使用SS/SSR时可使用多线程"
+
 msgid "SSR Client"
 msgstr "SSR客户端"
 
@@ -373,14 +382,11 @@ msgstr "周"
 msgid "oclock"
 msgstr "点"
 
+msgid "V2ray Update"
+msgstr "更新V2ray版本"
+
 msgid "Kcptun Update"
 msgstr "更新Kcptun客户端版本"
-
-msgid "Current Kcptun client version is"
-msgstr "当前Kcptun客户端版本"
-
-msgid "The Kcptun server and client should use the same version number, otherwise they may not be able to connect!"
-msgstr "Kcptun服务器端和客户端最好选用同一版本号，否则可能无法连接！"
 
 msgid "Kcptun client path"
 msgstr "Kcptun客户端路径"

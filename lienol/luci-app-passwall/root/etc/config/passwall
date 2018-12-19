@@ -3,6 +3,7 @@ config global
 	option proxy_mode 'chnroute'
 	option dns_mode 'chinadns'
 	option up_dns_mode 'OpenDNS_443'
+	option use_multithreading '0'
 	option ssr_server_passwall '0'
 	option auto_switch '0'
 	option tcp_redir '0'
