@@ -130,8 +130,8 @@ input[type=file] { padding: 0; border: 0; }
 	background-repeat: no-repeat;
 }
 
-.cbi-button-add, .cbi-input-find { background: #19a4e6; border-color: #19a4e6; color: #fff; }
-.cbi-button-add:active, .cbi-button-add:focus, .cbi-input-find:active, .cbi-input-find:focus { border-color: #19a4e6; opacity: .8; }
+.cbi-button-add, .cbi-input-add { background: #19a4e6; border-color: #19a4e6; color: #fff; }
+.cbi-button-add:active, .cbi-button-add:focus, .cbi-input-add:active, .cbi-input-add:focus { border-color: #19a4e6; opacity: .8; }
 
 .cbi-button-remove, .cbi-input-remove, .cbi-section-remove input { background: #c00; border-color: #c00; color: #fff; }
 .cbi-button-remove:active, .cbi-button-remove:focus, .cbi-input-remove:active, .cbi-input-remove:focus, .cbi-section-remove input:active, .cbi-section-remove input:focus { border-color: #c00; opacity: .8; }
