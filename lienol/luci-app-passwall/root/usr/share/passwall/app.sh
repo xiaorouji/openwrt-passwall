@@ -212,6 +212,9 @@ load_config() {
 	PROXY_MODE=$(config_t_get global proxy_mode gfwlist)
 	DNS_MODE=$(config_t_get global dns_mode ChinaDNS)
 	UP_DNS_MODE=$(config_t_get global up_dns_mode OpenDNS_443)
+	USE_MULTITHREADING=$(config_t_get global use_multithreading 0)
+	threads=1
+	[ "$USE_MULTITHREADING" == "1" ] && threads=$(cat /proc/cpuinfo | grep 'processor' | wc -l)
 	SSR_SERVER_PASSWALL=$(config_t_get global ssr_server_passwall 0)
 	DNS_FORWARD=$(config_t_get global_dns dns_forward 208.67.222.222:443)
 	DNS_FORWARD_IP=$(echo "$DNS_FORWARD" | awk -F':' '{print $1}')
@@ -419,7 +422,12 @@ start_tcp_redir() {
 			[ -n "$brook_bin" ] && $brook_bin $brook_tcp_cmd &>/dev/null &
 		else
 			ss_bin=$(find_bin "$TCP_REDIR_SERVER_TYPE"-redir)
-			[ -n "$ss_bin" ] && $ss_bin -c $CONFIG_TCP_FILE -b ::> /dev/null 2>&1 &
+			[ -n "$ss_bin" ] && {
+				for i in $(seq 1 $threads)
+				do
+					$ss_bin -c $CONFIG_TCP_FILE -b ::> /dev/null 2>&1 &
+				done
+			}
 		fi
 	fi
 }
@@ -435,7 +443,12 @@ start_udp_redir() {
 			[ -n "$brook_bin" ] && $brook_bin $brook_udp_cmd &>/dev/null &
 		else
 			ss_bin=$(find_bin "$UDP_REDIR_SERVER_TYPE"-redir)
-			[ -n "$ss_bin" ] && $ss_bin -c $CONFIG_UDP_FILE -U > /dev/null 2>&1 &
+			[ -n "$ss_bin" ] && {
+				for i in $(seq 1 $threads)
+				do
+					$ss_bin -c $CONFIG_UDP_FILE -U > /dev/null 2>&1 &
+				done
+			}
 		fi
 	fi
 }

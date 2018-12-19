@@ -1,7 +1,6 @@
 local e=require"nixio.fs"
 local e=require"luci.sys"
 --local t=luci.sys.exec("cat /usr/share/passwall/dnsmasq.d/gfwlist.conf|grep -c ipset")
-local a=luci.sys.exec("/usr/bin/kcptun_client -v | awk '{print $3}'")
 
 m=Map("passwall")
 -- [[ Rule Settings ]]--
@@ -29,24 +28,25 @@ end
 o.default=0
 o:depends("auto_update",1)
 
+-- [[ V2ray Settings ]]--
+s=m:section(TypedSection,"global",translate("V2ray Update"))
+s.anonymous=true
+s:append(Template("passwall/v2ray"))
+
 -- [[ Kcptun Settings ]]--
 s=m:section(TypedSection,"global_kcptun",translate("Kcptun Update"))
 s.anonymous=true
-
-o=s:option(DummyValue,"satus22",nil,translate("Current Kcptun client version is")..
-"【 "..a.."】，<font style='color:red'>"..
-translate("The Kcptun server and client should use the same version number, otherwise they may not be able to connect!")..
-"</font>")
-
+s:append(Template("passwall/kcptun"))
 o=s:option(Value,"kcptun_client_file",translate("Kcptun client path"))
 o.default="/usr/bin/kcptun_client"
 o.rmempty=false
+--[[
 o = s:option(Button, "_check_kcptun", translate("Manually update"),
 	translate("Make sure there is enough space to install Kcptun"))
 o.template = "passwall/kcptun"
 o.inputstyle = "apply"
-o.btnclick = "onKcptunBtnClick('kcptun', this);"
-o.id = "_kcptun-check_kcptun"
+o.btnclick = "onBtnClick_kcptun(this);"
+o.id = "_kcptun-check_btn"]]--
 
 -- [[ Subscribe Settings ]]--
 s=m:section(TypedSection,"global_subscribe",translate("SSR Server Subscribe"))
@@ -61,7 +61,7 @@ luci.sys.exec("/usr/share/passwall/onlineconfig.sh")
 luci.http.redirect(luci.dispatcher.build_url("admin","vpn","passwall","log"))
 end
 o=s:option(Button,"_stop",translate("Delete All Subscribe"))
-o.inputstyle="apply"
+o.inputstyle="reset"
 function o.write(e,e)
 luci.sys.exec("/usr/share/passwall/onlineconfig.sh stop")
 luci.http.redirect(luci.dispatcher.build_url("admin","vpn","passwall","log"))
