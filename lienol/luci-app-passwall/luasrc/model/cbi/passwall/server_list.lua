@@ -27,7 +27,7 @@ end
 
 e=t:option(Button,"_add",translate("Add Server"))
 e.inputtitle=translate("Add")
-e.inputstyle="apply"
+e.inputstyle="add"
 function e.write(e,e)
 luci.sys.exec("/usr/share/passwall/onlineconfig.sh add")
 end
