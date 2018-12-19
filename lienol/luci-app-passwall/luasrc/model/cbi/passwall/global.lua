@@ -14,7 +14,7 @@ local function is_finded(e)
 end
 
 local function has_multithreading()
-    return tonumber(sys.exec("cat /proc/cpuinfo | grep 'processor' | wc -l")) ==1 and true or false
+    return tonumber(sys.exec("cat /proc/cpuinfo | grep 'processor' | wc -l")) >1 and true or false
 end
 
 local function has_udp_relay()
