@@ -1,0 +1,21 @@
+header h3 a, header .brand {
+	display:none !important;
+}
+
+@media screen and (max-device-width: 600px) {
+	#maincontent.container {
+		margin-top: 30px;
+	}
+}
+
+@media screen and (max-device-width: 360px) {
+	#maincontent.container {
+		margin-top: 60px;
+	}
+}
+
+@media screen and (max-device-width: 200px) {
+	#maincontent.container {
+		margin-top: 230px;
+	}
+}
