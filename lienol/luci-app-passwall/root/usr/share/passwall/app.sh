@@ -444,10 +444,7 @@ start_udp_redir() {
 		else
 			ss_bin=$(find_bin "$UDP_REDIR_SERVER_TYPE"-redir)
 			[ -n "$ss_bin" ] && {
-				for i in $(seq 1 $threads)
-				do
-					$ss_bin -c $CONFIG_UDP_FILE -U > /dev/null 2>&1 &
-				done
+				$ss_bin -c $CONFIG_UDP_FILE -U > /dev/null 2>&1 &
 			}
 		fi
 	fi
