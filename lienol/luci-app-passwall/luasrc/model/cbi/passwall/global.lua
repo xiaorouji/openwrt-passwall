@@ -13,10 +13,6 @@ local function is_finded(e)
 	return sys.exec("find /usr/*bin -iname "..e.." -type f") ~="" and true or false
 end
 
-local function has_multithreading()
-    return tonumber(sys.exec("cat /proc/cpuinfo | grep 'processor' | wc -l")) >1 and true or false
-end
-
 local function has_udp_relay()
     return sys.call("lsmod | grep TPROXY >/dev/null") == 0
 end
@@ -39,7 +35,7 @@ e=t:option(Flag,"tcp_redir",translate("Start the TCP redir"),translate("For used
 e.default=0
 e.rmempty=false
 
-e=t:option(Flag,"auto_switch",translate("Use Auto Switch"),translate("Please switch the configuration of the standby server to the automatic interface"))
+e=t:option(Flag,"auto_switch",translate("Use Auto Switch/reconnect"),translate("Please switch the configuration of the standby server to the automatic interface"))
 e.default=0
 e.rmempty=false
 e:depends("tcp_redir",1)
@@ -122,10 +118,15 @@ end
 	e:value("OpenDNS_443","OpenDNS(443"..translate("Port")..")")
 	e:value("OpenDNS_5353","OpenDNS(5353"..translate("Port")..")")
 
-if has_multithreading() then
-	e=t:option(Flag,"use_multithreading",translate("Use MultiThreading"),translate("Check to you can start SS/SSR with multiple threads"))
-	e.default="0"
-end
+--据说单线程CPU使用也有加成，试试吧。。。 code from lean
+e = t:option(Value, "threads", translate("Multi Threads Option"),translate("you can start SS/SSR with multiple threads"))
+e:value("0", translate("Auto"))
+e:value("1", translate("1 Thread"))
+e:value("2", "2 "..translate("Thread"))
+e:value("3", "3 "..translate("Thread"))
+e:value("4", "4 "..translate("Thread"))
+e.default = "0"
+e.rmempty = false
 	
 e=t:option(Flag,"ssr_server_passwall",translate("SSR Client")..translate("Pass Wall"),translate("Check to make the SSR server client")..translate("Pass Wall"))
 e.default="0"

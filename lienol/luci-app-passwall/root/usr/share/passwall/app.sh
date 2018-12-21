@@ -15,7 +15,7 @@ LOG_FILE=/var/log/$CONFIG.log
 SS_PATH=/usr/share/$CONFIG
 SS_PATH_RULE=$SS_PATH/rule
 SS_PATH_DNSMASQ=$SS_PATH/dnsmasq.d
-TMP_DNSMASQ_PATH=/var/dnsmasq.d
+TMP_DNSMASQ_PATH=/var/etc/dnsmasq-passwall.d
 DNSMASQ_PATH=/etc/dnsmasq.d
 lanip=$(uci get network.lan.ipaddr)
 IPSET_LANIPLIST="laniplist"
@@ -212,9 +212,12 @@ load_config() {
 	PROXY_MODE=$(config_t_get global proxy_mode gfwlist)
 	DNS_MODE=$(config_t_get global dns_mode ChinaDNS)
 	UP_DNS_MODE=$(config_t_get global up_dns_mode OpenDNS_443)
-	USE_MULTITHREADING=$(config_t_get global use_multithreading 0)
 	threads=1
-	[ "$USE_MULTITHREADING" == "1" ] && threads=$(cat /proc/cpuinfo | grep 'processor' | wc -l)
+	if [ "$(config_t_get global threads 0)" = "0" ] ;then
+		threads=$(cat /proc/cpuinfo | grep 'processor' | wc -l)
+	else
+		threads=$(config_t_get global threads)
+	fi
 	SSR_SERVER_PASSWALL=$(config_t_get global ssr_server_passwall 0)
 	DNS_FORWARD=$(config_t_get global_dns dns_forward 208.67.222.222:443)
 	DNS_FORWARD_IP=$(echo "$DNS_FORWARD" | awk -F':' '{print $1}')
@@ -425,7 +428,7 @@ start_tcp_redir() {
 			[ -n "$ss_bin" ] && {
 				for i in $(seq 1 $threads)
 				do
-					$ss_bin -c $CONFIG_TCP_FILE -b ::> /dev/null 2>&1 &
+					$ss_bin -c $CONFIG_TCP_FILE -f $RUN_PID_PATH/tcp_${TCP_REDIR_SERVER_TYPE}_$i -b ::> /dev/null 2>&1 &
 				done
 			}
 		fi
@@ -444,7 +447,7 @@ start_udp_redir() {
 		else
 			ss_bin=$(find_bin "$UDP_REDIR_SERVER_TYPE"-redir)
 			[ -n "$ss_bin" ] && {
-				$ss_bin -c $CONFIG_UDP_FILE -U > /dev/null 2>&1 &
+				$ss_bin -c $CONFIG_UDP_FILE -f $RUN_PID_PATH/udp_${UDP_REDIR_SERVER_TYPE}_1 -U > /dev/null 2>&1 &
 			}
 		fi
 	fi
@@ -629,8 +632,7 @@ start_dns() {
 }
 
 add_dnsmasq() {
-	mkdir -p $TMP_DNSMASQ_PATH
-	mkdir -p $DNSMASQ_PATH
+	mkdir -p $TMP_DNSMASQ_PATH $DNSMASQ_PATH /var/dnsmasq.d
 	local wirteconf dnsconf dnsport isp_dns isp_ip
 	dnsport=$(config_t_get global_dns dns_port)
 	[ -z "$dnsport" ] && dnsport=0
@@ -793,7 +795,8 @@ EOF
 		echolog "生成回国模式Dnsmasq配置文件。" 
 	fi
 	
-	cp -pR $TMP_DNSMASQ_PATH/* $DNSMASQ_PATH
+	echo "conf-dir=$TMP_DNSMASQ_PATH" > /var/dnsmasq.d/dnsmasq-$CONFIG.conf
+	echo "conf-dir=$TMP_DNSMASQ_PATH" > $DNSMASQ_PATH/dnsmasq-$CONFIG.conf
 	if [ "$restdns" == 1 ];then
 		echolog "重启Dnsmasq。。。" 
 		/etc/init.d/dnsmasq restart  2>/dev/null
@@ -847,8 +850,9 @@ EOF
 
 stop_dnsmasq() {
 	if [ "$TCP_REDIR_SERVER" == "nil" ]; then
-		rm -rf $TMP_DNSMASQ_PATH/*
-		rm -rf $DNSMASQ_PATH/*
+		rm -rf /var/dnsmasq.d/dnsmasq-$CONFIG.conf
+		rm -rf $DNSMASQ_PATH/dnsmasq-$CONFIG.conf
+		rm -rf $TMP_DNSMASQ_PATH
 		/etc/init.d/dnsmasq restart  2>/dev/null
 		echolog "没有选择服务器！" 
 	fi

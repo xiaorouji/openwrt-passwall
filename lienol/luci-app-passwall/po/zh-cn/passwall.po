@@ -166,11 +166,17 @@ msgstr "ChinaDNS 的上游服务器"
 msgid "Only SS/R servers are supported"
 msgstr "仅支持SS/R服务器"
 
-msgid "Use MultiThreading"
-msgstr "使用多线程"
+msgid "Multi Threads Option"
+msgstr "多线程并发转发"
 
-msgid "Check to you can start SS/SSR with multiple threads"
-msgstr "勾选后当使用SS/SSR时可使用多线程"
+msgid "you can start SS/SSR with multiple threads"
+msgstr "当使用SS/SSR时可使用多线程并发转发"
+
+msgid "Thread"
+msgstr "线程"
+
+msgid "1 Thread"
+msgstr "单线程"
 
 msgid "SSR Client"
 msgstr "SSR客户端"
@@ -289,8 +295,8 @@ msgstr "点击这里查看负载均衡设置教程。"
 msgid "Auto Switch"
 msgstr "自动切换"
 
-msgid "Use Auto Switch"
-msgstr "使用自动切换"
+msgid "Use Auto Switch/reconnect"
+msgstr "使用自动切换/重连"
 
 msgid "Please switch the configuration of the standby server to the automatic interface"
 msgstr "备用服务器请到自动切换界面配置"
