@@ -140,11 +140,11 @@ input[type=file] { padding: 0; border: 0; }
 .cbi-button-reload, .cbi-input-reload { background: rgb(0,171,232); border-color: rgb(0,171,232); color: #fff; }
 .cbi-button-reload:active, .cbi-button-reload:focus, .cbi-input-reload:active, .cbi-input-reload:focus { border-color: rgb(0,171,232); opacity: .8; }
 
-.cbi-button-reset, .cbi-input-reset { background: #ffde1d; border-color: #ffde1d; color: #fff; }
-.cbi-button-reset:active, .cbi-button-reset:focus, .cbi-input-reset:active, .cbi-input-reset:focus { border-color: #ffde1d; opacity: .8; }
+.cbi-button-reset, .cbi-input-reset { background: #6bde84; border-color: #6bde84; color: #fff; }
+.cbi-button-reset:active, .cbi-button-reset:focus, .cbi-input-reset:active, .cbi-input-reset:focus { border-color: #6bde84; opacity: .8; }
 
-.cbi-button-edit, .cbi-input-edit { background: #f96f2d; border-color: #f96f2d; color: #fff; }
-.cbi-button-edit:active, .cbi-button-edit:focus, .cbi-input-edit:active, .cbi-input-edit:focus { border-color: #f96f2d; opacity: .8; }
+.cbi-button-edit, .cbi-input-edit { background: #ff7700; border-color: #ff7700; color: #fff; }
+.cbi-button-edit:active, .cbi-button-edit:focus, .cbi-input-edit:active, .cbi-input-edit:focus { border-color: #ff7700; opacity: .8; }
 
 .cbi-button-apply, .cbi-input-apply { background: rgb(148,143,225); border-color: rgb(148,143,225); color: #fff; }
 .cbi-button-apply:active, .cbi-button-apply:focus, .cbi-input-apply:active, .cbi-input-apply:focus { border-color: rgb(148,143,225); opacity: .8; }
