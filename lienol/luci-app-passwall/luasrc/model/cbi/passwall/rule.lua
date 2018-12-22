@@ -61,7 +61,7 @@ luci.sys.exec("/usr/share/passwall/onlineconfig.sh")
 luci.http.redirect(luci.dispatcher.build_url("admin","vpn","passwall","log"))
 end
 o=s:option(Button,"_stop",translate("Delete All Subscribe"))
-o.inputstyle="reset"
+o.inputstyle="remove"
 function o.write(e,e)
 luci.sys.exec("/usr/share/passwall/onlineconfig.sh stop")
 luci.http.redirect(luci.dispatcher.build_url("admin","vpn","passwall","log"))
