@@ -36,14 +36,16 @@ o:value("gamemode",translate("Game Mode"))
 o:value("returnhome",translate("Return Home"))
 
 o=s:option(Value,"tcp_redir_ports",translate("TCP Redir Ports"))
-o.default="80,443"
+o.default="default"
+o:value("default",translate("Default"))
 o:value("1:65535",translate("All"))
 o:value("80,443","80,443")
 o:value("80:","80 "..translate("or more"))
 o:value(":443","443 "..translate("or less"))
 
 o=s:option(Value,"udp_redir_ports",translate("UDP Redir Ports"))
-o.default="1:65535"
+o.default="default"
+o:value("default",translate("Default"))
 o:value("1:65535",translate("All"))
 o:value("53","53")
 return m

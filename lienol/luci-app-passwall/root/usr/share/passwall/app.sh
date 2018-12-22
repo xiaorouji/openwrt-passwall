@@ -202,7 +202,7 @@ brook_tcp_cmd=""
 brook_udp_cmd=""
 AUTO_SWITCH=$(config_t_get global auto_switch 0)
 TCP_REDIR_PORTS=$(config_t_get global tcp_redir_ports '80,443')
-UDP_REDIR_PORTS=$(config_t_get global udp_redir_ports '80,443')
+UDP_REDIR_PORTS=$(config_t_get global udp_redir_ports '1:65535')
 
 load_config() {
 	[ "$TCP_REDIR_SERVER" == "nil" -a "$UDP_REDIR_SERVER" == "nil" -a "$SOCKS5_PROXY_SERVER" == "nil" ] && {
@@ -1026,19 +1026,19 @@ load_acl(){
 	config_get acl_mode $1 proxy_mode
 	config_get tcp_redir_ports $1 tcp_redir_ports
 	config_get udp_redir_ports $1 udp_redir_ports
-	[ -z "$tcp_redir_ports" ] && tcp_redir_ports="1:65535"
-	[ -z "$udp_redir_ports" ] && udp_redir_ports="1:65535"
+	[ -z "$tcp_redir_ports" -o "$tcp_redir_ports" = "default" ] && tcp_redir_ports=$TCP_REDIR_PORTS
+	[ -z "$udp_redir_ports" -o "$udp_redir_ports" = "default" ] && udp_redir_ports=$UDP_REDIR_PORTS
 	local ip_mark=`get_ip_mark $ipaddr`								 
 	[ "$enabled" == "1" -a -n "$acl_mode" ] && {
 		if [ -n "$ipaddr" ] || [ -n "$macaddr" ]; then
 			if [ -n "$ipaddr" -a -n "$macaddr" ]; then
-				echolog "访问控制：IP：$ipaddr，MAC：$macaddr，TCP代理转发端口：tcp_redir_ports，UDP代理转发端口：$udp_redir_ports，代理模式：$(get_action_chain_name $acl_mode)" 
+				echolog "访问控制：IP：$ipaddr，MAC：$macaddr，代理模式：$(get_action_chain_name $acl_mode)" 
 			else
-				[ -n "$ipaddr" ] && echolog "访问控制：IP：$ipaddr，TCP代理转发端口：$tcp_redir_ports，UDP代理转发端口：$udp_redir_ports，代理模式：$(get_action_chain_name $acl_mode)" 
-				[ -n "$macaddr" ] && echolog "访问控制：MAC：$macaddr，TCP代理转发端口：$tcp_redir_ports，UDP代理转发端口：$udp_redir_ports，代理模式：$(get_action_chain_name $acl_mode)" 
+				[ -n "$ipaddr" ] && echolog "访问控制：IP：$ipaddr，代理模式：$(get_action_chain_name $acl_mode)" 
+				[ -n "$macaddr" ] && echolog "访问控制：MAC：$macaddr，代理模式：$(get_action_chain_name $acl_mode)" 
 			fi
 			$iptables_mangle -A SS $(factor $ipaddr "-s") -p tcp $(factor $macaddr "-m mac --mac-source") $(factor $tcp_redir_ports "-m multiport --dport") -$(get_jump_mode $acl_mode) $(get_action_chain $acl_mode)
-			$iptables_mangle -A SS $(factor $ipaddr "-s") -p udp $(factor $macaddr "-m mac --mac-source") $(factor $udp_redir_ports "-m multiport --dport") -$(get_jump_mode $acl_mode) $(get_action_chain $acl_mode)
+			[ "$UDP_REDIR" = "1" ] && $iptables_mangle -A SS $(factor $ipaddr "-s") -p udp $(factor $macaddr "-m mac --mac-source") $(factor $udp_redir_ports "-m multiport --dport") -$(get_jump_mode $acl_mode) $(get_action_chain $acl_mode)
 			[ -z "$ipaddr" ] && {
 				lower_macaddr=`echo $macaddr | tr '[A-Z]' '[a-z]'`
 				ipaddr=`ip neigh show | grep -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}" | grep $lower_macaddr | awk '{print $1}'`
