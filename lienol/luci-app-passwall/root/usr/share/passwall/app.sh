@@ -428,7 +428,7 @@ start_tcp_redir() {
 			[ -n "$ss_bin" ] && {
 				for i in $(seq 1 $threads)
 				do
-					$ss_bin -c $CONFIG_TCP_FILE -f $RUN_PID_PATH/tcp_${TCP_REDIR_SERVER_TYPE}_$i -b ::> /dev/null 2>&1 &
+					$ss_bin -c $CONFIG_TCP_FILE -f $RUN_PID_PATH/tcp_${TCP_REDIR_SERVER_TYPE}_$i -b :: > /dev/null 2>&1 &
 				done
 			}
 		fi
@@ -1202,7 +1202,7 @@ EOF
 			fi
 		
 			#  用于本机流量转发，默认只走router
-			$iptables_nat -I OUTPUT -j SS
+			#$iptables_nat -I OUTPUT -j SS
 			$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_ROUTER dst -j REDIRECT --to-ports $TCP_REDIR_PORT
 			
 			if [ "$SSR_SERVER_PASSWALL" == "1" ];then
@@ -1251,11 +1251,11 @@ EOF
 		
 	#  加载默认代理模式
 		if [ "$PROXY_MODE" == "disable" ];then
-			$iptables_mangle -A SS -p tcp -j $(get_action_chain $PROXY_MODE)
-			$iptables_mangle -A SS -p udp -j $(get_action_chain $PROXY_MODE)
+			[ "$TCP_REDIR" == "1" ] && $iptables_mangle -A SS -p tcp -j $(get_action_chain $PROXY_MODE)
+			[ "$UDP_REDIR" == "1" ] && $iptables_mangle -A SS -p udp -j $(get_action_chain $PROXY_MODE)
 		else
-			$iptables_mangle -A SS -p tcp -m multiport --dport $TCP_REDIR_PORTS -j $(get_action_chain $PROXY_MODE)
-			$iptables_mangle -A SS -p udp -m multiport --dport $UDP_REDIR_PORTS -j $(get_action_chain $PROXY_MODE)
+			[ "$TCP_REDIR" == "1" ] && $iptables_mangle -A SS -p tcp -m multiport --dport $TCP_REDIR_PORTS -j $(get_action_chain $PROXY_MODE)
+			[ "$UDP_REDIR" == "1" ] && $iptables_mangle -A SS -p udp -m multiport --dport $UDP_REDIR_PORTS -j $(get_action_chain $PROXY_MODE)
 		fi
 	
 	if [ "$PROXY_IPV6" == "1" ];then
