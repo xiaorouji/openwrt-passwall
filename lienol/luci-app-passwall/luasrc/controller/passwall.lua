@@ -14,7 +14,7 @@ function index()
 	entry({"admin","vpn","passwall","server_list"},cbi("passwall/server_list"),_("Server List"),2).dependent=true
 	entry({"admin","vpn","passwall","auto_switch"},cbi("passwall/auto_switch"),_("Auto Switch"),3).leaf=true
 	entry({"admin","vpn","passwall","other"},cbi("passwall/other"),_("Other Settings"),94).leaf=true
-	if luci.model.ipkg.installed("haproxy") or nixio.fs.access("/usr/bin/haproxy") or nixio.fs.access("/usr/sbin/haproxy") then
+	if nixio.fs.access("/usr/sbin/haproxy") then
 		entry({"admin","vpn","passwall","balancing"},cbi("passwall/balancing"),_("Load Balancing"),95).leaf=true
 	end
 	entry({"admin","vpn","passwall","rule"},cbi("passwall/rule"),_("Rule Update"),96).leaf=true
