@@ -1,4 +1,4 @@
-local fs = require"nixio.fs"
+local fs = require "nixio.fs"
 local net = require "luci.model.network".init()
 local ifaces = require "luci.sys".net:devices()
 m=Map("passwall")
