@@ -1,4 +1,4 @@
-local fs=require"nixio.fs"
+local fs = require "nixio.fs"
 m=Map("passwall")
 s=m:section(TypedSection,"global",translate("Set Blacklist And Whitelist"))
 s.anonymous=true

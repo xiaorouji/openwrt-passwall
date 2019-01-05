@@ -1,12 +1,13 @@
-local o=require "luci.dispatcher"
-local fs=require "nixio.fs"
-local sys=require "luci.sys"
-local cursor=luci.model.uci.cursor()
-local i="passwall"
+local o = require "luci.dispatcher"
+local fs = require "nixio.fs"
+local sys = require "luci.sys"
+local ipkg = require("luci.model.ipkg")
+local cursor = luci.model.uci.cursor()
+local i = "passwall"
 local a,t,e
 
 local function is_installed(e)
-	return luci.model.ipkg.installed(e)
+	return ipkg.installed(e)
 end
 
 local function is_finded(e)

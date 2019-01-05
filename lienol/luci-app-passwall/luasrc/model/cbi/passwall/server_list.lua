@@ -1,8 +1,8 @@
-local o=require "luci.dispatcher"
-local fs=require "nixio.fs"
-local sys=require "luci.sys"
-local cursor=luci.model.uci.cursor()
-local appname="passwall"
+local o = require "luci.dispatcher"
+local fs = require "nixio.fs"
+local sys = require "luci.sys"
+local cursor = luci.model.uci.cursor()
+local appname = "passwall"
 local a,t,e
 
 a=Map(appname)
