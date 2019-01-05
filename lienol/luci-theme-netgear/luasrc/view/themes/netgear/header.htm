@@ -26,7 +26,9 @@
 	local disp = require "luci.dispatcher"
 
 	local boardinfo = util.ubus("system", "board")
-
+	local boardinfo={}
+	boardinfo.hostname=sys.hostname()
+	
 	local request  = disp.context.path
 	local request2 = disp.context.request
 
@@ -128,7 +130,7 @@
     <link rel="icon" href="<%=media%>/logo.png" sizes="144x144">
     <link rel="apple-touch-icon-precomposed" href="<%=media%>/logo.png" sizes="144x144">
 
-    <link rel="stylesheet" href="<%=media%>/css/style.css?v=git-17.016.25656-a85807d">
+    <link rel="stylesheet" href="<%=media%>/css/style.css">
     <link rel="shortcut icon" href="<%=media%>/favicon.ico">
     <% if node and node.css then %>
         <link rel="stylesheet" href="<%=resource%>/<%=node.css%>">
@@ -138,16 +140,27 @@
             <%-= css %>
         </style>
     <% end -%>
-    <script src="<%=resource%>/xhr.js?v=git-17.016.25656-a85807d"></script>
+    <script src="<%=resource%>/xhr.js"></script>
 </head>
 
 <body class="lang_<%=luci.i18n.context.lang%> <%- if node then %><%= striptags( node.title ) %><%- end %> <% if luci.dispatcher.context.authsession then %>logged-in<% end %>">
 
 <header>
+
+
+
 	<div class="container">
-		<span class="showSide"></span>
-		<a class="brand" href="#">NETGEAR</a>
-		<span class="brand-hostname"><%=boardinfo.hostname or "?"%></span>
+
+
+   
+        
+        
+
+
+
+<span class="showSide"></span>
+		<img  src="/luci-static/netgear/nlogo.png" <%=striptags( (boardinfo.hostname or "?") ) %>>
+
 		<div class="pull-right">
 		<%
 		-- calculate the number of unsaved changes
@@ -161,21 +174,21 @@
 				end
 			end
 			%>
-			<span id="xhr_poll_status" style="display:none;" onclick="XHR.running() ? XHR.halt() : XHR.run()">
-				<span class="label success" id="xhr_poll_status_on"><span class="mobile-hide"><%:Auto Refresh%> </span><%:on%></span>
-				<span class="label" id="xhr_poll_status_off" style="display:none"><span class="mobile-hide"><%:Auto Refresh%> </span><%:off%></span>
-			</span>
 			<% if ucichanges > 0 then %>
 			<a class="label notice" href="<%=controller%>/<%=category%>/uci/changes?redir=<%=http.urlencode(http.formvalue("redir") or REQUEST_URI)%>"><span class="mobile-hide"><%:Unsaved Changes%>: </span><%=ucichanges%></a>
 			<% end %>
+			<span id="xhr_poll_status" style="display:none" onclick="XHR.running() ? XHR.halt() : XHR.run()">
+				<span class="label success" id="xhr_poll_status_on"><span class="mobile-hide"><%:Auto Refresh%> </span><%:on%></span>
+				<span class="label" id="xhr_poll_status_off" style="display:none"><span class="mobile-hide"><%:Auto Refresh%> </span><%:off%></span>
+			</span>
 		<% end %>
-		<a class="cbi-button cbi-button-reset" href="/cgi-bin/luci//admin/system/reboot" style="margin-right:-6px;">
-		<span class="myIcon myIcon-reboot"></span> <%=pcdata(striptags(translate("Reboot")))%></a>
-		</a>
-		<a class="cbi-button cbi-button-apply" href="/cgi-bin/luci//admin/logout">
-		<span class="myIcon myIcon-logout"></span> <%=pcdata(striptags(translate("Logout")))%></a>
 		</div>
-	</div>
+
+
+
+        
+ 	
+		</div>
 </header>
 
  <div class="main">
@@ -191,7 +204,7 @@
 				 <%-
 				 for i, r in ipairs(childs) do
 				 local nnode = node.nodes[r]
-				 local href  = controller .. prefix .. r ..
+				 local href  = controller .. "/" .. prefix .. r ..
 				 (nnode.query and http.build_querystring(nnode.query) or "")
 				 %>
 				 <li><a data-title="<%=pcdata(striptags(nnode.title))%>" href="<%=pcdata(href)%>"><%=pcdata(striptags(translate(nnode.title)))%></a></li>
@@ -219,6 +232,9 @@
 				 <%- submenu("/" .. category .. "/" .. r .. "/", nnode) %>
 			 </li>
 			 <%          else %>
+			 <li class="slide">
+				 <a class="menu2" data-title="<%=pcdata(striptags(nnode.title))%>" href="<%=pcdata(href)%>"><%=pcdata(striptags(translate(nnode.title)))%></a>
+			 </li>
 			 <%
 			 end
 			 end
