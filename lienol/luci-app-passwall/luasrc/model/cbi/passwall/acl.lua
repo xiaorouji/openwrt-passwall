@@ -1,5 +1,6 @@
-local sys=require"luci.sys"
-local webadmin=require"luci.tools.webadmin"
+local sys = require"luci.sys"
+local webadmin = require"luci.tools.webadmin"
+
 m=Map("passwall")
 s=m:section(TypedSection,"acl_rule",translate("ACLs"),
 translate("ACLs is a tools which used to designate specific IP proxy mode"))

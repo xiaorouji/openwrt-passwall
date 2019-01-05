@@ -1,5 +1,6 @@
-local i="passwall"
-local d=require "luci.dispatcher"
+local i = "passwall"
+local d = require "luci.dispatcher"
+local ipkg = require("luci.model.ipkg")
 local a,t,e
 
 local function is_finded(e)
@@ -7,7 +8,7 @@ local function is_finded(e)
 end
 
 local function is_installed(e)
-	return luci.model.ipkg.installed(e)
+	return ipkg.installed(e)
 end
 
 local ss_encrypt_method={

@@ -1,6 +1,6 @@
-local e=require"nixio.fs"
-local e=require"luci.sys"
---local t=luci.sys.exec("cat /usr/share/passwall/dnsmasq.d/gfwlist.conf|grep -c ipset")
+local e = require"nixio.fs"
+local e = require"luci.sys"
+--local t = luci.sys.exec("cat /usr/share/passwall/dnsmasq.d/gfwlist.conf|grep -c ipset")
 
 m=Map("passwall")
 -- [[ Rule Settings ]]--
