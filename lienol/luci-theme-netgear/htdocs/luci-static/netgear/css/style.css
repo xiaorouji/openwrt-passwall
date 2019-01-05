@@ -288,10 +288,6 @@ footer > a {
     margin-right:10px;
 }
 
-.pull-right span {
-    font-size:11px !important;
-}
-
 .pull-left {
     float: left;
 }
@@ -484,16 +480,8 @@ header > .container > .brand-hostname {
 .main > .main-left > .nav > .slide > a[data-title="Status"]:before {
     content: "\e026";
 }
-
 .main > .main-left > .nav > .slide > a[data-title="System"]:before {
     content: "\e01c";
-}
-
-.main > .main-left > .nav > .slide > a[data-title="Network"]:before {
-    content: "\e00e";
-}
-.main > .main-left > .nav > .slide > a[data-title="Usbapps"]:before {
-    content: "\e00b";
 }
 .main > .main-left > .nav > .slide > a[data-title="Services"]:before {
     content: "\e029";
@@ -501,15 +489,47 @@ header > .container > .brand-hostname {
 .main > .main-left > .nav > .slide > a[data-title="NAS"]:before {
     content: "\e00b";
 }
-
-
+.main > .main-left > .nav > .slide > a[data-title="Control"]:before {
+    content: "\e021";
+}
+.main > .main-left > .nav > .slide > a[data-title="VPN"]:before {
+    content: "\e029";
+}
+.main > .main-left > .nav > .slide > a[data-title="Network"]:before {
+    content: "\e00e";
+}
+.main > .main-left > .nav > .slide > a[data-title="Bandwidth Monitor"]:before {
+    content: "\e00f";
+}
+.main > .main-left > .nav > .slide > a[data-title="Statistics"]:before {
+	content: "\e015";
+}
+.main > .main-left > .nav > .slide > a[data-title="Usbapps"]:before {
+    content: "\e00b";
+}
+.main > .main-left > .nav > li > a[data-title="Logout"] {
+    padding: 10px 35px;
+}
 .main > .main-left > .nav > li > a[data-title="Logout"]:before {
     content: "\e005";
+    display: inline-block;
+    top: -1px;
+    left:-10px;
+    position: relative;
+    vertical-align: middle;
+    display: inline-block;
+    font-family: "advancedtomato" !important;
+    font-style: normal !important;
+    font-weight: normal !important;
+    font-variant: normal !important;
+    text-transform: none !important;
+    speak: none;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
 }
 
 .main > .main-left > .nav > li > a[data-title="Reboot"] {
-    padding-left:36px;
-    line-height:40px;
+    padding: 10px 35px;
 }
 .main > .main-left > .nav > li > a[data-title="Reboot"]:before {
     content: "\e004";
@@ -528,6 +548,7 @@ header > .container > .brand-hostname {
     line-height: 1;
     -webkit-font-smoothing: antialiased;
 }
+
 .main > .main-left > .nav > .slide > ul {
     display: none;
     list-style:dotted;
@@ -542,6 +563,10 @@ header > .container > .brand-hostname {
 
 .main > .main-left > .nav > li:hover,
 .main > .main-left > .nav > .slide > .menu:hover {
+    background: rgb(133,129,216);
+	color:white;
+}
+.main > .main-left > .nav > .slide > .menu2:hover {
     background: rgb(133,129,216);
 	color:white;
 }
@@ -1573,7 +1598,7 @@ body.lang_pl.node-main-login .cbi-value-title {
     .main > .main-left > .nav > li,
     .main > .main-left > .nav > li a,
     .main > .main-left > .nav > .slide > .menu {
-        font-size: 1.1rem;
+        font-size: 1.3rem;
     }
 
     .main > .main-left > .nav > .slide > .slide-menu > li > a {
