@@ -1,5 +1,5 @@
-local cursor=luci.model.uci.cursor()
-local i="passwall"
+local cursor = luci.model.uci.cursor()
+local i = "passwall"
 
 local n={}
 cursor:foreach(i,"servers",function(e)
