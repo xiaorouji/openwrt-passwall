@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 LUCI_TITLE:=Netgear Theme
 LUCI_DEPENDS:=
 PKG_VERSION:=1.0
-PKG_RELEASE:=3-20190105
+PKG_RELEASE:=5-20190107
 
 include $(TOPDIR)/package/lienol/luci_my.mk
 
