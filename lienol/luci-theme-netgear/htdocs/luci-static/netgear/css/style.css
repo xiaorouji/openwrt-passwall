@@ -99,7 +99,7 @@ html, body {
 }
 
 body div {
-    line-height: 150%;
+    line-height:150%;
 }
 
 a {
@@ -108,13 +108,6 @@ a {
 }
 
 em {font-style:normal !important;}
-
-input[type=checkbox], input[type=radio] {
-    width: auto;
-    margin: 0;
-    vertical-align: middle;
-    cursor: pointer;
-}
 
 select {
     padding: 0.36rem 0.8rem;
@@ -673,12 +666,11 @@ h4 {
 
 }
 
-/* label {
+label {
 	display: inline-block;  
     padding: 0px 10px;  
     vertical-align: middle;  
-} */
-
+}
 fieldset {
     margin: 10px 0 0 0;
     padding: 2rem;
@@ -687,9 +679,11 @@ fieldset {
     font-style: normal;
     line-height: 1;
     font-family: inherit;
+
     min-width: inherit;
     overflow-x: hidden;
     overflow-y: hidden;
+
     border-radius: 4px;
     background-color: #FFF;
     box-shadow: 3px 3px 3px rgba(0,0,0,.05);
@@ -709,13 +703,13 @@ fieldset > fieldset {
 }
 
 .panel-title {
-	width: 100%;
+    width: 100%;
     display: block;
     line-height: 1;
     color: #76838f;
-    font-size: 18px;
-    font-weight: bold;
-    padding-bottom: 15px;
+    font-size: 10pt;
+    padding-bottom: 10px;
+	font-weight:bold;
 }
 
 table {
@@ -726,9 +720,10 @@ table {
 }
 
 table > tbody > tr > td, table > tbody > tr > th, table > tfoot > tr > td, table > tfoot > tr > th, table > thead > tr > td, table > thead > tr > th {
-    padding: 6px;
-    line-height: 1.5;
+    padding: 12px;
+    line-height: 1.42857143;
     border-top: 0px dashed #EEE;
+	
     white-space: nowrap;
 }
 
@@ -979,31 +974,25 @@ form.inline + form.inline,
     background-color: #f9f9f9;
 }
 
-.cbi-value-field {
-    /* display: table-cell; */
-	margin-left: 320px;
-	line-height: 2;
-    color: #811;
+.cbi-value-field,
+.cbi-value-description {
+    display: table-cell;
 }
 
 .cbi-value-helpicon > img {
     display: none;
 }
 
-.cbi-value-description {
-    opacity: 0.8;
-	display: inherit;
-}
-
-.cbi-value-description img {
-    vertical-align: sub;
-}
-
 .cbi-value-helpicon:before {
     content: "\f059";
 }
 
-/*
+.cbi-value-description {
+    font-size: small;
+    opacity: 0.5;
+    padding: 0.5rem 0 0 0;
+}
+
 .cbi-value-title {
     word-wrap: break-word;
     line-height:150%;
@@ -1014,32 +1003,14 @@ form.inline + form.inline,
     text-align: right;
     display: table-cell;
 }
-*/
 
-.cbi-value-title {
-    text-align: right;
-    vertical-align: top;
-    width: 23rem;
-    line-height: 30px;
-    float: left;
-    color: #404040;
-}
-
-/*
 .cbi-value {
     padding: 5px;
     vertical-align: middle;
     display: inline-block;
-	display:block;
+	/* display:block; */
     width: 100%;
     border-top:0px dashed #e4eaec;
-}
-*/
-
-.cbi-value {
-	margin: 10px 0px;
-    zoom: 1;
-    overflow: hidden;
 }
 
 .cbi-section-table-descr > .cbi-section-table-cell,
@@ -1262,6 +1233,11 @@ width:50px !important;
     margin-top: 0.3rem;
 }
 
+.cbi-value-field .cbi-input-checkbox,
+.cbi-value-field .cbi-input-radio {
+    vertical-align: middle;
+}
+
 .cbi-section-table-row > .cbi-value-field .cbi-input-select {
     min-width: 7rem;
 }
@@ -1284,7 +1260,7 @@ small {
 .cbi-button-down {
     display: inline-block;
     min-width: 0;
-    padding: 0.8rem;
+    padding: 0.2rem 0.3rem;
     font-size: 10pt;
 }
 
@@ -1416,10 +1392,6 @@ header > .container > .pull-right > * {
 
 .node-main-login > .main .cbi-value > * {
     display: inline-block !important;
-}
-
-.node-main-login > .main .cbi-value > .cbi-value-field {
-    margin-left: 20px;
 }
 
 .node-main-login > .main .cbi-input-user,
