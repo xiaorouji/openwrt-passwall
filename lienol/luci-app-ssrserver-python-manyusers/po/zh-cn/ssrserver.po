@@ -1,8 +1,14 @@
 msgid "SSR Server"
 msgstr "SSR 服务器"
 
+msgid "SSR Python Server"
+msgstr "SSR Python 服务器"
+
 msgid "ShadowSocksR Server Config"
 msgstr "ShadowsocksR 服务器设置"
+
+msgid "ShadowSocksR Python Server Config"
+msgstr "ShadowsocksR Python 服务器设置"
 
 msgid "Global Setting"
 msgstr "全局设置"

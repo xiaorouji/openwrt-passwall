@@ -7,7 +7,7 @@ end
 
 entry({"admin", "vpn"}, firstchild(), "VPN", 45).dependent = false
 
-entry({"admin","vpn","ssr_server"},cbi("ssr_server/index"),_("SSR Server"),46).dependent=true
+entry({"admin","vpn","ssr_server"},cbi("ssr_server/index"),_("SSR Python Server"),46).dependent=true
 entry({"admin","vpn","ssr_server","status"},call("act_status")).leaf=true
 end
 
