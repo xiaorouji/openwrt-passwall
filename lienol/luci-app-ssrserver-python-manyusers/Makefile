@@ -5,11 +5,11 @@
 
 include $(TOPDIR)/rules.mk
 
-LUCI_TITLE:=LuCI support for SSR Server
+LUCI_TITLE:=LuCI support for SSR Server Python
 LUCI_DEPENDS:=+python
 LUCI_PKGARCH:=all
 PKG_VERSION:=1.0
-PKG_RELEASE:=3-20181206
+PKG_RELEASE:=5-20190112
 
 include $(TOPDIR)/package/lienol/luci_my.mk
 
