@@ -46,7 +46,7 @@ local obfss={
 "tls1.2_ticket_auth",
 }
 
-a= Map("ssr_server", translate("ShadowSocksR Server Config"))
+a= Map("ssr_server", translate("ShadowSocksR Python Server Config"))
 a.description = translate("")
 a.template="ssr_server/index"
 
