@@ -1,0 +1,11 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@passwall_server[-1]
+	add ucitrack passwall_server
+	set ucitrack.@passwall_server[-1].init=passwall_server
+	commit ucitrack
+EOF
+
+rm -f /tmp/luci-indexcache
+exit 0

@@ -1,0 +1,17 @@
+
+config global
+	option ssr_enable '0'
+	option v2ray_enable '0'
+
+config ssr_servers
+	option timeout '300'
+	option fast_open 'false'
+	option udp_forward '1'
+	option remarks '专用'
+	option password '123456'
+	option encrypt_method 'chacha20'
+	option protocol 'origin'
+	option obfs 'plain'
+	option port '50000'
+	option enable '1'
+
