@@ -92,9 +92,9 @@ table th { text-align: left; }
 table td:first-child { color: #127; }
 #cbi-network tr, #cbi-wireless tr, tr tr:first-child { border-top: 0; }
 #cbi-network tr, #cbi-wireless tr, tr tr { border-bottom: 0; }
-#memtotal, #memfree, #memcache, #membuff, #conns, #swaptotal, #swapfree { line-height: 18px; }
-#memtotal>div, #memfree>div, #memcache>div, #membuff>div, #conns>div, #swaptotal>div, #swapfree>div { border: 1.5px solid #bbb !important; border-radius: 5px; width: 240px !important; }
-#memtotal>div>div, #memfree>div>div, #memcache>div>div, #membuff>div>div, #conns>div>div, #swaptotal>div>div, #swapfree>div>div { background: #00adff7a !important; height: 18px !important; border-radius: 3px; }
+#cpu_use, #memtotal, #memfree, #memcache, #membuff, #conns, #swaptotal, #swapfree { line-height: 18px; }
+#cpu_use>div, #memtotal>div, #memfree>div, #memcache>div, #membuff>div, #conns>div, #swaptotal>div, #swapfree>div { border: 1.5px solid #bbb !important; border-radius: 5px; width: 240px !important; }
+#cpu_use>div>div, #memtotal>div>div, #memfree>div>div, #memcache>div>div, #membuff>div>div, #conns>div>div, #swaptotal>div>div, #swapfree>div>div { background: #00adff7a !important; height: 18px !important; border-radius: 3px; }
 
 /* Form */
 input, textarea, select { display: inline-block; width: 200px; padding: 6px; border: 1px solid #118af3; border-radius: 5px; box-sizing: border-box; color: #111; font: inherit; line-height: 16px; }
