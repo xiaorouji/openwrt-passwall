@@ -182,11 +182,6 @@ e.rmempty=false
 e:depends("server_type","SS")
 e:depends("server_type","SSR")
 
---e=t:option(Value,"local_port",translate("Local Port"))
---e.datatype="port"
---e.default=1080
---e.rmempty=false
-
 e=t:option(ListValue,"fast_open",translate("Fast_open"))
 e:value("false")
 e:value("true")
@@ -209,8 +204,8 @@ e:depends("use_kcp","1")
 e=t:option(Value,"kcp_port",translate("Kcptun Port"))
 e.datatype="port"
 e:depends("use_kcp","1")
-e=t:option(TextValue,"kcp_opts",translate("Kcptun Config"),translate("--crypt aes192 --key koolshare --mtu 1350 --sndwnd 128 --rcvwnd 1024 --mode fast").."<br><font style='color:red'>"..translate("Note: UDP cannot be forwarded after Kcptun is turned on.").."</font>")
-e.placeholder="--crypt aes192 --key koolshare --mtu 1350 --sndwnd 128 --rcvwnd 1024 --mode fast"
+e=t:option(TextValue,"kcp_opts",translate("Kcptun Config"),translate("--crypt aes192 --key abc123 --mtu 1350 --sndwnd 128 --rcvwnd 1024 --mode fast"))
+e.placeholder="--crypt aes192 --key abc123 --mtu 1350 --sndwnd 128 --rcvwnd 1024 --mode fast"
 e:depends("use_kcp","1")
 
 e=t:option(Value,"v2ray_VMess_id",translate("ID"))
