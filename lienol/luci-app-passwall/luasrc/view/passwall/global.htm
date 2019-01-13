@@ -115,6 +115,61 @@ end
 	</fieldset>
 </fieldset>
 
+<!--
+<style>
+#_passwall_status_table tr td:first-child {
+	text-align:right;
+}
+#_passwall_status_table tr td:nth-child(2) {
+	padding-left: 20px !important;
+	text-align:left;
+}
+</style>
+<fieldset class="cbi-section">
+	<legend><%:Running Status%></legend>
+	<table width="100%" cellspacing="10" id="_passwall_status_table">
+		<tr><td width="20%">TCP<%:Status%></td><td id="_tcp_redir_status"><em><%:Collecting data...%></em></td></tr>
+		<tr><td width="20%">UDP<%:Status%></td><td id="_udp_redir_status"><em><%:Collecting data...%></em></td></tr>
+		<tr><td width="20%">Socks5<%:Status%></td><td id="_socks5_proxy_status"><em><%:Collecting data...%></em></td></tr>
+		<tr><td width="20%">DNS<%:Status%></td><td id="_dns_mode_status"><em><%:Collecting data...%></em></td></tr>
+		<% if ipkg.installed("haproxy") or is_finded("haproxy*") then %>
+		<tr><td width="20%"><%:Load Balancing%></td><td id="_haproxy_status"><em><%:Collecting data...%></em></td></tr>
+		<% end %>
+		<% if ipkg.installed("kcptun") or is_finded("kcptun*") then %>
+		<tr><td width="20%"><%:Kcptun Client%></td><td id="_kcptun_status"><em><%:Collecting data...%></em></td></tr>
+		<% end %>
+		<tr>
+			<td width="20%"><%:China Connection%></td>
+			<td>
+				<input type="button" class="cbi-button cbi-input-apply" value="<%:Check%>" onclick="return check_connect(this,'china')" />
+				<font id="_china_status"></font>
+			</td>
+		</tr>
+		<tr>
+			<td width="20%"><%:Foreign Connection%></td>
+			<td>
+				<input type="button" class="cbi-button cbi-input-apply" value="<%:Check%>" onclick="return check_connect(this,'foreign')" />
+				<font id="_foreign_status"></font>
+			</td>
+		</tr>
+		<tr>
+			<td width="20%"><%:Server Check%></td>
+			<td>
+				<input type="button" class="cbi-button cbi-input-apply" value="<%:Check%>" onclick="return check_port(this)" />
+				<input id="clear_check_port_btn" type="button" class="cbi-button cbi-button-remove" style="display:none" value="<%:Clear%>" onclick="return clear_check_port(this)" />
+				<font id="_server_status"></font>
+			</td>
+		</tr>
+		<tr>
+			<td width="20%"></td>
+			<td>
+				<a class="cbi-button cbi-input-reload" href="http://www.ip111.cn/" target="_blank">IP111.cn</a>
+			</td>
+		</tr>
+	</table>
+</fieldset>
+-->
+
 <script type="text/javascript">
 	//<![CDATA[
 	var tcp_redir_status = document.getElementById('_tcp_redir_status');
