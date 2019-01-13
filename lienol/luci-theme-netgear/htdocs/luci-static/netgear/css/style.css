@@ -785,7 +785,8 @@ fieldset>table>tbody>tr:nth-of-type(odd) {
 #membuff>div,
 #conns>div,
 #memcache>div,
-#memtotal>div {
+#memtotal>div,
+#cpu_use>div {
 	width: 100% !important;
 	border-color: #ccc !important;
 	height: 20px !important;
@@ -799,7 +800,8 @@ fieldset>table>tbody>tr:nth-of-type(odd) {
 #membuff>div>div,
 #conns>div>div,
 #memcache>div>div,
-#memtotal>div>div {
+#memtotal>div>div,
+#cpu_use>div>div {
 	height: 1.4rem !important;
 	background-color: #e4eaec !important;
 }
