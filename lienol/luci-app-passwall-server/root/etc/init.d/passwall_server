@@ -13,7 +13,7 @@ config_t_get() {
 	echo ${ret:=$3}
 }
 
-gen_ssr_config_file() {
+gen_ssr_libev_config_file() {
 	config_get enable $1 enable
 	[ "$enable" = "0" ] && return 0
 	config_get remarks $1 remarks
@@ -30,7 +30,7 @@ gen_ssr_config_file() {
 	udp_param=""
 	[ "$udp_forward" = "1" ] && udp_param="-u"
 	
-	cat <<-EOF >$CONFIG_PATH/ssr-server_$1.json
+	cat <<-EOF >$CONFIG_PATH/ssr_libev-server_$1.json
 		{
 		    "server": ["[::0]", "0.0.0.0"],
 		    "server_port": $port,
@@ -45,9 +45,49 @@ gen_ssr_config_file() {
 		}
 		EOF
 		
-	/usr/bin/ssr-server -c $CONFIG_PATH/ssr-server_$1.json $udp_param >/dev/null 2>&1 &
-	iptables -t filter -A SSR-SERVER -p tcp --dport $port -j ACCEPT >/dev/null 2>&1 &
-	[ "$udp_forward" = "1" ] && iptables -t filter -A SSR-SERVER -p udp --dport $port -j ACCEPT >/dev/null 2>&1 &
+	/usr/bin/ssr-server -c $CONFIG_PATH/ssr_libev-server_$1.json $udp_param >/dev/null 2>&1 &
+	iptables -A SSR_LIBEV-SERVER -p tcp --dport $port -j ACCEPT
+	[ "$udp_forward" = "1" ] && iptables -A SSR_LIBEV-SERVER -p udp --dport $port -j ACCEPT
+}
+
+gen_ssr_python_config_file() {
+	encrypt_method=$(config_t_get ssr_python_server encrypt_method)
+	protocol=$(config_t_get ssr_python_server protocol)
+	protocol_param=$(config_t_get ssr_python_server protocol_param)
+	obfs=$(config_t_get ssr_python_server obfs)
+	obfs_param=$(config_t_get ssr_python_server obfs_param)
+	timeout=$(config_t_get ssr_python_server timeout)
+	fast_open=$(config_t_get ssr_python_server fast_open)
+	
+	cat <<-EOF >$CONFIG_PATH/ssr_python-server.json
+	{
+		"server": "::",
+		"local_address":"127.0.0.1",
+		"local_port":1085,
+		"port_password": {$USERS},
+		"timeout": $timeout,
+		"method": "$encrypt_method",
+		"protocol": "$protocol",
+		"protocol_param": "$protocol_param",
+		"obfs": "$obfs",
+		"obfs_param": "$obfs_param",
+		"connect_verbose_info": "1",
+		"redirect": [$REDIRECTS],
+		"fast_open": "$fast_open"
+	}
+	EOF
+	
+}
+
+setup_ssr_python_users() {
+	config_get enabled $1 enabled
+	[ "$enabled" -eq 0 ] && return 0
+	config_get port $1 port
+	config_get password $1 password
+	[ -n "$port" -a -n "$password" ] && USERS=$USERS"\"$port\"":"\"$password\"",
+	
+	iptables -A SSR_PYTHON-SERVER -p tcp --dport $port -j ACCEPT
+	iptables -A SSR_PYTHON-SERVER -p udp --dport $port -j ACCEPT
 }
 
 gen_v2ray_config_file() {
@@ -55,46 +95,82 @@ gen_v2ray_config_file() {
 	[ "$enable" = "0" ] && return 0
 	config_get port $1 port
 	lua /usr/lib/lua/luci/model/cbi/passwall_server/genv2rayconfig.lua $1 > $CONFIG_PATH/v2ray-server_$1.json
-	/usr/bin/v2ray/v2ray -config $CONFIG_PATH/v2ray-server_$1.json 2>&1 &
-	iptables -t filter -A V2RAY-SERVER -p tcp --dport $port -j ACCEPT >/dev/null 2>&1 &
-	iptables -t filter -A V2RAY-SERVER -p udp --dport $port -j ACCEPT >/dev/null 2>&1 &
+	/usr/bin/v2ray/v2ray -config $CONFIG_PATH/v2ray-server_$1.json >/dev/null 2>&1 &
+	iptables -A V2RAY-SERVER -p tcp --dport $port -j ACCEPT
+	iptables -A V2RAY-SERVER -p udp --dport $port -j ACCEPT
 }
 
-start_ssr_server() {
-	iptables -N SSR-SERVER >/dev/null 2>&1 &
-	iptables -t filter -I INPUT -j SSR-SERVER >/dev/null 2>&1 &
-	config_foreach gen_ssr_config_file ssr_servers
+start_ssr_libev_server() {
+	iptables -N SSR_LIBEV-SERVER
+	iptables -I INPUT -j SSR_LIBEV-SERVER
+	config_foreach gen_ssr_libev_config_file "ssr_libev_servers"
 }
 
-stop_ssr_server() {
-	iptables -F SSR-SERVER >/dev/null 2>&1 &
-	iptables -t filter -D INPUT -j SSR-SERVER >/dev/null 2>&1 &
-	iptables -X SSR-SERVER >/dev/null 2>&1 &
-	ps -w | grep "$CONFIG_PATH/ssr-server_" | grep -v "grep" | awk '{print $1}' | xargs kill -9
+stop_ssr_libev_server() {
+	iptables -F SSR_LIBEV-SERVER 2>/dev/null
+	iptables -D INPUT -j SSR_LIBEV-SERVER 2>/dev/null
+	iptables -X SSR_LIBEV-SERVER 2>/dev/null
+	ps -w | grep "$CONFIG_PATH/ssr_libev-server_" | grep -v "grep" | awk '{print $1}' | xargs kill -9
+}
+
+start_ssr_python_server() {
+	iptables -N SSR_PYTHON-SERVER
+	iptables -I INPUT -j SSR_PYTHON-SERVER
+	USERS=""
+	REDIRECTS=""
+	
+	config_foreach setup_ssr_python_users "ssr_python_server_users"
+	FINAL=`echo $USERS | sed 's/\(.*\)\(.\)$/\2/'`
+	[ "$FINAL" == "," ] && USERS=`echo $USERS | sed 's/\(.*\)\(.\)$/\1/'`
+	
+	redirect=$(config_t_get ssr_python_server redirect)
+	for i in $redirect
+	do
+		REDIRECTS="$REDIRECTS\"$i\","
+	done
+	FINAL=`echo $REDIRECTS | sed 's/\(.*\)\(.\)$/\2/'`
+	[ "$FINAL" == "," ] && REDIRECTS=`echo $REDIRECTS | sed 's/\(.*\)\(.\)$/\1/'`
+	
+	gen_ssr_python_config_file
+	/usr/bin/python /usr/share/ssr/shadowsocks/server.py -c $CONFIG_PATH/ssr_python-server.json -d start >/dev/null 2>&1 &
+}
+
+stop_ssr_python_server() {
+	iptables -F SSR_PYTHON-SERVER 2>/dev/null
+	iptables -D INPUT -j SSR_PYTHON-SERVER 2>/dev/null
+	iptables -X SSR_PYTHON-SERVER 2>/dev/null
+	ps -w | grep "$CONFIG_PATH/ssr_python-server" | grep -v "grep" | awk '{print $1}' | xargs kill -9
 }
 
 start_v2ray_server() {
-	iptables -N V2RAY-SERVER >/dev/null 2>&1 &
-	iptables -t filter -I INPUT -j V2RAY-SERVER >/dev/null 2>&1 &
-	config_foreach gen_v2ray_config_file v2ray_servers
+	iptables -N V2RAY-SERVER
+	iptables -I INPUT -j V2RAY-SERVER
+	config_foreach gen_v2ray_config_file "v2ray_servers"
 }
 
 stop_v2ray_server() {
-	iptables -F V2RAY-SERVER >/dev/null 2>&1 &
-	iptables -t filter -D INPUT -j V2RAY-SERVER >/dev/null 2>&1 &
-	iptables -X V2RAY-SERVER >/dev/null 2>&1 &
+	iptables -F V2RAY-SERVER 2>/dev/null
+	iptables -D INPUT -j V2RAY-SERVER 2>/dev/null
+	iptables -X V2RAY-SERVER 2>/dev/null
 	ps -w | grep "$CONFIG_PATH/v2ray-server_" | grep -v "grep" | awk '{print $1}' | xargs kill -9
 }
 
 start() {
-	stop
 	config_load $CONFIG
-	ssr_enable=$(config_t_get global ssr_enable 0)
-	if [ "$ssr_enable" = "0" ];then
-		stop_ssr_server
+	ssr_libev_enable=$(config_t_get global ssr_libev_enable 0)
+	if [ "$ssr_libev_enable" = "0" ];then
+		stop_ssr_libev_server
 	else
 		mkdir -p $CONFIG_PATH
-		start_ssr_server
+		start_ssr_libev_server
+	fi
+	
+	ssr_python_enable=$(config_t_get global ssr_python_enable 0)
+	if [ "$ssr_python_enable" = "0" ];then
+		stop_ssr_python_server
+	else
+		mkdir -p $CONFIG_PATH
+		start_ssr_python_server
 	fi
 	
 	v2ray_enable=$(config_t_get global v2ray_enable 0)
@@ -107,7 +183,8 @@ start() {
 }
 
 stop() {
-	stop_ssr_server
+	stop_ssr_libev_server
+	stop_ssr_python_server
 	stop_v2ray_server
 	rm -rf $CONFIG_PATH
 }

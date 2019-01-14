@@ -1,11 +1,23 @@
 msgid "Pass Wall Server"
 msgstr "多功能服务器中心"
 
+msgid "ShadowsocksR Python Server"
+msgstr "ShadowsocksR Python服务器"
+
+msgid "ShadowsocksR Libev Server"
+msgstr "ShadowsocksR Libev服务器"
+
 msgid "SSR Libev Server"
 msgstr "SSR Libev服务器"
 
 msgid "V2ray Server"
 msgstr "V2ray服务器"
+
+msgid "Global Settings"
+msgstr "全局设置"
+
+msgid "General Settings"
+msgstr "通用设置"
 
 msgid "Server Config"
 msgstr "服务器配置"
@@ -66,6 +78,12 @@ msgstr "启用"
 
 msgid "Status"
 msgstr "状态"
+
+msgid "please Install the python"
+msgstr "请安装python环境"
+
+msgid "NOT INSTALLED"
+msgstr "未安装"
 
 msgid "NOT RUNNING"
 msgstr "未运行"

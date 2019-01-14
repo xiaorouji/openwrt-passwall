@@ -5,29 +5,29 @@ local cursor = luci.model.uci.cursor()
 local appname = "passwall_server"
 local a,t,e
 
-a=Map(appname)
+a=Map(appname, translate("ShadowsocksR Libev Server"))
 
-t=a:section(TypedSection,"global",translate("General settings"))
+t=a:section(TypedSection,"global",translate("Global Settings"))
 t.anonymous=true
 t.addremove=false
 
-e=t:option(Flag,"ssr_enable",translate("Enable"))
+e=t:option(Flag,"ssr_libev_enable",translate("Enable"))
 e.rmempty=false
 
-t=a:section(TypedSection,"ssr_servers",translate("Users Manager"))
+t=a:section(TypedSection,"ssr_libev_servers",translate("Users Manager"))
 t.anonymous=true
 t.addremove=true
 t.template="cbi/tblsection"
-t.extedit=o.build_url("admin","vpn",appname,"ssr_config","%s")
+t.extedit=o.build_url("admin","vpn",appname,"ssr_libev_config","%s")
 function t.create(e,t)
 	local e=TypedSection.create(e,t)
-	luci.http.redirect(o.build_url("admin","vpn",appname,"ssr_config",e))
+	luci.http.redirect(o.build_url("admin","vpn",appname,"ssr_libev_config",e))
 end
 
 function t.remove(t,a)
 	t.map.proceed=true
 	t.map:del(a)
-	luci.http.redirect(o.build_url("admin","vpn",appname,"ssr"))
+	luci.http.redirect(o.build_url("admin","vpn",appname,"ssr_libev"))
 end
 
 e=t:option(Flag, "enable", translate("Enable"))
@@ -53,9 +53,9 @@ e=t:option(DummyValue,"obfs",translate("Obfs"))
 e.width="15%"
 
 e=t:option(DummyValue,"status",translate("Status"))
-e.template="passwall_server/ssr_status"
+e.template="passwall_server/ssr_libev_status"
 e.width="20%"
 
-a:append(Template("passwall_server/server_list_ssr_status"))
+a:append(Template("passwall_server/server_list_ssr_libev_status"))
 
 return a
