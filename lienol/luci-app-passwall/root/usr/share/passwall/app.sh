@@ -1398,7 +1398,8 @@ stop() {
 	ipset -F $IPSET_WHITELIST >/dev/null 2>&1 && ipset -X $IPSET_WHITELIST >/dev/null 2>&1
 	ipset -F $IPSET_VPSIPLIST >/dev/null 2>&1 && ipset -X $IPSET_VPSIPLIST >/dev/null 2>&1
 	ipset -F $IPSET_LANIPLIST >/dev/null 2>&1 && ipset -X $IPSET_LANIPLIST >/dev/null 2>&1
-	kill_all pdnsd cdns Pcap_DNSProxy ss-redir ss-local ssr-redir ssr-local v2ray v2ctl brook dns2socks kcptun_client haproxy dns-forwarder chinadns dnsproxy redsocks2
+	kill_all pdnsd cdns Pcap_DNSProxy ss-redir ss-local ssr-redir ssr-local brook dns2socks kcptun_client haproxy dns-forwarder chinadns dnsproxy redsocks2
+	ps -w | grep -E "$CONFIG_TCP_FILE|$CONFIG_UDP_FILE|CONFIG_SOCKS5_FILE" | grep -v "grep" | awk '{print $1}' | xargs kill -9
 	rm -rf /var/pdnsd/pdnsd.cache
 	rm -rf $CONFIG_PATH
 	stop_dnsmasq
