@@ -5,9 +5,9 @@ local cursor = luci.model.uci.cursor()
 local appname = "passwall_server"
 local a,t,e
 
-a=Map(appname)
+a=Map(appname, translate("V2ray Server"))
 
-t=a:section(TypedSection,"global",translate("General settings"))
+t=a:section(TypedSection,"global",translate("Global Settings"))
 t.anonymous=true
 t.addremove=false
 

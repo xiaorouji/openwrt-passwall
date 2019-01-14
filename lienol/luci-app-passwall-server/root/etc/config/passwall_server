@@ -1,17 +1,41 @@
 
 config global
-	option ssr_enable '0'
 	option v2ray_enable '0'
+	option ssr_libev_enable '0'
+	option ssr_python_enable '0'
 
-config ssr_servers
+config ssr_libev_servers
 	option timeout '300'
 	option fast_open 'false'
 	option udp_forward '1'
 	option remarks '专用'
-	option password '123456'
+	option password 'test'
 	option encrypt_method 'chacha20'
 	option protocol 'origin'
 	option obfs 'plain'
 	option port '50000'
 	option enable '1'
+
+config v2ray_servers
+	option enable '1'
+	option remarks '测试一波'
+	option port '12345'
+	option protocol 'vmess'
+	option VMess_id 'a4d47e35-d391-4844-bc81-852fa936d48c'
+	option VMess_alterId '16'
+	option VMess_level '1'
+	option transport 'tcp'
+	option tcp_guise 'none'
+
+config ssr_python_server
+	option encrypt_method 'none'
+	option timeout '300'
+	option fast_open 'false'
+	option protocol 'auth_chain_a'
+	option obfs 'tls1.2_ticket_auth'
+
+config ssr_python_server_users
+	option enabled '1'
+	option port '62000'
+	option password 'test'
 
