@@ -10,6 +10,9 @@ msgstr "ShadowsocksR Libev服务器"
 msgid "SSR Libev Server"
 msgstr "SSR Libev服务器"
 
+msgid "SSR Python Server"
+msgstr "SSR Python服务器"
+
 msgid "V2ray Server"
 msgstr "V2ray服务器"
 
