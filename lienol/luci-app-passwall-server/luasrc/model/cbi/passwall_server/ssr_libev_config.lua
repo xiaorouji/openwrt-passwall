@@ -36,9 +36,9 @@ local obfs={
 }
 
 a=Map(i,"ShadowsocksR Libev "..translate("Server Config"))
-a.redirect=d.build_url("admin","vpn","passwall_server","ssr")
+a.redirect=d.build_url("admin","vpn","passwall_server","ssr_libev")
 
-t=a:section(NamedSection,arg[1],"ssr_servers","")
+t=a:section(NamedSection,arg[1],"ssr_libev_servers","")
 t.addremove=false
 t.dynamic=false
 
