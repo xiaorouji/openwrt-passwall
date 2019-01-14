@@ -35,22 +35,22 @@ gen_config_file() {
 	FINAL=`echo $REDIRECTS | sed 's/\(.*\)\(.\)$/\2/'`
 	[ "$FINAL" == "," ] && REDIRECTS=`echo $REDIRECTS | sed 's/\(.*\)\(.\)$/\1/'`
 	cat <<-EOF >$CONFIG_FILE
-		{
-		    "server": "::",
-		    "local_address":"127.0.0.1",
-		    "local_port":1086,
-			"port_password": {$USERS},
-		    "timeout": $(config_t_get server timeout 300),
-		    "method": "$(config_t_get server encrypt_method)",
-		    "protocol": "$(config_t_get server protocol)",
-		    "protocol_param": "$(config_t_get server protocol_param)",
-		    "obfs": "$(config_t_get server obfs)",
-		    "obfs_param": "$(config_t_get server obfs_param)",
-			"connect_verbose_info": "1",
-		    "redirect": [$REDIRECTS],
-		    "fast_open": "$(config_t_get server fast_open)"
-		}
-EOF
+	{
+		"server": "::",
+		"local_address":"127.0.0.1",
+		"local_port":1086,
+		"port_password": {$USERS},
+		"timeout": $(config_t_get server timeout 300),
+		"method": "$(config_t_get server encrypt_method)",
+		"protocol": "$(config_t_get server protocol)",
+		"protocol_param": "$(config_t_get server protocol_param)",
+		"obfs": "$(config_t_get server obfs)",
+		"obfs_param": "$(config_t_get server obfs_param)",
+		"connect_verbose_info": "1",
+		"redirect": [$REDIRECTS],
+		"fast_open": "$(config_t_get server fast_open)"
+	}
+	EOF
 }
 
 setup_users() {
