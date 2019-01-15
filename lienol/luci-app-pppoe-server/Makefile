@@ -18,7 +18,7 @@ rm -rf $${IPKG_INSTROOT}/etc/init.d/pppoe-server >/dev/null 2>&1
 exit 0
 endef
 
-include $(TOPDIR)/package/lienol/luci_my.mk
+include ../luci_my.mk
 
 # call BuildPackage - OpenWrt buildroot signature
 

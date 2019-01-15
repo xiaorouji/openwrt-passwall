@@ -11,7 +11,7 @@ LUCI_PKGARCH:=all
 PKG_VERSION:=1.0
 PKG_RELEASE:=2-20181208
 
-include $(TOPDIR)/package/lienol/luci_my.mk
+include ../luci_my.mk
 
 # call BuildPackage - OpenWrt buildroot signature
 
