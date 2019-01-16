@@ -10,7 +10,7 @@ PKG_VERSION:=1.0
 PKG_RELEASE:=8-20190114
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
-PO2LMO:=$(BUILD_DIR)/luci-base/po2lmo
+PO2LMO:=../../../luci/modules/luci-base/src/po2lmo
  
 include $(INCLUDE_DIR)/package.mk
 
