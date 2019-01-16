@@ -34,6 +34,8 @@ Pcap_DNSProxy for OpenWrt/LEDE
    tar xjf OpenWrt-SDK-ar71xx-for-linux-x86_64-gcc-4.8-linaro_uClibc-0.9.33.2.tar.bz2
    # 进入 SDK 根目录
    cd OpenWrt-SDK-ar71xx-*
+   # 先运行一遍以生成 .config 文件
+   make menuconfig
    # 首先验证 SDK 是否需要 ccache
    cat .config | grep CONFIG_CCACHE
    # 如果返回结果为 "y"，则需要使用系统软件包管理器，如 yum、apt-get，安装 ccache
