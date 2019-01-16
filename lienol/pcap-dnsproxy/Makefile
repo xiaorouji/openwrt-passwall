@@ -7,13 +7,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pcap-dnsproxy
-PKG_VERSION:=0.4.9.11
-PKG_RELEASE:=00d4764
+PKG_VERSION:=0.4.9.12
+PKG_RELEASE:=20ee41d
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/chengr28/Pcap_DNSProxy.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=00d4764225b52cd80d1561c76419c35c4f5fd371
+PKG_SOURCE_VERSION:=20ee41de4a1d8e18847a0b162e402e3e717b557e
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 CMAKE_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -98,7 +98,7 @@ define Package/pcap-dnsproxy
 	CATEGORY:=Network
 	TITLE:=A local DNS server based on LibPcap
 	URL:=https://github.com/chengr28/Pcap_DNSProxy
-	DEPENDS:=+libpthread +libstdcpp +libevent2 \
+	DEPENDS:=+libpthread +libstdcpp +libevent2-core \
 		+PACKAGE_pcap-dnsproxy_libpcap:libpcap \
 		+PACKAGE_pcap-dnsproxy_libsodium:libsodium \
 		+PACKAGE_pcap-dnsproxy_tls:libopenssl \
