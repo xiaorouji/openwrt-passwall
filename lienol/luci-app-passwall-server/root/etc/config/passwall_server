@@ -1,7 +1,7 @@
 
 config global
-	option v2ray_enable '0'
 	option ssr_libev_enable '0'
+	option v2ray_enable '0'
 	option ssr_python_enable '0'
 
 config ssr_libev_servers
@@ -9,33 +9,44 @@ config ssr_libev_servers
 	option fast_open 'false'
 	option udp_forward '1'
 	option remarks '专用'
-	option password 'test'
-	option encrypt_method 'chacha20'
+	option password '123456'
 	option protocol 'origin'
 	option obfs 'plain'
 	option port '50000'
 	option enable '1'
+	option encrypt_method 'rc4-md5'
+	option method 'chacha20'
 
 config v2ray_servers
 	option enable '1'
-	option remarks '测试一波'
-	option port '12345'
+	option remarks '备注UDP'
 	option protocol 'vmess'
-	option VMess_id 'a4d47e35-d391-4844-bc81-852fa936d48c'
 	option VMess_alterId '16'
 	option VMess_level '1'
-	option transport 'tcp'
-	option tcp_guise 'none'
+	option transport 'mkcp'
+	option mkcp_guise 'wechat-video'
+	option mkcp_mtu '1350'
+	option mkcp_tti '10'
+	option mkcp_uplinkCapacity '100'
+	option mkcp_downlinkCapacity '100'
+	option mkcp_congestion '1'
+	option mkcp_readBufferSize '2'
+	option mkcp_writeBufferSize '2'
+	option VMess_id 'fe929736-41c7-4087-955a-7d6e904869b4'
+	option port '50001'
 
-config ssr_python_server
-	option encrypt_method 'none'
-	option timeout '300'
-	option fast_open 'false'
+config ssr_python_users
+	option enable '1'
+	option port '11111'
+	option password '123456'
+	option method 'none'
 	option protocol 'auth_chain_a'
 	option obfs 'tls1.2_ticket_auth'
-
-config ssr_python_server_users
-	option enabled '1'
-	option port '62000'
-	option password 'test'
+	option timeout '300'
+	option fast_open 'false'
+	option remarks '嘻嘻'
+	option device_limit '2'
+	option speed_limit_per_con '100'
+	option speed_limit_per_user '200'
+	option transfer_enable '10'
 

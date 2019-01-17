@@ -1,0 +1,26 @@
+<%#
+ Copyright 2018 Lienol
+ Licensed to the public under the Apache License 2.0.
+-%>
+
+<%
+local dsp = require "luci.dispatcher"
+-%>
+
+<script type="text/javascript">
+	//<![CDATA[
+	var v2ray_users_status = document.getElementsByClassName('v2ray_users_status');
+	for(var i = 0; i < v2ray_users_status.length; i++) {
+		var id = v2ray_users_status[i].parentElement.parentElement.parentElement.id;
+		id = id.substr(id.lastIndexOf("-") + 1);
+		XHR.poll(1,'<%=dsp.build_url("admin/vpn/passwall_server/v2ray_users_status")%>', {
+				index: i,
+				id: id
+			},
+			function(x, result) {
+				v2ray_users_status[result.index].innerHTML = (result.status ? '<font color=green><%:RUNNING%> ✓</font>' : '<font color=red><%:NOT RUNNING%> X</font>');
+			}
+		);
+	}
+	//]]>
+</script>
