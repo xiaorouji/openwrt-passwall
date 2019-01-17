@@ -7,10 +7,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall-server
 PKG_VERSION:=1.0
-PKG_RELEASE:=8-20190114
+PKG_RELEASE:=10-20190118
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
-PO2LMO:=../../../luci/modules/luci-base/src/po2lmo
+PO2LMO:=../po2lmo
  
 include $(INCLUDE_DIR)/package.mk
 
@@ -20,11 +20,11 @@ menu "Configuration"
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Libev_Server
 	bool "Include ShadowsocksR Libev Server (ssr-server)"
-	default y
+	default n
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Python_Server
 	bool "Include ShadowsocksR Python Server"
-	default n
+	default y
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_V2ray_Server
 	bool "Include V2ray Server"
@@ -65,10 +65,15 @@ define Package/$(PKG_NAME)/install
 	$(PO2LMO) ./po/zh-cn/passwall_server.po $(1)/usr/lib/lua/luci/i18n/passwall_server.zh-cn.lmo
 	
 ifdef CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Python_Server
-	$(INSTALL_DIR) $(1)/usr/share/ssr
-	cp -pR ./root/usr/share/ssr/* $(1)/usr/share/ssr/
+	$(INSTALL_DIR) $(1)/usr/share/ssr_python
+	cp -pR ./root/usr/share/ssr_python/* $(1)/usr/share/ssr_python/
 endif
+endef
 
+define Package/$(PKG_NAME)/postinst
+#!/bin/sh
+chmod a+x $${IPKG_INSTROOT}/usr/share/ssr_python/* >/dev/null 2>&1
+exit 0
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
