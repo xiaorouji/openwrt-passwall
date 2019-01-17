@@ -5,15 +5,14 @@ function index()
 		return
 	end
 	entry({"admin", "vpn"}, firstchild(), "VPN", 45).dependent = false
-	if nixio.fs.access("/usr/bin/ssr-server") then
-		entry({"admin","vpn","passwall_server"},alias("admin","vpn","passwall_server","ssr_libev"),_("Pass Wall Server"),3).dependent=true
-		entry({"admin","vpn","passwall_server","ssr_libev"},cbi("passwall_server/ssr_libev"),_("SSR Libev Server"),1).dependent=true
-	end
+	entry({"admin","vpn","passwall_server"},alias("admin","vpn","passwall_server","ssr_python"),_("Pass Wall Server"),3).dependent=true
 	if nixio.fs.access("/usr/share/ssr_python") then
-		entry({"admin","vpn","passwall_server","ssr_python"},cbi("passwall_server/ssr_python"),_("SSR Python Server"),2).dependent=true
+		entry({"admin","vpn","passwall_server","ssr_python"},cbi("passwall_server/ssr_python"),_("SSR Python Server"),1).dependent=true
+	end
+	if nixio.fs.access("/usr/bin/ssr-server") then
+		entry({"admin","vpn","passwall_server","ssr_libev"},cbi("passwall_server/ssr_libev"),_("SSR Libev Server"),2).dependent=true
 	end
 	if nixio.fs.access("/usr/bin/v2ray/v2ray") then
-		if nixio.fs.access("/usr/bin/ssr-server")==false then entry({"admin","vpn","passwall_server"},alias("admin","vpn","passwall_server","v2ray"),_("Pass Wall Server"),3).dependent=true end
 		entry({"admin","vpn","passwall_server","v2ray"},cbi("passwall_server/v2ray"),_("V2ray Server"),3).dependent=true
 	end
 	entry({"admin","vpn","passwall_server","ssr_libev_config"},cbi("passwall_server/ssr_libev_config")).leaf=true
