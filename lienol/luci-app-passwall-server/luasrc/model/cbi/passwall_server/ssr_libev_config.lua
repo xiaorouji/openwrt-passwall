@@ -58,7 +58,7 @@ e=t:option(Value,"password",translate("Password"))
 e.password=true
 e.rmempty=false
 
-e=t:option(ListValue,"encrypt_method",translate("Encrypt Method"))
+e=t:option(ListValue,"method",translate("Encrypt Method"))
 for a,t in ipairs(encrypt_method)do e:value(t)end
 
 e=t:option(ListValue,"protocol",translate("Protocol"))

@@ -47,9 +47,9 @@ e=t:option(DummyValue,"VMess_id",translate("ID"))
 e.width="35%"
 
 e=t:option(DummyValue,"status",translate("Status"))
-e.template="passwall_server/v2ray_status"
+e.template="passwall_server/v2ray_users_status"
 e.width="20%"
 
-a:append(Template("passwall_server/server_list_v2ray_status"))
+a:append(Template("passwall_server/v2ray_users_list_status"))
 
 return a

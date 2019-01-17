@@ -43,7 +43,7 @@ e.width="10%"
 e=t:option(DummyValue,"password",translate("Password"))
 e.width="15%"
 
-e=t:option(DummyValue,"encrypt_method",translate("Encrypt Method"))
+e=t:option(DummyValue,"method",translate("Encrypt Method"))
 e.width="15%"
 
 e=t:option(DummyValue,"protocol",translate("Protocol"))
@@ -53,9 +53,9 @@ e=t:option(DummyValue,"obfs",translate("Obfs"))
 e.width="15%"
 
 e=t:option(DummyValue,"status",translate("Status"))
-e.template="passwall_server/ssr_libev_status"
+e.template="passwall_server/ssr_libev_users_status"
 e.width="20%"
 
-a:append(Template("passwall_server/server_list_ssr_libev_status"))
+a:append(Template("passwall_server/ssr_libev_users_list_status"))
 
 return a

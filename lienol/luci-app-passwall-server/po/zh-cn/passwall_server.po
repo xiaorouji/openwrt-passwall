@@ -64,6 +64,45 @@ msgstr "快速打开"
 msgid "UDP Forward"
 msgstr "UDP转发"
 
+msgid "Forbidden Port"
+msgstr "禁止的端口"
+
+msgid "Device Limit"
+msgstr "设备数限制"
+
+msgid "Speed Limit Per Con"
+msgstr "单线程限速"
+
+msgid "Speed Limit Per User"
+msgstr "总限速"
+
+msgid "Available Total Flow"
+msgstr "可用总流量"
+
+msgid "Used Upload Traffic"
+msgstr "已用上传流量"
+
+msgid "Used Download Traffic"
+msgstr "已用下载流量"
+
+msgid "Used Total traffic"
+msgstr "已使用总流量"
+
+msgid "The number of clients that can be linked to each port at the same time (in multi-port mode, each port is calculated independently), a minimum of 2 is recommended."
+msgstr "每个端口同一时间能链接的客户端数量(多端口模式，每个端口都是独立计算)，建议最少 2个。"
+
+msgid "The speed limit for a single thread per port is capped, and multithreading is invalid. Zero means no speed limit. (unit: KB/S)"
+msgstr "每个端口单线程的限速上限，多线程即无效。 0代表不限速。(单位：KB/S)"
+
+msgid "Total speed limit upper limit for each port, and overall speed limit for single port. Zero means no speed limit. (unit: KB/S)"
+msgstr "每个端口总速度限速上限，单个端口整体限速。 0代表不限速。(单位：KB/S)"
+
+msgid "For example, if port 25 is not allowed, the user will not be able to access the mail port 25 through the SSR agent. If 80,443 is disabled, the user will not be able to access the HTTP/HTTPS website normally. <br>blocked single port format: 25<br>blocked multiple port format: 23,465<br>blocked port format: 233-266<br>blocked multiple port format: 25,465,233-666"
+msgstr "例如不允许访问 25端口，用户就无法通过SSR代理访问邮件端口25了，如果禁止了 80,443 那么用户将无法正常访问 http/https 网站。<br>封禁单个端口格式: 25<br>封禁多个端口格式: 23,465<br>封禁端口段格式: 233-266<br>封禁多种格式端口: 25,465,233-666"
+
+msgid "Maximum amount of total traffic available (GB, 1-1024gb), input errors can cause incredible problems!"
+msgstr "可使用的总流量上限(单位: GB, 1-1024GB)，输入错误可能会导致不可思议的问题！"
+
 msgid "Alter ID"
 msgstr "额外ID(AlterID)"
 

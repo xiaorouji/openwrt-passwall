@@ -1,0 +1,7 @@
+2019-01-17 19:42:35 INFO     util.py:85 loading libcrypto from libcrypto.so.10
+2019-01-17 19:42:35 INFO     asyncdns.py:324 dns server: [('192.168.0.2', 53)]
+2019-01-17 19:42:35 INFO     shell.py:72 ShadowsocksR 3.4.0 2017-07-27
+2019-01-17 19:42:35 INFO     db_transfer.py:238 current process RLIMIT_NOFILE resource: soft 512000 hard 512000
+2019-01-17 19:42:35 INFO     db_transfer.py:205 db start server at port [2333] pass [doub.io] protocol [auth_aes128_md5] method [aes-128-ctr] obfs [plain]
+2019-01-17 19:42:35 INFO     server_pool.py:127 starting server at [::]:2333
+2019-01-17 19:42:35 INFO     server_pool.py:153 starting server at 0.0.0.0:2333

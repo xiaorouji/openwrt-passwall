@@ -19,7 +19,7 @@ gen_ssr_libev_config_file() {
 	config_get remarks $1 remarks
 	config_get port $1 port
 	config_get password $1 password
-	config_get encrypt_method $1 encrypt_method
+	config_get method $1 method
 	config_get protocol $1 protocol
 	config_get protocol_param $1 protocol_param
 	config_get obfs $1 obfs
@@ -36,7 +36,7 @@ gen_ssr_libev_config_file() {
 		    "server_port": $port,
 		    "password": "$password",
 		    "timeout": $timeout,
-		    "method": "$encrypt_method",
+		    "method": "$method",
 		    "protocol": "$protocol",
 		    "protocol_param": "$protocol_param",
 		    "obfs": "$obfs",
@@ -51,43 +51,9 @@ gen_ssr_libev_config_file() {
 }
 
 gen_ssr_python_config_file() {
-	encrypt_method=$(config_t_get ssr_python_server encrypt_method)
-	protocol=$(config_t_get ssr_python_server protocol)
-	protocol_param=$(config_t_get ssr_python_server protocol_param)
-	obfs=$(config_t_get ssr_python_server obfs)
-	obfs_param=$(config_t_get ssr_python_server obfs_param)
-	timeout=$(config_t_get ssr_python_server timeout)
-	fast_open=$(config_t_get ssr_python_server fast_open)
-	
-	cat <<-EOF >$CONFIG_PATH/ssr_python-server.json
-	{
-		"server": "::",
-		"local_address":"127.0.0.1",
-		"local_port":1085,
-		"port_password": {$USERS},
-		"timeout": $timeout,
-		"method": "$encrypt_method",
-		"protocol": "$protocol",
-		"protocol_param": "$protocol_param",
-		"obfs": "$obfs",
-		"obfs_param": "$obfs_param",
-		"connect_verbose_info": "1",
-		"redirect": [$REDIRECTS],
-		"fast_open": "$fast_open"
-	}
-	EOF
-	
-}
-
-setup_ssr_python_users() {
-	config_get enabled $1 enabled
-	[ "$enabled" -eq 0 ] && return 0
-	config_get port $1 port
-	config_get password $1 password
-	[ -n "$port" -a -n "$password" ] && USERS=$USERS"\"$port\"":"\"$password\"",
-	
-	iptables -A SSR_PYTHON-SERVER -p tcp --dport $port -j ACCEPT
-	iptables -A SSR_PYTHON-SERVER -p udp --dport $port -j ACCEPT
+	lua /usr/lib/lua/luci/model/cbi/passwall_server/genssrmudbconfig.lua > /tmp/mudb.json
+	mv -f /tmp/mudb.json /usr/share/ssr_python/mudb.json
+	/usr/bin/python /usr/share/ssr_python/server.py >> /var/log/ssr_python.log 2>&1 &
 }
 
 gen_v2ray_config_file() {
@@ -116,30 +82,15 @@ stop_ssr_libev_server() {
 start_ssr_python_server() {
 	iptables -N SSR_PYTHON-SERVER
 	iptables -I INPUT -j SSR_PYTHON-SERVER
-	USERS=""
-	REDIRECTS=""
-	
-	config_foreach setup_ssr_python_users "ssr_python_server_users"
-	FINAL=`echo $USERS | sed 's/\(.*\)\(.\)$/\2/'`
-	[ "$FINAL" == "," ] && USERS=`echo $USERS | sed 's/\(.*\)\(.\)$/\1/'`
-	
-	redirect=$(config_t_get ssr_python_server redirect)
-	for i in $redirect
-	do
-		REDIRECTS="$REDIRECTS\"$i\","
-	done
-	FINAL=`echo $REDIRECTS | sed 's/\(.*\)\(.\)$/\2/'`
-	[ "$FINAL" == "," ] && REDIRECTS=`echo $REDIRECTS | sed 's/\(.*\)\(.\)$/\1/'`
-	
 	gen_ssr_python_config_file
-	/usr/bin/python /usr/share/ssr/shadowsocks/server.py -c $CONFIG_PATH/ssr_python-server.json -d start >/dev/null 2>&1 &
 }
 
 stop_ssr_python_server() {
 	iptables -F SSR_PYTHON-SERVER 2>/dev/null
 	iptables -D INPUT -j SSR_PYTHON-SERVER 2>/dev/null
 	iptables -X SSR_PYTHON-SERVER 2>/dev/null
-	ps -w | grep "$CONFIG_PATH/ssr_python-server" | grep -v "grep" | awk '{print $1}' | xargs kill -9
+	ps -w | grep "/usr/bin/python /usr/share/ssr_python/server.py" | grep -v "grep" | awk '{print $1}' | xargs kill -9
+	rm -rf /var/log/ssr_python.log
 }
 
 start_v2ray_server() {
@@ -169,6 +120,7 @@ start() {
 	if [ "$ssr_python_enable" = "0" ];then
 		stop_ssr_python_server
 	else
+		cp -rf /usr/share/ssr_python/mudb.json /usr/share/ssr_python/mudb_backup.json
 		mkdir -p $CONFIG_PATH
 		start_ssr_python_server
 	fi
