@@ -64,13 +64,21 @@ e.width="10%"
 e=t:option(DummyValue,"speed_limit_per_con",translate("Speed Limit Per Con"))
 e.width="10%"
 e.cfgvalue=function(t,n)
-	return a.uci:get(appname,n,"speed_limit_per_con").."Kb/s"
+	local str = a.uci:get(appname,n,"speed_limit_per_con")
+	if tonumber(str) == 0 then
+		return "不限速"
+	end
+	return str.."Kb/s"
 end
 
 e=t:option(DummyValue,"speed_limit_per_user",translate("Speed Limit Per User"))
 e.width="10%"
 e.cfgvalue=function(t,n)
-	return a.uci:get(appname,n,"speed_limit_per_user").."Kb/s"
+	local str = a.uci:get(appname,n,"speed_limit_per_user")
+	if tonumber(str) == 0 then
+		return "不限速"
+	end
+	return str.."Kb/s"
 end
 
 e=t:option(DummyValue,"transfer_enable",translate("Available Total Flow"))
