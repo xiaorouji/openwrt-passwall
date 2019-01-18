@@ -79,15 +79,15 @@ for a,t in ipairs(protocols)do e:value(t)end
 e=t:option(ListValue,"obfs",translate("Obfs"))
 for a,t in ipairs(obfss)do e:value(t)end
 
-e=t:option(Value,"device_limit",translate("Device Limit"),translate("The number of clients that can be linked to each port at the same time (in multi-port mode, each port is calculated independently), a minimum of 2 is recommended."))
+e=t:option(Value,"device_limit",translate("Device Limit"),translate("Number of clients that can be linked at the same time (multi-port mode, each port is calculated independently), a minimum of 2 is recommended."))
 e.default = "2"
 e.rmempty = false
 
-e=t:option(Value,"speed_limit_per_con",translate("Speed Limit Per Con"),translate("The speed limit for a single thread per port is capped, and multithreading is invalid. Zero means no speed limit. (unit: KB/S)"))
+e=t:option(Value,"speed_limit_per_con",translate("Speed Limit Per Con"),translate("Single thread speed limit upper limit, multithreading is invalid. Zero means no speed limit. (unit: KB/S)"))
 e.default = "0"
 e.rmempty = false
 
-e=t:option(Value,"speed_limit_per_user",translate("Speed Limit Per User"),translate("Total speed limit upper limit for each port, and overall speed limit for single port. Zero means no speed limit. (unit: KB/S)"))
+e=t:option(Value,"speed_limit_per_user",translate("Speed Limit Per User"),translate("Total speed limit upper limit, single port overall speed limit. Zero means no speed limit. (unit: KB/S)"))
 e.default = "0"
 e.rmempty = false
 
