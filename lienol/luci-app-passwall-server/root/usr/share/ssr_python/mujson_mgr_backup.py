@@ -135,10 +135,12 @@ class MuMgr(object):
 		self.data.load(self.config_path)
 		for row in self.data.json:
 			match = False
-			if 'id' in user and row['id'] != user['id']:
-				match = False
+			if 'user' in user and row['user'] == user['user']:
+				match = True
+			if 'port' in user and row['port'] == user['port']:
+				match = True
 			if match:
-				print("id %s user [%s] port [%s] already exist" % (row['id'], row['user'], row['port']))
+				print("user [%s] port [%s] already exist" % (row['user'], row['port']))
 				return
 		self.data.json.append(up)
 		print("### add user info %s" % self.userinfo(up))
@@ -148,12 +150,14 @@ class MuMgr(object):
 		self.data.load(self.config_path)
 		for row in self.data.json:
 			match = True
-			if 'id' in user and row['id'] != user['id']:
+			if 'user' in user and row['user'] != user['user']:
+				match = False
+			if 'port' in user and row['port'] != user['port']:
 				match = False
 			if match:
 				print("edit user [%s]" % (row['user'],))
 				row.update(user)
-				print("### new id %s user info %s" % (row["id"], self.userinfo(row)))
+				print("### new user info %s" % self.userinfo(row))
 				break
 		self.data.save(self.config_path)
 
@@ -162,10 +166,12 @@ class MuMgr(object):
 		index = 0
 		for row in self.data.json:
 			match = True
-			if 'id' in user and row['id'] != user['id']:
+			if 'user' in user and row['user'] != user['user']:
+				match = False
+			if 'port' in user and row['port'] != user['port']:
 				match = False
 			if match:
-				print("delete id %s user [%s]" % (row["id"], row['user']))
+				print("delete user [%s]" % row['user'])
 				del self.data.json[index]
 				break
 			index += 1
@@ -176,28 +182,32 @@ class MuMgr(object):
 		self.data.load(self.config_path)
 		for row in self.data.json:
 			match = True
-			if 'id' in user and row['id'] != user['id']:
+			if 'user' in user and row['user'] != user['user']:
+				match = False
+			if 'port' in user and row['port'] != user['port']:
 				match = False
 			if match:
 				row.update(up)
-				print("clear id %s user [%s]" % (row["id"], row['user']))
+				print("clear user [%s]" % row['user'])
 		self.data.save(self.config_path)
 
 	def list_user(self, user):
 		self.data.load(self.config_path)
 		if not user:
 			for row in self.data.json:
-				print("id %s user [%s] port %s" % (row["id"], row['user'], row['port']))
+				print("user [%s] port %s" % (row['user'], row['port']))
 			return
 		for row in self.data.json:
 			match = True
-			if 'id' in user and row['id'] != user['id']:
+			if 'user' in user and row['user'] != user['user']:
+				match = False
+			if 'port' in user and row['port'] != user['port']:
 				match = False
 			if match:
 				muid = None
 				if 'muid' in user:
 					muid = user['muid']
-				print("### id %s user [%s] info %s" % (row["id"], row['user'], self.userinfo(row, muid)))
+				print("### user [%s] info %s" % (row['user'], self.userinfo(row, muid)))
 
 
 def print_server_help():
@@ -211,7 +221,6 @@ Actions:
   -l                   display a user infomation or all users infomation
 
 Options:
-  -I ID                the ID
   -u USER              the user name
   -p PORT              server port (only this option must be set if add a user)
   -k PASSWORD          password
@@ -232,9 +241,7 @@ General options:
 
 
 def main():
-	reload(sys)
-	sys.setdefaultencoding('utf-8')
-	shortopts = 'adeclI:u:i:p:k:O:o:G:g:m:t:f:hs:S:'
+	shortopts = 'adeclu:i:p:k:O:o:G:g:m:t:f:hs:S:'
 	longopts = ['help']
 	action = None
 	user = {}
@@ -275,8 +282,6 @@ def main():
 				action = 4
 			elif key == '-c':
 				action = 0
-			elif key == '-I':
-				user['id'] = value
 			elif key == '-u':
 				user['user'] = value
 			elif key == '-i':
@@ -328,19 +333,19 @@ def main():
 	if action == 0:
 		manage.clear_ud(user)
 	elif action == 1:
-		if 'user' not in user and 'id' in user:
-			user['user'] = str(user['id'])
-		if 'user' in user and 'port' in user and 'id' in user:
+		if 'user' not in user and 'port' in user:
+			user['user'] = str(user['port'])
+		if 'user' in user and 'port' in user:
 			manage.add(user)
 		else:
 			print("You have to set the port with -p")
 	elif action == 2:
-		if 'user' in user or 'port' in user or 'id' in user:
+		if 'user' in user or 'port' in user:
 			manage.delete(user)
 		else:
 			print("You have to set the user name or port with -u/-p")
 	elif action == 3:
-		if 'user' in user or 'port' in user or 'id' in user:
+		if 'user' in user or 'port' in user:
 			manage.edit(user)
 		else:
 			print("You have to set the user name or port with -u/-p")
