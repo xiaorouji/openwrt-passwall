@@ -50,7 +50,7 @@ e.width="10%"
 e=t:option(DummyValue,"forbidden_port",translate("Forbidden Port"))
 e.width="10%"
 e.cfgvalue=function(t,n)
-	local str="无"
+	local str = translate("Null")
 	local forbidden_port = a.uci:get(appname,n,"forbidden_port")
 	if forbidden_port then
 		str=forbidden_port
@@ -66,7 +66,7 @@ e.width="10%"
 e.cfgvalue=function(t,n)
 	local str = a.uci:get(appname,n,"speed_limit_per_con")
 	if tonumber(str) == 0 then
-		return "不限速"
+		return translate("No Speed Limit")
 	end
 	return str.."Kb/s"
 end
@@ -76,7 +76,7 @@ e.width="10%"
 e.cfgvalue=function(t,n)
 	local str = a.uci:get(appname,n,"speed_limit_per_user")
 	if tonumber(str) == 0 then
-		return "不限速"
+		return translate("No Speed Limit")
 	end
 	return str.."Kb/s"
 end
@@ -90,7 +90,7 @@ end
 --[[e=t:option(DummyValue,"u",translate("Used Upload Traffic"))
 e.width="10%"
 e.cfgvalue=function(t,section)
-	local result = "未知"
+	local result = translate("Null")
 	if mudbjson then
 		for index,object in pairs(mudbjson) do
 			if object.id == section then
@@ -108,7 +108,7 @@ end
 e=t:option(DummyValue,"d",translate("Used Download Traffic"))
 e.width="10%"
 e.cfgvalue=function(t,section)
-	local result = "未知"
+	local result = translate("Null")
 	if mudbjson then
 		for index,object in pairs(mudbjson) do
 			if object.id == section then
@@ -126,7 +126,7 @@ end]]--
 e=t:option(DummyValue,"used_total_traffic",translate("Used Total traffic"))
 e.width="10%"
 e.cfgvalue=function(t,section)
-	local result = "未知"
+	local result = translate("Null")
 	if mudbjson then
 		for index,object in pairs(mudbjson) do
 			if object.id == section then
