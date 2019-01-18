@@ -32,14 +32,14 @@ function genconfig(i,section,d,u)
 		speed_limit_per_con = tonumber(speed_limit_per_con),
 		speed_limit_per_user = tonumber(speed_limit_per_user),
 		forbidden_port = forbidden_port and forbidden_port or "",
-		transfer_enable = transfer_enable and transfer_enable * 1024 * 1024 * 1024 or "1073741824",
+		transfer_enable = transfer_enable and transfer_enable * 1024 * 1024 * 1024 or 1073741824,
 		d = d and tonumber(d) or 0,
 		u = u and tonumber(u) or 0
 	}
 end
 
 
-local mudbjson = luci.sys.exec("cat /usr/share/ssr_mudb_python/mudb.json")
+local mudbjson = luci.sys.exec("cat /usr/share/ssr_python/mudb.json")
 local mudbjson_object = jsonc.parse(mudbjson)
 
 local i=0
@@ -49,12 +49,15 @@ function(s)
 	local section = s[".name"]
 	if mudbjson_object then
 		local flag=true
-		for index,object in pairs(mudbjson_object) do
-			if object.id == section then
-				flag=false
-				genconfig(i,section,object.d,object.u)
-				mudbjson_object[index]=nil
-				break
+		for index=1, table.maxn(mudbjson_object) do
+			local object = mudbjson_object[index]
+			if mudbjson_object[index]~=nil then
+				if object.id == section then
+					flag=false
+					genconfig(i,section,object.d,object.u)
+					mudbjson_object[index]=nil
+					break
+				end
 			end
 		end
 		if flag==true then

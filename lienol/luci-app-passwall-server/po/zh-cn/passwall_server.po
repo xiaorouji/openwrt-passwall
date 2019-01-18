@@ -88,14 +88,14 @@ msgstr "已用下载流量"
 msgid "Used Total traffic"
 msgstr "已使用总流量"
 
-msgid "The number of clients that can be linked to each port at the same time (in multi-port mode, each port is calculated independently), a minimum of 2 is recommended."
-msgstr "每个端口同一时间能链接的客户端数量(多端口模式，每个端口都是独立计算)，建议最少 2个。"
+msgid "Number of clients that can be linked at the same time (multi-port mode, each port is calculated independently), a minimum of 2 is recommended."
+msgstr "同一时间能链接的客户端数量(多端口模式，每个端口都是独立计算)，建议最少 2个。"
 
-msgid "The speed limit for a single thread per port is capped, and multithreading is invalid. Zero means no speed limit. (unit: KB/S)"
-msgstr "每个端口单线程的限速上限，多线程即无效。 0代表不限速。(单位：KB/S)"
+msgid "Single thread speed limit upper limit, multithreading is invalid. Zero means no speed limit. (unit: KB/S)"
+msgstr "单线程的限速上限，多线程即无效。 0代表不限速。(单位：KB/S)"
 
-msgid "Total speed limit upper limit for each port, and overall speed limit for single port. Zero means no speed limit. (unit: KB/S)"
-msgstr "每个端口总速度限速上限，单个端口整体限速。 0代表不限速。(单位：KB/S)"
+msgid "Total speed limit upper limit, single port overall speed limit. Zero means no speed limit. (unit: KB/S)"
+msgstr "总速度限速上限，单个端口整体限速。 0代表不限速。(单位：KB/S)"
 
 msgid "For example, if port 25 is not allowed, the user will not be able to access the mail port 25 through the SSR agent. If 80,443 is disabled, the user will not be able to access the HTTP/HTTPS website normally. <br>blocked single port format: 25<br>blocked multiple port format: 23,465<br>blocked port format: 233-266<br>blocked multiple port format: 25,465,233-666"
 msgstr "例如不允许访问 25端口，用户就无法通过SSR代理访问邮件端口25了，如果禁止了 80,443 那么用户将无法正常访问 http/https 网站。<br>封禁单个端口格式: 25<br>封禁多个端口格式: 23,465<br>封禁端口段格式: 233-266<br>封禁多种格式端口: 25,465,233-666"
@@ -120,6 +120,9 @@ msgstr "启用"
 
 msgid "Status"
 msgstr "状态"
+
+msgid "Current Condition"
+msgstr "当前状态"
 
 msgid "please Install the python"
 msgstr "请安装python环境"
