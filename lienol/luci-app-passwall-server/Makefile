@@ -7,10 +7,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall-server
 PKG_VERSION:=1.0
-PKG_RELEASE:=10-20190118
+PKG_RELEASE:=11-20190118
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
-PO2LMO:=../po2lmo
+PO2LMO:=po2lmo
  
 include $(INCLUDE_DIR)/package.mk
 
@@ -18,13 +18,13 @@ define Package/$(PKG_NAME)/config
 menu "Configuration"
 	depends on PACKAGE_$(PKG_NAME)
 	
-config PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Libev_Server
-	bool "Include ShadowsocksR Libev Server (ssr-server)"
-	default n
-	
 config PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Python_Server
 	bool "Include ShadowsocksR Python Server"
 	default y
+
+config PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Libev_Server
+	bool "Include ShadowsocksR Libev Server (ssr-server)"
+	default n
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_V2ray_Server
 	bool "Include V2ray Server"
@@ -38,7 +38,7 @@ define Package/$(PKG_NAME)
   SUBMENU:=3. Applications
   TITLE:=LuCI support for PassWall Server By Lienol
   PKGARCH:=all
-  DEPENDS:= \
+  DEPENDS:=+python \
   +PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Libev_Server:shadowsocksr-libev-server \
   +PACKAGE_$(PKG_NAME)_INCLUDE_V2ray_Server:v2ray
 endef
@@ -62,6 +62,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci
 	cp -pR ./luasrc/* $(1)/usr/lib/lua/luci/
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/i18n
+	chmod a+x $(PO2LMO)
 	$(PO2LMO) ./po/zh-cn/passwall_server.po $(1)/usr/lib/lua/luci/i18n/passwall_server.zh-cn.lmo
 	
 ifdef CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Python_Server
