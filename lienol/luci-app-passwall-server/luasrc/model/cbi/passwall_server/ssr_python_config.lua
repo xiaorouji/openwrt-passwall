@@ -93,8 +93,8 @@ e.rmempty = false
 
 e=t:option(Value,"forbidden_port",translate("Forbidden Port"),translate("For example, if port 25 is not allowed, the user will not be able to access the mail port 25 through the SSR agent. If 80,443 is disabled, the user will not be able to access the HTTP/HTTPS website normally. <br>blocked single port format: 25<br>blocked multiple port format: 23,465<br>blocked port format: 233-266<br>blocked multiple port format: 25,465,233-666"))
 
-e=t:option(Value,"transfer_enable",translate("Available Total Flow"),translate("Maximum amount of total traffic available (GB, 1-1024gb), input errors can cause incredible problems!"))
-e.default = "100"
+e=t:option(Value,"transfer_enable",translate("Available Total Flow"),translate("Maximum amount of total traffic available (GB, 1-838868), Zero means infinite."))
+e.default = "0"
 e.rmempty = false
 
 return a

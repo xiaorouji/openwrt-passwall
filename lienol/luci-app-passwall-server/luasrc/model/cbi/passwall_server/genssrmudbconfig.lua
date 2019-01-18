@@ -19,6 +19,8 @@ function genconfig(i,section,d,u)
 	local forbidden_port = server.forbidden_port
 	local transfer_enable = server.transfer_enable
 	
+	transfer_enable = transfer_enable and tonumber(transfer_enable)==0 and 838868 or transfer_enable
+	
 	json[i] = {
 		id = section,
 		enable = tonumber(enable),
