@@ -14,6 +14,8 @@ t.addremove=false
 e=t:option(Flag,"v2ray_enable",translate("Enable"))
 e.rmempty=false
 
+t:append(Template("server_center/v2ray"))
+
 t=a:section(TypedSection,"v2ray_servers",translate("Users Manager"))
 t.anonymous=true
 t.addremove=true

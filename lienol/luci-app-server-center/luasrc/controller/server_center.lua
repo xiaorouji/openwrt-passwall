@@ -1,4 +1,7 @@
 module("luci.controller.server_center",package.seeall)
+local appname = "server_center"
+local http = require "luci.http"
+local v2ray  = require "luci.model.cbi.server_center.api.v2ray"
 
 function index()
 	if not nixio.fs.access("/etc/config/server_center")then
@@ -23,35 +26,58 @@ function index()
 	entry({"admin","vpn","server_center","ssr_python_status"},call("act_ssr_python_status")).leaf=true
 	entry({"admin","vpn","server_center","ssr_python_users_status"},call("act_ssr_python_users_status")).leaf=true
 	entry({"admin","vpn","server_center","v2ray_users_status"},call("act_v2ray_users_status")).leaf=true
+	
+	entry({"admin", "vpn", "server_center", "v2ray_check"}, call("v2ray_check")).leaf = true
+	entry({"admin", "vpn", "server_center", "v2ray_update"}, call("v2ray_update")).leaf = true
+end
+
+local function http_write_json(content)
+	http.prepare_content("application/json")
+	http.write_json(content or { code = 1 })
 end
 
 function act_ssr_libev_users_status()
 	local e={}
 	e.index=luci.http.formvalue("index")
 	e.status=luci.sys.call("ps -w| grep -v grep | grep '/var/etc/server_center/ssr_libev-server_" .. luci.http.formvalue("id") .. "' >/dev/null")==0
-	luci.http.prepare_content("application/json")
-	luci.http.write_json(e)
+	http_write_json(e)
 end
 
 function act_ssr_python_status()
 	local e={}
 	e.status=luci.sys.call("ps -w | grep -v grep | grep '/usr/share/ssr_python/server.py' >/dev/null")==0
-	luci.http.prepare_content("application/json")
-	luci.http.write_json(e)
+	http_write_json(e)
 end
 
 function act_ssr_python_users_status()
 	local e={}
 	e.index=luci.http.formvalue("index")
 	e.status=luci.sys.call("netstat -an | grep '" .. luci.http.formvalue("port") .. "' >/dev/null")==0
-	luci.http.prepare_content("application/json")
-	luci.http.write_json(e)
+	http_write_json(e)
 end
 
 function act_v2ray_users_status()
 	local e={}
 	e.index=luci.http.formvalue("index")
 	e.status=luci.sys.call("ps -w| grep -v grep | grep '/var/etc/server_center/v2ray-server_" .. luci.http.formvalue("id") .. "' >/dev/null")==0
-	luci.http.prepare_content("application/json")
-	luci.http.write_json(e)
+	http_write_json(e)
+end
+
+function v2ray_check()
+	local json = v2ray.to_check("")
+	http_write_json(json)
+end
+
+function v2ray_update()
+	local json = nil
+	local task = http.formvalue("task")
+	if task == "extract" then
+		json = v2ray.to_extract(http.formvalue("file"), http.formvalue("subfix"))
+	elseif task == "move" then
+		json = v2ray.to_move(http.formvalue("file"))
+	else
+		json = v2ray.to_download(http.formvalue("url"))
+	end
+
+	http_write_json(json)
 end
