@@ -10,7 +10,7 @@ PKG_VERSION:=2.0
 PKG_RELEASE:=31-20190118
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
-PO2LMO:=po2lmo
+PO2LMO:=./po2lmo
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -121,7 +121,7 @@ define Package/$(PKG_NAME)/install
 	cp -pR ./luasrc/* $(1)/usr/lib/lua/luci/
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/i18n
 	cp -pR ./root/usr/share/passwall/* $(1)/usr/share/passwall
-	chmod a+x $(PO2LMO)
+	chmod 755 $(PO2LMO)
 	$(PO2LMO) ./po/zh-cn/passwall.po $(1)/usr/lib/lua/luci/i18n/passwall.zh-cn.lmo
 
 ifdef CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Pcap_dnsproxy
