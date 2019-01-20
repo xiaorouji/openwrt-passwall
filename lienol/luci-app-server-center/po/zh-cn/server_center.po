@@ -107,7 +107,7 @@ msgid "For example, if port 25 is not allowed, the user will not be able to acce
 msgstr "例如不允许访问 25端口，用户就无法通过SSR代理访问邮件端口25了，如果禁止了 80,443 那么用户将无法正常访问 http/https 网站。<br>封禁单个端口格式: 25<br>封禁多个端口格式: 23,465<br>封禁端口段格式: 233-266<br>封禁多种格式端口: 25,465,233-666"
 
 msgid "Maximum amount of total traffic available (GB, 1-838868), Zero means infinite."
-msgstr "可使用的总流量上限(单位: GB, 1-1024)，0代表无限"
+msgstr "可使用的总流量上限(单位: GB, 1-838868)，0代表无限"
 
 msgid "Alter ID"
 msgstr "额外ID(AlterID)"
