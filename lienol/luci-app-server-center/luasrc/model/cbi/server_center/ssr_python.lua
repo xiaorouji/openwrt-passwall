@@ -83,8 +83,13 @@ end
 
 e=t:option(DummyValue,"transfer_enable",translate("Available Total Flow"))
 e.width="10%"
-e.cfgvalue=function(t,n)
-	return a.uci:get(appname,n,"transfer_enable").."G"
+e.cfgvalue=function(t,section)
+	local result = a.uci:get(appname,section,"transfer_enable")
+	if result and tonumber(result) == 0 then
+		return translate("Infinite")
+	else
+		return result.."G"
+	end
 end
 
 --[[e=t:option(DummyValue,"u",translate("Used Upload Traffic"))
