@@ -5,10 +5,10 @@
 
 include $(TOPDIR)/rules.mk
 
-LUCI_TITLE:=LuCI support for File Browser
+LUCI_TITLE:=LuCI support for File Browser Mini
 LUCI_PKGARCH:=all
 PKG_VERSION:=1.0
-PKG_RELEASE:=1-20181210
+PKG_RELEASE:=2-20190121
 
 include ../luci_my.mk
 
