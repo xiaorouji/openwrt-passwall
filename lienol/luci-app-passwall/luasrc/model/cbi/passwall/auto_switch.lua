@@ -12,6 +12,10 @@ m=Map(i)
 s=m:section(TypedSection,"auto_switch",translate("Auto Switch"))
 s.anonymous = true
 
+o=s:option(Flag,"enable",translate("Enable"))
+o.default=0
+o.rmempty=false
+
 o=s:option(Value,"testing_time",translate("How often is a diagnosis made"),translate("Units:minutes"))
 o.default="10"
 

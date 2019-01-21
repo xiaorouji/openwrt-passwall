@@ -173,36 +173,30 @@ get_host_ip() {
 	echo $ip
 }
 
-TCP_REDIR=$(config_t_get global tcp_redir 0)
-UDP_REDIR=$(config_t_get global udp_redir 0)
-SOCKS5_PROXY=$(config_t_get global socks5_proxy 0)
-TCP_REDIR_SERVER="nil"
-UDP_REDIR_SERVER="nil"
-SOCKS5_PROXY_SERVER="nil"
-[ "$SOCKS5_PROXY" == "1" ] && SOCKS5_PROXY_SERVER=$(config_t_get global socks5_proxy_server nil)
-[ "$TCP_REDIR" == "1" ] && TCP_REDIR_SERVER=$(config_t_get global tcp_redir_server nil)
-[ "$UDP_REDIR" == "1" ] && {
-	UDP_REDIR_SERVER=$(config_t_get global udp_redir_server nil)
-	[ "$UDP_REDIR_SERVER" == "default" ] && UDP_REDIR_SERVER=$TCP_REDIR_SERVER
-}
-TCP_REDIR_SERVER_PORT=""
-UDP_REDIR_SERVER_PORT=""
-SOCKS5_PROXY_SERVER_PORT=""
-TCP_REDIR_SERVER_TYPE=""
-UDP_REDIR_SERVER_TYPE=""
-SOCKS5_PROXY_SERVER_TYPE=""
+SOCKS5_PROXY_SERVER=$(config_t_get global socks5_proxy_server nil)
+TCP_REDIR_SERVER=$(config_t_get global tcp_redir_server nil)
+UDP_REDIR_SERVER=$(config_t_get global udp_redir_server nil)
+[ "$UDP_REDIR_SERVER" == "default" ] && UDP_REDIR_SERVER=$TCP_REDIR_SERVER
+
 TCP_REDIR_SERVER_IP=""
 UDP_REDIR_SERVER_IP=""
 SOCKS5_PROXY_SERVER_IP=""
 TCP_REDIR_SERVER_IPV6=""
 UDP_REDIR_SERVER_IPV6=""
 SOCKS5_PROXY_SERVER_IPV6=""
-brook_socks5_cmd=""
-brook_tcp_cmd=""
-brook_udp_cmd=""
-AUTO_SWITCH=$(config_t_get global auto_switch 0)
-TCP_REDIR_PORTS=$(config_t_get global tcp_redir_ports '80,443')
-UDP_REDIR_PORTS=$(config_t_get global udp_redir_ports '1:65535')
+TCP_REDIR_SERVER_PORT=""
+UDP_REDIR_SERVER_PORT=""
+SOCKS5_PROXY_SERVER_PORT=""
+TCP_REDIR_SERVER_TYPE=""
+UDP_REDIR_SERVER_TYPE=""
+SOCKS5_PROXY_SERVER_TYPE=""
+
+BROOK_SOCKS5_CMD=""
+BROOK_TCP_CMD=""
+BROOK_UDP_CMD=""
+AUTO_SWITCH_ENABLE=$(config_t_get auto_switch enable 0)
+TCP_REDIR_PORTS=$(config_t_get global_forwarding tcp_redir_ports '80,443')
+UDP_REDIR_PORTS=$(config_t_get global_forwarding udp_redir_ports '1:65535')
 
 load_config() {
 	[ "$TCP_REDIR_SERVER" == "nil" -a "$UDP_REDIR_SERVER" == "nil" -a "$SOCKS5_PROXY_SERVER" == "nil" ] && {
@@ -218,7 +212,7 @@ load_config() {
 	else
 		threads=$(config_t_get global threads)
 	fi
-	SSR_SERVER_PASSWALL=$(config_t_get global ssr_server_passwall 0)
+	LOCALHOST_RULES=$(config_t_get global localhost_rules default)
 	DNS_FORWARD=$(config_t_get global_dns dns_forward 208.67.222.222:443)
 	DNS_FORWARD_IP=$(echo "$DNS_FORWARD" | awk -F':' '{print $1}')
 	DNS_FORWARD_PORT=$(echo "$DNS_FORWARD" | awk -F':' '{print $2}')
@@ -314,7 +308,7 @@ gen_config_file() {
 			lua $SS_PATH/genv2rayconfig.lua $SOCKS5_PROXY_SERVER nil nil $SOCKS5_PROXY_PORT > $CONFIG_SOCKS5_FILE
 		fi
 		if [ "$server_type" == "brook" ]; then
-			brook_socks5_cmd="client -l 0.0.0.0:$SOCKS5_PROXY_PORT -i 0.0.0.0 -s $server_ip:$server_port -p $(config_get $SOCKS5_PROXY_SERVER password)"
+			BROOK_SOCKS5_CMD="client -l 0.0.0.0:$SOCKS5_PROXY_PORT -i 0.0.0.0 -s $server_ip:$server_port -p $(config_get $SOCKS5_PROXY_SERVER password)"
 		fi
 	fi
 	
@@ -332,7 +326,7 @@ gen_config_file() {
 			lua $SS_PATH/genv2rayconfig.lua $UDP_REDIR_SERVER udp $UDP_REDIR_PORT nil > $CONFIG_UDP_FILE
 		fi
 		if [ "$server_type" == "brook" ]; then
-			brook_udp_cmd="tproxy -l 0.0.0.0:$UDP_REDIR_PORT -s $server_ip:$server_port -p $(config_get $UDP_REDIR_SERVER password)"
+			BROOK_UDP_CMD="tproxy -l 0.0.0.0:$UDP_REDIR_PORT -s $server_ip:$server_port -p $(config_get $UDP_REDIR_SERVER password)"
 		fi
 	fi
 	
@@ -390,14 +384,14 @@ gen_config_file() {
 					gen_ss_ssr_config_file $server_type $TCP_REDIR_PORT 1 $TCP_REDIR_SERVER $CONFIG_TCP_FILE
 				fi
 				if [ "$server_type" == "brook" ]; then
-					brook_tcp_cmd="tproxy -l 0.0.0.0:$TCP_REDIR_PORT -s 127.0.0.1:$KCPTUN_REDIR_PORT -p $(config_get $TCP_REDIR_SERVER password)"
+					BROOK_TCP_CMD="tproxy -l 0.0.0.0:$TCP_REDIR_PORT -s 127.0.0.1:$KCPTUN_REDIR_PORT -p $(config_get $TCP_REDIR_SERVER password)"
 				fi
 			else
 				if [ "$server_type" == "ss" -o "$server_type" == "ssr" ]; then
 					gen_ss_ssr_config_file $server_type $TCP_REDIR_PORT 0 $TCP_REDIR_SERVER $CONFIG_TCP_FILE
 				fi
 				if [ "$server_type" == "brook" ]; then
-					brook_tcp_cmd="tproxy -l 0.0.0.0:$TCP_REDIR_PORT -s $server_ip:$server_port -p $(config_get $TCP_REDIR_SERVER password)"
+					BROOK_TCP_CMD="tproxy -l 0.0.0.0:$TCP_REDIR_PORT -s $server_ip:$server_port -p $(config_get $TCP_REDIR_SERVER password)"
 				fi
 			fi
 		fi
@@ -422,7 +416,7 @@ start_tcp_redir() {
 			[ -n "$v2ray_bin" ] && $v2ray_bin -config=$CONFIG_TCP_FILE > /dev/null &
 		elif [ "$TCP_REDIR_SERVER_TYPE" == "brook" ]; then
 			brook_bin=$(find_bin Brook)
-			[ -n "$brook_bin" ] && $brook_bin $brook_tcp_cmd &>/dev/null &
+			[ -n "$brook_bin" ] && $brook_bin $BROOK_TCP_CMD &>/dev/null &
 		else
 			ss_bin=$(find_bin "$TCP_REDIR_SERVER_TYPE"-redir)
 			[ -n "$ss_bin" ] && {
@@ -443,7 +437,7 @@ start_udp_redir() {
 			[ -n "$v2ray_bin" ] && $v2ray_bin -config=$CONFIG_UDP_FILE > /dev/null &
 		elif [ "$UDP_REDIR_SERVER_TYPE" == "brook" ]; then
 			brook_bin=$(find_bin brook)
-			[ -n "$brook_bin" ] && $brook_bin $brook_udp_cmd &>/dev/null &
+			[ -n "$brook_bin" ] && $brook_bin $BROOK_UDP_CMD &>/dev/null &
 		else
 			ss_bin=$(find_bin "$UDP_REDIR_SERVER_TYPE"-redir)
 			[ -n "$ss_bin" ] && {
@@ -461,7 +455,7 @@ start_socks5_proxy() {
 			[ -n "$v2ray_bin" ] && $v2ray_bin -config=$CONFIG_SOCKS5_FILE > /dev/null &
 		elif [ "$SOCKS5_PROXY_SERVER_TYPE" == "brook" ]; then
 			brook_bin=$(find_bin brook)
-			[ -n "$brook_bin" ] && $brook_bin $brook_socks5_cmd &>/dev/null &
+			[ -n "$brook_bin" ] && $brook_bin $BROOK_SOCKS5_CMD &>/dev/null &
 		else
 			ss_bin=$(find_bin "$SOCKS5_PROXY_SERVER_TYPE"-local)
 			[ -n "$ss_bin" ] && $ss_bin -c $CONFIG_SOCKS5_FILE -b 0.0.0.0 > /dev/null 2>&1 &
@@ -530,7 +524,7 @@ start_crontab() {
 		}
 	fi
 	
-	[ "$AUTO_SWITCH" = "1" ] && {
+	[ "$AUTO_SWITCH_ENABLE" = "1" ] && {
 		testing_time=$(config_t_get auto_switch testing_time)
 		[ -n "$testing_time" ] && {
 			has_backup_server=`uci show $CONFIG.@auto_switch[0] | grep "tcp_redir_server"`
@@ -1142,9 +1136,13 @@ EOF
 			#	用于本机流量转发，默认只走router
 			$iptables_mangle -A SS -s $lan_ip -p tcp -m set --match-set $IPSET_ROUTER dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
 			$iptables_mangle -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_ROUTER dst -j MARK --set-mark 1
-			[ "$SSR_SERVER_PASSWALL" == "1" ] && {
+			[ "$LOCALHOST_RULES" == "gfwlist" ] && {
 				$iptables_mangle -A SS -s $lan_ip -p tcp -m set --match-set $IPSET_GFW dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
 				$iptables_mangle -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_GFW dst -j MARK --set-mark 1
+			}
+			[ "$LOCALHOST_RULES" == "chnroute" ] && {
+				$iptables_mangle -A SS -s $lan_ip -p tcp -m set --match-set $IPSET_CHN dst -j RETURN
+				$iptables_mangle -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -j MARK --set-mark 1
 			}
 		else
 			$iptables_mangle -A PREROUTING -j SS
@@ -1203,11 +1201,16 @@ EOF
 		
 			#  用于本机流量转发，默认只走router
 			#$iptables_nat -I OUTPUT -j SS
+			$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_LANIPLIST dst -j RETURN
+			$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_VPSIPLIST dst -j RETURN
 			$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_ROUTER dst -j REDIRECT --to-ports $TCP_REDIR_PORT
 			
-			if [ "$SSR_SERVER_PASSWALL" == "1" ];then
-				$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_GFW dst -j REDIRECT --to-ports $TCP_REDIR_PORT
-			fi
+			[ "$LOCALHOST_RULES" == "gfwlist" ] && $iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_GFW dst -j REDIRECT --to-ports $TCP_REDIR_PORT
+			[ "$LOCALHOST_RULES" == "chnroute" ] && {
+				$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_CHN dst -j RETURN
+				$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -j REDIRECT --to-ports $TCP_REDIR_PORT
+			}
+			
 			echolog "IPv4 防火墙TCP转发规则加载完成！" 
 		fi
 	else
@@ -1285,11 +1288,11 @@ del_firewall_rule() {
 	ipv4_chromecast_nu=`$iptables_nat -L PREROUTING 2>/dev/null | grep "dpt:53"|awk '{print $1}'`
 	[ -n "$ipv4_chromecast_nu" ] && $iptables_nat -D PREROUTING $ipv4_chromecast_nu 2>/dev/null
 	
-	ipv4_output_exist=`$iptables_nat -L OUTPUT 2>/dev/null | grep -c -E "SS|$IPSET_GFW|$IPSET_ROUTER"`
+	ipv4_output_exist=`$iptables_nat -L OUTPUT 2>/dev/null | grep -c -E "SS|$IPSET_LANIPLIST|$IPSET_VPSIPLIST|$IPSET_CHN|$IPSET_GFW|$IPSET_ROUTER|$TCP_REDIR_PORTS"`
 	[ -n "$ipv4_output_exist" ] && {
 		until [ "$ipv4_output_exist" = 0 ]
 		do
-			rules=`$iptables_nat -L OUTPUT --line-numbers | grep -E "SS|$IPSET_GFW|$IPSET_ROUTER" | awk '{print $1}'`
+			rules=`$iptables_nat -L OUTPUT --line-numbers | grep -E "SS|$IPSET_LANIPLIST|$IPSET_VPSIPLIST|$IPSET_CHN|$IPSET_GFW|$IPSET_ROUTER|$TCP_REDIR_PORTS" | awk '{print $1}'`
 			for rule in $rules
 			do
 				$iptables_nat -D OUTPUT $rule 2> /dev/null
@@ -1316,6 +1319,7 @@ del_firewall_rule() {
 	$iptables_mangle -D PREROUTING -p udp -m socket -j MARK --set-mark 1 2>/dev/null
 	$iptables_mangle -D OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_ROUTER dst -j MARK --set-mark 1 2>/dev/null
 	$iptables_mangle -D OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_GFW dst -j MARK --set-mark 1 2>/dev/null
+	$iptables_mangle -D OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -j MARK --set-mark 1 2>/dev/null
 	
 	$iptables_nat -D PREROUTING -j SS 2> /dev/null
 	$iptables_nat -F SS 2>/dev/null && $iptables_nat -X SS 2>/dev/null

@@ -45,9 +45,9 @@ s=m:section(TypedSection,"global_dns",translate("DNS Setting"))
 s.anonymous=true
 s.addremove=false
 o=s:option(Value,"dns_forward",translate("DNS Forward Address"))
-o.default="8.8.8.8:53"
-o:value("8.8.8.8:53","8.8.8.8:53(Google DNS1)")
-o:value("8.8.4.4:53","8.8.4.4:53(Google DNS2)")
+o.default="8.8.4.4:53"
+o:value("8.8.4.4:53","8.8.4.4:53(Google DNS1)")
+o:value("8.8.8.8:53","8.8.8.8:53(Google DNS2)")
 o:value("208.67.222.222:53","208.67.222.222:53(OpenDNS DNS1_53)")
 o:value("208.67.222.222:5353","208.67.222.222:5353(OpenDNS DNS1_5353)")
 o:value("208.67.222.222:443","208.67.222.222:443(OpenDNS DNS1_443)")
@@ -118,6 +118,23 @@ o=s:option(Flag,"dns_53",translate("DNS Hijack"))
 o.default=0
 o.rmempty=false
 
+-- [[ Forwarding Settings ]]--
+s=m:section(TypedSection,"global_forwarding",translate("Forwarding Settings"))
+s.anonymous=true
+s.addremove=false
+
+o=s:option(Value,"tcp_redir_ports",translate("TCP Redir Ports"))
+o.default="80,443"
+o:value("1:65535",translate("All"))
+o:value("80,443","80,443")
+o:value("80:","80 "..translate("or more"))
+o:value(":443","443 "..translate("or less"))
+
+o=s:option(Value,"udp_redir_ports",translate("UDP Redir Ports"))
+o.default="1:65535"
+o:value("1:65535",translate("All"))
+o:value("53","53")
+
 -- [[ Proxy Settings ]]--
 s=m:section(TypedSection,"global_proxy",translate("Proxy Settings"))
 s.anonymous=true
@@ -146,6 +163,7 @@ o=s:option(Flag,"proxy_ipv6",translate("Proxy IPv6"),translate("The IPv6 traffic
 o.default=0
 
 -- [[ Custom Dnsmasq Settings ]]--
+--[[
 s=m:section(TypedSection,"global",translate("Custom Dnsmasq"))
 s.anonymous=true
 local e="/usr/share/passwall/dnsmasq.d/user.conf"
@@ -159,4 +177,5 @@ end
 o.write=function(o,o,a)
 fs.writefile(e,a:gsub("\r\n","\n"))
 end
+]]--
 return m
