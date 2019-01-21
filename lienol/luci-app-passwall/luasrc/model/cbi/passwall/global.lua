@@ -32,51 +32,20 @@ t=a:section(TypedSection,"global",translate("Global Setting"))
 t.anonymous=true
 t.addremove=false
 
-e=t:option(Flag,"tcp_redir",translate("Start the TCP redir"),translate("For used to surf the Internet."))
-e.default=0
-e.rmempty=false
-
-e=t:option(Flag,"auto_switch",translate("Use Auto Switch/reconnect"),translate("Please switch the configuration of the standby server to the automatic interface"))
-e.default=0
-e.rmempty=false
-e:depends("tcp_redir",1)
-
-e=t:option(ListValue,"tcp_redir_server",translate("TCP Redir Server"))
+e=t:option(ListValue,"tcp_redir_server",translate("TCP Redir Server"),translate("For used to surf the Internet."))
+e:value("nil",translate("Close"))
 for a,t in pairs(n)do e:value(a,t)end
-e:depends("tcp_redir",1)
-
-e=t:option(Value,"tcp_redir_ports",translate("TCP Redir Ports"))
-e.default="80,443"
-e:value("1:65535",translate("All"))
-e:value("80,443","80,443")
-e:value("80:","80 "..translate("or more"))
-e:value(":443","443 "..translate("or less"))
-e:depends("tcp_redir",1)
 
 if has_udp_relay() then
-	e=t:option(Flag,"udp_redir",translate("Start the UDP redir"),translate("For Game Mode or DNS resolution and more.")..translate("The selected server will not use Kcptun."))
-	e.default=0
-	e.rmempty=false
+	e=t:option(ListValue,"udp_redir_server",translate("UDP Redir Server"),translate("For Game Mode or DNS resolution and more.")..translate("The selected server will not use Kcptun."))
+	e:value("nil",translate("Close"))
+	e:value("default",translate("Same as the tcp redir server"))
+	for a,t in pairs(n)do e:value(a,t)end
 end
 
-e=t:option(ListValue,"udp_redir_server",translate("UDP Redir Server"))
-e:value("default",translate("Same as the tcp redir server"))
+e=t:option(ListValue,"socks5_proxy_server",translate("Socks5 Proxy Server"),translate("The client can use the router's Socks5 proxy"))
+e:value("nil",translate("Close"))
 for a,t in pairs(n)do e:value(a,t)end
-e:depends("udp_redir",1)
-
-e=t:option(Value,"udp_redir_ports",translate("UDP Redir Ports"))
-e.default="1:65535"
-e:value("1:65535",translate("All"))
-e:value("53","53")
-e:depends("udp_redir",1)
-
-e=t:option(Flag,"socks5_proxy",translate("Start the Socks5 Proxy"),translate("The client can use the router's Socks5 proxy"))
-e.default=0
-e.rmempty=false
-
-e=t:option(ListValue,"socks5_proxy_server",translate("Socks5 Proxy Server"))
-for a,t in pairs(n)do e:value(a,t)end
-e:depends("socks5_proxy",1)
 
 e=t:option(ListValue,"proxy_mode",translate("Default")..translate("Proxy Mode"))
 e.default="gfwlist"
@@ -128,9 +97,13 @@ e:value("3", "3 "..translate("Thread"))
 e:value("4", "4 "..translate("Thread"))
 e.default = "0"
 e.rmempty = false
-	
-e=t:option(Flag,"ssr_server_passwall",translate("SSR Client")..translate("Pass Wall"),translate("Check to make the SSR server client")..translate("Pass Wall"))
-e.default="0"
+
+e=t:option(ListValue,"localhost_rules",translate("Localhost rules"),translate("The server client can also use this rule to scientifically surf the Internet"))
+e:value("default",translate("Default"))
+e:value("gfwlist",translate("GFW List"))
+e:value("chnroute",translate("China WhiteList"))
+e.default="default"
+e.rmempty=false
 
 local apply = luci.http.formvalue("cbi.apply")
 if apply then
