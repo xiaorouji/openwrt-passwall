@@ -85,6 +85,9 @@ msgstr "总限速"
 msgid "Available Total Flow"
 msgstr "可用总流量"
 
+msgid "Infinite"
+msgstr "无限"
+
 msgid "Used Upload Traffic"
 msgstr "已用上传流量"
 
