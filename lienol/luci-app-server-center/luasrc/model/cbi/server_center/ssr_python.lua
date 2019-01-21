@@ -103,7 +103,7 @@ e.cfgvalue=function(t,section)
 				if u < 1024 then result = u.."B"
 				elseif u < 1024*1024 then result = math.ceil((u/1024)).."KB"
 				elseif u < 1024*1024*1024 then result = math.ceil((u/1024/1024)).."MB"
-				elseif u < 1024*1024*1024*1024 then result = math.ceil((u/1024/1024/1024)).."TB" end
+				elseif u < 1024*1024*1024*1024 then result = math.ceil((u/1024/1024/1024)).."GB" end
 			end
 		end
 	end
@@ -121,7 +121,7 @@ e.cfgvalue=function(t,section)
 				if d < 1024 then result = d.."B"
 				elseif d < 1024*1024 then result = math.ceil((d/1024)).."KB"
 				elseif d < 1024*1024*1024 then result = math.ceil((d/1024/1024)).."MB"
-				elseif d < 1024*1024*1024*1024 then result = math.ceil((d/1024/1024/1024)).."TB" end
+				elseif d < 1024*1024*1024*1024 then result = math.ceil((d/1024/1024/1024)).."GB" end
 			end
 		end
 	end
@@ -139,7 +139,7 @@ e.cfgvalue=function(t,section)
 				if count < 1024 then result = count.."B"
 				elseif count < 1024*1024 then result = math.ceil((count/1024)).."KB"
 				elseif count < 1024*1024*1024 then result = math.ceil((count/1024/1024)).."MB"
-				elseif count < 1024*1024*1024*1024 then result = math.ceil((count/1024/1024/1024)).."TB" end
+				elseif count < 1024*1024*1024*1024 then result = math.ceil((count/1024/1024/1024)).."GB" end
 			end
 		end
 	end
