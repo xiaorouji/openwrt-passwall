@@ -18,7 +18,7 @@
         var currpath = document.getElementById("currentpath").value;
         var c = confirm('Are you sure to remove '+path+' ?');
         if (c) {
-            iwxhr.get('<%=luci.dispatcher.build_url("admin", "system", "filebrowser_delete")%>', {
+            iwxhr.get('<%=luci.dispatcher.build_url("admin", "system", "filebrowser-mini_delete")%>', {
                 path:path,
                 isdir:isDir
             },function(x, ifc){
@@ -33,7 +33,7 @@
         if (newname) {
             var newpath = currpath+'/'+newname;
             newpath = newpath.replace("//", "/");
-            iwxhr.get('<%=luci.dispatcher.build_url("admin", "system", "filebrowser_rename")%>', {
+            iwxhr.get('<%=luci.dispatcher.build_url("admin", "system", "filebrowser-mini_rename")%>', {
                 filepath: filepath,
                 newpath: newpath
             },function(x, ifc){
@@ -73,7 +73,7 @@
 		path = path || obj.getAttribute("data-path").replaceAll(' ', '\\ ');
 		filename = filename || obj.getAttribute("data-filename");
 		
-		iwxhr.get('<%=luci.dispatcher.build_url("admin", "system", "filebrowser_open")%>', {
+		iwxhr.get('<%=luci.dispatcher.build_url("admin", "system", "filebrowser-mini_open")%>', {
 			path:path,
 			filename:filename,
 		},function(x, ifc){});
@@ -84,7 +84,7 @@
 
         document.getElementById("list").style.opacity=0.5;
         document.getElementById("list").style.pointerEvents='none';
-		iwxhr.get('<%=luci.dispatcher.build_url("admin", "system", "filebrowser_list")%>', {path:path},
+		iwxhr.get('<%=luci.dispatcher.build_url("admin", "system", "filebrowser-mini_list")%>', {path:path},
 			function(x, ifc){
 				var filenames=ifc;
 				
@@ -116,7 +116,7 @@
 								encoded_path: encodeURIComponent((path+'/'+f[9]).replaceAll('/', '<>')),
 								encoded_filename: encodeURIComponent((f[9]).replaceAll('/', '<>'))
 							};
-							o.openLink = '<%=luci.dispatcher.build_url("admin", "system", "filebrowser_open")%>/'+o.encoded_path+'/'+o.encoded_filename;
+							o.openLink = '<%=luci.dispatcher.build_url("admin", "system", "filebrowser-mini_open")%>/'+o.encoded_path+'/'+o.encoded_filename;
                             o.removeLink = (!o.link) ? '<a class="file-op btn show-on-hover" onclick="removePath(\''+o.fullpath+'\',\''+o.isDir+'\');">Delete</a>' : '';
                             o.renameLink = (!o.link) ? '<a class="file-op btn show-on-hover" onclick="renamePath(\''+o.fullpath+'\',\''+o.filename+'\');">Rename</a>' : '';
 
@@ -218,7 +218,7 @@ table tr td:hover .show-on-hover {
     <a id="upload-toggle" href="#" class="pull-right">Upload file</a>
 </div>
 <div id="upload-container" style="display:none; padding: 15px 0;">
-    <form method="post" action="<%=luci.dispatcher.build_url('admin', 'system', 'filebrowser_upload')%>" enctype="multipart/form-data">
+    <form method="post" action="<%=luci.dispatcher.build_url('admin', 'system', 'filebrowser-mini_upload')%>" enctype="multipart/form-data">
         <input id="upload-dir" type="hidden" name="upload-dir" value="" />
         <input id="upload-filename" type="hidden" name="upload-filename" value="" />
         <input id="upload-file" name="upload-file" type="file" style="width: calc(100% - 90px) !important; border:1px solid #eee;" />
