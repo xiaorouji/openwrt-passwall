@@ -2,7 +2,7 @@ module("luci.controller.filebrowser-mini", package.seeall)
 
 function index()
 
-	page = entry({"admin", "system", "filebrowser-mini"}, template("filebrowser-mini"), _("File Browser Mini"), 90)
+	page = entry({"admin", "system", "filebrowser-mini"}, template("filebrowser-mini"), _("File Browser Mini"), 89)
 	page.i18n = "base"
 	page.dependent = true
 
