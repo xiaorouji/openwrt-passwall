@@ -1,5 +1,6 @@
 module("luci.controller.server_center",package.seeall)
 local appname = "server_center"
+local uci = require "luci.model.uci"
 local http = require "luci.http"
 local v2ray  = require "luci.model.cbi.server_center.api.v2ray"
 
@@ -25,8 +26,9 @@ function index()
 	entry({"admin","vpn","server_center","ssr_libev_users_status"},call("act_ssr_libev_users_status")).leaf=true
 	entry({"admin","vpn","server_center","ssr_python_status"},call("act_ssr_python_status")).leaf=true
 	entry({"admin","vpn","server_center","ssr_python_users_status"},call("act_ssr_python_users_status")).leaf=true
+	entry({"admin","vpn","server_center","ssr_python_clear_traffic"},call("act_ssr_python_clear_traffic")).leaf=true
+	entry({"admin","vpn","server_center","ssr_python_clear_traffic_all_users"},call("act_ssr_python_clear_traffic_all_users")).leaf=true
 	entry({"admin","vpn","server_center","v2ray_users_status"},call("act_v2ray_users_status")).leaf=true
-	
 	entry({"admin", "vpn", "server_center", "v2ray_check"}, call("v2ray_check")).leaf = true
 	entry({"admin", "vpn", "server_center", "v2ray_update"}, call("v2ray_update")).leaf = true
 end
@@ -53,6 +55,23 @@ function act_ssr_python_users_status()
 	local e={}
 	e.index=luci.http.formvalue("index")
 	e.status=luci.sys.call("netstat -an | grep '" .. luci.http.formvalue("port") .. "' >/dev/null")==0
+	http_write_json(e)
+end
+
+function act_ssr_python_clear_traffic()
+	local e={}
+	e.status=luci.sys.call("cd /usr/share/ssr_python && ./mujson_mgr.py -c -I '"..luci.http.formvalue("id").."' >/dev/null")==0
+	http_write_json(e)
+end
+
+function act_ssr_python_clear_traffic_all_users()
+	local e={}
+	e.status=luci.sys.call("/usr/share/ssr_python/sh/clear_traffic_all_users.sh >/dev/null")==0
+	--[[uci:foreach("server_center","ssr_python_users", 
+		function(s)
+			local section = s[".name"]
+			luci.sys.call("cd /usr/share/ssr_python && ./mujson_mgr.py -c -I '"..section.."' >/dev/null")
+		end)]]--
 	http_write_json(e)
 end
 
