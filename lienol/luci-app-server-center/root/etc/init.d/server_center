@@ -5,6 +5,7 @@ START=99
 
 CONFIG=server_center
 CONFIG_PATH=/var/etc/$CONFIG
+ssr_python_path=/usr/share/ssr_python
 
 config_t_get() {
 	local index=0
@@ -82,14 +83,30 @@ gen_ssr_python_config_file() {
 	./mujson_mgr.py $action -I $1 -u "${remarks}" -p ${port} -k ${password} -m ${method} -O ${protocol} -G ${device_limit} -o ${obfs} -s ${speed_limit_per_con} -S ${speed_limit_per_user} -t ${transfer_enable} -f "${forbidden_port}"
 }
 
+set_ssr_python_crontab() {
+	if [ "$1" = "start" ];then
+		ssr_python_auto_clear_transfer=$(config_t_get global ssr_python_auto_clear_transfer 0)
+		if [ "$ssr_python_auto_clear_transfer" = "0" ];then
+			sed -i '/clear_traffic_all_users.sh/d' /etc/crontabs/root >/dev/null 2>&1 &
+		else
+			ssr_python_auto_clear_transfer_time=$(config_t_get global ssr_python_auto_clear_transfer_time)
+			[ -n "$ssr_python_auto_clear_transfer_time" ] && ssr_python_auto_clear_transfer_time=$(echo $ssr_python_auto_clear_transfer_time | tr ',' ' ')
+			echo "$ssr_python_auto_clear_transfer_time $ssr_python_path/clear_traffic_all_users.sh >/dev/null 2>&1" >> /etc/crontabs/root
+		fi
+	else
+		sed -i '/clear_traffic_all_users.sh/d' /etc/crontabs/root >/dev/null 2>&1 &
+	fi
+	/etc/init.d/cron restart
+}
+
 start_ssr_python_server() {
 	iptables -N SSR_PYTHON-SERVER
 	iptables -I INPUT -j SSR_PYTHON-SERVER
 	python=/usr/bin/python
-	ssr_python_path=/usr/share/ssr_python
 	lua /usr/lib/lua/luci/model/cbi/server_center/genssrmudbconfig.lua > /tmp/mudb.json
 	mv -f /tmp/mudb.json $ssr_python_path/mudb.json
 	$python $ssr_python_path/server.py >> /var/log/ssr_python.log 2>&1 &
+	set_ssr_python_crontab "start"
 	
 :<<EOF
 	cbi_ids=
@@ -108,6 +125,8 @@ stop_ssr_python_server() {
 	iptables -X SSR_PYTHON-SERVER 2>/dev/null
 	ps -w | grep "/usr/bin/python /usr/share/ssr_python/server.py" | grep -v "grep" | awk '{print $1}' | xargs kill -9
 	rm -rf /var/log/ssr_python.log
+	
+	set_ssr_python_crontab "stop"
 }
 
 start_ssr_libev_server() {

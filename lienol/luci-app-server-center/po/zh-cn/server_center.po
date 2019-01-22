@@ -94,8 +94,23 @@ msgstr "已用上传流量"
 msgid "Used Download Traffic"
 msgstr "已用下载流量"
 
-msgid "Used Total traffic"
-msgstr "已使用总流量"
+msgid "Used Total Traffic"
+msgstr "已用总流量"
+
+msgid "Clear Traffic"
+msgstr "清空流量"
+
+msgid "Clear All Users Traffic"
+msgstr "清空所有用户流量"
+
+msgid "Enable Auto Clear Traffic"
+msgstr "启用自动清空流量"
+
+msgid "Clear Traffic Time Interval"
+msgstr "流量清空时间间隔"
+
+msgid "*,*,*,*,* is Min Hour Day Mon Week"
+msgstr "*,*,*,*,* 分别对应 分钟 小时 日份 月份 星期<br>0,2,1,*,* 代表 每月1日2点0分<br>0,2,15,*,* 代表 每月15日2点0分<br>0,2,*/7,*,* 代表 每7天2点0分<br>0,2,*,*,0 代表 每个星期日(7)<br>0,2,*,*,3 代表 每个星期三(3)"
 
 msgid "Number of clients that can be linked at the same time (multi-port mode, each port is calculated independently), a minimum of 2 is recommended."
 msgstr "同一时间能链接的客户端数量(多端口模式，每个端口都是独立计算)，建议最少 2个。"
