@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-server-center
 PKG_VERSION:=1.0
-PKG_RELEASE:=19-20190121
+PKG_RELEASE:=20-20190122
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PO2LMO:=./po2lmo
@@ -39,6 +39,7 @@ define Package/$(PKG_NAME)
   TITLE:=LuCI support for Server Center By Lienol
   PKGARCH:=all
   DEPENDS:=+python \
+  +PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Python_Server:lua-cjson \
   +PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Libev_Server:shadowsocksr-libev-server \
   +PACKAGE_$(PKG_NAME)_INCLUDE_V2ray_Server:v2ray
 endef
