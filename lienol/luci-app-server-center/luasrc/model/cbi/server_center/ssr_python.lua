@@ -82,9 +82,9 @@ e.width="10%"
 
 e=t:option(DummyValue,"speed_limit_per_con",translate("Speed Limit Per Con"))
 e.width="10%"
-e.cfgvalue=function(t,n)
+e.cfgvalue=function(t,section)
 	local str = translate("No Speed Limit")
-	local speed_limit_per_con = a.uci:get(appname,n,"speed_limit_per_con")
+	local speed_limit_per_con = a.uci:get(appname,section,"speed_limit_per_con")
 	if speed_limit_per_con and tonumber(speed_limit_per_con) > 0 then
 		speed_limit_per_con = tonumber(speed_limit_per_con)
 		if speed_limit_per_con < 1024 then str = speed_limit_per_con.."Kb/s"
@@ -95,9 +95,9 @@ end
 
 e=t:option(DummyValue,"speed_limit_per_user",translate("Speed Limit Per User"))
 e.width="10%"
-e.cfgvalue=function(t,n)
+e.cfgvalue=function(t,section)
 	local str = translate("No Speed Limit")
-	local speed_limit_per_user = a.uci:get(appname,n,"speed_limit_per_user")
+	local speed_limit_per_user = a.uci:get(appname,section,"speed_limit_per_user")
 	if speed_limit_per_user and tonumber(speed_limit_per_user) > 0 then
 		speed_limit_per_user = tonumber(speed_limit_per_user)
 		if speed_limit_per_user < 1024 then str = speed_limit_per_user.."Kb/s"
@@ -110,7 +110,7 @@ e=t:option(DummyValue,"transfer_enable",translate("Available Total Flow"))
 e.width="10%"
 e.cfgvalue=function(t,section)
 	local str = translate("Infinite")
-	local transfer_enable = a.uci:get(appname,n,"transfer_enable")
+	local transfer_enable = a.uci:get(appname,section,"transfer_enable")
 	if transfer_enable and tonumber(transfer_enable) > 0 then
 		str = transfer_enable.."G"
 	end
