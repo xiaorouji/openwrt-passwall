@@ -1,4 +1,4 @@
-local uci = require "luci.model.uci"
+local uci = require "luci.model.uci".cursor()
 local sys = require "luci.sys"
 local jsonc = require "luci.jsonc"
 
