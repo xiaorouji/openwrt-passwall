@@ -38,7 +38,7 @@ define Package/$(PKG_NAME)
   SUBMENU:=3. Applications
   TITLE:=LuCI support for Server Center By Lienol
   PKGARCH:=all
-  DEPENDS:=+python
+  DEPENDS:=+python \
   +PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Libev_Server:shadowsocksr-libev-server \
   +PACKAGE_$(PKG_NAME)_INCLUDE_V2ray_Server:v2ray
 endef
