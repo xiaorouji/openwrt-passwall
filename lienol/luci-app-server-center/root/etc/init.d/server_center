@@ -123,7 +123,7 @@ stop_ssr_python_server() {
 	iptables -F SSR_PYTHON-SERVER 2>/dev/null
 	iptables -D INPUT -j SSR_PYTHON-SERVER 2>/dev/null
 	iptables -X SSR_PYTHON-SERVER 2>/dev/null
-	ps -w | grep "/usr/bin/python /usr/share/ssr_python/server.py" | grep -v "grep" | awk '{print $1}' | xargs kill -9
+	ps -w | grep "/usr/bin/python /usr/share/ssr_python/server.py" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 	rm -rf /var/log/ssr_python.log
 	
 	set_ssr_python_crontab "stop"
@@ -139,7 +139,7 @@ stop_ssr_libev_server() {
 	iptables -F SSR_LIBEV-SERVER 2>/dev/null
 	iptables -D INPUT -j SSR_LIBEV-SERVER 2>/dev/null
 	iptables -X SSR_LIBEV-SERVER 2>/dev/null
-	ps -w | grep "$CONFIG_PATH/ssr_libev-server_" | grep -v "grep" | awk '{print $1}' | xargs kill -9
+	ps -w | grep "$CONFIG_PATH/ssr_libev-server_" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 }
 
 start_v2ray_server() {
@@ -152,7 +152,7 @@ stop_v2ray_server() {
 	iptables -F V2RAY-SERVER 2>/dev/null
 	iptables -D INPUT -j V2RAY-SERVER 2>/dev/null
 	iptables -X V2RAY-SERVER 2>/dev/null
-	ps -w | grep "$CONFIG_PATH/v2ray-server_" | grep -v "grep" | awk '{print $1}' | xargs kill -9
+	ps -w | grep "$CONFIG_PATH/v2ray-server_" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 }
 
 start() {
