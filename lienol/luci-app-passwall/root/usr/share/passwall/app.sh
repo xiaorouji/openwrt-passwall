@@ -1204,6 +1204,7 @@ EOF
 			$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_LANIPLIST dst -j RETURN
 			$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_VPSIPLIST dst -j RETURN
 			$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_ROUTER dst -j REDIRECT --to-ports $TCP_REDIR_PORT
+			$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_BLACKLIST dst -j REDIRECT --to-ports $TCP_REDIR_PORT
 			
 			[ "$LOCALHOST_RULES" == "gfwlist" ] && $iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_GFW dst -j REDIRECT --to-ports $TCP_REDIR_PORT
 			[ "$LOCALHOST_RULES" == "chnroute" ] && {
@@ -1288,11 +1289,11 @@ del_firewall_rule() {
 	ipv4_chromecast_nu=`$iptables_nat -L PREROUTING 2>/dev/null | grep "dpt:53"|awk '{print $1}'`
 	[ -n "$ipv4_chromecast_nu" ] && $iptables_nat -D PREROUTING $ipv4_chromecast_nu 2>/dev/null
 	
-	ipv4_output_exist=`$iptables_nat -L OUTPUT 2>/dev/null | grep -c -E "SS|$IPSET_LANIPLIST|$IPSET_VPSIPLIST|$IPSET_CHN|$IPSET_GFW|$IPSET_ROUTER|$TCP_REDIR_PORTS"`
+	ipv4_output_exist=`$iptables_nat -L OUTPUT 2>/dev/null | grep -c -E "SS|$IPSET_LANIPLIST|$IPSET_VPSIPLIST|$IPSET_CHN|$IPSET_GFW|$IPSET_ROUTER|$IPSET_BLACKLIST|$TCP_REDIR_PORTS"`
 	[ -n "$ipv4_output_exist" ] && {
 		until [ "$ipv4_output_exist" = 0 ]
 		do
-			rules=`$iptables_nat -L OUTPUT --line-numbers | grep -E "SS|$IPSET_LANIPLIST|$IPSET_VPSIPLIST|$IPSET_CHN|$IPSET_GFW|$IPSET_ROUTER|$TCP_REDIR_PORTS" | awk '{print $1}'`
+			rules=`$iptables_nat -L OUTPUT --line-numbers | grep -E "SS|$IPSET_LANIPLIST|$IPSET_VPSIPLIST|$IPSET_CHN|$IPSET_GFW|$IPSET_ROUTER|$IPSET_BLACKLIST|$TCP_REDIR_PORTS" | awk '{print $1}'`
 			for rule in $rules
 			do
 				$iptables_nat -D OUTPUT $rule 2> /dev/null
