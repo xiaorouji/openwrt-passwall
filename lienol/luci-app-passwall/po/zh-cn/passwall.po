@@ -70,11 +70,11 @@ msgstr "运行状态"
 msgid "Kcptun Client"
 msgstr "Kcptun客户端"
 
-msgid "China Connection"
-msgstr "国内连接"
+msgid "Baidu Connection"
+msgstr "百度连接"
 
-msgid "Foreign Connection"
-msgstr "国外连接"
+msgid "Google Connection"
+msgstr "谷歌连接"
 
 msgid "Server Check"
 msgstr "服务器检测"
@@ -148,17 +148,17 @@ msgstr "ChinaDNS 的上游服务器"
 msgid "Only SS/R servers are supported"
 msgstr "仅支持SS/R服务器"
 
-msgid "Multi Threads Option"
-msgstr "多线程并发转发"
+msgid "Multi Process Option"
+msgstr "多进程并发转发"
 
-msgid "you can start SS/SSR with multiple threads"
-msgstr "当使用SS/SSR时可使用多线程并发转发"
+msgid "you can start SS/SSR with multiple process"
+msgstr "当使用SS/SSR时可使用多个进程并发转发"
 
-msgid "Thread"
-msgstr "线程"
+msgid "Process"
+msgstr "进程"
 
-msgid "1 Thread"
-msgstr "单线程"
+msgid "1 Process"
+msgstr "单进程"
 
 msgid "Localhost rules"
 msgstr "本机规则"

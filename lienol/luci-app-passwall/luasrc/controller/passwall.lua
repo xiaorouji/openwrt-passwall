@@ -67,8 +67,8 @@ end
 
 function connect_status()
 	local e={}
-	if luci.http.formvalue("type") == "foreign" then
-		e.status=luci.sys.call("echo `curl -I -o /dev/null -s -m 10 --connect-timeout 5 -w %{http_code} 'https://www.google.com.tw'`|grep 200 >/dev/null")==0
+	if luci.http.formvalue("type") == "google" then
+		e.status=luci.sys.call("echo `curl -I -o /dev/null -s -m 10 --connect-timeout 5 -w %{http_code} 'https://www.google.com'`|grep 200 >/dev/null")==0
 	else
 		e.status=luci.sys.call("echo `curl -I -o /dev/null -s -m 10 --connect-timeout 2 -w %{http_code} 'http://www.baidu.com'`|grep 200 >/dev/null")==0
 	end
