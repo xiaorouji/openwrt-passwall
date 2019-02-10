@@ -88,16 +88,6 @@ end
 	e:value("OpenDNS_443","OpenDNS(443"..translate("Port")..")")
 	e:value("OpenDNS_5353","OpenDNS(5353"..translate("Port")..")")
 
---据说单线程CPU使用也有加成，试试吧。。。 code from lean
-e = t:option(Value, "threads", translate("Multi Threads Option"),translate("you can start SS/SSR with multiple threads"))
-e:value("0", translate("Auto"))
-e:value("1", translate("1 Thread"))
-e:value("2", "2 "..translate("Thread"))
-e:value("3", "3 "..translate("Thread"))
-e:value("4", "4 "..translate("Thread"))
-e.default = "0"
-e.rmempty = false
-
 e=t:option(ListValue,"localhost_rules",translate("Localhost rules"),translate("The server client can also use this rule to scientifically surf the Internet"))
 e:value("default",translate("Default"))
 e:value("gfwlist",translate("GFW List"))
