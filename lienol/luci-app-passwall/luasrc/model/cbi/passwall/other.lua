@@ -135,6 +135,15 @@ o.default="1:65535"
 o:value("1:65535",translate("All"))
 o:value("53","53")
 
+o = s:option(Value, "process", translate("Multi Process Option"),translate("you can start SS/SSR with multiple process"))
+o:value("0", translate("Auto"))
+o:value("1", translate("1 Process"))
+o:value("2", "2 "..translate("Process"))
+o:value("3", "3 "..translate("Process"))
+o:value("4", "4 "..translate("Process"))
+o.default = "0"
+o.rmempty = false
+
 -- [[ Proxy Settings ]]--
 s=m:section(TypedSection,"global_proxy",translate("Proxy Settings"))
 s.anonymous=true
