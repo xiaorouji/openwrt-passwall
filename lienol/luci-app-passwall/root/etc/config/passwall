@@ -1,7 +1,6 @@
 
 config global
 	option proxy_mode 'chnroute'
-	option threads '1'
 	option dns_mode 'chinadns'
 	option up_dns_mode 'OpenDNS_443'
 	option socks5_proxy_server 'nil'
@@ -28,6 +27,7 @@ config global_dns
 config global_forwarding
 	option udp_redir_ports '1:65535'
 	option tcp_redir_ports '1:65535'
+	option process '1'
 
 config global_proxy
 	option tcp_redir_port '1031'

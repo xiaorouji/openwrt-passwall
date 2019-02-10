@@ -206,11 +206,11 @@ load_config() {
 	PROXY_MODE=$(config_t_get global proxy_mode gfwlist)
 	DNS_MODE=$(config_t_get global dns_mode ChinaDNS)
 	UP_DNS_MODE=$(config_t_get global up_dns_mode OpenDNS_443)
-	threads=1
-	if [ "$(config_t_get global threads 0)" = "0" ] ;then
-		threads=$(cat /proc/cpuinfo | grep 'processor' | wc -l)
+	process=1
+	if [ "$(config_t_get global_forwarding process 0)" = "0" ] ;then
+		process=$(cat /proc/cpuinfo | grep 'processor' | wc -l)
 	else
-		threads=$(config_t_get global threads)
+		process=$(config_t_get global_forwarding process)
 	fi
 	LOCALHOST_RULES=$(config_t_get global localhost_rules default)
 	DNS_FORWARD=$(config_t_get global_dns dns_forward 208.67.222.222:443)
@@ -420,7 +420,7 @@ start_tcp_redir() {
 		else
 			ss_bin=$(find_bin "$TCP_REDIR_SERVER_TYPE"-redir)
 			[ -n "$ss_bin" ] && {
-				for i in $(seq 1 $threads)
+				for i in $(seq 1 $process)
 				do
 					$ss_bin -c $CONFIG_TCP_FILE -f $RUN_PID_PATH/tcp_${TCP_REDIR_SERVER_TYPE}_$i -b :: > /dev/null 2>&1 &
 				done
