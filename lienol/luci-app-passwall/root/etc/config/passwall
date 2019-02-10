@@ -6,7 +6,7 @@ config global
 	option socks5_proxy_server 'nil'
 	option udp_redir_server 'nil'
 	option tcp_redir_server 'nil'
-	option localhost_rules 'default'
+	option localhost_proxy_mode 'default'
 
 config global_haproxy
 	option admin_enable '0'

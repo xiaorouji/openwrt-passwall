@@ -47,16 +47,6 @@ e=t:option(ListValue,"socks5_proxy_server",translate("Socks5 Proxy Server"),tran
 e:value("nil",translate("Close"))
 for a,t in pairs(n)do e:value(a,t)end
 
-e=t:option(ListValue,"proxy_mode",translate("Default")..translate("Proxy Mode"))
-e.default="gfwlist"
-e.rmempty=false
-e:value("disable",translate("No Proxy"))
-e:value("global",translate("Global Proxy"))
-e:value("gfwlist",translate("GFW List"))
-e:value("chnroute",translate("China WhiteList"))
-e:value("gamemode",translate("Game Mode"))
-e:value("returnhome",translate("Return Home"))
-
 e=t:option(ListValue,"dns_mode",translate("DNS Forward Mode"))
 e.rmempty=false
 e:reset_values()--清空
@@ -88,8 +78,19 @@ end
 	e:value("OpenDNS_443","OpenDNS(443"..translate("Port")..")")
 	e:value("OpenDNS_5353","OpenDNS(5353"..translate("Port")..")")
 
-e=t:option(ListValue,"localhost_rules",translate("Localhost rules"),translate("The server client can also use this rule to scientifically surf the Internet"))
+e=t:option(ListValue,"proxy_mode",translate("Default")..translate("Proxy Mode"))
+e.default="gfwlist"
+e.rmempty=false
+e:value("disable",translate("No Proxy"))
+e:value("global",translate("Global Proxy"))
+e:value("gfwlist",translate("GFW List"))
+e:value("chnroute",translate("China WhiteList"))
+e:value("gamemode",translate("Game Mode"))
+e:value("returnhome",translate("Return Home"))
+
+e=t:option(ListValue,"localhost_proxy_mode",translate("Localhost")..translate("Proxy Mode"),translate("The server client can also use this rule to scientifically surf the Internet"))
 e:value("default",translate("Default"))
+e:value("global",translate("Global Proxy").."（"..translate("Danger").."）")
 e:value("gfwlist",translate("GFW List"))
 e:value("chnroute",translate("China WhiteList"))
 e.default="default"

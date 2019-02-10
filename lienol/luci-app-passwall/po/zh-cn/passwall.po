@@ -121,6 +121,27 @@ msgstr "用于游戏模式或DNS解析等。"
 msgid "The selected server will not use Kcptun."
 msgstr "选中的服务器不会使用Kcptun。"
 
+msgid "upstreamm DNS Server for ChinaDNS"
+msgstr "ChinaDNS 的上游服务器"
+
+msgid "Only SS/R servers are supported"
+msgstr "仅支持SS/R服务器"
+
+msgid "Multi Process Option"
+msgstr "多进程并发转发"
+
+msgid "you can start SS/SSR with multiple process"
+msgstr "当使用SS/SSR时可使用多个进程并发转发"
+
+msgid "Process"
+msgstr "进程"
+
+msgid "1 Process"
+msgstr "单进程"
+
+msgid "Proxy Mode"
+msgstr "代理模式"
+
 msgid "No Proxy"
 msgstr "不代理"
 
@@ -142,29 +163,14 @@ msgstr "回国模式"
 msgid "DNS Forward Mode"
 msgstr "DNS转发模式"
 
-msgid "upstreamm DNS Server for ChinaDNS"
-msgstr "ChinaDNS 的上游服务器"
+msgid "Localhost"
+msgstr "本机"
 
-msgid "Only SS/R servers are supported"
-msgstr "仅支持SS/R服务器"
-
-msgid "Multi Process Option"
-msgstr "多进程并发转发"
-
-msgid "you can start SS/SSR with multiple process"
-msgstr "当使用SS/SSR时可使用多个进程并发转发"
-
-msgid "Process"
-msgstr "进程"
-
-msgid "1 Process"
-msgstr "单进程"
-
-msgid "Localhost rules"
-msgstr "本机规则"
+msgid "Danger"
+msgstr "危险"
 
 msgid "The server client can also use this rule to scientifically surf the Internet"
-msgstr "本机服务器的客户端也可以使用这个规则科学的上网"
+msgstr "本机服务器的客户端也可以使用这个代理模式上网"
 
 msgid "Servers List"
 msgstr "服务器列表"
@@ -447,9 +453,6 @@ msgstr "内部IP地址"
 
 msgid "MAC Address"
 msgstr "MAC地址"
-
-msgid "Proxy Mode"
-msgstr "代理模式"
 
 msgid "Set Blacklist And Whitelist"
 msgstr "黑白名单"
