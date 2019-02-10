@@ -212,7 +212,7 @@ load_config() {
 	else
 		process=$(config_t_get global_forwarding process)
 	fi
-	LOCALHOST_RULES=$(config_t_get global localhost_rules default)
+	LOCALHOST_PROXY_MODE=$(config_t_get global localhost_proxy_mode default)
 	DNS_FORWARD=$(config_t_get global_dns dns_forward 208.67.222.222:443)
 	DNS_FORWARD_IP=$(echo "$DNS_FORWARD" | awk -F':' '{print $1}')
 	DNS_FORWARD_PORT=$(echo "$DNS_FORWARD" | awk -F':' '{print $2}')
@@ -1136,14 +1136,6 @@ EOF
 			#	用于本机流量转发，默认只走router
 			$iptables_mangle -A SS -s $lan_ip -p tcp -m set --match-set $IPSET_ROUTER dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
 			$iptables_mangle -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_ROUTER dst -j MARK --set-mark 1
-			[ "$LOCALHOST_RULES" == "gfwlist" ] && {
-				$iptables_mangle -A SS -s $lan_ip -p tcp -m set --match-set $IPSET_GFW dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
-				$iptables_mangle -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_GFW dst -j MARK --set-mark 1
-			}
-			[ "$LOCALHOST_RULES" == "chnroute" ] && {
-				$iptables_mangle -A SS -s $lan_ip -p tcp -m set --match-set $IPSET_CHN dst -j RETURN
-				$iptables_mangle -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -j MARK --set-mark 1
-			}
 		else
 			$iptables_mangle -A PREROUTING -j SS
 			$iptables_mangle -A SS -p tcp -m set --match-set $IPSET_BLACKLIST dst -j TTL --ttl-set 188
@@ -1203,11 +1195,13 @@ EOF
 			#$iptables_nat -I OUTPUT -j SS
 			$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_LANIPLIST dst -j RETURN
 			$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_VPSIPLIST dst -j RETURN
+			$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_WHITELIST dst -j RETURN
 			$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_ROUTER dst -j REDIRECT --to-ports $TCP_REDIR_PORT
 			$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_BLACKLIST dst -j REDIRECT --to-ports $TCP_REDIR_PORT
 			
-			[ "$LOCALHOST_RULES" == "gfwlist" ] && $iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_GFW dst -j REDIRECT --to-ports $TCP_REDIR_PORT
-			[ "$LOCALHOST_RULES" == "chnroute" ] && {
+			[ "$LOCALHOST_PROXY_MODE" == "global" ] && $iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -j REDIRECT --to-ports $TCP_REDIR_PORT
+			[ "$LOCALHOST_PROXY_MODE" == "gfwlist" ] && $iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_GFW dst -j REDIRECT --to-ports $TCP_REDIR_PORT
+			[ "$LOCALHOST_PROXY_MODE" == "chnroute" ] && {
 				$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_CHN dst -j RETURN
 				$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -j REDIRECT --to-ports $TCP_REDIR_PORT
 			}
@@ -1289,11 +1283,11 @@ del_firewall_rule() {
 	ipv4_chromecast_nu=`$iptables_nat -L PREROUTING 2>/dev/null | grep "dpt:53"|awk '{print $1}'`
 	[ -n "$ipv4_chromecast_nu" ] && $iptables_nat -D PREROUTING $ipv4_chromecast_nu 2>/dev/null
 	
-	ipv4_output_exist=`$iptables_nat -L OUTPUT 2>/dev/null | grep -c -E "SS|$IPSET_LANIPLIST|$IPSET_VPSIPLIST|$IPSET_CHN|$IPSET_GFW|$IPSET_ROUTER|$IPSET_BLACKLIST|$TCP_REDIR_PORTS"`
+	ipv4_output_exist=`$iptables_nat -L OUTPUT 2>/dev/null | grep -c -E "SS|$TCP_REDIR_PORTS|$IPSET_LANIPLIST|$IPSET_VPSIPLIST|$IPSET_WHITELIST|$IPSET_ROUTER|$IPSET_BLACKLIST|$IPSET_GFW|$IPSET_CHN"`
 	[ -n "$ipv4_output_exist" ] && {
 		until [ "$ipv4_output_exist" = 0 ]
 		do
-			rules=`$iptables_nat -L OUTPUT --line-numbers | grep -E "SS|$IPSET_LANIPLIST|$IPSET_VPSIPLIST|$IPSET_CHN|$IPSET_GFW|$IPSET_ROUTER|$IPSET_BLACKLIST|$TCP_REDIR_PORTS" | awk '{print $1}'`
+			rules=`$iptables_nat -L OUTPUT --line-numbers | grep -E "SS|$TCP_REDIR_PORTS|$IPSET_LANIPLIST|$IPSET_VPSIPLIST|$IPSET_WHITELIST|$IPSET_ROUTER|$IPSET_BLACKLIST|$IPSET_GFW|$IPSET_CHN" | awk '{print $1}'`
 			for rule in $rules
 			do
 				$iptables_nat -D OUTPUT $rule 2> /dev/null
