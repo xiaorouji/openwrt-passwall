@@ -24,7 +24,7 @@ echo "$(get_date): 运行自动切换检测脚本" >> /var/log/passwall.log
 failcount=1
 while [ "$failcount" -lt "6" ]
 do
-	status=`curl -I -o /dev/null -s --connect-timeout 5 -w %{http_code} 'https://www.google.com.tw' |grep 200 `
+	status=`curl -I -o /dev/null -s --connect-timeout 5 -w %{http_code} 'https://www.google.com' |grep 200 `
 	if [ -z "$status" -o "$status" != "200" ];then
 		echo "$(get_date): 自动切换检测：第$failcount次检测异常" >> /var/log/passwall.log
 		let "failcount++"
