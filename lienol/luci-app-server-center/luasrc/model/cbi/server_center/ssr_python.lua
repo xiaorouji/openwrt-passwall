@@ -155,7 +155,7 @@ e.width="10%"
 e.cfgvalue=function(t,section)
 	local result = translate("Null")
 	local u_str = luci.sys.exec("cd /usr/share/ssr_python && ./mujson_mgr.py -l -I "..section.." | sed -n 10p"):gsub("^%s*(.-)%s*$", "%1")
-	local u = luci.sys.exec("echo "..u_str.." | awk '{print $3}'")
+	local u = luci.sys.exec("echo "..u_str.." | awk '{print $3}'"):gsub("^%s*(.-)%s*$", "%1")
 	if u == "" then u = 0 end
 	local u_unit = luci.sys.exec("echo "..u_str.." | awk '{print $4}'"):gsub("^%s*(.-)%s*$", "%1")
 	if u_unit == "K" then u = u*1024
@@ -163,7 +163,7 @@ e.cfgvalue=function(t,section)
 	elseif u_unit == "G" then u = u*1024*1024*1024
 	end
 	local d_str = luci.sys.exec("cd /usr/share/ssr_python && ./mujson_mgr.py -l -I "..section.." | sed -n 11p"):gsub("^%s*(.-)%s*$", "%1")
-	local d = luci.sys.exec("echo "..d_str.." | awk '{print $3}'")
+	local d = luci.sys.exec("echo "..d_str.." | awk '{print $3}'"):gsub("^%s*(.-)%s*$", "%1")
 	if d == "" then d = 0 end
 	local d_unit = luci.sys.exec("echo "..d_str.." | awk '{print $4}'"):gsub("^%s*(.-)%s*$", "%1")
 	if d_unit == "K" then d = d*1024

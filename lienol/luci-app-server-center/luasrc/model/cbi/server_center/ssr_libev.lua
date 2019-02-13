@@ -34,6 +34,9 @@ e=t:option(Flag, "enable", translate("Enable"))
 e.width="5%"
 e.rmempty = false
 
+e=t:option(DummyValue,"status",translate("Status"))
+e.template="server_center/ssr_libev_users_status"
+
 e=t:option(DummyValue,"remarks",translate("Remarks"))
 e.width="15%"
 
@@ -51,10 +54,6 @@ e.width="15%"
 
 e=t:option(DummyValue,"obfs",translate("Obfs"))
 e.width="15%"
-
-e=t:option(DummyValue,"status",translate("Status"))
-e.template="server_center/ssr_libev_users_status"
-e.width="20%"
 
 a:append(Template("server_center/ssr_libev_users_list_status"))
 

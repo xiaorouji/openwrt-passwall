@@ -18,7 +18,7 @@ local dsp = require "luci.dispatcher"
 				id: id
 			},
 			function(x, result) {
-				ssr_libev_users_status[result.index].innerHTML = (result.status ? '<font color=green><%:RUNNING%> ✓</font>' : '<font color=red><%:NOT RUNNING%> X</font>');
+				ssr_libev_users_status[result.index].innerHTML = (result.status ? '<b><font color=green>✓</font></b>' : '<b><font color=red>X</font></b>');
 			}
 		);
 	}
