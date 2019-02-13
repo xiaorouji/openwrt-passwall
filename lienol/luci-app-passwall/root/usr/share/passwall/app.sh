@@ -505,6 +505,12 @@ set_cru() {
 
 start_crontab() {
 	sed -i '/$CONFIG/d' /etc/crontabs/root >/dev/null 2>&1 &
+	start_daemon=$(config_t_get global_delay start_daemon)
+	if [ "$start_daemon" = "1" ];then
+		echo "*/2 * * * * nohup $SS_PATH/monitor.sh > /dev/null 2>&1" >> /etc/crontabs/root
+		echolog "已启动守护进程。" 
+	fi
+	
 	auto_on=$(config_t_get global_delay auto_on)
 	if [ "$auto_on" = "1" ];then
 		time_off=$(config_t_get global_delay time_off)
