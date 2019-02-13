@@ -36,6 +36,10 @@ e=t:option(Flag, "enable", translate("Enable"))
 e.width="5%"
 e.rmempty = false
 
+e=t:option(DummyValue,"status",translate("Status"))
+e.template="server_center/v2ray_users_status"
+e.value=translate("Collecting data...")
+
 e=t:option(DummyValue,"remarks",translate("Remarks"))
 e.width="15%"
 
@@ -47,10 +51,6 @@ e.width="15%"
 
 e=t:option(DummyValue,"VMess_id",translate("ID"))
 e.width="35%"
-
-e=t:option(DummyValue,"status",translate("Status"))
-e.template="server_center/v2ray_users_status"
-e.width="20%"
 
 a:append(Template("server_center/v2ray_users_list_status"))
 

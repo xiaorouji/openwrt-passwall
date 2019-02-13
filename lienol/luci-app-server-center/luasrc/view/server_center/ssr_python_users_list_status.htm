@@ -19,7 +19,7 @@ local dsp = require "luci.dispatcher"
 				port: port
 			},
 			function(x, result) {
-				ssr_python_users_status[result.index].innerHTML = (result.status ? '<font color=green><%:RUNNING%> ✓</font>' : '<font color=red><%:NOT RUNNING%> X</font>');
+				ssr_python_users_status[result.index].innerHTML = (result.status ? '<b><font color=green>✓</font></b>' : '<b><font color=red>X</font></b>');
 			}
 		);
 	}
