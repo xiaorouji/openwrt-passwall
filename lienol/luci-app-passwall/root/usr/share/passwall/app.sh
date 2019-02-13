@@ -422,7 +422,7 @@ start_tcp_redir() {
 			[ -n "$ss_bin" ] && {
 				for i in $(seq 1 $process)
 				do
-					$ss_bin -c $CONFIG_TCP_FILE -f $RUN_PID_PATH/tcp_${TCP_REDIR_SERVER_TYPE}_$i -b :: > /dev/null 2>&1 &
+					$ss_bin -c $CONFIG_TCP_FILE -f $RUN_PID_PATH/tcp_${TCP_REDIR_SERVER_TYPE}_$i -b :: > /dev/null 2>&1
 				done
 			}
 		fi
@@ -441,7 +441,7 @@ start_udp_redir() {
 		else
 			ss_bin=$(find_bin "$UDP_REDIR_SERVER_TYPE"-redir)
 			[ -n "$ss_bin" ] && {
-				$ss_bin -c $CONFIG_UDP_FILE -f $RUN_PID_PATH/udp_${UDP_REDIR_SERVER_TYPE}_1 -U > /dev/null 2>&1 &
+				$ss_bin -c $CONFIG_UDP_FILE -f $RUN_PID_PATH/udp_${UDP_REDIR_SERVER_TYPE}_1 -U > /dev/null 2>&1
 			}
 		fi
 	fi
@@ -458,7 +458,7 @@ start_socks5_proxy() {
 			[ -n "$brook_bin" ] && $brook_bin $BROOK_SOCKS5_CMD &>/dev/null &
 		else
 			ss_bin=$(find_bin "$SOCKS5_PROXY_SERVER_TYPE"-local)
-			[ -n "$ss_bin" ] && $ss_bin -c $CONFIG_SOCKS5_FILE -b 0.0.0.0 > /dev/null 2>&1 &
+			[ -n "$ss_bin" ] && $ss_bin -c $CONFIG_SOCKS5_FILE -b 0.0.0.0 > /dev/null 2>&1
 		fi
 	fi
 }
@@ -527,14 +527,8 @@ start_crontab() {
 	[ "$AUTO_SWITCH_ENABLE" = "1" ] && {
 		testing_time=$(config_t_get auto_switch testing_time)
 		[ -n "$testing_time" ] && {
-			has_backup_server=`uci show $CONFIG.@auto_switch[0] | grep "tcp_redir_server"`
-			if [ -z "$has_backup_server" ];then
-				echo "*/$testing_time * * * * $SS_PATH/reconnection.sh" >> /etc/crontabs/root
-				echolog "设置每$testing_time分钟检测是否已掉线。"
-			else
-				echo "*/$testing_time * * * * $SS_PATH/auto_switch.sh" >> /etc/crontabs/root
-				echolog "设置每$testing_time分钟检测是否已掉线并自动切换。"
-			fi
+			echo "*/$testing_time * * * * nohup $SS_PATH/test.sh > /dev/null 2>&1" >> /etc/crontabs/root
+			echolog "设置每$testing_time分钟执行检测脚本。"
 		}
 	}
 	/etc/init.d/cron restart
@@ -542,10 +536,8 @@ start_crontab() {
 
 stop_crontab() {
 	sed -i "/$CONFIG/d" /etc/crontabs/root >/dev/null 2>&1 &
-	ps | grep "$SS_PATH/reconnection.sh" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
-	ps | grep "$SS_PATH/auto_switch.sh" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
-	rm -f /var/lock/passwall_reconnection.lock >/dev/null 2>&1 &
-	rm -f /var/lock/passwall_auto_switch.lock >/dev/null 2>&1 &
+	ps | grep "$SS_PATH/test.sh" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
+	rm -f /var/lock/passwall_test.lock >/dev/null 2>&1 &
 	/etc/init.d/cron restart
 	echolog "清除定时执行命令。" 
 }
@@ -574,13 +566,6 @@ start_dns() {
 				gen_pdnsd_config
 				nohup $pdnsd_bin --daemon -c $CACHEDIR/pdnsd.conf -p $RUN_PID_PATH/pdnsd.pid -d >/dev/null 2>&1 &
 				echolog "运行DNS转发模式：Pdnsd..." 
-			}
-		;;
-		cdns)
-			cdns_bin=$(find_bin cdns)
-			[ -n "$cdns_bin" ] && {
-				nohup $cdns_bin -c /etc/cdns.json >/dev/null 2>&1 &
-				echolog "运行DNS转发模式：cdns..." 
 			}
 		;;
 		chinadns)
@@ -950,7 +935,7 @@ EOF
 			stats admin if TRUE
 		EOF
 			fi
-			nohup $haproxy_bin -f $HAPROXY_FILE 2>&1 &
+			nohup $haproxy_bin -f $HAPROXY_FILE 2>&1
 			echolog "负载均衡服务运行成功！" 
 		}
 	}
@@ -998,7 +983,7 @@ dns_hijack(){
 		else
 			if [ -z "$is_right_lanip" ]; then
 				echolog "添加接管局域网DNS解析规则..." 
-				$iptables_nat -D PREROUTING $chromecast_nu >/dev/null 2>&1
+				$iptables_nat -D PREROUTING $chromecast_nu >/dev/null 2>&1 &
 				$iptables_nat -A PREROUTING -i br-lan -p udp --dport 53 -j DNAT --to $lanip 2>/dev/null
 			else
 				echolog " DNS劫持规则已经添加，跳过~" >>$LOG_FILE
@@ -1055,7 +1040,7 @@ filter_vpsip(){
 	server_ip=$(get_host_ip $network_type $server_host)
 	
 	[ -n "$server_ip" -a "$server_ip" != "$TCP_REDIR_SERVER_IP" ] && {
-		[ "$network_type" == "ipv4" ] && ipset add $IPSET_VPSIPLIST $server_ip >/dev/null 2>&1
+		[ "$network_type" == "ipv4" ] && ipset add $IPSET_VPSIPLIST $server_ip >/dev/null 2>&1 &
 	}
 }
 
@@ -1082,14 +1067,14 @@ EOF
 	[ -n "$ISP_DNS" ] && {
 		for ispip in $ISP_DNS
 		do
-			ipset -! add $IPSET_WHITELIST $ispip >/dev/null 2>&1
+			ipset -! add $IPSET_WHITELIST $ispip >/dev/null 2>&1 &
 		done
 	}
 		
 	#	忽略特殊IP段
 	lan_ip=`ifconfig br-lan | grep "inet addr" | awk '{print $2}' | awk -F : '{print $2}'` #路由器lan IP
 	lan_ipv4=`ip address show br-lan | grep -w "inet" |awk '{print $2}'`  #当前LAN IPv4段
-	[ -n "$lan_ipv4" ] && ipset add $IPSET_LANIPLIST $lan_ipv4 >/dev/null 2>&1
+	[ -n "$lan_ipv4" ] && ipset add $IPSET_LANIPLIST $lan_ipv4 >/dev/null 2>&1 &
 	
 	#  过滤所有节点IP
 		config_foreach filter_vpsip "servers"
@@ -1344,7 +1329,7 @@ del_firewall_rule() {
 }
 
 kill_all() {
-	kill -9 $(pidof $@) >/dev/null 2>&1
+	kill -9 $(pidof $@) >/dev/null 2>&1 &
 }
 
 boot() {
@@ -1352,7 +1337,7 @@ boot() {
 	if [ "$delay" -gt 0 ]; then
 		[ "$TCP_REDIR_SERVER" != "nil" -o "$UDP_REDIR_SERVER" != "nil" ] && {
 			echolog "执行启动延时 $delay 秒后再启动!" 
-			sleep $delay && start >/dev/null 2>&1
+			sleep $delay && start >/dev/null 2>&1 &
 		}
 	else
 		start
@@ -1375,7 +1360,7 @@ start() {
 	add_dnsmasq
 	add_firewall_rule
 	dns_hijack
-	/etc/init.d/dnsmasq restart >/dev/null 2>&1
+	/etc/init.d/dnsmasq restart >/dev/null 2>&1 &
 	start_crontab
 	set_cru
 	rm -f "$LOCK_FILE"
@@ -1390,14 +1375,14 @@ stop() {
 	clean_log
 	del_firewall_rule
 	del_vps_port
-	ipset -F $IPSET_ROUTER >/dev/null 2>&1 && ipset -X $IPSET_ROUTER >/dev/null 2>&1
-	ipset -F $IPSET_GFW >/dev/null 2>&1 && ipset -X $IPSET_GFW >/dev/null 2>&1
-	#ipset -F $IPSET_CHN >/dev/null 2>&1 && ipset -X $IPSET_CHN >/dev/null 2>&1
-	ipset -F $IPSET_BLACKLIST >/dev/null 2>&1 && ipset -X $IPSET_BLACKLIST >/dev/null 2>&1
-	ipset -F $IPSET_WHITELIST >/dev/null 2>&1 && ipset -X $IPSET_WHITELIST >/dev/null 2>&1
-	ipset -F $IPSET_VPSIPLIST >/dev/null 2>&1 && ipset -X $IPSET_VPSIPLIST >/dev/null 2>&1
-	ipset -F $IPSET_LANIPLIST >/dev/null 2>&1 && ipset -X $IPSET_LANIPLIST >/dev/null 2>&1
-	kill_all pdnsd cdns Pcap_DNSProxy ss-redir ss-local ssr-redir ssr-local brook dns2socks kcptun_client haproxy dns-forwarder chinadns dnsproxy redsocks2
+	ipset -F $IPSET_ROUTER >/dev/null 2>&1 && ipset -X $IPSET_ROUTER >/dev/null 2>&1 &
+	ipset -F $IPSET_GFW >/dev/null 2>&1 && ipset -X $IPSET_GFW >/dev/null 2>&1 &
+	#ipset -F $IPSET_CHN >/dev/null 2>&1 && ipset -X $IPSET_CHN >/dev/null 2>&1 &
+	ipset -F $IPSET_BLACKLIST >/dev/null 2>&1 && ipset -X $IPSET_BLACKLIST >/dev/null 2>&1 &
+	ipset -F $IPSET_WHITELIST >/dev/null 2>&1 && ipset -X $IPSET_WHITELIST >/dev/null 2>&1 &
+	ipset -F $IPSET_VPSIPLIST >/dev/null 2>&1 && ipset -X $IPSET_VPSIPLIST >/dev/null 2>&1 &
+	ipset -F $IPSET_LANIPLIST >/dev/null 2>&1 && ipset -X $IPSET_LANIPLIST >/dev/null 2>&1 &
+	kill_all pdnsd Pcap_DNSProxy ss-redir ss-local ssr-redir ssr-local brook dns2socks kcptun_client haproxy dns-forwarder chinadns dnsproxy redsocks2
 	ps -w | grep -E "$CONFIG_TCP_FILE|$CONFIG_UDP_FILE|CONFIG_SOCKS5_FILE" | grep -v "grep" | awk '{print $1}' | xargs kill -9
 	rm -rf /var/pdnsd/pdnsd.cache
 	rm -rf $CONFIG_PATH
