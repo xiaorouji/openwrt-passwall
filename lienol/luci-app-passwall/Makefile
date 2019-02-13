@@ -66,10 +66,6 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_dns-forwarder
 	bool "Include dns-forwarder"
 	default n
 
-config PACKAGE_$(PKG_NAME)_INCLUDE_Pcap_dnsproxy
-	bool "Include pcap-dnsproxy"
-	default n
-
 endmenu
 endef
 
@@ -91,8 +87,7 @@ define Package/$(PKG_NAME)
   +PACKAGE_$(PKG_NAME)_INCLUDE_ChinaDNS:ChinaDNS \
   +PACKAGE_$(PKG_NAME)_INCLUDE_pdnsd:pdnsd-alt \
   +PACKAGE_$(PKG_NAME)_INCLUDE_dns2socks:dns2socks \
-  +PACKAGE_$(PKG_NAME)_INCLUDE_dns-forwarder:dns-forwarder \
-  +PACKAGE_$(PKG_NAME)_INCLUDE_Pcap_dnsproxy:pcap-dnsproxy
+  +PACKAGE_$(PKG_NAME)_INCLUDE_dns-forwarder:dns-forwarder
 endef
 
 define Build/Prepare
@@ -118,11 +113,6 @@ define Package/$(PKG_NAME)/install
 	cp -pR ./root/usr/share/passwall/* $(1)/usr/share/passwall
 	chmod 755 $(PO2LMO)
 	$(PO2LMO) ./po/zh-cn/passwall.po $(1)/usr/lib/lua/luci/i18n/passwall.zh-cn.lmo
-
-ifdef CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Pcap_dnsproxy
-	$(INSTALL_DIR) $(1)/etc/pcap-dnsproxy
-	$(INSTALL_BIN) ./config/pcap-dnsproxy/etc/pcap-dnsproxy/* $(1)/etc/pcap-dnsproxy
-endif
 endef
 
 define Package/$(PKG_NAME)/postinst
