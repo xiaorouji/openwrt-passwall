@@ -12,6 +12,10 @@ o=s:option(Value,"start_delay",translate("Delay Start"),translate("Units:seconds
 o.default="0"
 o.rmempty=true
 
+o=s:option(Flag,"start_daemon",translate("Open and close Daemon"))
+o.default=1
+o.rmempty=false
+
 o=s:option(Flag,"auto_on",translate("Open and close automatically"))
 o.default=0
 o.rmempty=false
