@@ -50,9 +50,6 @@ for a,t in pairs(n)do e:value(a,t)end
 e=t:option(ListValue,"dns_mode",translate("DNS Forward Mode"))
 e.rmempty=false
 e:reset_values()--清空
-if is_installed("cdns") or is_finded("cdns") then
-	e:value("cdns","cdns")
-end
 if is_installed("ChinaDNS") or is_finded("chinadns") then
 	e:value("chinadns","ChinaDNS")
 end
