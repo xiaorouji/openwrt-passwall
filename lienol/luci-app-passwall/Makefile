@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
 PKG_VERSION:=2.0
-PKG_RELEASE:=38-20190211
+PKG_RELEASE:=39-20190214
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PO2LMO:=./po2lmo
@@ -58,10 +58,6 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_pdnsd
 	bool "Include pdnsd"
 	default y
 	
-config PACKAGE_$(PKG_NAME)_INCLUDE_cdns
-	bool "Include cdns"
-	default y
-	
 config PACKAGE_$(PKG_NAME)_INCLUDE_dns2socks
 	bool "Include dns2socks"
 	default n
@@ -94,7 +90,6 @@ define Package/$(PKG_NAME)
   +PACKAGE_$(PKG_NAME)_INCLUDE_haproxy:haproxy \
   +PACKAGE_$(PKG_NAME)_INCLUDE_ChinaDNS:ChinaDNS \
   +PACKAGE_$(PKG_NAME)_INCLUDE_pdnsd:pdnsd-alt \
-  +PACKAGE_$(PKG_NAME)_INCLUDE_cdns:cdns \
   +PACKAGE_$(PKG_NAME)_INCLUDE_dns2socks:dns2socks \
   +PACKAGE_$(PKG_NAME)_INCLUDE_dns-forwarder:dns-forwarder \
   +PACKAGE_$(PKG_NAME)_INCLUDE_Pcap_dnsproxy:pcap-dnsproxy
