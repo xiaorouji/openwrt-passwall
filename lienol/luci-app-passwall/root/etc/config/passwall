@@ -44,8 +44,6 @@ config global_rules
 	option auto_update '0'
 	option gfwlist_version '2019-02-05'
 	option chnroute_version '2019-02-05'
-	option pcap_Routing_version '2019-02-05'
-	option pcap_WhiteList_version '2019-02-05'
 
 config global_kcptun
 	option kcptun_client_file '/usr/bin/kcptun_client'
