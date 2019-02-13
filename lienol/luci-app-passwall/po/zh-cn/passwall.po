@@ -235,6 +235,9 @@ msgstr "SS指定出口"
 msgid "Start Delay"
 msgstr "定时配置"
 
+msgid "Open and close Daemon"
+msgstr "启动守护进程"
+
 msgid "Delay Start"
 msgstr "开机时延时启动"
 
