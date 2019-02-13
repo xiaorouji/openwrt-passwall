@@ -1,0 +1,14 @@
+<%
+function get_ssr_link(section)
+	local result = translate("Null")
+	local link = luci.sys.exec("cd /usr/share/ssr_python && ./mujson_mgr.py -l -I "..section.." | sed -n 17p"):gsub("^%s*(.-)%s*$", "%1")
+	if link ~= "" then result = link end
+	return result
+end
+%>
+
+<%+cbi/valueheader%>
+<span class="ssr_link" hint="<%=self:cfgvalue(section)%>">
+	<a href="javascript:alert('<%=get_ssr_link(section)%>')"><%=translate("GET")%></a>
+</span>
+<%+cbi/valuefooter%>

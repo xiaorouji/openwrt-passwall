@@ -97,6 +97,12 @@ msgstr "已用下载流量"
 msgid "Used Total Traffic"
 msgstr "已用总流量"
 
+msgid "SSR Link"
+msgstr "SSR链接"
+
+msgid "GET"
+msgstr "获取"
+
 msgid "Clear Traffic"
 msgstr "清空流量"
 
