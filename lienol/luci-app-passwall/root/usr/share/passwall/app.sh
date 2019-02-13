@@ -305,7 +305,7 @@ gen_config_file() {
 			gen_ss_ssr_config_file $server_type $SOCKS5_PROXY_PORT 0 $SOCKS5_PROXY_SERVER $CONFIG_SOCKS5_FILE
 		fi
 		if [ "$server_type" == "v2ray" ]; then
-			lua $SS_PATH/genv2rayconfig.lua $SOCKS5_PROXY_SERVER nil nil $SOCKS5_PROXY_PORT > $CONFIG_SOCKS5_FILE
+			lua /usr/lib/lua/luci/model/cbi/passwall/api/genv2rayconfig.lua $SOCKS5_PROXY_SERVER nil nil $SOCKS5_PROXY_PORT > $CONFIG_SOCKS5_FILE
 		fi
 		if [ "$server_type" == "brook" ]; then
 			BROOK_SOCKS5_CMD="client -l 0.0.0.0:$SOCKS5_PROXY_PORT -i 0.0.0.0 -s $server_ip:$server_port -p $(config_get $SOCKS5_PROXY_SERVER password)"
@@ -323,7 +323,7 @@ gen_config_file() {
 			gen_ss_ssr_config_file $server_type $UDP_REDIR_PORT 0 $UDP_REDIR_SERVER $CONFIG_UDP_FILE
 		fi
 		if [ "$server_type" == "v2ray" ]; then
-			lua $SS_PATH/genv2rayconfig.lua $UDP_REDIR_SERVER udp $UDP_REDIR_PORT nil > $CONFIG_UDP_FILE
+			lua /usr/lib/lua/luci/model/cbi/passwall/api/genv2rayconfig.lua $UDP_REDIR_SERVER udp $UDP_REDIR_PORT nil > $CONFIG_UDP_FILE
 		fi
 		if [ "$server_type" == "brook" ]; then
 			BROOK_UDP_CMD="tproxy -l 0.0.0.0:$UDP_REDIR_PORT -s $server_ip:$server_port -p $(config_get $UDP_REDIR_SERVER password)"
@@ -338,7 +338,7 @@ gen_config_file() {
 		fi
 		TCP_REDIR_SERVER_PORT=$server_port
 		if [ "$server_type" == "v2ray" ]; then
-			lua $SS_PATH/genv2rayconfig.lua $TCP_REDIR_SERVER tcp $TCP_REDIR_PORT nil > $CONFIG_TCP_FILE
+			lua /usr/lib/lua/luci/model/cbi/passwall/api/genv2rayconfig.lua $TCP_REDIR_SERVER tcp $TCP_REDIR_PORT nil > $CONFIG_TCP_FILE
 		else
 			local kcptun_use kcptun_server_host kcptun_port kcptun_config
 			kcptun_use=$(config_get $1 use_kcp)
