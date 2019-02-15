@@ -49,6 +49,11 @@ find_bin(){
 	fi
 }
 
+config_n_get() {
+	local ret=$(uci get $CONFIG.$1.$2 2>/dev/null)
+	echo ${ret:=$3}
+}
+
 config_t_get() {
 	local index=0
 	[ -n "$4" ] && index=$4
@@ -197,6 +202,7 @@ BROOK_UDP_CMD=""
 AUTO_SWITCH_ENABLE=$(config_t_get auto_switch enable 0)
 TCP_REDIR_PORTS=$(config_t_get global_forwarding tcp_redir_ports '80,443')
 UDP_REDIR_PORTS=$(config_t_get global_forwarding udp_redir_ports '1:65535')
+KCPTUN_REDIR_PORT=$(config_t_get global_proxy kcptun_port 11183)
 
 load_config() {
 	[ "$TCP_REDIR_SERVER" == "nil" -a "$UDP_REDIR_SERVER" == "nil" -a "$SOCKS5_PROXY_SERVER" == "nil" ] && {
@@ -221,7 +227,6 @@ load_config() {
 	TCP_REDIR_PORT=$(config_t_get global_proxy tcp_redir_port 1031)
 	UDP_REDIR_PORT=$(config_t_get global_proxy udp_redir_port 1032)
 	SOCKS5_PROXY_PORT=$(config_t_get global_proxy socks5_proxy_port 1033)
-	KCPTUN_REDIR_PORT=$(config_t_get global_proxy kcptun_port 11183)
 	PROXY_IPV6=$(config_t_get global_proxy proxy_ipv6 0)
 	mkdir -p /var/etc $CONFIG_PATH $RUN_PID_PATH
 	config_load $CONFIG
@@ -1388,8 +1393,9 @@ stop() {
 	ipset -F $IPSET_WHITELIST >/dev/null 2>&1 && ipset -X $IPSET_WHITELIST >/dev/null 2>&1 &
 	ipset -F $IPSET_VPSIPLIST >/dev/null 2>&1 && ipset -X $IPSET_VPSIPLIST >/dev/null 2>&1 &
 	ipset -F $IPSET_LANIPLIST >/dev/null 2>&1 && ipset -X $IPSET_LANIPLIST >/dev/null 2>&1 &
-	kill_all pdnsd Pcap_DNSProxy ss-redir ss-local ssr-redir ssr-local brook dns2socks kcptun_client haproxy dns-forwarder chinadns dnsproxy redsocks2
-	ps -w | grep -E "$CONFIG_TCP_FILE|$CONFIG_UDP_FILE|CONFIG_SOCKS5_FILE" | grep -v "grep" | awk '{print $1}' | xargs kill -9
+	kill_all pdnsd Pcap_DNSProxy brook dns2socks haproxy dns-forwarder chinadns dnsproxy redsocks2
+	ps -w | grep -E "$CONFIG_TCP_FILE|$CONFIG_UDP_FILE|$CONFIG_SOCKS5_FILE" | grep -v "grep" | awk '{print $1}' | xargs kill -9
+	ps -w | grep "kcptun_client" | grep "$KCPTUN_REDIR_PORT" | grep -v "grep" | awk '{print $1}' | xargs kill -9
 	rm -rf /var/pdnsd/pdnsd.cache
 	rm -rf $CONFIG_PATH
 	stop_dnsmasq
