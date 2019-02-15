@@ -12,6 +12,22 @@ test_url(){
 	echo $status
 }
 
+test_proxy(){
+	result=0
+	status=$(test_url "https://www.google.com")
+	if [ "$status" = "200" ];then
+		result=0
+	else
+		status2=$(test_url "https://www.baidu.com")
+		if [ "$status2" = "200" ];then
+			result=1
+		else
+			result=2
+		fi
+	fi
+	echo $result
+}
+
 test_auto_switch(){
 	if [ -f "/var/etc/passwall/tcp_server_id" ];then
 		TCP_REDIR_SERVER=`cat /var/etc/passwall/tcp_server_id`
@@ -19,13 +35,15 @@ test_auto_switch(){
 		rm -f $LOCK_FILE
 		exit 1
 	fi
-
-	echo "$(get_date): 运行自动切换检测脚本" >> /var/log/passwall.log
+	
 	failcount=1
 	while [ "$failcount" -lt "6" ]
 	do
-		status=$(test_url "https://www.google.com")
-		if [ -z "$status" -o "$status" != "200" ];then
+		status=$(test_proxy)
+		if [ "$status" == 2 ];then
+			echo "$(get_date): 自动切换检测：无法连接到网络，请检查网络是否正常！" >> /var/log/passwall.log
+			break
+		elif [ "$status" == 1 ];then
 			echo "$(get_date): 自动切换检测：第$failcount次检测异常" >> /var/log/passwall.log
 			let "failcount++"
 			[ "$failcount" -ge 6 ] && {
@@ -63,7 +81,7 @@ test_auto_switch(){
 				exit 1
 			}
 			sleep 5s
-		else
+		elif [ "$status" == 0 ];then
 			echo "$(get_date): 自动切换检测：检测正常" >> /var/log/passwall.log
 			break
 		fi
@@ -74,8 +92,11 @@ test_reconnection(){
 	failcount=1
 	while [ "$failcount" -lt "6" ]
 	do
-		status=$(test_url "https://www.google.com")
-		if [ -z "$status" -o "$status" != "200" ];then
+		status=$(test_proxy)
+		if [ "$status" == 2 ];then
+			echo "$(get_date): 掉线重连检测：无法连接到网络，请检查网络是否正常！" >> /var/log/passwall.log
+			break
+		elif [ "$status" == 1 ];then
 			echo "$(get_date): 掉线重连检测：第$failcount次检测异常" >> /var/log/passwall.log
 			let "failcount++"
 			[ "$failcount" -ge 6 ] && {
@@ -85,7 +106,7 @@ test_reconnection(){
 				exit 1
 			}
 			sleep 5s
-		else
+		elif [ "$status" == 0 ];then
 			echo "$(get_date): 掉线重连检测：检测正常" >> /var/log/passwall.log
 			break
 		fi
