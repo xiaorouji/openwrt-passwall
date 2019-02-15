@@ -29,6 +29,7 @@ function index()
 	entry({"admin","vpn","passwall","connect_status"},call("connect_status")).leaf=true
 	entry({"admin","vpn","passwall","check_port"},call("check_port")).leaf=true
 	entry({"admin","vpn","passwall","ping"},call("act_ping")).leaf=true
+	entry({"admin","vpn","passwall","set_server"},call("set_server")).leaf=true
 	entry({"admin","vpn","passwall","update_rules"},call("update_rules")).leaf=true
 	entry({"admin", "vpn", "passwall", "kcptun_check"}, call("kcptun_check")).leaf = true
 	entry({"admin", "vpn", "passwall", "kcptun_update"}, call("kcptun_update")).leaf = true
@@ -80,6 +81,19 @@ function act_ping()
 	local e={}
 	e.index=luci.http.formvalue("index")
 	e.ping=luci.sys.exec("ping -c 1 -W 1 %q 2>&1|grep -o 'time=[0-9]*.[0-9]'|awk -F '=' '{print$2}'"%luci.http.formvalue("domain"))
+	luci.http.prepare_content("application/json")
+	luci.http.write_json(e)
+end
+
+function set_server()
+	local e={}
+	local protocol = luci.http.formvalue("protocol")
+	local section = luci.http.formvalue("section")
+	if protocol == "tcp" then
+		luci.sys.call("uci set passwall.@global[0].tcp_redir_server="..section.." && uci commit passwall && /etc/init.d/passwall restart")
+	elseif protocol == "udp" then
+		luci.sys.call("uci set passwall.@global[0].udp_redir_server="..section.." && uci commit passwall && /etc/init.d/passwall restart")
+	end
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
 end
