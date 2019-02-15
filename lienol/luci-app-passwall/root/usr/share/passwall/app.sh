@@ -1005,12 +1005,14 @@ dns_hijack(){
 
 load_acl(){
 	local enabled
+	local aclremarks
 	local ipaddr
 	local macaddr
 	local proxy_mode
 	local tcp_redir_ports
 	local udp_redir_ports
 	config_get enabled $1 enabled
+	config_get aclremarks $1 aclremarks
 	config_get ipaddr $1 ipaddr
 	config_get macaddr $1 macaddr
 	config_get acl_mode $1 proxy_mode
@@ -1027,8 +1029,8 @@ load_acl(){
 				[ -n "$ipaddr" ] && echolog "访问控制：IP：$ipaddr，代理模式：$(get_action_chain_name $acl_mode)" 
 				[ -n "$macaddr" ] && echolog "访问控制：MAC：$macaddr，代理模式：$(get_action_chain_name $acl_mode)" 
 			fi
-			$iptables_mangle -A SS $(factor $ipaddr "-s") -p tcp $(factor $macaddr "-m mac --mac-source") $(factor $tcp_redir_ports "-m multiport --dport") -$(get_jump_mode $acl_mode) $(get_action_chain $acl_mode)
-			[ "$UDP_REDIR_SERVER" != "nil" ] && $iptables_mangle -A SS $(factor $ipaddr "-s") -p udp $(factor $macaddr "-m mac --mac-source") $(factor $udp_redir_ports "-m multiport --dport") -$(get_jump_mode $acl_mode) $(get_action_chain $acl_mode)
+			$iptables_mangle -A SS_ACL $(factor $ipaddr "-s") -p tcp $(factor $macaddr "-m mac --mac-source") $(factor $tcp_redir_ports "-m multiport --dport") -m comment --comment "$aclremarks" -$(get_jump_mode $acl_mode) $(get_action_chain $acl_mode)
+			[ "$UDP_REDIR_SERVER" != "nil" ] && $iptables_mangle -A SS_ACL $(factor $ipaddr "-s") -p udp $(factor $macaddr "-m mac --mac-source") $(factor $udp_redir_ports "-m multiport --dport") -m comment --comment "$aclremarks" -$(get_jump_mode $acl_mode) $(get_action_chain $acl_mode)
 			[ -z "$ipaddr" ] && {
 				lower_macaddr=`echo $macaddr | tr '[A-Z]' '[a-z]'`
 				ipaddr=`ip neigh show | grep -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}" | grep $lower_macaddr | awk '{print $1}'`
@@ -1094,6 +1096,7 @@ EOF
 	$iptables_mangle -A SS -m set --match-set $IPSET_LANIPLIST dst -j RETURN
 	$iptables_mangle -A SS -m set --match-set $IPSET_VPSIPLIST dst -j RETURN
 	$iptables_mangle -A SS -m set --match-set $IPSET_WHITELIST dst -j RETURN
+	$iptables_mangle -N SS_ACL
 	$iptables_mangle -N SS_GLO
 	$iptables_mangle -N SS_GFW
 	$iptables_mangle -N SS_CHN
@@ -1215,7 +1218,7 @@ EOF
 			$iptables_mangle -A PREROUTING -p udp -m socket -j MARK --set-mark 1
 			$iptables_mangle -A PREROUTING -p udp -j SS
 		fi
-		$iptables_mangle -I SS 4 -p udp -m set --match-set $IPSET_BLACKLIST dst -j TPROXY --on-port $UDP_REDIR_PORT --tproxy-mark 0x1/0x1
+		$iptables_mangle -A SS -p udp -m set --match-set $IPSET_BLACKLIST dst -j TPROXY --on-port $UDP_REDIR_PORT --tproxy-mark 0x1/0x1
 		#  全局模式
 		$iptables_mangle -A SS_GLO -p udp -j TPROXY --on-port $UDP_REDIR_PORT --tproxy-mark 0x1/0x1
 		
@@ -1241,6 +1244,7 @@ EOF
 	fi
 		
 	#  加载ACLS
+		$iptables_mangle -A SS -j SS_ACL
 		config_foreach load_acl "acl_rule"
 		
 	#  加载默认代理模式
@@ -1255,6 +1259,7 @@ EOF
 	if [ "$PROXY_IPV6" == "1" ];then
 		lan_ipv6=`ip address show br-lan | grep -w "inet6" |awk '{print $2}'`  #当前LAN IPv6段
 		$ip6tables_nat -N SS
+		$ip6tables_nat -N SS_ACL
 		$ip6tables_nat -A PREROUTING -j SS
 		[ -n "$lan_ipv6" ] && {
 			for ip in $lan_ipv6
@@ -1316,6 +1321,7 @@ del_firewall_rule() {
 	$iptables_nat -F SS 2>/dev/null && $iptables_nat -X SS 2>/dev/null
 	$iptables_mangle -D PREROUTING -j SS 2>/dev/null
 	$iptables_mangle -F SS 2>/dev/null && $iptables_mangle -X SS 2>/dev/null
+	$iptables_mangle -F SS_ACL 2>/dev/null && $iptables_mangle -X SS_ACL 2>/dev/null
 	$iptables_mangle -F SS_GLO 2>/dev/null && $iptables_mangle -X SS_GLO 2>/dev/null
 	$iptables_mangle -F SS_GFW 2>/dev/null && $iptables_mangle -X SS_GFW 2>/dev/null
 	$iptables_mangle -F SS_CHN 2>/dev/null && $iptables_mangle -X SS_CHN 2>/dev/null
@@ -1324,6 +1330,7 @@ del_firewall_rule() {
 	
 	$ip6tables_nat -D PREROUTING -j SS 2>/dev/null
 	$ip6tables_nat -F SS 2>/dev/null && $ip6tables_nat -X SS 2>/dev/null
+	$ip6tables_nat -F SS_ACL 2>/dev/null && $ip6tables_nat -X SS_ACL 2>/dev/null
 	$ip6tables_nat -F SS_GLO 2>/dev/null && $ip6tables_nat -X SS_GLO 2>/dev/null
 	$ip6tables_nat -F SS_GFW 2>/dev/null && $ip6tables_nat -X SS_GFW 2>/dev/null
 	$ip6tables_nat -F SS_CHN 2>/dev/null && $ip6tables_nat -X SS_CHN 2>/dev/null
