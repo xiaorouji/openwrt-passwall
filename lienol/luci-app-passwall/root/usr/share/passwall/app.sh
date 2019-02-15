@@ -1249,11 +1249,11 @@ EOF
 		
 	#  加载默认代理模式
 		if [ "$PROXY_MODE" == "disable" ];then
-			[ "$TCP_REDIR_SERVER" != "nil" ] && $iptables_mangle -A SS -p tcp -j $(get_action_chain $PROXY_MODE)
-			[ "$UDP_REDIR_SERVER" != "nil" ] && $iptables_mangle -A SS -p udp -j $(get_action_chain $PROXY_MODE)
+			[ "$TCP_REDIR_SERVER" != "nil" ] && $iptables_mangle -A SS_ACL -p tcp -m comment --comment "Default" -j $(get_action_chain $PROXY_MODE)
+			[ "$UDP_REDIR_SERVER" != "nil" ] && $iptables_mangle -A SS_ACL -p udp -m comment --comment "Default" -j $(get_action_chain $PROXY_MODE)
 		else
-			[ "$TCP_REDIR_SERVER" != "nil" ] && $iptables_mangle -A SS -p tcp -m multiport --dport $TCP_REDIR_PORTS -j $(get_action_chain $PROXY_MODE)
-			[ "$UDP_REDIR_SERVER" != "nil" ] && $iptables_mangle -A SS -p udp -m multiport --dport $UDP_REDIR_PORTS -j $(get_action_chain $PROXY_MODE)
+			[ "$TCP_REDIR_SERVER" != "nil" ] && $iptables_mangle -A SS_ACL -p tcp -m multiport --dport $TCP_REDIR_PORTS -m comment --comment "Default" -j $(get_action_chain $PROXY_MODE)
+			[ "$UDP_REDIR_SERVER" != "nil" ] && $iptables_mangle -A SS_ACL -p udp -m multiport --dport $UDP_REDIR_PORTS -m comment --comment "Default" -j $(get_action_chain $PROXY_MODE)
 		fi
 	
 	if [ "$PROXY_IPV6" == "1" ];then
