@@ -82,6 +82,10 @@ e=t:option(DummyValue,"server",translate("Ping Latency"))
 e.template="passwall/ping"
 e.width="10%"
 
-a:append(Template("passwall/server_list_ping"))
+e=t:option(DummyValue,"apply",translate("Apply"))
+e.width="10%"
+e.template=appname.."/apply"
+
+a:append(Template("passwall/server_list"))
 
 return a

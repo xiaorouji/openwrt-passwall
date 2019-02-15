@@ -20,5 +20,17 @@ local dsp = require "luci.dispatcher"
 			}
 		);
 	}
+	
+	function set_server(protocol,section) {
+		if (confirm('确认吗？')==true){
+			XHR.get('<%=dsp.build_url("admin/vpn/passwall/set_server")%>', { "protocol" : protocol , "section" : section },
+				function(x, json) {
+					if(x && x.status == 200) {
+						window.location.href = '<%=dsp.build_url("admin/vpn/passwall/log")%>'
+					}
+				}
+			);
+		}
+	}
 	//]]>
 </script>
