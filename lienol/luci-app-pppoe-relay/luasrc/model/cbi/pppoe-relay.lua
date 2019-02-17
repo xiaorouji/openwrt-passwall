@@ -13,6 +13,9 @@ s.template="cbi/tblsection"
 o=s:option(Flag,"enabled",translate("Enabled"))
 o.rmempty=false
 
+o=s:option(DummyValue,"status",translate("Current Condition"))
+o.template="pppoe-relay/status"
+
 o=s:option(ListValue,"server_interface",translate("Server Interface"))
 for _, iface in ipairs(ifaces) do
 	if not (iface == "lo" or iface:match("^ifb.*") or iface:match("gre*")) then
@@ -40,17 +43,5 @@ for _, iface in ipairs(ifaces) do
 	end
 end
 o.rmempty=true
-
-o=s:option(Button,"is_run",translate("Check"))
-function o.write(self, section)
-	local server_interface = m.uci:get('pppoe-relay',section,"server_interface")
-	local client_interface = m.uci:get('pppoe-relay',section,"client_interface")
-	isrun=luci.sys.call("ps | grep '/usr/sbin/pppoe-relay -S "..server_interface.." -C "..client_interface.."' | grep -v 'grep' >/dev/null")
-	if isrun == 1 then
-		o.description = "<script>alert('"..translate("NOT RUNNING").."');</script>"
-	else
-		o.description = "<script>alert('"..translate("RUNNING").."');</script>"
-	end
-end
 
 return m
