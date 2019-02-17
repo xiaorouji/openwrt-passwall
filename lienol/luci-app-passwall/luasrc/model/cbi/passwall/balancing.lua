@@ -15,7 +15,7 @@ i:foreach(n,"servers",function(e)
 end)
 a=Map("passwall")
 -- [[ Haproxy Settings ]]--
-t=a:section(TypedSection,"global_haproxy",translate("Admin Status"),translate("In the browser input routing IP plus port access, such as:192.168.1.1:1188").."<br><a href='http://koolshare.cn/thread-65561-1-1.html' target='_blank' style='font-size:18px;color:red'>"..translate("Click here to setting your Load Balancing").."</a>")
+t=a:section(TypedSection,"global_haproxy",translate("Admin Status"),translate("In the browser input routing IP plus port access, such as:192.168.1.1:1188").."<br><input type='button' class='cbi-button cbi-input-reload' value='"..translate("Click here to setting your Load Balancing").."' onclick=javascript:window.open('http://koolshare.cn/thread-65561-1-1.html','target'); />")
 t.anonymous=true
 
 e=t:option(Flag,"admin_enable",translate("Enable Admin Status"))
