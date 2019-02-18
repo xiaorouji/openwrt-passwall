@@ -136,6 +136,10 @@
      */
     $("#maincontent > .container").find("a").each(function () {
         var that = $(this);
+		var href = that.attr("href");
+		if (href != undefined && href.indexOf("javascript") != -1) {
+			return true;
+		}
         var onclick = that.attr("onclick");
         if (onclick == undefined || onclick == "") {
             that.click(function () {

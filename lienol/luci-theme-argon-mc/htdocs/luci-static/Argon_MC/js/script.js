@@ -147,6 +147,10 @@
      */
     $("#maincontent > .container").find("a").each(function () {
         var that = $(this);
+		var href = that.attr("href");
+		if (href != undefined && href.indexOf("javascript") != -1) {
+			return true;
+		}
         var onclick = that.attr("onclick");
         if (onclick == undefined || onclick == "") {
             that.click(function () {
@@ -210,12 +214,12 @@
         that.after("<span class='panel-title'>" + that.text() + "</span>");
     });
 
-    $(".cbi-section-table-titles, .cbi-section-table-descr, .cbi-section-descr").each(function () {
+    /* $(".cbi-section-table-titles, .cbi-section-table-descr, .cbi-section-descr").each(function () {
         var that = $(this);
         if (that.text().trim() == ""){
             that.css("display", "none");
         }
-    });
+    }); */
 
 
     $(".main-right").focus();
