@@ -527,33 +527,46 @@ header > .container > .brand {
   left:1rem;
   padding-top:3px;
 }
+
 .main > .main-left > .nav > .slide > .menu[data-title= 状态 ]:before{
 	content: "\e906";
 }
+
 .main > .main-left > .nav > .slide > .menu[data-title= 系统 ]:before{
 	content: "\e90a";
 }
+
 .main > .main-left > .nav > .slide > .menu[data-title= 服务 ]:before{
 	content: "\e909";
 }
 .main > .main-left > .nav > .slide > .menu[data-title= 网络存储 ]:before{
 	content: "\e90c";
 }
+
 .main > .main-left > .nav > .slide > .menu[data-title= 管控 ]:before{
 	content: "\e90e";
 }
+
 .main > .main-left > .nav > .slide > .menu[data-title= VPN ]:before{
 	content: "\e90b";
 }
+
 .main > .main-left > .nav > .slide > .menu[data-title= 网络 ]:before{
 	content: "\e908";
 }
+
 .main > .main-left > .nav > .slide > .menu[data-title= 带宽监控 ]:before{
 	content: "\e90d";
 }
+
+.main > .main-left > .nav > .slide > .menu[data-title= 统计 ]:before{
+	content: "\e90d";
+}
+
 .main > .main-left > .nav > .slide > .menu[data-title= 退出 ]:before{
 	content: "\e907";
 }
+
 header > .container > .brand:before{
 	font-family: 'ssr' !important;
   speak: none;
