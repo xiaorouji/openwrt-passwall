@@ -308,17 +308,16 @@ footer > a {
 }
 
 [id^="cbi-apply-"] {
-	position: fixed;
-    z-index: 200;
-    width: 20rem;
-	margin-left:-10rem;
-	margin-top:-10rem;
-    height: 10rem;
-    left: 50%;
-    top: 50%;
-    font-size: 1.2rem;
-    border-color: #5e72e4;
-    text-align: center;
+	position: absolute;
+	z-index: 200;
+	left: 50%;
+	top: 50%;
+	font-size: 1.2rem;
+	border-color: #5e72e4;
+	text-align: center;
+	width: 300px;
+	height: 180px;
+	transform: translate(-50%, -50%);
 }
 
 [id^="cbi-apply-"] >  .panel-title {
@@ -332,8 +331,8 @@ footer > a {
 [id^="cbi-apply-"] > [id^="cbi-apply-"]{
 	height: auto;
 	font-size: 1rem;
-	margin-top: -2rem;
 	display: block;
+	top: 80%;
 }
 
 .main-left {
