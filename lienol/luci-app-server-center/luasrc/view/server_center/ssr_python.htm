@@ -22,7 +22,7 @@ local ipkg = require "luci.model.ipkg"
 		ssr_python_status[0].innerHTML = '<b><font color=red><%=translate("NOT INSTALLED")%><br><%=translate("please Install the python")%><br>opkg update && opkg install python</font></b>';
 	<% end %>
 	
-	var ssr_python_users_status = document.getElementsByClassName('ssr_python_users_status');
+	/* var ssr_python_users_status = document.getElementsByClassName('ssr_python_users_status');
 	for(var i = 0; i < ssr_python_users_status.length; i++) {
 		var id_div = ssr_python_users_status[i].parentElement.parentElement.parentElement.id;
 		var port_div = document.getElementById(id_div+"-port");
@@ -35,6 +35,6 @@ local ipkg = require "luci.model.ipkg"
 				ssr_python_users_status[result.index].innerHTML = (result.status ? '<b><font color=green>✓</font></b>' : '<b><font color=red>X</font></b>');
 			}
 		);
-	}
+	} */
 //]]>
 </script>
