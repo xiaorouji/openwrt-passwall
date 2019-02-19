@@ -17,11 +17,12 @@ config_t_get() {
 gen_v2ray_config_file() {
 	config_get enable $1 enable
 	[ "$enable" = "0" ] && return 0
+	config_get remarks $1 remarks
 	config_get port $1 port
 	lua /usr/lib/lua/luci/model/cbi/server_center/genv2rayconfig.lua $1 > $CONFIG_PATH/v2ray-server_$1.json
 	/usr/bin/v2ray/v2ray -config $CONFIG_PATH/v2ray-server_$1.json >/dev/null 2>&1 &
-	iptables -A V2RAY-SERVER -p tcp --dport $port -j ACCEPT
-	iptables -A V2RAY-SERVER -p udp --dport $port -j ACCEPT
+	iptables -A V2RAY-SERVER -p tcp --dport $port -m comment --comment "$remarks" -j ACCEPT
+	iptables -A V2RAY-SERVER -p udp --dport $port -m comment --comment "$remarks" -j ACCEPT
 }
 
 gen_ssr_libev_config_file() {
@@ -57,8 +58,8 @@ gen_ssr_libev_config_file() {
 		EOF
 		
 	/usr/bin/ssr-server -c $CONFIG_PATH/ssr_libev-server_$1.json $udp_param >/dev/null 2>&1 &
-	iptables -A SSR_LIBEV-SERVER -p tcp --dport $port -j ACCEPT
-	[ "$udp_forward" = "1" ] && iptables -A SSR_LIBEV-SERVER -p udp --dport $port -j ACCEPT
+	iptables -A SSR_LIBEV-SERVER -p tcp --dport $port -m comment --comment "$remarks" -j ACCEPT
+	[ "$udp_forward" = "1" ] && iptables -A SSR_LIBEV-SERVER -p udp --dport $port -m comment --comment "$remarks" -j ACCEPT
 }
 
 gen_ssr_python_config_file() {
@@ -81,6 +82,15 @@ gen_ssr_python_config_file() {
 	action="-e"
 	[ -z "$exist" ] && action="-a"
 	./mujson_mgr.py $action -I $1 -u "${remarks}" -p ${port} -k ${password} -m ${method} -O ${protocol} -G ${device_limit} -o ${obfs} -s ${speed_limit_per_con} -S ${speed_limit_per_user} -t ${transfer_enable} -f "${forbidden_port}"
+}
+
+gen_ssr_python_iptables() {
+	config_get enable $1 enable
+	[ "$enable" = "0" ] && return 0
+	config_get remarks $1 remarks
+	config_get port $1 port
+	iptables -A SSR_PYTHON-SERVER -p tcp --dport $port -m comment --comment "$remarks" -j ACCEPT
+	iptables -A SSR_PYTHON-SERVER -p udp --dport $port -m comment --comment "$remarks" -j ACCEPT
 }
 
 set_ssr_python_crontab() {
@@ -106,6 +116,7 @@ start_ssr_python_server() {
 	lua /usr/lib/lua/luci/model/cbi/server_center/genssrmudbconfig.lua > /tmp/mudb.json
 	mv -f /tmp/mudb.json $ssr_python_path/mudb.json
 	$python $ssr_python_path/server.py >> /var/log/ssr_python.log 2>&1 &
+	config_foreach gen_ssr_python_iptables "ssr_python_users"
 	set_ssr_python_crontab "start"
 	
 :<<EOF
@@ -125,7 +136,6 @@ stop_ssr_python_server() {
 	iptables -X SSR_PYTHON-SERVER 2>/dev/null
 	ps -w | grep "/usr/bin/python /usr/share/ssr_python/server.py" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 	rm -rf /var/log/ssr_python.log
-	
 	set_ssr_python_crontab "stop"
 }
 
