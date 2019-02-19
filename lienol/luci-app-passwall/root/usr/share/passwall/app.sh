@@ -986,16 +986,16 @@ del_vps_port() {
 dns_hijack(){
 	dnshijack=$(config_t_get global_dns dns_53)
 	if [ "$dnshijack" = "1" ];then
-		chromecast_nu=`$iptables_nat -L PREROUTING -v -n --line-numbers|grep "dpt:53"|awk '{print $1}'`
-		is_right_lanip=`$iptables_nat -L PREROUTING -v -n --line-numbers|grep "dpt:53" |grep "$lanip"`
+		chromecast_nu=`$iptables_nat -L SS -v -n --line-numbers|grep "dpt:53"|awk '{print $1}'`
+		is_right_lanip=`$iptables_nat -L SS -v -n --line-numbers|grep "dpt:53" |grep "$lanip"`
 		if [ -z "$chromecast_nu" ]; then
 			echolog "添加接管局域网DNS解析规则..." 
-			$iptables_nat -A PREROUTING -i br-lan -p udp --dport 53 -j DNAT --to $lanip 2>/dev/null
+			$iptables_nat -I SS -i br-lan -p udp --dport 53 -j DNAT --to $lanip 2>/dev/null
 		else
 			if [ -z "$is_right_lanip" ]; then
 				echolog "添加接管局域网DNS解析规则..." 
-				$iptables_nat -D PREROUTING $chromecast_nu >/dev/null 2>&1 &
-				$iptables_nat -A PREROUTING -i br-lan -p udp --dport 53 -j DNAT --to $lanip 2>/dev/null
+				$iptables_nat -D SS $chromecast_nu >/dev/null 2>&1 &
+				$iptables_nat -I SS -i br-lan -p udp --dport 53 -j DNAT --to $lanip 2>/dev/null
 			else
 				echolog " DNS劫持规则已经添加，跳过~" >>$LOG_FILE
 			fi
@@ -1280,10 +1280,7 @@ EOF
 }
 
 del_firewall_rule() {
-	echolog "删除所有防火墙规则..." 
-	ipv4_chromecast_nu=`$iptables_nat -L PREROUTING 2>/dev/null | grep "dpt:53"|awk '{print $1}'`
-	[ -n "$ipv4_chromecast_nu" ] && $iptables_nat -D PREROUTING $ipv4_chromecast_nu 2>/dev/null
-	
+	echolog "删除所有防火墙规则..."
 	ipv4_output_exist=`$iptables_nat -L OUTPUT 2>/dev/null | grep -c -E "SS|$TCP_REDIR_PORTS|$IPSET_LANIPLIST|$IPSET_VPSIPLIST|$IPSET_WHITELIST|$IPSET_ROUTER|$IPSET_BLACKLIST|$IPSET_GFW|$IPSET_CHN"`
 	[ -n "$ipv4_output_exist" ] && {
 		until [ "$ipv4_output_exist" = 0 ]
