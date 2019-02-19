@@ -1,6 +1,5 @@
 module("luci.controller.server_center",package.seeall)
 local appname = "server_center"
-local uci = require "luci.model.uci"
 local http = require "luci.http"
 local v2ray  = require "luci.model.cbi.server_center.api.v2ray"
 
@@ -67,11 +66,6 @@ end
 function act_ssr_python_clear_traffic_all_users()
 	local e={}
 	e.status=luci.sys.call("/usr/share/ssr_python/sh/clear_traffic_all_users.sh >/dev/null")==0
-	--[[uci:foreach("server_center","ssr_python_users", 
-		function(s)
-			local section = s[".name"]
-			luci.sys.call("cd /usr/share/ssr_python && ./mujson_mgr.py -c -I '"..section.."' >/dev/null")
-		end)]]--
 	http_write_json(e)
 end
 
