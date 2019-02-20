@@ -104,12 +104,12 @@ class MuMgr(object):
 							break
 				else:
 					val = user[key]
-				if val / 1024 < 4:
+				if val < 1024:
 					ret += "    %s : %s" % (key, val)
-				elif val / 1024 ** 2 < 4:
+				elif val < 1024 ** 2:
 					val /= float(1024)
 					ret += "    %s : %s  K Bytes" % (key, val)
-				elif val / 1024 ** 3 < 4:
+				elif val < 1024 ** 3:
 					val /= float(1024 ** 2)
 					ret += "    %s : %s  M Bytes" % (key, val)
 				else:
@@ -125,12 +125,12 @@ class MuMgr(object):
 		ret += "\n    %s : %s" % ("d_b", d_b)
 		ret += "\n    %s : %s" % ("total_traffic_b", total_traffic_b)
 		ret += "\n"
-		if total_traffic / 1024 < 4:
+		if total_traffic < 1024:
 			ret += "    %s : %s" % ("total_traffic", total_traffic)
-		elif total_traffic / 1024 ** 2 < 4:
+		elif total_traffic < 1024 ** 2:
 			total_traffic /= float(1024)
 			ret += "    %s : %s  K Bytes" % ("total_traffic", total_traffic)
-		elif total_traffic / 1024 ** 3 < 4:
+		elif total_traffic < 1024 ** 3:
 			total_traffic /= float(1024 ** 2)
 			ret += "    %s : %s  M Bytes" % ("total_traffic", total_traffic)
 		else:

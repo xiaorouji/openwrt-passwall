@@ -140,7 +140,8 @@ end]]--
 
 e=t:option(DummyValue,"used_total_traffic",translate("Used Total Traffic"))
 e.width="10%"
-e.cfgvalue=function(t,section)
+e.template=appname.."/ssr_python_users_total_traffic"
+--[[e.cfgvalue=function(t,section)
 	local result = translate("Null")
 	local total_traffic_str = luci.sys.exec("cd /usr/share/ssr_python && ./mujson_mgr.py -l -I "..section.." | sed -n 19p"):gsub("^%s*(.-)%s*$", "%1")
 	local total_traffic = luci.sys.exec("echo "..total_traffic_str.." | awk '{print $3}'"):gsub("^%s*(.-)%s*$", "%1")
@@ -148,11 +149,11 @@ e.cfgvalue=function(t,section)
 	local unit = luci.sys.exec("echo "..total_traffic_str.." | awk '{print $4}'"):gsub("^%s*(.-)%s*$", "%1")
 	result = string.format("%0.2f",total_traffic)..unit
 	return result
-end
+end]]--
 
 e=t:option(DummyValue,"ssr_link",translate("SSR Link"))
 e.width="10%"
-e.template=appname.."/ssr_python_link"
+e.template=appname.."/ssr_python_users_link"
 
 e=t:option(Button,"clear_transfer",translate("Clear Traffic"))
 e.inputstyle="remove"
