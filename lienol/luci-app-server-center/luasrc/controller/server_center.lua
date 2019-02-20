@@ -25,6 +25,7 @@ function index()
 	entry({"admin","vpn","server_center","ssr_libev_users_status"},call("act_ssr_libev_users_status")).leaf=true
 	entry({"admin","vpn","server_center","ssr_python_status"},call("act_ssr_python_status")).leaf=true
 	entry({"admin","vpn","server_center","ssr_python_users_status"},call("act_ssr_python_users_status")).leaf=true
+	entry({"admin","vpn","server_center","ssr_python_get_total_traffic"},call("act_ssr_python_get_total_traffic")).leaf=true
 	entry({"admin","vpn","server_center","ssr_python_get_link"},call("act_ssr_python_get_link")).leaf=true
 	entry({"admin","vpn","server_center","ssr_python_clear_traffic"},call("act_ssr_python_clear_traffic")).leaf=true
 	entry({"admin","vpn","server_center","ssr_python_clear_traffic_all_users"},call("act_ssr_python_clear_traffic_all_users")).leaf=true
@@ -55,6 +56,18 @@ function act_ssr_python_users_status()
 	local e={}
 	e.index=luci.http.formvalue("index")
 	e.status=luci.sys.call("netstat -an | grep '" .. luci.http.formvalue("port") .. "' >/dev/null")==0
+	http_write_json(e)
+end
+
+function act_ssr_python_get_total_traffic()
+	local e={}
+	local result = nil
+	local total_traffic_str = luci.sys.exec("cd /usr/share/ssr_python && ./mujson_mgr.py -l -I "..luci.http.formvalue("section").." | sed -n 19p"):gsub("^%s*(.-)%s*$", "%1")
+	local total_traffic = luci.sys.exec("echo "..total_traffic_str.." | awk '{print $3}'"):gsub("^%s*(.-)%s*$", "%1")
+	if total_traffic == "" then total_traffic = 0 end
+	local unit = luci.sys.exec("echo "..total_traffic_str.." | awk '{print $4}'"):gsub("^%s*(.-)%s*$", "%1")
+	result = string.format("%0.2f",total_traffic)..unit
+	e.result = result
 	http_write_json(e)
 end
 
