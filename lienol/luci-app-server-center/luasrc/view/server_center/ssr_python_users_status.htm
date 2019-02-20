@@ -1,7 +1,7 @@
 <%
 local uci = require "luci.model.uci".cursor()
 function get_status(section)
-	local port = uci.get("server_center",section,"port")
+	local port = uci:get("server_center",section,"port")
 	local status = luci.sys.call("netstat -an | grep '" .. port .. "' >/dev/null")==0
 	if status then
 		return "<font color=green> ✓ </font>"

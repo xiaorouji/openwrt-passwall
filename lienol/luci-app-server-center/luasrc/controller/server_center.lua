@@ -25,6 +25,7 @@ function index()
 	entry({"admin","vpn","server_center","ssr_libev_users_status"},call("act_ssr_libev_users_status")).leaf=true
 	entry({"admin","vpn","server_center","ssr_python_status"},call("act_ssr_python_status")).leaf=true
 	entry({"admin","vpn","server_center","ssr_python_users_status"},call("act_ssr_python_users_status")).leaf=true
+	entry({"admin","vpn","server_center","ssr_python_get_link"},call("act_ssr_python_get_link")).leaf=true
 	entry({"admin","vpn","server_center","ssr_python_clear_traffic"},call("act_ssr_python_clear_traffic")).leaf=true
 	entry({"admin","vpn","server_center","ssr_python_clear_traffic_all_users"},call("act_ssr_python_clear_traffic_all_users")).leaf=true
 	entry({"admin","vpn","server_center","v2ray_users_status"},call("act_v2ray_users_status")).leaf=true
@@ -54,6 +55,13 @@ function act_ssr_python_users_status()
 	local e={}
 	e.index=luci.http.formvalue("index")
 	e.status=luci.sys.call("netstat -an | grep '" .. luci.http.formvalue("port") .. "' >/dev/null")==0
+	http_write_json(e)
+end
+
+function act_ssr_python_get_link()
+	local e={}
+	local link = luci.sys.exec("cd /usr/share/ssr_python && ./mujson_mgr.py -l -I " .. luci.http.formvalue("section") .. " | sed -n 21p"):gsub("^%s*(.-)%s*$", "%1")
+	if link ~= "" then e.link = link end
 	http_write_json(e)
 end
 
