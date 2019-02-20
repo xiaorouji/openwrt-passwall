@@ -118,17 +118,11 @@ end
 e.width="10%"
 e.cfgvalue=function(t,section)
 	local result = translate("Null")
-	local u = luci.sys.exec("cd /usr/share/ssr_python && ./mujson_mgr.py -l -I "..section.." | sed -n 10p | awk '{print $3}'"):gsub("^%s*(.-)%s*$", "%1")
-	local u_unit = luci.sys.exec("cd /usr/share/ssr_python && ./mujson_mgr.py -l -I "..section.." | sed -n 10p | awk '{print $4}'"):gsub("^%s*(.-)%s*$", "%1")
-	if u_unit == "K" then u = u*1024
-	elseif u_unit == "M" then u = u*1024*1024
-	elseif u_unit == "G" then u = u*1024*1024*1024
-	end
-	if u < 1024 then result = string.format("%0.2f",u).."B"
-	elseif u < 1024*1024 then result = string.format("%0.2f",(u/1024)).."KB"
-	elseif u < 1024*1024*1024 then result = string.format("%0.2f",(u/1024/1024)).."MB"
-	elseif u < 1024*1024*1024*1024 then result = string.format("%0.2f",(u/1024/1024/1024)).."GB"
-	elseif u < 1024*1024*1024*1024*1024 then result = string.format("%0.2f",(u/1024/1024/1024/1024)).."TB" end
+	local u_str = luci.sys.exec("cd /usr/share/ssr_python && ./mujson_mgr.py -l -I "..section.." | sed -n 10p"):gsub("^%s*(.-)%s*$", "%1")
+	local u = luci.sys.exec("echo "..u_str.." | awk '{print $3}'"):gsub("^%s*(.-)%s*$", "%1")
+	if u == "" then u = 0 end
+	local unit = luci.sys.exec("echo "..u_str.." | awk '{print $4}'"):gsub("^%s*(.-)%s*$", "%1")
+	result = string.format("%0.2f",u)..unit
 	return result
 end
 
@@ -136,17 +130,11 @@ e=t:option(DummyValue,"d",translate("Used Download Traffic"))
 e.width="10%"
 e.cfgvalue=function(t,section)
 	local result = translate("Null")
-	local d = luci.sys.exec("cd /usr/share/ssr_python && ./mujson_mgr.py -l -I "..section.." | sed -n 11p | awk '{print $3}'"):gsub("^%s*(.-)%s*$", "%1")
-	local d_unit = luci.sys.exec("cd /usr/share/ssr_python && ./mujson_mgr.py -l -I "..section.." | sed -n 11p | awk '{print $4}'"):gsub("^%s*(.-)%s*$", "%1")
-	if d_unit == "K" then d = d*1024
-	elseif d_unit == "M" then d = d*1024*1024
-	elseif d_unit == "G" then d = d*1024*1024*1024
-	end
-	if d < 1024 then result = string.format("%0.2f",d).."B"
-	elseif d < 1024*1024 then result = string.format("%0.2f",(d/1024)).."KB"
-	elseif d < 1024*1024*1024 then result = string.format("%0.2f",(d/1024/1024)).."MB"
-	elseif d < 1024*1024*1024*1024 then result = string.format("%0.2f",(d/1024/1024/1024)).."GB"
-	elseif d < 1024*1024*1024*1024*1024 then result = string.format("%0.2f",(d/1024/1024/1024/1024)).."TB" end
+	local d_str = luci.sys.exec("cd /usr/share/ssr_python && ./mujson_mgr.py -l -I "..section.." | sed -n 11p"):gsub("^%s*(.-)%s*$", "%1")
+	local d = luci.sys.exec("echo "..d_str.." | awk '{print $3}'"):gsub("^%s*(.-)%s*$", "%1")
+	if d == "" then d = 0 end
+	local unit = luci.sys.exec("echo "..d_str.." | awk '{print $4}'"):gsub("^%s*(.-)%s*$", "%1")
+	result = string.format("%0.2f",d)..unit
 	return result
 end]]--
 
@@ -154,29 +142,11 @@ e=t:option(DummyValue,"used_total_traffic",translate("Used Total Traffic"))
 e.width="10%"
 e.cfgvalue=function(t,section)
 	local result = translate("Null")
-	local u_str = luci.sys.exec("cd /usr/share/ssr_python && ./mujson_mgr.py -l -I "..section.." | sed -n 10p"):gsub("^%s*(.-)%s*$", "%1")
-	local u = luci.sys.exec("echo "..u_str.." | awk '{print $3}'"):gsub("^%s*(.-)%s*$", "%1")
-	if u == "" then u = 0 end
-	local u_unit = luci.sys.exec("echo "..u_str.." | awk '{print $4}'"):gsub("^%s*(.-)%s*$", "%1")
-	if u_unit == "K" then u = u*1024
-	elseif u_unit == "M" then u = u*1024*1024
-	elseif u_unit == "G" then u = u*1024*1024*1024
-	end
-	local d_str = luci.sys.exec("cd /usr/share/ssr_python && ./mujson_mgr.py -l -I "..section.." | sed -n 11p"):gsub("^%s*(.-)%s*$", "%1")
-	local d = luci.sys.exec("echo "..d_str.." | awk '{print $3}'"):gsub("^%s*(.-)%s*$", "%1")
-	if d == "" then d = 0 end
-	local d_unit = luci.sys.exec("echo "..d_str.." | awk '{print $4}'"):gsub("^%s*(.-)%s*$", "%1")
-	if d_unit == "K" then d = d*1024
-	elseif d_unit == "M" then d = d*1024*1024
-	elseif d_unit == "G" then d = d*1024*1024*1024
-	end
-	
-	local count = u + d
-	if count < 1024 then result = string.format("%0.2f",count).."B"
-	elseif count < 1024*1024 then result = string.format("%0.2f",(count/1024)).."KB"
-	elseif count < 1024*1024*1024 then result = string.format("%0.2f",(count/1024/1024)).."MB"
-	elseif count < 1024*1024*1024*1024 then result = string.format("%0.2f",(count/1024/1024/1024)).."GB"
-	elseif count < 1024*1024*1024*1024*1024 then result = string.format("%0.2f",(count/1024/1024/1024/1024)).."TB" end
+	local total_traffic_str = luci.sys.exec("cd /usr/share/ssr_python && ./mujson_mgr.py -l -I "..section.." | sed -n 19p"):gsub("^%s*(.-)%s*$", "%1")
+	local total_traffic = luci.sys.exec("echo "..total_traffic_str.." | awk '{print $3}'"):gsub("^%s*(.-)%s*$", "%1")
+	if total_traffic == "" then total_traffic = 0 end
+	local unit = luci.sys.exec("echo "..total_traffic_str.." | awk '{print $4}'"):gsub("^%s*(.-)%s*$", "%1")
+	result = string.format("%0.2f",total_traffic)..unit
 	return result
 end
 

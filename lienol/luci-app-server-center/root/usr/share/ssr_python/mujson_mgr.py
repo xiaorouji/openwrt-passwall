@@ -117,6 +117,25 @@ class MuMgr(object):
 					ret += "    %s : %s  G Bytes" % (key, val)
 			else:
 				ret += "    %s : %s" % (key, user[key])
+		u_b = user['u']
+		d_b = user['d']
+		total_traffic_b = u_b + d_b
+		total_traffic = total_traffic_b
+		ret += "\n    %s : %s" % ("u_b", u_b)
+		ret += "\n    %s : %s" % ("d_b", d_b)
+		ret += "\n    %s : %s" % ("total_traffic_b", total_traffic_b)
+		ret += "\n"
+		if total_traffic / 1024 < 4:
+			ret += "    %s : %s" % ("total_traffic", total_traffic)
+		elif total_traffic / 1024 ** 2 < 4:
+			total_traffic /= float(1024)
+			ret += "    %s : %s  K Bytes" % ("total_traffic", total_traffic)
+		elif total_traffic / 1024 ** 3 < 4:
+			total_traffic /= float(1024 ** 2)
+			ret += "    %s : %s  M Bytes" % ("total_traffic", total_traffic)
+		else:
+			total_traffic /= float(1024 ** 3)
+			ret += "    %s : %s  G Bytes" % ("total_traffic", total_traffic)
 		ret += "\n    " + self.ssrlink(user, False, muid)
 		ret += "\n    " + self.ssrlink(user, True, muid)
 		return ret
