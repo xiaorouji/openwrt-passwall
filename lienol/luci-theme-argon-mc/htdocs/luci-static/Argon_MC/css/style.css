@@ -635,25 +635,23 @@ li {
 
 h1 {
     font-size: 2rem;
-    padding-bottom: 10px;
+    padding: 0.5rem;
     border-bottom: 1px solid #eee;
 }
 
 h2 {
-    margin: 2rem 0 0 0;
+    margin: 1rem 0 0 0;
     font-size: 1.5rem;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #eee;
+    padding: 0.5rem;
+    /* border-bottom: 1px solid #eee; */
 }
 
 h3 {
     font-size: 1.4rem;
-    
-	    width: 100%;
+	width: 100%;
     display: block;
     margin-bottom: 0;
-    padding: 1.25rem 1.5rem;
-	padding-bottom: 10px;
+    padding: 0.5rem;
     border-bottom: 1px solid rgba(0,0,0,.05);
     background-color: #fff;
     line-height: 1.5;
@@ -936,7 +934,7 @@ form.inline + form.inline,
 .tabs {
     /* margin: 0 -2rem; */
 	margin-top: 1rem;
-    padding-left: 0.5rem;
+    /* padding-left: 0.5rem; */
     background-color: #FFFFFF;
 }
 
@@ -948,7 +946,7 @@ form.inline + form.inline,
 	border-bottom-left-radius:0.25rem;
 	border-bottom-right-radius:0.25rem;
     display: inline-block;
-    padding: 10px;
+    padding: 0.6rem;
 }
 
 .cbi-tabmenu > li > a,
@@ -966,7 +964,7 @@ form.inline + form.inline,
     cursor: pointer;
     border-bottom: 0.2rem solid #5e72e4;
     color: #5e72e4;
-    margin-bottom: -0.18751rem;
+    margin-bottom: -0.2rem;
 }
 
 .tabs > li[class~="active"] > a {
@@ -974,7 +972,7 @@ form.inline + form.inline,
 }
 
 .tabs > li:hover {
-    border-bottom: 0.18751rem solid #C9C9C9;
+    border-bottom: 0.2rem solid #C9C9C9;
 }
 
 .cbi-tabmenu {
