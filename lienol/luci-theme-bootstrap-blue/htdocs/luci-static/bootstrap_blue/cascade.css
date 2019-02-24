@@ -109,8 +109,18 @@ input[type=file] { padding: 0; border: 0; }
 .cbi-image-button { margin: 10px 8px; vertical-align: middle; }
 .uneditable-input { background: #fafafa; border-color: #f2f2f2; color: #ccc; cursor: not-allowed; }
 .uneditable-input:active, .uneditable-input:focus { border-color: #f2f2f2; }
-.cbi-value-description { display: inline; }
-.cbi-value-description img { vertical-align: sub; }
+.cbi-value-description { 
+	display: inline;
+    background-image: url(/luci-static/resources/cbi/help.gif);
+    background-position-x: 0px;
+    background-position-y: 1px;
+    background-repeat: no-repeat;
+    padding: 0 1.2rem;
+}
+.cbi-value-description img {
+	display:none;
+	vertical-align: sub;
+}
 
 .cbi-page-actions { text-align: right; padding: 10px 0px; }
 .cbi-page-actions.right { float: inherit; }
