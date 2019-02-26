@@ -8,11 +8,11 @@ function index()
 		return
 	end
 
-	entry({"admin","services","kodexplorer"},cbi("kodexplorer/settings"),_("KodExplorer"),99).dependent=true
+	entry({"admin","nas","kodexplorer"},cbi("kodexplorer/settings"),_("KodExplorer"),3).dependent=true
 	
-	entry({"admin","services","kodexplorer","check"},call("action_check")).leaf=true
-	entry({"admin","services","kodexplorer","download"},call("action_download")).leaf=true
-	entry({"admin","services","kodexplorer","status"},call("act_status")).leaf=true
+	entry({"admin","nas","kodexplorer","check"},call("action_check")).leaf=true
+	entry({"admin","nas","kodexplorer","download"},call("action_download")).leaf=true
+	entry({"admin","nas","kodexplorer","status"},call("act_status")).leaf=true
 end
 
 local function http_write_json(content)

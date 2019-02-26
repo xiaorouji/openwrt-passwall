@@ -8,11 +8,11 @@ function index()
 		return
 	end
 
-	entry({"admin","services","filebrowser"},cbi("filebrowser/settings"),_("File Browser"),99).dependent=true
+	entry({"admin","nas","filebrowser"},cbi("filebrowser/settings"),_("File Browser"),2).dependent=true
 	
-	entry({"admin","services","filebrowser","check"},call("action_check")).leaf=true
-	entry({"admin","services","filebrowser","download"},call("action_download")).leaf=true
-	entry({"admin","services","filebrowser","status"},call("act_status")).leaf=true
+	entry({"admin","nas","filebrowser","check"},call("action_check")).leaf=true
+	entry({"admin","nas","filebrowser","download"},call("action_download")).leaf=true
+	entry({"admin","nas","filebrowser","status"},call("act_status")).leaf=true
 end
 
 local function http_write_json(content)
@@ -22,7 +22,7 @@ end
 
 function act_status()
 	local e={}
-	e.status=luci.sys.call("ps -w | grep -v grep | grep 'filebrowser' >/dev/null")==0
+	e.status=luci.sys.call("ps -w | grep -v grep | grep 'filebrowser -a 0.0.0.0' >/dev/null")==0
 	http_write_json(e)
 end
 
