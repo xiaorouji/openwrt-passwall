@@ -1,2 +1,2 @@
 msgid "File Browser Mini"
-msgstr "文件浏览器"
+msgstr "迷你文件浏览器"
