@@ -1,6 +1,6 @@
 #!/bin/sh
 uci batch <<-EOF
-	set luci.themes.Bootstrap_GayPurple=/luci-static/bootstrap_purple
+	set luci.themes.Bootstrap_Purple=/luci-static/bootstrap_purple
 	set luci.main.mediaurlbase=/luci-static/bootstrap_purple
 	commit luci
 EOF
