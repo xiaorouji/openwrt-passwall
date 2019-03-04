@@ -65,6 +65,46 @@
 	box-sizing: border-box;
 }
 
+.left {
+	text-align: left !important;
+}
+
+.right {
+	text-align: right !important;
+}
+
+.center {
+	text-align: center !important;
+}
+
+.top {
+	vertical-align: top !important;
+}
+
+.middle {
+	vertical-align: middle !important;
+}
+
+.bottom {
+	vertical-align: bottom !important;
+}
+
+.pull-left {
+	float: left !important;
+}
+
+.pull-right {
+	float: right !important;
+}
+
+.inline {
+	display: inline;
+}
+
+.hidden {
+	display: none;
+}
+
 .h1,
 .h2,
 .h3,
@@ -294,24 +334,6 @@ footer>a {
 
 .main-right>#maincontent {
 	background-color: #f1f4f5;
-}
-
-.pull-right {
-	float: right;
-	margin-top: 10px;
-	margin-right: 10px;
-}
-
-.pull-left {
-	float: left;
-}
-
-.middle {
-	vertical-align: middle !important;
-}
-
-.center {
-	text-align: center !important;
 }
 
 header {
@@ -1179,25 +1201,6 @@ form.inline+form.inline,
 	margin-bottom: 10px;
 	padding-left: 5px;
 	font-size: small;
-}
-
-
-/* luci */
-
-.hidden {
-	display: none
-}
-
-.left {
-	text-align: left !important;
-}
-
-.right {
-	text-align: right !important;
-}
-
-.inline {
-	display: inline;
 }
 
 .cbi-page-actions {
