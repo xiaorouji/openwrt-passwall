@@ -130,7 +130,7 @@
     <link rel="icon" href="<%=media%>/logo.png" sizes="144x144">
     <link rel="apple-touch-icon-precomposed" href="<%=media%>/logo.png" sizes="144x144">
 
-    <link rel="stylesheet" href="<%=media%>/css/style.css">
+    <link rel="stylesheet" href="<%=media%>/css/style.css?v=1.0">
     <link rel="shortcut icon" href="<%=media%>/favicon.ico">
     <% if node and node.css then %>
         <link rel="stylesheet" href="<%=resource%>/<%=node.css%>">
@@ -140,7 +140,8 @@
             <%-= css %>
         </style>
     <% end -%>
-    <script src="<%=resource%>/xhr.js"></script>
+	<script src="<%=resource%>/cbi.js?v=git-19.060.34677-e62cc32"></script>
+    <script src="<%=resource%>/xhr.js?v=1.0"></script>
 </head>
 
 <body class="lang_<%=luci.i18n.context.lang%> <%- if node then %><%= striptags( node.title ) %><%- end %> <% if luci.dispatcher.context.authsession then %>logged-in<% end %>">

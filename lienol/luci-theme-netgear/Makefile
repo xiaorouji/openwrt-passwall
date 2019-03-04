@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 LUCI_TITLE:=Netgear Theme
 LUCI_DEPENDS:=
 PKG_VERSION:=1.0
-PKG_RELEASE:=8-20190114
+PKG_RELEASE:=10-20190304
 
 include ../luci_my.mk
 
