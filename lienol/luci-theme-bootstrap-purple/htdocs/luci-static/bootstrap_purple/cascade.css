@@ -313,6 +313,15 @@ table th, .table .th {
 	font-weight: bold;
 }
 table td:first-child, .table .td:first-child { color: #127; }
+
+.table[width="33%"], .th[width="33%"], .td[width="33%"] {
+    width: 33%;
+}
+
+.table[width="100%"], .th[width="100%"], .td[width="100%"] {
+    width: 100%;
+}
+
 .table .th, .table .td {
     display: table-cell;
     vertical-align: middle;
@@ -441,8 +450,48 @@ input[type=file] { padding: 0; border: 0; }
 
 /* Interface */
 .ifacebox { text-align: center; margin-right: 60px; }
-.ifacebox .ifacebox-head { border-radius: 4px 4px 0 0; }
-.ifacebox .ifacebox-body { border: 2px solid #f2f2f2; border-top: 0; border-radius: 0 0 4px 4px; padding: 2px 10px; }
+.ifacebox .ifacebox-head { 
+	border-bottom: 1px solid #ccc;
+    padding: 2px;
+    background: #eee;
+}
+.ifacebox .ifacebox-head.active {
+    background: #90c0e0;
+}
+.ifacebox .ifacebox-body {
+    border: 2px solid #f2f2f2;
+    border-top: 0;
+    border-radius: 0 0 4px 4px;
+    padding: 2px 10px;
+}
+.network-status-table .ifacebox-body {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    text-align: left;
+}
+.network-status-table .ifacebox {
+    margin: .5em;
+    flex-grow: 1;
+}
+.ifacebox .ifacebox-body {
+    padding: .25em;
+}
+.ifacebox {
+    background-color: #fff;
+    border: 1px solid #ccc;
+    margin: 0 10px;
+    text-align: center;
+    white-space: nowrap;
+    background-image: linear-gradient(#fff, #fff 25%, #f9f9f9);
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.75);
+    border-radius: 4px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+    display: inline-flex;
+    flex-direction: column;
+    line-height: 1.2em;
+    min-width: 100px;
+}
 .ifacebadge {
     display: inline-block;
     flex-direction: row;
@@ -474,6 +523,11 @@ input[type=file] { padding: 0; border: 0; }
 }
 .ifacebadge > *, .ifacebadge.large > * {
     margin: 0 .125em;
+}
+
+.network-status-table {
+    display: flex;
+    flex-wrap: wrap;
 }
 
 .cbi-tooltip {
