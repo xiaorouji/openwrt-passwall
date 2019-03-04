@@ -53,8 +53,44 @@ legend {
 	padding: 0 0 3px;
 }
 
+.left {
+	text-align: left !important;
+}
+
+.right {
+	text-align: right !important;
+}
+
+.center {
+	text-align: center !important;
+}
+
+.top {
+	vertical-align: top !important;
+}
+
 .middle {
 	vertical-align: middle !important;
+}
+
+.bottom {
+	vertical-align: bottom !important;
+}
+
+.pull-left {
+	float: left !important;
+}
+
+.pull-right {
+	float: right !important;
+}
+
+.inline {
+	display: inline;
+}
+
+.hidden {
+	display: none;
 }
 
 
@@ -73,24 +109,6 @@ legend {
 /* 隐藏登录用户栏 */
 
 .container form[action$="/cgi-bin/luci"] .cbi-map fieldset fieldset div:first-child {
-	display: none;
-}
-
-.pull-left,
-.left {
-	text-align: left !important;
-}
-
-.pull-right,
-.right {
-	text-align: right !important;
-}
-
-.inline {
-	display: inline;
-}
-
-.hidden {
 	display: none;
 }
 
