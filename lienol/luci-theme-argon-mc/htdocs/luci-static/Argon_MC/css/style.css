@@ -915,7 +915,9 @@ h3 {
 h4 {}
 
 
-/* fieldset {
+/* 
+div.cbi-section,
+fieldset {
     margin: 2rem 0 0 0;
     padding: 0;
     font-weight: normal;
@@ -952,6 +954,7 @@ fieldset {
 	box-shadow: 3px 3px 3px rgba(0, 0, 0, .05);
 }
 
+.cbi-map-descr+div.cbi-section,
 .cbi-map-descr+fieldset {
 	margin-top: 1rem;
 }
@@ -961,6 +964,7 @@ fieldset>legend {
 	display: none !important;
 }
 
+div.cbi-section>div.cbi-section,
 fieldset>fieldset {
 	margin: 0;
 	padding: 0;
@@ -1111,6 +1115,7 @@ tr,
 	text-align: center;
 }
 
+div.cbi-section>.table>.tr:nth-of-type(2n),
 fieldset>table>tbody>tr:nth-of-type(2n) {
 	background-color: #f9f9f9;
 }
@@ -1157,10 +1162,12 @@ table table {
 	border: none;
 }
 
+.td>.table>.tr>.td,
 td>table>tbody>tr>td {
 	border: none;
 }
 
+.cbi-value-field>.table>.tr.td,
 .cbi-value-field>table>tbody>tr>td {
 	border: none;
 }
@@ -1485,7 +1492,7 @@ td>.ifacebadge {
 }
 
 .ifacebox .ifacebox-head.active {
-	background: #90c0e0;
+	background: #5e72e4;
 }
 
 .ifacebox .ifacebox-body {
@@ -1549,6 +1556,7 @@ td>.ifacebadge {
 	padding: .25em;
 	min-width: 220px;
 	margin: .125em;
+	float: left;
 }
 
 .ifacebadge img {
@@ -1887,6 +1895,7 @@ header>.container>.pull-right>* {
 	background-color: #172b4d!important;
 }
 
+.node-main-login>.main div.cbi-section,
 .node-main-login>.main fieldset {
 	padding: 0.5rem;
 	margin-bottom: 1rem;
@@ -1990,6 +1999,7 @@ header>.container>.pull-right>* {
 
 /* fix status overview */
 
+.node-status-overview>.main div.cbi-section:nth-child(4) td:nth-child(2),
 .node-status-overview>.main fieldset:nth-child(4) td:nth-child(2) {
 	white-space: normal;
 }
@@ -1997,6 +2007,7 @@ header>.container>.pull-right>* {
 
 /* fix status processes */
 
+.node-status-processes>.main .table .tr .td:nth-child(3),
 .node-status-processes>.main table tr td:nth-child(3) {
 	white-space: normal;
 }
@@ -2032,10 +2043,12 @@ header>.container>.pull-right>* {
 
 /* fix System Software*/
 
+.node-system-packages>.main .table .tr .td:nth-child(1),
 .node-system-packages>.main table tr td:nth-child(1) {
 	width: auto !important;
 }
 
+.node-system-packages>.main .table .tr .td:nth-last-child(1),
 .node-system-packages>.main table tr td:nth-last-child(1) {
 	white-space: normal;
 	font-size: small;
@@ -2064,6 +2077,9 @@ header>.container>.pull-right>* {
 	min-width: 4rem;
 }
 
+.node-status-iptables div.cbi-section,
+.node-system-packages div.cbi-section,
+.node-system-flashops div.cbi-section,
 .node-status-iptables fieldset,
 .node-system-packages fieldset,
 .node-system-flashops fieldset {
@@ -2311,7 +2327,7 @@ body.lang_pl.node-main-login .cbi-value-title {
 		width: 15rem;
 		padding-right: 0.6rem;
 	}
-	fieldset {
+	div.cbi-section,fieldset {
 		padding: 0;
 		margin: 1rem 0 0 0;
 		overflow-x: auto;
@@ -2319,6 +2335,7 @@ body.lang_pl.node-main-login .cbi-value-title {
 	.cbi-input-textarea {
 		font-size: small;
 	}
+	.node-status-iptables>.main div.cbi-section li>a,
 	.node-status-iptables>.main fieldset li>a {
 		padding: 0.3rem 0.6rem;
 	}
@@ -2390,19 +2407,25 @@ body.lang_pl.node-main-login .cbi-value-title {
 		/* width: 9rem;
          padding-right: 1rem; */
 	}
+	.node-network-diagnostics>.main .cbi-map div.cbi-section>div *,
 	.node-network-diagnostics>.main .cbi-map fieldset>div * {
 		width: 100% !important;
 	}
+	.node-network-diagnostics>.main .cbi-map div.cbi-section>div input[type="text"],
 	.node-network-diagnostics>.main .cbi-map fieldset>div input[type="text"] {
 		margin: 3rem 0 0 0 !important;
 	}
+	.node-network-diagnostics>.main .cbi-map div.cbi-section>div:nth-child(4) input[type="text"],
 	.node-network-diagnostics>.main .cbi-map fieldset>div:nth-child(4) input[type="text"] {
 		margin: 0 !important;
 	}
+	.node-network-diagnostics>.main .cbi-map div.cbi-section>div select,
 	.node-network-diagnostics>.main .cbi-map fieldset>div select,
+	.node-network-diagnostics>.main .cbi-map div.cbi-section>div input[type="button"],
 	.node-network-diagnostics>.main .cbi-map fieldset>div input[type="button"] {
 		margin: 1rem 0 0 0;
 	}
+	.node-network-diagnostics>.main .cbi-map div.cbi-section>div,
 	.node-network-diagnostics>.main .cbi-map fieldset>div {
 		width: 100% !important;
 	}
@@ -2415,7 +2438,7 @@ body.lang_pl.node-main-login .cbi-value-title {
 }
 
 @media screen and (max-width: 480px) {
-	fieldset {
+	div.cbi-section,fieldset {
 		padding: 0;
 		margin: 1rem 0 0 0;
 		overflow-x: auto;
@@ -2481,6 +2504,7 @@ body.lang_pl.node-main-login .cbi-value-title {
 		width: 100% !important;
 		font-size: 1.2rem;
 	}
+	.node-main-login>.main div.cbi-section,
 	.node-main-login>.main fieldset {
 		margin: 0;
 		padding: 0.5rem;

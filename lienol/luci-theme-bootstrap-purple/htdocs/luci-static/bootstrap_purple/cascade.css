@@ -1068,7 +1068,7 @@ input[type=file] {
 }
 
 .ifacebox .ifacebox-head.active {
-	background: #90c0e0;
+	background: #b9b6eb;
 }
 
 .ifacebox .ifacebox-body {
@@ -1132,6 +1132,7 @@ input[type=file] {
 	padding: .25em;
 	min-width: 220px;
 	margin: .125em;
+	float: left;
 }
 
 .ifacebadge img {
