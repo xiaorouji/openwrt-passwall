@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-server-center
 PKG_VERSION:=1.0
-PKG_RELEASE:=28-20190220
+PKG_RELEASE:=30-20190309
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PO2LMO:=./po2lmo
