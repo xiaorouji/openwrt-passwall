@@ -152,10 +152,14 @@ end
 			function(x, rv) {
 				var s = document.getElementById('_' + type + '_status');
 				if(s) {
-					if(rv.status)
-						s.innerHTML = '<font color=green><%:Working...%> ✓</font>';
-					else
-						s.innerHTML = '<font color=red><%:Problem detected!%> X</font>';
+					if(rv.status) {
+						s.setAttribute("color","green");
+						s.innerHTML = '<%:Working...%> ✓';
+					}
+					else {
+						s.setAttribute("color","red");
+						s.innerHTML = '<%:Problem detected!%> X';
+					}
 				}
 				btn.disabled = false;
 				btn.value = '<%:Check%>';
