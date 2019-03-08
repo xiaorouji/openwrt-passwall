@@ -7,7 +7,7 @@ function index()
 	if not nixio.fs.access("/etc/config/server_center")then
 		return
 	end
-	entry({"admin", "vpn"}, firstchild(), "VPN", 45).dependent = false
+	entry({"admin","vpn"}, firstchild(), "VPN", 45).dependent = false
 	entry({"admin","vpn","server_center"},alias("admin","vpn","server_center","ssr_python"),_("Server Center"),3).dependent=true
 	if nixio.fs.access("/usr/share/ssr_python") then
 		entry({"admin","vpn","server_center","ssr_python"},cbi("server_center/ssr_python"),_("SSR Python Server"),1).dependent=true
