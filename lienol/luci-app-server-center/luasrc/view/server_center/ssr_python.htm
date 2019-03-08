@@ -10,16 +10,19 @@ local ipkg = require "luci.model.ipkg"
 
 <% include("cbi/map") %>
 <script type="text/javascript">//<![CDATA[
-	var ssr_python_status = document.getElementsByClassName('ssr_python_status');
+	var ssr_python_status = document.getElementsByClassName('ssr_python_status')[0];
+	ssr_python_status.setAttribute("style","font-weight:bold;");
 	<% if ipkg.installed("python") then %>
 		XHR.poll(2, '<%=luci.dispatcher.build_url("admin", "vpn", "server_center", "ssr_python_status")%>', null,
 			function(x, result)
 			{
-				ssr_python_status[0].innerHTML = result.status?'<b><font color=green><%=translate("RUNNING")%></font></b>':'<b><font color=red><%=translate("NOT RUNNING")%></font></b>';
+				ssr_python_status.setAttribute("color",result.status ? "green":"red");
+				ssr_python_status.innerHTML = result.status?'<%=translate("RUNNING")%>':'<%=translate("NOT RUNNING")%>';
 			}
 		)
 	<% else %>
-		ssr_python_status[0].innerHTML = '<b><font color=red><%=translate("NOT INSTALLED")%><br><%=translate("please Install the python")%><br>opkg update && opkg install python</font></b>';
+		ssr_python_status.setAttribute("color","red");
+		ssr_python_status.innerHTML = '<%=translate("NOT INSTALLED")%><br><%=translate("please Install the python")%><br>opkg update && opkg install python</font></b>';
 	<% end %>
 	
 	function ssr_python_get_total_traffic(section,dom) {

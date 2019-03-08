@@ -18,7 +18,9 @@ local dsp = require "luci.dispatcher"
 				id: id
 			},
 			function(x, result) {
-				v2ray_users_status[result.index].innerHTML = (result.status ? '<b><font color=green>✓</font></b>' : '<b><font color=red>X</font></b>');
+				v2ray_users_status[result.index].setAttribute("style","font-weight:bold;");
+				v2ray_users_status[result.index].setAttribute("color",result.status ? "green":"red");
+				v2ray_users_status[result.index].innerHTML = (result.status ? '✓' : 'X');
 			}
 		);
 	}

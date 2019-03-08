@@ -8,7 +8,7 @@ function index()
 	if not nixio.fs.access("/etc/config/passwall") then
 		return
 	end
-	entry({"admin", "vpn"}, firstchild(), "VPN", 45).dependent = false
+	entry({"admin","vpn"}, firstchild(), "VPN", 45).dependent = false
 	entry({"admin","vpn","passwall"},alias("admin","vpn","passwall","settings"),_("Pass Wall"),2).dependent=true
 	entry({"admin","vpn","passwall","settings"},cbi("passwall/global"),_("Basic Settings"),1).dependent=true
 	entry({"admin","vpn","passwall","server_list"},cbi("passwall/server_list"),_("Server List"),2).dependent=true
@@ -31,10 +31,10 @@ function index()
 	entry({"admin","vpn","passwall","ping"},call("act_ping")).leaf=true
 	entry({"admin","vpn","passwall","set_server"},call("set_server")).leaf=true
 	entry({"admin","vpn","passwall","update_rules"},call("update_rules")).leaf=true
-	entry({"admin", "vpn", "passwall", "kcptun_check"}, call("kcptun_check")).leaf = true
-	entry({"admin", "vpn", "passwall", "kcptun_update"}, call("kcptun_update")).leaf = true
-	entry({"admin", "vpn", "passwall", "v2ray_check"}, call("v2ray_check")).leaf = true
-	entry({"admin", "vpn", "passwall", "v2ray_update"}, call("v2ray_update")).leaf = true
+	entry({"admin","vpn","passwall","kcptun_check"},call("kcptun_check")).leaf = true
+	entry({"admin","vpn","passwall","kcptun_update"},call("kcptun_update")).leaf = true
+	entry({"admin","vpn","passwall","v2ray_check"},call("v2ray_check")).leaf = true
+	entry({"admin","vpn","passwall","v2ray_update"},call("v2ray_update")).leaf = true
 end
 
 local function http_write_json(content)

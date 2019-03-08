@@ -18,7 +18,9 @@ local dsp = require "luci.dispatcher"
 				id: id
 			},
 			function(x, result) {
-				ssr_libev_users_status[result.index].innerHTML = (result.status ? '<b><font color=green>✓</font></b>' : '<b><font color=red>X</font></b>');
+				ssr_libev_users_status[result.index].setAttribute("style","font-weight:bold;");
+				ssr_libev_users_status[result.index].setAttribute("color",result.status ? "green":"red");
+				ssr_libev_users_status[result.index].innerHTML = (result.status ? '✓' : 'X');
 			}
 		);
 	}
