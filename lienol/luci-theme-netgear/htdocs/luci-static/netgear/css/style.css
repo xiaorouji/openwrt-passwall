@@ -1123,6 +1123,10 @@ form.inline+form.inline,
 .cbi-value-field {
 	display: table-cell;
 	color: #811;
+}
+
+.cbi-value-field > font {
+	display: block;
 	padding-top: 0.5em;
 }
 
@@ -1150,8 +1154,8 @@ form.inline+form.inline,
 }
 
 .cbi-value {
-	padding: 1em 0em;
-    zoom: 1;
+	zoom: 1;
+    padding: 0.5em 0em;
     clear: both;
 }
 
@@ -1653,8 +1657,8 @@ header>.container>.pull-right>* {
 	float: right;
 }
 
-.node-main-login>.main .cbi-value {
-	display: block;
+.node-main-login>.main .cbi-value:first-child {
+	display: none;
 }
 
 .node-main-login>.main .cbi-value>* {
@@ -2157,8 +2161,9 @@ body.lang_pl.node-main-login .cbi-value-title {
 	.cbi-value-title {
 		width: 40%;
 		min-width: 0rem !important;
-		text-align: left;
-		padding-left: 1em;
+		margin-right: 1em;
+		/* text-align: left;
+		padding-left: 1em; */
 	}
 	.cbi-value-field,
 	.cbi-value-description {
