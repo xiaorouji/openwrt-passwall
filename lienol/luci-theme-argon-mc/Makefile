@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 LUCI_TITLE:=Argon Magic Change Theme
 LUCI_DEPENDS:=
 PKG_VERSION:=1.0
-PKG_RELEASE:=6-20190304
+PKG_RELEASE:=10-20190308
 
 include ../luci_my.mk
 
