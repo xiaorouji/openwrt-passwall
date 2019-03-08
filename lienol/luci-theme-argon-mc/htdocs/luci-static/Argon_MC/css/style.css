@@ -1358,7 +1358,7 @@ form.inline+form.inline,
 
 .cbi-value-field {
 	display: table-cell;
-	line-height: 2.5;
+	padding-top: 0.5em;
 }
 
 .cbi-value-helpicon>img {
@@ -1379,37 +1379,24 @@ form.inline+form.inline,
 	vertical-align: sub;
 }
 
-
-/* .cbi-value-title {
-    word-wrap: break-word;
-    font-size: 0.875rem;
-    line-height: 1.6;
-    color: #525f7f;
-    padding: .7rem;
-	padding-left:0;
-    width: 23rem;
-    float: left;
-    text-align: right;
-    display: table-cell;
-} */
-
 .cbi-value-title {
+	display: table-cell;
 	text-align: right;
-	vertical-align: top;
 	width: 23rem;
-	line-height: 150%;
-	padding: 6px 20px;
+	line-height: unset;
+	padding-top: 0.5em;
+	margin-right: 1.5em;
 	float: left;
 	color: #404040;
-	white-space: nowrap;
+	/* white-space: nowrap;
 	overflow: hidden;
-	text-overflow: clip;
+	text-overflow: clip; */
 }
 
 .cbi-value {
 	padding: 0.3rem 1rem;
-	display: inline-block;
 	width: 100%;
+	clear: both;
 }
 
 .cbi-section-table-descr>.cbi-section-table-cell,
@@ -1451,7 +1438,7 @@ form.inline+form.inline,
 
 .cbi-value input[type="password"],
 .cbi-value input[type="text"] {
-	min-width: 15rem;
+	min-width: unset;
 }
 
 
@@ -2325,7 +2312,6 @@ body.lang_pl.node-main-login .cbi-value-title {
 	}
 	.cbi-value-title {
 		width: 15rem;
-		padding-right: 0.6rem;
 	}
 	div.cbi-section,fieldset {
 		padding: 0;
@@ -2404,8 +2390,7 @@ body.lang_pl.node-main-login .cbi-value-title {
 		display: none !important;
 	}
 	.cbi-value-title {
-		/* width: 9rem;
-         padding-right: 1rem; */
+		/* width: 9rem; */
 	}
 	.node-network-diagnostics>.main .cbi-map div.cbi-section>div *,
 	.node-network-diagnostics>.main .cbi-map fieldset>div * {
@@ -2455,13 +2440,14 @@ body.lang_pl.node-main-login .cbi-value-title {
 	.main>.main-left>.nav>.slide>.slide-menu>li>a {
 		font-size: 1.1rem;
 	}
+	.cbi-value {
+		padding: 0.6em 0em;
+	}
 	.cbi-value-title {
 		width: 40%;
 		min-width: 0rem !important;
-		display: block;
-		margin-top: 1rem;
-		padding: 0;
 		text-align: left;
+		padding-left: 1em;
 	}
 	.cbi-value-field,
 	.cbi-value-description {
@@ -2473,8 +2459,7 @@ body.lang_pl.node-main-login .cbi-value-title {
 	}
 	.cbi-value>.cbi-value-field {
 		display: table-cell;
-		padding-top: 8px;
-		width: 480px;
+		width: 20em;
 	}
 	.cbi-tabmenu>li,
 	.tabs>li {
