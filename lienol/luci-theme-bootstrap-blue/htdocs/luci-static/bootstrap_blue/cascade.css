@@ -592,9 +592,9 @@ fieldset fieldset {
 }
 
 .cbi-value {
-	margin-bottom: 10px;
+	margin-bottom: 1em;
 	zoom: 1;
-	/* overflow: hidden; */
+	clear: both;
 }
 
 table .cbi-value-field,
@@ -603,21 +603,22 @@ table .cbi-value-field,
 }
 
 .cbi-value-title {
-	text-align: right;
-	vertical-align: top;
-	width: 180px;
-	padding-top: 6px;
-	line-height: 15px;
-	float: left;
-	color: #404040;
-	white-space: nowrap;
+	/* white-space: nowrap;
 	overflow: hidden;
-	text-overflow: clip;
+	text-overflow: clip; */
+	display: table-cell;
+	padding-top: 0.4em;
+    line-height: 1.2em;
+    float: left;
+    width: 13em;
+	margin-right: 1.5em;
+    text-align: right;
+	color: #404040;
 }
 
 .cbi-value-field {
 	color: #811;
-	margin-left: 200px;
+	display: table-cell;
 }
 
 .cbi-section-table-cell {
@@ -733,12 +734,18 @@ table td:first-child,
 	background: unset;
 }
 
+#cbi-network .tr,
+#cbi-wireless .tr,
+.tr .tr:first-child,
 #cbi-network tr,
 #cbi-wireless tr,
 tr tr:first-child {
 	border-top: 0;
 }
 
+#cbi-network .tr,
+#cbi-wireless .tr,
+.tr .tr,
 #cbi-network tr,
 #cbi-wireless tr,
 tr tr {
@@ -789,14 +796,14 @@ input,
 textarea,
 select {
 	display: inline-block;
-	width: 200px;
-	padding: 6px;
+	width: 15em;
+	padding: 0.5em;
 	border: 1px solid #118af3;
 	border-radius: 5px;
 	box-sizing: border-box;
 	color: #111;
 	font: inherit;
-	line-height: 16px;
+	line-height: 1em;
 }
 
 table.cbi-section-table input,
