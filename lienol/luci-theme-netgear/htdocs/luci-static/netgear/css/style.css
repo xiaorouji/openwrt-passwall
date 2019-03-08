@@ -1123,7 +1123,7 @@ form.inline+form.inline,
 .cbi-value-field {
 	display: table-cell;
 	color: #811;
-	line-height: 2.5;
+	padding-top: 0.5em;
 }
 
 .cbi-value-description {
@@ -1135,48 +1135,24 @@ form.inline+form.inline,
 	vertical-align: sub;
 }
 
-
-/*
 .cbi-value-title {
-    word-wrap: break-word;
-    line-height:150%;
-    vertical-align: middle;
-    padding:6px 10px;
-    width: 23rem;
-    float: left;
-    text-align: right;
-    display: table-cell;
-}
-*/
-
-.cbi-value-title {
+	display: table-cell;
 	text-align: right;
-	vertical-align: top;
 	width: 23rem;
-	line-height: 150%;
-	padding: 5px 10px;
+	line-height: unset;
+	padding-top: 0.5em;
+	margin-right: 1.5em;
 	float: left;
 	color: #404040;
-	white-space: nowrap;
+	/* white-space: nowrap;
 	overflow: hidden;
-	text-overflow: clip;
+	text-overflow: clip; */
 }
 
-
-/*
 .cbi-value {
-    padding: 5px;
-    vertical-align: middle;
-    display: inline-block;
-	display:block;
-    width: 100%;
-    border-top:0px dashed #e4eaec;
-}
-*/
-
-.cbi-value {
-	padding: 10px 0px;
-	zoom: 1;
+	padding: 1em 0em;
+    zoom: 1;
+    clear: both;
 }
 
 .cbi-section-table-descr>.cbi-section-table-cell,
@@ -2034,7 +2010,6 @@ body.lang_pl.node-main-login .cbi-value-title {
 	}
 	.cbi-value-title {
 		width: 15rem;
-		padding-right: 0.6rem;
 	}
 	div.cbi-section, fieldset {
 		padding: 1rem;
@@ -2127,7 +2102,6 @@ body.lang_pl.node-main-login .cbi-value-title {
 	}
 	.cbi-value-title {
 		width: 9rem;
-		padding-right: 1rem;
 	}
 	.node-network-diagnostics>.main .cbi-map div.cbi-section>div *,
 	.node-network-diagnostics>.main .cbi-map fieldset>div * {
@@ -2177,13 +2151,14 @@ body.lang_pl.node-main-login .cbi-value-title {
 	.main>.main-left>.nav>.slide>.slide-menu>li>a {
 		font-size: 1.1rem;
 	}
+	.cbi-value {
+		padding: 0.6em 0em;
+	}
 	.cbi-value-title {
 		width: 40%;
 		min-width: 0rem !important;
-		display: block;
-		margin-top: 1rem;
-		margin-bottom: 0.5rem;
 		text-align: left;
+		padding-left: 1em;
 	}
 	.cbi-value-field,
 	.cbi-value-description {
@@ -2199,8 +2174,7 @@ body.lang_pl.node-main-login .cbi-value-title {
 	}
 	.cbi-value>.cbi-value-field {
 		display: table-cell;
-		padding-top: 10px;
-		width: 480px;
+		width: 20em;
 	}
 	.cbi-tabmenu>li,
 	.tabs>li {
