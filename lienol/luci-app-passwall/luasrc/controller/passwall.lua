@@ -99,7 +99,7 @@ function set_server()
 end
 
 function check_port()
-	local retstring = "<br /><br />"
+	local retstring = ""
 	retstring = retstring.."<font color='red'>暂时不支持UDP检测</font><br />"
 	local s
 	local server_name = ""
