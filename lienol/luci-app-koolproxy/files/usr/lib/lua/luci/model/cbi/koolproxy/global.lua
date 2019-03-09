@@ -297,6 +297,7 @@ end)
 e=t:option(Value,"mac",translate("MAC Address"))
 e.width="20%"
 e.rmempty=true
+e.datatype="macaddr"
 luci.ip.neighbors({family = 4}, function(neighbor)
 	if neighbor.reachable then
 		e:value(neighbor.mac, "%s (%s)" %{neighbor.mac, neighbor.dest:string()})
