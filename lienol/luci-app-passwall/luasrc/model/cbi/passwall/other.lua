@@ -175,6 +175,17 @@ o.rmempty=true
 o=s:option(Flag,"proxy_ipv6",translate("Proxy IPv6"),translate("The IPv6 traffic can be proxyed when selected"))
 o.default=0
 
+-- [[ Other Settings ]]--
+s=m:section(TypedSection,"global_other",translate("Other Settings"))
+s.anonymous=true
+s.addremove=false
+
+o=s:option(Button,"hide",translate("Hide Menu"),translate("After the hidden to the display, type in the address bar enter the admin/vpn/passwall/show, such as: http://192.168.0.1/cgi-bin/luci/admin/vpn/passwall/show"))
+o.inputstyle="remove"
+function o.write(e,e)
+	luci.http.redirect(luci.dispatcher.build_url("admin","vpn","passwall","hide"))
+end
+
 -- [[ Custom Dnsmasq Settings ]]--
 --[[
 s=m:section(TypedSection,"global",translate("Custom Dnsmasq"))

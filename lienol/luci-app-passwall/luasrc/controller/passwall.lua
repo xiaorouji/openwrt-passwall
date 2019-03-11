@@ -9,7 +9,11 @@ function index()
 		return
 	end
 	entry({"admin","vpn"}, firstchild(), "VPN", 45).dependent = false
-	entry({"admin","vpn","passwall"},alias("admin","vpn","passwall","settings"),_("Pass Wall"),2).dependent=true
+	entry({"admin","vpn","passwall","show"},call("show_menu")).leaf=true
+	entry({"admin","vpn","passwall","hide"},call("hide_menu")).leaf=true
+	if nixio.fs.access("/etc/config/passwall") and nixio.fs.access("/etc/config/passwall_show") then
+		entry({"admin","vpn","passwall"},alias("admin","vpn","passwall","settings"),_("Pass Wall"),2).dependent=true
+	end
 	entry({"admin","vpn","passwall","settings"},cbi("passwall/global"),_("Basic Settings"),1).dependent=true
 	entry({"admin","vpn","passwall","server_list"},cbi("passwall/server_list"),_("Server List"),2).dependent=true
 	entry({"admin","vpn","passwall","auto_switch"},cbi("passwall/auto_switch"),_("Auto Switch"),3).leaf=true
@@ -23,6 +27,7 @@ function index()
 	entry({"admin","vpn","passwall","log"},cbi("passwall/log"),_("Watch Logs"),99).leaf=true
 	entry({"admin","vpn","passwall","serverconfig"},cbi("passwall/serverconfig")).leaf=true
 	
+	entry({"admin","vpn","passwall","link_add_server"},call("link_add_server")).leaf=true
 	entry({"admin","vpn","passwall","get_log"},call("get_log")).leaf=true
 	entry({"admin","vpn","passwall","clear_log"},call("clear_log")).leaf=true
 	entry({"admin","vpn","passwall","server_status"},call("server_status")).leaf=true
@@ -42,13 +47,33 @@ local function http_write_json(content)
 	http.write_json(content or { code = 1 })
 end
 
+function show_menu()
+	luci.sys.call("touch /etc/config/passwall_show")
+	luci.http.redirect(luci.dispatcher.build_url("admin","vpn","passwall"))
+end
+
+function hide_menu()
+	luci.sys.call("rm -rf /etc/config/passwall_show")
+	luci.http.redirect(luci.dispatcher.build_url("admin","status","overview"))
+end
+
+function link_add_server()
+	local type = luci.http.formvalue("type")
+	local link = luci.http.formvalue("link")
+	if type == "SSR" then
+		luci.sys.call("/usr/share/passwall/subscription_ssr.sh add '"..link.."' >/dev/null")
+	elseif type == "V2ray" then
+		luci.sys.call("/usr/share/passwall/subscription_v2ray.sh add '"..link.."' >/dev/null")
+	end
+end
+
 function get_log()
 	--luci.sys.exec("[ -f /var/log/passwall.log ] && sed '1!G;h;$!d' /var/log/passwall.log > /var/log/passwall_show.log")
 	luci.http.write(luci.sys.exec("cat /var/log/passwall.log"))
 end
 
 function clear_log()
-	luci.sys.exec("rm -rf > /var/log/passwall.log")
+	luci.sys.call("rm -rf > /var/log/passwall.log")
 end
 
 function server_status()
