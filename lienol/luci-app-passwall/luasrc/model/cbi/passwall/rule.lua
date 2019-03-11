@@ -52,18 +52,19 @@ o.id = "_kcptun-check_btn"]]--
 s=m:section(TypedSection,"global_subscribe",translate("SSR Server Subscribe"))
 s.anonymous=true
 
-o=s:option(DynamicList,"baseurl",translate("Subscribe URL"),translate("Servers unsubscribed will be deleted in next update; Please summit the Subscribe URL first before manually update."))
+o=s:option(DynamicList,"baseurl_ssr",translate("SSR Subscribe URL"),translate("Servers unsubscribed will be deleted in next update; Please summit the Subscribe URL first before manually update."))
+o=s:option(DynamicList,"baseurl_v2ray",translate("V2ray Subscribe URL"),translate("Servers unsubscribed will be deleted in next update; Please summit the Subscribe URL first before manually update."))
 
 o=s:option(Button,"_update",translate("Manually update"))
 o.inputstyle="apply"
 function o.write(e,e)
-luci.sys.exec("/usr/share/passwall/onlineconfig.sh")
+luci.sys.call("/usr/share/passwall/subscription.sh")
 luci.http.redirect(luci.dispatcher.build_url("admin","vpn","passwall","log"))
 end
 o=s:option(Button,"_stop",translate("Delete All Subscribe"))
 o.inputstyle="remove"
 function o.write(e,e)
-luci.sys.exec("/usr/share/passwall/onlineconfig.sh stop")
+luci.sys.call("/usr/share/passwall/subscription.sh stop")
 luci.http.redirect(luci.dispatcher.build_url("admin","vpn","passwall","log"))
 end
 

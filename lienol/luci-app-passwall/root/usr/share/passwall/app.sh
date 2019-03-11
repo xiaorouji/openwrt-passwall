@@ -497,14 +497,14 @@ set_cru() {
 
 	if [ "$autoupdatesubscribe" = "1" ];then
 		if [ "$weekupdatesubscribe" = "7" ];then
-			echo "0 $dayupdatesubscribe * * * $SS_PATH/onlineconfig.sh" >> /etc/crontabs/root
+			echo "0 $dayupdatesubscribe * * * $SS_PATH/subscription.sh" >> /etc/crontabs/root
 			echolog "设置服务器订阅自动更新规则在每天 $dayupdatesubscribe 点。" 
 		else
-			echo "0 $dayupdatesubscribe * * $weekupdate $SS_PATH/onlineconfig.sh" >> /etc/crontabs/root
+			echo "0 $dayupdatesubscribe * * $weekupdate $SS_PATH/subscription.sh" >> /etc/crontabs/root
 			echolog "设置服务器订阅自动更新规则在星期 $weekupdate 的 $dayupdatesubscribe 点。" 
 		fi
 	else
-		sed -i '/onlineconfig.sh/d' /etc/crontabs/root >/dev/null 2>&1 &
+		sed -i '/subscription.sh/d' /etc/crontabs/root >/dev/null 2>&1 &
 	fi
 }
 
