@@ -169,6 +169,12 @@ msgstr "本机"
 msgid "Danger"
 msgstr "危险"
 
+msgid "Please Enter The Link"
+msgstr "请输入链接"
+
+msgid "Add Server"
+msgstr "添加服务器"
+
 msgid "The server client can also use this rule to scientifically surf the Internet"
 msgstr "本机服务器的客户端也可以使用这个代理模式上网"
 
@@ -570,6 +576,12 @@ msgstr "伪装类型"
 
 msgid "Using TLS must use the domain name as the server address"
 msgstr "使用TLS必须使用域名作为服务器地址"
+
+msgid "Hide Menu"
+msgstr "隐藏菜单"
+
+msgid "After the hidden to the display, type in the address bar enter the admin/vpn/passwall/show, such as: http://192.168.0.1/cgi-bin/luci/admin/vpn/passwall/show"
+msgstr "当你隐藏后想再次显示，在地址栏后面输入admin/vpn/passwall/show，例如:http://192.168.0.1/cgi-bin/luci/admin/vpn/passwall/show"
 
 msgid "NOT RUNNING"
 msgstr "未运行"

@@ -1,4 +1,4 @@
--- Copyright 2018 Lienol <lienol@qq.com>
+-- Copyright 2018-2019 Lienol <lawlienol@gmail.com>
 -- Licensed to the public under the Apache License 2.0.
 
 local fs   = require "nixio.fs"
