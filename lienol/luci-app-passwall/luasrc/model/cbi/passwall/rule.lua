@@ -49,7 +49,7 @@ o.btnclick = "onBtnClick_kcptun(this);"
 o.id = "_kcptun-check_btn"]]--
 
 -- [[ Subscribe Settings ]]--
-s=m:section(TypedSection,"global_subscribe",translate("SSR Server Subscribe"))
+s=m:section(TypedSection,"global_subscribe",translate("Server Subscribe"))
 s.anonymous=true
 
 o=s:option(DynamicList,"baseurl_ssr",translate("SSR Subscribe URL"),translate("Servers unsubscribed will be deleted in next update; Please summit the Subscribe URL first before manually update."))
