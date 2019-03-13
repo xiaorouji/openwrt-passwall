@@ -58,14 +58,15 @@ o=s:option(DynamicList,"baseurl_v2ray",translate("V2ray Subscribe URL"),translat
 o=s:option(Button,"_update",translate("Manually update"))
 o.inputstyle="apply"
 function o.write(e,e)
-luci.sys.call("/usr/share/passwall/subscription.sh")
-luci.http.redirect(luci.dispatcher.build_url("admin","vpn","passwall","log"))
+	luci.sys.call("nohup /usr/share/passwall/subscription.sh > /dev/null 2>&1 &")
+	luci.http.redirect(luci.dispatcher.build_url("admin","vpn","passwall","log"))
 end
+
 o=s:option(Button,"_stop",translate("Delete All Subscribe"))
 o.inputstyle="remove"
 function o.write(e,e)
-luci.sys.call("/usr/share/passwall/subscription.sh stop")
-luci.http.redirect(luci.dispatcher.build_url("admin","vpn","passwall","log"))
+	luci.sys.call("nohup /usr/share/passwall/subscription.sh stop > /dev/null 2>&1 &")
+	luci.http.redirect(luci.dispatcher.build_url("admin","vpn","passwall","log"))
 end
 
 o=s:option(Flag,"subscribe_by_ss",translate("Subscribe via proxy"))
