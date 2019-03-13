@@ -8,7 +8,7 @@ local a,t,e
 a=Map(appname)
 
 -- [[ SS/SSR link Settings ]]--
-t=a:section(TypedSection,"global",translate("Add the server via the SS/SSR link"))
+t=a:section(TypedSection,"global",translate("Add the server via the link"))
 t.anonymous=true
 
 t:append(Template("passwall/link_add_server"))
