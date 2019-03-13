@@ -2,9 +2,12 @@
 # Copyright (C) 2016 monokoo <realstones2012@gmail.com>
 # Copyright (C) 2019 Lienol <lawlienol@gmail.com>
 
+. /usr/share/libubox/jshn.sh
+
 CONFIG=passwall
-LOCK_FILE=/var/lock/subscription_v2ray.lock
+LOCK_FILE=/var/lock/${CONFIG}_subscription_v2ray.lock
 Date=$(date "+%Y-%m-%d %H:%M:%S")
+LOG_FILE=/var/log/$CONFIG.log
 
 config_t_get() {
 	local index=0
@@ -34,18 +37,18 @@ decode_url_link(){
 }
 
 get_remote_config(){
-	decode_link=$(lua /usr/lib/lua/luci/model/cbi/passwall/api/subscription_v2ray.lua "$1")
-	v=$(echo "$decode_link" | sed -n 1P | awk '{print $3}')
-	host=$(echo "$decode_link" | sed -n 2P | awk '{print $3}')
-	ps=$(echo "$decode_link" | sed -n 3P | awk '{print $3}')
-	server=$(echo "$decode_link" | sed -n 4P | awk '{print $3}')
-	server_port=$(echo "$decode_link" | sed -n 5P | awk '{print $3}')
-	id=$(echo "$decode_link" | sed -n 6P | awk '{print $3}')
-	aid=$(echo "$decode_link" | sed -n 7P | awk '{print $3}')
-	net=$(echo "$decode_link" | sed -n 8P | awk '{print $3}')
-	type=$(echo "$decode_link" | sed -n 9P | awk '{print $3}')
-	path=$(echo "$decode_link" | sed -n 10P | awk '{print $3}')
-	tls=$(echo "$decode_link" | sed -n 11P | awk '{print $3}')
+	json_load "$1"
+	json_get_var v v
+	json_get_var host host
+	json_get_var ps ps
+	json_get_var server add
+	json_get_var server_port port
+	json_get_var id id
+	json_get_var aid aid
+	json_get_var net net
+	json_get_var type type
+	json_get_var path path
+	json_get_var tls tls
 	
 	remarks="订阅_$ps"
 	group='AutoSuB_V2ray'
@@ -169,12 +172,10 @@ add() {
 			fi
 		done
 		[ -f "/usr/share/$CONFIG/serverconfig_v2ray/all_onlineservers" ] && rm -f /usr/share/$CONFIG/serverconfig_v2ray/all_onlineservers
-		rm -f "$LOCK_FILE"
 	}
+	rm -f "$LOCK_FILE"
 	exit 0
 }
-
-LOG_FILE=/var/log/$CONFIG.log
 
 start() {
 	#防止并发开启服务
@@ -184,7 +185,7 @@ start() {
 	updatenum=0
 	delnum=0
 	baseurl_v2ray=$(uci get $CONFIG.@global_subscribe[0].baseurl_v2ray)  ##V2ray订阅地址
-	[ -z "$baseurl_v2ray" ] && exit 0
+	[ -z "$baseurl_v2ray" ] && echo "$Date: V2ray订阅地址为空，跳过！" >> $LOG_FILE && rm -f "$LOCK_FILE" && exit 0
 	
 	echo "$Date: 开始订阅V2ray..." >> $LOG_FILE
 	[ ! -d "/usr/share/$CONFIG/onlineurl_v2ray" ] && mkdir -p /usr/share/$CONFIG/onlineurl_v2ray
