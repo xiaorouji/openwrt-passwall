@@ -415,11 +415,14 @@ msgstr "Kcptun客户端路径"
 msgid "Make sure there is enough space to install Kcptun"
 msgstr "确保有足够的空间安装Kcptun"
 
-msgid "SSR Server Subscribe"
+msgid "Server Subscribe"
 msgstr "服务器订阅"
 
-msgid "Subscribe URL"
-msgstr "订阅网址"
+msgid "SSR Subscribe URL"
+msgstr "SSR订阅网址"
+
+msgid "V2ray Subscribe URL"
+msgstr "V2ray订阅网址"
 
 msgid "Servers unsubscribed will be deleted in next update; Please summit the Subscribe URL first before manually update."
 msgstr "取消订阅的服务器将在下次更新时删除，请先输入订阅网址保存提交之后再更新。"
@@ -433,14 +436,8 @@ msgstr "通过代理订阅"
 msgid "Enable auto update subscribe"
 msgstr "开启自动更新订阅"
 
-msgid "Add the server via the SS/SSR link"
-msgstr "通过SS/SSR链接添加服务器"
-
-msgid "SS/SSR Link"
-msgstr "SS/SSR链接"
-
-msgid "Please fill in the SS/SSR link and then click Add; each line of a link."
-msgstr "请填写SS/SSR链接，然后点击添加服务器按钮。"
+msgid "Add the server via the link"
+msgstr "通过链接添加服务器"
 
 msgid "Add Server"
 msgstr "添加服务器"
