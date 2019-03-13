@@ -3,8 +3,9 @@
 # Copyright (C) 2019 Lienol <lawlienol@gmail.com>
 
 CONFIG=passwall
-LOCK_FILE=/var/lock/subscription_ssr.lock
+LOCK_FILE=/var/lock/${CONFIG}_subscription_ssr.lock
 Date=$(date "+%Y-%m-%d %H:%M:%S")
+LOG_FILE=/var/log/$CONFIG.log
 
 config_t_get() {
 	local index=0
@@ -219,12 +220,10 @@ add() {
 			fi
 		done
 		[ -f "/usr/share/$CONFIG/serverconfig_ssr/all_onlineservers" ] && rm -f /usr/share/$CONFIG/serverconfig_ssr/all_onlineservers
-		rm -f "$LOCK_FILE"
 	}
+	rm -f "$LOCK_FILE"
 	exit 0
 }
-
-LOG_FILE=/var/log/$CONFIG.log
 
 start() {
 	#防止并发开启服务
@@ -234,7 +233,7 @@ start() {
 	updatenum=0
 	delnum=0
 	baseurl_ssr=$(uci get $CONFIG.@global_subscribe[0].baseurl_ssr)  ##SSR订阅地址
-	[ -z "$baseurl_ssr" ] && exit 0
+	[ -z "$baseurl_ssr" ] && echo "$Date: SSR订阅地址为空，跳过！" >> $LOG_FILE && rm -f "$LOCK_FILE" && exit 0
 	
 	echo "$Date: 开始订阅SSR..." >> $LOG_FILE
 	[ ! -d "/usr/share/$CONFIG/onlineurl_ssr" ] && mkdir -p /usr/share/$CONFIG/onlineurl_ssr
