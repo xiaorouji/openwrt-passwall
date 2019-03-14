@@ -1,4 +1,3 @@
-
 require("luci.tools.webadmin")
 
 m = Map("guest-wifi", translate("Guest-wifi"))
@@ -21,6 +20,8 @@ device = s:option(ListValue, "device", translate("Define device"), translate("De
 device:value("radio0", "radio0")
 device:value("radio1", "radio1")
 device:value("radio2", "radio2")
+device:value("ra", "ra")
+device:value("rai", "rai")
 device.default = "radio0"
 
 wifi_name = s:option(Value, "wifi_name", translate("Wifi name"), translate("Define the name of guest wifi"))
