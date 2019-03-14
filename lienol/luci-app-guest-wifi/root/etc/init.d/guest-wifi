@@ -4,8 +4,8 @@
 
 START=50
 
-HISTORY_DIR="/etc/config/guestwifi"
-[ -e /etc/config/guestwifi ]||mkdir -p /etc/config/guestwifi
+HISTORY_DIR="/etc/config/guest_wifi"
+[ -e /etc/config/guest_wifi ] || mkdir -p /etc/config/guest_wifi
 
 enabled=$(uci get guest-wifi.@guest-wifi[0].enable)
 wifi_name=$(uci get guest-wifi.@guest-wifi[0].wifi_name)
@@ -24,7 +24,7 @@ create=$(uci get guest-wifi.@guest-wifi[0].create)
 start() {
 	[ $enabled = 1 ] && {
 		[ $create = 1 ] && {
-			[ -f /etc/config/guestwifi/guest_del ] || echo "#! /bin/sh" > ${HISTORY_DIR}/guest_del
+			[ -f /etc/config/guest_wifi/guest_del ] || echo "#! /bin/sh" > ${HISTORY_DIR}/guest_del
 			chmod 0755 ${HISTORY_DIR}/guest_del
 			add_interface
 			add_ssid
@@ -54,8 +54,8 @@ stop() {
 			rule_a=`uci show firewall |grep "Allow DNS Queries for $wifi_name"|grep -o "[0-9]*[0-9]"`
 			uci del firewall.@rule[$rule_a]
 			uci commit firewall
-			/etc/config/guestwifi/guest_del
-			rm -rf /etc/config/guestwifi/guest_del
+			/etc/config/guest_wifi/guest_del
+			rm -rf /etc/config/guest_wifi/guest_del
 			/etc/init.d/network restart
 		}
 		uci set guest-wifi.@guest-wifi[0].create='0'
