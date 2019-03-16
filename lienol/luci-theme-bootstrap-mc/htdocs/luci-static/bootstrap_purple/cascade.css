@@ -8,6 +8,7 @@ body {
 	line-height: 1.8;
 	margin: 0;
 	padding-top: 60px;
+	margin: unset;
 }
 
 a {
@@ -97,7 +98,7 @@ legend {
 /* Style */
 
 .container:first-child {
-	height: 40px;
+	min-height: 40px;
 }
 
 .container {
