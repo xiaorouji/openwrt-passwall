@@ -464,7 +464,7 @@ header>.container>.brand-hostname {
 	padding-top: 6px;
 	border: 0px solid #eee;
 	border-radius: 4px;
-	box-shadow: 4px 4px 4px rgba(0, 0, 0, .05);
+	/* box-shadow: 4px 4px 4px rgba(0, 0, 0, .05); */
 	cursor: pointer;
 }
 
@@ -639,13 +639,13 @@ header>.container>.brand-hostname {
 }
 
 .main>.main-left>.nav>.slide>.slide-menu>li {
-	padding-left: 30px;
+	padding-left: 20px;
 	padding-bottom: 4px;
-	font-size: 12px !important;
+	font-size: 14px !important;
 	position: relative;
 	background-color: rgb(255, 255, 255);
 	margin-top: 4px;
-	margin-left: 15px;
+	margin-left: 10px;
 	border: 1px solid #eee;
 	border-radius: 5px;
 }
@@ -1560,7 +1560,7 @@ input[name="nslookup"] {
 
 header>.container>.pull-right>* {
 	position: relative;
-	top: 0.45rem;
+	top: 1.3rem;
 	cursor: pointer;
 }
 
@@ -1659,19 +1659,6 @@ header>.container>.pull-right>* {
 
 .node-main-login>.main .cbi-value:first-child {
 	display: none;
-}
-
-.node-main-login>.main .cbi-value>* {
-	/* display: inline-block !important; */
-}
-
-.node-main-login>.main .cbi-value>.cbi-value-field {
-	margin-left: 20px;
-}
-
-.node-main-login>.main .cbi-input-user,
-.node-main-login>.main .cbi-input-password {
-	min-width: 15rem;
 }
 
 .node-main-login footer {
@@ -2007,7 +1994,8 @@ body.lang_pl.node-main-login .cbi-value-title {
 		line-height: 1.5;
 	}
 	header>.container>.pull-right>* {
-		top: 0.35rem;
+		top: unset;
+		bottom: 3rem;
 	}
 	.label {
 		padding: 0.2rem 0.6rem;
@@ -2028,12 +2016,6 @@ body.lang_pl.node-main-login .cbi-value-title {
 }
 
 @media screen and (max-width: 1280px) {
-	header {
-		/*height: 3.5rem;*/
-	}
-	header>.container {
-		/*margin-top: 0.25rem;*/
-	}
 	.main {
 		top: 3.5rem;
 		height: calc(100% - 3.5rem);
@@ -2058,20 +2040,12 @@ body.lang_pl.node-main-login .cbi-value-title {
 		font-size: 0.8rem !important;
 		width: 100% !important;
 	}
-	.main>.main-left>.nav>li,
-	.main>.main-left>.nav>li a,
-	.main>.main-left>.nav>.slide>.menu {
-		font-size: 1.3rem;
-	}
-	.main>.main-left>.nav>.slide>.slide-menu>li>a {
-		font-size: 0.9rem;
+	.main>.main-left>.nav>.slide>.slide-menu>li {
+		font-size: 1rem;
 	}
 }
 
 @media screen and (max-width: 992px) {
-	header {
-		height: 3.5rem;
-	}
 	header>.container>.brand {
 		font-size: 18px;
 		height: 3.5rem;
@@ -2132,12 +2106,12 @@ body.lang_pl.node-main-login .cbi-value-title {
 	#diag-rc-output>pre {
 		font-size: 1.2rem;
 	}
-	.node-main-login>.main .cbi-value-title {
-		text-align: left;
-	}
 }
 
 @media screen and (max-width: 480px) {
+	header {
+		height: 3.5rem;
+	}
 	div.cbi-section, fieldset {
 		padding: 1rem;
 		margin: 1rem 0 0 0;
@@ -2149,11 +2123,8 @@ body.lang_pl.node-main-login .cbi-value-title {
 	#maincontent>.container {
 		margin: 0 1rem 1.5rem 1rem;
 	}
-	.main>.main-left>.nav>.slide>.menu {
-		font-size: 1.3rem;
-	}
-	.main>.main-left>.nav>.slide>.slide-menu>li>a {
-		font-size: 1.1rem;
+	.main>.main-left>.nav>.slide>.slide-menu>li {
+		font-size: 1rem;
 	}
 	.cbi-value {
 		padding: 0.6em 0em;
@@ -2165,21 +2136,17 @@ body.lang_pl.node-main-login .cbi-value-title {
 		/* text-align: left;
 		padding-left: 1em; */
 	}
-	.cbi-value-field,
+	.cbi-value-field {
+		width: 55%;
+	}
 	.cbi-value-description {
 		width: 100%;
 	}
-	.cbi-value-field .cbi-input-select {
-		min-width: unset;
-		width: 95%;
-	}
+	.cbi-value-field .cbi-input-select,
 	.cbi-value input[type="password"],
 	.cbi-value input[type="text"] {
 		min-width: unset;
-	}
-	.cbi-value>.cbi-value-field {
-		display: table-cell;
-		width: 20em;
+		width: 95%;
 	}
 	.cbi-tabmenu>li,
 	.tabs>li {
@@ -2201,10 +2168,6 @@ body.lang_pl.node-main-login .cbi-value-title {
 	}
 	.node-main-login>.main form>div:nth-last-child(1) {
 		margin-top: 2rem;
-	}
-	.node-main-login>.main .cbi-value-title {
-		width: 100% !important;
-		font-size: 1.2rem;
 	}
 	.node-main-login>.main div.cbi-section,
 	.node-main-login>.main fieldset {
@@ -2261,30 +2224,18 @@ body.lang_pl.node-main-login .cbi-value-title {
 }
 
 @media screen and (min-width: 992px) {
-	.cbi-value input[type="password"],
-	.cbi-value input[type="text"] {
-		min-width: 20rem;
-	}
 	.cbi-value-field .cbi-input-select {
 		min-width: 20rem;
 	}
 }
 
 @media screen and (min-width: 1280px) {
-	.cbi-value input[type="password"],
-	.cbi-value input[type="text"] {
-		min-width: 22rem;
-	}
 	.cbi-value-field .cbi-input-select {
 		min-width: 22rem;
 	}
 }
 
 @media screen and (min-width: 1600px) {
-	.cbi-value input[type="password"],
-	.cbi-value input[type="text"] {
-		min-width: 25rem;
-	}
 	.cbi-value-field .cbi-input-select {
 		min-width: 25rem;
 	}
