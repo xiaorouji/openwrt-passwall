@@ -87,9 +87,9 @@ e:value("returnhome",translate("Return Home"))
 
 e=t:option(ListValue,"localhost_proxy_mode",translate("Localhost")..translate("Proxy Mode"),translate("The server client can also use this rule to scientifically surf the Internet"))
 e:value("default",translate("Default"))
-e:value("global",translate("Global Proxy").."（"..translate("Danger").."）")
+--e:value("global",translate("Global Proxy").."（"..translate("Danger").."）")
 e:value("gfwlist",translate("GFW List"))
-e:value("chnroute",translate("China WhiteList"))
+--e:value("chnroute",translate("China WhiteList"))
 e.default="default"
 e.rmempty=false
 
