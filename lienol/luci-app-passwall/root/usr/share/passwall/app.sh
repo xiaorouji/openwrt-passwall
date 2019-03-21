@@ -1192,9 +1192,9 @@ EOF
 		
 			#  用于本机流量转发，默认只走router
 			#$iptables_nat -I OUTPUT -j SS
-			$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_LANIPLIST dst -j RETURN
-			$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_VPSIPLIST dst -j RETURN
-			$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_WHITELIST dst -j RETURN
+			$iptables_nat -A OUTPUT -m set --match-set $IPSET_LANIPLIST dst -j RETURN
+			$iptables_nat -A OUTPUT -m set --match-set $IPSET_VPSIPLIST dst -j RETURN
+			$iptables_nat -A OUTPUT -m set --match-set $IPSET_WHITELIST dst -j RETURN
 			$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_ROUTER dst -j REDIRECT --to-ports $TCP_REDIR_PORT
 			$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_BLACKLIST dst -j REDIRECT --to-ports $TCP_REDIR_PORT
 			
