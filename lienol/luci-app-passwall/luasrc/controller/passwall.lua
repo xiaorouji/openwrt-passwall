@@ -61,9 +61,11 @@ function link_add_server()
 	local type = luci.http.formvalue("type")
 	local link = luci.http.formvalue("link")
 	if type == "SSR" then
-		luci.sys.call("/usr/share/passwall/subscription_ssr.sh add '"..link.."' >/dev/null")
+		luci.sys.call('rm -f /tmp/ssr_links.conf && echo "' .. link .. '" >> /tmp/ssr_links.conf')
+		luci.sys.call("/usr/share/passwall/subscription_ssr.sh add >/dev/null")
 	elseif type == "V2ray" then
-		luci.sys.call("/usr/share/passwall/subscription_v2ray.sh add '"..link.."' >/dev/null")
+		luci.sys.call('rm -f /tmp/v2ray_links.conf && echo "' .. link .. '" >> /tmp/v2ray_links.conf')
+		luci.sys.call("/usr/share/passwall/subscription_v2ray.sh add >/dev/null")
 	end
 end
 
