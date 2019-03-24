@@ -148,26 +148,6 @@ local function get_api_json(url)
 	return jsonc.parse(json_content) or { }
 end
 
-function get_config_option(option, default)
-	return uci:get("v2ray", "general", option) or default
-end
-
-function get_current_log_file(type)
-	local log_folder = get_config_option("log_folder", "/var/log/v2ray")
-	return "%s/%s.%s.log" % { log_folder, type, "general" }
-end
-
-function is_running(client)
-	if client and client ~= "" then
-		local file_name = client:match(".*/([^/]+)$") or ""
-		if file_name ~= "" then
-			return sys.call("pidof %s >/dev/null" % file_name) == 0
-		end
-	end
-
-	return false
-end
-
 function get_v2ray_version()
 	return luci.sys.exec("/usr/bin/v2ray/v2ray -version | awk '{print $2}' | sed -n 1P")
 end
