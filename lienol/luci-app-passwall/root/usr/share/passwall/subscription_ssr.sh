@@ -188,7 +188,7 @@ get_ss_config(){
 }
 
 add() {
-	SSR_LINKS=$1
+	SSR_LINKS=$(cat /tmp/ssr_links.conf 2>/dev/null)
 	[ -n "$SSR_LINKS" ] && {
 		[ -f "$LOCK_FILE" ] && return 3
 		touch "$LOCK_FILE"
@@ -221,6 +221,7 @@ add() {
 		done
 		[ -f "/usr/share/$CONFIG/serverconfig_ssr/all_onlineservers" ] && rm -f /usr/share/$CONFIG/serverconfig_ssr/all_onlineservers
 	}
+	rm -f /tmp/ssr_links.conf
 	rm -f "$LOCK_FILE"
 	exit 0
 }
@@ -283,7 +284,7 @@ stop)
 	stop
 	;;
 add)
-	add $2
+	add
 	;;
 *)
 	start
