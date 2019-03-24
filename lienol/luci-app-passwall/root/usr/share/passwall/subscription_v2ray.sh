@@ -154,7 +154,7 @@ del_all_config(){
 }
 
 add() {
-	V2RAY_LINKS=$1
+	V2RAY_LINKS=$(cat /tmp/v2ray_links.conf 2>/dev/null)
 	[ -n "$V2RAY_LINKS" ] && {
 		[ -f "$LOCK_FILE" ] && return 3
 		touch "$LOCK_FILE"
@@ -173,6 +173,7 @@ add() {
 		done
 		[ -f "/usr/share/$CONFIG/serverconfig_v2ray/all_onlineservers" ] && rm -f /usr/share/$CONFIG/serverconfig_v2ray/all_onlineservers
 	}
+	rm -f /tmp/v2ray_links.conf
 	rm -f "$LOCK_FILE"
 	exit 0
 }
@@ -235,7 +236,7 @@ stop)
 	stop
 	;;
 add)
-	add $2
+	add
 	;;
 *)
 	start
