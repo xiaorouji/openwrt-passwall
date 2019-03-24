@@ -21,7 +21,11 @@ end
 local n={}
 cursor:foreach(i,"servers",function(e)
 	if e.server_type and e.server and e.remarks then
-		n[e[".name"]]="%s：[%s] %s"%{e.server_type,e.remarks,e.server}
+		if e.use_kcp and e.use_kcp == "1" then
+			n[e[".name"]]="%s+%s：[%s] %s"%{e.server_type,"Kcptun",e.remarks,e.server}
+		else
+			n[e[".name"]]="%s：[%s] %s"%{e.server_type,e.remarks,e.server}
+		end
 	end
 end)
 
