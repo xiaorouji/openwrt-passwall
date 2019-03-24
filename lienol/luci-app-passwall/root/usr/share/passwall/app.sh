@@ -409,7 +409,7 @@ start_kcptun() {
 	if [ -z "$kcptun_bin" ]; then
 		echolog "找不到Kcptun客户端主程序，无法启用！！！" 
 	else
-		$kcptun_bin -l 0.0.0.0:$KCPTUN_REDIR_PORT -r $2:$3 $4 >/dev/null 2>&1 &
+		$kcptun_bin --log $CONFIG_PATH/kcptun -l 0.0.0.0:$KCPTUN_REDIR_PORT -r $2:$3 $4 >/dev/null 2>&1 &
 	fi
 }
 
@@ -427,7 +427,7 @@ start_tcp_redir() {
 			[ -n "$ss_bin" ] && {
 				for i in $(seq 1 $process)
 				do
-					$ss_bin -c $CONFIG_TCP_FILE -f $RUN_PID_PATH/tcp_${TCP_REDIR_SERVER_TYPE}_$i -b :: > /dev/null 2>&1
+					$ss_bin -c $CONFIG_TCP_FILE -f $RUN_PID_PATH/tcp_${TCP_REDIR_SERVER_TYPE}_$i -b :: > /dev/null 2>&1 &
 				done
 			}
 		fi
@@ -446,7 +446,7 @@ start_udp_redir() {
 		else
 			ss_bin=$(find_bin "$UDP_REDIR_SERVER_TYPE"-redir)
 			[ -n "$ss_bin" ] && {
-				$ss_bin -c $CONFIG_UDP_FILE -f $RUN_PID_PATH/udp_${UDP_REDIR_SERVER_TYPE}_1 -U > /dev/null 2>&1
+				$ss_bin -c $CONFIG_UDP_FILE -f $RUN_PID_PATH/udp_${UDP_REDIR_SERVER_TYPE}_1 -U > /dev/null 2>&1 &
 			}
 		fi
 	fi
@@ -463,7 +463,7 @@ start_socks5_proxy() {
 			[ -n "$brook_bin" ] && $brook_bin $BROOK_SOCKS5_CMD &>/dev/null &
 		else
 			ss_bin=$(find_bin "$SOCKS5_PROXY_SERVER_TYPE"-local)
-			[ -n "$ss_bin" ] && $ss_bin -c $CONFIG_SOCKS5_FILE -b 0.0.0.0 > /dev/null 2>&1
+			[ -n "$ss_bin" ] && $ss_bin -c $CONFIG_SOCKS5_FILE -b 0.0.0.0 > /dev/null 2>&1 &
 		fi
 	fi
 }
