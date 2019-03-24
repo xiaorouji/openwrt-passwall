@@ -83,12 +83,12 @@ function server_status()
 	local udp_redir_port = luci.sys.exec("echo -n `uci get " .. appname .. ".@global_proxy[0].udp_redir_port`")
 	local dns_mode = luci.sys.exec("echo -n `uci get " .. appname .. ".@global[0].dns_mode`")
 	local e={}
-	e.tcp_redir_status=luci.sys.call("ps -w | grep -v grep | grep -i -E '" .. appname .. "/TCP|brook tproxy -l 0.0.0.0:" .. tcp_redir_port .. "' >/dev/null")==0
-	e.udp_redir_status=luci.sys.call("ps -w | grep -v grep | grep -i -E '" .. appname .. "/UDP|brook tproxy -l 0.0.0.0:" .. udp_redir_port .. "' >/dev/null")==0
-	e.socks5_proxy_status=luci.sys.call("ps -w | grep -v grep | grep -i -E '" .. appname .. "/SOCKS5|brook client' >/dev/null")==0
-	e.dns_mode_status=luci.sys.call("ps -w | grep -v grep | grep -i "..dns_mode.." >/dev/null")==0
-	e.haproxy_status=luci.sys.call("pgrep haproxy >/dev/null")==0
-	e.kcptun_status=luci.sys.call("pgrep kcptun >/dev/null")==0
+	e.tcp_redir_status = luci.sys.call("ps -w | grep -v grep | grep -i -E '" .. appname .. "/TCP|brook tproxy -l 0.0.0.0:" .. tcp_redir_port .. "' >/dev/null") == 0
+	e.udp_redir_status = luci.sys.call("ps -w | grep -v grep | grep -i -E '" .. appname .. "/UDP|brook tproxy -l 0.0.0.0:" .. udp_redir_port .. "' >/dev/null") == 0
+	e.socks5_proxy_status = luci.sys.call("ps -w | grep -v grep | grep -i -E '" .. appname .. "/SOCKS5|brook client' >/dev/null") == 0
+	e.dns_mode_status = luci.sys.call("ps -w | grep -v grep | grep -i "..dns_mode.." >/dev/null") == 0
+	e.haproxy_status = luci.sys.call("ps -w | grep -v grep | grep -i 'haproxy -f /var/etc/" .. appname .. "/haproxy.cfg' >/dev/null") == 0
+	e.kcptun_status = luci.sys.call("ps -w | grep -v grep | grep -i 'log /var/etc/" .. appname .. "/kcptun' >/dev/null") == 0
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
 end
@@ -96,9 +96,9 @@ end
 function connect_status()
 	local e={}
 	if luci.http.formvalue("type") == "google" then
-		e.status=luci.sys.call("echo `curl -I -o /dev/null -s -m 10 --connect-timeout 5 -w %{http_code} 'https://www.google.com'`|grep 200 >/dev/null")==0
+		e.status=luci.sys.call("echo `curl -I -o /dev/null -s -m 10 --connect-timeout 5 -w %{http_code} 'https://www.google.com'` | grep 200 >/dev/null") == 0
 	else
-		e.status=luci.sys.call("echo `curl -I -o /dev/null -s -m 10 --connect-timeout 2 -w %{http_code} 'http://www.baidu.com'`|grep 200 >/dev/null")==0
+		e.status=luci.sys.call("echo `curl -I -o /dev/null -s -m 10 --connect-timeout 2 -w %{http_code} 'http://www.baidu.com'` | grep 200 >/dev/null") == 0
 	end
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
@@ -107,7 +107,7 @@ end
 function act_ping()
 	local e={}
 	e.index=luci.http.formvalue("index")
-	e.ping=luci.sys.exec("ping -c 1 -W 1 %q 2>&1|grep -o 'time=[0-9]*.[0-9]'|awk -F '=' '{print$2}'"%luci.http.formvalue("domain"))
+	e.ping=luci.sys.exec("ping -c 1 -W 1 %q 2>&1 | grep -o 'time=[0-9]*.[0-9]' | awk -F '=' '{print$2}'"%luci.http.formvalue("domain"))
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
 end
