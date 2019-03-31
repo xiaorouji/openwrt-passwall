@@ -1,20 +1,19 @@
 -- Copyright 2018-2019 Lienol <lawlienol@gmail.com>
 -- Licensed to the public under the Apache License 2.0.
 
+module("luci.model.cbi.passwall.api.v2ray", package.seeall)
 local fs   = require "nixio.fs"
 local sys  = require "luci.sys"
 local uci  = require "luci.model.uci".cursor()
 local util = require "luci.util"
 local i18n = require "luci.i18n"
-
-module("luci.model.cbi.passwall.api.v2ray", package.seeall)
+local ipkg = require "luci.model.ipkg"
 
 local v2ray_api = "https://api.github.com/repos/v2ray/v2ray-core/releases/latest"
-
 local wget = "/usr/bin/wget"
-local wget_args = { "--no-check-certificate", "--quiet", "--timeout=10", "--tries=2" }
+local wget_args = { "--no-check-certificate", "--quiet", "--timeout=100", "--tries=3" }
 local curl = "/usr/bin/curl"
-local command_timeout = 40
+local command_timeout = 300
 
 local function _unpack(t, i)
 	i = i or 1
@@ -148,8 +147,18 @@ local function get_api_json(url)
 	return jsonc.parse(json_content) or { }
 end
 
+function get_v2ray_file_path()
+	return uci:get("passwall", "global_v2ray", "v2ray_client_file") or luci.sys.exec("echo -n `uci get passwall.@global_v2ray[0].v2ray_client_file`")
+end
+
 function get_v2ray_version()
-	return luci.sys.exec("/usr/bin/v2ray/v2ray -version | awk '{print $2}' | sed -n 1P")
+	if get_v2ray_file_path() and get_v2ray_file_path() ~= "" then
+		if fs.access(get_v2ray_file_path().."/v2ray")then
+			return luci.sys.exec(get_v2ray_file_path() .. "/v2ray -version | awk '{print $2}' | sed -n 1P")
+		end
+	end
+	return ""
+	--return luci.sys.exec("/usr/bin/v2ray/v2ray -version | awk '{print $2}' | sed -n 1P")
 end
 
 function to_check(arch)
@@ -241,9 +250,10 @@ function to_download(url)
 end
 
 function to_extract(file, subfix)
-	local isinstall_unzip=sys.call("opkg list-installed | grep unzip > /dev/null")==0
-	if not isinstall_unzip then
-		sys.call("opkg update && opkg install unzip > /dev/null")
+	local isinstall_unzip = ipkg.installed("unzip")
+	if isinstall_unzip == nil then
+		ipkg.update()
+		ipkg.install("unzip")
 	end
 	
 	if not file or file == "" or not fs.access(file) then
@@ -279,7 +289,7 @@ function to_move(file)
 		}
 	end
 
-	local client_file = "/usr/bin/v2ray"
+	local client_file = get_v2ray_file_path()
 	
 	sys.call("mkdir -p "..client_file)
 	

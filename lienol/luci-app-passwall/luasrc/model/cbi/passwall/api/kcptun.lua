@@ -2,20 +2,20 @@
 -- Copyright 2018-2019 Lienol <lawlienol@gmail.com>
 -- Licensed to the public under the Apache License 2.0.
 
+module("luci.model.cbi.passwall.api.kcptun", package.seeall)
 local fs   = require "nixio.fs"
 local sys  = require "luci.sys"
 local uci  = require "luci.model.uci".cursor()
 local util = require "luci.util"
 local i18n = require "luci.i18n"
-
-module("luci.model.cbi.passwall.api.kcptun", package.seeall)
+local ipkg = require "luci.model.ipkg"
 
 local kcptun_api = "https://api.github.com/repos/xtaci/kcptun/releases/latest"
 
 local wget = "/usr/bin/wget"
-local wget_args = { "--no-check-certificate", "--quiet", "--timeout=10", "--tries=2" }
+local wget_args = { "--no-check-certificate", "--quiet", "--timeout=100", "--tries=3" }
 local curl = "/usr/bin/curl"
-local command_timeout = 40
+local command_timeout = 300
 
 local function _unpack(t, i)
 	i = i or 1

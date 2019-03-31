@@ -417,8 +417,13 @@ start_tcp_redir() {
 	if [ "$TCP_REDIR_SERVER" != "nil" ];then
 		echolog "运行TCP透明代理..."
 		if [ "$TCP_REDIR_SERVER_TYPE" == "v2ray" ]; then
-			v2ray_bin=$(find_bin V2ray)
-			[ -n "$v2ray_bin" ] && $v2ray_bin -config=$CONFIG_TCP_FILE > /dev/null &
+			v2ray_path=$(config_t_get global_v2ray v2ray_client_file)
+			if [ -f "${v2ray_path}/v2ray" ];then
+				${v2ray_path}/v2ray -config=$CONFIG_TCP_FILE > /dev/null &
+			else
+				v2ray_bin=$(find_bin V2ray)
+				[ -n "$v2ray_bin" ] && $v2ray_bin -config=$CONFIG_TCP_FILE > /dev/null &
+			fi
 		elif [ "$TCP_REDIR_SERVER_TYPE" == "brook" ]; then
 			brook_bin=$(find_bin Brook)
 			[ -n "$brook_bin" ] && $brook_bin $BROOK_TCP_CMD &>/dev/null &
@@ -438,8 +443,13 @@ start_udp_redir() {
 	if [ "$UDP_REDIR_SERVER" != "nil" ];then
 		echolog "运行UDP透明代理..." 
 		if [ "$UDP_REDIR_SERVER_TYPE" == "v2ray" ]; then
-			v2ray_bin=$(find_bin V2ray)
-			[ -n "$v2ray_bin" ] && $v2ray_bin -config=$CONFIG_UDP_FILE > /dev/null &
+			v2ray_path=$(config_t_get global_v2ray v2ray_client_file)
+			if [ -f "${v2ray_path}/v2ray" ];then
+				${v2ray_path}/v2ray -config=$CONFIG_UDP_FILE > /dev/null &
+			else
+				v2ray_bin=$(find_bin V2ray)
+				[ -n "$v2ray_bin" ] && $v2ray_bin -config=$CONFIG_UDP_FILE > /dev/null &
+			fi
 		elif [ "$UDP_REDIR_SERVER_TYPE" == "brook" ]; then
 			brook_bin=$(find_bin brook)
 			[ -n "$brook_bin" ] && $brook_bin $BROOK_UDP_CMD &>/dev/null &
@@ -456,8 +466,13 @@ start_socks5_proxy() {
 	if [ "$SOCKS5_PROXY_SERVER" != "nil" ];then
 		echolog "运行Socks5代理..."
 		if [ "$SOCKS5_PROXY_SERVER_TYPE" == "v2ray" ]; then
-			v2ray_bin=$(find_bin v2ray)
-			[ -n "$v2ray_bin" ] && $v2ray_bin -config=$CONFIG_SOCKS5_FILE > /dev/null &
+			v2ray_path=$(config_t_get global_v2ray v2ray_client_file)
+			if [ -f "${v2ray_path}/v2ray" ];then
+				${v2ray_path}/v2ray -config=$CONFIG_SOCKS5_FILE > /dev/null &
+			else
+				v2ray_bin=$(find_bin V2ray)
+				[ -n "$v2ray_bin" ] && $v2ray_bin -config=$CONFIG_SOCKS5_FILE > /dev/null &
+			fi
 		elif [ "$SOCKS5_PROXY_SERVER_TYPE" == "brook" ]; then
 			brook_bin=$(find_bin brook)
 			[ -n "$brook_bin" ] && $brook_bin $BROOK_SOCKS5_CMD &>/dev/null &
@@ -985,7 +1000,7 @@ del_vps_port() {
 
 dns_hijack(){
 	dnshijack=$(config_t_get global_dns dns_53)
-	if [ "$dnshijack" = "1" ];then
+	if [ "$dnshijack" = "1" -o "$1" = "force" ];then
 		chromecast_nu=`$iptables_nat -L SS -v -n --line-numbers|grep "dpt:53"|awk '{print $1}'`
 		is_right_lanip=`$iptables_nat -L SS -v -n --line-numbers|grep "dpt:53" |grep "$lanip"`
 		if [ -z "$chromecast_nu" ]; then
@@ -1252,6 +1267,7 @@ EOF
 			[ "$TCP_REDIR_SERVER" != "nil" ] && $iptables_mangle -A SS_ACL -p tcp -m comment --comment "Default" -j $(get_action_chain $PROXY_MODE)
 			[ "$UDP_REDIR_SERVER" != "nil" ] && $iptables_mangle -A SS_ACL -p udp -m comment --comment "Default" -j $(get_action_chain $PROXY_MODE)
 		else
+			[ "$PROXY_MODE" == "gfwlist" ] && dns_hijack "force"
 			[ "$TCP_REDIR_SERVER" != "nil" ] && $iptables_mangle -A SS_ACL -p tcp -m multiport --dport $TCP_REDIR_PORTS -m comment --comment "Default" -j $(get_action_chain $PROXY_MODE)
 			[ "$UDP_REDIR_SERVER" != "nil" ] && $iptables_mangle -A SS_ACL -p udp -m multiport --dport $UDP_REDIR_PORTS -m comment --comment "Default" -j $(get_action_chain $PROXY_MODE)
 		fi
@@ -1401,6 +1417,7 @@ stop() {
 	ps -w | grep -E "$CONFIG_TCP_FILE|$CONFIG_UDP_FILE|$CONFIG_SOCKS5_FILE" | grep -v "grep" | awk '{print $1}' | xargs kill -9
 	ps -w | grep "kcptun_client" | grep "$KCPTUN_REDIR_PORT" | grep -v "grep" | awk '{print $1}' | xargs kill -9
 	rm -rf /var/pdnsd/pdnsd.cache
+	rm -rf $TMP_DNSMASQ_PATH
 	rm -rf $CONFIG_PATH
 	stop_dnsmasq
 	stop_crontab

@@ -29,15 +29,18 @@ o.default=0
 o:depends("auto_update",1)
 
 -- [[ V2ray Settings ]]--
-s=m:section(TypedSection,"global",translate("V2ray Update"))
+s=m:section(TypedSection,"global_v2ray",translate("V2ray Update"))
 s.anonymous=true
 s:append(Template("passwall/v2ray"))
+o=s:option(Value,"v2ray_client_file",translate("V2ray client path"),translate("if you want to run from memory, change the path, such as /tmp/v2ray/, Then save the application and update it manually."))
+o.default="/usr/bin/v2ray/"
+o.rmempty=false
 
 -- [[ Kcptun Settings ]]--
 s=m:section(TypedSection,"global_kcptun",translate("Kcptun Update"))
 s.anonymous=true
 s:append(Template("passwall/kcptun"))
-o=s:option(Value,"kcptun_client_file",translate("Kcptun client path"))
+o=s:option(Value,"kcptun_client_file",translate("Kcptun client path"),translate("if you want to run from memory, change the path, such as /tmp/kcptun_client, Then save the application and update it manually."))
 o.default="/usr/bin/kcptun_client"
 o.rmempty=false
 --[[
