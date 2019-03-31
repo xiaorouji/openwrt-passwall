@@ -4,7 +4,9 @@
 -%>
 
 <%
-local kcptun_version=luci.sys.exec("/usr/bin/kcptun_client -v | awk '{print $3}'")
+local kcptun_path = luci.sys.exec("echo -n `uci get passwall.@global_kcptun[0].kcptun_client_file`")
+local kcptun_version = luci.sys.exec(kcptun_path.." -v | awk '{print $3}'")
+--local kcptun_version = luci.sys.exec("/usr/bin/kcptun_client -v | awk '{print $3}'")
 local dsp = require "luci.dispatcher"
 -%>
 
@@ -18,6 +20,9 @@ local dsp = require "luci.dispatcher"
 	var inProgressText = '<%:正在更新...%>';
 	var unexpectedErrorText = '<%:意外错误.%>';
 	var updateInProgressNotice = '<%:正在更新，你确认要关闭吗？%>';
+	var downloadingText = '<%:下载中...%>';
+	var decompressioningText = '<%:解压中...%>';
+	var movingText = '<%:移动中...%>';
 
 	window.onload = function() {
 		var kcptunCheckBtn = document.getElementById('_kcptun-check_btn');
@@ -58,19 +63,6 @@ local dsp = require "luci.dispatcher"
 		}
 	}
 
-	function doAjaxGet(url, data, onResult) {
-		new XHR().get(url, data, function(_, json) {
-			var resultJson = json || {
-				'code': 1,
-				'error': unexpectedErrorText
-			};
-
-			if(typeof onResult === 'function') {
-				onResult(resultJson);
-			}
-		})
-	}
-
 	function onBtnClick_kcptun(btn) {
 		if(kcptunInfo === undefined) {
 			checkUpdate_kcptun(btn);
@@ -87,10 +79,10 @@ local dsp = require "luci.dispatcher"
 
 		var ckeckDetailElm = document.getElementById(btn.id + '-detail');
 
-		doAjaxGet('<%=dsp.build_url("admin/vpn/passwall/kcptun_check")%>', {
+		XHR.get('<%=dsp.build_url("admin/vpn/passwall/kcptun_check")%>', {
 			token: tokenStr,
 			arch: ''
-		}, function(json) {
+		}, function(x,json) {
 			removePageNotice_kcptun();
 
 			if(json.code) {
@@ -118,57 +110,57 @@ local dsp = require "luci.dispatcher"
 					btn.value = noUpdateText;
 				}
 			}
-		});
+		},300);
 	}
 
 	function doUpdate_kcptun(btn) {
 		btn.disabled = true;
-		btn.value = '<%:下载中...%>';
+		btn.value = downloadingText;
 
 		addPageNotice_kcptun();
 
 		var kcptunUpdateUrl = '<%=dsp.build_url("admin/vpn/passwall/kcptun_update")%>';
 		// Download file
-		doAjaxGet(kcptunUpdateUrl, {
+		XHR.get(kcptunUpdateUrl, {
 			token: tokenStr,
 			url: kcptunInfo ? kcptunInfo.url.download : ''
-		}, function(json) {
+		}, function(x,json) {
 			if(json.code) {
 				removePageNotice_kcptun();
 				onRequestError_kcptun(btn, json.error);
 			} else {
-				btn.value = '<%:解压中...%>';
+				btn.value = decompressioningText;
 
 				// Extract file
-				doAjaxGet(kcptunUpdateUrl, {
+				XHR.get(kcptunUpdateUrl, {
 					token: tokenStr,
 					task: 'extract',
 					file: json.file,
 					subfix: kcptunInfo ? kcptunInfo.type : ''
-				}, function(json) {
+				}, function(x,json) {
 					if(json.code) {
 						removePageNotice_kcptun();
 						onRequestError_kcptun(btn, json.error);
 					} else {
-						btn.value = '<%:移动中...%>';
+						btn.value = movingText;
 
 						// Move file to target dir
-						doAjaxGet(kcptunUpdateUrl, {
+						XHR.get(kcptunUpdateUrl, {
 							token: tokenStr,
 							task: 'move',
 							file: json.file
-						}, function(json) {
+						}, function(x,json) {
 							removePageNotice_kcptun();
 							if(json.code) {
 								onRequestError_kcptun(btn, json.error);
 							} else {
 								onUpdateSuccess_kcptun(btn);
 							}
-						})
+						},300)
 					}
-				})
+				},300)
 			}
-		})
+		},300)
 	}
 	//]]>
 </script>
