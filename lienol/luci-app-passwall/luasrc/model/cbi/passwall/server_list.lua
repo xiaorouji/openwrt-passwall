@@ -11,7 +11,7 @@ a=Map(appname)
 t=a:section(TypedSection,"global",translate("Add the server via the link"))
 t.anonymous=true
 
-t:append(Template("passwall/link_add_server"))
+t:append(Template("passwall/server_list/link_add_server"))
 
 t=a:section(TypedSection,"servers",translate("Servers List"),translate("Make sure that the Kcptun parameters are configured under the servers to use the Kcptun fast switch."))
 t.anonymous=true
@@ -60,13 +60,13 @@ e=t:option(Flag,"use_kcp",translate("Kcptun Switch"))
 e.width="10%"
 
 e=t:option(DummyValue,"server",translate("Ping Latency"))
-e.template="passwall/ping"
+e.template="passwall/server_list/ping"
 e.width="10%"
 
 e=t:option(DummyValue,"apply",translate("Apply"))
 e.width="10%"
-e.template=appname.."/apply"
+e.template="passwall/server_list/apply"
 
-a:append(Template("passwall/server_list"))
+a:append(Template("passwall/server_list/server_list"))
 
 return a
