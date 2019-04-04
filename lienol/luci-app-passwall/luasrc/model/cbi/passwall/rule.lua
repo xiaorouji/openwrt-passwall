@@ -6,7 +6,7 @@ m=Map("passwall")
 -- [[ Rule Settings ]]--
 s=m:section(TypedSection,"global_rules",translate("Rule status"))
 s.anonymous=true
-s:append(Template("passwall/rule_version"))
+s:append(Template("passwall/rule/rule_version"))
 
 o=s:option(Flag,"auto_update",translate("Enable auto update rules"))
 o.default=0
@@ -31,18 +31,20 @@ o:depends("auto_update",1)
 -- [[ V2ray Settings ]]--
 s=m:section(TypedSection,"global_v2ray",translate("V2ray Update"))
 s.anonymous=true
-s:append(Template("passwall/v2ray"))
+s:append(Template("passwall/rule/v2ray_version"))
 o=s:option(Value,"v2ray_client_file",translate("V2ray client path"),translate("if you want to run from memory, change the path, such as /tmp/v2ray/, Then save the application and update it manually."))
 o.default="/usr/bin/v2ray/"
 o.rmempty=false
+s:append(Template("passwall/rule/v2ray_update_btn"))
 
 -- [[ Kcptun Settings ]]--
 s=m:section(TypedSection,"global_kcptun",translate("Kcptun Update"))
 s.anonymous=true
-s:append(Template("passwall/kcptun"))
+s:append(Template("passwall/rule/kcptun_version"))
 o=s:option(Value,"kcptun_client_file",translate("Kcptun client path"),translate("if you want to run from memory, change the path, such as /tmp/kcptun_client, Then save the application and update it manually."))
 o.default="/usr/bin/kcptun_client"
 o.rmempty=false
+s:append(Template("passwall/rule/kcptun_update_btn"))
 --[[
 o = s:option(Button, "_check_kcptun", translate("Manually update"),
 	translate("Make sure there is enough space to install Kcptun"))
