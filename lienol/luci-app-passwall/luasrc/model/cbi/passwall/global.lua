@@ -30,7 +30,7 @@ cursor:foreach(i,"servers",function(e)
 end)
 
 a=Map(i)
-a:append(Template("passwall/global"))
+a:append(Template("passwall/global/status"))
 
 t=a:section(TypedSection,"global",translate("Global Setting"))
 t.anonymous=true
