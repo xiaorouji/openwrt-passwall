@@ -78,9 +78,11 @@ start_pptpd() {
 	ln -sfn $CHAP_SECRETS /etc/ppp/chap-secrets
 	chmod 600 /etc/ppp/*-secrets
 	service_start $BIN $OPTIONS -c $CONFIG_FILE
+	iptables -I INPUT -p tcp --dport 1723 -m comment --comment "Rule for PPTPD" -j ACCEPT
 }
 
 del_rule(){
+	iptables -D INPUT -p tcp --dport 1723 -m comment --comment "Rule for PPTPD" -j ACCEPT
 	pptp_nums=`iptables -t nat -L POSTROUTING 2> /dev/null|grep -c "Rule For PPTPD"`
 	if [ -n "$pptp_nums" ]; then
 		until [ "$pptp_nums" = 0 ]
