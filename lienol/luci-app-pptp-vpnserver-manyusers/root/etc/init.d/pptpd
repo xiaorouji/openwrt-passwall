@@ -50,11 +50,11 @@ setup_config() {
 	if [ "$is_nat" -eq 1 ];then
 		config_get export_interface $1 export_interface
 		if [ "$export_interface" != "default" ];then
-			iptables -t nat -A POSTROUTING -s ${localip%.*}.0/24 -o ${export_interface} -m comment --comment "Rule For PPTPD" -j MASQUERADE
+			iptables -t nat -A POSTROUTING -s ${localip%.*}.0/24 -o ${export_interface} -m comment --comment "Rule For PPTP VPN Server" -j MASQUERADE
 		else
-			iptables -t nat -A POSTROUTING -s ${localip%.*}.0/24 -m comment --comment "Rule For PPTPD" -j MASQUERADE
+			iptables -t nat -A POSTROUTING -s ${localip%.*}.0/24 -m comment --comment "Rule For PPTP VPN Server" -j MASQUERADE
 		fi
-		iptables -A forwarding_rule -s ${localip%.*}.0/24 -m comment --comment "Rule For PPTPD" -j ACCEPT
+		iptables -A forwarding_rule -s ${localip%.*}.0/24 -m comment --comment "Rule For PPTP VPN Server" -j ACCEPT
 	fi
 	config_get mppe $1 mppe
 	[ -n "$(cat "/etc/ppp/options.pptpd" |grep mppe)" ] && sed -i '/mppe/'d /etc/ppp/options.pptpd
@@ -78,16 +78,16 @@ start_pptpd() {
 	ln -sfn $CHAP_SECRETS /etc/ppp/chap-secrets
 	chmod 600 /etc/ppp/*-secrets
 	service_start $BIN $OPTIONS -c $CONFIG_FILE
-	iptables -I INPUT -p tcp --dport 1723 -m comment --comment "Rule for PPTPD" -j ACCEPT
+	iptables -I INPUT -p tcp --dport 1723 -m comment --comment "Rule For PPTP VPN Server" -j ACCEPT
 }
 
 del_rule(){
-	iptables -D INPUT -p tcp --dport 1723 -m comment --comment "Rule for PPTPD" -j ACCEPT
-	pptp_nums=`iptables -t nat -L POSTROUTING 2> /dev/null|grep -c "Rule For PPTPD"`
+	iptables -D INPUT -p tcp --dport 1723 -m comment --comment "Rule For PPTP VPN Server" -j ACCEPT
+	pptp_nums=`iptables -t nat -L POSTROUTING 2> /dev/null|grep -c "Rule For PPTP VPN Server"`
 	if [ -n "$pptp_nums" ]; then
 		until [ "$pptp_nums" = 0 ]
 		do
-			pptp_rules=`iptables -t nat -L POSTROUTING --line-num 2> /dev/null|grep "Rule For PPTPD" |awk '{print $1}'`
+			pptp_rules=`iptables -t nat -L POSTROUTING --line-num 2> /dev/null|grep "Rule For PPTP VPN Server" |awk '{print $1}'`
 			for pptp_rule in $pptp_rules
 			do
 				iptables -t nat -D POSTROUTING $pptp_rule 2> /dev/null
@@ -96,11 +96,11 @@ del_rule(){
 			pptp_nums=`expr $pptp_nums - 1`
 		done
 	fi
-	nums=`iptables -L forwarding_rule 2> /dev/null|grep -c "Rule For PPTPD"`
+	nums=`iptables -L forwarding_rule 2> /dev/null|grep -c "Rule For PPTP VPN Server"`
 	if [ -n "$nums" ]; then
 		until [ "$nums" = 0 ]
 		do
-			rules=`iptables -L forwarding_rule --line-num 2> /dev/null|grep "Rule For PPTPD" |awk '{print $1}'`
+			rules=`iptables -L forwarding_rule --line-num 2> /dev/null|grep "Rule For PPTP VPN Server" |awk '{print $1}'`
 			for rule in $rules
 			do
 				iptables -D forwarding_rule $rule 2> /dev/null
