@@ -436,9 +436,12 @@ EOF
 	procd_set_param respawn
 
 	procd_close_instance
+	
+	iptables -I INPUT -p udp -m multiport --dports 500,4500 -m comment --comment "Rule For IPSec VPN Server" -j ACCEPT
 }
 
 del_rule(){
+	iptables -D INPUT -p udp -m multiport --dports 500,4500 -m comment --comment "Rule For IPSec VPN Server" -j ACCEPT
 	ipsec_nums=`iptables -t nat -L POSTROUTING 2> /dev/null|grep -c "Rule For IPSec VPN Server"`
 	if [ -n "$ipsec_nums" ]; then
 		until [ "$ipsec_nums" = 0 ]
