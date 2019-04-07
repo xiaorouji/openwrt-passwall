@@ -41,8 +41,8 @@ s:append(Template("passwall/rule/v2ray_update_btn"))
 s=m:section(TypedSection,"global_kcptun",translate("Kcptun Update"))
 s.anonymous=true
 s:append(Template("passwall/rule/kcptun_version"))
-o=s:option(Value,"kcptun_client_file",translate("Kcptun client path"),translate("if you want to run from memory, change the path, such as /tmp/kcptun_client, Then save the application and update it manually."))
-o.default="/usr/bin/kcptun_client"
+o=s:option(Value,"kcptun_client_file",translate("Kcptun client path"),translate("if you want to run from memory, change the path, such as /tmp/kcptun-client, Then save the application and update it manually."))
+o.default="/usr/bin/kcptun-client"
 o.rmempty=false
 s:append(Template("passwall/rule/kcptun_update_btn"))
 --[[
