@@ -52,7 +52,7 @@ config global_v2ray
 	option v2ray_client_file '/usr/bin/v2ray/'
 	
 config global_kcptun
-	option kcptun_client_file '/usr/bin/kcptun_client'
+	option kcptun_client_file '/usr/bin/kcptun-client'
 
 config global_subscribe
 	option subscribe_by_ss '0'
