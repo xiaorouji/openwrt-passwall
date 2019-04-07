@@ -22,11 +22,11 @@ ifeq ($(ARCH),arm)
 	PKG_ARCH_KCPTUN:=arm
 endif
 
-PKG_NAME:=kcptun
+PKG_NAME:=kcptun-client
 PKG_VERSION:=20190401
 PKG_RELEASE:=2
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE:=$(PKG_NAME)-linux-$(PKG_ARCH_KCPTUN)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=kcptun-linux-$(PKG_ARCH_KCPTUN)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/xtaci/kcptun/releases/download/v$(PKG_VERSION)
 PKG_HASH:=skip
 
@@ -57,7 +57,7 @@ endef
 
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/client_linux_$(PKG_ARCH_KCPTUN) $(1)/usr/bin/kcptun_client
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/client_linux_$(PKG_ARCH_KCPTUN) $(1)/usr/bin/kcptun-client
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
