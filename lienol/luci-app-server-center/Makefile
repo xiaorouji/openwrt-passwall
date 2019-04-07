@@ -16,7 +16,6 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/$(PKG_NAME)/config
 menu "Configuration"
-	depends on PACKAGE_$(PKG_NAME)
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Python_Server
 	bool "Include ShadowsocksR Python Server"
