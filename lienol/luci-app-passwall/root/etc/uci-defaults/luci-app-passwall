@@ -7,9 +7,6 @@ uci -q batch <<-EOF >/dev/null
 	commit ucitrack
 EOF
 
-/etc/init.d/kcptun stop
-/etc/init.d/haproxy stop
-/etc/init.d/shadowsocks-libev stop
-/etc/init.d/shadowsocksr-libev stop
+killall -9 kcptun haproxy shadowsocks-libev shadowsocksr-libev
 rm -f /tmp/luci-indexcache
 exit 0
