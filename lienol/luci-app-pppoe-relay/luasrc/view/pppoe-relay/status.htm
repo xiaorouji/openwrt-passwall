@@ -1,17 +1,3 @@
-<%
-local uci = require "luci.model.uci".cursor()
-function get_status(section)
-	local server_interface = uci:get("pppoe-relay",section,"server_interface")
-	local client_interface = uci:get("pppoe-relay",section,"client_interface")
-	isrun=luci.sys.call("ps | grep '/usr/sbin/pppoe-relay -S "..server_interface.." -C "..client_interface.."' | grep -v 'grep' >/dev/null")
-	if isrun == 1 then
-		return "<font color=red> X </font>"
-	else
-		return "<font color=green> ✓ </font>"
-	end
-end
-%>
-
 <%+cbi/valueheader%>
-<span class="_status"><%=pcdata(self:cfgvalue(section) or self.default or "")%><%=get_status(section)%></span>
+<span class="_status"><%=pcdata(self:cfgvalue(section) or self.default or "")%></span>
 <%+cbi/valuefooter%>
