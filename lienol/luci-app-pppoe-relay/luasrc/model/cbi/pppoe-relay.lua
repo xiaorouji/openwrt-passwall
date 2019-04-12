@@ -5,6 +5,7 @@ local m,s,o
 
 m=Map("pppoe-relay",translate("PPPoE Relay"))
 m.description = translate("Opening the PPPoE relay allows devices in the Intranet to create a separate PPPoE connection that can cross NAT.")
+
 s=m:section(TypedSection,"service")
 s.addremove=true
 s.anonymous=true
@@ -43,5 +44,7 @@ for _, iface in ipairs(ifaces) do
 	end
 end
 o.rmempty=true
+
+m:append(Template("pppoe-relay/ajax"))
 
 return m
