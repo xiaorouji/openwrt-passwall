@@ -339,7 +339,7 @@ service_running() {
 
 reload_service() {
   local bool vt_enabled=`uci get ipsec.@service[0].enabled 2>/dev/null`
-  [ "$vt_enabled" = 0 ] && /etc/init.d/ipsecvpn stop && return
+  [ "$vt_enabled" = 0 ] && /etc/init.d/ipsecvpn stop > /dev/null 2>&1 && return
 	running && {
 		prepare_env
 		[ $WAIT_FOR_INTF -eq 0 ] && {
@@ -374,7 +374,7 @@ start_service() {
 	local vt_is_nat=`uci get ipsec.@service[0].is_nat 2>/dev/null`
 	local vt_export_interface=`uci get ipsec.@service[0].export_interface 2>/dev/null`
 	
-	[ "$vt_enabled" = 0 ] && /etc/init.d/ipsecvpn stop && return
+	[ "$vt_enabled" = 0 ] && /etc/init.d/ipsecvpn stop > /dev/null 2>&1 && return
 	
 	cat > /etc/ipsec.conf <<EOF
 # ipsec.conf - strongSwan IPsec configuration file
@@ -441,7 +441,7 @@ EOF
 }
 
 del_rule(){
-	iptables -D INPUT -p udp -m multiport --dports 500,4500 -m comment --comment "Rule For IPSec VPN Server" -j ACCEPT
+	iptables -D INPUT -p udp -m multiport --dports 500,4500 -m comment --comment "Rule For IPSec VPN Server" -j ACCEPT 2> /dev/null
 	ipsec_nums=`iptables -t nat -L POSTROUTING 2> /dev/null|grep -c "Rule For IPSec VPN Server"`
 	if [ -n "$ipsec_nums" ]; then
 		until [ "$ipsec_nums" = 0 ]
