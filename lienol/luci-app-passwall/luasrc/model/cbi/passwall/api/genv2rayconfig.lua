@@ -68,7 +68,8 @@ local v2ray = {
 		-- 底层传输配置
 		streamSettings = {
 			network = server.v2ray_transport,
-			security = (server.v2ray_tls == '1') and "tls" or "none",
+			security = server.v2ray_stream_security,
+			tlsSettings = (server.v2ray_tls) and {} or nil,
 			kcpSettings = (server.v2ray_transport == "mkcp") and {
 				mtu = tonumber(server.v2ray_mkcp_mtu),
 				tti = tonumber(server.v2ray_mkcp_tti),
@@ -90,6 +91,9 @@ local v2ray = {
 			httpSettings = (server.v2ray_transport == "h2") and {
 				path = server.v2ray_h2_path,
 				host = server.v2ray_h2_host,
+			} or nil,
+			dsSettings = (server.v2ray_transport == "ds") and {
+				path = server.v2ray_ds_path
 			} or nil,
 			quicSettings = (server.v2ray_transport == "quic") and {
 				security = server.v2ray_quic_security,

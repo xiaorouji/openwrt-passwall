@@ -29,6 +29,10 @@ cursor:foreach(i,"servers",function(e)
 	end
 end)
 
+local key_table = {}   
+for key,_ in pairs(n) do table.insert(key_table,key) end 
+table.sort(key_table)
+
 a=Map(i)
 a:append(Template("passwall/global/status"))
 
@@ -38,22 +42,22 @@ t.addremove=false
 
 e=t:option(ListValue,"tcp_redir_server",translate("TCP Redir Server"),translate("For used to surf the Internet."))
 e:value("nil",translate("Close"))
-for a,t in pairs(n)do e:value(a,t)end
+for _,key in pairs(key_table) do e:value(key,n[key]) end
 
 if has_udp_relay() then
 	e=t:option(ListValue,"udp_redir_server",translate("UDP Redir Server"),translate("For Game Mode or DNS resolution and more.")..translate("The selected server will not use Kcptun."))
 	e:value("nil",translate("Close"))
 	e:value("default",translate("Same as the tcp redir server"))
-	for a,t in pairs(n)do e:value(a,t)end
+	for _,key in pairs(key_table) do e:value(key,n[key]) end
 end
 
 e=t:option(ListValue,"socks5_proxy_server",translate("Socks5 Proxy Server"),translate("The client can use the router's Socks5 proxy"))
 e:value("nil",translate("Close"))
-for a,t in pairs(n)do e:value(a,t)end
+for _,key in pairs(key_table) do e:value(key,n[key]) end
 
 e=t:option(ListValue,"dns_mode",translate("DNS Forward Mode"))
 e.rmempty=false
-e:reset_values()--清空
+e:reset_values()
 if is_installed("ChinaDNS") or is_finded("chinadns") then
 	e:value("chinadns","ChinaDNS")
 end
