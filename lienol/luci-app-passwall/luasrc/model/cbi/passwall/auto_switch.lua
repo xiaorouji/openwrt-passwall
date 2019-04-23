@@ -8,6 +8,10 @@ cursor:foreach(i,"servers",function(e)
 	end
 end)
 
+local key_table = {}   
+for key,_ in pairs(n) do table.insert(key_table,key) end 
+table.sort(key_table)
+
 m=Map(i)
 s=m:section(TypedSection,"auto_switch",translate("Auto Switch"))
 s.anonymous = true
@@ -20,6 +24,6 @@ o=s:option(Value,"testing_time",translate("How often is a diagnosis made"),trans
 o.default="10"
 
 o=s:option(DynamicList,"tcp_redir_server",translate("List of alternate TCP forwarding servers"),translate("When there is no server, an automatic reconnect scheme is used"))
-for a,t in pairs(n)do o:value(a,t)end
+for _,key in pairs(key_table) do o:value(key,n[key]) end
 
 return m

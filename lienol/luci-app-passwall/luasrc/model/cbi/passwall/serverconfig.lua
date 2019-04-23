@@ -221,11 +221,17 @@ e=t:option(Value,"v2ray_VMess_level",translate("User Level"))
 e.default=1
 e:depends("server_type","V2ray")
 
+e=t:option(ListValue,"v2ray_stream_security",translate("Transport Layer Encryption"),translate('Whether or not transport layer encryption is enabled, the supported options are "none" for unencrypted (default) and "TLS" for using TLS.'))
+e:value("none","none")
+e:value("tls", "tls")
+e:depends("server_type","V2ray")
+
 e=t:option(ListValue,"v2ray_transport",translate("Transport"))
 e:value("tcp","TCP")
 e:value("mkcp", "mKCP")
 e:value("ws", "WebSocket")
 e:value("h2", "HTTP/2")
+e:value("ds", "DomainSocket")
 e:value("quic", "QUIC")
 e:depends("server_type","V2ray")
 
@@ -288,6 +294,11 @@ e:depends("v2ray_transport", "h2")
 e = t:option(Value, "v2ray_h2_path", translate("HTTP/2 Path"))
 e:depends("v2ray_transport", "h2")
 
+-- [[ DomainSocket部分 ]]--
+
+e=t:option(Value,"v2ray_ds_path","Path", translate("A legal file path. This file must not exist before running V2Ray."))
+e:depends("v2ray_transport","ds")
+
 -- [[ QUIC部分 ]]--
 e=t:option(ListValue,"v2ray_quic_security",translate("Encrypt Method"))
 e:value("none")
@@ -311,7 +322,7 @@ e=t:option(Value,"v2ray_mux_concurrency",translate("Mux Concurrency"))
 e.default=8
 e:depends("v2ray_mux","1")
 
-e=t:option(Flag,"v2ray_tls",translate("TLS"),translate("Using TLS must use the domain name as the server address"))
-e:depends("server_type","V2ray")
+--e=t:option(Flag,"v2ray_insecure",translate("allowInsecure"))
+--e:depends("server_type","V2ray")
 
 return a
