@@ -18,7 +18,19 @@ o.rmempty=true
 o=s:option(Value,"ipaddr",translate("IP Address"))
 o.datatype="ip4addr"
 o.rmempty=true
-webadmin.cbi_add_knownips(o)
+
+local temp={}
+for index, n in ipairs(luci.ip.neighbors({ family = 4 })) do
+	if n.dest then
+		temp[index]=n.dest:string()
+	end
+end
+local ips = {}   
+for _,key in pairs(temp) do table.insert(ips,key) end 
+table.sort(ips)
+
+for index,key in pairs(ips) do o:value(key,temp[key]) end
+--webadmin.cbi_add_knownips(o)
 
 o=s:option(Value,"macaddr",translate("MAC Address"))
 o.rmempty=true

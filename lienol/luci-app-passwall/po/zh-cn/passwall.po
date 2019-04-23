@@ -583,8 +583,14 @@ msgstr "传输方式"
 msgid "Camouflage Type"
 msgstr "伪装类型"
 
-msgid "Using TLS must use the domain name as the server address"
-msgstr "使用TLS必须使用域名作为服务器地址"
+msgid "Transport Layer Encryption"
+msgstr "传输层加密"
+
+msgid "Whether or not transport layer encryption is enabled, the supported options are "none" for unencrypted (default) and "TLS" for using TLS."
+msgstr "是否启入传输层加密，支持的选项有 "none" 表示不加密（默认值），"tls" 表示使用 TLS。"
+
+msgid "A legal file path. This file must not exist before running V2Ray."
+msgstr "一个合法的文件路径。在运行 V2Ray 之前，这个文件必须不存在。"
 
 msgid "Hide Menu"
 msgstr "隐藏菜单"
