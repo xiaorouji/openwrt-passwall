@@ -1,7 +1,0 @@
-
-config global
-	option koolproxy_mode '1'
-	option koolproxy_acl_default '1'
-	option time_update '4'
-	option enabled '0'
-	option startup_delay '0'
