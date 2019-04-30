@@ -27,42 +27,6 @@ uci_get_by_type() {
 	echo ${ret:=$3}
 }
 
-add_rule()
-{
-	l2tp=$(uci_get_by_type softether l2tp)
-	openvpn=$(uci_get_by_type softether openvpn)
-	openvpnport=$(cat /usr/libexec/softethervpn/vpn_server.config |grep OpenVPN_UdpPortList | awk -F " " '{print $3}')
-	sstp=$(uci_get_by_type softether sstp)
-	if [ "$l2tp" = "1" ];then
-		iptables -I INPUT -p udp -m multiport --dports 500,1701,4500 -m comment --comment "Rule for softethervpn" -j ACCEPT 2>/dev/null
-	fi
-	if [ "$openvpn" = "1" ];then
-		[ -z "$openvpnport" ] && openvpnport=1194
-		iptables -I INPUT -p udp --dport $openvpnport -m comment --comment "Rule for softethervpn" -j ACCEPT
-		iptables -I INPUT -p tcp --dport $openvpnport -m comment --comment "Rule for softethervpn" -j ACCEPT
-	fi 
-	if [ "$sstp" = "1" ];then
-		iptables -I INPUT -p tcp --dport 443 -m comment --comment "Rule for softethervpn" -j ACCEPT
-	fi
-	iptables -I INPUT -p tcp --dport 5555 -m comment --comment "Rule for softethervpn" -j ACCEPT
-	iptables -I INPUT -p tcp --dport 8888 -m comment --comment "Rule for softethervpn" -j ACCEPT
-	iptables -I INPUT -p tcp --dport 992 -m comment --comment "Rule for softethervpn" -j ACCEPT
-}
-
-
-del_rule()
-{
-	openvpnport=$(cat /usr/libexec/softethervpn/vpn_server.config 2>/dev/null|grep OpenVPN_UdpPortList | awk -F " " '{print $3}')
-	[ -z "$openvpnport" ] && openvpnport=1194
-	iptables -D INPUT -p udp -m multiport --dports 500,1701,4500 -m comment --comment "Rule for softethervpn" -j ACCEPT 2>/dev/null
-	[ -n "$openvpnport" ] && iptables -D INPUT -p udp --dport $openvpnport -m comment --comment "Rule for softethervpn" -j ACCEPT 2>/dev/null
-	[ -n "$openvpnport" ] && iptables -D INPUT -p tcp --dport $openvpnport -m comment --comment "Rule for softethervpn" -j ACCEPT 2>/dev/null
-	iptables -D INPUT -p tcp --dport 443 -m comment --comment "Rule for softethervpn" -j ACCEPT 2>/dev/null
-	iptables -D INPUT -p tcp --dport 5555 -m comment --comment "Rule for softethervpn" -j ACCEPT 2>/dev/null
-	iptables -D INPUT -p tcp --dport 8888 -m comment --comment "Rule for softethervpn" -j ACCEPT 2>/dev/null
-	iptables -D INPUT -p tcp --dport 992 -m comment --comment "Rule for softethervpn" -j ACCEPT 2>/dev/null
-}
-
 start()
 {
 	config_load softethervpn
@@ -70,11 +34,12 @@ start()
 	[ $enable -ne 1 ] && exit 0
 	logger -t 'softethervpn' "Starting softether vpnserver service."
 	/usr/bin/env LANG=en_US.UTF-8 /usr/libexec/softethervpn/vpnserver start > /dev/null 2>&1
+	fw3 reload
 }
 
 stop()
 {
 	logger -t 'softethervpn' "Stopping softether vpnserver service."
 	/usr/bin/env LANG=en_US.UTF-8 /usr/libexec/softethervpn/vpnserver stop > /dev/null 2>&1
-	del_rule
+	fw3 reload
 }
