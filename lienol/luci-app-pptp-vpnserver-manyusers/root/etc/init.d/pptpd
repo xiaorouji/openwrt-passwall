@@ -46,16 +46,8 @@ setup_config() {
 	[ -n "$remoteip" ] && echo "remoteip  $remoteip" >> $CONFIG_FILE
 	[ -n "$options" ] && echo "option /etc/ppp/options.pptpd" >> $CONFIG_FILE
 
-	del_rule
-	if [ "$is_nat" -eq 1 ];then
-		config_get export_interface $1 export_interface
-		if [ "$export_interface" != "default" ];then
-			iptables -t nat -A POSTROUTING -s ${localip%.*}.0/24 -o ${export_interface} -m comment --comment "Rule For PPTP VPN Server" -j MASQUERADE
-		else
-			iptables -t nat -A POSTROUTING -s ${localip%.*}.0/24 -m comment --comment "Rule For PPTP VPN Server" -j MASQUERADE
-		fi
-		iptables -A forwarding_rule -s ${localip%.*}.0/24 -m comment --comment "Rule For PPTP VPN Server" -j ACCEPT
-	fi
+	fw3 reload
+	
 	config_get mppe $1 mppe
 	[ -n "$(cat "/etc/ppp/options.pptpd" |grep mppe)" ] && sed -i '/mppe/'d /etc/ppp/options.pptpd
 	[ -z "$(cat "/etc/ppp/options.pptpd" |grep mppe)" ] && echo "mppe required,no40,no56,stateless" >> /etc/ppp/options.pptpd
@@ -78,37 +70,6 @@ start_pptpd() {
 	ln -sfn $CHAP_SECRETS /etc/ppp/chap-secrets
 	chmod 600 /etc/ppp/*-secrets
 	service_start $BIN $OPTIONS -c $CONFIG_FILE
-	iptables -I INPUT -p tcp --dport 1723 -m comment --comment "Rule For PPTP VPN Server" -j ACCEPT
-}
-
-del_rule(){
-	iptables -D INPUT -p tcp --dport 1723 -m comment --comment "Rule For PPTP VPN Server" -j ACCEPT
-	pptp_nums=`iptables -t nat -L POSTROUTING 2> /dev/null|grep -c "Rule For PPTP VPN Server"`
-	if [ -n "$pptp_nums" ]; then
-		until [ "$pptp_nums" = 0 ]
-		do
-			pptp_rules=`iptables -t nat -L POSTROUTING --line-num 2> /dev/null|grep "Rule For PPTP VPN Server" |awk '{print $1}'`
-			for pptp_rule in $pptp_rules
-			do
-				iptables -t nat -D POSTROUTING $pptp_rule 2> /dev/null
-				break
-			done
-			pptp_nums=`expr $pptp_nums - 1`
-		done
-	fi
-	nums=`iptables -L forwarding_rule 2> /dev/null|grep -c "Rule For PPTP VPN Server"`
-	if [ -n "$nums" ]; then
-		until [ "$nums" = 0 ]
-		do
-			rules=`iptables -L forwarding_rule --line-num 2> /dev/null|grep "Rule For PPTP VPN Server" |awk '{print $1}'`
-			for rule in $rules
-			do
-				iptables -D forwarding_rule $rule 2> /dev/null
-				break
-			done
-			nums=`expr $nums - 1`
-		done
-	fi
 }
 
 del_user()
@@ -129,6 +90,6 @@ start() {
 stop() {
 	service_stop $BIN
 	ps | grep "pppd local" | grep -v "grep" | awk '{print $1}' | xargs kill -9
-	del_rule
+	fw3 reload
 	del_user
 }

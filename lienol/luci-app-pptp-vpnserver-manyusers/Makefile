@@ -1,4 +1,4 @@
-# Copyright (C) 2018 Lienol
+# Copyright (C) 2018-2019 Lienol
 #
 # This is free software, licensed under the Apache License, Version 2.0 .
 #
@@ -9,7 +9,7 @@ LUCI_TITLE:=LuCI support for PPTP VPN Server
 LUCI_DEPENDS:=+pptpd +kmod-mppe +ppp
 LUCI_PKGARCH:=all
 PKG_VERSION:=1.0
-PKG_RELEASE:=8-20190406
+PKG_RELEASE:=10-20190430
 
 include ../luci_my.mk
 
