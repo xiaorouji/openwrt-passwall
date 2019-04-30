@@ -1,4 +1,4 @@
-# Copyright (C) 2016 Openwrt.org
+# Copyright (C) 2018-2019 Lienol
 #
 # This is free software, licensed under the Apache License, Version 2.0 .
 #
@@ -9,7 +9,7 @@ LUCI_TITLE:=LuCI support for IPSec VPN Server
 LUCI_DEPENDS:=+strongswan-minimal +strongswan-mod-xauth-generic
 LUCI_PKGARCH:=all
 PKG_VERSION:=1.0
-PKG_RELEASE:=9-20190415
+PKG_RELEASE:=10-20190430
 
 include ../luci_my.mk
 
