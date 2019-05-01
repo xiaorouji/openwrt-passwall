@@ -12,7 +12,7 @@ function index()
 	entry({"admin","vpn","passwall","show"},call("show_menu")).leaf=true
 	entry({"admin","vpn","passwall","hide"},call("hide_menu")).leaf=true
 	if nixio.fs.access("/etc/config/passwall") and nixio.fs.access("/etc/config/passwall_show") then
-		entry({"admin","vpn","passwall"},alias("admin","vpn","passwall","settings"),_("Pass Wall"),2).dependent=true
+		entry({"admin","vpn","passwall"},alias("admin","vpn","passwall","settings"),_("Pass Wall"),1).dependent=true
 	end
 	entry({"admin","vpn","passwall","settings"},cbi("passwall/global"),_("Basic Settings"),1).dependent=true
 	entry({"admin","vpn","passwall","server_list"},cbi("passwall/server_list"),_("Server List"),2).dependent=true
