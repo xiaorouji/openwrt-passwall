@@ -1,4 +1,4 @@
-# Copyright (C) 2016 Openwrt.org
+# Copyright (C) 2018-2019 Lienol
 #
 # This is free software, licensed under the Apache License, Version 2.0 .
 #
@@ -9,7 +9,7 @@ LUCI_TITLE:=LuCI support for SoftEtherVPN
 LUCI_DEPENDS:=+zlib +libpthread +librt +libreadline +libncurses +libiconv-full +kmod-tun +libopenssl +softethervpn
 LUCI_PKGARCH:=all
 PKG_VERSION:=1.0
-PKG_RELEASE:=6-20190430
+PKG_RELEASE:=8-20190517
 
 include ../luci_my.mk
 
