@@ -9,7 +9,7 @@ LUCI_TITLE:=LuCI support for PPTP VPN Server
 LUCI_DEPENDS:=+pptpd +kmod-mppe +ppp
 LUCI_PKGARCH:=all
 PKG_VERSION:=1.0
-PKG_RELEASE:=10-20190430
+PKG_RELEASE:=11-20190517
 
 include ../luci_my.mk
 
