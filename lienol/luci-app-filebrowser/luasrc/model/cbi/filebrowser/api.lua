@@ -16,6 +16,9 @@ local wget_args = {
 local curl = "/usr/bin/curl"
 local command_timeout = 40
 
+local LEDE_BOARD = nil
+local DISTRIB_TARGET = nil
+
 local function _unpack(t, i)
     i = i or 1
     if t[i] ~= nil then return t[i], _unpack(t, i + 1) end
@@ -91,14 +94,22 @@ end
 
 local function auto_get_arch()
     local arch = nixio.uname().machine or ""
+    if fs.access("/usr/lib/os-release") then
+        LEDE_BOARD = sys.exec(
+                         "grep 'LEDE_BOARD' /usr/lib/os-release | awk -F '[\'\"]' '{print $2}'")
+    end
+    if fs.access("/etc/openwrt_release") then
+        DISTRIB_TARGET = sys.exec(
+                             'grep "DISTRIB_TARGET" /etc/openwrt_release | awk -F "[\'\"]" \'{print $2}\'')
+    end
 
     if arch == "mips" then
-        if fs.access("/usr/lib/os-release") then
-            arch = sys.exec(
-                       "grep 'LEDE_BOARD' /usr/lib/os-release | grep -oE 'ramips|ar71xx'")
-        elseif fs.access("/etc/openwrt_release") then
-            arch = sys.exec(
-                       "grep 'DISTRIB_TARGET' /etc/openwrt_release | grep -oE 'ramips|ar71xx'")
+        if LEDE_BOARD ~= "" then
+            arch = sys.exec("echo '" .. LEDE_BOARD ..
+                                "' | grep -oE 'ramips|ar71xx'")
+        elseif DISTRIB_TARGET ~= "" then
+            arch = sys.exec("echo '" .. DISTRIB_TARGET ..
+                                "' | grep -oE 'ramips|ar71xx'")
         end
     end
 
@@ -111,6 +122,8 @@ local function get_file_info(arch)
 
     if arch == "x86_64" then
         file_tree = "amd64"
+    elseif arch == "aarch64" then
+        file_tree = "arm64"
     elseif arch == "ramips" then
         file_tree = "mipsle"
     elseif arch == "ar71xx" then
@@ -120,6 +133,13 @@ local function get_file_info(arch)
     elseif arch:match("^armv[5-8]") then
         file_tree = "arm"
         sub_version = arch:match("[5-8]")
+        if LEDE_BOARD and string.match(LEDE_BOARD, "bcm53xx") == "bcm53xx" then
+            sub_version = "5"
+        elseif DISTRIB_TARGET and string.match(DISTRIB_TARGET, "bcm53xx") ==
+            "bcm53xx" then
+            sub_version = "5"
+        end
+        sub_version = "5"
     end
 
     return file_tree, sub_version
@@ -176,7 +196,7 @@ function to_check(arch)
     if needs_update then
         html_url = json.html_url
         for _, v in ipairs(json.assets) do
-            if v.name and v.name:match("linux%-" .. file_tree) then
+            if v.name and v.name:match("linux%-" .. file_tree .. sub_version) then
                 download_url = v.browser_download_url
                 break
             end
@@ -197,8 +217,7 @@ function to_check(arch)
         code = 0,
         update = needs_update,
         version = remote_version,
-        url = {html = html_url, download = download_url},
-        type = file_tree .. sub_version
+        url = {html = html_url, download = download_url}
     }
 end
 
