@@ -1,22 +1,22 @@
 local d = require "luci.dispatcher"
 local fs = require "nixio.fs"
 local sys = require "luci.sys"
-local cursor = luci.model.uci.cursor()
+local uci = require "luci.model.uci".cursor()
 local appname = "passwall"
 
 m = Map(appname)
 
--- [[ Add the server via the link ]]--
-s = m:section(TypedSection, "global_other",
-              translate("Add the server via the link"))
+-- [[ Other Settings ]]--
+s = m:section(TypedSection, "global_other")
 s.anonymous = true
-
-s:append(Template("passwall/server_list/link_add_server"))
 
 ---- Auto Ping
 o = s:option(Flag, "auto_ping", translate("Auto Ping"),
              translate("This will automatically ping the server for latency"))
 o.default = 0
+
+-- [[ Add the server via the link ]]--
+s:append(Template("passwall/server_list/link_add_server"))
 
 -- [[ Servers List ]]--
 s = m:section(TypedSection, "servers")
@@ -70,8 +70,7 @@ end--]]
 
 ---- Ping
 o = s:option(DummyValue, "server", translate("Ping"))
-if luci.sys.exec("echo -n `uci get " .. appname ..
-                     ".@global_other[0].auto_ping`") == "0" then
+if uci:get(appname, "@global_other[0]", "auto_ping") == "0" then
     o.template = "passwall/server_list/ping"
 else
     o.template = "passwall/server_list/auto_ping"
@@ -84,5 +83,9 @@ o.width = "15%"
 o.template = "passwall/server_list/apply"
 
 m:append(Template("passwall/server_list/server_list"))
+
+if luci.http.formvalue("cbi.apply") then
+    luci.http.redirect(d.build_url("admin", "vpn", "passwall", "server_list"))
+end
 
 return m
