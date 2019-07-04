@@ -51,7 +51,7 @@ header h3 a, header .brand {
 	}
 	.cbi-value-description {
 		width: 75%;
-		display: inline-block;
+		display: inline-table;
 		padding: 1px 1.2rem;
 		background-position-y: 3px;
 	}
