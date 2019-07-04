@@ -1,13 +1,13 @@
 local e = require "nixio.fs"
 local e = require "luci.sys"
-local net = require"luci.model.network".init()
-local cursor = luci.model.uci.cursor()
+local net = require "luci.model.network".init()
+local uci = require "luci.model.uci".cursor()
 local ifaces = e.net:devices()
 local appname = "passwall"
 local servers_name = {}
 local servers_port = {}
 
-cursor:foreach(appname, "servers", function(e)
+uci:foreach(appname, "servers", function(e)
     if e.server and e.server_port and e.server ~= "127.0.0.1" then
         servers_name[e[".name"]] = "%s" % {e.server}
         servers_port[e[".name"]] = "%s" % {e.server_port}

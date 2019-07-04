@@ -2,7 +2,7 @@ local o = require "luci.dispatcher"
 local fs = require "nixio.fs"
 local sys = require "luci.sys"
 local ipkg = require "luci.model.ipkg"
-local cursor = luci.model.uci.cursor()
+local uci = require "luci.model.uci".cursor()
 local appname = "passwall"
 
 local function is_installed(e) return ipkg.installed(e) end
@@ -18,7 +18,7 @@ local function has_udp_relay()
 end
 
 local n = {}
-cursor:foreach(appname, "servers", function(e)
+uci:foreach(appname, "servers", function(e)
     if e.server_type and e.server and e.remarks then
         if e.use_kcp and e.use_kcp == "1" then
             n[e[".name"]] = "%s+%s：[%s] %s" %

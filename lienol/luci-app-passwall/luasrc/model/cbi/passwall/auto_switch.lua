@@ -1,8 +1,8 @@
-local cursor = luci.model.uci.cursor()
+local uci = require "luci.model.uci".cursor()
 local appname = "passwall"
 
 local n = {}
-cursor:foreach(appname, "servers", function(e)
+uci:foreach(appname, "servers", function(e)
     if e.server_type and e.server and e.remarks then
         n[e[".name"]] = "%s：[%s] %s" % {e.server_type, e.remarks, e.server}
     end
