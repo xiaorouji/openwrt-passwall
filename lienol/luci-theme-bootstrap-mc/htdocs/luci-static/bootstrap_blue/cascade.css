@@ -797,7 +797,7 @@ input,
 textarea,
 select {
 	display: inline-block;
-	width: 15em;
+	width: 16em;
 	padding: 0.5em;
 	border: 1px solid #118af3;
 	border-radius: 5px;

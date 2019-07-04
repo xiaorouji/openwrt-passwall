@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 LUCI_TITLE:=Bootstrap Magic Change Theme By Lienol
 LUCI_DEPENDS:=
 PKG_VERSION:=1.0
-PKG_RELEASE:=35-20190317
+PKG_RELEASE:=36-20190704
 
 include ../luci_my.mk
 
