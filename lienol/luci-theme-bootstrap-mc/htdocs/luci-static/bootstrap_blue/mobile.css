@@ -12,6 +12,20 @@ header h3 a, header .brand {
 }
 
 @media screen and (max-width: 480px) {
+	body {
+		font-size: 12px;
+	}
+	header {
+		font-size: 13px;
+	}
+	legend {
+		font-size: 14px;
+	}
+	.dropdown-menu a {
+		font-size: 13px;
+		min-width: 130px;
+		padding: 0 15px;
+	}
 	.mobile-hide {
 		display: none;
 	}
@@ -26,7 +40,7 @@ header h3 a, header .brand {
 	.cbi-value {
 	}
 	.cbi-value-title {
-		width: 40%;
+		width: 30%;
 		min-width: 0rem !important;
 		margin-right: 1em;
 		/* text-align: left;
@@ -36,13 +50,16 @@ header h3 a, header .brand {
 		width: 55%;
 	}
 	.cbi-value-description {
-		width: 100%;
+		width: 75%;
+		display: inline-block;
+		padding: 1px 1.2rem;
+		background-position-y: 3px;
 	}
 	.cbi-value-field .cbi-input-select,
 	.cbi-value input[type="password"],
 	.cbi-value input[type="text"] {
 		min-width: unset;
-		width: 95%;
+		/* width: 95%; */
 	}
 }
 
