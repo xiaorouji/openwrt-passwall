@@ -49,14 +49,10 @@ config global_rules
 	option gfwlist_version '2019-05-28'
 	option chnroute_version '2019-07-01'
 	
-config global_brook
-	option brook_client_file '/usr/bin/brook'
-
-config global_v2ray
+config global_app
 	option v2ray_client_file '/usr/bin/v2ray/'
-	
-config global_kcptun
 	option kcptun_client_file '/usr/bin/kcptun-client'
+	option brook_client_file '/usr/bin/brook'
 
 config global_subscribe
 	option subscribe_by_ss '0'
