@@ -96,20 +96,28 @@ local function auto_get_arch()
     local arch = nixio.uname().machine or ""
     if fs.access("/usr/lib/os-release") then
         LEDE_BOARD = sys.exec(
-                         "grep 'LEDE_BOARD' /usr/lib/os-release | awk -F '[\'\"]' '{print $2}'")
+                         "echo -n `grep 'LEDE_BOARD' /usr/lib/os-release | awk -F '[\\042\\047]' '{print $2}'`")
     end
     if fs.access("/etc/openwrt_release") then
         DISTRIB_TARGET = sys.exec(
-                             'grep "DISTRIB_TARGET" /etc/openwrt_release | awk -F "[\'\"]" \'{print $2}\'')
+                             "echo -n `grep 'DISTRIB_TARGET' /etc/openwrt_release | awk -F '[\\042\\047]' '{print $2}'`")
     end
 
     if arch == "mips" then
-        if LEDE_BOARD ~= "" then
-            arch = sys.exec("echo '" .. LEDE_BOARD ..
-                                "' | grep -oE 'ramips|ar71xx'")
-        elseif DISTRIB_TARGET ~= "" then
-            arch = sys.exec("echo '" .. DISTRIB_TARGET ..
-                                "' | grep -oE 'ramips|ar71xx'")
+        if LEDE_BOARD and LEDE_BOARD ~= "" then
+            if string.match(LEDE_BOARD, "ramips") == "ramips" then
+                arch = "ramips"
+            else
+                arch = sys.exec("echo '" .. LEDE_BOARD ..
+                                    "' | grep -oE 'ramips|ar71xx'")
+            end
+        elseif DISTRIB_TARGET and DISTRIB_TARGET ~= "" then
+            if string.match(DISTRIB_TARGET, "ramips") == "ramips" then
+                arch = "ramips"
+            else
+                arch = sys.exec("echo '" .. DISTRIB_TARGET ..
+                                    "' | grep -oE 'ramips|ar71xx'")
+            end
         end
     end
 
@@ -183,7 +191,7 @@ function to_check(arch)
         return {
             code = 1,
             error = i18n.translate(
-                "Can't determine ARCH, or ARCH not supported. Please select manually.")
+                "Can't determine ARCH, or ARCH not supported.")
         }
     end
 
