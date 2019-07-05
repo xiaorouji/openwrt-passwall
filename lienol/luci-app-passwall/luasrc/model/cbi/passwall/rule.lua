@@ -28,9 +28,12 @@ o.default = 0
 o:depends("auto_update", 1)
 
 -- [[ V2ray Settings ]]--
-s = m:section(TypedSection, "global_v2ray", translate("V2ray Update"))
+s = m:section(TypedSection, "global_app", translate("App Update"),
+              translate("Please confirm that your firmware supports FPU."))
 s.anonymous = true
 s:append(Template("passwall/rule/v2ray_version"))
+s:append(Template("passwall/rule/kcptun_version"))
+s:append(Template("passwall/rule/brook_version"))
 
 ---- V2ray client path
 o = s:option(Value, "v2ray_client_file", translate("V2ray client path"),
@@ -39,21 +42,12 @@ o = s:option(Value, "v2ray_client_file", translate("V2ray client path"),
 o.default = "/usr/bin/v2ray/"
 o.rmempty = false
 
-s:append(Template("passwall/rule/v2ray_update_btn"))
-
--- [[ Kcptun Settings ]]--
-s = m:section(TypedSection, "global_kcptun", translate("Kcptun Update"))
-s.anonymous = true
-s:append(Template("passwall/rule/kcptun_version"))
-
 ---- Kcptun client path
 o = s:option(Value, "kcptun_client_file", translate("Kcptun client path"),
              translate(
                  "if you want to run from memory, change the path, such as /tmp/kcptun-client, Then save the application and update it manually."))
 o.default = "/usr/bin/kcptun-client"
 o.rmempty = false
-
-s:append(Template("passwall/rule/kcptun_update_btn"))
 
 --[[
 o = s:option(Button,  "_check_kcptun",  translate("Manually update"), translate("Make sure there is enough space to install Kcptun"))
@@ -62,19 +56,12 @@ o.inputstyle = "apply"
 o.btnclick = "onBtnClick_kcptun(this);"
 o.id = "_kcptun-check_btn"]] --
 
--- [[ Brook Settings ]]--
-s = m:section(TypedSection, "global_brook", translate("Brook Update"))
-s.anonymous = true
-s:append(Template("passwall/rule/brook_version"))
-
 ---- Brook client path
 o = s:option(Value, "brook_client_file", translate("Brook client path"),
              translate(
                  "if you want to run from memory, change the path, such as /tmp/brook, Then save the application and update it manually."))
 o.default = "/usr/bin/brook"
 o.rmempty = false
-
-s:append(Template("passwall/rule/brook_update_btn"))
 
 -- [[ Subscribe Settings ]]--
 s = m:section(TypedSection, "global_subscribe", translate("Server Subscribe"))
