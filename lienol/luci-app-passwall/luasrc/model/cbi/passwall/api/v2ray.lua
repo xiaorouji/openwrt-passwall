@@ -4,7 +4,7 @@ local sys = require "luci.sys"
 local uci = require"luci.model.uci".cursor()
 local util = require "luci.util"
 local i18n = require "luci.i18n"
-local ipkg = require "luci.model.ipkg"
+local ipkg = require("luci.model.ipkg")
 local api = require "luci.model.cbi.passwall.api.api"
 
 local v2ray_api =
