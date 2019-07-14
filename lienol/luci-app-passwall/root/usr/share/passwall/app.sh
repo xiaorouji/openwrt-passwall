@@ -204,13 +204,13 @@ AUTO_SWITCH_ENABLE=$(config_t_get auto_switch enable 0)
 TCP_REDIR_PORTS=$(config_t_get global_forwarding tcp_redir_ports '80,443')
 UDP_REDIR_PORTS=$(config_t_get global_forwarding udp_redir_ports '1:65535')
 KCPTUN_REDIR_PORT=$(config_t_get global_proxy kcptun_port 11183)
+PROXY_MODE=$(config_t_get global proxy_mode gfwlist)
 
 load_config() {
 	[ "$TCP_REDIR_SERVER" == "nil" -a "$UDP_REDIR_SERVER" == "nil" -a "$SOCKS5_PROXY_SERVER" == "nil" ] && {
 		echolog "没有选择服务器！" 
 		return 1
 	}
-	PROXY_MODE=$(config_t_get global proxy_mode gfwlist)
 	DNS_MODE=$(config_t_get global dns_mode ChinaDNS)
 	UP_CHINADNS_MODE=$(config_t_get global up_chinadns_mode OpenDNS_1)
 	process=1
@@ -1040,22 +1040,23 @@ load_acl(){
 	config_get aclremarks $1 aclremarks
 	config_get ipaddr $1 ipaddr
 	config_get macaddr $1 macaddr
-	config_get acl_mode $1 proxy_mode
+	config_get proxy_mode $1 proxy_mode
 	config_get tcp_redir_ports $1 tcp_redir_ports
 	config_get udp_redir_ports $1 udp_redir_ports
+	[ -z "$proxy_mode" -o "$proxy_mode" = "default" ] && proxy_mode=$PROXY_MODE
 	[ -z "$tcp_redir_ports" -o "$tcp_redir_ports" = "default" ] && tcp_redir_ports=$TCP_REDIR_PORTS
 	[ -z "$udp_redir_ports" -o "$udp_redir_ports" = "default" ] && udp_redir_ports=$UDP_REDIR_PORTS
 	local ip_mark=`get_ip_mark $ipaddr`								 
-	[ "$enabled" == "1" -a -n "$acl_mode" ] && {
+	[ "$enabled" == "1" -a -n "$proxy_mode" ] && {
 		if [ -n "$ipaddr" ] || [ -n "$macaddr" ]; then
 			if [ -n "$ipaddr" -a -n "$macaddr" ]; then
-				echolog "访问控制：IP：$ipaddr，MAC：$macaddr，代理模式：$(get_action_chain_name $acl_mode)" 
+				echolog "访问控制：IP：$ipaddr，MAC：$macaddr，代理模式：$(get_action_chain_name $proxy_mode)" 
 			else
-				[ -n "$ipaddr" ] && echolog "访问控制：IP：$ipaddr，代理模式：$(get_action_chain_name $acl_mode)" 
-				[ -n "$macaddr" ] && echolog "访问控制：MAC：$macaddr，代理模式：$(get_action_chain_name $acl_mode)" 
+				[ -n "$ipaddr" ] && echolog "访问控制：IP：$ipaddr，代理模式：$(get_action_chain_name $proxy_mode)" 
+				[ -n "$macaddr" ] && echolog "访问控制：MAC：$macaddr，代理模式：$(get_action_chain_name $proxy_mode)" 
 			fi
-			$iptables_mangle -A SS_ACL $(factor $ipaddr "-s") -p tcp $(factor $macaddr "-m mac --mac-source") $(factor $tcp_redir_ports "-m multiport --dport") -m comment --comment "$aclremarks" -$(get_jump_mode $acl_mode) $(get_action_chain $acl_mode)
-			[ "$UDP_REDIR_SERVER" != "nil" ] && $iptables_mangle -A SS_ACL $(factor $ipaddr "-s") -p udp $(factor $macaddr "-m mac --mac-source") $(factor $udp_redir_ports "-m multiport --dport") -m comment --comment "$aclremarks" -$(get_jump_mode $acl_mode) $(get_action_chain $acl_mode)
+			$iptables_mangle -A SS_ACL $(factor $ipaddr "-s") -p tcp $(factor $macaddr "-m mac --mac-source") $(factor $tcp_redir_ports "-m multiport --dport") -m comment --comment "$aclremarks" -$(get_jump_mode $proxy_mode) $(get_action_chain $proxy_mode)
+			[ "$UDP_REDIR_SERVER" != "nil" ] && $iptables_mangle -A SS_ACL $(factor $ipaddr "-s") -p udp $(factor $macaddr "-m mac --mac-source") $(factor $udp_redir_ports "-m multiport --dport") -m comment --comment "$aclremarks" -$(get_jump_mode $proxy_mode) $(get_action_chain $proxy_mode)
 			[ -z "$ipaddr" ] && {
 				lower_macaddr=`echo $macaddr | tr '[A-Z]' '[a-z]'`
 				ipaddr=`ip neigh show | grep -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}" | grep $lower_macaddr | awk '{print $1}'`

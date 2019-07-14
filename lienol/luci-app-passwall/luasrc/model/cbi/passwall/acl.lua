@@ -42,8 +42,9 @@ sys.net.mac_hints(function(e, t) o:value(e, "%s (%s)" % {e, t}) end)
 
 ---- Proxy Mode
 o = s:option(ListValue, "proxy_mode", translate("Proxy Mode"))
-o.default = "disable"
+o.default = "default"
 o.rmempty = false
+o:value("default", translate("Default"))
 o:value("disable", translate("No Proxy"))
 o:value("global", translate("Global Proxy"))
 o:value("gfwlist", translate("GFW List"))
