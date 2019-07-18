@@ -139,7 +139,7 @@ local function get_file_info(arch)
     elseif arch:match("^i[%d]86$") then
         file_tree = "386"
     elseif arch:match("^armv[5-8]") then
-        file_tree = "arm"
+        file_tree = "armv"
         sub_version = arch:match("[5-8]")
         if LEDE_BOARD and string.match(LEDE_BOARD, "bcm53xx") == "bcm53xx" then
             sub_version = "5"
