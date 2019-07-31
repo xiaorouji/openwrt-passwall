@@ -21,6 +21,7 @@ s:append(Template("passwall/server_list/link_add_server"))
 -- [[ Servers List ]]--
 s = m:section(TypedSection, "servers")
 s.anonymous = true
+s.sortable = true
 s.addremove = true
 s.template = "cbi/tblsection"
 s.extedit = d.build_url("admin", "vpn", "passwall", "serverconfig", "%s")
