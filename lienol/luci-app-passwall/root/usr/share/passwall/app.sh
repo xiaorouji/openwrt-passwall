@@ -404,14 +404,14 @@ set_cru() {
 	dayupdatesubscribe=$(config_t_get global_subscribe time_update_subscribe)
 	if [ "$autoupdate" = "1" ];then
 		if [ "$weekupdate" = "7" ];then
-			echo "0 $dayupdate * * * $APP_PATH/ssruleupdate.sh" >> /etc/crontabs/root
-			echolog "设置自动更新GFWList规则在每天 $dayupdate 点。" 
+			echo "0 $dayupdate * * * $APP_PATH/rule_update.sh" >> /etc/crontabs/root
+			echolog "设置自动更新规则在每天 $dayupdate 点。" 
 		else
-			echo "0 $dayupdate * * $weekupdate $APP_PATH/ssruleupdate.sh" >> /etc/crontabs/root
-			echolog "设置自动更新GFWList规则在星期 $weekupdate 的 $dayupdate 点。" 
+			echo "0 $dayupdate * * $weekupdate $APP_PATH/rule_update.sh" >> /etc/crontabs/root
+			echolog "设置自动更新规则在星期 $weekupdate 的 $dayupdate 点。" 
 		fi
 	else
-		sed -i '/ssruleupdate.sh/d' /etc/crontabs/root >/dev/null 2>&1 &
+		sed -i '/rule_update.sh/d' /etc/crontabs/root >/dev/null 2>&1 &
 	fi
 
 	if [ "$autoupdatesubscribe" = "1" ];then
