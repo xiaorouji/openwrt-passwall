@@ -13,22 +13,12 @@ CONFIG_UDP_FILE=$CONFIG_PATH/UDP.json
 CONFIG_SOCKS5_FILE=$CONFIG_PATH/SOCKS5.json
 LOCK_FILE=$CONFIG_PATH/$CONFIG.lock
 LOG_FILE=/var/log/$CONFIG.log
-SS_PATH=/usr/share/$CONFIG
-SS_PATH_RULE=$SS_PATH/rule
-SS_PATH_DNSMASQ=$SS_PATH/dnsmasq.d
+APP_PATH=/usr/share/$CONFIG
+APP_PATH_RULE=$APP_PATH/rule
+APP_PATH_DNSMASQ=$APP_PATH/dnsmasq.d
 TMP_DNSMASQ_PATH=/var/etc/dnsmasq-passwall.d
 DNSMASQ_PATH=/etc/dnsmasq.d
 lanip=$(uci get network.lan.ipaddr)
-IPSET_LANIPLIST="laniplist"
-IPSET_VPSIPLIST="vpsiplist"
-IPSET_ROUTER="router"	
-IPSET_GFW="gfwlist"
-IPSET_CHN="chnroute"
-IPSET_BLACKLIST="blacklist"
-IPSET_WHITELIST="whitelist"
-iptables_nat="iptables -t nat"
-iptables_mangle="iptables -t mangle"
-ip6tables_nat="ip6tables -t nat"
 
 get_date(){
 	echo "$(date "+%Y-%m-%d %H:%M:%S")"
@@ -60,93 +50,6 @@ config_t_get() {
 	[ -n "$4" ] && index=$4
 	local ret=$(uci get $CONFIG.@$1[$index].$2 2>/dev/null)
 	echo ${ret:=$3}
-}
-
-factor(){
-	if [ -z "$1" ] || [ -z "$2" ]; then
-		echo ""
-	else
-		echo "$2 $1"
-	fi
-}
-
-get_jump_mode(){
-	case "$1" in
-		disable)
-			echo "j"
-		;;
-		*)
-			echo "g"
-		;;
-	esac
-}
-
-get_ip_mark(){
-	if [ -z "$1" ]; then
-		echo ""
-	else
-		echo $1 | awk -F "." '{printf ("0x%02X", $1)} {printf ("%02X", $2)} {printf ("%02X", $3)} {printf ("%02X", $4)}'
-	fi
-}
-
-get_action_chain() {
-	case "$1" in
-		disable)
-			echo "RETURN"
-		;;
-		global)
-			echo "SS_GLO"
-		;;
-		gfwlist)
-			echo "SS_GFW"
-		;;
-		chnroute)
-			echo "SS_CHN"
-		;;
-		gamemode)
-			echo "SS_GAME"
-		;;
-		returnhome)
-			echo "SS_HOME"
-		;;
-	esac
-}
-
-get_action_chain_name() {
-	case "$1" in
-		disable)
-			echo "不代理"
-		;;
-		global)
-			echo "全局"
-		;;
-		gfwlist)
-			echo "GFW"
-		;;
-		chnroute)
-			echo "大陆白名单"
-		;;
-		gamemode)
-			echo "游戏"
-		;;
-		returnhome)
-			echo "回国"
-		;;
-	esac
-}
-
-gen_laniplist() {
-	cat <<-EOF
-		0.0.0.0/8
-		10.0.0.0/8
-		100.64.0.0/10
-		127.0.0.0/8
-		169.254.0.0/16
-		172.16.0.0/12
-		192.168.0.0/16
-		224.0.0.0/4
-		240.0.0.0/4
-EOF
 }
 
 get_host_ip() {
@@ -311,7 +214,7 @@ gen_config_file() {
 			gen_ss_ssr_config_file $server_type $SOCKS5_PROXY_PORT 0 $SOCKS5_PROXY_SERVER $CONFIG_SOCKS5_FILE
 		fi
 		if [ "$server_type" == "v2ray" ]; then
-			lua /usr/lib/lua/luci/model/cbi/passwall/api/genv2rayconfig.lua $SOCKS5_PROXY_SERVER nil nil $SOCKS5_PROXY_PORT > $CONFIG_SOCKS5_FILE
+			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_v2ray_client_config_file.lua $SOCKS5_PROXY_SERVER nil nil $SOCKS5_PROXY_PORT > $CONFIG_SOCKS5_FILE
 		fi
 		if [ "$server_type" == "brook" ]; then
 			BROOK_SOCKS5_CMD="client -l 0.0.0.0:$SOCKS5_PROXY_PORT -i 0.0.0.0 -s $server_ip:$server_port -p $(config_get $SOCKS5_PROXY_SERVER password)"
@@ -329,7 +232,7 @@ gen_config_file() {
 			gen_ss_ssr_config_file $server_type $UDP_REDIR_PORT 0 $UDP_REDIR_SERVER $CONFIG_UDP_FILE
 		fi
 		if [ "$server_type" == "v2ray" ]; then
-			lua /usr/lib/lua/luci/model/cbi/passwall/api/genv2rayconfig.lua $UDP_REDIR_SERVER udp $UDP_REDIR_PORT nil > $CONFIG_UDP_FILE
+			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_v2ray_client_config_file.lua $UDP_REDIR_SERVER udp $UDP_REDIR_PORT nil > $CONFIG_UDP_FILE
 		fi
 		if [ "$server_type" == "brook" ]; then
 			BROOK_UDP_CMD="tproxy -l 0.0.0.0:$UDP_REDIR_PORT -s $server_ip:$server_port -p $(config_get $UDP_REDIR_SERVER password)"
@@ -344,7 +247,7 @@ gen_config_file() {
 		fi
 		TCP_REDIR_SERVER_PORT=$server_port
 		if [ "$server_type" == "v2ray" ]; then
-			lua /usr/lib/lua/luci/model/cbi/passwall/api/genv2rayconfig.lua $TCP_REDIR_SERVER tcp $TCP_REDIR_PORT nil > $CONFIG_TCP_FILE
+			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_v2ray_client_config_file.lua $TCP_REDIR_SERVER tcp $TCP_REDIR_PORT nil > $CONFIG_TCP_FILE
 		else
 			local kcptun_use kcptun_server_host kcptun_port kcptun_config
 			kcptun_use=$(config_get $1 use_kcp)
@@ -501,10 +404,10 @@ set_cru() {
 	dayupdatesubscribe=$(config_t_get global_subscribe time_update_subscribe)
 	if [ "$autoupdate" = "1" ];then
 		if [ "$weekupdate" = "7" ];then
-			echo "0 $dayupdate * * * $SS_PATH/ssruleupdate.sh" >> /etc/crontabs/root
+			echo "0 $dayupdate * * * $APP_PATH/ssruleupdate.sh" >> /etc/crontabs/root
 			echolog "设置自动更新GFWList规则在每天 $dayupdate 点。" 
 		else
-			echo "0 $dayupdate * * $weekupdate $SS_PATH/ssruleupdate.sh" >> /etc/crontabs/root
+			echo "0 $dayupdate * * $weekupdate $APP_PATH/ssruleupdate.sh" >> /etc/crontabs/root
 			echolog "设置自动更新GFWList规则在星期 $weekupdate 的 $dayupdate 点。" 
 		fi
 	else
@@ -513,10 +416,10 @@ set_cru() {
 
 	if [ "$autoupdatesubscribe" = "1" ];then
 		if [ "$weekupdatesubscribe" = "7" ];then
-			echo "0 $dayupdatesubscribe * * * $SS_PATH/subscription.sh" >> /etc/crontabs/root
+			echo "0 $dayupdatesubscribe * * * $APP_PATH/subscription.sh" >> /etc/crontabs/root
 			echolog "设置服务器订阅自动更新规则在每天 $dayupdatesubscribe 点。" 
 		else
-			echo "0 $dayupdatesubscribe * * $weekupdate $SS_PATH/subscription.sh" >> /etc/crontabs/root
+			echo "0 $dayupdatesubscribe * * $weekupdate $APP_PATH/subscription.sh" >> /etc/crontabs/root
 			echolog "设置服务器订阅自动更新规则在星期 $weekupdate 的 $dayupdatesubscribe 点。" 
 		fi
 	else
@@ -528,7 +431,7 @@ start_crontab() {
 	sed -i '/$CONFIG/d' /etc/crontabs/root >/dev/null 2>&1 &
 	start_daemon=$(config_t_get global_delay start_daemon)
 	if [ "$start_daemon" = "1" ];then
-		echo "*/2 * * * * nohup $SS_PATH/monitor.sh > /dev/null 2>&1" >> /etc/crontabs/root
+		echo "*/2 * * * * nohup $APP_PATH/monitor.sh > /dev/null 2>&1" >> /etc/crontabs/root
 		echolog "已启动守护进程。" 
 	fi
 	
@@ -554,7 +457,7 @@ start_crontab() {
 	[ "$AUTO_SWITCH_ENABLE" = "1" ] && {
 		testing_time=$(config_t_get auto_switch testing_time)
 		[ -n "$testing_time" ] && {
-			echo "*/$testing_time * * * * nohup $SS_PATH/test.sh > /dev/null 2>&1" >> /etc/crontabs/root
+			echo "*/$testing_time * * * * nohup $APP_PATH/test.sh > /dev/null 2>&1" >> /etc/crontabs/root
 			echolog "设置每$testing_time分钟执行检测脚本。"
 		}
 	}
@@ -563,7 +466,7 @@ start_crontab() {
 
 stop_crontab() {
 	sed -i "/$CONFIG/d" /etc/crontabs/root >/dev/null 2>&1 &
-	ps | grep "$SS_PATH/test.sh" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
+	ps | grep "$APP_PATH/test.sh" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 	rm -f /var/lock/passwall_test.lock >/dev/null 2>&1 &
 	/etc/init.d/cron restart
 	echolog "清除定时执行命令。" 
@@ -608,18 +511,18 @@ start_dns() {
 				case "$UP_CHINADNS_MODE" in
 					OpenDNS_1)
 						other=0
-						nohup $chinadns_bin -p 7913 -c $SS_PATH_RULE/chnroute -m -d -s $dns1,208.67.222.222:443,208.67.222.222:5353 >/dev/null 2>&1 &
+						nohup $chinadns_bin -p 7913 -c $APP_PATH_RULE/chnroute -m -d -s $dns1,208.67.222.222:443,208.67.222.222:5353 >/dev/null 2>&1 &
 						echolog "运行ChinaDNS上游转发模式：$dns1,208.67.222.222..." 
 					;;
 					OpenDNS_2)
 						other=0
-						nohup $chinadns_bin -p 7913 -c $SS_PATH_RULE/chnroute -m -d -s $dns1,208.67.220.220:443,208.67.220.220:5353 >/dev/null 2>&1 &
+						nohup $chinadns_bin -p 7913 -c $APP_PATH_RULE/chnroute -m -d -s $dns1,208.67.220.220:443,208.67.220.220:5353 >/dev/null 2>&1 &
 						echolog "运行ChinaDNS上游转发模式：$dns1,208.67.220.220..." 
 					;;
 					custom)
 						other=0
 						UP_CHINADNS_CUSTOM=$(config_t_get global up_chinadns_custom '114.114.114.114,208.67.222.222:5353')
-						nohup $chinadns_bin -p 7913 -c $SS_PATH_RULE/chnroute -m -d -s $UP_CHINADNS_CUSTOM >/dev/null 2>&1 &
+						nohup $chinadns_bin -p 7913 -c $APP_PATH_RULE/chnroute -m -d -s $UP_CHINADNS_CUSTOM >/dev/null 2>&1 &
 						echolog "运行ChinaDNS上游转发模式：$UP_CHINADNS_CUSTOM..." 
 					;;
 					dnsproxy)
@@ -638,7 +541,7 @@ start_dns() {
 					;;
 				esac
 				if [ "$other" = "1" ];then
-					nohup $chinadns_bin -p 7923 -c $SS_PATH_RULE/chnroute -m -d -s $dns1,127.0.0.1:7913 >/dev/null 2>&1 &
+					nohup $chinadns_bin -p 7923 -c $APP_PATH_RULE/chnroute -m -d -s $dns1,127.0.0.1:7913 >/dev/null 2>&1 &
 				fi
 			}
 		;;
@@ -776,28 +679,28 @@ EOF
 	}
 
 	if [ ! -f "$TMP_DNSMASQ_PATH/gfwlist.conf" ];then
-		ln -s $SS_PATH_DNSMASQ/gfwlist.conf $TMP_DNSMASQ_PATH/gfwlist.conf
+		ln -s $APP_PATH_DNSMASQ/gfwlist.conf $TMP_DNSMASQ_PATH/gfwlist.conf
 		restdns=1
 	fi
 	
 	if [ ! -f "$TMP_DNSMASQ_PATH/blacklist_host.conf" ];then
-		cat $SS_PATH_RULE/blacklist_host | awk '{print "server=/."$1"/127.0.0.1#7913\nipset=/."$1"/blacklist"}' >> $TMP_DNSMASQ_PATH/blacklist_host.conf
+		cat $APP_PATH_RULE/blacklist_host | awk '{print "server=/."$1"/127.0.0.1#7913\nipset=/."$1"/blacklist"}' >> $TMP_DNSMASQ_PATH/blacklist_host.conf
 		restdns=1
 	fi
 	
 	if [ ! -f "$TMP_DNSMASQ_PATH/whitelist_host.conf" ];then
-		cat $SS_PATH_RULE/whitelist_host | sed "s/^/ipset=&\/./g" | sed "s/$/\/&whitelist/g" | sort | awk '{if ($0!=line) print;line=$0}' >$TMP_DNSMASQ_PATH/whitelist_host.conf
+		cat $APP_PATH_RULE/whitelist_host | sed "s/^/ipset=&\/./g" | sed "s/$/\/&whitelist/g" | sort | awk '{if ($0!=line) print;line=$0}' >$TMP_DNSMASQ_PATH/whitelist_host.conf
 		restdns=1
 	fi
 	
 	if [ ! -f "$TMP_DNSMASQ_PATH/router.conf" ];then
-		cat $SS_PATH_RULE/router | awk '{print "server=/."$1"/127.0.0.1#7913\nipset=/."$1"/router"}' >> $TMP_DNSMASQ_PATH/router.conf
+		cat $APP_PATH_RULE/router | awk '{print "server=/."$1"/127.0.0.1#7913\nipset=/."$1"/router"}' >> $TMP_DNSMASQ_PATH/router.conf
 		restdns=1
 	fi
 	
-	userconf=$(grep -c "" $SS_PATH_DNSMASQ/user.conf)
+	userconf=$(grep -c "" $APP_PATH_DNSMASQ/user.conf)
 	if [ "$userconf" -gt 0  ];then
-		ln -s $SS_PATH_DNSMASQ/user.conf $TMP_DNSMASQ_PATH/user.conf
+		ln -s $APP_PATH_DNSMASQ/user.conf $TMP_DNSMASQ_PATH/user.conf
 		restdns=1
 	fi
 	
@@ -1008,368 +911,6 @@ del_vps_port() {
 	[ -n "$udp_ip" ] && route del -host ${udp_ip}
 }
 
-dns_hijack(){
-	dnshijack=$(config_t_get global_dns dns_53)
-	if [ "$dnshijack" = "1" -o "$1" = "force" ];then
-		chromecast_nu=`$iptables_nat -L SS -v -n --line-numbers|grep "dpt:53"|awk '{print $1}'`
-		is_right_lanip=`$iptables_nat -L SS -v -n --line-numbers|grep "dpt:53" |grep "$lanip"`
-		if [ -z "$chromecast_nu" ]; then
-			echolog "添加接管局域网DNS解析规则..." 
-			$iptables_nat -I SS -i br-lan -p udp --dport 53 -j DNAT --to $lanip 2>/dev/null
-		else
-			if [ -z "$is_right_lanip" ]; then
-				echolog "添加接管局域网DNS解析规则..." 
-				$iptables_nat -D SS $chromecast_nu >/dev/null 2>&1 &
-				$iptables_nat -I SS -i br-lan -p udp --dport 53 -j DNAT --to $lanip 2>/dev/null
-			else
-				echolog " DNS劫持规则已经添加，跳过~" >>$LOG_FILE
-			fi
-		fi
-	fi
-}
-
-load_acl(){
-	local enabled
-	local aclremarks
-	local ipaddr
-	local macaddr
-	local proxy_mode
-	local tcp_redir_ports
-	local udp_redir_ports
-	config_get enabled $1 enabled
-	config_get aclremarks $1 aclremarks
-	config_get ipaddr $1 ipaddr
-	config_get macaddr $1 macaddr
-	config_get proxy_mode $1 proxy_mode
-	config_get tcp_redir_ports $1 tcp_redir_ports
-	config_get udp_redir_ports $1 udp_redir_ports
-	[ -z "$proxy_mode" -o "$proxy_mode" = "default" ] && proxy_mode=$PROXY_MODE
-	[ -z "$tcp_redir_ports" -o "$tcp_redir_ports" = "default" ] && tcp_redir_ports=$TCP_REDIR_PORTS
-	[ -z "$udp_redir_ports" -o "$udp_redir_ports" = "default" ] && udp_redir_ports=$UDP_REDIR_PORTS
-	local ip_mark=`get_ip_mark $ipaddr`								 
-	[ "$enabled" == "1" -a -n "$proxy_mode" ] && {
-		if [ -n "$ipaddr" ] || [ -n "$macaddr" ]; then
-			if [ -n "$ipaddr" -a -n "$macaddr" ]; then
-				echolog "访问控制：IP：$ipaddr，MAC：$macaddr，代理模式：$(get_action_chain_name $proxy_mode)" 
-			else
-				[ -n "$ipaddr" ] && echolog "访问控制：IP：$ipaddr，代理模式：$(get_action_chain_name $proxy_mode)" 
-				[ -n "$macaddr" ] && echolog "访问控制：MAC：$macaddr，代理模式：$(get_action_chain_name $proxy_mode)" 
-			fi
-			$iptables_mangle -A SS_ACL $(factor $ipaddr "-s") -p tcp $(factor $macaddr "-m mac --mac-source") $(factor $tcp_redir_ports "-m multiport --dport") -m comment --comment "$aclremarks" -$(get_jump_mode $proxy_mode) $(get_action_chain $proxy_mode)
-			[ "$UDP_REDIR_SERVER" != "nil" ] && $iptables_mangle -A SS_ACL $(factor $ipaddr "-s") -p udp $(factor $macaddr "-m mac --mac-source") $(factor $udp_redir_ports "-m multiport --dport") -m comment --comment "$aclremarks" -$(get_jump_mode $proxy_mode) $(get_action_chain $proxy_mode)
-			[ -z "$ipaddr" ] && {
-				lower_macaddr=`echo $macaddr | tr '[A-Z]' '[a-z]'`
-				ipaddr=`ip neigh show | grep -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}" | grep $lower_macaddr | awk '{print $1}'`
-				[ -z "$ipaddr" ] && {
-					dhcp_index=`uci show dhcp | grep $lower_macaddr |awk -F'.' '{print $2}'`
-					ipaddr=`uci -q get dhcp.$dhcp_index.ip`
-				}
-				[ -z "$ipaddr" ] && ipaddr=`cat /tmp/dhcp.leases | grep -E "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" |grep $lower_macaddr |awk '{print $3}'`
-			}
-		fi
-	}
-}
-
-filter_vpsip(){
-	local server_host server_ip use_ipv6 network_type
-	server_host=$(config_get $1 server)
-	use_ipv6=$(config_get $1 use_ipv6)
-	network_type="ipv4"
-	[ "$use_ipv6" == "1" ] && network_type="ipv6"
-	server_ip=$(get_host_ip $network_type $server_host)
-	
-	[ -n "$server_ip" -a "$server_ip" != "$TCP_REDIR_SERVER_IP" ] && {
-		[ "$network_type" == "ipv4" ] && ipset add $IPSET_VPSIPLIST $server_ip >/dev/null 2>&1 &
-	}
-}
-
-add_firewall_rule() {
-	echolog "开始加载防火墙规则..." 
-	echolog "默认代理模式：$(get_action_chain_name $PROXY_MODE)" 
-	ipset -! create $IPSET_LANIPLIST nethash && ipset flush $IPSET_LANIPLIST
-	ipset -! create $IPSET_VPSIPLIST nethash && ipset flush $IPSET_VPSIPLIST
-	ipset -! create $IPSET_ROUTER nethash && ipset flush $IPSET_ROUTER
-	ipset -! create $IPSET_GFW nethash && ipset flush $IPSET_GFW
-	ipset -! create $IPSET_CHN nethash && ipset flush $IPSET_CHN
-	ipset -! create $IPSET_BLACKLIST nethash && ipset flush $IPSET_BLACKLIST
-	ipset -! create $IPSET_WHITELIST nethash && ipset flush $IPSET_WHITELIST
-	
-	sed -e "s/^/add $IPSET_CHN &/g" $SS_PATH_RULE/chnroute | awk '{print $0} END{print "COMMIT"}' | ipset -R
-	sed -e "s/^/add $IPSET_BLACKLIST &/g" $SS_PATH_RULE/blacklist_ip | awk '{print $0} END{print "COMMIT"}' | ipset -R
-	sed -e "s/^/add $IPSET_WHITELIST &/g" $SS_PATH_RULE/whitelist_ip | awk '{print $0} END{print "COMMIT"}' | ipset -R
-	
-	ipset -! -R <<-EOF || return 1
-			$(gen_laniplist | sed -e "s/^/add $IPSET_LANIPLIST /")
-EOF
-	
-	ISP_DNS=`cat /tmp/resolv.conf.auto 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | sort -u |grep -v 0.0.0.0 |grep -v 127.0.0.1`
-	[ -n "$ISP_DNS" ] && {
-		for ispip in $ISP_DNS
-		do
-			ipset -! add $IPSET_WHITELIST $ispip >/dev/null 2>&1 &
-		done
-	}
-		
-	#	忽略特殊IP段
-	lan_ip=`ifconfig br-lan | grep "inet addr" | awk '{print $2}' | awk -F : '{print $2}'` #路由器lan IP
-	lan_ipv4=`ip address show br-lan | grep -w "inet" |awk '{print $2}'`  #当前LAN IPv4段
-	[ -n "$lan_ipv4" ] && ipset add $IPSET_LANIPLIST $lan_ipv4 >/dev/null 2>&1 &
-	
-	#  过滤所有节点IP
-		config_foreach filter_vpsip "servers"
-	
-	$iptables_mangle -N SS
-	$iptables_mangle -A SS -m set --match-set $IPSET_LANIPLIST dst -j RETURN
-	$iptables_mangle -A SS -m set --match-set $IPSET_VPSIPLIST dst -j RETURN
-	$iptables_mangle -A SS -m set --match-set $IPSET_WHITELIST dst -j RETURN
-	$iptables_mangle -N SS_ACL
-	$iptables_mangle -N SS_GLO
-	$iptables_mangle -N SS_GFW
-	$iptables_mangle -N SS_CHN
-	$iptables_mangle -N SS_HOME
-	$iptables_mangle -N SS_GAME
-	
-	ip rule add fwmark 1 lookup 100
-	ip route add local 0.0.0.0/0 dev lo table 100
-	
-	#	生成TCP转发规则
-	if [ "$TCP_REDIR_SERVER" != "nil" ];then
-		[ -n "$SOCKS5_PROXY_SERVER_IP" -a -n "$SOCKS5_PROXY_SERVER_PORT" ] && $iptables_mangle -A SS -p tcp -d $SOCKS5_PROXY_SERVER_IP -m multiport --dports $SOCKS5_PROXY_SERVER_PORT -j RETURN
-		[ -n "$TCP_REDIR_SERVER_IP" -a -n "$TCP_REDIR_SERVER_PORT" ] && $iptables_mangle -A SS -p tcp -d $TCP_REDIR_SERVER_IP -m multiport --dports $TCP_REDIR_SERVER_PORT -j RETURN
-		if [ "$TCP_REDIR_SERVER_TYPE" == "brook" ]; then
-			$iptables_mangle -A PREROUTING -p tcp -m socket -j MARK --set-mark 1
-			$iptables_mangle -A PREROUTING -p tcp -j SS
-			
-			$iptables_mangle -A SS -p tcp -m set --match-set $IPSET_BLACKLIST dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
-			#	全局模式
-			$iptables_mangle -A SS_GLO -p tcp -j TPROXY --tproxy-mark 0x1/0x1 --on-port $TCP_REDIR_PORT
-			
-			#	GFWLIST模式
-			$iptables_mangle -A SS_GFW -p tcp -m set --match-set $IPSET_GFW dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
-			$iptables_mangle -A SS_GFW -p tcp -m set --match-set $IPSET_ROUTER dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
-			
-			#	大陆白名单模式
-			$iptables_mangle -A SS_CHN -p tcp -m set --match-set $IPSET_CHN dst -j RETURN
-			$iptables_mangle -A SS_CHN -p tcp -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
-			
-			#	回国模式
-			$iptables_mangle -A SS_HOME -p tcp -m set --match-set $IPSET_CHN dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
-			
-			#	游戏模式
-			$iptables_mangle -A SS_GAME -p tcp -m set --match-set $IPSET_CHN dst -j RETURN
-			
-			#	用于本机流量转发，默认只走router
-			$iptables_mangle -A SS -s $lan_ip -p tcp -m set --match-set $IPSET_ROUTER dst -j TPROXY --on-port $TCP_REDIR_PORT --tproxy-mark 0x1/0x1
-			$iptables_mangle -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_ROUTER dst -j MARK --set-mark 1
-		else
-			$iptables_mangle -A PREROUTING -j SS
-			$iptables_mangle -A SS -p tcp -m set --match-set $IPSET_BLACKLIST dst -j TTL --ttl-set 188
-			#	全局模式
-			$iptables_mangle -A SS_GLO -p tcp -j TTL --ttl-set 188
-			
-			#	GFWLIST模式
-			$iptables_mangle -A SS_GFW -p tcp -m set --match-set $IPSET_GFW dst -j TTL --ttl-set 188
-			$iptables_mangle -A SS_GFW -p tcp -m set --match-set $IPSET_ROUTER dst -j TTL --ttl-set 188
-			
-			#	大陆白名单模式
-			$iptables_mangle -A SS_CHN -p tcp -m set --match-set $IPSET_CHN dst -j RETURN
-			#$iptables_mangle -A SS_CHN -p tcp -m geoip ! --destination-country CN -j TTL --ttl-set 188
-			$iptables_mangle -A SS_CHN -p tcp -j TTL --ttl-set 188
-			
-			#	回国模式
-			#$iptables_mangle -A SS_HOME -p tcp -m geoip --destination-country CN -j TTL --ttl-set 188
-			$iptables_mangle -A SS_HOME -p tcp -m set --match-set $IPSET_CHN dst -j TTL --ttl-set 188
-			
-			#	游戏模式
-			$iptables_mangle -A SS_GAME -p tcp -m set --match-set $IPSET_CHN dst -j RETURN
-			
-			#	重定所有流量到透明代理端口
-			$iptables_nat -N SS
-			$iptables_nat -A SS -p tcp -m ttl --ttl-eq 188 -j REDIRECT --to $TCP_REDIR_PORT
-			
-			is_add_prerouting=0
-			
-			KP_INDEX=`$iptables_nat -L PREROUTING|tail -n +3|sed -n -e '/^KOOLPROXY/='`
-			if [ -n "$KP_INDEX" ]; then
-				let KP_INDEX+=1
-				#确保添加到KOOLPROXY规则之后
-				$iptables_nat -I PREROUTING $KP_INDEX -j SS
-				is_add_prerouting=1
-			fi
-			
-			ADBYBY_INDEX=`$iptables_nat -L PREROUTING|tail -n +3|sed -n -e '/^ADBYBY/='`
-			if [ -n "$ADBYBY_INDEX" ]; then
-				let ADBYBY_INDEX+=1
-				#确保添加到ADBYBY规则之后
-				$iptables_nat -I PREROUTING $ADBYBY_INDEX -j SS
-				is_add_prerouting=1
-			fi
-			
-			if [ "$is_add_prerouting" == 0 ]; then
-				#如果去广告没有运行，确保添加到prerouting_rule规则之后
-				PR_INDEX=`$iptables_nat -L PREROUTING|tail -n +3|sed -n -e '/^prerouting_rule/='`
-				if [ -z "$PR_INDEX" ]; then
-					PR_INDEX=1
-				else
-					let PR_INDEX+=1
-				fi
-				$iptables_nat -I PREROUTING $PR_INDEX -j SS
-			fi
-		
-			#  用于本机流量转发，默认只走router
-			#$iptables_nat -I OUTPUT -j SS
-			$iptables_nat -A OUTPUT -m set --match-set $IPSET_LANIPLIST dst -j RETURN
-			$iptables_nat -A OUTPUT -m set --match-set $IPSET_VPSIPLIST dst -j RETURN
-			$iptables_nat -A OUTPUT -m set --match-set $IPSET_WHITELIST dst -j RETURN
-			$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_ROUTER dst -j REDIRECT --to-ports $TCP_REDIR_PORT
-			$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_BLACKLIST dst -j REDIRECT --to-ports $TCP_REDIR_PORT
-			
-			[ "$LOCALHOST_PROXY_MODE" == "global" ] && $iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -j REDIRECT --to-ports $TCP_REDIR_PORT
-			[ "$LOCALHOST_PROXY_MODE" == "gfwlist" ] && $iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_GFW dst -j REDIRECT --to-ports $TCP_REDIR_PORT
-			[ "$LOCALHOST_PROXY_MODE" == "chnroute" ] && {
-				$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_CHN dst -j RETURN
-				$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -j REDIRECT --to-ports $TCP_REDIR_PORT
-			}
-			
-			echolog "IPv4 防火墙TCP转发规则加载完成！" 
-		fi
-	else
-		echolog "主服务器未选择，无法转发TCP！" 
-	fi
-		
-	#  生成UDP转发规则
-	if [ "$UDP_REDIR_SERVER" != "nil" ];then
-		[ -n "$UDP_REDIR_SERVER_IP" -a -n "$UDP_REDIR_SERVER_PORT" ] && $iptables_mangle -A SS -p udp -d $UDP_REDIR_SERVER_IP -m multiport --dports $UDP_REDIR_SERVER_PORT -j RETURN
-		if [ "$UDP_REDIR_SERVER_TYPE" == "brook" ]; then
-			$iptables_mangle -A PREROUTING -p udp -m socket -j MARK --set-mark 1
-			$iptables_mangle -A PREROUTING -p udp -j SS
-		fi
-		$iptables_mangle -A SS -p udp -m set --match-set $IPSET_BLACKLIST dst -j TPROXY --on-port $UDP_REDIR_PORT --tproxy-mark 0x1/0x1
-		#  全局模式
-		$iptables_mangle -A SS_GLO -p udp -j TPROXY --on-port $UDP_REDIR_PORT --tproxy-mark 0x1/0x1
-		
-		#  GFWLIST模式
-		$iptables_mangle -A SS_GFW -p udp -m set --match-set $IPSET_GFW dst -j TPROXY --on-port $UDP_REDIR_PORT --tproxy-mark 0x1/0x1
-		$iptables_mangle -A SS_GFW -p udp -m set --match-set $IPSET_ROUTER dst -j TPROXY --on-port $UDP_REDIR_PORT --tproxy-mark 0x1/0x1
-		
-		#  大陆白名单模式
-		$iptables_mangle -A SS_CHN -p udp -m set --match-set $IPSET_CHN dst -j RETURN
-		$iptables_mangle -A SS_CHN -p udp -j TPROXY --on-port $UDP_REDIR_PORT --tproxy-mark 0x1/0x1
-		
-		#  回国模式
-		$iptables_mangle -A SS_HOME -p udp -m set --match-set $IPSET_CHN dst -j TPROXY --on-port $UDP_REDIR_PORT --tproxy-mark 0x1/0x1
-		
-		#  游戏模式
-		$iptables_mangle -A SS_GAME -p udp -m set --match-set $IPSET_CHN dst -j RETURN
-		$iptables_mangle -A SS_GAME -p udp -j TPROXY --on-port $UDP_REDIR_PORT --tproxy-mark 0x1/0x1
-		#$iptables_mangle -A SS_GAME -p udp -m geoip ! --destination-country CN -j TTL --ttl-set 188
-		
-		echolog "IPv4 防火墙UDP转发规则加载完成！" 
-	else
-		echolog "UDP服务器未选择，无法转发UDP！" 
-	fi
-		
-	#  加载ACLS
-		$iptables_mangle -A SS -j SS_ACL
-		config_foreach load_acl "acl_rule"
-		
-	#  加载默认代理模式
-		if [ "$PROXY_MODE" == "disable" ];then
-			[ "$TCP_REDIR_SERVER" != "nil" ] && $iptables_mangle -A SS_ACL -p tcp -m comment --comment "Default" -j $(get_action_chain $PROXY_MODE)
-			[ "$UDP_REDIR_SERVER" != "nil" ] && $iptables_mangle -A SS_ACL -p udp -m comment --comment "Default" -j $(get_action_chain $PROXY_MODE)
-		else
-			[ "$PROXY_MODE" == "gfwlist" ] && dns_hijack "force"
-			[ "$TCP_REDIR_SERVER" != "nil" ] && $iptables_mangle -A SS_ACL -p tcp -m multiport --dport $TCP_REDIR_PORTS -m comment --comment "Default" -j $(get_action_chain $PROXY_MODE)
-			[ "$UDP_REDIR_SERVER" != "nil" ] && $iptables_mangle -A SS_ACL -p udp -m multiport --dport $UDP_REDIR_PORTS -m comment --comment "Default" -j $(get_action_chain $PROXY_MODE)
-		fi
-	
-	if [ "$PROXY_IPV6" == "1" ];then
-		lan_ipv6=`ip address show br-lan | grep -w "inet6" |awk '{print $2}'`  #当前LAN IPv6段
-		$ip6tables_nat -N SS
-		$ip6tables_nat -N SS_ACL
-		$ip6tables_nat -A PREROUTING -j SS
-		[ -n "$lan_ipv6" ] && {
-			for ip in $lan_ipv6
-			do
-				$ip6tables_nat -A SS -d $ip -j RETURN
-			done
-		}
-		[ "$use_ipv6" == "1" -a -n "$server_ip" ] && $ip6tables_nat -A SS -d $server_ip -j RETURN
-		$ip6tables_nat -N SS_GLO
-		$ip6tables_nat -N SS_GFW
-		$ip6tables_nat -N SS_CHN
-		$ip6tables_nat -N SS_HOME
-		$ip6tables_nat -A SS_GLO -p tcp -j REDIRECT --to $TCP_REDIR_PORT
-		$ip6tables_nat -A SS -j SS_GLO
-		$ip6tables_nat -I OUTPUT -p tcp -j SS
-		echolog "IPv6防火墙规则加载完成！" 
-	fi
-}
-
-del_firewall_rule() {
-	echolog "删除所有防火墙规则..."
-	ipv4_output_exist=`$iptables_nat -L OUTPUT 2>/dev/null | grep -c -E "SS|$TCP_REDIR_PORTS|$IPSET_LANIPLIST|$IPSET_VPSIPLIST|$IPSET_WHITELIST|$IPSET_ROUTER|$IPSET_BLACKLIST|$IPSET_GFW|$IPSET_CHN"`
-	[ -n "$ipv4_output_exist" ] && {
-		until [ "$ipv4_output_exist" = 0 ]
-		do
-			rules=`$iptables_nat -L OUTPUT --line-numbers | grep -E "SS|$TCP_REDIR_PORTS|$IPSET_LANIPLIST|$IPSET_VPSIPLIST|$IPSET_WHITELIST|$IPSET_ROUTER|$IPSET_BLACKLIST|$IPSET_GFW|$IPSET_CHN" | awk '{print $1}'`
-			for rule in $rules
-			do
-				$iptables_nat -D OUTPUT $rule 2> /dev/null
-				break
-			done
-			ipv4_output_exist=`expr $ipv4_output_exist - 1`
-		done
-	}
-	
-	ipv6_output_ss_exist=`$ip6tables_nat -L OUTPUT 2>/dev/null | grep -c "SS"`
-	[ -n "$ipv6_output_ss_exist" ] && {
-		until [ "$ipv6_output_ss_exist" = 0 ]
-		do
-			rules=`$ip6tables_nat -L OUTPUT --line-numbers | grep "SS" | awk '{print $1}'`
-			for rule in $rules
-			do
-				$ip6tables_nat -D OUTPUT $rule 2> /dev/null
-				break
-			done
-			ipv6_output_ss_exist=`expr $ipv6_output_ss_exist - 1`
-		done
-	}
-	$iptables_mangle -D PREROUTING -p tcp -m socket -j MARK --set-mark 1 2>/dev/null
-	$iptables_mangle -D PREROUTING -p udp -m socket -j MARK --set-mark 1 2>/dev/null
-	$iptables_mangle -D OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_ROUTER dst -j MARK --set-mark 1 2>/dev/null
-	$iptables_mangle -D OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_GFW dst -j MARK --set-mark 1 2>/dev/null
-	$iptables_mangle -D OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -j MARK --set-mark 1 2>/dev/null
-	
-	$iptables_nat -D PREROUTING -j SS 2> /dev/null
-	$iptables_nat -F SS 2>/dev/null && $iptables_nat -X SS 2>/dev/null
-	$iptables_mangle -D PREROUTING -j SS 2>/dev/null
-	$iptables_mangle -F SS 2>/dev/null && $iptables_mangle -X SS 2>/dev/null
-	$iptables_mangle -F SS_ACL 2>/dev/null && $iptables_mangle -X SS_ACL 2>/dev/null
-	$iptables_mangle -F SS_GLO 2>/dev/null && $iptables_mangle -X SS_GLO 2>/dev/null
-	$iptables_mangle -F SS_GFW 2>/dev/null && $iptables_mangle -X SS_GFW 2>/dev/null
-	$iptables_mangle -F SS_CHN 2>/dev/null && $iptables_mangle -X SS_CHN 2>/dev/null
-	$iptables_mangle -F SS_GAME 2>/dev/null && $iptables_mangle -X SS_GAME 2>/dev/null
-	$iptables_mangle -F SS_HOME 2>/dev/null && $iptables_mangle -X SS_HOME 2>/dev/null
-	
-	$ip6tables_nat -D PREROUTING -j SS 2>/dev/null
-	$ip6tables_nat -F SS 2>/dev/null && $ip6tables_nat -X SS 2>/dev/null
-	$ip6tables_nat -F SS_ACL 2>/dev/null && $ip6tables_nat -X SS_ACL 2>/dev/null
-	$ip6tables_nat -F SS_GLO 2>/dev/null && $ip6tables_nat -X SS_GLO 2>/dev/null
-	$ip6tables_nat -F SS_GFW 2>/dev/null && $ip6tables_nat -X SS_GFW 2>/dev/null
-	$ip6tables_nat -F SS_CHN 2>/dev/null && $ip6tables_nat -X SS_CHN 2>/dev/null
-	$ip6tables_nat -F SS_HOME 2>/dev/null && $ip6tables_nat -X SS_HOME 2>/dev/null
-	ip_rule_exist=`ip rule show | grep "from all fwmark 0x1 lookup 100" | grep -c 100`
-	if [ ! -z "$ip_rule_exist" ];then
-		until [ "$ip_rule_exist" = 0 ]
-		do 
-			ip rule del fwmark 1 lookup 100
-			ip_rule_exist=`expr $ip_rule_exist - 1`
-		done
-	fi
-	ip route del local 0.0.0.0/0 dev lo table 100 2>/dev/null
-}
-
 kill_all() {
 	kill -9 $(pidof $@) >/dev/null 2>&1 &
 }
@@ -1400,8 +941,7 @@ start() {
 	start_socks5_proxy
 	start_dns
 	add_dnsmasq
-	add_firewall_rule
-	dns_hijack
+	source $APP_PATH/iptables.sh start
 	/etc/init.d/dnsmasq restart >/dev/null 2>&1 &
 	start_crontab
 	set_cru
@@ -1415,15 +955,8 @@ stop() {
 		sleep 1s
 	done
 	clean_log
-	del_firewall_rule
+	source $APP_PATH/iptables.sh stop
 	del_vps_port
-	ipset -F $IPSET_ROUTER >/dev/null 2>&1 && ipset -X $IPSET_ROUTER >/dev/null 2>&1 &
-	ipset -F $IPSET_GFW >/dev/null 2>&1 && ipset -X $IPSET_GFW >/dev/null 2>&1 &
-	#ipset -F $IPSET_CHN >/dev/null 2>&1 && ipset -X $IPSET_CHN >/dev/null 2>&1 &
-	ipset -F $IPSET_BLACKLIST >/dev/null 2>&1 && ipset -X $IPSET_BLACKLIST >/dev/null 2>&1 &
-	ipset -F $IPSET_WHITELIST >/dev/null 2>&1 && ipset -X $IPSET_WHITELIST >/dev/null 2>&1 &
-	ipset -F $IPSET_VPSIPLIST >/dev/null 2>&1 && ipset -X $IPSET_VPSIPLIST >/dev/null 2>&1 &
-	ipset -F $IPSET_LANIPLIST >/dev/null 2>&1 && ipset -X $IPSET_LANIPLIST >/dev/null 2>&1 &
 	kill_all pdnsd Pcap_DNSProxy brook dns2socks haproxy dns-forwarder chinadns dnsproxy redsocks2
 	ps -w | grep -E "$CONFIG_TCP_FILE|$CONFIG_UDP_FILE|$CONFIG_SOCKS5_FILE" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 	ps -w | grep "kcptun_client" | grep "$KCPTUN_REDIR_PORT" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
@@ -1447,4 +980,6 @@ boot)
 	boot
 	;;
 *)
+	echo "Usage: $0 (start|stop|restart)"
+    ;;
 esac
