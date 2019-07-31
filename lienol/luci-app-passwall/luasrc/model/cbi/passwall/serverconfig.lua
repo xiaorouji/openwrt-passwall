@@ -11,7 +11,7 @@ end
 local function is_installed(e) return ipkg.installed(e) end
 
 local ss_encrypt_method = {
-    "rc4", "rc4-md5", "aes-128-cfb", "aes-192-cfb", "aes-256-cfb",
+    "rc4-md5", "aes-128-cfb", "aes-192-cfb", "aes-256-cfb",
     "aes-128-ctr", "aes-192-ctr", "aes-256-ctr", "bf-cfb", "camellia-128-cfb",
     "camellia-192-cfb", "camellia-256-cfb", "salsa20", "chacha20",
     "chacha20-ietf", -- aead
@@ -20,10 +20,10 @@ local ss_encrypt_method = {
 }
 
 local ssr_encrypt_method = {
-    "none", "table", "rc4", "rc4-md5", "rc4-md5-6", "aes-128-cfb",
+    "none", "table", "rc2-cfb", "rc4", "rc4-md5", "rc4-md5-6", "aes-128-cfb",
     "aes-192-cfb", "aes-256-cfb", "aes-128-ctr", "aes-192-ctr", "aes-256-ctr",
     "bf-cfb", "camellia-128-cfb", "camellia-192-cfb", "camellia-256-cfb",
-    "cast5-cfb", "des-cfb", "rc2-cfb", "seed-cfb", "salsa20", "chacha20",
+    "cast5-cfb", "des-cfb", "idea-cfb", "seed-cfb", "salsa20", "chacha20",
     "chacha20-ietf"
 }
 

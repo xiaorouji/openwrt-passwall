@@ -37,7 +37,6 @@ decode_url_link(){
 get_remote_config(){
 	json_load "$1"
 	json_get_var v v
-	json_get_var host host
 	json_get_var ps ps
 	json_get_var server add
 	json_get_var server_port port
@@ -45,8 +44,16 @@ get_remote_config(){
 	json_get_var aid aid
 	json_get_var net net
 	json_get_var type type
-	json_get_var path path
+	json_get_var transport net
 	json_get_var tls tls
+	json_get_var ws_host host
+	json_get_var ws_path path
+	
+	if [ "$tls" == "1" ]; then
+		tls="tls"
+	else
+		tls="none"
+	fi
 	
 	remarks="订阅_$ps"
 	group='AutoSuB_V2ray'
@@ -101,9 +108,10 @@ add_servers(){
 	config_t_set servers v2ray_VMess_alterId $v2ray_index $aid
 	config_t_set servers v2ray_VMess_level $v2ray_index $v
 	config_t_set servers v2ray_transport $v2ray_index $net
+	config_t_set servers v2ray_stream_security $v2ray_index $tls
 	config_t_set servers v2ray_tcp_guise $v2ray_index $type
-	config_t_set servers v2ray_tcp_guise_http_host $v2ray_index $host
-	config_t_set servers v2ray_tcp_guise_http_path $v2ray_index $path
+	config_t_set servers v2ray_ws_host $v2ray_index $ws_host
+	config_t_set servers v2ray_ws_path $v2ray_index $ws_path
 	uci commit $CONFIG
 }
 
@@ -116,13 +124,12 @@ update_config(){
 		index=$(uci show $CONFIG | grep -w "server='$server'" | cut -d '[' -f2|cut -d ']' -f1)
 		local_server_port=$(config_t_get servers server_port $index)
 		local_vmess_id=$(config_t_get servers v2ray_VMess_id $index)
-		#to do
 	fi
 
 }
 
 del_config(){
-	##删除订阅服务器已经不存在的节点
+	# 删除订阅服务器已经不存在的节点
 	for localserver in $(cat /usr/share/$CONFIG/serverconfig_v2ray/all_localservers)
 	do
 		[ "`cat /usr/share/$CONFIG/serverconfig_v2ray/all_onlineservers |grep -c "$localserver"`" -eq 0 ] && {
