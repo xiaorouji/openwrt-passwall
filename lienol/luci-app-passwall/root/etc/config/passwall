@@ -39,6 +39,8 @@ config global_proxy
 	
 config global_other
 	option auto_ping '1'
+	option tcp_redir_server_num '1'
+	option udp_redir_server_num '1'
 
 config global_rules
 	option gfwlist_update '1'
