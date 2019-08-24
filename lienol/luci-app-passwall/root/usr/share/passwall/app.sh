@@ -390,7 +390,7 @@ start_tcp_redir_other() {
 				TYPE=`echo $(config_get $temp_server server_type) | tr 'A-Z' 'a-z'`
 				local config_file=$CONFIG_PATH/TCP$i.json
 				local port_temp=`expr $TCP_REDIR_PORT + 1 `
-				local port=`echo $(get_not_exists_port_after $port_temp)`
+				local port=`echo $(get_not_exists_port_after $port_temp tcp)`
 				eval TCP_REDIR_PORT$i=$port
 				gen_config_file $temp_server $port TCP $config_file
 				if [ "$TYPE" == "v2ray" ]; then
@@ -427,7 +427,7 @@ start_udp_redir_other() {
 				TYPE=`echo $(config_get $temp_server server_type) | tr 'A-Z' 'a-z'`
 				local config_file=$CONFIG_PATH/UDP$i.json
 				local port_temp=`expr $TCP_REDIR_PORT + 1 `
-				local port=`echo $(get_not_exists_port_after $port_temp)`
+				local port=`echo $(get_not_exists_port_after $port_temp udp)`
 				eval UDP_REDIR_PORT$i=$port
 				gen_config_file $temp_server $port UDP $config_file
 				if [ "$TYPE" == "v2ray" ]; then
