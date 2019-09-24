@@ -49,6 +49,9 @@ e.width = "10%"
 e = t:option(DummyValue, "protocol", translate("Protocol"))
 e.width = "15%"
 
+e = t:option(DummyValue, "transport", translate("Transport"))
+e.width = "15%"
+
 e = t:option(DummyValue, "VMess_id", translate("ID"))
 e.width = "35%"
 
