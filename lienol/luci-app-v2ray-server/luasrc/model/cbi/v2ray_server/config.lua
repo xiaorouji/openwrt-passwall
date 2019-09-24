@@ -42,6 +42,7 @@ e.default = 1
 e = t:option(ListValue, "transport", translate("Transport"))
 e:value("tcp", "TCP")
 e:value("mkcp", "mKCP")
+e:value("ws", "WebSocket")
 e:value("quic", "QUIC")
 
 -- [[ TCP部分 ]]--
@@ -86,6 +87,11 @@ e:depends("transport", "mkcp")
 
 e = t:option(Value, "mkcp_writeBufferSize", translate("KCP writeBufferSize"))
 e:depends("transport", "mkcp")
+
+-- [[ WebSocket部分 ]]--
+
+e = t:option(Value, "ws_path", translate("WebSocket Path"), translate("自行做反向代理，不提供傻瓜式服务"))
+e:depends("transport", "ws")
 
 -- [[ QUIC部分 ]]--
 e = t:option(ListValue, "quic_security", translate("Encrypt Method"))
