@@ -35,6 +35,8 @@ local v2ray = {
                 writeBufferSize = tonumber(server.mkcp_writeBufferSize),
                 header = {type = server.mkcp_guise}
             } or nil,
+            wsSettings = (server.transport == "ws") and {path = server.ws_path} or
+                nil,
             httpSettings = (server.transport == "h2") and
                 {path = server.h2_path, host = server.h2_host} or nil,
             quicSettings = (server.transport == "quic") and {
