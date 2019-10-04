@@ -37,6 +37,24 @@ msgstr "传输方式"
 msgid "Camouflage Type"
 msgstr "伪装类型"
 
+msgid "Camouflage Domain,you can not fill in"
+msgstr "伪装域名，也可以不填写"
+
+msgid "TLS Settings"
+msgstr "TLS配置"
+
+msgid "You can also use other web reverse proxy servers,as:Nginx,Apache,Caddy..."
+msgstr "你也可以使用其他的Web反向代理服务器，如：Nginx,Apache,Caddy等等..."
+
+msgid "as:"
+msgstr "如："
+
+msgid "Public key absolute path"
+msgstr "公钥文件绝对路径"
+
+msgid "Private key absolute path"
+msgstr "私钥文件绝对路径"
+
 msgid "<br>none: default, no masquerade, data sent is packets with no characteristics.<br>srtp: disguised as an SRTP packet, it will be recognized as video call data (such as FaceTime).<br>utp: packets disguised as uTP will be recognized as bittorrent downloaded data.<br>wechat-video: packets disguised as WeChat video calls.<br>dtls: disguised as DTLS 1.2 packet.<br>wireguard: disguised as a WireGuard packet. (not really WireGuard protocol)"
 msgstr "<br>none：默认值，不进行伪装，发送的数据是没有特征的数据包。<br>srtp：伪装成 SRTP 数据包，会被识别为视频通话数据（如 FaceTime）。<br>utp：伪装成 uTP 数据包，会被识别为 BT 下载数据。<br>wechat-video：伪装成微信视频通话的数据包。<br>dtls：伪装成 DTLS 1.2 数据包。<br>wireguard：伪装成 WireGuard 数据包。(并不是真正的 WireGuard 协议)"
 
