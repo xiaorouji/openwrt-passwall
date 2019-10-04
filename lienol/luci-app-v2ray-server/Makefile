@@ -9,7 +9,7 @@ LUCI_TITLE:=LuCI support for V2ray Server
 LUCI_DEPENDS:=+libsodium +luci-lib-jsonc +unzip +v2ray
 LUCI_PKGARCH:=all
 PKG_VERSION:=1.0
-PKG_RELEASE:=10-20190924
+PKG_RELEASE:=11-20190924
 
 include ../luci_my.mk
 
