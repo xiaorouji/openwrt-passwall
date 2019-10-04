@@ -47,13 +47,38 @@ e = t:option(DummyValue, "port", translate("Port"))
 e.width = "10%"
 
 e = t:option(DummyValue, "protocol", translate("Protocol"))
-e.width = "15%"
+e.width = "10%"
+e.cfgvalue = function(t, n)
+    local str = "未知"
+    local transport = a.uci:get(appname, n, "protocol") or ""
+    if transport == "vmess" then
+        str = "Vmess"
+    -- To Do
+    end
+    return str
+end
 
 e = t:option(DummyValue, "transport", translate("Transport"))
-e.width = "15%"
+e.width = "10%"
+e.cfgvalue = function(t, n)
+    local str = "未知"
+    local transport = a.uci:get(appname, n, "transport") or ""
+    if transport == "tcp" then
+        str = "TCP"
+    elseif transport == "mkcp" then
+        str = "mKCP"
+    elseif transport == "ws" then
+        str = "WebSocket"
+    elseif transport == "h2" then
+        str = "HTTP/2"
+    elseif transport == "quic" then
+        str = "QUIC"
+    end
+    return str
+end
 
 e = t:option(DummyValue, "VMess_id", translate("ID"))
-e.width = "35%"
+e.width = "30%"
 
 a:append(Template("v2ray_server/users_list_status"))
 

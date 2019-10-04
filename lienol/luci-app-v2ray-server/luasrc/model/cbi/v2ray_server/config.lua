@@ -26,7 +26,7 @@ e.rmempty = false
 e = t:option(ListValue, "protocol", translate("Protocol"))
 e:value("vmess", translate("Vmess"))
 
-e = t:option(Value, "VMess_id", translate("ID"))
+e = t:option(DynamicList, "VMess_id", translate("ID"))
 e.default = luci.sys.exec("cat /proc/sys/kernel/random/uuid")
 e.rmempty = false
 e:depends("protocol", "vmess")
@@ -43,10 +43,10 @@ e = t:option(ListValue, "transport", translate("Transport"))
 e:value("tcp", "TCP")
 e:value("mkcp", "mKCP")
 e:value("ws", "WebSocket")
+e:value("h2", "HTTP/2")
 e:value("quic", "QUIC")
 
 -- [[ TCP部分 ]]--
-
 -- TCP伪装
 e = t:option(ListValue, "tcp_guise", translate("Camouflage Type"))
 e:depends("transport", "tcp")
@@ -89,9 +89,19 @@ e = t:option(Value, "mkcp_writeBufferSize", translate("KCP writeBufferSize"))
 e:depends("transport", "mkcp")
 
 -- [[ WebSocket部分 ]]--
-
-e = t:option(Value, "ws_path", translate("WebSocket Path"), translate("自行做反向代理，不提供傻瓜式服务"))
+e = t:option(Value, "ws_path", translate("WebSocket Path"))
 e:depends("transport", "ws")
+
+e = t:option(Value, "ws_host", translate("WebSocket Host"))
+e:depends("transport", "ws")
+
+-- [[ HTTP/2部分 ]]--
+e = t:option(Value, "h2_path", translate("HTTP/2 Path"))
+e:depends("transport", "h2")
+
+e = t:option(DynamicList, "h2_host", translate("HTTP/2 Host"),
+             translate("Camouflage Domain,you can not fill in"))
+e:depends("transport", "h2")
 
 -- [[ QUIC部分 ]]--
 e = t:option(ListValue, "quic_security", translate("Encrypt Method"))
@@ -106,5 +116,25 @@ e:depends("transport", "quic")
 e = t:option(ListValue, "quic_guise", translate("Camouflage Type"))
 for a, t in ipairs(header_type) do e:value(t) end
 e:depends("transport", "quic")
+
+-- [[ TLS部分 ]]--
+e = t:option(Flag, "tlsSettingsEnable", translate("TLS Settings"), translate(
+                 "You can also use other web reverse proxy servers,as:Nginx,Apache,Caddy..."))
+e:depends("transport", "ws")
+e:depends("transport", "h2")
+e.default = "0"
+e.rmempty = false
+
+e = t:option(Value, "tls_serverName", translate("Domain"))
+e:depends("tlsSettingsEnable", 1)
+
+e = t:option(Value, "tls_certificateFile",
+             translate("Public key absolute path"),
+             translate("as:") .. "/etc/v2ray/public.crt")
+e:depends("tlsSettingsEnable", 1)
+
+e = t:option(Value, "tls_keyFile", translate("Private key absolute path"),
+             translate("as:") .. "/etc/v2ray/private.key")
+e:depends("tlsSettingsEnable", 1)
 
 return a
