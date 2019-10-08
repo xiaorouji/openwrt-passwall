@@ -8,8 +8,12 @@ gen_user_iptables() {
 	[ "$enable" = "0" ] && return 0
 	config_get remarks $1 remarks
 	config_get port $1 port
-	iptables -A V2RAY-SERVER -p tcp --dport $port -m comment --comment "$remarks" -j ACCEPT
-	iptables -A V2RAY-SERVER -p udp --dport $port -m comment --comment "$remarks" -j ACCEPT
+	config_get reverse_proxy_enable $1 reverse_proxy_enable
+	config_get reverse_proxy_port $1 reverse_proxy_port
+	dport=$port
+	[ "$reverse_proxy_enable" = "1" ] && dport=$reverse_proxy_port
+	iptables -A V2RAY-SERVER -p tcp --dport $dport -m comment --comment "$remarks" -j ACCEPT
+	iptables -A V2RAY-SERVER -p udp --dport $dport -m comment --comment "$remarks" -j ACCEPT
 }
 
 iptables -F V2RAY-SERVER 2>/dev/null

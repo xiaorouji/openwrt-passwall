@@ -40,6 +40,15 @@ msgstr "伪装类型"
 msgid "Camouflage Domain,you can not fill in"
 msgstr "伪装域名，也可以不填写"
 
+msgid "Reverse Proxy Enable"
+msgstr "Nginx反向代理"
+
+msgid "can not has conflict"
+msgstr "请不要冲突"
+
+msgid "Use HTTPS"
+msgstr "使用HTTPS"
+
 msgid "TLS Settings"
 msgstr "TLS配置"
 
