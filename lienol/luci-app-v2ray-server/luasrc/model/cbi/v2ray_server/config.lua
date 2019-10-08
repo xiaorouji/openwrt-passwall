@@ -117,8 +117,8 @@ e = t:option(ListValue, "quic_guise", translate("Camouflage Type"))
 for a, t in ipairs(header_type) do e:value(t) end
 e:depends("transport", "quic")
 
--- [[ TLS部分 ]]--
-e = t:option(Flag, "tlsSettingsEnable", translate("TLS Settings"), translate(
+-- [[ TLS部分 ]] --
+--[[ e = t:option(Flag, "tlsSettingsEnable", translate("TLS Settings"), translate(
                  "You can also use other web reverse proxy servers,as:Nginx,Apache,Caddy..."))
 e:depends("transport", "ws")
 e:depends("transport", "h2")
@@ -136,5 +136,37 @@ e:depends("tlsSettingsEnable", 1)
 e = t:option(Value, "tls_keyFile", translate("Private key absolute path"),
              translate("as:") .. "/etc/v2ray/private.key")
 e:depends("tlsSettingsEnable", 1)
+--]]
+
+-- [[ 反向代理部分 ]] --
+e = t:option(Flag, "reverse_proxy_enable", translate("Reverse Proxy Enable"))
+e:depends("transport", "ws")
+e.default = "0"
+e.rmempty = false
+
+e = t:option(Value, "reverse_proxy_serverName", translate("Domain"))
+e:depends("reverse_proxy_enable", 1)
+
+e = t:option(Value, "reverse_proxy_port", translate("Port"),
+             translate("can not has conflict"))
+e.datatype = "port"
+e.rmempty = false
+e.default = "443"
+e:depends("reverse_proxy_enable", 1)
+
+e = t:option(Flag, "reverse_proxy_https_enable", translate("Use HTTPS"))
+e:depends("reverse_proxy_enable", 1)
+e.default = "1"
+e.rmempty = false
+
+e = t:option(Value, "reverse_proxy_https_certificateFile",
+             translate("Public key absolute path"),
+             translate("as:") .. "/etc/ssl/fullchain.pem")
+e:depends("reverse_proxy_https_enable", 1)
+
+e = t:option(Value, "reverse_proxy_https_keyFile",
+             translate("Private key absolute path"),
+             translate("as:") .. "/etc/ssl/private.key")
+e:depends("reverse_proxy_https_enable", 1)
 
 return a
