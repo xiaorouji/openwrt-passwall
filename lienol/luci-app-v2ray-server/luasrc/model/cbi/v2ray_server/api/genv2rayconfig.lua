@@ -28,7 +28,7 @@ local v2ray = {
         -- 底层传输配置
         streamSettings = {
             network = server.transport,
-            security = (server.tls == '1') and "tls" or "none",
+            security = (server.tls == '1' or server.transport == "h2") and "tls" or "none",
             kcpSettings = (server.transport == "mkcp") and {
                 mtu = tonumber(server.mkcp_mtu),
                 tti = tonumber(server.mkcp_tti),
@@ -51,12 +51,12 @@ local v2ray = {
                 header = {type = server.quic_guise}
             } or nil
         },
-        tlsSettings = (server.tlsSettingsEnable == '1') and {
-            serverName = (server.tls_serverName),
+        tlsSettings = (server.reverse_proxy_enable == '1' and server.transport == "h2") and {
+            serverName = (server.reverse_proxy_serverName),
             certificates = {
                 {
-                    certificateFile = server.tls_certificateFile,
-                    keyFile = server.tls_keyFile
+                    certificateFile = server.reverse_proxy_https_certificateFile,
+                    keyFile = server.reverse_proxy_https_keyFile
                 }
             }
         } or nil
