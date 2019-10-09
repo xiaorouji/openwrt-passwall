@@ -19,8 +19,7 @@ t:append(Template("v2ray_server/nginx"))
 t:append(Template("v2ray_server/caddy"))
 
 ---- Caddy path
-e = t:option(Value, "caddy_file", translate("Caddy path"),
-             translate(
+e = t:option(Value, "caddy_file", translate("Caddy path"), translate(
                  "if you want to run from memory, change the path, such as /tmp/caddy, Then save the application and update it manually."))
 e.default = "/usr/bin/caddy"
 e.rmempty = false
@@ -56,13 +55,14 @@ e = t:option(DummyValue, "port", translate("Port"))
 e.width = "10%"
 
 e = t:option(DummyValue, "protocol", translate("Protocol"))
-e.width = "10%"
+e.width = "15%"
 e.cfgvalue = function(t, n)
     local str = "未知"
-    local transport = a.uci:get(appname, n, "protocol") or ""
-    if transport == "vmess" then
+    local protocol = a.uci:get(appname, n, "protocol") or ""
+    if protocol == "vmess" then
         str = "Vmess"
-    -- To Do
+    elseif protocol == "shadowsocks" then
+        str = "Shadowsocks"
     end
     return str
 end
@@ -70,10 +70,21 @@ end
 e = t:option(DummyValue, "transport", translate("Transport"))
 e.width = "10%"
 e.cfgvalue = function(t, n)
+    local transport_var = ""
     local str = "未知"
-    local transport = a.uci:get(appname, n, "transport") or ""
+    local protocol = a.uci:get(appname, n, "protocol") or ""
+    if protocol == "vmess" then
+        transport_var = "transport"
+    elseif protocol == "shadowsocks" then
+        transport_var = "ss_network"
+    end
+    local transport = a.uci:get(appname, n, transport_var) or ""
     if transport == "tcp" then
         str = "TCP"
+    elseif transport == "udp" then
+        str = "UDP"
+    elseif transport == "tcp,udp" then
+        str = "TCP,UDP"
     elseif transport == "mkcp" then
         str = "mKCP"
     elseif transport == "ws" then
@@ -86,8 +97,25 @@ e.cfgvalue = function(t, n)
     return str
 end
 
-e = t:option(DummyValue, "VMess_id", translate("ID"))
+e = t:option(DummyValue, "password", translate("Password"))
 e.width = "30%"
+e.cfgvalue = function(t, n)
+    local password_var = ""
+    local protocol = a.uci:get(appname, n, "protocol") or ""
+    if protocol == "vmess" then
+        password_var = "VMess_id"
+    elseif protocol == "shadowsocks" then
+        password_var = "ss_password"
+    end
+    local password = a.uci:get(appname, n, password_var) or ""
+    local str = ""
+    if type(password) == "table" then
+        for i = 1, #password do str = str .. password[i] end
+    else
+        str = password
+    end
+    return str
+end
 
 a:append(Template("v2ray_server/users_list_status"))
 

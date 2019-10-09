@@ -25,6 +25,38 @@ e.rmempty = false
 
 e = t:option(ListValue, "protocol", translate("Protocol"))
 e:value("vmess", translate("Vmess"))
+e:value("shadowsocks", translate("Shadowsocks"))
+
+e = t:option(ListValue, "ss_method", translate("Encrypt Method"))
+e:value("aes-128-cfb")
+e:value("aes-256-cfb")
+e:value("aes-128-gcm")
+e:value("aes-256-gcm")
+e:value("chacha20")
+e:value("chacha20-ietf")
+e:value("chacha20-poly1305")
+e:value("chacha20-ietf-poly1305")
+e:depends("protocol", "shadowsocks")
+
+e = t:option(Value, "ss_password", translate("Password"))
+e.rmempty = false
+e:depends("protocol", "shadowsocks")
+
+e = t:option(Value, "ss_level", translate("User Level"))
+e.default = 1
+e:depends("protocol", "shadowsocks")
+
+e = t:option(ListValue, "ss_network", translate("Transport"))
+e:value("tcp", "TCP")
+e:value("udp", "UDP")
+e:value("tcp,udp", "TCP,UDP")
+e:depends("protocol", "shadowsocks")
+
+e = t:option(Flag, "ss_ota", translate("OTA"), translate(
+                 "是否强制 OTA，如果不指定此项，则自动判断。强制开启 OTA 后，V2Ray 会拒绝未启用 OTA 的连接。反之亦然。\n当使用 AEAD 时，ota 设置无效"))
+e.default = "0"
+e.rmempty = false
+e:depends("protocol", "shadowsocks")
 
 e = t:option(DynamicList, "VMess_id", translate("ID"))
 e.default = luci.sys.exec("cat /proc/sys/kernel/random/uuid")
@@ -38,6 +70,7 @@ e:depends("protocol", "vmess")
 
 e = t:option(Value, "VMess_level", translate("User Level"))
 e.default = 1
+e:depends("protocol", "vmess")
 
 e = t:option(ListValue, "transport", translate("Transport"))
 e:value("tcp", "TCP")
@@ -45,6 +78,7 @@ e:value("mkcp", "mKCP")
 e:value("ws", "WebSocket")
 e:value("h2", "HTTP/2")
 e:value("quic", "QUIC")
+e:depends("protocol", "vmess")
 
 -- [[ TCP部分 ]]--
 -- TCP伪装

@@ -5,7 +5,7 @@ local server = ucursor:get_all("v2ray_server", server_section)
 
 local clients = {}
 
-if server.VMess_id then
+if server.protocol == "vmess" and server.VMess_id then
     for i = 1, #server.VMess_id do
         clients[i] = {
             id = server.VMess_id[i],
@@ -26,9 +26,17 @@ local v2ray = {
         protocol = server.protocol,
         settings = {clients = clients},
         -- 底层传输配置
-        streamSettings = {
+        settings = (server.protocol == "shadowsocks") and {
+            method = server.ss_method,
+            password = server.ss_password,
+            level = tonumber(server.ss_level),
+            network = server.ss_network,
+            ota = (server.ss_ota == '1') and true or false
+        } or nil,
+        streamSettings = (server.protocol == "vmess") and {
             network = server.transport,
-            security = (server.tls == '1' or server.transport == "h2") and "tls" or "none",
+            security = (server.tls == '1' or server.transport == "h2") and "tls" or
+                "none",
             kcpSettings = (server.transport == "mkcp") and {
                 mtu = tonumber(server.mkcp_mtu),
                 tti = tonumber(server.mkcp_tti),
@@ -50,8 +58,9 @@ local v2ray = {
                 key = server.quic_key,
                 header = {type = server.quic_guise}
             } or nil
-        },
-        tlsSettings = (server.reverse_proxy_enable == '1' and server.transport == "h2") and {
+        } or nil,
+        tlsSettings = (server.reverse_proxy_enable == '1' and server.transport ==
+            "h2") and {
             serverName = (server.reverse_proxy_serverName),
             certificates = {
                 {
