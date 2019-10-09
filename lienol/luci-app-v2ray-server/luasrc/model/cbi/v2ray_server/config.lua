@@ -139,10 +139,17 @@ e:depends("tlsSettingsEnable", 1)
 --]]
 
 -- [[ 反向代理部分 ]] --
-e = t:option(Flag, "reverse_proxy_enable", translate("Reverse Proxy Enable"))
+e = t:option(Flag, "reverse_proxy_enable", translate("Reverse Proxy"))
 e:depends("transport", "ws")
+e:depends("transport", "h2")
 e.default = "0"
 e.rmempty = false
+
+e = t:option(ListValue, "reverse_proxy_type", translate("Reverse Proxy Type"),
+             translate("Nginx does not support HTTP/2 reverse proxies"))
+e:depends("reverse_proxy_enable", 1)
+e:value("nginx", "Nginx")
+e:value("caddy", "Caddy")
 
 e = t:option(Value, "reverse_proxy_serverName", translate("Domain"))
 e:depends("reverse_proxy_enable", 1)

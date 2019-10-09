@@ -6,6 +6,10 @@ START=99
 CONFIG=v2ray_server
 CONFIG_PATH=/var/etc/$CONFIG
 CONFIG_NGINX_PATH=$CONFIG_PATH/nginx
+CONFIG_CADDY_PATH=$CONFIG_PATH/caddy
+LOG_PATH=/var/log/$CONFIG
+LOG_NGINX_PATH=$LOG_PATH/nginx
+LOG_CADDY_PATH=$LOG_PATH/caddy
 
 gen_v2ray_config_file() {
 	config_get enable $1 enable
@@ -17,12 +21,12 @@ gen_v2ray_config_file() {
 	/usr/bin/v2ray/v2ray -config $CONFIG_PATH/$1.json >/dev/null 2>&1 &
 	
 	config_get reverse_proxy_enable $1 reverse_proxy_enable
-	[ "$reverse_proxy_enable" = "1" ] && {
+	config_get reverse_proxy_type $1 reverse_proxy_type
+	config_get reverse_proxy_port $1 reverse_proxy_port
+	config_get reverse_proxy_serverName $1 reverse_proxy_serverName
+	config_get reverse_proxy_https_enable $1 reverse_proxy_https_enable
+	[ "$reverse_proxy_enable" = "1" -a "$reverse_proxy_type" = "nginx" ] && {
 		#生成Nginx配置文件
-		config_get reverse_proxy_port $1 reverse_proxy_port
-		config_get reverse_proxy_serverName $1 reverse_proxy_serverName
-		config_get reverse_proxy_https_enable $1 reverse_proxy_https_enable
-		
 		cat <<-EOF > $CONFIG_NGINX_PATH/$1.conf
 			user root root;
 			worker_processes  1;
@@ -65,7 +69,7 @@ gen_v2ray_config_file() {
 			            listen $reverse_proxy_port $(echo $is_ssl);
 						$(echo -e $ssl_params)
 			            charset UTF-8;
-			            access_log  /var/log/nginx/v2ray/$1_access.log;
+			            access_log  $LOG_NGINX_PATH/$1_access.log;
 						
 			            location $location_path {
 			                proxy_redirect off;
@@ -86,6 +90,58 @@ gen_v2ray_config_file() {
 		/usr/sbin/nginx -c $CONFIG_NGINX_PATH/$1.conf
 		
 	}
+	
+	[ "$reverse_proxy_enable" = "1" -a "$reverse_proxy_type" = "caddy" ] && {
+		host="http://$reverse_proxy_serverName:$reverse_proxy_port"
+		gzip=""
+		location_path=''
+		websocket=''
+		header_upstream=''
+		proxy_path="http://127.0.0.1:$port"
+		if [ "$transport" = "ws" ];then
+			config_get ws_path $1 ws_path
+			location_path=$ws_path
+			gzip="gzip"
+			websocket="websocket"
+		elif [ "$transport" = "h2" ];then
+			config_get h2_path $1 h2_path
+			location_path=$h2_path
+			proxy_path="https://127.0.0.1:$port"
+			header_upstream="header_upstream X-Forwarded-Proto 'https'\nheader_upstream Host \"$reverse_proxy_serverName\""
+		fi
+		if [ "$reverse_proxy_https_enable" = "1" ];then
+			config_get reverse_proxy_https_certificateFile $1 reverse_proxy_https_certificateFile
+			config_get reverse_proxy_https_keyFile $1 reverse_proxy_https_keyFile
+			host="https://$reverse_proxy_serverName:$reverse_proxy_port"
+			ssl_params="tls ${reverse_proxy_https_certificateFile} ${reverse_proxy_https_keyFile} {\nprotocols tls1.2 tls1.3\nciphers ECDHE-ECDSA-WITH-CHACHA20-POLY1305 ECDHE-RSA-WITH-CHACHA20-POLY1305 ECDHE-ECDSA-AES128-GCM-SHA256 ECDHE-RSA-AES128-GCM-SHA256\n}"
+		fi
+	
+	
+		#生成Caddy配置文件
+		cat <<-EOF > $CONFIG_CADDY_PATH/$1
+			$host
+			{
+			    $gzip
+			    timeouts none
+			    proxy / https://www.baidu.com
+			    $(echo -e $ssl_params)
+			    header / {
+			        Strict-Transport-Security "max-age=15768000; preload"
+			        X-XSS-Protection "1; mode=block"
+			        X-Content-Type-Options "nosniff"
+			        X-Frame-Options "DENY"
+			    }
+			    proxy $location_path $proxy_path {
+			        $websocket
+			        header_upstream -Origin
+					$(echo -e $header_upstream)
+			    }
+			}
+		EOF
+		
+		$caddy_file -conf $CONFIG_CADDY_PATH/$1 -log $LOG_CADDY_PATH/$1 >/dev/null 2>&1 &
+		
+	}
 }
 
 start_v2ray_server() {
@@ -100,6 +156,7 @@ stop_v2ray_server() {
 	do
 		/usr/sbin/nginx -c $i -s stop
 	done
+	ps -w | grep "$CONFIG_CADDY_PATH/" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 	ps -w | grep "$CONFIG_PATH/" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 }
 
@@ -109,7 +166,8 @@ start() {
 	if [ "$enable" = "0" ];then
 		stop_v2ray_server
 	else
-		mkdir -p $CONFIG_PATH $CONFIG_NGINX_PATH /var/lib/nginx /var/log/nginx /var/log/nginx/v2ray
+		mkdir -p $CONFIG_PATH $CONFIG_CADDY_PATH $CONFIG_NGINX_PATH $LOG_CADDY_PATH $LOG_NGINX_PATH /var/lib/nginx /var/log/nginx
+		caddy_file=$(uci get $CONFIG.@global[0].caddy_file)
 		start_v2ray_server
 	fi
 }
@@ -117,7 +175,7 @@ start() {
 stop() {
 	stop_v2ray_server
 	rm -rf $CONFIG_PATH
-	rm -rf /var/log/nginx/v2ray
+	rm -rf $LOG_PATH
 }
 
 restart() {
