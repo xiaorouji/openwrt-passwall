@@ -19,6 +19,12 @@ msgstr "用户管理"
 msgid "Remarks"
 msgstr "备注"
 
+msgid "Bind Local"
+msgstr "本机监听"
+
+msgid "When selected, it can only be accessed locally,It is recommended to turn on when using reverse proxies."
+msgstr "当勾选时，只能由本机访问此端口，当开启反向代理时建议勾选此项。"
+
 msgid "Port"
 msgstr "端口"
 
@@ -36,6 +42,9 @@ msgstr "额外ID(AlterID)"
 
 msgid "User Level"
 msgstr "用户等级(Level)"
+
+msgid "Whether OTA is mandatory or not, and if this is not specified, it is automatically determined. When OTA is forcibly enabled, V2Ray will reject connections that are not OTA enabled. And vice versa. \n ota Settings are invalid when AEAD is used"
+msgstr "是否强制 OTA，如果不指定此项，则自动判断。强制开启 OTA 后，V2Ray 会拒绝未启用 OTA 的连接。反之亦然。\n当使用 AEAD 时，ota 设置无效"
 
 msgid "Transport"
 msgstr "传输方式"
