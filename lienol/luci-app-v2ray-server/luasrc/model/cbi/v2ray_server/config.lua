@@ -59,7 +59,7 @@ e:value("tcp,udp", "TCP,UDP")
 e:depends("protocol", "shadowsocks")
 
 e = t:option(Flag, "ss_ota", translate("OTA"), translate(
-                 "Whether OTA is mandatory or not, and if this is not specified, it is automatically determined. When OTA is forcibly enabled, V2Ray will reject connections that are not OTA enabled. And vice versa. \n ota Settings are invalid when AEAD is used"))
+                 "When OTA is enabled, V2Ray will reject connections that are not OTA enabled. This option is invalid when using AEAD encryption."))
 e.default = "0"
 e.rmempty = false
 e:depends("protocol", "shadowsocks")

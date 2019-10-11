@@ -43,8 +43,8 @@ msgstr "额外ID(AlterID)"
 msgid "User Level"
 msgstr "用户等级(Level)"
 
-msgid "Whether OTA is mandatory or not, and if this is not specified, it is automatically determined. When OTA is forcibly enabled, V2Ray will reject connections that are not OTA enabled. And vice versa. \n ota Settings are invalid when AEAD is used"
-msgstr "是否强制 OTA，如果不指定此项，则自动判断。强制开启 OTA 后，V2Ray 会拒绝未启用 OTA 的连接。反之亦然。\n当使用 AEAD 时，ota 设置无效"
+msgid "When OTA is enabled, V2Ray will reject connections that are not OTA enabled. This option is invalid when using AEAD encryption."
+msgstr "开启 OTA 后，V2Ray 会拒绝未启用 OTA 的连接。当使用 AEAD 加密时，该选项无效。"
 
 msgid "Transport"
 msgstr "传输方式"
@@ -57,6 +57,9 @@ msgstr "伪装域名，也可以不填写"
 
 msgid "Reverse Proxy"
 msgstr "反向代理"
+
+msgid "Reverse Proxy Type"
+msgstr "反向代理类型"
 
 msgid "can not has conflict"
 msgstr "请不要冲突"
