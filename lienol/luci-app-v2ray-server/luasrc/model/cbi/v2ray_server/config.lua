@@ -19,6 +19,11 @@ e = t:option(Value, "remarks", translate("Remarks"))
 e.default = translate("Remarks")
 e.rmempty = false
 
+e = t:option(Flag, "bind_local", translate("Bind Local"), translate(
+                 "When selected, it can only be accessed locally,It is recommended to turn on when using reverse proxies."))
+e.default = "0"
+e.rmempty = false
+
 e = t:option(Value, "port", translate("Port"))
 e.datatype = "port"
 e.rmempty = false
@@ -47,13 +52,14 @@ e.default = 1
 e:depends("protocol", "shadowsocks")
 
 e = t:option(ListValue, "ss_network", translate("Transport"))
+e.default = "tcp,udp"
 e:value("tcp", "TCP")
 e:value("udp", "UDP")
 e:value("tcp,udp", "TCP,UDP")
 e:depends("protocol", "shadowsocks")
 
 e = t:option(Flag, "ss_ota", translate("OTA"), translate(
-                 "是否强制 OTA，如果不指定此项，则自动判断。强制开启 OTA 后，V2Ray 会拒绝未启用 OTA 的连接。反之亦然。\n当使用 AEAD 时，ota 设置无效"))
+                 "Whether OTA is mandatory or not, and if this is not specified, it is automatically determined. When OTA is forcibly enabled, V2Ray will reject connections that are not OTA enabled. And vice versa. \n ota Settings are invalid when AEAD is used"))
 e.default = "0"
 e.rmempty = false
 e:depends("protocol", "shadowsocks")

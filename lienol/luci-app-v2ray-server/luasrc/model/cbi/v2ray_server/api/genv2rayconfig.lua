@@ -22,11 +22,12 @@ local v2ray = {
     },
     -- 传入连接
     inbound = {
+        listen = (server.bind_local) and "127.0.0.1" or nil,
         port = tonumber(server.port),
         protocol = server.protocol,
-        settings = {clients = clients},
         -- 底层传输配置
-        settings = (server.protocol == "shadowsocks") and {
+        settings = (server.protocol == "vmess") and {clients = clients} or
+            (server.protocol == "shadowsocks") and {
             method = server.ss_method,
             password = server.ss_password,
             level = tonumber(server.ss_level),
