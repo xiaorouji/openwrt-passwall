@@ -155,7 +155,11 @@ gen_v2ray_config_file() {
 				}
 			EOF
 			
-			$caddy_file -conf $CONFIG_CADDY_PATH/$1 -log $LOG_CADDY_PATH/$1 >> $LOG_APP_FILE && 2>&1 &
+			if [ -f "$caddy_file" ];then
+				$caddy_file -conf $CONFIG_CADDY_PATH/$1 -log $LOG_CADDY_PATH/$1 >> $LOG_APP_FILE && 2>&1 &
+			else
+				echolog "未安装Caddy，请安装后再重试"
+			fi
 		}
 	fi
 }
