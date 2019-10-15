@@ -1322,10 +1322,11 @@ header {
 
 footer {
     text-align: right;
-    padding: 1rem;
+    /* padding: 1rem; */
     color: #aaa;
     font-size: 0.8rem;
     text-shadow: 0px 0px 2px #BBB;
+	padding: 2rem;
 }
 
 footer > a {
@@ -1537,6 +1538,11 @@ div > .table > .tbody > .tr:nth-of-type(2n) {
     color: #525f7f;
 }
 
+.alert-message {
+	margin: 5rem 0 0 0 !important;
+	color: #5e72e4 !important;
+}
+
 .errorbox,
 .alert-message {
     margin: 2rem 0 0 0;
@@ -1549,7 +1555,7 @@ div > .table > .tbody > .tr:nth-of-type(2n) {
     min-width: inherit;
     overflow: auto;
     border-radius: 0.3rem;
-    background-color: #FFF;
+    background-color: #ffd600;
     box-shadow: 0 2px 2px 0 rgba(0, 0, 0, .16), 0 0 2px 0 rgba(0, 0, 0, .12);
 }
 
