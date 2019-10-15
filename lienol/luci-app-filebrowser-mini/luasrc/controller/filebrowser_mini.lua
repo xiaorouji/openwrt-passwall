@@ -2,6 +2,7 @@ module("luci.controller.filebrowser_mini", package.seeall)
 
 function index()
 
+	entry({"admin", "nas"}, firstchild(), "NAS", 44).dependent = false
     page = entry({"admin", "nas", "filebrowser_mini"}, template("filebrowser_mini"), _("迷你文件浏览器"), 1)
     page.i18n = "base"
     page.dependent = true
