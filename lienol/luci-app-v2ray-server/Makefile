@@ -10,7 +10,7 @@ LUCI_TITLE:=LuCI support for V2ray Server
 LUCI_DEPENDS:=+libsodium +luci-lib-jsonc +nginx +unzip +v2ray 
 LUCI_PKGARCH:=all
 PKG_VERSION:=1.0
-PKG_RELEASE:=18-20191012
+PKG_RELEASE:=19-20191018
 
 define Package/$(PKG_NAME)/config
 	select NGINX_SSL
