@@ -341,17 +341,16 @@ EOF
 						fi
 						# 用于本机流量转发，默认只走router
 						#$iptables_nat -I OUTPUT -j SS
-						$iptables_nat -A OUTPUT -m set --match-set $IPSET_LANIPLIST dst -j RETURN
-						$iptables_nat -A OUTPUT -m set --match-set $IPSET_VPSIPLIST dst -j RETURN
-						$iptables_nat -A OUTPUT -m set --match-set $IPSET_WHITELIST dst -j RETURN
-						$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_ROUTER dst -j REDIRECT --to-ports $TCP_REDIR_PORT
-						$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_BLACKLIST dst -j REDIRECT --to-ports $TCP_REDIR_PORT
+						$iptables_nat -A OUTPUT -m set --match-set $IPSET_LANIPLIST dst -m comment --comment "PassWall" -j RETURN
+						$iptables_nat -A OUTPUT -m set --match-set $IPSET_VPSIPLIST dst -m comment --comment "PassWall" -j RETURN
+						$iptables_nat -A OUTPUT -m set --match-set $IPSET_WHITELIST dst -m comment --comment "PassWall" -j RETURN
+						$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_ROUTER dst -m comment --comment "PassWall" -j REDIRECT --to-ports $TCP_REDIR_PORT
+						$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_BLACKLIST dst -m comment --comment "PassWall" -j REDIRECT --to-ports $TCP_REDIR_PORT
 						
-						[ "$LOCALHOST_PROXY_MODE" == "global" ] && $iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -j REDIRECT --to-ports $TCP_REDIR_PORT
-						[ "$LOCALHOST_PROXY_MODE" == "gfwlist" ] && $iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_GFW dst -j REDIRECT --to-ports $TCP_REDIR_PORT
+						[ "$LOCALHOST_PROXY_MODE" == "global" ] && $iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m comment --comment "PassWall" -j REDIRECT --to-ports $TCP_REDIR_PORT
+						[ "$LOCALHOST_PROXY_MODE" == "gfwlist" ] && $iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_GFW dst -m comment --comment "PassWall" -j REDIRECT --to-ports $TCP_REDIR_PORT
 						[ "$LOCALHOST_PROXY_MODE" == "chnroute" ] && {
-							$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set --match-set $IPSET_CHN dst -j RETURN
-							$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -j REDIRECT --to-ports $TCP_REDIR_PORT
+							$iptables_nat -A OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS -m set ! --match-set $IPSET_CHN dst -m comment --comment "PassWall" -j REDIRECT --to-ports $TCP_REDIR_PORT
 						}
 					}
 					# 重定所有流量到透明代理端口
@@ -461,11 +460,11 @@ EOF
 
 del_firewall_rule() {
 	echolog "删除所有防火墙规则..."
-	ipv4_output_exist=`$iptables_nat -L OUTPUT 2>/dev/null | grep -c -E "SS|$TCP_REDIR_PORTS|$IPSET_LANIPLIST|$IPSET_VPSIPLIST|$IPSET_WHITELIST|$IPSET_ROUTER|$IPSET_BLACKLIST|$IPSET_GFW|$IPSET_CHN"`
+	ipv4_output_exist=`$iptables_nat -L OUTPUT 2>/dev/null | grep -c -E "PassWall"`
 	[ -n "$ipv4_output_exist" ] && {
 		until [ "$ipv4_output_exist" = 0 ]
 		do
-			rules=`$iptables_nat -L OUTPUT --line-numbers | grep -E "SS|$TCP_REDIR_PORTS|$IPSET_LANIPLIST|$IPSET_VPSIPLIST|$IPSET_WHITELIST|$IPSET_ROUTER|$IPSET_BLACKLIST|$IPSET_GFW|$IPSET_CHN" | awk '{print $1}'`
+			rules=`$iptables_nat -L OUTPUT --line-numbers | grep -E "PassWall" | awk '{print $1}'`
 			for rule in $rules
 			do
 				$iptables_nat -D OUTPUT $rule 2> /dev/null

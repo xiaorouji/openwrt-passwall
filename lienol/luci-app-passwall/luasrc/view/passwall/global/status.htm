@@ -15,7 +15,7 @@ end
 -%>
 
 <style>
-@media screen and (min-width: 1600px) {
+/* @media screen and (min-width: 1600px) {
 	#_passwall_status_fieldset > fieldset {
 		padding: 0px;
 	}
@@ -51,7 +51,7 @@ end
 		display: block;
 	}
 }
-
+*/
 </style>
 
 <fieldset id="_passwall_status_fieldset" class="cbi-section">
@@ -137,8 +137,8 @@ end
 			</label>
 			<div class="cbi-value-field">
 				<input type="button" class="cbi-button cbi-input-apply" value="<%:Check%>" onclick="return check_port(this)" />
-				
-				
+				<font id="_server_status"></font>
+				<input id="clear_check_port_btn" type="button" class="cbi-button cbi-button-remove" style="display:none" value="<%:Clear%>" onclick="return clear_check_port(this)" />
 			</div>
 		</div>
 		<div class="cbi-value">
@@ -148,8 +148,6 @@ end
 			</div>
 		</div>
 	</fieldset>
-	<font id="_server_status"></font>
-	<input id="clear_check_port_btn" type="button" class="cbi-button cbi-button-remove" style="display:none" value="<%:Clear%>" onclick="return clear_check_port(this)" />
 </fieldset>
 
 <script type="text/javascript">
