@@ -83,7 +83,8 @@ function caddy_update()
 end
 
 function get_log()
-    luci.http.write(luci.sys.exec("cat /var/log/v2ray_server/app.log"))
+    luci.http.write(luci.sys.exec(
+                        "[ -f '/var/log/v2ray_server/app.log' ] && cat /var/log/v2ray_server/app.log"))
 end
 
-function clear_log() luci.sys.call("rm -rf > /var/log/v2ray_server/app.log") end
+function clear_log() luci.sys.call("echo '' > /var/log/v2ray_server/app.log") end

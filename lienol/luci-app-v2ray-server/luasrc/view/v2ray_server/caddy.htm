@@ -1,6 +1,6 @@
 <%
 local caddy_path = luci.sys.exec("echo -n `uci get v2ray_server.@global[0].caddy_file`")
-local caddy_version = luci.sys.exec("caddy_version=`"..caddy_path.." -version | awk '{print $2}'` && echo ${caddy_version#v}")
+local caddy_version = luci.sys.exec("[ -f '" .. caddy_path .. "' ] && caddy_version=`" .. caddy_path .. " -version | awk '{print $2}'` && echo ${caddy_version#v}")
 local dsp = require "luci.dispatcher"
 -%>
 
