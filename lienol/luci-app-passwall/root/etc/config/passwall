@@ -45,11 +45,11 @@ config global_other
 config global_rules
 	option gfwlist_update '1'
 	option chnroute_update '1'
-	option Pcap_Routing_update '1'
-	option Pcap_WhiteList_update '1'
+	option Pcap_Routing_update '0'
+	option Pcap_WhiteList_update '0'
 	option auto_update '0'
-	option chnroute_version '2019-09-22'
-	option gfwlist_version '2019-10-08'
+	option gfwlist_version '2019-10-18'
+	option chnroute_version '2019-10-18'
 	
 config global_app
 	option v2ray_client_file '/usr/bin/v2ray/'

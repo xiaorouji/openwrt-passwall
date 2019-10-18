@@ -14,7 +14,47 @@ local function has_udp_relay()
 end
 -%>
 
-<fieldset id="_ss_status_fieldset" class="cbi-section">
+<style>
+@media screen and (min-width: 1600px) {
+	#_passwall_status_fieldset > fieldset {
+		padding: 0px;
+	}
+
+	#_passwall_status_fieldset > fieldset > div {
+		width: 200px;
+		height: 60px;
+		background: #f7fafd;
+		float: left;
+		margin: 5px;
+		padding: 0.3rem 1rem;
+		border-radius: 10px;
+		display: flex;
+		align-items: center;
+		clear: unset;
+	}
+
+	#_passwall_status_fieldset > fieldset > div > .cbi-value-title {
+		text-align: left;
+		width: unset;
+		padding-top: unset;
+	}
+
+	#_passwall_status_fieldset > fieldset > div > .cbi-value-field {
+		padding-top: unset;
+	}
+
+	#_passwall_status_fieldset > fieldset > div > .cbi-value-field > font {
+		padding-top: unset;
+	}
+
+	#_server_status > font {
+		display: block;
+	}
+}
+
+</style>
+
+<fieldset id="_passwall_status_fieldset" class="cbi-section">
 	<legend>
 		<%:Running Status%>
 	</legend>
@@ -97,8 +137,8 @@ end
 			</label>
 			<div class="cbi-value-field">
 				<input type="button" class="cbi-button cbi-input-apply" value="<%:Check%>" onclick="return check_port(this)" />
-				<input id="clear_check_port_btn" type="button" class="cbi-button cbi-button-remove" style="display:none" value="<%:Clear%>" onclick="return clear_check_port(this)" />
-				<font id="_server_status"></font>
+				
+				
 			</div>
 		</div>
 		<div class="cbi-value">
@@ -108,6 +148,8 @@ end
 			</div>
 		</div>
 	</fieldset>
+	<font id="_server_status"></font>
+	<input id="clear_check_port_btn" type="button" class="cbi-button cbi-button-remove" style="display:none" value="<%:Clear%>" onclick="return clear_check_port(this)" />
 </fieldset>
 
 <script type="text/javascript">
@@ -148,16 +190,18 @@ end
 				var s = document.getElementById('_' + type + '_status');
 				if(s) {
 					if(rv.status) {
-						s.setAttribute("color","green");
-						s.innerHTML = '<%:Working...%> ✓';
+						//s.setAttribute("color","green");
+						btn.setAttribute("style","background-color: green !important; border-color: green !important;");
+						btn.value = '<%:Working...%> ✓';
 					}
 					else {
-						s.setAttribute("color","red");
-						s.innerHTML = '<%:Problem detected!%> X';
+						//s.setAttribute("color","red");
+						btn.setAttribute("style","background-color:red !important; border-color: red !important;");
+						btn.value = '<%:Problem detected!%> X';
 					}
 				}
 				btn.disabled = false;
-				btn.value = '<%:Check%>';
+				//btn.value = '<%:Check%>';
 			}
 		);
 		return false;

@@ -107,10 +107,10 @@ end
 
 function get_log()
     -- luci.sys.exec("[ -f /var/log/passwall.log ] && sed '1!G;h;$!d' /var/log/passwall.log > /var/log/passwall_show.log")
-    luci.http.write(luci.sys.exec("cat /var/log/passwall.log"))
+    luci.http.write(luci.sys.exec("[ -f '/var/log/passwall.log' ] && cat /var/log/passwall.log"))
 end
 
-function clear_log() luci.sys.call("rm -rf > /var/log/passwall.log") end
+function clear_log() luci.sys.call("echo '' > /var/log/passwall.log") end
 
 function server_status()
     local tcp_redir_port = luci.sys.exec(

@@ -1,6 +1,6 @@
 <%
 local kcptun_path = luci.sys.exec("echo -n `uci get passwall.@global_app[0].kcptun_client_file`")
-local kcptun_version = luci.sys.exec(kcptun_path.." -v | awk '{print $3}'")
+local kcptun_version = luci.sys.exec("[ -f '" .. kcptun_path .. "' ] && " .. kcptun_path .. " -v | awk '{print $3}'")
 local dsp = require "luci.dispatcher"
 -%>
 
