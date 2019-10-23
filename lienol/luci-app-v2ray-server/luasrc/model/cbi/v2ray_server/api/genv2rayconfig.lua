@@ -3,16 +3,35 @@ local json = require "luci.jsonc"
 local server_section = arg[1]
 local server = ucursor:get_all("v2ray_server", server_section)
 
-local clients = {}
+local settings = nil
 
-if server.protocol == "vmess" and server.VMess_id then
-    for i = 1, #server.VMess_id do
-        clients[i] = {
-            id = server.VMess_id[i],
-            level = tonumber(server.VMess_level),
-            alterId = tonumber(server.VMess_alterId)
-        }
+if server.protocol == "vmess" then
+    if server.VMess_id then
+        local clients = {}
+        for i = 1, #server.VMess_id do
+            clients[i] = {
+                id = server.VMess_id[i],
+                level = tonumber(server.VMess_level),
+                alterId = tonumber(server.VMess_alterId)
+            }
+        end
+        settings = {clients = clients}
     end
+elseif server.protocol == "socks" then
+    settings = {
+        auth = "password",
+        accounts = {
+            {user = server.socks_username, pass = server.socks_password}
+        }
+    }
+elseif server.protocol == "shadowsocks" then
+    settings = {
+        method = server.ss_method,
+        password = server.ss_password,
+        level = tonumber(server.ss_level),
+        network = server.ss_network,
+        ota = (server.ss_ota == '1') and true or false
+    }
 end
 
 local v2ray = {
@@ -26,14 +45,7 @@ local v2ray = {
         port = tonumber(server.port),
         protocol = server.protocol,
         -- 底层传输配置
-        settings = (server.protocol == "vmess") and {clients = clients} or
-            (server.protocol == "shadowsocks") and {
-            method = server.ss_method,
-            password = server.ss_password,
-            level = tonumber(server.ss_level),
-            network = server.ss_network,
-            ota = (server.ss_ota == '1') and true or false
-        } or nil,
+        settings = settings,
         streamSettings = (server.protocol == "vmess") and {
             network = server.transport,
             security = (server.tls == '1' or server.transport == "h2") and "tls" or
