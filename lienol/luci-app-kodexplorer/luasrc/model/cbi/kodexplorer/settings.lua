@@ -42,6 +42,8 @@ o = s:option(Value, "project_directory", translate("项目存放目录"),
 o.default = "/mnt/sda1/kodexplorer"
 o.rmempty = false
 
+s:append(Template("kodexplorer/version"))
+
 o = s:option(Button, "_download", translate("手动下载"), translate(
                  "请确保具有足够的空间。<br /><font style='color:red'>第一次运行务必填好设备路径和存放路径，然后保存应用。再手动下载，否则无法使用！</font>"))
 o.template = "kodexplorer/download"
