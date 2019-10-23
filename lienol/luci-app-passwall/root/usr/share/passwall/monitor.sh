@@ -24,52 +24,52 @@ use_kcp=$(uci_get_by_name $TCP_REDIR_SERVER use_kcp 0)
 kcp_port=$(uci_get_by_type global_proxy kcptun_port 11183)
 
 #tcp
-if [ $TCP_REDIR_SERVER != "nil" ] ;then
-	icount=`ps -w | grep -E "ss-redir|ssr-redir|v2ray" | grep $CONFIG_PATH/TCP.json | grep -v grep | wc -l`
-	if [ $icount = 0 ] ;then
+if [ $TCP_REDIR_SERVER != "nil" ]; then
+	icount=$(ps -w | grep -E "ss-redir|ssr-redir|v2ray" | grep $CONFIG_PATH/TCP.json | grep -v grep | wc -l)
+	if [ $icount = 0 ]; then
 		/etc/init.d/passwall restart
 		exit 0
 	fi
 fi
 
 #udp
-if [ $UDP_REDIR_SERVER != "nil" ] ;then
-	icount=`ps -w | grep -E "ss-redir|ssr-redir|v2ray" | grep $CONFIG_PATH/UDP.json | grep -v grep | wc -l`
-	if [ $icount = 0 ] ;then
+if [ $UDP_REDIR_SERVER != "nil" ]; then
+	icount=$(ps -w | grep -E "ss-redir|ssr-redir|v2ray" | grep $CONFIG_PATH/UDP.json | grep -v grep | wc -l)
+	if [ $icount = 0 ]; then
 		/etc/init.d/passwall restart
 		exit 0
 	fi
 fi
 
 #socks5
-if [ $SOCKS5_PROXY_SERVER != "nil" ] ;then
-	icount=`ps -w | grep -E "ss-redir|ssr-redir|v2ray" | grep $CONFIG_PATH/SOCKS5.json | grep -v grep | wc -l`
-	if [ $icount = 0 ] ;then
+if [ $SOCKS5_PROXY_SERVER != "nil" ]; then
+	icount=$(ps -w | grep -E "ss-redir|ssr-redir|v2ray" | grep $CONFIG_PATH/SOCKS5.json | grep -v grep | wc -l)
+	if [ $icount = 0 ]; then
 		/etc/init.d/passwall restart
 		exit 0
 	fi
 fi
 
 #dns
-icount=`netstat -apn | grep 7913 | wc -l`
-if [ $icount = 0 ] ;then
+icount=$(netstat -apn | grep 7913 | wc -l)
+if [ $icount = 0 ]; then
 	/etc/init.d/passwall restart
 	exit 0
 fi
 
 #kcptun
-if [ $use_kcp -gt 0 ] ;then
-	icount=`ps -w | grep kcptun_client | grep $kcp_port |grep -v grep | wc -l`
-	if [ $icount = 0 ] ;then
+if [ $use_kcp -gt 0 ]; then
+	icount=$(ps -w | grep kcptun_client | grep $kcp_port | grep -v grep | wc -l)
+	if [ $icount = 0 ]; then
 		/etc/init.d/passwall restart
 		exit 0
 	fi
 fi
 
 #haproxy
-if [ $use_haproxy -gt 0 ] ;then
-	icount=`ps -w | grep haproxy | grep $haproxy_port | grep -v grep | wc -l`
-	if [ $icount = 0 ] ;then
+if [ $use_haproxy -gt 0 ]; then
+	icount=$(ps -w | grep haproxy | grep $haproxy_port | grep -v grep | wc -l)
+	if [ $icount = 0 ]; then
 		/etc/init.d/passwall restart
 		exit 0
 	fi
