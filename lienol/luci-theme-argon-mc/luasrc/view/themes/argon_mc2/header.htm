@@ -133,9 +133,10 @@
 
 				if #grandchildren > 0 then
 					local title = pcdata(striptags(translate(nnode.title)))
+					local en_title = pcdata(striptags(string.gsub(nnode.title," ","_")))
 
 					write('<li class="slide"><a class="menu" data-title="%s" href="#">%s</a>' %{
-						title,
+						en_title,
 						title
 					})
 
@@ -143,9 +144,10 @@
 					write('</li>')
 				else
 					local title = pcdata(striptags(translate(nnode.title)))
+					local en_title = pcdata(striptags(string.gsub(nnode.title," ","_")))
 
 					write('<li><a data-title="%s" href="%s">%s</a></li>' %{
-						title,
+						en_title,
 						nodeurl(category, r, nnode.query),
 						title
 					})

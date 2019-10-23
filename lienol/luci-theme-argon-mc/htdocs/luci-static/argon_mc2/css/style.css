@@ -782,44 +782,41 @@ header>.container>.brand {
 	padding-top: 3px;
 }
 
-.main>.main-left>.nav>.slide>.menu[data-title=状态]:before {
-	content: "\e906";
+.main > .main-left > .nav > .slide > .menu[data-title= Status ]:before{
+    content: "\e906";
+    color: #5e72e4!important;
 }
-
-.main>.main-left>.nav>.slide>.menu[data-title=系统]:before {
-	content: "\e90a";
+.main > .main-left > .nav > .slide > .menu[data-title= System ]:before{
+    content: "\e90a";
+    color: #fb6340!important;
 }
-
-.main>.main-left>.nav>.slide>.menu[data-title=服务]:before {
-	content: "\e909";
+.main > .main-left > .nav > .slide > .menu[data-title= Services ]:before{
+    content: "\e909";
+    color: #11cdef!important;
 }
-
-.main>.main-left>.nav>.slide>.menu[data-title=网络存储]:before {
-	content: "\e90c";
+.main > .main-left > .nav > .slide > .menu[data-title= NAS ]:before{
+    content: "\e90c";
+    color: #f3a4b5!important;
 }
-
-.main>.main-left>.nav>.slide>.menu[data-title=管控]:before {
-	content: "\e90e";
+.main > .main-left > .nav > .slide > .menu[data-title= Control ]:before{
+    content: "\e90e";
+    color: #f3a4b5!important;
 }
-
-.main>.main-left>.nav>.slide>.menu[data-title=VPN]:before {
-	content: "\e90b";
+.main > .main-left > .nav > .slide > .menu[data-title= VPN ]:before{
+    content: "\e90b";
+    color: #6de9ea!important;
 }
-
-.main>.main-left>.nav>.slide>.menu[data-title=网络]:before {
-	content: "\e908";
+.main > .main-left > .nav > .slide > .menu[data-title= Network ]:before{
+    content: "\e908";
+    color: #8965e0!important;
 }
-
-.main>.main-left>.nav>.slide>.menu[data-title=带宽监控]:before {
-	content: "\e90d";
+.main > .main-left > .nav > .slide > .menu[data-title= Bandwidth_Monitor ]:before{
+    content: "\e90d";
+    color: #2dce89!important;
 }
-
-.main>.main-left>.nav>.slide>.menu[data-title=统计]:before {
-	content: "\e90d";
-}
-
-.main>.main-left>.nav>.slide>.menu[data-title=退出]:before {
-	content: "\e907";
+.main > .main-left > .nav > .slide > .menu[data-title= Logout ]:before{
+    content: "\e907";
+    color: #32325d!important;
 }
 
 header>.container>.brand:before {
