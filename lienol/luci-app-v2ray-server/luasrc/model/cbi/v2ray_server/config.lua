@@ -30,7 +30,17 @@ e.rmempty = false
 
 e = t:option(ListValue, "protocol", translate("Protocol"))
 e:value("vmess", translate("Vmess"))
+e:value("socks",translate("Socks"))
 e:value("shadowsocks", translate("Shadowsocks"))
+
+e=t:option(Value,"socks_username",translate("User name"))
+e.rmempty=true
+e:depends("protocol","socks")
+
+e=t:option(Value,"socks_password",translate("Password"))
+e.rmempty=true
+e.password=true
+e:depends("protocol","socks")
 
 e = t:option(ListValue, "ss_method", translate("Encrypt Method"))
 e:value("aes-128-cfb")
