@@ -5,12 +5,8 @@ START=99
 
 CONFIG=v2ray_server
 CONFIG_PATH=/var/etc/$CONFIG
-CONFIG_NGINX_PATH=$CONFIG_PATH/nginx
-CONFIG_CADDY_PATH=$CONFIG_PATH/caddy
 LOG_PATH=/var/log/$CONFIG
 LOG_APP_FILE=$LOG_PATH/app.log
-LOG_NGINX_PATH=$LOG_PATH/nginx
-LOG_CADDY_PATH=$LOG_PATH/caddy
 
 echolog() {
 	echo -e "$(date "+%Y-%m-%d %H:%M:%S"): $1" >> $LOG_APP_FILE
@@ -35,8 +31,7 @@ gen_v2ray_config_file() {
 }
 
 start_v2ray_server() {
-	ulimit -n 8192
-	mkdir -p $CONFIG_PATH $CONFIG_CADDY_PATH $CONFIG_NGINX_PATH $LOG_PATH $LOG_CADDY_PATH $LOG_NGINX_PATH /var/lib/nginx /var/log/nginx
+	mkdir -p $CONFIG_PATH $LOG_PATH
 	touch $LOG_APP_FILE
 	caddy_file=$(uci get $CONFIG.@global[0].caddy_file)
 	config_foreach gen_v2ray_config_file "user"
@@ -45,12 +40,6 @@ start_v2ray_server() {
 
 stop_v2ray_server() {
 	fw3 reload >/dev/null 2>&1 &
-	nginx_run=`ps -w | grep "$CONFIG_NGINX_PATH/" | grep -v "grep" | awk '{print $10}'`
-	for i in $nginx_run
-	do
-		/usr/sbin/nginx -c $i -s stop
-	done
-	ps -w | grep "$CONFIG_CADDY_PATH/" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 	ps -w | grep "$CONFIG_PATH/" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 	rm -rf $CONFIG_PATH
 	rm -rf $LOG_PATH
