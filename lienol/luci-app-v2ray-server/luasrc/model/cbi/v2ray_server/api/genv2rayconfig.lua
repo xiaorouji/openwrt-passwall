@@ -41,15 +41,28 @@ local v2ray = {
     },
     -- 传入连接
     inbound = {
-        listen = (server.bind_local) and "127.0.0.1" or nil,
+        listen = (server.bind_local == "1") and "127.0.0.1" or nil,
         port = tonumber(server.port),
         protocol = server.protocol,
         -- 底层传输配置
         settings = settings,
         streamSettings = (server.protocol == "vmess") and {
             network = server.transport,
-            security = (server.tls == '1' or server.transport == "h2") and "tls" or
-                "none",
+            security = ((server.transport == "ws" and server.tls_enable == '1' and
+                server.reverse_proxy_enable ~= "1") or
+                (server.transport == "h2")) and "tls" or "none",
+            tlsSettings = (server.tls_enable == '1' and
+                server.reverse_proxy_enable ~= "1") and {
+                -- serverName = (server.tls_serverName),
+                allowInsecure = false,
+                disableSystemRoot = false,
+                certificates = {
+                    {
+                        certificateFile = server.tls_certificateFile,
+                        keyFile = server.tls_keyFile
+                    }
+                }
+            } or nil,
             kcpSettings = (server.transport == "mkcp") and {
                 mtu = tonumber(server.mkcp_mtu),
                 tti = tonumber(server.mkcp_tti),
@@ -71,16 +84,6 @@ local v2ray = {
                 key = server.quic_key,
                 header = {type = server.quic_guise}
             } or nil
-        } or nil,
-        tlsSettings = (server.reverse_proxy_enable == '1' and server.transport ==
-            "h2") and {
-            serverName = (server.reverse_proxy_serverName),
-            certificates = {
-                {
-                    certificateFile = server.reverse_proxy_https_certificateFile,
-                    keyFile = server.reverse_proxy_https_keyFile
-                }
-            }
         } or nil
     },
     -- 传出连接

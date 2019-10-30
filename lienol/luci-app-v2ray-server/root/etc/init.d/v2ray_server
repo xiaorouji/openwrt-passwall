@@ -33,9 +33,9 @@ gen_v2ray_config_file() {
 		echolog "$remarks $port V2ray 运行成功" 
 		config_get reverse_proxy_enable $1 reverse_proxy_enable
 		config_get reverse_proxy_type $1 reverse_proxy_type
-		config_get reverse_proxy_port $1 reverse_proxy_port
 		config_get reverse_proxy_serverName $1 reverse_proxy_serverName
-		config_get reverse_proxy_https_enable $1 reverse_proxy_https_enable
+		config_get reverse_proxy_port $1 reverse_proxy_port
+		config_get tls_enable $1 tls_enable
 		[ "$reverse_proxy_enable" = "1" -a "$reverse_proxy_type" = "nginx" ] && {
 			echolog "$remarks $port 生成并运行Nginx配置文件 - $CONFIG_NGINX_PATH/$1.conf" 
 			cat <<-EOF > $CONFIG_NGINX_PATH/$1.conf
@@ -59,11 +59,11 @@ gen_v2ray_config_file() {
 				location_path=$h2_path
 			fi
 			
-			if [ "$reverse_proxy_https_enable" = "1" ];then
-				config_get reverse_proxy_https_certificateFile $1 reverse_proxy_https_certificateFile
-				config_get reverse_proxy_https_keyFile $1 reverse_proxy_https_keyFile
+			if [ "$tls_enable" = "1" ];then
+				config_get tls_certificateFile $1 tls_certificateFile
+				config_get tls_keyFile $1 tls_keyFile
 				is_ssl='ssl'
-				ssl_params="ssl_certificate ${reverse_proxy_https_certificateFile};\nssl_certificate_key ${reverse_proxy_https_keyFile};\nssl_protocols TLSv1 TLSv1.1 TLSv1.2;\nssl_ciphers HIGH:!aNULL:!MD5;"
+				ssl_params="ssl_certificate ${tls_certificateFile};\nssl_certificate_key ${tls_keyFile};\nssl_protocols TLSv1 TLSv1.1 TLSv1.2;\nssl_ciphers HIGH:!aNULL:!MD5;"
 			fi
 				
 			cat <<-EOF >> $CONFIG_NGINX_PATH/$1.conf
@@ -126,11 +126,11 @@ gen_v2ray_config_file() {
 				proxy_path="https://127.0.0.1:$port"
 				header_upstream="header_upstream X-Forwarded-Proto 'https'\nheader_upstream Host \"$reverse_proxy_serverName\""
 			fi
-			if [ "$reverse_proxy_https_enable" = "1" ];then
-				config_get reverse_proxy_https_certificateFile $1 reverse_proxy_https_certificateFile
-				config_get reverse_proxy_https_keyFile $1 reverse_proxy_https_keyFile
+			if [ "$tls_enable" = "1" ];then
+				config_get tls_certificateFile $1 tls_certificateFile
+				config_get tls_keyFile $1 tls_keyFile
 				host="https://$reverse_proxy_serverName:$reverse_proxy_port"
-				ssl_params="tls ${reverse_proxy_https_certificateFile} ${reverse_proxy_https_keyFile} {\nprotocols tls1.2 tls1.3\nciphers ECDHE-ECDSA-WITH-CHACHA20-POLY1305 ECDHE-RSA-WITH-CHACHA20-POLY1305 ECDHE-ECDSA-AES128-GCM-SHA256 ECDHE-RSA-AES128-GCM-SHA256\n}"
+				ssl_params="tls ${tls_certificateFile} ${tls_keyFile} {\nprotocols tls1.2 tls1.3\nciphers ECDHE-ECDSA-WITH-CHACHA20-POLY1305 ECDHE-RSA-WITH-CHACHA20-POLY1305 ECDHE-ECDSA-AES128-GCM-SHA256 ECDHE-RSA-AES128-GCM-SHA256\n}"
 			fi
 		
 			echolog "$remarks $port 生成并运行Caddy配置文件 - $CONFIG_CADDY_PATH/$1.conf" 
