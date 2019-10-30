@@ -48,11 +48,8 @@ local v2ray = {
         settings = settings,
         streamSettings = (server.protocol == "vmess") and {
             network = server.transport,
-            security = ((server.transport == "ws" and server.tls_enable == '1' and
-                server.reverse_proxy_enable ~= "1") or
-                (server.transport == "h2")) and "tls" or "none",
-            tlsSettings = (server.tls_enable == '1' and
-                server.reverse_proxy_enable ~= "1") and {
+            security = (server.tls_enable == '1') and "tls" or "none",
+            tlsSettings = (server.tls_enable == '1') and {
                 -- serverName = (server.tls_serverName),
                 allowInsecure = false,
                 disableSystemRoot = false,
