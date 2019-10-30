@@ -30,17 +30,17 @@ e.rmempty = false
 
 e = t:option(ListValue, "protocol", translate("Protocol"))
 e:value("vmess", translate("Vmess"))
-e:value("socks",translate("Socks"))
+e:value("socks", translate("Socks"))
 e:value("shadowsocks", translate("Shadowsocks"))
 
-e=t:option(Value,"socks_username",translate("User name"))
-e.rmempty=true
-e:depends("protocol","socks")
+e = t:option(Value, "socks_username", translate("User name"))
+e.rmempty = true
+e:depends("protocol", "socks")
 
-e=t:option(Value,"socks_password",translate("Password"))
-e.rmempty=true
-e.password=true
-e:depends("protocol","socks")
+e = t:option(Value, "socks_password", translate("Password"))
+e.rmempty = true
+e.password = true
+e:depends("protocol", "socks")
 
 e = t:option(ListValue, "ss_method", translate("Encrypt Method"))
 e:value("aes-128-cfb")
@@ -168,30 +168,29 @@ for a, t in ipairs(header_type) do e:value(t) end
 e:depends("transport", "quic")
 
 -- [[ TLS部分 ]] --
---[[ e = t:option(Flag, "tlsSettingsEnable", translate("TLS Settings"), translate(
-                 "You can also use other web reverse proxy servers,as:Nginx,Apache,Caddy..."))
+e = t:option(Flag, "tls_enable", translate("Use HTTPS"))
 e:depends("transport", "ws")
 e:depends("transport", "h2")
-e.default = "0"
+e.default = "1"
 e.rmempty = false
 
-e = t:option(Value, "tls_serverName", translate("Domain"))
-e:depends("tlsSettingsEnable", 1)
+-- e = t:option(Value, "tls_serverName", translate("Domain"))
+-- e:depends("transport", "ws")
+-- e:depends("transport", "h2")
 
 e = t:option(Value, "tls_certificateFile",
              translate("Public key absolute path"),
-             translate("as:") .. "/etc/v2ray/public.crt")
-e:depends("tlsSettingsEnable", 1)
+             translate("as:") .. "/etc/ssl/fullchain.pem")
+e:depends("tls_enable", 1)
 
-e = t:option(Value, "tls_keyFile", translate("Private key absolute path"),
-             translate("as:") .. "/etc/v2ray/private.key")
-e:depends("tlsSettingsEnable", 1)
---]]
+e = t:option(Value, "tls_keyFile",
+             translate("Private key absolute path"),
+             translate("as:") .. "/etc/ssl/private.key")
+e:depends("tls_enable", 1)
 
 -- [[ 反向代理部分 ]] --
 e = t:option(Flag, "reverse_proxy_enable", translate("Reverse Proxy"))
-e:depends("transport", "ws")
-e:depends("transport", "h2")
+e:depends("tls_enable", 1)
 e.default = "0"
 e.rmempty = false
 
@@ -207,23 +206,7 @@ e:depends("reverse_proxy_enable", 1)
 e = t:option(Value, "reverse_proxy_port", translate("Port"),
              translate("can not has conflict"))
 e.datatype = "port"
-e.rmempty = false
 e.default = "443"
 e:depends("reverse_proxy_enable", 1)
-
-e = t:option(Flag, "reverse_proxy_https_enable", translate("Use HTTPS"))
-e:depends("reverse_proxy_enable", 1)
-e.default = "1"
-e.rmempty = false
-
-e = t:option(Value, "reverse_proxy_https_certificateFile",
-             translate("Public key absolute path"),
-             translate("as:") .. "/etc/ssl/fullchain.pem")
-e:depends("reverse_proxy_https_enable", 1)
-
-e = t:option(Value, "reverse_proxy_https_keyFile",
-             translate("Private key absolute path"),
-             translate("as:") .. "/etc/ssl/private.key")
-e:depends("reverse_proxy_https_enable", 1)
 
 return a
