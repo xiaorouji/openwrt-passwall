@@ -12,12 +12,6 @@ t.addremove = false
 e = t:option(Flag, "enable", translate("Enable"))
 e.rmempty = false
 t:append(Template("v2ray_server/v2ray"))
-t:append(Template("v2ray_server/nginx"))
-t:append(Template("v2ray_server/caddy"))
-e = t:option(Value, "caddy_file", translate("Caddy path"), translate(
-                 "if you want to run from memory, change the path, such as /tmp/caddy, Then save the application and update it manually."))
-e.default = "/usr/bin/caddy"
-e.rmempty = false
 
 t = a:section(TypedSection, "user", translate("Users Manager"))
 t.anonymous = true

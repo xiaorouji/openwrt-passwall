@@ -2,7 +2,6 @@
 module("luci.controller.v2ray_server", package.seeall)
 local http = require "luci.http"
 local v2ray = require "luci.model.cbi.v2ray_server.api.v2ray"
-local caddy = require "luci.model.cbi.v2ray_server.api.caddy"
 
 function index()
     if not nixio.fs.access("/etc/config/v2ray_server") then return end
@@ -17,10 +16,6 @@ function index()
     entry({"admin", "vpn", "v2ray_server", "check"}, call("v2ray_check")).leaf =
         true
     entry({"admin", "vpn", "v2ray_server", "update"}, call("v2ray_update")).leaf =
-        true
-    entry({"admin", "vpn", "v2ray_server", "caddy_check"}, call("caddy_check")).leaf =
-        true
-    entry({"admin", "vpn", "v2ray_server", "caddy_update"}, call("caddy_update")).leaf =
         true
     entry({"admin", "vpn", "v2ray_server", "get_log"}, call("get_log")).leaf =
         true
@@ -57,26 +52,6 @@ function v2ray_update()
         json = v2ray.to_move(http.formvalue("file"))
     else
         json = v2ray.to_download(http.formvalue("url"))
-    end
-
-    http_write_json(json)
-end
-
-function caddy_check()
-    local json = caddy.to_check("")
-    http_write_json(json)
-end
-
-function caddy_update()
-    local json = nil
-    local task = http.formvalue("task")
-    if task == "extract" then
-        json =
-            caddy.to_extract(http.formvalue("file"), http.formvalue("subfix"))
-    elseif task == "move" then
-        json = caddy.to_move(http.formvalue("file"))
-    else
-        json = caddy.to_download(http.formvalue("url"))
     end
 
     http_write_json(json)
