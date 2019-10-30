@@ -7,8 +7,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=v2ray
-PKG_VERSION:=4.20
-PKG_RELEASE:=1
+PKG_VERSION:=4.21.3
+PKG_RELEASE:=2
 
 include $(INCLUDE_DIR)/package.mk
 
