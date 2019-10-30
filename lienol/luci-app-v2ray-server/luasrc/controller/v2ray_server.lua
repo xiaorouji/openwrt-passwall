@@ -88,3 +88,4 @@ function get_log()
 end
 
 function clear_log() luci.sys.call("echo '' > /var/log/v2ray_server/app.log") end
+

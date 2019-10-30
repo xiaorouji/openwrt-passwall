@@ -108,3 +108,4 @@ a:append(Template("v2ray_server/log"))
 
 a:append(Template("v2ray_server/users_list_status"))
 return a
+
