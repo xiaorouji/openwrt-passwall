@@ -2500,13 +2500,14 @@ td > .ifacebadge {
 
 .cbi-input-textarea {
     width: 100%;
-    border: 1;
+	resize: none;
     outline: none;
     min-height: 14rem;
     padding: 0.8rem;
     font-size: 0.8rem;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     color: black;
+	border-radius: 0.25rem;
 }
 
 #syslog {
@@ -3444,7 +3445,7 @@ header > .container > .pull-right > * {
 	
 	.cbi-value-field,
 	.cbi-value-description {
-		width: 100%;
+		width: 95%;
 	}
 	select, input {
 		width: 95%;
@@ -3454,6 +3455,12 @@ header > .container > .pull-right > * {
 		width: 95%;
 		min-width: unset;
 	}
+	
+	.cbi-value-field .cbi-input-textarea {
+		width: 95% !important;
+		min-width: unset;
+	}
+	
     .cbi-value > .cbi-value-field {
         /* display: inline-block;
         padding-left: 1rem; */
@@ -3484,6 +3491,7 @@ header > .container > .pull-right > * {
 
     .node-main-login > .main .container {
         padding: 0.5rem 1rem 2rem 1rem;
+		margin: 0 auto !important;
     }
 
 
