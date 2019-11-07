@@ -3,17 +3,17 @@ local e = require "nixio.fs"
 local e = require "luci.sys"
 local e = luci.model.uci.cursor()
 local o = "v2ray_server"
-local a, t, e
-a = Map(o, translate("V2ray Server"))
 
-t = a:section(TypedSection, "global", translate("Global Settings"))
+m = Map(o, translate("V2ray Server"))
+
+t = m:section(TypedSection, "global", translate("Global Settings"))
 t.anonymous = true
 t.addremove = false
 e = t:option(Flag, "enable", translate("Enable"))
 e.rmempty = false
 t:append(Template("v2ray_server/v2ray"))
 
-t = a:section(TypedSection, "user", translate("Users Manager"))
+t = m:section(TypedSection, "user", translate("Users Manager"))
 t.anonymous = true
 t.addremove = true
 t.template = "cbi/tblsection"
@@ -39,28 +39,24 @@ e = t:option(DummyValue, "port", translate("Port"))
 e.width = "10%"
 e = t:option(DummyValue, "protocol", translate("Protocol"))
 e.width = "15%"
-e.cfgvalue = function(t, i)
-    local t = "未知"
-    local a = a.uci:get(o, i, "protocol") or ""
-    if a == "vmess" then
-        t = "Vmess"
-    elseif a == "shadowsocks" then
-        t = "Shadowsocks"
-    end
-    return t
+e.cfgvalue = function(self, section)
+    local str = "未知"
+    local protocol = m:get(section, "protocol") or ""
+    if protocol ~= "" then str = (protocol:gsub("^%l", string.upper)) end
+    return str
 end
 e = t:option(DummyValue, "transport", translate("Transport"))
 e.width = "10%"
-e.cfgvalue = function(t, s)
-    local i = ""
+e.cfgvalue = function(self, section)
     local t = "未知"
-    local n = a.uci:get(o, s, "protocol") or ""
-    if n == "vmess" then
-        i = "transport"
-    elseif n == "shadowsocks" then
-        i = "ss_network"
+    local b = ""
+    local protocol = m:get(section, "protocol") or ""
+    if protocol == "vmess" then
+        b = "transport"
+    elseif protocol == "shadowsocks" then
+        b = "ss_network"
     end
-    local a = a.uci:get(o, s, i) or ""
+    local a = m:get(section, b) or ""
     if a == "tcp" then
         t = "TCP"
     elseif a == "udp" then
@@ -75,20 +71,24 @@ e.cfgvalue = function(t, s)
         t = "HTTP/2"
     elseif a == "quic" then
         t = "QUIC"
+    else
+        t = "TCP,UDP"
     end
     return t
 end
 e = t:option(DummyValue, "password", translate("Password"))
 e.width = "30%"
-e.cfgvalue = function(e, t)
+e.cfgvalue = function(self, section)
     local e = ""
-    local i = a.uci:get(o, t, "protocol") or ""
-    if i == "vmess" then
+    local protocol = m:get(section, "protocol") or ""
+    if protocol == "vmess" then
         e = "VMess_id"
-    elseif i == "shadowsocks" then
+    elseif protocol == "shadowsocks" then
         e = "ss_password"
+    elseif protocol == "socks" then
+        e = "socks_password"
     end
-    local e = a.uci:get(o, t, e) or ""
+    local e = m:get(section, e) or ""
     local t = ""
     if type(e) == "table" then
         for a = 1, #e do t = t .. e[a] end
@@ -98,8 +98,8 @@ e.cfgvalue = function(e, t)
     return t
 end
 
-a:append(Template("v2ray_server/log"))
+m:append(Template("v2ray_server/log"))
 
-a:append(Template("v2ray_server/users_list_status"))
-return a
+m:append(Template("v2ray_server/users_list_status"))
+return m
 
