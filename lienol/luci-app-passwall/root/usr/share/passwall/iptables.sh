@@ -121,6 +121,8 @@ load_acl() {
 	[ -z "$proxy_mode" -o "$proxy_mode" = "default" ] && proxy_mode=$PROXY_MODE
 	[ -z "$tcp_redir_ports" -o "$tcp_redir_ports" = "default" ] && tcp_redir_ports=$TCP_REDIR_PORTS
 	[ -z "$udp_redir_ports" -o "$udp_redir_ports" = "default" ] && udp_redir_ports=$UDP_REDIR_PORTS
+	[ "$tcp_redir_server" == "1" -a "$TCP_REDIR_SERVER" = "nil" ] && tcp_redir_server="nil"
+	[ "$udp_redir_server" == "1" -a "$UDP_REDIR_SERVER" = "nil" ] && udp_redir_server="nil"
 	local ip_mark=$(get_ip_mark $ipaddr)
 	[ "$enabled" == "1" -a -n "$proxy_mode" ] && {
 		if [ -n "$ipaddr" ] || [ -n "$macaddr" ]; then

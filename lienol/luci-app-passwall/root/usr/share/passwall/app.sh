@@ -8,6 +8,8 @@ CONFIG=passwall
 CONFIG_PATH=/var/etc/$CONFIG
 RUN_PID_PATH=$CONFIG_PATH/pid
 HAPROXY_FILE=$CONFIG_PATH/haproxy.cfg
+REDSOCKS_CONFIG_TCP_FILE=$CONFIG_PATH/redsocks_TCP.conf
+REDSOCKS_CONFIG_UDP_FILE=$CONFIG_PATH/redsocks_UDP.conf
 CONFIG_TCP_FILE=$CONFIG_PATH/TCP.json
 CONFIG_UDP_FILE=$CONFIG_PATH/UDP.json
 CONFIG_SOCKS5_FILE=$CONFIG_PATH/SOCKS5.json
@@ -185,26 +187,10 @@ load_config() {
 	UDP_REDIR_PORT2=
 	TCP_REDIR_PORT3=
 	UDP_REDIR_PORT3=
-	SOCKS5_PROXY_PORT=$(config_t_get global_proxy socks5_proxy_port 1043)
+	SOCKS5_PROXY_PORT=$(config_t_get global_proxy socks5_proxy_port 1051)
 	PROXY_IPV6=$(config_t_get global_proxy proxy_ipv6 0)
 	mkdir -p /var/etc $CONFIG_PATH $RUN_PID_PATH
 	config_load $CONFIG
-	[ "$TCP_REDIR_SERVER" != "nil" ] && {
-		TCP_REDIR_SERVER_TYPE=$(echo $(config_get $TCP_REDIR_SERVER server_type) | tr 'A-Z' 'a-z')
-		gen_config_file $TCP_REDIR_SERVER $TCP_REDIR_PORT TCP $CONFIG_TCP_FILE
-		echo "$TCP_REDIR_SERVER" >$CONFIG_PATH/tcp_server_id
-	}
-	[ "$UDP_REDIR_SERVER" != "nil" ] && {
-		UDP_REDIR_SERVER_TYPE=$(echo $(config_get $UDP_REDIR_SERVER server_type) | tr 'A-Z' 'a-z')
-		gen_config_file $UDP_REDIR_SERVER $UDP_REDIR_PORT UDP $CONFIG_UDP_FILE
-		echo "$UDP_REDIR_SERVER" >$CONFIG_PATH/udp_server_id
-	}
-	[ "$SOCKS5_PROXY_SERVER" != "nil" ] && {
-		SOCKS5_PROXY_SERVER_TYPE=$(echo $(config_get $SOCKS5_PROXY_SERVER server_type) | tr 'A-Z' 'a-z')
-		gen_config_file $SOCKS5_PROXY_SERVER $SOCKS5_PROXY_PORT Socks5 $CONFIG_SOCKS5_FILE
-		echo "$SOCKS5_PROXY_SERVER" >$CONFIG_PATH/socks5_server_id
-	}
-
 	return 0
 }
 
@@ -277,7 +263,9 @@ gen_config_file() {
 		elif [ "$server_type" == "brook" ]; then
 			BROOK_SOCKS5_CMD="client -l 0.0.0.0:$local_port -i 0.0.0.0 -s $server_ip:$server_port -p $(config_get $server password)"
 		elif [ "$server_type" == "trojan" ]; then
-			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_trojan_client_config_file.lua $server nil nil $local_port >$config_file_path
+			local_port=$(get_not_exists_port_after $SOCKS5_PROXY_PORT tcp)
+			socks5_port=$local_port
+			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_trojan_client_config_file.lua $server nil nil $socks5_port >$config_file_path
 		fi
 	fi
 
@@ -294,6 +282,10 @@ gen_config_file() {
 			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_v2ray_client_config_file.lua $server udp $local_port nil >$config_file_path
 		elif [ "$server_type" == "brook" ]; then
 			BROOK_UDP_CMD="tproxy -l 0.0.0.0:$local_port -s $server_ip:$server_port -p $(config_get $server password)"
+		elif [ "$server_type" == "trojan" ]; then
+			local_port=$(get_not_exists_port_after $SOCKS5_PROXY_PORT tcp)
+			socks5_port=$local_port
+			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_trojan_client_config_file.lua $server udp nil $socks5_port >$config_file_path
 		fi
 	fi
 
@@ -306,6 +298,10 @@ gen_config_file() {
 		TCP_REDIR_SERVER_PORT=$server_port
 		if [ "$server_type" == "v2ray" ]; then
 			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_v2ray_client_config_file.lua $server tcp $local_port nil >$config_file_path
+		elif [ "$server_type" == "trojan" ]; then
+			local_port=$(get_not_exists_port_after $SOCKS5_PROXY_PORT tcp)
+			socks5_port=$local_port
+			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_trojan_client_config_file.lua $server tcp nil $socks5_port >$config_file_path
 		else
 			local kcptun_use kcptun_server_host kcptun_port kcptun_config
 			kcptun_use=$(config_get $server use_kcp)
@@ -381,6 +377,7 @@ start_tcp_redir_other() {
 			[ "$temp_server" != "nil" ] && {
 				TYPE=$(echo $(config_get $temp_server server_type) | tr 'A-Z' 'a-z')
 				local config_file=$CONFIG_PATH/TCP$i.json
+				local redsocks_config_file=$CONFIG_PATH/redsocks_TCP$i.conf
 				local port_temp=$(expr $TCP_REDIR_PORT + 1)
 				local port=$(echo $(get_not_exists_port_after $port_temp tcp))
 				eval TCP_REDIR_PORT$i=$port
@@ -397,9 +394,13 @@ start_tcp_redir_other() {
 					brook_bin=$(find_bin Brook)
 					[ -n "$brook_bin" ] && $brook_bin $BROOK_TCP_CMD &>/dev/null &
 				elif [ "$TYPE" == "trojan" ]; then
-					#trojan_bin=$(find_bin trojan)
-					#[ -n "$trojan_bin" ] && $trojan_bin -c $config_file >/dev/null &
-					echolog "目前暂不支持Trojan透明代理，请使用Socks5代理"
+					trojan_bin=$(find_bin trojan)
+					[ -n "$trojan_bin" ] && $trojan_bin -c $config_file >/dev/null 2>&1 &
+					redsocks_bin=$(find_bin redsocks2)
+					[ -n "$redsocks_bin" ] && {
+						gen_redsocks_config udp $socks5_port $port_temp $redsocks_config_file
+						$redsocks_bin -c $redsocks_config_file >/dev/null &
+					}
 				else
 					ss_bin=$(find_bin "$TYPE"-redir)
 					[ -n "$ss_bin" ] && {
@@ -420,6 +421,7 @@ start_udp_redir_other() {
 			[ "$temp_server" != "nil" ] && {
 				TYPE=$(echo $(config_get $temp_server server_type) | tr 'A-Z' 'a-z')
 				local config_file=$CONFIG_PATH/UDP$i.json
+				local redsocks_config_file=$CONFIG_PATH/redsocks_UDP$i.conf
 				local port_temp=$(expr $TCP_REDIR_PORT + 1)
 				local port=$(echo $(get_not_exists_port_after $port_temp udp))
 				eval UDP_REDIR_PORT$i=$port
@@ -436,9 +438,13 @@ start_udp_redir_other() {
 					brook_bin=$(find_bin brook)
 					[ -n "$brook_bin" ] && $brook_bin $BROOK_UDP_CMD &>/dev/null &
 				elif [ "$TYPE" == "trojan" ]; then
-					#trojan_bin=$(find_bin trojan)
-					#[ -n "$trojan_bin" ] && $trojan_bin -c $config_file >/dev/null &
-					echolog "目前暂不支持Trojan透明代理，请使用Socks5代理"
+					trojan_bin=$(find_bin trojan)
+					[ -n "$trojan_bin" ] && $trojan_bin -c $config_file >/dev/null 2>&1 &
+					redsocks_bin=$(find_bin redsocks2)
+					[ -n "$redsocks_bin" ] && {
+						gen_redsocks_config udp $socks5_port $port_temp $redsocks_config_file
+						$redsocks_bin -c $redsocks_config_file >/dev/null &
+					}
 				else
 					ss_bin=$(find_bin "$TYPE"-redir)
 					[ -n "$ss_bin" ] && {
@@ -452,6 +458,10 @@ start_udp_redir_other() {
 
 start_tcp_redir() {
 	if [ "$TCP_REDIR_SERVER" != "nil" ]; then
+		TCP_REDIR_SERVER_TYPE=$(echo $(config_get $TCP_REDIR_SERVER server_type) | tr 'A-Z' 'a-z')
+		gen_config_file $TCP_REDIR_SERVER $TCP_REDIR_PORT TCP $CONFIG_TCP_FILE
+		echo "$TCP_REDIR_SERVER" >$CONFIG_PATH/tcp_server_id
+
 		if [ "$TCP_REDIR_SERVER_TYPE" == "v2ray" ]; then
 			v2ray_path=$(config_t_get global_v2ray v2ray_client_file)
 			if [ -f "${v2ray_path}/v2ray" ]; then
@@ -462,11 +472,16 @@ start_tcp_redir() {
 			fi
 		elif [ "$TCP_REDIR_SERVER_TYPE" == "brook" ]; then
 			brook_bin=$(find_bin Brook)
-			[ -n "$brook_bin" ] && $brook_bin $BROOK_TCP_CMD &>/dev/null &
+			[ -n "$brook_bin" ] && $brook_bin $BROOK_TCP_CMD &
+			>/dev/null &
 		elif [ "$TCP_REDIR_SERVER_TYPE" == "trojan" ]; then
-			#trojan_bin=$(find_bin trojan)
-			#[ -n "$trojan_bin" ] && $trojan_bin -c $CONFIG_TCP_FILE >/dev/null &
-			echolog "目前暂不支持Trojan透明代理，请使用Socks5代理"
+			trojan_bin=$(find_bin trojan)
+			[ -n "$trojan_bin" ] && $trojan_bin -c $CONFIG_TCP_FILE >/dev/null 2>&1 &
+			redsocks_bin=$(find_bin redsocks2)
+			[ -n "$redsocks_bin" ] && {
+				gen_redsocks_config tcp $socks5_port $TCP_REDIR_PORT $REDSOCKS_CONFIG_TCP_FILE
+				$redsocks_bin -c $REDSOCKS_CONFIG_TCP_FILE >/dev/null &
+			}
 		else
 			ss_bin=$(find_bin "$TCP_REDIR_SERVER_TYPE"-redir)
 			[ -n "$ss_bin" ] && {
@@ -480,6 +495,10 @@ start_tcp_redir() {
 
 start_udp_redir() {
 	if [ "$UDP_REDIR_SERVER" != "nil" ]; then
+		UDP_REDIR_SERVER_TYPE=$(echo $(config_get $UDP_REDIR_SERVER server_type) | tr 'A-Z' 'a-z')
+		gen_config_file $UDP_REDIR_SERVER $UDP_REDIR_PORT UDP $CONFIG_UDP_FILE
+		echo "$UDP_REDIR_SERVER" >$CONFIG_PATH/udp_server_id
+
 		if [ "$UDP_REDIR_SERVER_TYPE" == "v2ray" ]; then
 			v2ray_path=$(config_t_get global_v2ray v2ray_client_file)
 			if [ -f "${v2ray_path}/v2ray" ]; then
@@ -492,9 +511,13 @@ start_udp_redir() {
 			brook_bin=$(find_bin brook)
 			[ -n "$brook_bin" ] && $brook_bin $BROOK_UDP_CMD &>/dev/null &
 		elif [ "$UDP_REDIR_SERVER_TYPE" == "trojan" ]; then
-			#trojan_bin=$(find_bin trojan)
-			#[ -n "$trojan_bin" ] && $trojan_bin -c $CONFIG_UDP_FILE >/dev/null &
-			echolog "目前暂不支持Trojan透明代理，请使用Socks5代理"
+			trojan_bin=$(find_bin trojan)
+			[ -n "$trojan_bin" ] && $trojan_bin -c $CONFIG_UDP_FILE >/dev/null 2>&1 &
+			redsocks_bin=$(find_bin redsocks2)
+			[ -n "$redsocks_bin" ] && {
+				gen_redsocks_config udp $socks5_port $UDP_REDIR_PORT $REDSOCKS_CONFIG_UDP_FILE
+				$redsocks_bin -c $REDSOCKS_CONFIG_UDP_FILE >/dev/null &
+			}
 		else
 			ss_bin=$(find_bin "$UDP_REDIR_SERVER_TYPE"-redir)
 			[ -n "$ss_bin" ] && {
@@ -506,6 +529,10 @@ start_udp_redir() {
 
 start_socks5_proxy() {
 	if [ "$SOCKS5_PROXY_SERVER" != "nil" ]; then
+		SOCKS5_PROXY_SERVER_TYPE=$(echo $(config_get $SOCKS5_PROXY_SERVER server_type) | tr 'A-Z' 'a-z')
+		gen_config_file $SOCKS5_PROXY_SERVER $SOCKS5_PROXY_PORT Socks5 $CONFIG_SOCKS5_FILE
+		echo "$SOCKS5_PROXY_SERVER" >$CONFIG_PATH/socks5_server_id
+
 		if [ "$SOCKS5_PROXY_SERVER_TYPE" == "v2ray" ]; then
 			v2ray_path=$(config_t_get global_v2ray v2ray_client_file)
 			if [ -f "${v2ray_path}/v2ray" ]; then
@@ -519,7 +546,7 @@ start_socks5_proxy() {
 			[ -n "$brook_bin" ] && $brook_bin $BROOK_SOCKS5_CMD &>/dev/null &
 		elif [ "$SOCKS5_PROXY_SERVER_TYPE" == "trojan" ]; then
 			trojan_bin=$(find_bin trojan)
-			[ -n "$trojan_bin" ] && $trojan_bin -c $CONFIG_SOCKS5_FILE >/dev/null &
+			[ -n "$trojan_bin" ] && $trojan_bin -c $CONFIG_SOCKS5_FILE >/dev/null 2>&1 &
 		else
 			ss_bin=$(find_bin "$SOCKS5_PROXY_SERVER_TYPE"-local)
 			[ -n "$ss_bin" ] && $ss_bin -c $CONFIG_SOCKS5_FILE -b 0.0.0.0 >/dev/null 2>&1 &
@@ -856,6 +883,62 @@ EOF
 	fi
 }
 
+gen_redsocks_config() {
+	protocol=$1
+	proxy_port=$2
+	local_port=$3
+	[ -n "$4" ] && {
+		cat >$4 <<-EOF
+			base {
+			    log_debug = off;
+			    log_info = off;
+			    log = "file:/dev/null";
+			    daemon = on;
+			    redirector = iptables;
+			}
+			
+		EOF
+		if [ "$protocol" == "tcp" ]; then
+			cat >>$4 <<-EOF
+				redsocks {
+				    local_ip = 0.0.0.0;
+				    local_port = $local_port;
+				    type = socks5;
+				    autoproxy = 0;
+				    ip = 127.0.0.1;
+				    port = $proxy_port;
+				}
+				
+				autoproxy {
+				    no_quick_check_seconds = 300;
+				    quick_connect_timeout = 2;
+				}
+				
+				ipcache {
+				    cache_size = 4;
+				    stale_time = 7200;
+				    autosave_interval = 3600;
+				    port_check = 0;
+				}
+				
+			EOF
+		elif [ "$protocol" == "udp" ]; then
+			cat >>$4 <<-EOF
+				redudp {
+				    local_ip = 0.0.0.0;
+				    local_port = $local_port;
+				    ip = 127.0.0.1;
+				    port = $proxy_port;
+				    type = socks5;
+				    udp_timeout = 60;
+				    udp_timeout_stream = 360;
+				}
+				
+			EOF
+		fi
+	}
+}
+
 gen_pdnsd_config() {
 	CACHEDIR=/var/pdnsd
 	CACHE=$CACHEDIR/pdnsd.cache
@@ -917,7 +1000,7 @@ start_haproxy() {
 		haproxy_bin=$(find_bin haproxy)
 		[ -n "$haproxy_bin" ] && {
 			bport=$(config_t_get global_haproxy haproxy_port)
-			cat <<-EOF > $HAPROXY_FILE
+			cat <<-EOF >$HAPROXY_FILE
 				global
 				    log         127.0.0.1 local2
 				    chroot      /usr/bin
@@ -973,7 +1056,7 @@ start_haproxy() {
 				#	fi
 				#	echolog "负载均衡${i} IP为：$bips"
 				#fi
-				echo "    server server_$i $bips:$bports weight $bweight check inter 1500 rise 1 fall 3 $bbackup" >> $HAPROXY_FILE
+				echo "    server server_$i $bips:$bports weight $bweight check inter 1500 rise 1 fall 3 $bbackup" >>$HAPROXY_FILE
 				if [ "$exports" != "0" ]; then
 					failcount=0
 					while [ "$failcount" -lt "10" ]; do
@@ -998,7 +1081,7 @@ start_haproxy() {
 				adminport=$(config_t_get global_haproxy admin_port)
 				adminuser=$(config_t_get global_haproxy admin_user)
 				adminpassword=$(config_t_get global_haproxy admin_password)
-				cat <<-EOF >> $HAPROXY_FILE
+				cat <<-EOF >>$HAPROXY_FILE
 					
 					listen status
 					    bind 0.0.0.0:$adminport
@@ -1071,9 +1154,9 @@ start() {
 	#防止并发开启服务
 	[ -f "$LOCK_FILE" ] && return 3
 	touch "$LOCK_FILE"
+	start_socks5_proxy
 	start_tcp_redir
 	start_udp_redir
-	start_socks5_proxy
 	start_tcp_redir_other
 	start_udp_redir_other
 	start_dns
