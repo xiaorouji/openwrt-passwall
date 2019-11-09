@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
 PKG_VERSION:=2.0
-PKG_RELEASE:=90-20191103
+PKG_RELEASE:=91-20191110
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PO2LMO:=./po2lmo
@@ -35,6 +35,10 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_socks
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_V2ray
 	bool "Include V2ray"
+	default y
+
+config PACKAGE_$(PKG_NAME)_INCLUDE_Trojan
+	bool "Include Trojan"
 	default n
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_Brook
@@ -47,7 +51,7 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_kcptun
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_haproxy
 	bool "Include haproxy"
-	default y
+	default n
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_ChinaDNS
 	bool "Include ChinaDNS"
@@ -80,6 +84,7 @@ define Package/$(PKG_NAME)
   +PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_socks:shadowsocks-libev-ss-local \
   +PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_socks:shadowsocksr-libev-ssr-local \
   +PACKAGE_$(PKG_NAME)_INCLUDE_V2ray:v2ray \
+  +PACKAGE_$(PKG_NAME)_INCLUDE_Trojan:trojan +redsocks2 \
   +PACKAGE_$(PKG_NAME)_INCLUDE_Brook:brook \
   +PACKAGE_$(PKG_NAME)_INCLUDE_kcptun:kcptun-client \
   +PACKAGE_$(PKG_NAME)_INCLUDE_haproxy:haproxy \
