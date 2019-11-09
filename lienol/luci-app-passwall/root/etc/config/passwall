@@ -33,7 +33,7 @@ config global_forwarding
 config global_proxy
 	option tcp_redir_port '1041'
 	option udp_redir_port '1041'
-	option socks5_port '1051'
+	option socks5_proxy_port '1051'
 	option kcptun_port '11183'
 	option proxy_ipv6 '0'
 	
