@@ -265,7 +265,7 @@ gen_config_file() {
 		elif [ "$server_type" == "trojan" ]; then
 			local_port=$(get_not_exists_port_after $SOCKS5_PROXY_PORT tcp)
 			socks5_port=$local_port
-			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_trojan_client_config_file.lua $server nil nil $socks5_port >$config_file_path
+			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_trojan_client_config_file.lua $server client $socks5_port >$config_file_path
 		fi
 	fi
 
@@ -285,7 +285,7 @@ gen_config_file() {
 		elif [ "$server_type" == "trojan" ]; then
 			local_port=$(get_not_exists_port_after $SOCKS5_PROXY_PORT tcp)
 			socks5_port=$local_port
-			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_trojan_client_config_file.lua $server udp nil $socks5_port >$config_file_path
+			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_trojan_client_config_file.lua $server client $socks5_port >$config_file_path
 		fi
 	fi
 
@@ -299,9 +299,7 @@ gen_config_file() {
 		if [ "$server_type" == "v2ray" ]; then
 			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_v2ray_client_config_file.lua $server tcp $local_port nil >$config_file_path
 		elif [ "$server_type" == "trojan" ]; then
-			local_port=$(get_not_exists_port_after $SOCKS5_PROXY_PORT tcp)
-			socks5_port=$local_port
-			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_trojan_client_config_file.lua $server tcp nil $socks5_port >$config_file_path
+			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_trojan_client_config_file.lua $server nat $local_port >$config_file_path
 		else
 			local kcptun_use kcptun_server_host kcptun_port kcptun_config
 			kcptun_use=$(config_get $server use_kcp)
@@ -396,11 +394,11 @@ start_tcp_redir_other() {
 				elif [ "$TYPE" == "trojan" ]; then
 					trojan_bin=$(find_bin trojan)
 					[ -n "$trojan_bin" ] && $trojan_bin -c $config_file >/dev/null 2>&1 &
-					redsocks_bin=$(find_bin redsocks2)
-					[ -n "$redsocks_bin" ] && {
-						gen_redsocks_config udp $socks5_port $port_temp $redsocks_config_file
-						$redsocks_bin -c $redsocks_config_file >/dev/null &
-					}
+					#redsocks_bin=$(find_bin redsocks2)
+					#[ -n "$redsocks_bin" ] && {
+					#	gen_redsocks_config udp $socks5_port $port_temp $redsocks_config_file
+					#	$redsocks_bin -c $redsocks_config_file >/dev/null &
+					#}
 				else
 					ss_bin=$(find_bin "$TYPE"-redir)
 					[ -n "$ss_bin" ] && {
@@ -436,7 +434,7 @@ start_udp_redir_other() {
 					fi
 				elif [ "$TYPE" == "brook" ]; then
 					brook_bin=$(find_bin brook)
-					[ -n "$brook_bin" ] && $brook_bin $BROOK_UDP_CMD &>/dev/null &
+					[ -n "$brook_bin" ] && $brook_bin $BROOK_UDP_CMD >/dev/null &
 				elif [ "$TYPE" == "trojan" ]; then
 					trojan_bin=$(find_bin trojan)
 					[ -n "$trojan_bin" ] && $trojan_bin -c $config_file >/dev/null 2>&1 &
@@ -472,16 +470,15 @@ start_tcp_redir() {
 			fi
 		elif [ "$TCP_REDIR_SERVER_TYPE" == "brook" ]; then
 			brook_bin=$(find_bin Brook)
-			[ -n "$brook_bin" ] && $brook_bin $BROOK_TCP_CMD &
-			>/dev/null &
+			[ -n "$brook_bin" ] && $brook_bin $BROOK_TCP_CMD >/dev/null &
 		elif [ "$TCP_REDIR_SERVER_TYPE" == "trojan" ]; then
 			trojan_bin=$(find_bin trojan)
 			[ -n "$trojan_bin" ] && $trojan_bin -c $CONFIG_TCP_FILE >/dev/null 2>&1 &
-			redsocks_bin=$(find_bin redsocks2)
-			[ -n "$redsocks_bin" ] && {
-				gen_redsocks_config tcp $socks5_port $TCP_REDIR_PORT $REDSOCKS_CONFIG_TCP_FILE
-				$redsocks_bin -c $REDSOCKS_CONFIG_TCP_FILE >/dev/null &
-			}
+			#redsocks_bin=$(find_bin redsocks2)
+			#[ -n "$redsocks_bin" ] && {
+			#	gen_redsocks_config tcp $socks5_port $TCP_REDIR_PORT $REDSOCKS_CONFIG_TCP_FILE
+			#	$redsocks_bin -c $REDSOCKS_CONFIG_TCP_FILE >/dev/null &
+			#}
 		else
 			ss_bin=$(find_bin "$TCP_REDIR_SERVER_TYPE"-redir)
 			[ -n "$ss_bin" ] && {
@@ -509,7 +506,7 @@ start_udp_redir() {
 			fi
 		elif [ "$UDP_REDIR_SERVER_TYPE" == "brook" ]; then
 			brook_bin=$(find_bin brook)
-			[ -n "$brook_bin" ] && $brook_bin $BROOK_UDP_CMD &>/dev/null &
+			[ -n "$brook_bin" ] && $brook_bin $BROOK_UDP_CMD >/dev/null &
 		elif [ "$UDP_REDIR_SERVER_TYPE" == "trojan" ]; then
 			trojan_bin=$(find_bin trojan)
 			[ -n "$trojan_bin" ] && $trojan_bin -c $CONFIG_UDP_FILE >/dev/null 2>&1 &
@@ -543,7 +540,7 @@ start_socks5_proxy() {
 			fi
 		elif [ "$SOCKS5_PROXY_SERVER_TYPE" == "brook" ]; then
 			brook_bin=$(find_bin brook)
-			[ -n "$brook_bin" ] && $brook_bin $BROOK_SOCKS5_CMD &>/dev/null &
+			[ -n "$brook_bin" ] && $brook_bin $BROOK_SOCKS5_CMD >/dev/null &
 		elif [ "$SOCKS5_PROXY_SERVER_TYPE" == "trojan" ]; then
 			trojan_bin=$(find_bin trojan)
 			[ -n "$trojan_bin" ] && $trojan_bin -c $CONFIG_SOCKS5_FILE >/dev/null 2>&1 &
