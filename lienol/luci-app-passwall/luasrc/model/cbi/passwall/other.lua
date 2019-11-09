@@ -168,19 +168,19 @@ s.addremove = false
 ---- TCP Redir Port
 o = s:option(Value, "tcp_redir_port", translate("TCP Redir Port"))
 o.datatype = "port"
-o.default = 1031
+o.default = 1041
 o.rmempty = true
 
 ---- UDP Redir Port
 o = s:option(Value, "udp_redir_port", translate("UDP Redir Port"))
 o.datatype = "port"
-o.default = 1032
+o.default = 1042
 o.rmempty = true
 
 ---- Socks5 Proxy Port
-o = s:option(Value, "socks5_port", translate("Socks5 Proxy Port"))
+o = s:option(Value, "socks5_proxy_port", translate("Socks5 Proxy Port"))
 o.datatype = "port"
-o.default = 1033
+o.default = 1051
 
 ---- Kcptun Port
 o = s:option(Value, "kcptun_port", translate("Kcptun Port"))
