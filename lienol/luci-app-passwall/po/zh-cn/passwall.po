@@ -682,6 +682,9 @@ msgstr "TCP转发服务器数量"
 msgid "UDP Redir Server Number"
 msgstr "UDP转发服务器数量"
 
+msgid "Socks5 Proxy Server Number"
+msgstr "Socks5代理服务器数量"
+
 msgid "You can only set up a maximum of 3 servers for the time being"
 msgstr "目前最多只能设置3个服务器"
 
