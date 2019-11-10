@@ -116,42 +116,35 @@ get_not_exists_port_after() {
 	fi
 }
 
-SOCKS5_PROXY_SERVER=$(config_t_get global socks5_proxy_server nil)
-TCP_REDIR_SERVER=$(config_t_get global tcp_redir_server nil)
-UDP_REDIR_SERVER=$(config_t_get global udp_redir_server nil)
-[ "$UDP_REDIR_SERVER" == "default" ] && UDP_REDIR_SERVER=$TCP_REDIR_SERVER
-
-TCP_REDIR_SERVER2=
-TCP_REDIR_SERVER3=
-UDP_REDIR_SERVER2=
-UDP_REDIR_SERVER3=
 TCP_REDIR_SERVER_NUM=$(config_t_get global_other tcp_redir_server_num 1)
+for i in $(seq 1 $TCP_REDIR_SERVER_NUM); do
+	eval TCP_REDIR_SERVER$i=$(config_t_get global tcp_redir_server$i nil)
+done
+
 UDP_REDIR_SERVER_NUM=$(config_t_get global_other udp_redir_server_num 1)
+for i in $(seq 1 $UDP_REDIR_SERVER_NUM); do
+	eval UDP_REDIR_SERVER$i=$(config_t_get global udp_redir_server$i nil)
+done
 
-if [ "$TCP_REDIR_SERVER_NUM" -ge 2 ]; then
-	for i in $(seq 2 $TCP_REDIR_SERVER_NUM); do
-		eval TCP_REDIR_SERVER$i=$(config_t_get global tcp_redir_server$i nil)
-	done
-fi
+SOCKS5_PROXY_SERVER_NUM=$(config_t_get global_other socks5_proxy_server_num 1)
+for i in $(seq 1 $SOCKS5_PROXY_SERVER_NUM); do
+	eval SOCKS5_PROXY_SERVER$i=$(config_t_get global socks5_proxy_server$i nil)
+done
 
-if [ "$UDP_REDIR_SERVER_NUM" -ge 2 ]; then
-	for i in $(seq 2 $UDP_REDIR_SERVER_NUM); do
-		eval UDP_REDIR_SERVER$i=$(config_t_get global udp_redir_server$i nil)
-	done
-fi
+[ "$UDP_REDIR_SERVER1" == "default" ] && UDP_REDIR_SERVER1=$TCP_REDIR_SERVER1
 
-TCP_REDIR_SERVER_IP=""
-UDP_REDIR_SERVER_IP=""
-SOCKS5_PROXY_SERVER_IP=""
-TCP_REDIR_SERVER_IPV6=""
-UDP_REDIR_SERVER_IPV6=""
-SOCKS5_PROXY_SERVER_IPV6=""
-TCP_REDIR_SERVER_PORT=""
-UDP_REDIR_SERVER_PORT=""
-SOCKS5_PROXY_SERVER_PORT=""
-TCP_REDIR_SERVER_TYPE=""
-UDP_REDIR_SERVER_TYPE=""
-SOCKS5_PROXY_SERVER_TYPE=""
+TCP_REDIR_SERVER1_IP=""
+UDP_REDIR_SERVER1_IP=""
+SOCKS5_PROXY_SERVER1_IP=""
+TCP_REDIR_SERVER1_IPV6=""
+UDP_REDIR_SERVER1_IPV6=""
+SOCKS5_PROXY_SERVER1_IPV6=""
+TCP_REDIR_SERVER1_PORT=""
+UDP_REDIR_SERVER1_PORT=""
+SOCKS5_PROXY_SERVER1_PORT=""
+TCP_REDIR_SERVER1_TYPE=""
+UDP_REDIR_SERVER1_TYPE=""
+SOCKS5_PROXY_SERVER1_TYPE=""
 
 BROOK_SOCKS5_CMD=""
 BROOK_TCP_CMD=""
@@ -163,7 +156,7 @@ KCPTUN_REDIR_PORT=$(config_t_get global_proxy kcptun_port 11183)
 PROXY_MODE=$(config_t_get global proxy_mode gfwlist)
 
 load_config() {
-	[ "$TCP_REDIR_SERVER" == "nil" -a "$UDP_REDIR_SERVER" == "nil" -a "$SOCKS5_PROXY_SERVER" == "nil" ] && {
+	[ "$TCP_REDIR_SERVER1" == "nil" -a "$UDP_REDIR_SERVER1" == "nil" -a "$SOCKS5_PROXY_SERVER1" == "nil" ] && {
 		echolog "没有选择服务器！"
 		return 1
 	}
@@ -181,13 +174,15 @@ load_config() {
 	DNS_FORWARD_PORT=$(echo "$DNS_FORWARD" | awk -F':' '{print $2}')
 	DNS1=$(config_t_get global_dns dns_1)
 	DNS2=$(config_t_get global_dns dns_2)
-	TCP_REDIR_PORT=$(config_t_get global_proxy tcp_redir_port 1041)
-	UDP_REDIR_PORT=$(config_t_get global_proxy udp_redir_port 1042)
-	TCP_REDIR_PORT2=
-	UDP_REDIR_PORT2=
-	TCP_REDIR_PORT3=
-	UDP_REDIR_PORT3=
-	SOCKS5_PROXY_PORT=$(config_t_get global_proxy socks5_proxy_port 1051)
+	TCP_REDIR_PORT1=$(config_t_get global_proxy tcp_redir_port 1041)
+	TCP_REDIR_PORT2=$(expr $TCP_REDIR_PORT1 + 1)
+	TCP_REDIR_PORT3=$(expr $TCP_REDIR_PORT2 + 1)
+	UDP_REDIR_PORT1=$(config_t_get global_proxy udp_redir_port 1051)
+	UDP_REDIR_PORT2=$(expr $UDP_REDIR_PORT1 + 1)
+	UDP_REDIR_PORT3=$(expr $UDP_REDIR_PORT2 + 1)
+	SOCKS5_PROXY_PORT1=$(config_t_get global_proxy socks5_proxy_port 1061)
+	SOCKS5_PROXY_PORT2=$(expr $SOCKS5_PROXY_PORT1 + 1)
+	SOCKS5_PROXY_PORT3=$(expr $SOCKS5_PROXY_PORT2 + 1)
 	PROXY_IPV6=$(config_t_get global_proxy proxy_ipv6 0)
 	mkdir -p /var/etc $CONFIG_PATH $RUN_PID_PATH
 	config_load $CONFIG
@@ -251,11 +246,11 @@ gen_config_file() {
 
 	if [ "$redir_type" == "Socks5" ]; then
 		if [ "$network_type" == "ipv6" ]; then
-			SOCKS5_PROXY_SERVER_IPV6=$server_ip
+			SOCKS5_PROXY_SERVER1_IPV6=$server_ip
 		else
-			SOCKS5_PROXY_SERVER_IP=$server_ip
+			SOCKS5_PROXY_SERVER1_IP=$server_ip
 		fi
-		SOCKS5_PROXY_SERVER_PORT=$server_port
+		SOCKS5_PROXY_SERVER1_PORT=$server_port
 		if [ "$server_type" == "ss" -o "$server_type" == "ssr" ]; then
 			gen_ss_ssr_config_file $server_type $local_port 0 $server $config_file_path
 		elif [ "$server_type" == "v2ray" ]; then
@@ -263,19 +258,17 @@ gen_config_file() {
 		elif [ "$server_type" == "brook" ]; then
 			BROOK_SOCKS5_CMD="client -l 0.0.0.0:$local_port -i 0.0.0.0 -s $server_ip:$server_port -p $(config_get $server password)"
 		elif [ "$server_type" == "trojan" ]; then
-			local_port=$(get_not_exists_port_after $SOCKS5_PROXY_PORT tcp)
-			socks5_port=$local_port
-			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_trojan_client_config_file.lua $server client $socks5_port >$config_file_path
+			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_trojan_client_config_file.lua $server client $local_port >$config_file_path
 		fi
 	fi
 
 	if [ "$redir_type" == "UDP" ]; then
 		if [ "$network_type" == "ipv6" ]; then
-			UDP_REDIR_SERVER_IPV6=$server_ip
+			UDP_REDIR_SERVER1_IPV6=$server_ip
 		else
-			UDP_REDIR_SERVER_IP=$server_ip
+			UDP_REDIR_SERVER1_IP=$server_ip
 		fi
-		UDP_REDIR_SERVER_PORT=$server_port
+		UDP_REDIR_SERVER1_PORT=$server_port
 		if [ "$server_type" == "ss" -o "$server_type" == "ssr" ]; then
 			gen_ss_ssr_config_file $server_type $local_port 0 $server $config_file_path
 		elif [ "$server_type" == "v2ray" ]; then
@@ -283,7 +276,7 @@ gen_config_file() {
 		elif [ "$server_type" == "brook" ]; then
 			BROOK_UDP_CMD="tproxy -l 0.0.0.0:$local_port -s $server_ip:$server_port -p $(config_get $server password)"
 		elif [ "$server_type" == "trojan" ]; then
-			local_port=$(get_not_exists_port_after $SOCKS5_PROXY_PORT tcp)
+			local_port=$(get_not_exists_port_after $SOCKS5_PROXY_PORT1 tcp)
 			socks5_port=$local_port
 			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_trojan_client_config_file.lua $server client $socks5_port >$config_file_path
 		fi
@@ -291,11 +284,11 @@ gen_config_file() {
 
 	if [ "$redir_type" == "TCP" ]; then
 		if [ "$network_type" == "ipv6" ]; then
-			TCP_REDIR_SERVER_IPV6=$server_ip
+			TCP_REDIR_SERVER1_IPV6=$server_ip
 		else
-			TCP_REDIR_SERVER_IP=$server_ip
+			TCP_REDIR_SERVER1_IP=$server_ip
 		fi
-		TCP_REDIR_SERVER_PORT=$server_port
+		TCP_REDIR_SERVER1_PORT=$server_port
 		if [ "$server_type" == "v2ray" ]; then
 			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_v2ray_client_config_file.lua $server tcp $local_port nil >$config_file_path
 		elif [ "$server_type" == "trojan" ]; then
@@ -337,7 +330,7 @@ gen_config_file() {
 					[ "$kcptun_use_ipv6" == "1" ] && network_type="ipv6"
 					kcptun_server_ip=$(get_host_ip $network_type $kcptun_server_host)
 					echolog "KCP服务器IP地址:$kcptun_server_ip"
-					TCP_REDIR_SERVER_IP=$kcptun_server_ip
+					TCP_REDIR_SERVER1_IP=$kcptun_server_ip
 					start_kcptun "$kcptun_path" $kcptun_server_ip $kcptun_port "$kcptun_config"
 				fi
 				echolog "运行Kcptun..."
@@ -368,187 +361,113 @@ start_kcptun() {
 	fi
 }
 
-start_tcp_redir_other() {
-	if [ "$TCP_REDIR_SERVER_NUM" -ge 2 ]; then
-		for i in $(seq 2 $TCP_REDIR_SERVER_NUM); do
-			eval temp_server=\$TCP_REDIR_SERVER$i
-			[ "$temp_server" != "nil" ] && {
-				TYPE=$(echo $(config_get $temp_server server_type) | tr 'A-Z' 'a-z')
-				local config_file=$CONFIG_PATH/TCP$i.json
-				local redsocks_config_file=$CONFIG_PATH/redsocks_TCP$i.conf
-				local port_temp=$(expr $TCP_REDIR_PORT + 1)
-				local port=$(echo $(get_not_exists_port_after $port_temp tcp))
-				eval TCP_REDIR_PORT$i=$port
-				gen_config_file $temp_server $port TCP $config_file
-				if [ "$TYPE" == "v2ray" ]; then
-					v2ray_path=$(config_t_get global_v2ray v2ray_client_file)
-					if [ -f "${v2ray_path}/v2ray" ]; then
-						${v2ray_path}/v2ray -config=$config_file >/dev/null &
-					else
-						v2ray_bin=$(find_bin V2ray)
-						[ -n "$v2ray_bin" ] && $v2ray_bin -config=$config_file >/dev/null &
-					fi
-				elif [ "$TYPE" == "brook" ]; then
-					brook_bin=$(find_bin Brook)
-					[ -n "$brook_bin" ] && $brook_bin $BROOK_TCP_CMD &>/dev/null &
-				elif [ "$TYPE" == "trojan" ]; then
-					trojan_bin=$(find_bin trojan)
-					[ -n "$trojan_bin" ] && $trojan_bin -c $config_file >/dev/null 2>&1 &
-					#redsocks_bin=$(find_bin redsocks2)
-					#[ -n "$redsocks_bin" ] && {
-					#	gen_redsocks_config udp $socks5_port $port_temp $redsocks_config_file
-					#	$redsocks_bin -c $redsocks_config_file >/dev/null &
-					#}
-				else
-					ss_bin=$(find_bin "$TYPE"-redir)
-					[ -n "$ss_bin" ] && {
-						for k in $(seq 1 $process); do
-							$ss_bin -c $config_file -f $RUN_PID_PATH/tcp_${TYPE}_$k_$i >/dev/null 2>&1 &
-						done
-					}
-				fi
-			}
-		done
-	fi
-}
-
-start_udp_redir_other() {
-	if [ "$UDP_REDIR_SERVER_NUM" -ge 2 ]; then
-		for i in $(seq 2 $UDP_REDIR_SERVER_NUM); do
-			eval temp_server=\$UDP_REDIR_SERVER$i
-			[ "$temp_server" != "nil" ] && {
-				TYPE=$(echo $(config_get $temp_server server_type) | tr 'A-Z' 'a-z')
-				local config_file=$CONFIG_PATH/UDP$i.json
-				local redsocks_config_file=$CONFIG_PATH/redsocks_UDP$i.conf
-				local port_temp=$(expr $TCP_REDIR_PORT + 1)
-				local port=$(echo $(get_not_exists_port_after $port_temp udp))
-				eval UDP_REDIR_PORT$i=$port
-				gen_config_file $temp_server $port UDP $config_file
-				if [ "$TYPE" == "v2ray" ]; then
-					v2ray_path=$(config_t_get global_v2ray v2ray_client_file)
-					if [ -f "${v2ray_path}/v2ray" ]; then
-						${v2ray_path}/v2ray -config=$config_file >/dev/null &
-					else
-						v2ray_bin=$(find_bin V2ray)
-						[ -n "$v2ray_bin" ] && $v2ray_bin -config=$config_file >/dev/null &
-					fi
-				elif [ "$TYPE" == "brook" ]; then
-					brook_bin=$(find_bin brook)
-					[ -n "$brook_bin" ] && $brook_bin $BROOK_UDP_CMD >/dev/null &
-				elif [ "$TYPE" == "trojan" ]; then
-					trojan_bin=$(find_bin trojan)
-					[ -n "$trojan_bin" ] && $trojan_bin -c $config_file >/dev/null 2>&1 &
-					redsocks_bin=$(find_bin redsocks2)
-					[ -n "$redsocks_bin" ] && {
-						gen_redsocks_config udp $socks5_port $port_temp $redsocks_config_file
-						$redsocks_bin -c $redsocks_config_file >/dev/null &
-					}
-				else
-					ss_bin=$(find_bin "$TYPE"-redir)
-					[ -n "$ss_bin" ] && {
-						$ss_bin -c $config_file -f $RUN_PID_PATH/udp_${TYPE}_1_$i -U >/dev/null 2>&1 &
-					}
-				fi
-			}
-		done
-	fi
-}
-
 start_tcp_redir() {
-	if [ "$TCP_REDIR_SERVER" != "nil" ]; then
-		TCP_REDIR_SERVER_TYPE=$(echo $(config_get $TCP_REDIR_SERVER server_type) | tr 'A-Z' 'a-z')
-		gen_config_file $TCP_REDIR_SERVER $TCP_REDIR_PORT TCP $CONFIG_TCP_FILE
-		echo "$TCP_REDIR_SERVER" >$CONFIG_PATH/tcp_server_id
-
-		if [ "$TCP_REDIR_SERVER_TYPE" == "v2ray" ]; then
-			v2ray_path=$(config_t_get global_v2ray v2ray_client_file)
-			if [ -f "${v2ray_path}/v2ray" ]; then
-				${v2ray_path}/v2ray -config=$CONFIG_TCP_FILE >/dev/null &
+	for i in $(seq 1 $TCP_REDIR_SERVER_NUM); do
+		eval temp_server=\$TCP_REDIR_SERVER$i
+		[ "$temp_server" != "nil" ] && {
+			TYPE=$(echo $(config_get $temp_server server_type) | tr 'A-Z' 'a-z')
+			local config_file=$CONFIG_PATH/TCP_$i.json
+			#local redsocks_config_file=$CONFIG_PATH/redsocks_TCP_$i.conf
+			eval current_port=\$TCP_REDIR_PORT$i
+			local port=$(echo $(get_not_exists_port_after $current_port tcp))
+			eval TCP_REDIR_PORT$i=$port
+			gen_config_file $temp_server $port TCP $config_file
+			if [ "$TYPE" == "v2ray" ]; then
+				v2ray_path=$(config_t_get global_v2ray v2ray_client_file)
+				if [ -f "${v2ray_path}/v2ray" ]; then
+					${v2ray_path}/v2ray -config=$config_file >/dev/null &
+				else
+					v2ray_bin=$(find_bin V2ray)
+					[ -n "$v2ray_bin" ] && $v2ray_bin -config=$config_file >/dev/null &
+				fi
+			elif [ "$TYPE" == "brook" ]; then
+				brook_bin=$(find_bin Brook)
+				[ -n "$brook_bin" ] && $brook_bin $BROOK_TCP_CMD &>/dev/null &
+			elif [ "$TYPE" == "trojan" ]; then
+				trojan_bin=$(find_bin trojan)
+				[ -n "$trojan_bin" ] && $trojan_bin -c $config_file >/dev/null 2>&1 &
 			else
-				v2ray_bin=$(find_bin V2ray)
-				[ -n "$v2ray_bin" ] && $v2ray_bin -config=$CONFIG_TCP_FILE >/dev/null &
+				ss_bin=$(find_bin "$TYPE"-redir)
+				[ -n "$ss_bin" ] && {
+					for k in $(seq 1 $process); do
+						$ss_bin -c $config_file -f $RUN_PID_PATH/tcp_${TYPE}_$k_$i >/dev/null 2>&1 &
+					done
+				}
 			fi
-		elif [ "$TCP_REDIR_SERVER_TYPE" == "brook" ]; then
-			brook_bin=$(find_bin Brook)
-			[ -n "$brook_bin" ] && $brook_bin $BROOK_TCP_CMD >/dev/null &
-		elif [ "$TCP_REDIR_SERVER_TYPE" == "trojan" ]; then
-			trojan_bin=$(find_bin trojan)
-			[ -n "$trojan_bin" ] && $trojan_bin -c $CONFIG_TCP_FILE >/dev/null 2>&1 &
-			#redsocks_bin=$(find_bin redsocks2)
-			#[ -n "$redsocks_bin" ] && {
-			#	gen_redsocks_config tcp $socks5_port $TCP_REDIR_PORT $REDSOCKS_CONFIG_TCP_FILE
-			#	$redsocks_bin -c $REDSOCKS_CONFIG_TCP_FILE >/dev/null &
-			#}
-		else
-			ss_bin=$(find_bin "$TCP_REDIR_SERVER_TYPE"-redir)
-			[ -n "$ss_bin" ] && {
-				for i in $(seq 1 $process); do
-					$ss_bin -c $CONFIG_TCP_FILE -f $RUN_PID_PATH/tcp_${TCP_REDIR_SERVER_TYPE}_$i >/dev/null 2>&1 &
-				done
-			}
-		fi
-	fi
+		}
+	done
 }
 
 start_udp_redir() {
-	if [ "$UDP_REDIR_SERVER" != "nil" ]; then
-		UDP_REDIR_SERVER_TYPE=$(echo $(config_get $UDP_REDIR_SERVER server_type) | tr 'A-Z' 'a-z')
-		gen_config_file $UDP_REDIR_SERVER $UDP_REDIR_PORT UDP $CONFIG_UDP_FILE
-		echo "$UDP_REDIR_SERVER" >$CONFIG_PATH/udp_server_id
-
-		if [ "$UDP_REDIR_SERVER_TYPE" == "v2ray" ]; then
-			v2ray_path=$(config_t_get global_v2ray v2ray_client_file)
-			if [ -f "${v2ray_path}/v2ray" ]; then
-				${v2ray_path}/v2ray -config=$CONFIG_UDP_FILE >/dev/null &
+	for i in $(seq 1 $UDP_REDIR_SERVER_NUM); do
+		eval temp_server=\$UDP_REDIR_SERVER$i
+		[ "$temp_server" != "nil" ] && {
+			TYPE=$(echo $(config_get $temp_server server_type) | tr 'A-Z' 'a-z')
+			local config_file=$CONFIG_PATH/UDP_$i.json
+			eval current_port=\$UDP_REDIR_PORT$i
+			local port=$(echo $(get_not_exists_port_after $current_port udp))
+			eval UDP_REDIR_PORT$i=$port
+			gen_config_file $temp_server $port UDP $config_file
+			if [ "$TYPE" == "v2ray" ]; then
+				v2ray_path=$(config_t_get global_v2ray v2ray_client_file)
+				if [ -f "${v2ray_path}/v2ray" ]; then
+					${v2ray_path}/v2ray -config=$config_file >/dev/null &
+				else
+					v2ray_bin=$(find_bin V2ray)
+					[ -n "$v2ray_bin" ] && $v2ray_bin -config=$config_file >/dev/null &
+				fi
+			elif [ "$TYPE" == "brook" ]; then
+				brook_bin=$(find_bin brook)
+				[ -n "$brook_bin" ] && $brook_bin $BROOK_UDP_CMD >/dev/null &
+			elif [ "$TYPE" == "trojan" ]; then
+				trojan_bin=$(find_bin trojan)
+				[ -n "$trojan_bin" ] && $trojan_bin -c $config_file >/dev/null 2>&1 &
+				redsocks_bin=$(find_bin redsocks2)
+				[ -n "$redsocks_bin" ] && {
+					local redsocks_config_file=$CONFIG_PATH/redsocks_UDP_$i.conf
+					gen_redsocks_config udp $socks5_port $port $redsocks_config_file
+					$redsocks_bin -c $redsocks_config_file >/dev/null &
+				}
 			else
-				v2ray_bin=$(find_bin V2ray)
-				[ -n "$v2ray_bin" ] && $v2ray_bin -config=$CONFIG_UDP_FILE >/dev/null &
+				ss_bin=$(find_bin "$TYPE"-redir)
+				[ -n "$ss_bin" ] && {
+					$ss_bin -c $config_file -f $RUN_PID_PATH/udp_${TYPE}_1_$i -U >/dev/null 2>&1 &
+				}
 			fi
-		elif [ "$UDP_REDIR_SERVER_TYPE" == "brook" ]; then
-			brook_bin=$(find_bin brook)
-			[ -n "$brook_bin" ] && $brook_bin $BROOK_UDP_CMD >/dev/null &
-		elif [ "$UDP_REDIR_SERVER_TYPE" == "trojan" ]; then
-			trojan_bin=$(find_bin trojan)
-			[ -n "$trojan_bin" ] && $trojan_bin -c $CONFIG_UDP_FILE >/dev/null 2>&1 &
-			redsocks_bin=$(find_bin redsocks2)
-			[ -n "$redsocks_bin" ] && {
-				gen_redsocks_config udp $socks5_port $UDP_REDIR_PORT $REDSOCKS_CONFIG_UDP_FILE
-				$redsocks_bin -c $REDSOCKS_CONFIG_UDP_FILE >/dev/null &
-			}
-		else
-			ss_bin=$(find_bin "$UDP_REDIR_SERVER_TYPE"-redir)
-			[ -n "$ss_bin" ] && {
-				$ss_bin -c $CONFIG_UDP_FILE -f $RUN_PID_PATH/udp_${UDP_REDIR_SERVER_TYPE}_1 -U >/dev/null 2>&1 &
-			}
-		fi
-	fi
+		}
+	done
 }
 
 start_socks5_proxy() {
-	if [ "$SOCKS5_PROXY_SERVER" != "nil" ]; then
-		SOCKS5_PROXY_SERVER_TYPE=$(echo $(config_get $SOCKS5_PROXY_SERVER server_type) | tr 'A-Z' 'a-z')
-		gen_config_file $SOCKS5_PROXY_SERVER $SOCKS5_PROXY_PORT Socks5 $CONFIG_SOCKS5_FILE
-		echo "$SOCKS5_PROXY_SERVER" >$CONFIG_PATH/socks5_server_id
-
-		if [ "$SOCKS5_PROXY_SERVER_TYPE" == "v2ray" ]; then
-			v2ray_path=$(config_t_get global_v2ray v2ray_client_file)
-			if [ -f "${v2ray_path}/v2ray" ]; then
-				${v2ray_path}/v2ray -config=$CONFIG_SOCKS5_FILE >/dev/null &
+	for i in $(seq 1 $SOCKS5_PROXY_SERVER_NUM); do
+		eval temp_server=\$SOCKS5_PROXY_SERVER$i
+		if [ "$temp_server" != "nil" ]; then
+			TYPE=$(echo $(config_get $temp_server server_type) | tr 'A-Z' 'a-z')
+			local config_file=$CONFIG_PATH/Socks5_$i.json
+			eval current_port=\$SOCKS5_PROXY_PORT$i
+			local port=$(get_not_exists_port_after $current_port tcp)
+			eval SOCKS5_PROXY_PORT$i=$port
+			gen_config_file $temp_server $port Socks5 $config_file
+			if [ "$TYPE" == "v2ray" ]; then
+				v2ray_path=$(config_t_get global_v2ray v2ray_client_file)
+				if [ -f "${v2ray_path}/v2ray" ]; then
+					${v2ray_path}/v2ray -config=$config_file >/dev/null &
+				else
+					v2ray_bin=$(find_bin V2ray)
+					[ -n "$v2ray_bin" ] && $v2ray_bin -config=$config_file >/dev/null &
+				fi
+			elif [ "$TYPE" == "brook" ]; then
+				brook_bin=$(find_bin brook)
+				[ -n "$brook_bin" ] && $brook_bin $BROOK_SOCKS5_CMD >/dev/null &
+			elif [ "$TYPE" == "trojan" ]; then
+				trojan_bin=$(find_bin trojan)
+				[ -n "$trojan_bin" ] && $trojan_bin -c $config_file >/dev/null 2>&1 &
 			else
-				v2ray_bin=$(find_bin V2ray)
-				[ -n "$v2ray_bin" ] && $v2ray_bin -config=$CONFIG_SOCKS5_FILE >/dev/null &
+				ss_bin=$(find_bin "$TYPE"-local)
+				[ -n "$ss_bin" ] && $ss_bin -c $config_file -b 0.0.0.0 >/dev/null 2>&1 &
 			fi
-		elif [ "$SOCKS5_PROXY_SERVER_TYPE" == "brook" ]; then
-			brook_bin=$(find_bin brook)
-			[ -n "$brook_bin" ] && $brook_bin $BROOK_SOCKS5_CMD >/dev/null &
-		elif [ "$SOCKS5_PROXY_SERVER_TYPE" == "trojan" ]; then
-			trojan_bin=$(find_bin trojan)
-			[ -n "$trojan_bin" ] && $trojan_bin -c $CONFIG_SOCKS5_FILE >/dev/null 2>&1 &
-		else
-			ss_bin=$(find_bin "$SOCKS5_PROXY_SERVER_TYPE"-local)
-			[ -n "$ss_bin" ] && $ss_bin -c $CONFIG_SOCKS5_FILE -b 0.0.0.0 >/dev/null 2>&1 &
 		fi
-	fi
+	done
 }
 
 clean_log() {
@@ -640,11 +559,11 @@ start_dns() {
 	case "$DNS_MODE" in
 	dns2socks)
 		dns2socks_bin=$(find_bin dns2socks)
-		sslocal_bin=$(find_bin "$TCP_REDIR_SERVER_TYPE"-local)
+		sslocal_bin=$(find_bin "$TCP_REDIR_SERVER1_TYPE"-local)
 		[ -n "$dns2socks_bin" -a -n "$sslocal_bin" ] && {
-			nohup $sslocal_bin -c $CONFIG_TCP_FILE -l 3080 -f $RUN_PID_PATH/$TCP_REDIR_SERVER_TYPE-local.pid >/dev/null 2>&1 &
+			nohup $sslocal_bin -c $CONFIG_TCP_FILE -l 3080 -f $RUN_PID_PATH/$TCP_REDIR_SERVER1_TYPE-local.pid >/dev/null 2>&1 &
 			nohup $dns2socks_bin 127.0.0.1:3080 $DNS_FORWARD 127.0.0.1:7913 >/dev/null 2>&1 &
-			echolog "运行DNS转发模式：dns2socks+$TCP_REDIR_SERVER_TYPE-local..."
+			echolog "运行DNS转发模式：dns2socks+$TCP_REDIR_SERVER1_TYPE-local..."
 		}
 		;;
 	Pcap_DNSProxy)
@@ -982,7 +901,7 @@ gen_pdnsd_config() {
 }
 
 stop_dnsmasq() {
-	if [ "$TCP_REDIR_SERVER" == "nil" ]; then
+	if [ "$TCP_REDIR_SERVER1" == "nil" ]; then
 		rm -rf /var/dnsmasq.d/dnsmasq-$CONFIG.conf
 		rm -rf $DNSMASQ_PATH/dnsmasq-$CONFIG.conf
 		rm -rf $TMP_DNSMASQ_PATH
@@ -1108,11 +1027,11 @@ add_vps_port() {
 				[ "$failcount" -ge 10 ] && exit 0
 				sleep 1m
 			else
-				route add -host ${TCP_REDIR_SERVER_IP} dev ${multiwan}
-				route add -host ${UDP_REDIR_SERVER_IP} dev ${multiwan}
+				route add -host ${TCP_REDIR_SERVER1_IP} dev ${multiwan}
+				route add -host ${UDP_REDIR_SERVER1_IP} dev ${multiwan}
 				echolog "添加SS出口路由表：$multiwan"
-				echo "$TCP_REDIR_SERVER_IP" >$CONFIG_PATH/tcp_ip
-				echo "$UDP_REDIR_SERVER_IP" >$CONFIG_PATH/udp_ip
+				echo "$TCP_REDIR_SERVER1_IP" >$CONFIG_PATH/tcp_ip
+				echo "$UDP_REDIR_SERVER1_IP" >$CONFIG_PATH/udp_ip
 				break
 			fi
 		done
@@ -1133,7 +1052,7 @@ kill_all() {
 boot() {
 	local delay=$(config_t_get global_delay start_delay 0)
 	if [ "$delay" -gt 0 ]; then
-		[ "$TCP_REDIR_SERVER" != "nil" -o "$UDP_REDIR_SERVER" != "nil" ] && {
+		[ "$TCP_REDIR_SERVER1" != "nil" -o "$UDP_REDIR_SERVER1" != "nil" ] && {
 			echolog "执行启动延时 $delay 秒后再启动!"
 			sleep $delay && start >/dev/null 2>&1 &
 		}
@@ -1154,8 +1073,6 @@ start() {
 	start_socks5_proxy
 	start_tcp_redir
 	start_udp_redir
-	start_tcp_redir_other
-	start_udp_redir_other
 	start_dns
 	add_dnsmasq
 	source $APP_PATH/iptables.sh start

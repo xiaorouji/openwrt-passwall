@@ -13,19 +13,19 @@ uci_get_by_type() {
 	echo ${ret:=$3}
 }
 
-TCP_REDIR_SERVER=$(uci_get_by_type global tcp_redir_server nil)
+TCP_REDIR_SERVER1=$(uci_get_by_type global tcp_redir_server1 nil)
 TCP_REDIR_PORT=$(uci_get_by_type global_proxy tcp_redir_port nil)
-UDP_REDIR_SERVER=$(uci_get_by_type global udp_redir_server nil)
+UDP_REDIR_SERVER1=$(uci_get_by_type global udp_redir_server1 nil)
 UDP_REDIR_PORT=$(uci_get_by_type global_proxy udp_redir_port nil)
-[ "$UDP_REDIR_SERVER" == "default" ] && UDP_REDIR_SERVER=$TCP_REDIR_SERVER
-SOCKS5_PROXY_SERVER=$(uci_get_by_type global socks5_proxy_server nil)
+[ "$UDP_REDIR_SERVER1" == "default" ] && UDP_REDIR_SERVER1=$TCP_REDIR_SERVER1
+SOCKS5_PROXY_SERVER1=$(uci_get_by_type global socks5_proxy_server1 nil)
 dns_mode=$(uci_get_by_type global dns_mode)
 use_haproxy=$(uci_get_by_type global_haproxy balancing_enable 0)
-use_kcp=$(uci_get_by_name $TCP_REDIR_SERVER use_kcp 0)
+use_kcp=$(uci_get_by_name $TCP_REDIR_SERVER1 use_kcp 0)
 kcp_port=$(uci_get_by_type global_proxy kcptun_port 11183)
 
 #tcp
-if [ $TCP_REDIR_SERVER != "nil" ]; then
+if [ $TCP_REDIR_SERVER1 != "nil" ]; then
 	icount=$(ps -w | grep -i -E "ss-redir|ssr-redir|v2ray|brook tproxy -l 0.0.0.0:$TCP_REDIR_PORT" | grep $CONFIG_PATH/TCP.json | grep -v grep | wc -l)
 	if [ $icount = 0 ]; then
 		/etc/init.d/passwall restart
@@ -34,7 +34,7 @@ if [ $TCP_REDIR_SERVER != "nil" ]; then
 fi
 
 #udp
-if [ $UDP_REDIR_SERVER != "nil" ]; then
+if [ $UDP_REDIR_SERVER1 != "nil" ]; then
 	icount=$(ps -w | grep -i -E "ss-redir|ssr-redir|v2ray|brook tproxy -l 0.0.0.0:$UDP_REDIR_PORT" | grep $CONFIG_PATH/UDP.json | grep -v grep | wc -l)
 	if [ $icount = 0 ]; then
 		/etc/init.d/passwall restart
@@ -43,7 +43,7 @@ if [ $UDP_REDIR_SERVER != "nil" ]; then
 fi
 
 #socks5
-if [ $SOCKS5_PROXY_SERVER != "nil" ]; then
+if [ $SOCKS5_PROXY_SERVER1 != "nil" ]; then
 	icount=$(ps -w | grep -i -E "ss-redir|ssr-redir|v2ray|brook client" | grep $CONFIG_PATH/SOCKS5.json | grep -v grep | wc -l)
 	if [ $icount = 0 ]; then
 		/etc/init.d/passwall restart
