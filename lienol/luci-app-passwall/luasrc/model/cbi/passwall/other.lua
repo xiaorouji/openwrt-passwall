@@ -174,13 +174,14 @@ o.rmempty = true
 ---- UDP Redir Port
 o = s:option(Value, "udp_redir_port", translate("UDP Redir Port"))
 o.datatype = "port"
-o.default = 1042
+o.default = 1051
 o.rmempty = true
 
 ---- Socks5 Proxy Port
 o = s:option(Value, "socks5_proxy_port", translate("Socks5 Proxy Port"))
 o.datatype = "port"
-o.default = 1051
+o.default = 1061
+o.rmempty = true
 
 ---- Kcptun Port
 o = s:option(Value, "kcptun_port", translate("Kcptun Port"))
@@ -211,6 +212,16 @@ o:value("3")
 ---- UDP Servers Number Option
 o = s:option(ListValue, "udp_redir_server_num",
              translate("UDP Redir Server Number"), translate(
+                 "You can only set up a maximum of 3 servers for the time being"))
+o.default = "1"
+o.rmempty = false
+o:value("1")
+o:value("2")
+o:value("3")
+
+---- Socks5 Servers Number Option
+o = s:option(ListValue, "socks5_proxy_server_num",
+             translate("Socks5 Proxy Server Number"), translate(
                  "You can only set up a maximum of 3 servers for the time being"))
 o.default = "1"
 o.rmempty = false
