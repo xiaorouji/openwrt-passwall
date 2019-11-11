@@ -685,8 +685,8 @@ msgstr "UDP转发服务器数量"
 msgid "Socks5 Proxy Server Number"
 msgstr "Socks5代理服务器数量"
 
-msgid "You can only set up a maximum of 3 servers for the time being"
-msgstr "目前最多只能设置3个服务器"
+msgid "You can only set up a maximum of %s servers for the time being"
+msgstr "目前最多只能设置%s个服务器"
 
 msgid "Hide Menu"
 msgstr "隐藏菜单"

@@ -21,8 +21,8 @@ function index()
           _("Basic Settings"), 1).dependent = true
     entry({"admin", "vpn", "passwall", "server_list"},
           cbi("passwall/server_list"), _("Server List"), 2).dependent = true
-    entry({"admin", "vpn", "passwall", "auto_switch"},
-          cbi("passwall/auto_switch"), _("Auto Switch"), 3).leaf = true
+    -- entry({"admin", "vpn", "passwall", "auto_switch"},
+    --      cbi("passwall/auto_switch"), _("Auto Switch"), 3).leaf = true
     entry({"admin", "vpn", "passwall", "other"}, cbi("passwall/other"),
           _("Other Settings"), 94).leaf = true
     if nixio.fs.access("/usr/sbin/haproxy") then
@@ -177,15 +177,22 @@ end
 function set_server()
     local e = {}
     local protocol = luci.http.formvalue("protocol")
+    local number = luci.http.formvalue("number")
     local section = luci.http.formvalue("section")
     if protocol == "tcp" then
         luci.sys.call(
-            "uci set passwall.@global[0].tcp_redir_server=" .. section ..
+            "uci set passwall.@global[0].tcp_redir_server" .. number .. "=" ..
+                section ..
                 " && uci commit passwall && /etc/init.d/passwall restart")
     elseif protocol == "udp" then
         luci.sys.call(
-            "uci set passwall.@global[0].udp_redir_server=" .. section ..
+            "uci set passwall.@global[0].udp_redir_server" .. number .. "=" ..
+                section ..
                 " && uci commit passwall && /etc/init.d/passwall restart")
+    elseif protocol == "socks5" then
+        luci.sys.call("uci set passwall.@global[0].socks5_proxy_server" ..
+                          number .. "=" .. section ..
+                          " && uci commit passwall && /etc/init.d/passwall restart")
     end
     luci.http.prepare_content("application/json")
     luci.http.write_json(e)
