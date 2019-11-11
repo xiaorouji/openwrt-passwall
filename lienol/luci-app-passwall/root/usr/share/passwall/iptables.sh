@@ -498,8 +498,7 @@ del_firewall_rule() {
 	$ip6tables_nat -F SS 2>/dev/null && $ip6tables_nat -X SS 2>/dev/null
 	$ip6tables_nat -F SS_ACL 2>/dev/null && $ip6tables_nat -X SS_ACL 2>/dev/null
 
-	local max_num=1
-	[ "$TCP_REDIR_SERVER_NUM" -ge "$UDP_REDIR_SERVER_NUM" ] && max_num=$TCP_REDIR_SERVER_NUM
+	local max_num=10
 	if [ "$max_num" -ge 1 ]; then
 		for i in $(seq 1 $max_num); do
 			local k=$i
