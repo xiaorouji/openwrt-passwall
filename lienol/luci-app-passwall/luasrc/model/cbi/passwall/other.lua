@@ -201,8 +201,10 @@ s.addremove = false
 
 ---- TCP Servers Number Option
 o = s:option(ListValue, "tcp_redir_server_num",
-             translate("TCP Redir Server Number"), translate(
-                 "You can only set up a maximum of %s servers for the time being" % "3"))
+             translate("TCP Redir Server Number"),
+             translatef(
+                 "You can only set up a maximum of %s servers for the time being",
+                 "3"))
 o.default = "1"
 o.rmempty = false
 o:value("1")
@@ -211,8 +213,10 @@ o:value("3")
 
 ---- UDP Servers Number Option
 o = s:option(ListValue, "udp_redir_server_num",
-             translate("UDP Redir Server Number"), translate(
-                 "You can only set up a maximum of %s servers for the time being" % "3"))
+             translate("UDP Redir Server Number"),
+             translatef(
+                 "You can only set up a maximum of %s servers for the time being",
+                 "3"))
 o.default = "1"
 o.rmempty = false
 o:value("1")
@@ -221,8 +225,10 @@ o:value("3")
 
 ---- Socks5 Servers Number Option
 o = s:option(ListValue, "socks5_proxy_server_num",
-             translate("Socks5 Proxy Server Number"), translate(
-                 "You can only set up a maximum of %s servers for the time being" % "5"))
+             translate("Socks5 Proxy Server Number"),
+             translatef(
+                 "You can only set up a maximum of %s servers for the time being",
+                 "5"))
 o.default = "1"
 o.rmempty = false
 o:value("1")
