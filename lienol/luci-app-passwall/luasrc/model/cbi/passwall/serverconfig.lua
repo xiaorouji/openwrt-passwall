@@ -10,7 +10,7 @@ end
 
 local function is_installed(e) return ipkg.installed(e) end
 
-local ss_encrypt_method = {
+local ss_encrypt_method_list = {
     "rc4-md5", "aes-128-cfb", "aes-192-cfb", "aes-256-cfb", "aes-128-ctr",
     "aes-192-ctr", "aes-256-ctr", "bf-cfb", "camellia-128-cfb",
     "camellia-192-cfb", "camellia-256-cfb", "salsa20", "chacha20",
@@ -19,7 +19,7 @@ local ss_encrypt_method = {
     "xchacha20-ietf-poly1305"
 }
 
-local ssr_encrypt_method = {
+local ssr_encrypt_method_list = {
     "none", "table", "rc2-cfb", "rc4", "rc4-md5", "rc4-md5-6", "aes-128-cfb",
     "aes-192-cfb", "aes-256-cfb", "aes-128-ctr", "aes-192-ctr", "aes-256-ctr",
     "bf-cfb", "camellia-128-cfb", "camellia-192-cfb", "camellia-256-cfb",
@@ -27,20 +27,20 @@ local ssr_encrypt_method = {
     "chacha20-ietf"
 }
 
-local ssr_protocol = {
+local ssr_protocol_list = {
     "origin", "verify_simple", "verify_deflate", "verify_sha1", "auth_simple",
     "auth_sha1", "auth_sha1_v2", "auth_sha1_v4", "auth_aes128_md5",
     "auth_aes128_sha1", "auth_chain_a", "auth_chain_b", "auth_chain_c",
     "auth_chain_d", "auth_chain_e", "auth_chain_f"
 }
-local ssr_obfs = {
+local ssr_obfs_list = {
     "plain", "http_simple", "http_post", "random_head", "tls_simple",
     "tls1.0_session_auth", "tls1.2_ticket_auth"
 }
 
-local v2ray_security = {"none", "auto", "aes-128-gcm", "chacha20-poly1305"}
+local v2ray_security_list = {"none", "auto", "aes-128-gcm", "chacha20-poly1305"}
 
-local v2ray_header_type = {
+local v2ray_header_type_list = {
     "none", "srtp", "utp", "wechat-video", "dtls", "wireguard"
 }
 
@@ -99,28 +99,28 @@ password:depends("server_type", "Trojan")
 
 ss_encrypt_method = s:option(ListValue, "ss_encrypt_method",
                              translate("Encrypt Method"))
-for a, t in ipairs(ss_encrypt_method) do ss_encrypt_method:value(t) end
+for a, t in ipairs(ss_encrypt_method_list) do ss_encrypt_method:value(t) end
 ss_encrypt_method:depends("server_type", "SS")
 
 ssr_encrypt_method = s:option(ListValue, "ssr_encrypt_method",
                               translate("Encrypt Method"))
-for a, t in ipairs(ssr_encrypt_method) do ssr_encrypt_method:value(t) end
+for a, t in ipairs(ssr_encrypt_method_list) do ssr_encrypt_method:value(t) end
 ssr_encrypt_method:depends("server_type", "SSR")
 
 v2ray_security = s:option(ListValue, "v2ray_security",
                           translate("Encrypt Method"))
-for a, t in ipairs(v2ray_security) do v2ray_security:value(t) end
+for a, t in ipairs(v2ray_security_list) do v2ray_security:value(t) end
 v2ray_security:depends("server_type", "V2ray")
 
 protocol = s:option(ListValue, "protocol", translate("Protocol"))
-for a, t in ipairs(ssr_protocol) do protocol:value(t) end
+for a, t in ipairs(ssr_protocol_list) do protocol:value(t) end
 protocol:depends("server_type", "SSR")
 
 protocol_param = s:option(Value, "protocol_param", translate("Protocol_param"))
 protocol_param:depends("server_type", "SSR")
 
 obfs = s:option(ListValue, "obfs", translate("Obfs"))
-for a, t in ipairs(ssr_obfs) do obfs:value(t) end
+for a, t in ipairs(ssr_obfs_list) do obfs:value(t) end
 obfs:depends("server_type", "SSR")
 
 obfs_param = s:option(Value, "obfs_param", translate("Obfs_param"))
@@ -232,7 +232,7 @@ v2ray_tcp_guise_http_path:depends("v2ray_tcp_guise", "http")
 v2ray_mkcp_guise = s:option(ListValue, "v2ray_mkcp_guise",
                             translate("Camouflage Type"), translate(
                                 '<br>none: default, no masquerade, data sent is packets with no characteristics.<br>srtp: disguised as an SRTP packet, it will be recognized as video call data (such as FaceTime).<br>utp: packets disguised as uTP will be recognized as bittorrent downloaded data.<br>wechat-video: packets disguised as WeChat video calls.<br>dtls: disguised as DTLS 1.2 packet.<br>wireguard: disguised as a WireGuard packet. (not really WireGuard protocol)'))
-for a, t in ipairs(v2ray_header_type) do v2ray_mkcp_guise:value(t) end
+for a, t in ipairs(v2ray_header_type_list) do v2ray_mkcp_guise:value(t) end
 v2ray_mkcp_guise:depends("v2ray_transport", "mkcp")
 
 v2ray_mkcp_mtu = s:option(Value, "v2ray_mkcp_mtu", translate("KCP MTU"))
@@ -297,7 +297,7 @@ v2ray_quic_key:depends("v2ray_transport", "quic")
 
 v2ray_quic_guise = s:option(ListValue, "v2ray_quic_guise",
                             translate("Camouflage Type"))
-for a, t in ipairs(v2ray_header_type) do v2ray_quic_guise:value(t) end
+for a, t in ipairs(v2ray_header_type_list) do v2ray_quic_guise:value(t) end
 v2ray_quic_guise:depends("v2ray_transport", "quic")
 
 -- [[ 其它 ]]--
