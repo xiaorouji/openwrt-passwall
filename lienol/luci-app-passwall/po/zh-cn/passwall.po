@@ -7,6 +7,9 @@ msgstr "ShadowSocks 服务器"
 msgid "ShadowsocksR Server"
 msgstr "ShadowSocksR 服务器"
 
+msgid "Socks5 Server"
+msgstr "Socks5 服务器"
+
 msgid "V2ray Server"
 msgstr "V2ray 服务器"
 
