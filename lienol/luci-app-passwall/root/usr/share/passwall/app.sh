@@ -387,7 +387,18 @@ start_tcp_redir() {
 			elif [ "$TYPE" == "trojan" ]; then
 				trojan_bin=$(find_bin trojan)
 				[ -n "$trojan_bin" ] && $trojan_bin -c $config_file >/dev/null 2>&1 &
-			else
+			elif [ "$TYPE" == "socks5" ]; then
+				redsocks_bin=$(find_bin redsocks2)
+				[ -n "$redsocks_bin" ] && {
+					local server=$(config_get $temp_server server)
+					local server_port=$(config_get $temp_server server_port)
+					local server_username=$(config_get $temp_server username)
+					local server_password=$(config_get $temp_server password)
+					local redsocks_config_file=$CONFIG_PATH/TCP_$i.conf
+					gen_redsocks_config $redsocks_config_file tcp $port $server $server_port $server_username $server_password
+					$redsocks_bin -c $redsocks_config_file >/dev/null &
+				}
+			elif [ "$TYPE" == "ss" -o "$TYPE" == "ssr" ]; then
 				ss_bin=$(find_bin "$TYPE"-redir)
 				[ -n "$ss_bin" ] && {
 					for k in $(seq 1 $process); do
@@ -427,10 +438,21 @@ start_udp_redir() {
 				redsocks_bin=$(find_bin redsocks2)
 				[ -n "$redsocks_bin" ] && {
 					local redsocks_config_file=$CONFIG_PATH/redsocks_UDP_$i.conf
-					gen_redsocks_config udp $socks5_port $port $redsocks_config_file
+					gen_redsocks_config $redsocks_config_file udp $port "127.0.0.1" $socks5_port
 					$redsocks_bin -c $redsocks_config_file >/dev/null &
 				}
-			else
+			elif [ "$TYPE" == "socks5" ]; then
+				redsocks_bin=$(find_bin redsocks2)
+				[ -n "$redsocks_bin" ] && {
+					local server=$(config_get $temp_server server)
+					local server_port=$(config_get $temp_server server_port)
+					local server_username=$(config_get $temp_server username)
+					local server_password=$(config_get $temp_server password)
+					local redsocks_config_file=$CONFIG_PATH/UDP_$i.conf
+					gen_redsocks_config $redsocks_config_file udp $port $server $server_port $server_username $server_password
+					$redsocks_bin -c $redsocks_config_file >/dev/null &
+				}
+			elif [ "$TYPE" == "ss" -o "$TYPE" == "ssr" ]; then
 				ss_bin=$(find_bin "$TYPE"-redir)
 				[ -n "$ss_bin" ] && {
 					$ss_bin -c $config_file -f $RUN_PID_PATH/udp_${TYPE}_1_$i -U >/dev/null 2>&1 &
@@ -465,7 +487,9 @@ start_socks5_proxy() {
 			elif [ "$TYPE" == "trojan" ]; then
 				trojan_bin=$(find_bin trojan)
 				[ -n "$trojan_bin" ] && $trojan_bin -c $config_file >/dev/null 2>&1 &
-			else
+			elif [ "$TYPE" == "socks5" ]; then
+				echolog "Socks5服务器不能使用Socks5代理服务器！"
+			elif [ "$TYPE" == "ss" -o "$TYPE" == "ssr" ]; then
 				ss_bin=$(find_bin "$TYPE"-local)
 				[ -n "$ss_bin" ] && $ss_bin -c $config_file -b 0.0.0.0 >/dev/null 2>&1 &
 			fi
@@ -804,11 +828,16 @@ EOF
 }
 
 gen_redsocks_config() {
-	protocol=$1
-	proxy_port=$2
+	protocol=$2
 	local_port=$3
-	[ -n "$4" ] && {
-		cat >$4 <<-EOF
+	proxy_server=$4
+	proxy_port=$5
+	proxy_username=$6
+	[ -n "$proxy_username" ] && proxy_username="login = $proxy_username;"
+	proxy_password=$7
+	[ -n "$proxy_password" ] && proxy_password="password = $proxy_password;"
+	[ -n "$1" ] && {
+		cat >$1 <<-EOF
 			base {
 			    log_debug = off;
 			    log_info = off;
@@ -819,14 +848,16 @@ gen_redsocks_config() {
 			
 		EOF
 		if [ "$protocol" == "tcp" ]; then
-			cat >>$4 <<-EOF
+			cat >>$1 <<-EOF
 				redsocks {
 				    local_ip = 0.0.0.0;
 				    local_port = $local_port;
 				    type = socks5;
 				    autoproxy = 0;
-				    ip = 127.0.0.1;
+				    ip = $proxy_server;
 				    port = $proxy_port;
+				    $proxy_username
+				    $proxy_password
 				}
 				
 				autoproxy {
@@ -843,13 +874,15 @@ gen_redsocks_config() {
 				
 			EOF
 		elif [ "$protocol" == "udp" ]; then
-			cat >>$4 <<-EOF
+			cat >>$1 <<-EOF
 				redudp {
 				    local_ip = 0.0.0.0;
 				    local_port = $local_port;
-				    ip = 127.0.0.1;
-				    port = $proxy_port;
 				    type = socks5;
+				    ip = $proxy_server;
+				    port = $proxy_port;
+				    $proxy_username
+				    $proxy_password
 				    udp_timeout = 60;
 				    udp_timeout_stream = 360;
 				}

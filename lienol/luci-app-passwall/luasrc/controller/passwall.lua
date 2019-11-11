@@ -155,7 +155,7 @@ function server_status()
                                     i, i))
         e["socks5_proxy_server%s_status" % i] =
             luci.sys.call(string.format(
-                              "ps -w | grep -v grep | grep -i -E '%s/Socks5_%s|brook client -l 0.0.0.0:%s'>/tmp/test",
+                              "ps -w | grep -v grep | grep -i -E '%s/Socks5_%s|brook client -l 0.0.0.0:%s' >/dev/null",
                               appname, i, listen_port)) == 0
     end
     luci.http.prepare_content("application/json")
