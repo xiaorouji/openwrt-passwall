@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
 PKG_VERSION:=2.0
-PKG_RELEASE:=96-20191111
+PKG_RELEASE:=98-20191111
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PO2LMO:=./po2lmo
@@ -16,6 +16,10 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/$(PKG_NAME)/config
 menu "Configuration"
+
+config PACKAGE_$(PKG_NAME)_INCLUDE_redsocks2
+	bool "Include RedSocks2"
+	default y
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks
 	bool "Include Shadowsocks Redir (ss-redir)"
@@ -75,10 +79,11 @@ endef
 define Package/$(PKG_NAME)
   CATEGORY:=LuCI for Lienol
   SUBMENU:=3. Applications
-  TITLE:=LuCI support for PassWall(fanqiang) By Lienol
+  TITLE:=LuCI support for PassWall By Lienol
   PKGARCH:=all
   DEPENDS:=+curl +libcurl +libmbedtls +ca-bundle +ca-certificates +resolveip +iptables-mod-tproxy +kmod-ipt-tproxy +iptables-mod-ipopt +kmod-ipt-ipopt +ip +ipset +coreutils +coreutils-base64 +coreutils-nohup +luci-lib-jsonc +unzip \
   +dnsmasq-full \
+  +PACKAGE_$(PKG_NAME)_INCLUDE_redsocks2:redsocks2 \
   +PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks:shadowsocks-libev-ss-redir \
   +PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR:shadowsocksr-libev-alt \
   +PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_socks:shadowsocks-libev-ss-local \

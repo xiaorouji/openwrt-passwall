@@ -58,6 +58,9 @@ remarks.default = translate("Node Remarks")
 remarks.rmempty = false
 
 server_type = s:option(ListValue, "server_type", translate("Server Type"))
+if is_installed("redsocks2") or is_finded("redsocks2") then
+    server_type:value("Socks5", translate("Socks5 Server"))
+end
 if is_finded("ss-redir") then
     server_type:value("SS", translate("Shadowsocks Server"))
 end
@@ -90,8 +93,12 @@ server_port = s:option(Value, "server_port", translate("Server Port"))
 server_port.datatype = "port"
 server_port.rmempty = false
 
+username = s:option(Value, "username", translate("Username"))
+username:depends("server_type", "Socks5")
+
 password = s:option(Value, "password", translate("Password"))
 password.password = true
+password:depends("server_type", "Socks5")
 password:depends("server_type", "SS")
 password:depends("server_type", "SSR")
 password:depends("server_type", "Brook")
