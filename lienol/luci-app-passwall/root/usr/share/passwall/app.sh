@@ -7,6 +7,7 @@
 CONFIG=passwall
 CONFIG_PATH=/var/etc/$CONFIG
 RUN_PID_PATH=$CONFIG_PATH/pid
+RUN_PORT_PATH=$CONFIG_PATH/port
 HAPROXY_FILE=$CONFIG_PATH/haproxy.cfg
 REDSOCKS_CONFIG_TCP_FILE=$CONFIG_PATH/redsocks_TCP.conf
 REDSOCKS_CONFIG_UDP_FILE=$CONFIG_PATH/redsocks_UDP.conf
@@ -184,7 +185,7 @@ load_config() {
 	SOCKS5_PROXY_PORT2=$(expr $SOCKS5_PROXY_PORT1 + 1)
 	SOCKS5_PROXY_PORT3=$(expr $SOCKS5_PROXY_PORT2 + 1)
 	PROXY_IPV6=$(config_t_get global_proxy proxy_ipv6 0)
-	mkdir -p /var/etc $CONFIG_PATH $RUN_PID_PATH
+	mkdir -p /var/etc $CONFIG_PATH $RUN_PID_PATH $RUN_PORT_PATH
 	config_load $CONFIG
 	return 0
 }
@@ -394,6 +395,7 @@ start_tcp_redir() {
 					done
 				}
 			fi
+			echo $port > $CONFIG_PATH/port/TCP_${i}
 		}
 	done
 }
@@ -434,6 +436,7 @@ start_udp_redir() {
 					$ss_bin -c $config_file -f $RUN_PID_PATH/udp_${TYPE}_1_$i -U >/dev/null 2>&1 &
 				}
 			fi
+			echo $port > $CONFIG_PATH/port/UDP_${i}
 		}
 	done
 }
@@ -466,6 +469,7 @@ start_socks5_proxy() {
 				ss_bin=$(find_bin "$TYPE"-local)
 				[ -n "$ss_bin" ] && $ss_bin -c $config_file -b 0.0.0.0 >/dev/null 2>&1 &
 			fi
+			echo $port > $CONFIG_PATH/port/Socks5_${i}
 		fi
 	done
 }
