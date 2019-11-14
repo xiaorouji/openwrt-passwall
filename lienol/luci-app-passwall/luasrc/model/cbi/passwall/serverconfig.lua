@@ -353,7 +353,7 @@ server_type.validate = function(self, value)
 end
 
 v2ray_transport.validate = function(self, value)
-    
+    return value
 end
 
 return m

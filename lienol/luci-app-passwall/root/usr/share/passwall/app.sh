@@ -586,13 +586,15 @@ stop_crontab() {
 start_dns() {
 	case "$DNS_MODE" in
 	dns2socks)
-		dns2socks_bin=$(find_bin dns2socks)
-		sslocal_bin=$(find_bin "$TCP_REDIR_SERVER1_TYPE"-local)
-		[ -n "$dns2socks_bin" -a -n "$sslocal_bin" ] && {
-			nohup $sslocal_bin -c $CONFIG_TCP_FILE -l 3080 -f $RUN_PID_PATH/$TCP_REDIR_SERVER1_TYPE-local.pid >/dev/null 2>&1 &
-			nohup $dns2socks_bin 127.0.0.1:3080 $DNS_FORWARD 127.0.0.1:7913 >/dev/null 2>&1 &
-			echolog "运行DNS转发模式：dns2socks+$TCP_REDIR_SERVER1_TYPE-local..."
-		}
+		if [ -n "$SOCKS5_PROXY_SERVER1" -a "$SOCKS5_PROXY_SERVER1" != "nil" ]; then
+			dns2socks_bin=$(find_bin dns2socks)
+			[ -n "$dns2socks_bin" ] && {
+				nohup $dns2socks_bin 127.0.0.1:$SOCKS5_PROXY_PORT1 $DNS_FORWARD 127.0.0.1:7913 >/dev/null 2>&1 &
+				echolog "运行DNS转发模式：dns2socks..."
+			}
+		else
+			echolog "dns2socks模式需要使用Socks5代理服务器，请开启！"
+		fi
 		;;
 	Pcap_DNSProxy)
 		Pcap_DNSProxy_bin=$(find_bin Pcap_DNSProxy)
