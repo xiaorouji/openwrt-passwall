@@ -105,8 +105,7 @@ o:reset_values()
 if is_installed("ChinaDNS") or is_finded("chinadns") then
     o:value("chinadns", "ChinaDNS")
 end
-if (is_installed("dns2socks") or is_finded("dns2socks")) and
-    (is_finded("ss-local") or is_finded("ssr-local")) then
+if is_installed("dns2socks") or is_finded("dns2socks") then
     o:value("dns2socks", "dns2socks " .. translate("Need Socks5 server"))
 end
 if is_installed("pcap-dnsproxy") or is_finded("Pcap_DNSProxy") then
