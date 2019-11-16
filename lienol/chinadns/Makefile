@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ChinaDNS
-PKG_VERSION:=1.3.2
-PKG_RELEASE:=8
+PKG_VERSION:=1.3.3
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/aa65535/ChinaDNS.git
-PKG_SOURCE_VERSION:=5ed537bd24b7fd53540799f9ab4cf56f749c3245
+PKG_SOURCE_VERSION:=00616680114011553881760e843b77a3519e8fbf
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.xz
 
@@ -48,11 +48,6 @@ define Package/ChinaDNS/conffiles
 endef
 
 define Package/ChinaDNS/install
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/chinadns.init $(1)/etc/init.d/chinadns
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/chnroute.txt $(1)/etc/chinadns_chnroute.txt
-	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_DATA) ./files/chinadns.config $(1)/etc/config/chinadns
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/chinadns $(1)/usr/bin
 endef
