@@ -227,15 +227,15 @@ add() {
 		mkdir -p /usr/share/${CONFIG}/sub && rm -f /usr/share/${CONFIG}/sub/*
 		for link in $LINKS
 		do
-			if [ -n "`echo -n "$link" | grep 'ss://'`" ]; then
+			if expr "$link" : "ss://";then
 				link_type="ss"
-				new_link=`echo -n "$link" | sed 's/ss:\/\///g'`
-			elif [ -n "`echo -n "$link" | grep 'ssr://'`" ]; then
+				new_link=$(echo -n "$link" | sed 's/ssr:\/\///g')
+			elif expr "$link" : "ssr://";then
 				link_type="ssr"
-				new_link=`echo -n "$link" | sed 's/ssr:\/\///g'`
-			elif [ -n "`echo -n "$link" | grep 'vmess://'`" ]; then
+				new_link=$(echo -n "$link" | sed 's/ssr:\/\///g')
+			elif expr "$link" : "vmess://";then
 				link_type="v2ray"
-				new_link=`echo -n "$link" | sed 's/vmess:\/\///g'`
+				new_link=$(echo -n "$link" | sed 's/vmess:\/\///g')
 			fi
 			[ -z "$link_type" ] && continue
 			decode_link=$(decode_url_link $new_link 1)
