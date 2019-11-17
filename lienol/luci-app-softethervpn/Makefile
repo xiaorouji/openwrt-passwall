@@ -6,10 +6,10 @@
 include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=LuCI support for SoftEtherVPN
-LUCI_DEPENDS:=+zlib +libpthread +librt +libreadline +libncurses +libiconv-full +kmod-tun +libopenssl +softethervpn-bridge +softethervpn-client +softethervpn-server
+LUCI_DEPENDS:=+zlib +libpthread +librt +libreadline +libncurses +libiconv-full +kmod-tun +libopenssl +softethervpn5-bridge +softethervpn5-client +softethervpn5-server
 LUCI_PKGARCH:=all
 PKG_VERSION:=1.0
-PKG_RELEASE:=9-20191102
+PKG_RELEASE:=10-20191116
 
 include ../luci_my.mk
 
