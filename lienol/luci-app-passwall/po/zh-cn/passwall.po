@@ -34,6 +34,12 @@ msgstr "连接正常"
 msgid "Problem detected!"
 msgstr "连接失败"
 
+msgid "Touch Check"
+msgstr "点我检测"
+
+msgid "Kernel Unsupported"
+msgstr "内核不支持"
+
 msgid "Use IPv6"
 msgstr "使用IPv6"
 
@@ -694,6 +700,9 @@ msgstr "Socks5代理服务器数量"
 msgid "You can only set up a maximum of %s servers for the time being"
 msgstr "目前最多只能设置%s个服务器"
 
+msgid "Status Use Big Icon"
+msgstr "状态信息使用大图标"
+
 msgid "Hide Menu"
 msgstr "隐藏菜单"
 
@@ -729,9 +738,3 @@ msgstr "客户端文件不适合当前设备。"
 
 msgid "Can't move new file to path: %s"
 msgstr "无法移动新文件到：%s"
-
-msgid "NOT RUNNING"
-msgstr "未运行"
-
-msgid "RUNNING"
-msgstr "运行中"

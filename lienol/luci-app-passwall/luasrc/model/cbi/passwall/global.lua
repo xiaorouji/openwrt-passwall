@@ -35,7 +35,13 @@ for key, _ in pairs(n) do table.insert(key_table, key) end
 table.sort(key_table)
 
 m = Map(appname)
-m:append(Template("passwall/global/status"))
+local status_use_big_icon = uci:get(appname, "@global_other[0]",
+                                    "status_use_big_icon")
+if status_use_big_icon and status_use_big_icon == "1" then
+    m:append(Template("passwall/global/status"))
+else
+    m:append(Template("passwall/global/status2"))
+end
 
 -- [[ Global Settings ]]--
 s = m:section(TypedSection, "global", translate("Global Settings"))
