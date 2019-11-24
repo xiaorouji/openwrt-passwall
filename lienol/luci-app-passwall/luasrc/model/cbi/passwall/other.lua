@@ -238,6 +238,11 @@ o:value("3")
 o:value("4")
 o:value("5")
 
+---- 状态使用大图标
+o = s:option(Flag, "status_use_big_icon", translate("Status Use Big Icon"))
+o.default = "0"
+o.rmempty = false
+
 ---- Hide Menu
 o = s:option(Button, "hide", translate("Hide Menu"), translate(
                  "After the hidden to the display, type in the address bar enter the admin/vpn/passwall/show, such as: http://192.168.1.1/cgi-bin/luci/admin/vpn/passwall/show"))
