@@ -42,6 +42,7 @@ config global_other
 	option tcp_redir_server_num '1'
 	option udp_redir_server_num '1'
 	option socks5_proxy_server_num '1'
+	option status_use_big_icon '1'
 
 config global_rules
 	option gfwlist_update '1'
