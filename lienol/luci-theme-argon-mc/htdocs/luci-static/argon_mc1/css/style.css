@@ -586,14 +586,8 @@ td > table > tbody > tr > td,
 
 /* table */
 
-
-
-
-
-
-
 .cbi-section-table .cbi-section-table-titles .cbi-section-table-cell {
-    width: auto !important;
+    width: auto;
 }
 
 .td.cbi-section-actions {
@@ -617,11 +611,6 @@ td > table > tbody > tr > td,
 }
 
 /* desc */
-
-
-
-
-
 
 /* luci */
 
@@ -2432,12 +2421,6 @@ select[multiple="multiple"] {
 
 .cbi-rowstyle-2 {
     background-color:#fefefe;
-}
-
-
-
-.cbi-section-table .cbi-section-table-titles .cbi-section-table-cell {
-    width: auto !important;
 }
 
 /* desc */
