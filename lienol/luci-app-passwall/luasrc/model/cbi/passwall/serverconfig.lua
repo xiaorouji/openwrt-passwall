@@ -318,6 +318,15 @@ v2ray_mux_concurrency = s:option(Value, "v2ray_mux_concurrency",
 v2ray_mux_concurrency.default = 8
 v2ray_mux_concurrency:depends("v2ray_mux", "1")
 
+-- [[ Trojan Cert ]]--
+trojan_verify_cert = s:option(Flag, "trojan_verify_cert", translate("Trojan Verify Cert"))
+trojan_verify_cert:depends("server_type", "Trojan")
+
+trojan_cert_path = s:option(Value, "trojan_cert_path",
+                                 translate("Trojan Cert Path"))
+trojan_cert_path.default = ""
+trojan_cert_path:depends("trojan_verify_cert", "1")
+
 -- v2ray_insecure = s:option(Flag, "v2ray_insecure", translate("allowInsecure"))
 -- v2ray_insecure:depends("server_type", "V2ray")
 
