@@ -232,6 +232,9 @@ msgstr "服务器列表"
 msgid "Node Remarks"
 msgstr "节点备注"
 
+msgid "Add Mode"
+msgstr "添加方式"
+
 msgid "Server Type"
 msgstr "类型"
 
@@ -270,6 +273,9 @@ msgstr "选中后保存应用后刷新即可自动Ping服务器"
 
 msgid "Apply"
 msgstr "应用"
+
+msgid "Use"
+msgstr "使用"
 
 msgid "DNS Settings"
 msgstr "DNS配置"
