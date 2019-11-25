@@ -1,7 +1,7 @@
 local d = require "luci.dispatcher"
 local fs = require "nixio.fs"
 local sys = require "luci.sys"
-local uci = require "luci.model.uci".cursor()
+local uci = require"luci.model.uci".cursor()
 local appname = "passwall"
 
 m = Map(appname)
@@ -39,19 +39,27 @@ end
 
 ---- Node Remarks
 o = s:option(DummyValue, "remarks", translate("Node Remarks"))
-o.width = "20%"
+
+---- Add Mode
+o = s:option(DummyValue, "add_mode", translate("Add Mode"))
+o.cfgvalue = function(t, n)
+    local v = Value.cfgvalue(t, n)
+    if v and v ~= '' then
+        return v
+    else
+        return '手动'
+    end
+    return str
+end
 
 ---- Server Type
 o = s:option(DummyValue, "server_type", translate("Server Type"))
-o.width = "10%"
 
 ---- Server Address
 o = s:option(DummyValue, "server", translate("Server Address"))
-o.width = "15%"
 
 ---- Server Port
 o = s:option(DummyValue, "server_port", translate("Server Port"))
-o.width = "10%"
 
 ---- Encrypt Method
 --[[o = s:option(DummyValue, "encrypt_method", translate("Encrypt Method"))
@@ -76,11 +84,9 @@ if uci:get(appname, "@global_other[0]", "auto_ping") == "0" then
 else
     o.template = "passwall/server_list/auto_ping"
 end
-o.width = "10%"
 
 ---- Apply
 o = s:option(DummyValue, "apply", translate("Apply"))
-o.width = "15%"
 o.template = "passwall/server_list/apply"
 
 m:append(Template("passwall/server_list/server_list"))
