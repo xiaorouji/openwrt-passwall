@@ -18,7 +18,7 @@ local udp_redir_server_num = luci.sys.exec("echo -n `uci get passwall.@global_ot
 local socks5_proxy_server_num = luci.sys.exec("echo -n `uci get passwall.@global_other[0].socks5_proxy_server_num`")
 -%>
 
-  <style>
+<style>
 /*!
 Pure v1.0.1
 Copyright 2013 Yahoo!
@@ -301,7 +301,7 @@ https://github.com/pure-css/pure/blob/master/LICENSE.md
 						}
 					<% else %>
 						var status_udp_redir_server = document.getElementById('status_udp_redir_server');
-						status_udp_redir_server.innerHTML = '<%:Kernel Unsupported%>'
+						status_udp_redir_server.innerHTML = 'UDP<br /><span class="red"><%:Kernel Unsupported%></span>'
 					<% end %>
 					
 					var socks5_proxy_server_num = <%=socks5_proxy_server_num %>;
