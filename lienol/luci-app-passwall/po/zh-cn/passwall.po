@@ -241,6 +241,12 @@ msgstr "地址"
 msgid "Server Address (Support Domain Name)"
 msgstr "地址（支持域名）"
 
+msgid "Trojan Verify Cert"
+msgstr "验证证书"
+
+msgid "Trojan Cert Path"
+msgstr "证书路径"
+
 msgid "Server Port"
 msgstr "端口"
 
