@@ -52,8 +52,8 @@ get_local_servers(){
 }
 
 get_remote_config(){
-	remarks="(订阅)"
-	[ -n "$3" ] && remarks="(导入)"
+	add_mode="订阅"
+	[ -n "$3" ] && add_mode="导入"
 	group="sub_server"
 	if [ "$1" == "ss" ]; then
 		decode_link="$2"
@@ -101,7 +101,7 @@ get_remote_config(){
 			json_tls="none"
 		fi
 		
-		remarks="${remarks}${json_ps}"
+		remarks="${json_ps}"
 		server_host=$json_server
 	fi
 	
@@ -120,6 +120,7 @@ add_servers(){
 	uci add $CONFIG servers > /dev/null
 	[ -z "$3" ] && ${uci_set}group="$group"
 	if [ "$2" == "ss" ]; then
+		${uci_set}add_mode="$add_mode"
 		${uci_set}remarks="$remarks"
 		${uci_set}server_type="SSR"
 		${uci_set}server="$server_host"
@@ -137,6 +138,7 @@ add_servers(){
 		fi
 		
 	elif [ "$2" == "ssr" ]; then
+		${uci_set}add_mode="$add_mode"
 		${uci_set}remarks="$remarks"
 		${uci_set}server_type="SSR"
 		${uci_set}server="$server_host"
@@ -158,6 +160,7 @@ add_servers(){
 		fi
 		
 	elif [ "$2" == "v2ray" ]; then
+		${uci_set}add_mode="$add_mode"
 		${uci_set}remarks="$remarks"
 		${uci_set}server_type="V2ray"
 		${uci_set}v2ray_protocol="vmess"
