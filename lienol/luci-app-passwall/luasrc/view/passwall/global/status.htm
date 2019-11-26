@@ -276,33 +276,28 @@ https://github.com/pure-css/pure/blob/master/LICENSE.md
 						}
 					}
 					
-					<% if has_udp_relay() then %>
-						var udp_redir_server_num = <%=udp_redir_server_num %>;
-						if (udp_redir_server_num >= 1) {
-							var status_udp_redir_server = document.getElementById('status_udp_redir_server');
-							if (status_udp_redir_server) {
-								var text = 'UDP<br />';
-								if (udp_redir_server_num == 1) {
-									if (data["udp_redir_server1_status"])
-										text += '<span class="green"><%:RUNNING%></span>';
-									else
-										text += '<span class="red"><%:NOT RUNNING%></span>';
-								} else {
-									for(var i = 0; i < udp_redir_server_num; i++) {
-										var k = i + 1;
-										if (data["udp_redir_server" + k + "_status"])
-											text += '<span class="green"> ✓</span>';
-										else
-											text += '<span class="red"> X</span>';
-									}
-								}
-								status_udp_redir_server.innerHTML = text;
-							}
-						}
-					<% else %>
+					var udp_redir_server_num = <%=udp_redir_server_num %>;
+					if (udp_redir_server_num >= 1) {
 						var status_udp_redir_server = document.getElementById('status_udp_redir_server');
-						status_udp_redir_server.innerHTML = 'UDP<br /><span class="red"><%:Kernel Unsupported%></span>'
-					<% end %>
+						if (status_udp_redir_server) {
+							var text = 'UDP<br />';
+							if (udp_redir_server_num == 1) {
+								if (data["udp_redir_server1_status"])
+									text += '<span class="green"><%:RUNNING%></span>';
+									else
+									text += '<span class="red"><%:NOT RUNNING%></span>';
+							} else {
+								for(var i = 0; i < udp_redir_server_num; i++) {
+									var k = i + 1;
+									if (data["udp_redir_server" + k + "_status"])
+										text += '<span class="green"> ✓</span>';
+									else
+										text += '<span class="red"> X</span>';
+								}
+							}
+							status_udp_redir_server.innerHTML = text;
+						}
+					}
 					
 					var socks5_proxy_server_num = <%=socks5_proxy_server_num %>;
 					if (socks5_proxy_server_num >= 1) {

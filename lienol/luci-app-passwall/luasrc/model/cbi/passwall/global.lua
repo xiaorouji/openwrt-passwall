@@ -66,23 +66,21 @@ if tcp_redir_server_num and tonumber(tcp_redir_server_num) >= 2 then
 end
 
 ---- UDP Redir Server
-if has_udp_relay() then
-    o = s:option(ListValue, "udp_redir_server1", translate("UDP Redir Server"),
-                 translate("For Game Mode or DNS resolution and more.") ..
-                     translate("The selected server will not use Kcptun."))
-    o:value("nil", translate("Close"))
-    o:value("default", translate("Same as the tcp redir server"))
-    for _, key in pairs(key_table) do o:value(key, n[key]) end
+o = s:option(ListValue, "udp_redir_server1", translate("UDP Redir Server"),
+             translate("For Game Mode or DNS resolution and more.") ..
+                 translate("The selected server will not use Kcptun."))
+o:value("nil", translate("Close"))
+o:value("default", translate("Same as the tcp redir server"))
+for _, key in pairs(key_table) do o:value(key, n[key]) end
 
-    local udp_redir_server_num = uci:get(appname, "@global_other[0]",
-                                         "udp_redir_server_num")
-    if udp_redir_server_num and tonumber(udp_redir_server_num) >= 2 then
-        for i = 2, udp_redir_server_num, 1 do
-            o = s:option(ListValue, "udp_redir_server" .. i,
-                         translate("UDP Redir Server") .. " " .. i)
-            o:value("nil", translate("Close"))
-            for _, key in pairs(key_table) do o:value(key, n[key]) end
-        end
+local udp_redir_server_num = uci:get(appname, "@global_other[0]",
+                                     "udp_redir_server_num")
+if udp_redir_server_num and tonumber(udp_redir_server_num) >= 2 then
+    for i = 2, udp_redir_server_num, 1 do
+        o = s:option(ListValue, "udp_redir_server" .. i,
+                     translate("UDP Redir Server") .. " " .. i)
+        o:value("nil", translate("Close"))
+        for _, key in pairs(key_table) do o:value(key, n[key]) end
     end
 end
 
