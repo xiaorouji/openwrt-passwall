@@ -76,18 +76,16 @@ local socks5_proxy_num = luci.sys.exec("echo -n `uci get passwall.@global_other[
 			<% end %>
 		<% end %>
 		
-		<% if has_udp_relay() then %>
-			<% if udp_redir_server_num and tonumber(udp_redir_server_num) >= 1 then %>
-				<% for i = 1, udp_redir_server_num, 1 do %>
-				<div class="cbi-value">
-					<label class="cbi-value-title">UDP_<%=i%>
-						<%:Status%>
-					</label>
-					<div class="cbi-value-field" id="_udp_redir_server<%=i%>_status">
-						<%:Collecting data...%>
-					</div>
+		<% if udp_redir_server_num and tonumber(udp_redir_server_num) >= 1 then %>
+			<% for i = 1, udp_redir_server_num, 1 do %>
+			<div class="cbi-value">
+				<label class="cbi-value-title">UDP_<%=i%>
+					<%:Status%>
+				</label>
+				<div class="cbi-value-field" id="_udp_redir_server<%=i%>_status">
+					<%:Collecting data...%>
 				</div>
-				<% end %>
+			</div>
 			<% end %>
 		<% end %>
 		
@@ -186,13 +184,11 @@ local socks5_proxy_num = luci.sys.exec("echo -n `uci get passwall.@global_other[
 							tcp_redir_server<%=i%>_status.innerHTML = json.tcp_redir_server<%=i%>_status ? '<font color=green><%:RUNNING%> ✓</font>' : '<font color=red><%:NOT RUNNING%> X</font>';
 					<% end %>
 				<% end %>
-				<% if has_udp_relay() then %>
-					<% if udp_redir_server_num and tonumber(udp_redir_server_num) >= 1 then %>
-						<% for i = 1, udp_redir_server_num, 1 do %>
-							var udp_redir_server<%=i%>_status = document.getElementById('_udp_redir_server<%=i%>_status');
-							if(udp_redir_server<%=i%>_status)
-								udp_redir_server<%=i%>_status.innerHTML = json.udp_redir_server<%=i%>_status ? '<font color=green><%:RUNNING%> ✓</font>' : '<font color=red><%:NOT RUNNING%> X</font>';
-						<% end %>
+				<% if udp_redir_server_num and tonumber(udp_redir_server_num) >= 1 then %>
+					<% for i = 1, udp_redir_server_num, 1 do %>
+						var udp_redir_server<%=i%>_status = document.getElementById('_udp_redir_server<%=i%>_status');
+						if(udp_redir_server<%=i%>_status)
+							udp_redir_server<%=i%>_status.innerHTML = json.udp_redir_server<%=i%>_status ? '<font color=green><%:RUNNING%> ✓</font>' : '<font color=red><%:NOT RUNNING%> X</font>';
 					<% end %>
 				<% end %>
 				<% if socks5_proxy_num and tonumber(socks5_proxy_num) >= 1 then %>
