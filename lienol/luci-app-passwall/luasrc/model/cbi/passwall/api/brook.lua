@@ -19,9 +19,9 @@ local LEDE_BOARD = nil
 local DISTRIB_TARGET = nil
 
 function get_brook_file_path()
-    return uci:get("passwall", "global_app", "brook_client_file") or
+    return uci:get("passwall", "global_app", "brook_file") or
                luci.sys.exec(
-                   "echo -n `uci get passwall.@global_app[0].brook_client_file`")
+                   "echo -n `uci get passwall.@global_app[0].brook_file`")
 end
 
 function get_brook_version(file)
