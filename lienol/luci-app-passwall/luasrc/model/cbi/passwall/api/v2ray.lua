@@ -20,9 +20,9 @@ local DISTRIB_TARGET = nil
 local is_armv7 = false
 
 function get_v2ray_file_path()
-    return uci:get("passwall", "global_app", "v2ray_client_file") or
+    return uci:get("passwall", "global_app", "v2ray_file") or
                sys.exec(
-                   "echo -n `uci get passwall.@global_app[0].v2ray_client_file`")
+                   "echo -n `uci get passwall.@global_app[0].v2ray_file`")
 end
 
 function get_v2ray_version()

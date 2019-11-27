@@ -13,9 +13,9 @@ local function has_udp_relay()
     return luci.sys.call("lsmod | grep TPROXY >/dev/null") == 0
 end
 
-local tcp_redir_server_num = luci.sys.exec("echo -n `uci get passwall.@global_other[0].tcp_redir_server_num`")
-local udp_redir_server_num = luci.sys.exec("echo -n `uci get passwall.@global_other[0].udp_redir_server_num`")
-local socks5_proxy_num = luci.sys.exec("echo -n `uci get passwall.@global_other[0].socks5_proxy_server_num`")
+local tcp_node_num = luci.sys.exec("echo -n `uci get passwall.@global_other[0].tcp_node_num`")
+local udp_node_num = luci.sys.exec("echo -n `uci get passwall.@global_other[0].udp_node_num`")
+local socks5_node_num = luci.sys.exec("echo -n `uci get passwall.@global_other[0].socks5_node_num`")
 -%>
 
 <style>
@@ -63,39 +63,39 @@ local socks5_proxy_num = luci.sys.exec("echo -n `uci get passwall.@global_other[
 		<%:Running Status%>
 	</legend>
 	<fieldset class="cbi-section">
-		<% if tcp_redir_server_num and tonumber(tcp_redir_server_num) >= 1 then %>
-			<% for i = 1, tcp_redir_server_num, 1 do %>
+		<% if tcp_node_num and tonumber(tcp_node_num) >= 1 then %>
+			<% for i = 1, tcp_node_num, 1 do %>
 			<div class="cbi-value">
 				<label class="cbi-value-title">TCP_<%=i%>
 					<%:Status%>
 				</label>
-				<div class="cbi-value-field" id="_tcp_redir_server<%=i%>_status">
+				<div class="cbi-value-field" id="_tcp_node<%=i%>_status">
 					<%:Collecting data...%>
 				</div>
 			</div>
 			<% end %>
 		<% end %>
 		
-		<% if udp_redir_server_num and tonumber(udp_redir_server_num) >= 1 then %>
-			<% for i = 1, udp_redir_server_num, 1 do %>
+		<% if udp_node_num and tonumber(udp_node_num) >= 1 then %>
+			<% for i = 1, udp_node_num, 1 do %>
 			<div class="cbi-value">
 				<label class="cbi-value-title">UDP_<%=i%>
 					<%:Status%>
 				</label>
-				<div class="cbi-value-field" id="_udp_redir_server<%=i%>_status">
+				<div class="cbi-value-field" id="_udp_node<%=i%>_status">
 					<%:Collecting data...%>
 				</div>
 			</div>
 			<% end %>
 		<% end %>
 		
-		<% if socks5_proxy_num and tonumber(socks5_proxy_num) >= 1 then %>
-			<% for i = 1, socks5_proxy_num, 1 do %>
+		<% if socks5_node_num and tonumber(socks5_node_num) >= 1 then %>
+			<% for i = 1, socks5_node_num, 1 do %>
 			<div class="cbi-value">
 				<label class="cbi-value-title">Socks5_<%=i%>
 					<%:Status%>
 				</label>
-				<div class="cbi-value-field" id="_socks5_proxy_server<%=i%>_status">
+				<div class="cbi-value-field" id="_socks5_node<%=i%>_status">
 					<%:Collecting data...%>
 				</div>
 			</div>
@@ -123,7 +123,7 @@ local socks5_proxy_num = luci.sys.exec("echo -n `uci get passwall.@global_other[
 		<% if ipkg.installed("kcptun") or is_finded("kcptun*") then %>
 		<div class="cbi-value">
 			<label class="cbi-value-title">
-				<%:Kcptun Client%>
+				<%:Kcptun%>
 			</label>
 			<div class="cbi-value-field" id="_kcptun_status">
 				<%:Collecting data...%>
@@ -174,28 +174,28 @@ local socks5_proxy_num = luci.sys.exec("echo -n `uci get passwall.@global_other[
 	var kcptun_status = document.getElementById('_kcptun_status');
 	var baidu_status = document.getElementById('_baidu_status');
 	var google_status = document.getElementById('_google_status');
-	XHR.poll(3, '<%=dsp.build_url("admin/vpn/passwall/server_status")%>', null,
+	XHR.poll(3, '<%=dsp.build_url("admin/vpn/passwall/status")%>', null,
 		function(x, json) {
 			if(x && x.status == 200) {
-				<% if tcp_redir_server_num and tonumber(tcp_redir_server_num) >= 1 then %>
-					<% for i = 1, tcp_redir_server_num, 1 do %>
-						var tcp_redir_server<%=i%>_status = document.getElementById('_tcp_redir_server<%=i%>_status');
-						if(tcp_redir_server<%=i%>_status)
-							tcp_redir_server<%=i%>_status.innerHTML = json.tcp_redir_server<%=i%>_status ? '<font color=green><%:RUNNING%> ✓</font>' : '<font color=red><%:NOT RUNNING%> X</font>';
+				<% if tcp_node_num and tonumber(tcp_node_num) >= 1 then %>
+					<% for i = 1, tcp_node_num, 1 do %>
+						var tcp_node<%=i%>_status = document.getElementById('_tcp_node<%=i%>_status');
+						if(tcp_node<%=i%>_status)
+							tcp_node<%=i%>_status.innerHTML = json.tcp_node<%=i%>_status ? '<font color=green><%:RUNNING%> ✓</font>' : '<font color=red><%:NOT RUNNING%> X</font>';
 					<% end %>
 				<% end %>
-				<% if udp_redir_server_num and tonumber(udp_redir_server_num) >= 1 then %>
-					<% for i = 1, udp_redir_server_num, 1 do %>
-						var udp_redir_server<%=i%>_status = document.getElementById('_udp_redir_server<%=i%>_status');
-						if(udp_redir_server<%=i%>_status)
-							udp_redir_server<%=i%>_status.innerHTML = json.udp_redir_server<%=i%>_status ? '<font color=green><%:RUNNING%> ✓</font>' : '<font color=red><%:NOT RUNNING%> X</font>';
+				<% if udp_node_num and tonumber(udp_node_num) >= 1 then %>
+					<% for i = 1, udp_node_num, 1 do %>
+						var udp_node<%=i%>_status = document.getElementById('_udp_node<%=i%>_status');
+						if(udp_node<%=i%>_status)
+							udp_node<%=i%>_status.innerHTML = json.udp_node<%=i%>_status ? '<font color=green><%:RUNNING%> ✓</font>' : '<font color=red><%:NOT RUNNING%> X</font>';
 					<% end %>
 				<% end %>
-				<% if socks5_proxy_num and tonumber(socks5_proxy_num) >= 1 then %>
-					<% for i = 1, socks5_proxy_num, 1 do %>
-						var socks5_proxy_server<%=i%>_status = document.getElementById('_socks5_proxy_server<%=i%>_status');
-						if(socks5_proxy_server<%=i%>_status)
-							socks5_proxy_server<%=i%>_status.innerHTML = json.socks5_proxy_server<%=i%>_status ? '<font color=green><%:RUNNING%> ✓</font>' : '<font color=red><%:NOT RUNNING%> X</font>';
+				<% if socks5_node_num and tonumber(socks5_node_num) >= 1 then %>
+					<% for i = 1, socks5_node_num, 1 do %>
+						var socks5_node<%=i%>_status = document.getElementById('_socks5_node<%=i%>_status');
+						if(socks5_node<%=i%>_status)
+							socks5_node<%=i%>_status.innerHTML = json.socks5_node<%=i%>_status ? '<font color=green><%:RUNNING%> ✓</font>' : '<font color=red><%:NOT RUNNING%> X</font>';
 					<% end %>
 				<% end %>
 				if(dns_mode_status)

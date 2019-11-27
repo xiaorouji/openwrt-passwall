@@ -23,14 +23,14 @@ local dsp = require "luci.dispatcher"
 
 <script type="text/javascript">
 	//<![CDATA[
-	function ajax_add_server(link) {
+	function ajax_add_node(link) {
 		if (link) {
-			XHR.get('<%=dsp.build_url("admin/vpn/passwall/link_add_server")%>', {
+			XHR.get('<%=dsp.build_url("admin/vpn/passwall/link_add_node")%>', {
 				'link': link
 			},
 			function(x, data) {
 				if(x && x.status == 200) {
-					window.location.href = '<%=dsp.build_url("admin/vpn/passwall/server_list")%>';
+					window.location.href = '<%=dsp.build_url("admin/vpn/passwall/node_list")%>';
 				}
 				else {
 					alert("<%:Error%>");
@@ -41,18 +41,18 @@ local dsp = require "luci.dispatcher"
 	
 	function open_add_link_div() {
 		document.getElementById("add_link_div").style.display = "block";
-		document.getElementById("servers_link").focus();
+		document.getElementById("nodes_link").focus();
 	}
 	
 	function close_add_link_div() {
 		document.getElementById("add_link_div").style.display = "none";
 	}
 	
-	function add_server() {
-		var servers_link = document.getElementById("servers_link").value;
-		if (servers_link.trim() != "") {
-			if (servers_link.indexOf("ss://") == 0 || servers_link.indexOf("ssr://") == 0 || servers_link.indexOf("vmess://") == 0) {
-				ajax_add_server(servers_link);
+	function add_node() {
+		var nodes_link = document.getElementById("nodes_link").value;
+		if (nodes_link.trim() != "") {
+			if (nodes_link.indexOf("ss://") == 0 || nodes_link.indexOf("ssr://") == 0 || nodes_link.indexOf("vmess://") == 0) {
+				ajax_add_node(nodes_link);
 			}
 			else {
 				alert("<%:Please enter the correct link, ss:// ssr:// vmess://%>");
@@ -60,16 +60,16 @@ local dsp = require "luci.dispatcher"
 		}
 		else {
 			alert("<%:Please Enter The Link%>");
-			document.getElementById("servers_link").focus();
+			document.getElementById("nodes_link").focus();
 		}
 	}
 	//]]>
 </script>
 
 <div class="cbi-value">
-	<label class="cbi-value-title"><%:Add Server%></label>
+	<label class="cbi-value-title"><%:Add Node%></label>
 	<div class="cbi-value-field">
-		<input class="cbi-button cbi-button-add" type="button" onclick="open_add_link_div()" value="<%:Add the server via the link%>">
+		<input class="cbi-button cbi-button-add" type="button" onclick="open_add_link_div()" value="<%:Add the node via the link%>">
 	</div>
 </div>
 
@@ -77,13 +77,13 @@ local dsp = require "luci.dispatcher"
 	<div class="cbi-value">
 		<label class="cbi-value-title"><%:Please Enter The SS/SSR/V2ray Link%></label>
 		<div class="cbi-value-field">
-			<textarea id="servers_link" rows="5" cols="50"></textarea>
+			<textarea id="nodes_link" rows="5" cols="50"></textarea>
 		</div>
 	</div>
 	<div class="cbi-value">
 		<label class="cbi-value-title"></label>
 		<div class="cbi-value-field">
-			<input class="cbi-button cbi-button-add" type="button" onclick="add_server()" value="<%:Add%>">
+			<input class="cbi-button cbi-button-add" type="button" onclick="add_node()" value="<%:Add%>">
 			<input class="cbi-button cbi-button-remove" type="button" onclick="close_add_link_div()" value="<%:Close%>">
 		</div>
 	</div>

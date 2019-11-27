@@ -13,9 +13,9 @@ local function has_udp_relay()
     return luci.sys.call("lsmod | grep TPROXY >/dev/null") == 0
 end
 
-local tcp_redir_server_num = luci.sys.exec("echo -n `uci get passwall.@global_other[0].tcp_redir_server_num`")
-local udp_redir_server_num = luci.sys.exec("echo -n `uci get passwall.@global_other[0].udp_redir_server_num`")
-local socks5_proxy_server_num = luci.sys.exec("echo -n `uci get passwall.@global_other[0].socks5_proxy_server_num`")
+local tcp_node_num = luci.sys.exec("echo -n `uci get passwall.@global_other[0].tcp_node_num`")
+local udp_node_num = luci.sys.exec("echo -n `uci get passwall.@global_other[0].udp_node_num`")
+local socks5_node_num = luci.sys.exec("echo -n `uci get passwall.@global_other[0].socks5_node_num`")
 -%>
 
 <style>
@@ -106,7 +106,7 @@ https://github.com/pure-css/pure/blob/master/LICENSE.md
         <div class="pure-u-1-4">
             <div class="block pure-g">
                 <div class="pure-u-16-24">
-				<h4 id="status_tcp_redir_server">TCP<br /><span class="red"><%:NOT RUNNING%></span></h4>
+				<h4 id="status_tcp_node">TCP<br /><span class="red"><%:NOT RUNNING%></span></h4>
                 </div>
                 <div class="pure-u-8-24">
                     <div class="img-con">
@@ -120,7 +120,7 @@ https://github.com/pure-css/pure/blob/master/LICENSE.md
         <div class="pure-u-1-4">
             <div class="block pure-g">
                 <div class="pure-u-16-24">
-				<h4 id="status_udp_redir_server">UDP<br /><span class="red"><%:NOT RUNNING%></span></h4>
+				<h4 id="status_udp_node">UDP<br /><span class="red"><%:NOT RUNNING%></span></h4>
                 </div>
                 <div class="pure-u-8-24">
                     <div class="img-con">
@@ -133,7 +133,7 @@ https://github.com/pure-css/pure/blob/master/LICENSE.md
 		<div class="pure-u-1-4">
             <div class="block pure-g">
                 <div class="pure-u-16-24">
-				<h4 id="status_socks5_proxy_server">SOCKS5<br /><span class="red"><%:NOT RUNNING%></span></h4>
+				<h4 id="status_socks5_node">SOCKS5<br /><span class="red"><%:NOT RUNNING%></span></h4>
                 </div>
                 <div class="pure-u-8-24">
                     <div class="img-con">
@@ -215,7 +215,7 @@ https://github.com/pure-css/pure/blob/master/LICENSE.md
 		<div class="pure-u-1-2 check" onclick="check_port(this)">
             <div class="block pure-g">
                 <div class="pure-u-4-5">
-                    <h4 id="status_servers_check"><%:Server Check%><br /><span id="_check_servers_status" class="red"><%:Touch Check%></span></h4>
+                    <h4 id="status_servers_check"><%:Server Check%><br /><span id="_check_nodes_status" class="red"><%:Touch Check%></span></h4>
 					<input id="clear_check_port_btn" type="button" class="cbi-button cbi-button-remove" style="display:none" value="<%:Clear%>" />
                 </div>
                 <div class="pure-u-1-5">
@@ -247,78 +247,78 @@ https://github.com/pure-css/pure/blob/master/LICENSE.md
 			document.getElementsByTagName('img')[i].setAttribute("oncontextmenu","return false;");
 			document.getElementsByTagName('img')[i].setAttribute("ondragstart","return false;");
 		}
-        XHR.poll(5, '<%=dsp.build_url("admin/vpn/passwall/server_status")%>', null,
+        XHR.poll(5, '<%=dsp.build_url("admin/vpn/passwall/status")%>', null,
             function (x, data) {
                 var status_dns = document.getElementById('status_dns');
                 var status_haproxy = document.getElementById('status_haproxy');
 				var status_kcptun = document.getElementById('status_kcptun');
 				if (data) {
-					var tcp_redir_server_num = <%=tcp_redir_server_num %>;
-					if (tcp_redir_server_num >= 1) {
-						var status_tcp_redir_server = document.getElementById('status_tcp_redir_server');
-						if (status_tcp_redir_server) {
+					var tcp_node_num = <%=tcp_node_num%>;
+					if (tcp_node_num >= 1) {
+						var status_tcp_node = document.getElementById('status_tcp_node');
+						if (status_tcp_node) {
 							var text = 'TCP<br />';
-							if (tcp_redir_server_num == 1) {
-								if (data["tcp_redir_server1_status"])
+							if (tcp_node_num == 1) {
+								if (data["tcp_node1_status"])
 									text += '<span class="green"><%:RUNNING%></span>';
 								else
 									text += '<span class="red"><%:NOT RUNNING%></span>';
 							} else {
-								for(var i = 0; i < tcp_redir_server_num; i++) {
+								for(var i = 0; i < tcp_node_num; i++) {
 									var k = i + 1;
-									if (data["tcp_redir_server" + k + "_status"])
+									if (data["tcp_node" + k + "_status"])
 										text += '<span class="green"> ✓</span>';
 									else
 										text += '<span class="red"> X</span>';
 								}
 							}
-							status_tcp_redir_server.innerHTML = text;
+							status_tcp_node.innerHTML = text;
 						}
 					}
 					
-					var udp_redir_server_num = <%=udp_redir_server_num %>;
-					if (udp_redir_server_num >= 1) {
-						var status_udp_redir_server = document.getElementById('status_udp_redir_server');
-						if (status_udp_redir_server) {
+					var udp_node_num = <%=udp_node_num%>;
+					if (udp_node_num >= 1) {
+						var status_udp_node = document.getElementById('status_udp_node');
+						if (status_udp_node) {
 							var text = 'UDP<br />';
-							if (udp_redir_server_num == 1) {
-								if (data["udp_redir_server1_status"])
+							if (udp_node_num == 1) {
+								if (data["udp_node1_status"])
 									text += '<span class="green"><%:RUNNING%></span>';
 									else
 									text += '<span class="red"><%:NOT RUNNING%></span>';
 							} else {
-								for(var i = 0; i < udp_redir_server_num; i++) {
+								for(var i = 0; i < udp_node_num; i++) {
 									var k = i + 1;
-									if (data["udp_redir_server" + k + "_status"])
+									if (data["udp_node" + k + "_status"])
 										text += '<span class="green"> ✓</span>';
 									else
 										text += '<span class="red"> X</span>';
 								}
 							}
-							status_udp_redir_server.innerHTML = text;
+							status_udp_node.innerHTML = text;
 						}
 					}
 					
-					var socks5_proxy_server_num = <%=socks5_proxy_server_num %>;
-					if (socks5_proxy_server_num >= 1) {
-						var status_socks5_proxy_server = document.getElementById('status_socks5_proxy_server');
-						if (status_socks5_proxy_server) {
+					var socks5_node_num = <%=socks5_node_num%>;
+					if (socks5_node_num >= 1) {
+						var status_socks5_node = document.getElementById('status_socks5_node');
+						if (status_socks5_node) {
 							var text = 'SOCKS5<br />';
-							if (socks5_proxy_server_num == 1) {
-								if (data["socks5_proxy_server1_status"])
+							if (socks5_node_num == 1) {
+								if (data["socks5_node1_status"])
 									text += '<span class="green"><%:RUNNING%></span>';
 								else
 									text += '<span class="red"><%:NOT RUNNING%></span>';
 							} else {
-								for(var i = 0; i < socks5_proxy_server_num; i++) {
+								for(var i = 0; i < socks5_node_num; i++) {
 									var k = i + 1;
-									if (data["socks5_proxy_server" + k + "_status"])
+									if (data["socks5_node" + k + "_status"])
 										text += '<span class="green"> ✓</span>';
 									else
 										text += '<span class="red"> X</span>';
 								}
 							}
-							status_socks5_proxy_server.innerHTML = text;
+							status_socks5_node.innerHTML = text;
 						}
 					}
 					
@@ -370,7 +370,7 @@ https://github.com/pure-css/pure/blob/master/LICENSE.md
 		}
 
 		function check_port(dom) {
-			var s = document.getElementById('_check_servers_status');
+			var s = document.getElementById('_check_nodes_status');
 			if (s) {
 				dom.removeAttribute('onclick');
 				s.innerHTML = '<%:Check...%>';
@@ -397,7 +397,7 @@ https://github.com/pure-css/pure/blob/master/LICENSE.md
 
 		function clear_check_port(btn) {
 			btn.style.display = 'none';
-			var s = document.getElementById('_check_servers_status');
+			var s = document.getElementById('_check_nodes_status');
 			s.innerHTML = "<%:Touch Check%>";
 			return false;
 		}

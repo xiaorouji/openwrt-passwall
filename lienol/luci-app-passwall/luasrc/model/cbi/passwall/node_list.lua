@@ -12,33 +12,33 @@ s.anonymous = true
 
 ---- Auto Ping
 o = s:option(Flag, "auto_ping", translate("Auto Ping"),
-             translate("This will automatically ping the server for latency"))
+             translate("This will automatically ping the node for latency"))
 o.default = 0
 
--- [[ Add the server via the link ]]--
-s:append(Template("passwall/server_list/link_add_server"))
+-- [[ Add the node via the link ]]--
+s:append(Template("passwall/node_list/link_add_node"))
 
--- [[ Servers List ]]--
-s = m:section(TypedSection, "servers")
+-- [[ Node List ]]--
+s = m:section(TypedSection, "nodes")
 s.anonymous = true
 s.sortable = true
 s.addremove = true
 s.template = "cbi/tblsection"
-s.extedit = d.build_url("admin", "vpn", "passwall", "serverconfig", "%s")
+s.extedit = d.build_url("admin", "vpn", "passwall", "node_config", "%s")
 function s.create(e, t)
     local e = TypedSection.create(e, t)
     luci.http.redirect(
-        d.build_url("admin", "vpn", "passwall", "serverconfig", e))
+        d.build_url("admin", "vpn", "passwall", "node_config", e))
 end
 
 function s.remove(t, a)
     s.map.proceed = true
     s.map:del(a)
-    luci.http.redirect(d.build_url("admin", "vpn", "passwall", "server_list"))
+    luci.http.redirect(d.build_url("admin", "vpn", "passwall", "node_list"))
 end
 
----- Node Remarks
-o = s:option(DummyValue, "remarks", translate("Node Remarks"))
+---- Remarks
+o = s:option(DummyValue, "remarks", translate("Remarks"))
 
 ---- Add Mode
 o = s:option(DummyValue, "add_mode", translate("Add Mode"))
@@ -52,21 +52,21 @@ o.cfgvalue = function(t, n)
     return str
 end
 
----- Server Type
-o = s:option(DummyValue, "server_type", translate("Server Type"))
+---- Type
+o = s:option(DummyValue, "type", translate("Type"))
 
----- Server Address
-o = s:option(DummyValue, "server", translate("Server Address"))
+---- Address
+o = s:option(DummyValue, "address", translate("Address"))
 
----- Server Port
-o = s:option(DummyValue, "server_port", translate("Server Port"))
+---- Port
+o = s:option(DummyValue, "port", translate("Port"))
 
 ---- Encrypt Method
 --[[o = s:option(DummyValue, "encrypt_method", translate("Encrypt Method"))
 o.width="15%"
 o.cfgvalue=function(t, n)
 local str="无"
-local type = m.uci:get(appname, n, "server_type") or ""
+local type = m.uci:get(appname, n, "type") or ""
 if type == "SSR" then
 	return m.uci:get(appname, n, "ssr_encrypt_method")
 elseif type == "SS" then
@@ -78,21 +78,21 @@ return str
 end--]]
 
 ---- Ping
-o = s:option(DummyValue, "server", translate("Ping"))
+o = s:option(DummyValue, "address", translate("Ping"))
 if uci:get(appname, "@global_other[0]", "auto_ping") == "0" then
-    o.template = "passwall/server_list/ping"
+    o.template = "passwall/node_list/ping"
 else
-    o.template = "passwall/server_list/auto_ping"
+    o.template = "passwall/node_list/auto_ping"
 end
 
 ---- Apply
 o = s:option(DummyValue, "apply", translate("Apply"))
-o.template = "passwall/server_list/apply"
+o.template = "passwall/node_list/apply"
 
-m:append(Template("passwall/server_list/server_list"))
+m:append(Template("passwall/node_list/node_list"))
 
 if luci.http.formvalue("cbi.apply") then
-    luci.http.redirect(d.build_url("admin", "vpn", "passwall", "server_list"))
+    luci.http.redirect(d.build_url("admin", "vpn", "passwall", "node_list"))
 end
 
 return m
