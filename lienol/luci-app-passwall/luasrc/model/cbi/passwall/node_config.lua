@@ -310,6 +310,36 @@ v2ray_mux_concurrency = s:option(Value, "v2ray_mux_concurrency",
 v2ray_mux_concurrency.default = 8
 v2ray_mux_concurrency:depends("v2ray_mux", "1")
 
+-- [[ 当作为TCP节点时，是否同时开启socks代理 ]]
+v2ray_tcp_socks = s:option(Flag, "v2ray_tcp_socks", translate("TCP Open Socks"),
+                           translate(
+                               "When using this TCP node, whether to open the socks proxy at the same time"))
+v2ray_tcp_socks.default = 0
+v2ray_tcp_socks:depends("type", "V2ray")
+
+v2ray_tcp_socks_port = s:option(Value, "v2ray_tcp_socks_port",
+                                "Socks5 " .. translate("Port"),
+                                translate("Do not conflict with other ports"))
+v2ray_tcp_socks_port.datatype = "port"
+v2ray_tcp_socks_port.default = 1080
+v2ray_tcp_socks_port:depends("v2ray_tcp_socks", "1")
+
+v2ray_tcp_socks_auth = s:option(ListValue, "v2ray_tcp_socks_auth",
+                                translate("Socks for authentication"),
+                                translate(
+                                    'Socks protocol authentication, support anonymous and password.'))
+v2ray_tcp_socks_auth:value("noauth", translate("anonymous"))
+v2ray_tcp_socks_auth:value("password", translate("User Password"))
+v2ray_tcp_socks_auth:depends("v2ray_tcp_socks", "1")
+
+v2ray_tcp_socks_auth_username = s:option(Value, "v2ray_tcp_socks_auth_username",
+                                         "Socks5 " .. translate("Username"))
+v2ray_tcp_socks_auth_username:depends("v2ray_tcp_socks_auth", "password")
+
+v2ray_tcp_socks_auth_password = s:option(Value, "v2ray_tcp_socks_auth_password",
+                                         "Socks5 " .. translate("Password"))
+v2ray_tcp_socks_auth_password:depends("v2ray_tcp_socks_auth", "password")
+
 -- [[ Trojan Cert ]]--
 trojan_verify_cert = s:option(Flag, "trojan_verify_cert",
                               translate("Trojan Verify Cert"))

@@ -6,6 +6,7 @@ local redir_port = arg[3]
 local socks5_proxy_port = arg[4]
 local node = ucursor:get_all("passwall", node_section)
 local inbound_json = {}
+local inboundDetour_json = {}
 
 if socks5_proxy_port ~= "nil" then
     inbound_json = {
@@ -23,6 +24,25 @@ if redir_port ~= "nil" then
         settings = {network = proto, followRedirect = true},
         sniffing = {enabled = true, destOverride = {"http", "tls"}}
     }
+    if node.v2ray_tcp_socks == "1" then
+        inboundDetour_json = {
+            {
+                listen = "0.0.0.0",
+                port = tonumber(node.v2ray_tcp_socks_port),
+                protocol = "socks",
+                settings = {
+                    auth = node.v2ray_tcp_socks_auth,
+                    accounts = (node.v2ray_tcp_socks_auth == "password") and {
+                        {
+                            user = node.v2ray_tcp_socks_auth_username,
+                            pass = node.v2ray_tcp_socks_auth_password
+                        }
+                    } or nil,
+                    udp = true
+                }
+            }
+        }
+    end
 end
 
 local v2ray = {
@@ -32,6 +52,7 @@ local v2ray = {
     },
     -- 传入连接
     inbound = inbound_json,
+    inboundDetour = inboundDetour_json,
     -- 传出连接
     outbound = {
         protocol = node.v2ray_protocol,
@@ -82,8 +103,7 @@ local v2ray = {
                     {Host = node.v2ray_ws_host} or nil
             } or nil,
             httpSettings = (node.v2ray_transport == "h2") and
-                {path = node.v2ray_h2_path, host = node.v2ray_h2_host} or
-                nil,
+                {path = node.v2ray_h2_path, host = node.v2ray_h2_host} or nil,
             dsSettings = (node.v2ray_transport == "ds") and
                 {path = node.v2ray_ds_path} or nil,
             quicSettings = (node.v2ray_transport == "quic") and {
