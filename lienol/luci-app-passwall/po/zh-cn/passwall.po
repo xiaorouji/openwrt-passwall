@@ -685,7 +685,28 @@ msgstr "<br>none：默认值，不进行伪装，发送的数据是没有特征�
 msgid "A legal file path. This file must not exist before running V2Ray."
 msgstr "一个合法的文件路径。在运行 V2Ray 之前，这个文件必须不存在。"
 
-msgid " Node Number"
+msgid "TCP Open Socks"
+msgstr "开启Socks"
+
+msgid "When using this TCP node, whether to open the socks proxy at the same time"
+msgstr "使用此TCP节点时，是否同时打开socks代理"
+
+msgid "Do not conflict with other ports"
+msgstr "端口不能冲突"
+
+msgid "Socks for authentication"
+msgstr "Socks认证方式"
+
+msgid "Socks protocol authentication, support anonymous and password."
+msgstr "Socks 协议的认证方式，支持匿名方式和账号密码方式。"
+
+msgid "anonymous"
+msgstr "匿名"
+
+msgid "User Password"
+msgstr "账号密码"
+
+msgid "Node Number"
 msgstr "节点数量"
 
 msgid "You can only set up a maximum of %s nodes for the time being"

@@ -205,7 +205,7 @@ s.anonymous = true
 s.addremove = false
 
 ---- TCP Node Number Option
-o = s:option(ListValue, "tcp_node_num", "TCP" .. translate(" Node Number"),
+o = s:option(ListValue, "tcp_node_num", "TCP" .. translate("Node Number"),
              translatef(
                  "You can only set up a maximum of %s nodes for the time being",
                  "3"))
@@ -216,7 +216,7 @@ o:value("2")
 o:value("3")
 
 ---- UDP Node Number Option
-o = s:option(ListValue, "udp_node_num", "UDP" .. translate(" Node Number"),
+o = s:option(ListValue, "udp_node_num", "UDP" .. translate("Node Number"),
              translatef(
                  "You can only set up a maximum of %s nodes for the time being",
                  "3"))
@@ -227,7 +227,7 @@ o:value("2")
 o:value("3")
 
 ---- Socks5 Node Number Option
-o = s:option(ListValue, "socks5_node_num", "Socks5" .. translate(" Node Number"),
+o = s:option(ListValue, "socks5_node_num", "Socks5" .. translate("Node Number"),
              translatef(
                  "You can only set up a maximum of %s nodes for the time being",
                  "5"))

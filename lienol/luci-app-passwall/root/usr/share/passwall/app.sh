@@ -216,7 +216,7 @@ gen_ss_ssr_config_file() {
 			"password": "$(config_get $node password)",
 			"timeout": $(config_get $node timeout),
 			"method": "$encrypt_method",
-			"tcp_fast_open": $(config_get $node tcp_fast_open),
+			"fast_open": $(config_get $node tcp_fast_open),
 			"reuse_port": true,
 	EOF
 	[ "$1" == "ssr" ] && {
