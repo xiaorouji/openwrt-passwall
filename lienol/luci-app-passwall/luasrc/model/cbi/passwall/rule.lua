@@ -96,7 +96,7 @@ o.default = "/usr/bin/v2ray/"
 o.rmempty = false
 
 ---- Kcptun client Path
-o = s:option(Value, "kcptun_client_file", translate("Kcptun client Path"),
+o = s:option(Value, "kcptun_client_file", translate("Kcptun Client Path"),
              translate(
                  "if you want to run from memory, change the path, such as /tmp/kcptun-client, Then save the application and update it manually."))
 o.default = "/usr/bin/kcptun-client"
