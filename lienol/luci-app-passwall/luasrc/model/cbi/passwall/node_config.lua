@@ -55,7 +55,7 @@ remarks = s:option(Value, "remarks", translate("Node Remarks"))
 remarks.default = translate("Remarks")
 remarks.rmempty = false
 
-type = s:option(ListValue, "type", translate("Server Type"))
+type = s:option(ListValue, "type", translate("Type"))
 if ((is_installed("redsocks2") or is_finded("redsocks2")) or
     (is_installed("ipt2socks") or is_finded("ipt2socks"))) then
     type:value("Socks5", translate("Socks5"))

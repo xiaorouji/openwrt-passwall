@@ -105,7 +105,7 @@ end
 function clear_log() luci.sys.call("echo '' > /var/log/passwall.log") end
 
 function status()
-    -- local dns_mode = luci.sys.exec("echo -n `uci get " .. appname .. ".@global[0].dns_mode`")
+    -- local dns_mode = luci.sys.exec("echo -n `uci -q get " .. appname .. ".@global[0].dns_mode`")
     local e = {}
     e.dns_mode_status = luci.sys.call("netstat -apn | grep 7913 >/dev/null") ==
                             0
@@ -117,7 +117,7 @@ function status()
                               appname .. "/kcptun' >/dev/null") == 0
 
     local tcp_node_num = luci.sys.exec(
-                             "echo -n `uci get %s.@global_other[0].tcp_node_num`" %
+                             "echo -n `uci -q get %s.@global_other[0].tcp_node_num`" %
                                  appname)
     for i = 1, tcp_node_num, 1 do
         local listen_port = luci.sys.exec(
@@ -132,7 +132,7 @@ function status()
     end
 
     local udp_node_num = luci.sys.exec(
-                             "echo -n `uci get %s.@global_other[0].udp_node_num`" %
+                             "echo -n `uci -q get %s.@global_other[0].udp_node_num`" %
                                  appname)
     for i = 1, udp_node_num, 1 do
         local listen_port = luci.sys.exec(
@@ -147,7 +147,7 @@ function status()
     end
 
     local socks5_node_num = luci.sys.exec(
-                                "echo -n `uci get %s.@global_other[0].socks5_node_num`" %
+                                "echo -n `uci -q get %s.@global_other[0].socks5_node_num`" %
                                     appname)
     for i = 1, socks5_node_num, 1 do
         local listen_port = luci.sys.exec(

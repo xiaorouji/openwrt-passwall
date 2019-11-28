@@ -1,6 +1,7 @@
 local sys = require "luci.sys"
 local webadmin = require "luci.tools.webadmin"
 local uci = require"luci.model.uci".cursor()
+local api = require "luci.model.cbi.passwall.api.api"
 local appname = "passwall"
 
 local n = {}
@@ -58,12 +59,12 @@ o.rmempty = true
 sys.net.mac_hints(function(e, t) o:value(e, "%s " % {e}) end)
 
 ---- TCP Node
-local tcp_node_num = uci:get(appname, "@global_other[0]", "tcp_node_num")
+local tcp_node_num = api.uci_get_type("global_other", "tcp_node_num")
 o = s:option(ListValue, "tcp_node", translate("TCP Node"))
 for i = 1, tcp_node_num, 1 do o:value(i, "TCP_" .. i) end
 
 ---- UDP Node
-local udp_node_num = uci:get(appname, "@global_other[0]", "udp_node_num")
+local udp_node_num = api.uci_get_type("global_other", "udp_node_num")
 o = s:option(ListValue, "udp_node", translate("UDP Node"))
 for i = 1, udp_node_num, 1 do o:value(i, "UDP_" .. i) end
 

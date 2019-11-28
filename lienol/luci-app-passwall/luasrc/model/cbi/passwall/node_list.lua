@@ -2,6 +2,7 @@ local d = require "luci.dispatcher"
 local fs = require "nixio.fs"
 local sys = require "luci.sys"
 local uci = require"luci.model.uci".cursor()
+local api = require "luci.model.cbi.passwall.api.api"
 local appname = "passwall"
 
 m = Map(appname)
@@ -27,8 +28,8 @@ s.template = "cbi/tblsection"
 s.extedit = d.build_url("admin", "vpn", "passwall", "node_config", "%s")
 function s.create(e, t)
     local e = TypedSection.create(e, t)
-    luci.http.redirect(
-        d.build_url("admin", "vpn", "passwall", "node_config", e))
+    luci.http
+        .redirect(d.build_url("admin", "vpn", "passwall", "node_config", e))
 end
 
 function s.remove(t, a)
@@ -62,24 +63,24 @@ o = s:option(DummyValue, "address", translate("Address"))
 o = s:option(DummyValue, "port", translate("Port"))
 
 ---- Encrypt Method
---[[o = s:option(DummyValue, "encrypt_method", translate("Encrypt Method"))
-o.width="15%"
-o.cfgvalue=function(t, n)
-local str="无"
-local type = m.uci:get(appname, n, "type") or ""
-if type == "SSR" then
-	return m.uci:get(appname, n, "ssr_encrypt_method")
-elseif type == "SS" then
-	return m.uci:get(appname, n, "ss_encrypt_method")
-elseif type == "V2ray" then
-	return m.uci:get(appname, n, "v2ray_security")
-end
-return str
+--[[ o = s:option(DummyValue, "encrypt_method", translate("Encrypt Method"))
+o.width = "15%"
+o.cfgvalue = function(t, n)
+    local str = "无"
+    local type = api.uci_get_type_id(n, "type") or ""
+    if type == "SSR" then
+        return api.uci_get_type_id(n, "ssr_encrypt_method")
+    elseif type == "SS" then
+        return api.uci_get_type_id(n, "ss_encrypt_method")
+    elseif type == "V2ray" then
+        return api.uci_get_type_id(n, "v2ray_security")
+    end
+    return str
 end--]]
 
 ---- Ping
 o = s:option(DummyValue, "address", translate("Ping"))
-if uci:get(appname, "@global_other[0]", "auto_ping") == "0" then
+if api.uci_get_type("global_other", "auto_ping") == "0" then
     o.template = "passwall/node_list/ping"
 else
     o.template = "passwall/node_list/auto_ping"
