@@ -502,13 +502,13 @@ msgstr "更新主程序"
 msgid "Please confirm that your firmware supports FPU."
 msgstr "请确认你的固件支持FPU。"
 
-msgid "V2ray path"
+msgid "V2ray Path"
 msgstr "V2ray路径"
 
 msgid "if you want to run from memory, change the path, such as /tmp/v2ray/, Then save the application and update it manually."
 msgstr "如果你希望从内存中运行，请更改路径，例如/tmp/v2ray/，然后保存应用后，再手动更新。"
 
-msgid "Kcptun client path"
+msgid "Kcptun Client Path"
 msgstr "Kcptun客户端路径"
 
 msgid "if you want to run from memory, change the path, such as /tmp/kcptun-client, Then save the application and update it manually."
@@ -517,7 +517,7 @@ msgstr "如果你希望从内存中运行，请更改路径，例如/tmp/kcptun-
 msgid "Make sure there is enough space to install Kcptun"
 msgstr "确保有足够的空间安装Kcptun"
 
-msgid "Brook path"
+msgid "Brook Path"
 msgstr "Brook路径"
 
 msgid "if you want to run from memory, change the path, such as /tmp/brook, Then save the application and update it manually."
@@ -685,14 +685,8 @@ msgstr "<br>none：默认值，不进行伪装，发送的数据是没有特征�
 msgid "A legal file path. This file must not exist before running V2Ray."
 msgstr "一个合法的文件路径。在运行 V2Ray 之前，这个文件必须不存在。"
 
-msgid "TCP Node Number"
-msgstr "TCP节点数量"
-
-msgid "UDP Node Number"
-msgstr "UDP节点数量"
-
-msgid "Socks5 Node Number"
-msgstr "Socks5节点数量"
+msgid " Node Number"
+msgstr "节点数量"
 
 msgid "You can only set up a maximum of %s nodes for the time being"
 msgstr "目前最多只能设置%s个节点"
