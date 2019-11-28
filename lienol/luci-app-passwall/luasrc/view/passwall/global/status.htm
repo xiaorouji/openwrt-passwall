@@ -1,6 +1,8 @@
 <%
+local api = require "luci.model.cbi.passwall.api.api"
 local dsp = require "luci.dispatcher"
 local ipkg = require "luci.model.ipkg"
+
 local function is_finded(e)
 	local result=luci.sys.exec("find /usr/*bin -iname "..e.." -type f")
 	if result~="" then
@@ -9,13 +11,9 @@ local function is_finded(e)
 	return false
 end
 
-local function has_udp_relay()
-    return luci.sys.call("lsmod | grep TPROXY >/dev/null") == 0
-end
-
-local tcp_node_num = luci.sys.exec("echo -n `uci get passwall.@global_other[0].tcp_node_num`")
-local udp_node_num = luci.sys.exec("echo -n `uci get passwall.@global_other[0].udp_node_num`")
-local socks5_node_num = luci.sys.exec("echo -n `uci get passwall.@global_other[0].socks5_node_num`")
+local tcp_node_num = api.uci_get_type("global_other", "tcp_node_num")
+local udp_node_num = api.uci_get_type("global_other", "udp_node_num")
+local socks5_node_num = api.uci_get_type("global_other", "socks5_node_num")
 -%>
 
 <style>
