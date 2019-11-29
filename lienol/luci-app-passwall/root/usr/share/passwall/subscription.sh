@@ -127,7 +127,7 @@ add_nodes(){
 		${uci_set}password="$password"
 		${uci_set}ssr_encrypt_method="$ssr_encrypt_method"
 		${uci_set}timeout=300
-		${uci_set}fast_open=false
+		${uci_set}tcp_fast_open=false
 		
 		if [ "$1" == "add" ]; then
 			let addnum_ss+=1
@@ -149,7 +149,7 @@ add_nodes(){
 		${uci_set}obfs="$obfs"
 		${uci_set}obfs_param="$obfsparam"
 		${uci_set}timeout=300
-		${uci_set}fast_open=false
+		${uci_set}tcp_fast_open=false
 		
 		if [ "$1" == "add" ]; then
 			let addnum_ssr+=1
