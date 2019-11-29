@@ -6,7 +6,7 @@ local redir_port = arg[3]
 local socks5_proxy_port = arg[4]
 local node = ucursor:get_all("passwall", node_section)
 local inbound_json = {}
-local inboundDetour_json = {}
+local inboundDetour_json = nil
 
 if socks5_proxy_port ~= "nil" then
     inbound_json = {
@@ -24,7 +24,7 @@ if redir_port ~= "nil" then
         settings = {network = proto, followRedirect = true},
         sniffing = {enabled = true, destOverride = {"http", "tls"}}
     }
-    if node.v2ray_tcp_socks == "1" then
+    if proto == "tcp" and node.v2ray_tcp_socks == "1" then
         inboundDetour_json = {
             {
                 listen = "0.0.0.0",
