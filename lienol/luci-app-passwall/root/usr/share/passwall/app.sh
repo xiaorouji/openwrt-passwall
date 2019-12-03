@@ -16,9 +16,8 @@ CONFIG_UDP_FILE=$CONFIG_PATH/UDP.json
 CONFIG_SOCKS5_FILE=$CONFIG_PATH/SOCKS5.json
 LOCK_FILE=$CONFIG_PATH/$CONFIG.lock
 LOG_FILE=/var/log/$CONFIG.log
+RULE_PATH=/etc/config/${CONFIG}_rule
 APP_PATH=/usr/share/$CONFIG
-APP_PATH_RULE=$APP_PATH/rule
-APP_PATH_DNSMASQ=$APP_PATH/dnsmasq.d
 TMP_DNSMASQ_PATH=/var/etc/dnsmasq-passwall.d
 DNSMASQ_PATH=/etc/dnsmasq.d
 lanip=$(uci get network.lan.ipaddr)
@@ -656,18 +655,18 @@ start_dns() {
 			case "$UP_CHINADNS_MODE" in
 			OpenDNS_1)
 				other=0
-				nohup $chinadns_bin -p 7913 -c $APP_PATH_RULE/chnroute -m -d -s $dns1,208.67.222.222:443,208.67.222.222:5353 >/dev/null 2>&1 &
+				nohup $chinadns_bin -p 7913 -c $RULE_PATH/chnroute -m -d -s $dns1,208.67.222.222:443,208.67.222.222:5353 >/dev/null 2>&1 &
 				echolog "运行ChinaDNS上游转发模式：$dns1,208.67.222.222..."
 				;;
 			OpenDNS_2)
 				other=0
-				nohup $chinadns_bin -p 7913 -c $APP_PATH_RULE/chnroute -m -d -s $dns1,208.67.220.220:443,208.67.220.220:5353 >/dev/null 2>&1 &
+				nohup $chinadns_bin -p 7913 -c $RULE_PATH/chnroute -m -d -s $dns1,208.67.220.220:443,208.67.220.220:5353 >/dev/null 2>&1 &
 				echolog "运行ChinaDNS上游转发模式：$dns1,208.67.220.220..."
 				;;
 			custom)
 				other=0
 				UP_CHINADNS_CUSTOM=$(config_t_get global up_chinadns_custom '114.114.114.114,208.67.222.222:5353')
-				nohup $chinadns_bin -p 7913 -c $APP_PATH_RULE/chnroute -m -d -s $UP_CHINADNS_CUSTOM >/dev/null 2>&1 &
+				nohup $chinadns_bin -p 7913 -c $RULE_PATH/chnroute -m -d -s $UP_CHINADNS_CUSTOM >/dev/null 2>&1 &
 				echolog "运行ChinaDNS上游转发模式：$UP_CHINADNS_CUSTOM..."
 				;;
 			dnsproxy)
@@ -686,7 +685,7 @@ start_dns() {
 				;;
 			esac
 			if [ "$other" = "1" ]; then
-				nohup $chinadns_bin -p 7923 -c $APP_PATH_RULE/chnroute -m -d -s $dns1,127.0.0.1:7913 >/dev/null 2>&1 &
+				nohup $chinadns_bin -p 7923 -c $RULE_PATH/chnroute -m -d -s $dns1,127.0.0.1:7913 >/dev/null 2>&1 &
 			fi
 		}
 		;;
@@ -819,28 +818,28 @@ EOF
 	}
 
 	if [ ! -f "$TMP_DNSMASQ_PATH/gfwlist.conf" ]; then
-		ln -s $APP_PATH_DNSMASQ/gfwlist.conf $TMP_DNSMASQ_PATH/gfwlist.conf
+		ln -s $RULE_PATH/gfwlist.conf $TMP_DNSMASQ_PATH/gfwlist.conf
 		restdns=1
 	fi
 
 	if [ ! -f "$TMP_DNSMASQ_PATH/blacklist_host.conf" ]; then
-		cat $APP_PATH_RULE/blacklist_host | awk '{print "server=/."$1"/127.0.0.1#7913\nipset=/."$1"/blacklist"}' >>$TMP_DNSMASQ_PATH/blacklist_host.conf
+		cat $RULE_PATH/blacklist_host | awk '{print "server=/."$1"/127.0.0.1#7913\nipset=/."$1"/blacklist"}' >>$TMP_DNSMASQ_PATH/blacklist_host.conf
 		restdns=1
 	fi
 
 	if [ ! -f "$TMP_DNSMASQ_PATH/whitelist_host.conf" ]; then
-		cat $APP_PATH_RULE/whitelist_host | sed "s/^/ipset=&\/./g" | sed "s/$/\/&whitelist/g" | sort | awk '{if ($0!=line) print;line=$0}' >$TMP_DNSMASQ_PATH/whitelist_host.conf
+		cat $RULE_PATH/whitelist_host | sed "s/^/ipset=&\/./g" | sed "s/$/\/&whitelist/g" | sort | awk '{if ($0!=line) print;line=$0}' >$TMP_DNSMASQ_PATH/whitelist_host.conf
 		restdns=1
 	fi
 
 	if [ ! -f "$TMP_DNSMASQ_PATH/router.conf" ]; then
-		cat $APP_PATH_RULE/router | awk '{print "server=/."$1"/127.0.0.1#7913\nipset=/."$1"/router"}' >>$TMP_DNSMASQ_PATH/router.conf
+		cat $RULE_PATH/router | awk '{print "server=/."$1"/127.0.0.1#7913\nipset=/."$1"/router"}' >>$TMP_DNSMASQ_PATH/router.conf
 		restdns=1
 	fi
 
-	userconf=$(grep -c "" $APP_PATH_DNSMASQ/user.conf)
+	userconf=$(grep -c "" $RULE_PATH/user.conf)
 	if [ "$userconf" -gt 0 ]; then
-		ln -s $APP_PATH_DNSMASQ/user.conf $TMP_DNSMASQ_PATH/user.conf
+		ln -s $RULE_PATH/user.conf $TMP_DNSMASQ_PATH/user.conf
 		restdns=1
 	fi
 
