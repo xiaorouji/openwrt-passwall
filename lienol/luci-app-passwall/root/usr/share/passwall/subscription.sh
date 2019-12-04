@@ -292,8 +292,9 @@ start() {
 	
 	echo "$Date: 开始订阅..." >> $LOG_FILE
 	mkdir -p /var/${CONFIG}_sub && rm -f /var/${CONFIG}_sub/*
-	/usr/bin/wget --no-check-certificate --timeout=8 -t 2 $subscribe_url -P /var/${CONFIG}_sub
-	[ ! -d "/var/${CONFIG}_sub" ] || [ "$(ls /var/${CONFIG}_sub | wc -l)" -eq 0 ] && echo "$Date: 订阅链接下载失败，请重试！" >> $LOG_FILE && rm -f "$LOCK_FILE" && exit 0
+	#/usr/bin/wget --no-check-certificate --timeout=8 -t 2 $subscribe_url -P /var/${CONFIG}_sub
+	status=$(curl -w %{http_code} --connect-timeout 10 $subscribe_url --silent -o /var/${CONFIG}_sub/sub)
+	[ -z "$status" ] || [ "$status" == "404" ] || [ ! -d "/var/${CONFIG}_sub" ] || [ "$(ls /var/${CONFIG}_sub | wc -l)" -eq 0 ] && echo "$Date: 订阅链接下载失败，请重试！" >> $LOG_FILE && rm -f "$LOCK_FILE" && exit 0
 	
 	mkdir -p /usr/share/${CONFIG}/sub && rm -f /usr/share/${CONFIG}/sub/*
 	get_local_nodes
