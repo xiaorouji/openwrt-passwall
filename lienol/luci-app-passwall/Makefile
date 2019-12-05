@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
 PKG_VERSION:=3.0
-PKG_RELEASE:=116-20191203
+PKG_RELEASE:=118-20191205
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PO2LMO:=./po2lmo
@@ -82,7 +82,7 @@ define Package/$(PKG_NAME)
   TITLE:=LuCI support for PassWall By Lienol
   PKGARCH:=all
   DEPENDS:=+curl +libcurl +libmbedtls +ca-bundle +ca-certificates +resolveip +iptables-mod-tproxy +kmod-ipt-tproxy +iptables-mod-ipopt +kmod-ipt-ipopt +ip +ipset +coreutils +coreutils-base64 +coreutils-nohup +luci-lib-jsonc +unzip \
-  +dnsmasq-full \
+  +dnsmasq-full +tcping \
   +PACKAGE_$(PKG_NAME)_INCLUDE_redsocks2:redsocks2 \
   +PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks:shadowsocks-libev-ss-redir \
   +PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR:shadowsocksr-libev-alt \

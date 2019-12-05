@@ -179,21 +179,37 @@ function connect_status()
 end
 
 function auto_ping_node()
+    local index = luci.http.formvalue("index")
+    local address = luci.http.formvalue("address")
+    local port = luci.http.formvalue("port")
     local e = {}
-    e.index = luci.http.formvalue("index")
-    e.ping = luci.sys.exec(
-                 "ping -c 1 -W 1 %q 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print$2}'" %
-                     luci.http.formvalue("domain"))
+    e.index = index
+    if luci.sys.exec("echo -n `command -v tcping`") ~= "" then
+        e.ping = luci.sys.exec("tcping -q -c 1 -i 3 -p " .. port .. " " ..
+                                   address ..
+                                   " 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print$2}'")
+    else
+        e.ping = luci.sys.exec(
+                     "ping -c 1 -W 1 %q 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print$2}'" %
+                         address)
+    end
     luci.http.prepare_content("application/json")
     luci.http.write_json(e)
 end
 
 function ping_node()
     local e = {}
-    local node = luci.http.formvalue("node")
-    e.ping = luci.sys.exec(
-                 "echo -n `ping -c 1 -W 1 %q 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print$2}'`" %
-                     node)
+    local address = luci.http.formvalue("address")
+    local port = luci.http.formvalue("port")
+    if luci.sys.exec("echo -n `command -v tcping`") ~= "" then
+        e.ping = luci.sys.exec("tcping -q -c 1 -i 3 -p " .. port .. " " ..
+                                   address ..
+                                   " 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print$2}'")
+    else
+        e.ping = luci.sys.exec(
+                     "echo -n `ping -c 1 -W 1 %q 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print$2}'`" %
+                         address)
+    end
     luci.http.prepare_content("application/json")
     luci.http.write_json(e)
 end
