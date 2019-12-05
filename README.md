@@ -1,5 +1,4 @@
 # openwrt-package
-=================
 
 Some OpenWrt/LEDE LuCI for Commonly Used Package
 
@@ -12,3 +11,5 @@ Add "src-git lienol https://github.com/Lienol/openwrt-package" to feeds.conf.def
 
 Or download it yourself and put it in the package folder.
 make after enjoy...
+
+If you use Luci-19, Please selected the "luci-compat" and "luci-lib-ipkg" after compile
