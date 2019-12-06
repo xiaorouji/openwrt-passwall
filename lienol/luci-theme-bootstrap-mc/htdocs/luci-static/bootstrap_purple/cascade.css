@@ -106,14 +106,6 @@ legend {
 	margin: 0 auto;
 }
 
-
-/* 隐藏登录用户栏 */
-
-.container form[action$="/cgi-bin/luci"] .cbi-map fieldset fieldset div:first-child {
-	display: none;
-}
-
-
 /* Header */
 
 header {
@@ -1246,4 +1238,68 @@ footer a:hover {
 #wan6_i {
 	vertical-align: top;
 	width: 50px !important;
+}
+
+/* login */
+body.node-main-login {
+    background: url(bg.jpg);
+}
+
+body.node-main-login > header {
+    background: none;
+	border-bottom: none;
+}
+
+.node-main-login > .container > form {
+	width: 20rem;
+    display: inline-block;
+    padding: 1rem 1rem;
+    border-radius: .375rem;
+    text-align: center;
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin-top: 60px;
+}
+
+.node-main-login > .container > form .errorbox {
+	color: red;
+}
+
+.node-main-login > .container > form > .cbi-map > h2{
+    width: 100px;
+    height: 100px;
+    color: #fff;
+    text-align: center;
+    letter-spacing: 4px;
+    display: block;
+    margin: -100px auto 15px auto;
+    padding: 0;
+    text-indent: -500px;
+    overflow: hidden;
+    border-radius: 60px;
+    border: #948fe1 3px solid;
+    background-image: url(wifi.png);
+    background-size: cover;
+    box-shadow: 0 4px 20px 0px rgba(0, 0, 0, 0.14), 0 7px 10px -5px rgba(156, 39, 176, 0.4);
+}
+
+.node-main-login > .container > form input[name='luci_username'], .node-main-login > .container > form input[name='luci_password'] {
+	background:unset;
+	color: white;
+}
+
+.node-main-login > .container > form > .cbi-map > fieldset.cbi-section {
+	display: unset;
+}
+
+.node-main-login > .container > footer {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+	width: 100%;
+	margin-top: 60px;
+	display: none;
 }
