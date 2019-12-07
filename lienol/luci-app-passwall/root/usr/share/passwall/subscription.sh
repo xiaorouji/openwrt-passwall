@@ -274,6 +274,7 @@ add() {
 		mkdir -p /usr/share/${CONFIG}/sub && rm -f /usr/share/${CONFIG}/sub/*
 		for link in $LINKS
 		do
+			is_decode=1
 			if expr "$link" : "ss://";then
 				link_type="ss"
 				new_link=$(echo -n "$link" | sed 's/ssr:\/\///g')
