@@ -326,16 +326,18 @@ start() {
 	for url in $subscribe_url
 	do
 		let index+=1
-		#/usr/bin/wget --no-check-certificate --timeout=8 -t 2 $url -P /var/${CONFIG}_sub
-		status=$(curl -w %{http_code} --connect-timeout 10 $url --silent -o /var/${CONFIG}_sub/$index)
-		[ -z "$status" ] || [ "$status" != "200" ] && echo "$Date: 订阅链接$url下载失败，请重试！" >> $LOG_FILE && continue
+		echo "$Date: 正在订阅：$url" >> $LOG_FILE
+		#status=$(/usr/bin/curl -w %{http_code} --connect-timeout 10 $url --silent -o /var/${CONFIG}_sub/$index)
+		result=$(/usr/bin/wget --no-check-certificate --timeout=8 -t 1 -O- $url)
+		[ "$?" != 0 ] || [ -z "$result" ] && echo "$Date: 订阅失败：$url，请检测订阅链接是否正常或使用代理尝试！" >> $LOG_FILE && continue
+		echo "$result" > /var/${CONFIG}_sub/$index
 	done
 	[ ! -d "/var/${CONFIG}_sub" ] || [ "$(ls /var/${CONFIG}_sub | wc -l)" -eq 0 ] && echo "$Date: 订阅失败" >> $LOG_FILE && rm -f "$LOCK_FILE" && exit 0
 	mkdir -p /usr/share/${CONFIG}/sub && rm -f /usr/share/${CONFIG}/sub/*
 	get_local_nodes
 	for file in /var/${CONFIG}_sub/*
 	do
-		[ -z "$(du -sh $file 2> /dev/null)" ] && echo "$Date: 订阅链接下载 $file 失败，请重试！" >> $LOG_FILE && continue
+		[ -z "$(du -sh $file 2> /dev/null)" ] && echo "$Date: 订阅失败：$url，解密失败！" >> $LOG_FILE && continue
 		decode_link=$(cat "$file" | /usr/bin/base64 -d 2> /dev/null)
 		maxnum=$(echo -n "$decode_link" | grep "MAX=" | awk -F"=" '{print $2}')
 		if [ -n "$maxnum" ]; then
