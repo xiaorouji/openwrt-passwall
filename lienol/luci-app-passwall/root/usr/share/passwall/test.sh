@@ -8,7 +8,7 @@ get_date() {
 }
 
 test_url() {
-	status=$(curl -I -o /dev/null -s --connect-timeout 5 -w %{http_code} "$1" | grep 200)
+	status=$(/usr/bin/curl -I -o /dev/null -s --connect-timeout 5 -w %{http_code} "$1" | grep 200)
 	echo $status
 }
 
