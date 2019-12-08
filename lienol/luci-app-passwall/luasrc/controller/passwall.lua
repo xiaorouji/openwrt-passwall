@@ -167,11 +167,11 @@ function connect_status()
     local e = {}
     if luci.http.formvalue("type") == "google" then
         e.status = luci.sys.call(
-                       "echo `curl -I -o /dev/null -s -m 10 --connect-timeout 5 -w %{http_code} 'https://www.google.com'` | grep 200 >/dev/null") ==
+                       "echo `/usr/share/passwall/test.sh test_url 'https://www.google.com'` | grep 200 >/dev/null") ==
                        0
     else
         e.status = luci.sys.call(
-                       "echo `curl -I -o /dev/null -s -m 10 --connect-timeout 2 -w %{http_code} 'http://www.baidu.com'` | grep 200 >/dev/null") ==
+                       "echo `/usr/share/passwall/test.sh test_url 'https://www.baidu.com'` | grep 200 >/dev/null") ==
                        0
     end
     luci.http.prepare_content("application/json")
@@ -268,8 +268,8 @@ function check_port()
                     node_name = "[%s] [%s:%s]" % {s.remarks, s.address, s.port}
                 end
 
-                result = luci.sys.exec("echo -n `tcping -q -c 1 -i 3 -p " .. s.port ..
-                                           " " .. s.address ..
+                result = luci.sys.exec("echo -n `tcping -q -c 1 -i 3 -p " ..
+                                           s.port .. " " .. s.address ..
                                            " 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print$2}'`")
                 if result and result ~= "" then
                     retstring =
