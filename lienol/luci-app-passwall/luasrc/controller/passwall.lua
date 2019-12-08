@@ -185,12 +185,13 @@ function auto_ping_node()
     local e = {}
     e.index = index
     if luci.sys.exec("echo -n `command -v tcping`") ~= "" then
-        e.ping = luci.sys.exec("tcping -q -c 1 -i 3 -p " .. port .. " " ..
-                                   address ..
-                                   " 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print$2}'")
+        e.ping = luci.sys.exec(
+                     "echo -n `tcping -q -c 1 -i 3 -p " .. port .. " " ..
+                         address ..
+                         " 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print$2}'`")
     else
         e.ping = luci.sys.exec(
-                     "ping -c 1 -W 1 %q 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print$2}'" %
+                     "echo -n `ping -c 1 -W 1 %q 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print$2}'`" %
                          address)
     end
     luci.http.prepare_content("application/json")
@@ -202,9 +203,10 @@ function ping_node()
     local address = luci.http.formvalue("address")
     local port = luci.http.formvalue("port")
     if luci.sys.exec("echo -n `command -v tcping`") ~= "" then
-        e.ping = luci.sys.exec("tcping -q -c 1 -i 3 -p " .. port .. " " ..
-                                   address ..
-                                   " 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print$2}'")
+        e.ping = luci.sys.exec(
+                     "echo -n `tcping -q -c 1 -i 3 -p " .. port .. " " ..
+                         address ..
+                         " 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print$2}'`")
     else
         e.ping = luci.sys.exec(
                      "echo -n `ping -c 1 -W 1 %q 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print$2}'`" %
@@ -263,13 +265,12 @@ function check_port()
                 (s.v2ray_transport and s.v2ray_transport == "mkcp" and s.port) then
             else
                 if s.type and s.address and s.port and s.remarks then
-                    node_name = "[%s] [%s:%s]" %
-                                    {s.remarks, s.address, s.port}
+                    node_name = "[%s] [%s:%s]" % {s.remarks, s.address, s.port}
                 end
 
-                result = luci.sys.exec("tcping -q -c 1 -i 3 -p " .. s.port ..
+                result = luci.sys.exec("echo -n `tcping -q -c 1 -i 3 -p " .. s.port ..
                                            " " .. s.address ..
-                                           " 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print$2}'")
+                                           " 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print$2}'`")
                 if result and result ~= "" then
                     retstring =
                         retstring .. "<font color='green'>" .. node_name ..
