@@ -277,7 +277,7 @@ add() {
 			is_decode=1
 			if expr "$link" : "ss://";then
 				link_type="ss"
-				new_link=$(echo -n "$link" | sed 's/ssr:\/\///g')
+				new_link=$(echo -n "$link" | sed 's/ss:\/\///g')
 			elif expr "$link" : "ssr://";then
 				link_type="ssr"
 				new_link=$(echo -n "$link" | sed 's/ssr:\/\///g')
@@ -350,7 +350,7 @@ start() {
 			is_decode=1
 			if expr "$link" : "ss://";then
 				link_type="ss"
-				new_link=$(echo -n "$link" | sed 's/ssr:\/\///g')
+				new_link=$(echo -n "$link" | sed 's/ss:\/\///g')
 			elif expr "$link" : "ssr://";then
 				link_type="ssr"
 				new_link=$(echo -n "$link" | sed 's/ssr:\/\///g')
