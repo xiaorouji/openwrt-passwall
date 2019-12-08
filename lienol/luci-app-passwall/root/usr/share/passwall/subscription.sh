@@ -23,9 +23,9 @@ decode_url_link() {
 	if [ "$mod4" -gt 0 ]; then
 		var="===="
 		newlink=${link}${var:$mod4}
-		echo -n "$newlink" | sed 's/-/+/g; s/_/\//g' | /usr/bin/base64 -d -i 2> /dev/null
+		echo -n "$newlink" | sed 's/-/+/g; s/_/\//g' | base64 -d -i 2> /dev/null
 	else
-		echo -n "$link" | sed 's/-/+/g; s/_/\//g' | /usr/bin/base64 -d -i 2> /dev/null
+		echo -n "$link" | sed 's/-/+/g; s/_/\//g' | base64 -d -i 2> /dev/null
 	fi
 }
 
@@ -267,6 +267,8 @@ del_all_config(){
 }
 
 add() {
+	base64=$(command -v base64)
+	[ -z "$base64" ] && echo "$Date: 找不到Base64程序，请安装后重试！" >> $LOG_FILE && rm -f "$LOCK_FILE" && exit 0
 	LINKS=$(cat /tmp/links.conf 2>/dev/null)
 	[ -n "$LINKS" ] && {
 		[ -f "$LOCK_FILE" ] && return 3
@@ -305,6 +307,8 @@ start() {
 	# 防止并发开启服务
 	[ -f "$LOCK_FILE" ] && return 3
 	touch "$LOCK_FILE"
+	base64=$(command -v base64)
+	[ -z "$base64" ] && echo "$Date: 找不到Base64程序，请安装后重试！" >> $LOG_FILE && rm -f "$LOCK_FILE" && exit 0
 	addnum_ss=0
 	updatenum_ss=0
 	delnum_ss=0
@@ -327,9 +331,11 @@ start() {
 	do
 		let index+=1
 		echo "$Date: 正在订阅：$url" >> $LOG_FILE
-		#status=$(/usr/bin/curl -w %{http_code} --connect-timeout 10 $url --silent -o /var/${CONFIG}_sub/$index)
-		result=$(/usr/bin/wget --no-check-certificate --timeout=8 -t 1 -O- $url)
-		[ "$?" != 0 ] || [ -z "$result" ] && echo "$Date: 订阅失败：$url，请检测订阅链接是否正常或使用代理尝试！" >> $LOG_FILE && continue
+		result=$(/usr/bin/curl --connect-timeout 10 -sL $url)
+		[ "$?" != 0 ] || [ -z "$result" ] && {
+			result=$(/usr/bin/wget --no-check-certificate --timeout=8 -t 1 -O- $url)
+			[ "$?" != 0 ] || [ -z "$result" ] && echo "$Date: 订阅失败：$url，请检测订阅链接是否正常或使用代理尝试！" >> $LOG_FILE && continue
+		}
 		echo "$result" > /var/${CONFIG}_sub/$index
 	done
 	[ ! -d "/var/${CONFIG}_sub" ] || [ "$(ls /var/${CONFIG}_sub | wc -l)" -eq 0 ] && echo "$Date: 订阅失败" >> $LOG_FILE && rm -f "$LOCK_FILE" && exit 0
@@ -338,7 +344,7 @@ start() {
 	for file in /var/${CONFIG}_sub/*
 	do
 		[ -z "$(du -sh $file 2> /dev/null)" ] && echo "$Date: 订阅失败：$url，解密失败！" >> $LOG_FILE && continue
-		decode_link=$(cat "$file" | /usr/bin/base64 -d 2> /dev/null)
+		decode_link=$(cat "$file" | base64 -d 2> /dev/null)
 		maxnum=$(echo -n "$decode_link" | grep "MAX=" | awk -F"=" '{print $2}')
 		if [ -n "$maxnum" ]; then
 			decode_link=$(echo -n "$decode_link" | sed '/MAX=/d' | shuf -n${maxnum})

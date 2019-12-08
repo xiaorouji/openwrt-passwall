@@ -33,12 +33,14 @@ uci_get_by_type() {
 
 # rule update
 echo $Date: 开始更新规则，请等待... >$LOG_FILE
-#/usr/bin/wget -q --no-check-certificate --timeout=15 https://raw.githubusercontent.com/monokoo/koolshare.github.io/acelan_softcenter_ui/maintain_files/version1 -O /tmp/version1
-status1=$(/usr/bin/curl -w %{http_code} --connect-timeout 10 $url_main/version1 --silent -o /tmp/version1)
-if [ "$?" != 0 ] || [ ! -f "/tmp/version1" ] || [ -z "$status1" ] || [ "$status1" != "200" ]; then
-	echo $Date: 无法访问更新接口，请更新接口！ >>$LOG_FILE
-	exit
-fi
+status=$(/usr/bin/curl -w %{http_code} --connect-timeout 10 $url_main/version1 --silent -o /tmp/version1)
+[ "$?" != 0 ] || [ -z "$status" ] || [ "$status" != "200" ] && {
+	status=$(/usr/bin/wget -q --no-check-certificate --timeout=15 $url_main/version1 -O /tmp/version1)
+	[ "$?" != 0 ] || [ -z "$status" ] && {
+		echo $Date: 无法访问更新接口，请更新接口！ >>$LOG_FILE
+		exit
+	}
+}
 online_content=$(cat /tmp/version1 2>/dev/null)
 if [ -z "$online_content" ]; then
 	rm -rf /tmp/version1
@@ -57,12 +59,14 @@ if [ "$gfwlist_update" == 1 ]; then
 		if [ "$version_gfwlist1" != "$version_gfwlist2" -o "$md5sum_gfwlist2" != "$local_md5sum_gfwlist" ]; then
 			echo $Date: 检测到新版本gfwlist，开始更新... >>$LOG_FILE
 			echo $Date: 下载gfwlist到临时文件... >>$LOG_FILE
-			#/usr/bin/wget --no-check-certificate --timeout=15 -q https://raw.githubusercontent.com/monokoo/koolshare.github.io/acelan_softcenter_ui/maintain_files/gfwlist.conf -O /tmp/gfwlist.conf
-			status2=$(/usr/bin/curl -w %{http_code} --connect-timeout 10 $url_main/gfwlist.conf --silent -o /tmp/gfwlist.conf)
-			if [ "$?" != 0 ] || [ ! -f "/tmp/gfwlist.conf" ] || [ -z "$status2" ] || [ "$status2" != "200" ]; then
-				echo $Date: 无法访问更新接口，请更新接口！ >>$LOG_FILE
-				exit
-			fi
+			status=$(/usr/bin/curl -w %{http_code} --connect-timeout 10 $url_main/gfwlist.conf --silent -o /tmp/gfwlist.conf)
+			[ "$?" != 0 ] || [ -z "$status" ] || [ "$status" != "200" ] && {
+				status=$(/usr/bin/wget --no-check-certificate --timeout=15 -q $url_main/gfwlist.conf -O /tmp/gfwlist.conf)
+				[ "$?" != 0 ] || [ -z "$status" ] && {
+					echo $Date: 无法访问更新接口，请更新接口！ >>$LOG_FILE
+					exit
+				}
+			}
 			md5sum_gfwlist1=$(md5sum /tmp/gfwlist.conf | sed 's/ /\n/g' | sed -n 1p)
 			if [ "$md5sum_gfwlist1"x = "$md5sum_gfwlist2"x ]; then
 				echo $Date: 下载完成，校验通过，将临时文件覆盖到原始gfwlist文件 >>$LOG_FILE
@@ -94,12 +98,14 @@ if [ "$chnroute_update" == 1 ]; then
 		if [ "$version_chnroute1" != "$version_chnroute2" -o "$md5sum_chnroute2" != "$local_md5sum_chnroute" ]; then
 			echo $Date: 检测到新版本chnroute，开始更新... >>$LOG_FILE
 			echo $Date: 下载chnroute到临时文件... >>$LOG_FILE
-			#/usr/bin/wget --no-check-certificate --timeout=15 -q https://raw.githubusercontent.com/monokoo/koolshare.github.io/acelan_softcenter_ui/maintain_files/chnroute.txt -O /tmp/chnroute
-			status3=$(/usr/bin/curl -w %{http_code} --connect-timeout 10 $url_main/chnroute.txt --silent -o /tmp/chnroute)
-			if [ "$?" != 0 ] || [ ! -f "/tmp/chnroute" ] || [ -z "$status3" ] || [ "$status3" == "404" ]; then
-				echo $Date: 无法访问更新接口，请更新接口！ >>$LOG_FILE
-				exit
-			fi
+			status=$(/usr/bin/curl -w %{http_code} --connect-timeout 10 $url_main/chnroute.txt --silent -o /tmp/chnroute)
+			[ "$?" != 0 ] || [ -z "$status" ] || [ "$status" != "200" ] && {
+				status=$(/usr/bin/wget --no-check-certificate --timeout=15 -q $url_main/chnroute.txt -O /tmp/chnroute)
+				[ "$?" != 0 ] || [ -z "$status" ] && {
+					echo $Date: 无法访问更新接口，请更新接口！ >>$LOG_FILE
+					exit
+				}
+			}
 			md5sum_chnroute1=$(md5sum /tmp/chnroute | sed 's/ /\n/g' | sed -n 1p)
 			if [ "$md5sum_chnroute1"x = "$md5sum_chnroute2"x ]; then
 				echo $Date: 下载完成，校验通过，将临时文件覆盖到原始chnroute文件 >>$LOG_FILE
