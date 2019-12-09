@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 . /usr/share/libubox/jshn.sh
 
@@ -15,6 +15,8 @@ config_t_get() {
 	echo $ret
 }
 
+urldecode() { : "${*//+/ }"; echo -e "${_//%/\\x}"; }
+
 decode_url_link() {
 	link=$1
 	num=$2
@@ -26,6 +28,22 @@ decode_url_link() {
 		echo -n "$newlink" | sed 's/-/+/g; s/_/\//g' | base64 -d -i 2> /dev/null
 	else
 		echo -n "$link" | sed 's/-/+/g; s/_/\//g' | base64 -d -i 2> /dev/null
+	fi
+}
+
+ss_decode() {
+	temp_link=$1
+	if [[ "$(echo $temp_link | grep "@")" != "" ]]; then
+		link1=$(decode_url_link $(echo -n "$temp_link" | awk -F '@' '{print $1}') 1)
+		link2=$(echo -n "$temp_link" | awk -F '@' '{print $2}')
+		echo -n "${link1}@${link2}"
+	elif [[ "$(echo $temp_link | grep "#")" != "" ]]; then
+		link1=$(decode_url_link $(echo -n "$temp_link" | awk -F '#' '{print $1}') 1)
+		link2=$(echo -n "$temp_link" | awk -F '#' '{print $2}')
+		echo -n "${link1}#${link2}"
+	else
+		link1=$(decode_url_link $(echo -n "$temp_link" ) 1)
+		echo -n "$link1"
 	fi
 }
 
@@ -58,12 +76,15 @@ get_remote_config(){
 	group="sub_node"
 	if [ "$1" == "ss" ]; then
 		decode_link="$2"
-		node_address=$(echo "$decode_link" | awk -F ':' '{print $2}' | awk -F '@' '{print $2}')
-		node_port=$(echo "$decode_link" | awk -F ':' '{print $3}')
-		ssr_encrypt_method=$(echo "$decode_link" | awk -F ':' '{print $1}')
+		decode_link=$(ss_decode $decode_link)
+		ss_encrypt_method=$(echo "$decode_link" | awk -F ':' '{print $1}')
 		password=$(echo "$decode_link" | awk -F ':' '{print $2}' | awk -F '@' '{print $1}')
+		node_address=$(echo "$decode_link" | awk -F ':' '{print $2}' | awk -F '@' '{print $2}')
+		node_port=$(echo "$decode_link" | awk -F '@' '{print $2}' | awk -F '#' '{print $1}' | awk -F ':' '{print $2}')
+		remarks=$(urldecode $(echo "$decode_link" | awk -F '#' '{print $2}'))
 	elif [ "$1" == "ssr" ]; then
 		decode_link="$2"
+		decode_link=$(decode_url_link $decode_link 1)
 		node_address=$(echo "$decode_link" | awk -F ':' '{print $1}')
 		node_address=$(echo $node_address |awk '{print gensub(/[^!-~]/,"","g",$0)}')
 		[ -z "$node_address" -o "$node_address" == "" ] && isAdd=0
@@ -81,7 +102,8 @@ get_remote_config(){
 		[ -n "$remarks_temp" ] && remarks="$(decode_url_link $remarks_temp 0)"
 		group_temp=$(echo "$decode_link" |grep -Eo "group.+" |sed 's/group=//g'|awk -F'&' '{print $1}')
 	elif [ "$1" == "v2ray" ]; then
-		json_load "$2"
+		decode_link=$(decode_url_link $2 1)
+		json_load "$decode_link"
 		json_get_var json_v v
 		json_get_var json_ps ps
 		json_get_var json_node_address add
@@ -129,12 +151,12 @@ add_nodes(){
 	if [ "$2" == "ss" ]; then
 		${uci_set}add_mode="$add_mode"
 		${uci_set}remarks="$remarks"
-		${uci_set}type="SSR"
+		${uci_set}type="SS"
 		${uci_set}address="$node_address"
 		${uci_set}use_ipv6=0
 		${uci_set}port="$node_port"
 		${uci_set}password="$password"
-		${uci_set}ssr_encrypt_method="$ssr_encrypt_method"
+		${uci_set}ss_encrypt_method="$ss_encrypt_method"
 		${uci_set}timeout=300
 		${uci_set}tcp_fast_open=false
 		
@@ -276,7 +298,6 @@ add() {
 		mkdir -p /usr/share/${CONFIG}/sub && rm -f /usr/share/${CONFIG}/sub/*
 		for link in $LINKS
 		do
-			is_decode=1
 			if expr "$link" : "ss://";then
 				link_type="ss"
 				new_link=$(echo -n "$link" | sed 's/ss:\/\///g')
@@ -289,10 +310,8 @@ add() {
 			elif expr "$link" : "trojan://";then
 				link_type="trojan"
 				new_link=$(echo -n "$link" | sed 's/trojan:\/\///g')
-				is_decode=0
 			fi
 			[ -z "$link_type" ] && continue
-			[ "$is_decode" == 1 ] && new_link=$(decode_url_link $new_link 1)
 			get_remote_config "$link_type" "$new_link" 1
 			update_config
 		done
@@ -355,7 +374,6 @@ start() {
 		[ -z "$decode_link" ] && continue
 		for link in $decode_link
 		do
-			is_decode=1
 			if expr "$link" : "ss://";then
 				link_type="ss"
 				new_link=$(echo -n "$link" | sed 's/ss:\/\///g')
@@ -368,10 +386,8 @@ start() {
 			elif expr "$link" : "trojan://";then
 				link_type="trojan"
 				new_link=$(echo -n "$link" | sed 's/trojan:\/\///g')
-				is_decode=0
 			fi
 			[ -z "$link_type" ] && continue
-			[ "$is_decode" == 1 ] && new_link=$(decode_url_link $new_link 1)
 			get_remote_config "$link_type" "$new_link"
 			update_config
 		done
@@ -408,3 +424,4 @@ add)
 	start
 	;;
 esac
+
