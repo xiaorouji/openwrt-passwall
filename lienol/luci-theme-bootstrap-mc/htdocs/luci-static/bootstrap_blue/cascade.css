@@ -228,7 +228,7 @@ header {
 }
 
 .cbi-dropdown {
-	min-width: 210px;
+	/* min-width: 210px; */
 	max-width: 400px;
 	width: auto;
 }
@@ -281,7 +281,7 @@ header {
 	flex-grow: 1;
 	align-items: center;
 	align-self: center;
-	color: #404040;
+	/* color: #404040; */
 	min-height: 20px;
 }
 
@@ -831,7 +831,8 @@ select:focus {
 
 input[type=button],
 input[type=reset],
-input[type=submit] {
+input[type=submit],
+button {
 	width: auto !important;
 }
 
@@ -872,10 +873,11 @@ input[type=file] {
 }
 
 .cbi-value-description {
-	display: inline;
+	/* display: inline; */
 	background-image: url(/luci-static/resources/cbi/help.gif);
-	background-position-x: 0px;
-	background-position-y: 1px;
+	/* background-position-x: 0px;
+	background-position-y: 1px; */
+	background-position: 0em 0.3em;
 	background-repeat: no-repeat;
 	padding: 0 1.2rem;
 }
@@ -897,7 +899,7 @@ input[type=file] {
 
 /* Button */
 
-.cbi-button {
+.cbi-button, button {
 	border-radius: 6px !important;
 	display: inline-block;
 	background: #fff;
@@ -908,10 +910,13 @@ input[type=file] {
 	line-height: 16px;
 	padding: 4px 8px;
 	cursor: pointer;
+	margin-left: 0.2em;
 }
 
 .cbi-button:active,
-.cbi-button:focus {
+.cbi-button:focus
+button:active,
+button:focus {
 	border-color: #bbb;
 }
 
@@ -1256,6 +1261,10 @@ body.node-main-login > header {
 	border-bottom: none;
 }
 
+body.node-main-login .alert-message {
+	z-index: 999;
+}
+
 .node-main-login > .container > form {
 	width: 20rem;
     display: inline-block;
@@ -1295,8 +1304,8 @@ body.node-main-login > header {
 	color: #000;
 }
 
-.node-main-login > .container > form > .cbi-map > fieldset.cbi-section {
-	display: unset;
+.node-main-login > .container > form > .cbi-map > .cbi-section {
+	display: inline-block;
 }
 
 .node-main-login > .container > footer {
@@ -1307,4 +1316,211 @@ body.node-main-login > header {
 	width: 100%;
 	margin-top: 60px;
 	display: none;
+}
+
+.node-main-login > .container > form .cbi-page-actions {
+    text-align: center !important;
+}
+
+/* luci 19 */
+body.modal-overlay-active {
+    overflow: hidden;
+    height: 100vh;
+}
+
+body.modal-overlay-active #modal_overlay {
+	visibility: visible;
+	left: 50%;
+	top: 50%;
+	position: absolute;
+	opacity: 1;
+	width: auto;
+	right: unset;
+	bottom: unset;
+	transform: translate(-50%,-50%);
+	overflow: unset;
+	height: auto;
+	background: unset;
+}
+
+body.modal-overlay-active #modal_overlay > .modal {
+	align-items: center;
+	box-shadow: 0 0 3px #444;
+	display: flex;
+	flex-wrap: wrap;
+	max-height: unset;
+	max-width: unset;
+	min-height: 32px;
+	min-width: 270px;
+	background: #fe8;
+	border-radius: 3px;
+	padding: 1em 1.5em;
+	margin: 0;
+}
+
+#modal_overlay {
+    visibility: hidden;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: -10000px;
+    right: 10000px;
+    background: rgba(0,0,0,0.7);
+    z-index: 900;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+    transition: opacity .125s ease-in;
+    opacity: 0;
+}
+
+#modal_overlay > .modal.uci-dialog, #modal_overlay > .modal.cbi-modal {
+    max-width: 900px;
+}
+
+/*.modal.alert-message.notice {
+    position: absolute;
+    padding: 15px;
+    margin-bottom: 10px;
+    background: #fe8;
+    border: 1px solid rgba(0, 0, 0, .1);
+    border-width: 2px 0;
+}*/
+
+.modal > * {
+    flex-basis: 100%;
+    line-height: normal;
+    margin-bottom: .5em;
+    max-width: 100%;
+}
+
+#modal_overlay .modal > * {
+    flex-basis: 100%;
+    line-height: normal;
+    margin-bottom: .5em;
+}
+
+[data-tab-title] {
+    height: 0;
+    opacity: 0;
+    overflow: hidden;
+}
+
+[data-tab-active="true"], .cbi-filebrowser.open {
+    height: auto;
+    opacity: 1;
+    overflow: visible;
+    transition: opacity .25s ease-in;
+}
+
+.tabs > li:not(.active), .cbi-tabmenu > .cbi-tab-disabled {
+    color: #999;
+}
+
+.cbi-dynlist {
+    height: auto;
+    min-height: 30px;
+    display: inline-flex;
+    flex-direction: column;
+}
+
+.cbi-dropdown:not(.btn):not(.cbi-button), .cbi-dynlist {
+    min-width: 210px;
+    max-width: 400px;
+    width: auto;
+    background: white;
+    border: 1px solid #118af3;
+    border-radius: 5px;
+    box-sizing: border-box;
+    padding: 0.3em !important;
+}
+
+.cbi-dynlist > .item {
+    margin-bottom: 4px;
+    box-shadow: 0 0 2px #ccc;
+    background: #fff;
+    border: 1px solid #118af3;
+    border-radius: 3px;
+    position: relative;
+    pointer-events: none;
+    padding: 2px 2em 2px 4px;
+}
+
+.cbi-dynlist > .item::after {
+    content: "×";
+    position: absolute;
+    display: inline-flex;
+    align-items: center;
+    top: -1px;
+    right: -1px;
+    bottom: -1px;
+    border: 1px solid #ccc;
+    border-radius: 0 3px 3px 0;
+    font-weight: 700;
+    color: #c44;
+    pointer-events: auto;
+    padding: 0 6px;
+}
+
+.cbi-dynlist > .add-item, .td.cbi-section-actions > * {
+    display: flex;
+}
+
+.cbi-dynlist > .add-item > input, .cbi-dynlist > .add-item > button {
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cbi-dropdown.btn > .open, .cbi-dropdown.cbi-button > .open {
+    margin-left: .5em;
+    border-left: 1px solid;
+    padding: 0 .5em;
+}
+
+.cbi-dropdown.btn > ul:not(.dropdown), .cbi-dropdown.cbi-button > ul:not(.dropdown) {
+    margin: 0 0 0 13px!important;
+}
+
+.btn.primary, .cbi-button-action.important, .cbi-page-actions .cbi-button-apply, .cbi-section-actions .cbi-button-edit {
+    color: #fff;
+}
+
+.cbi-dropdown {
+    display: inline-flex!important;
+    cursor: pointer;
+    height: auto;
+    position: relative;
+    padding: 0!important;
+}
+
+.cbi-progressbar {
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    position: relative;
+    min-width: 170px;
+    height: 20px;
+    background: #f9f9f9;
+    margin: 4px 0;
+}
+
+.cbi-progressbar > div {
+    background: #85d8ff;
+    height: 100%;
+    transition: width .25s ease-in;
+    width: 0%;
+}
+
+.cbi-progressbar::after {
+    position: absolute;
+    bottom: 0;
+    top: 0;
+    right: 0;
+    left: 0;
+    text-align: center;
+    text-shadow: 0 0 2px #fff;
+    content: attr(title);
+    white-space: pre;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
