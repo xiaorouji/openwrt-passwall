@@ -82,7 +82,7 @@ define Package/$(PKG_NAME)
   TITLE:=LuCI support for PassWall By Lienol
   PKGARCH:=all
   DEPENDS:=+curl +wget +libcurl +libmbedtls +ca-bundle +ca-certificates +resolveip +iptables-mod-tproxy +kmod-ipt-tproxy +iptables-mod-ipopt +kmod-ipt-ipopt +ip +ipset +coreutils +coreutils-base64 +coreutils-nohup +luci-lib-jsonc +unzip \
-  +dnsmasq-full +tcping \
+  +dnsmasq-full +tcping +bash \
   +PACKAGE_$(PKG_NAME)_INCLUDE_redsocks2:redsocks2 \
   +PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks:shadowsocks-libev-ss-redir \
   +PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR:shadowsocksr-libev-alt \
