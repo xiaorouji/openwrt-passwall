@@ -37,10 +37,13 @@ ss_decode() {
 		link1=$(decode_url_link $(echo -n "$temp_link" | awk -F '@' '{print $1}') 1)
 		link2=$(echo -n "$temp_link" | awk -F '@' '{print $2}')
 		echo -n "${link1}@${link2}"
-	else
+	elif [[ "$(echo $temp_link | grep "#")" != "" ]]; then
 		link1=$(decode_url_link $(echo -n "$temp_link" | awk -F '#' '{print $1}') 1)
 		link2=$(echo -n "$temp_link" | awk -F '#' '{print $2}')
 		echo -n "${link1}#${link2}"
+	else
+		link1=$(decode_url_link $(echo -n "$temp_link" ) 1)
+		echo -n "$link1"
 	fi
 }
 
