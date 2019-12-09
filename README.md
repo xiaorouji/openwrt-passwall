@@ -1,7 +1,8 @@
 # openwrt-package
-因为已有官方(https://github.com/openwrt/openwrt) 和大雕Lean(https://github.com/coolsnowwolf/lede) 在维护OpenWRT项目，本人就不搞OpenWRT源码了，只做一些Luci包玩玩。
 
-本源码兼容官方和大雕的OpenWRT源码
+本源码兼容官方(https://github.com/openwrt/openwrt) 和大雕Lean(https://github.com/coolsnowwolf/lede)源码
+
+可尝试本人处女作(https://github.com/Lienol/openwrt) 体验一下和官方原版luci19有什么不同？
 
 一些实用的OpenWRT Luci包
 
