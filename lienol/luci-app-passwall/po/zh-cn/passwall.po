@@ -268,11 +268,17 @@ msgstr "Ping延迟"
 msgid "Ping Value"
 msgstr "Ping值"
 
+msgid "Use TCPing"
+msgstr "使用TCPing"
+
+msgid "This will use tcping replace ping detection of node"
+msgstr "选中后保存应用后即使用tcping替换ping检测节点"
+
 msgid "Auto Ping"
 msgstr "自动Ping"
 
 msgid "This will automatically ping the node for latency"
-msgstr "选中后保存应用后刷新即可自动Ping节点"
+msgstr "选中后保存应用后即自动Ping节点"
 
 msgid "Apply"
 msgstr "应用"

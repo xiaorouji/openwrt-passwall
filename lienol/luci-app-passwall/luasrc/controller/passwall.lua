@@ -184,7 +184,9 @@ function auto_ping_node()
     local port = luci.http.formvalue("port")
     local e = {}
     e.index = index
-    if luci.sys.exec("echo -n `command -v tcping`") ~= "" then
+    if luci.sys.exec("echo -n `uci -q get %s.@global_other[0].use_tcping`" %
+                         appname) == "1" and
+        luci.sys.exec("echo -n `command -v tcping`") ~= "" then
         e.ping = luci.sys.exec(
                      "echo -n `tcping -q -c 1 -i 3 -p " .. port .. " " ..
                          address ..
@@ -202,7 +204,9 @@ function ping_node()
     local e = {}
     local address = luci.http.formvalue("address")
     local port = luci.http.formvalue("port")
-    if luci.sys.exec("echo -n `command -v tcping`") ~= "" then
+    if luci.sys.exec("echo -n `uci -q get %s.@global_other[0].use_tcping`" %
+                         appname) == "1" and
+        luci.sys.exec("echo -n `command -v tcping`") ~= "" then
         e.ping = luci.sys.exec(
                      "echo -n `tcping -q -c 1 -i 3 -p " .. port .. " " ..
                          address ..
@@ -255,7 +259,9 @@ function check_port()
     retstring = retstring ..
                     "<font color='red'>暂时不支持UDP检测</font><br />"
 
-    if luci.sys.exec("echo -n `command -v tcping`") ~= "" then
+    if luci.sys.exec("echo -n `uci -q get %s.@global_other[0].use_tcping`" %
+                         appname) == "1" and
+        luci.sys.exec("echo -n `command -v tcping`") ~= "" then
         retstring = retstring ..
                         "<font color='green'>使用tcping检测端口延迟</font><br />"
         uci:foreach("passwall", "nodes", function(s)
@@ -292,15 +298,6 @@ function check_port()
             local udp_socket
             if (s.use_kcp and s.use_kcp == "1" and s.kcp_port) or
                 (s.v2ray_transport and s.v2ray_transport == "mkcp" and s.port) then
-                --[[local port = (s.use_kcp == "1" and s.kcp_port) and s.kcp_port or (s.v2ray_transport == "mkcp" and s.port) and s.port or nil
-			if port then
-				udp_socket = nixio.socket("inet", "dgram")
-				udp_socket:setopt("socket", "rcvtimeo", 3)
-				udp_socket:setopt("socket", "sndtimeo", 3)
-				udp_socket:sendto("test", s.address, port)
-				r,c,d=udp_socket:recvfrom(10)
-				ret=""
-			end--]]
             else
                 if s.type and s.address and s.port and s.remarks then
                     node_name = "%s：[%s] %s:%s" %
