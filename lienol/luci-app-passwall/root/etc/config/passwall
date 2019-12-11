@@ -37,6 +37,7 @@ config global_proxy
 	option proxy_ipv6 '0'
 	
 config global_other
+	option use_tcping '1'
 	option auto_ping '0'
 	option tcp_node_num '1'
 	option udp_node_num '1'
