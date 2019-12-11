@@ -75,11 +75,6 @@ endef
 define Package/trojan/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/trojan $(1)/usr/sbin/trojan
-	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_DATA) ./files/trojan.config $(1)/etc/config/trojan
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/trojan.init $(1)/etc/init.d/trojan
-	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/trojan/config.json $(1)/etc/trojan.json
 endef
 
 
