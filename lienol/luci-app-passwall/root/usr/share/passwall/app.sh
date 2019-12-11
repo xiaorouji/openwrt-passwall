@@ -396,16 +396,16 @@ start_tcp_redir() {
 				local port=$(config_n_get $temp_server port)
 				local server_username=$(config_n_get $temp_server username)
 				local server_password=$(config_n_get $temp_server password)
-				#ipt2socks_bin=$(find_bin ipt2socks)
-				#[ -n "$ipt2socks_bin" ] && {
-				#	$ipt2socks_bin -T -l $port -b 0.0.0.0 -s $address -p $port -R >/dev/null &
-				#}
-				redsocks_bin=$(find_bin redsocks2)
-				[ -n "$redsocks_bin" ] && {
-					local redsocks_config_file=$CONFIG_PATH/TCP_$i.conf
-					gen_redsocks_config $redsocks_config_file tcp $port $address $port $server_username $server_password
-					$redsocks_bin -c $redsocks_config_file >/dev/null &
+				ipt2socks_bin=$(find_bin ipt2socks)
+				[ -n "$ipt2socks_bin" ] && {
+					$ipt2socks_bin -T -l $port -b 0.0.0.0 -s $address -p $port -R >/dev/null &
 				}
+				#redsocks_bin=$(find_bin redsocks2)
+				#[ -n "$redsocks_bin" ] && {
+				#	local redsocks_config_file=$CONFIG_PATH/TCP_$i.conf
+				#	gen_redsocks_config $redsocks_config_file tcp $port $address $port $server_username $server_password
+				#	$redsocks_bin -c $redsocks_config_file >/dev/null &
+				#}
 			elif [ "$TYPE" == "ss" -o "$TYPE" == "ssr" ]; then
 				ss_bin=$(find_bin "$TYPE"-redir)
 				[ -n "$ss_bin" ] && {
@@ -452,33 +452,33 @@ start_udp_redir() {
 				local port=$(config_n_get $temp_server port)
 				local server_username=$(config_n_get $temp_server username)
 				local server_password=$(config_n_get $temp_server password)
-				#ipt2socks_bin=$(find_bin ipt2socks)
-				#[ -n "$ipt2socks_bin" ] && {
-				#	$ipt2socks_bin -U -l $port -b 0.0.0.0 -s 127.0.0.1 -p $socks5_port -R >/dev/null &
-				#}
-				
-				redsocks_bin=$(find_bin redsocks2)
-				[ -n "$redsocks_bin" ] && {
-					local redsocks_config_file=$CONFIG_PATH/redsocks_UDP_$i.conf
-					gen_redsocks_config $redsocks_config_file udp $port "127.0.0.1" $socks5_port
-					$redsocks_bin -c $redsocks_config_file >/dev/null &
+				ipt2socks_bin=$(find_bin ipt2socks)
+				[ -n "$ipt2socks_bin" ] && {
+					$ipt2socks_bin -U -l $port -b 0.0.0.0 -s 127.0.0.1 -p $socks5_port -R >/dev/null &
 				}
+				
+				#redsocks_bin=$(find_bin redsocks2)
+				#[ -n "$redsocks_bin" ] && {
+				#	local redsocks_config_file=$CONFIG_PATH/redsocks_UDP_$i.conf
+				#	gen_redsocks_config $redsocks_config_file udp $port "127.0.0.1" $socks5_port
+				#	$redsocks_bin -c $redsocks_config_file >/dev/null &
+				#}
 			elif [ "$TYPE" == "socks5" ]; then
 				local address=$(config_n_get $temp_server address)
 				local port=$(config_n_get $temp_server port)
 				local server_username=$(config_n_get $temp_server username)
 				local server_password=$(config_n_get $temp_server password)
-				#ipt2socks_bin=$(find_bin ipt2socks)
-				#[ -n "$ipt2socks_bin" ] && {
-				#	$ipt2socks_bin -U -l $port -b 0.0.0.0 -s $address -p $port -R >/dev/null &
-				#}
-				
-				redsocks_bin=$(find_bin redsocks2)
-				[ -n "$redsocks_bin" ] && {
-					local redsocks_config_file=$CONFIG_PATH/UDP_$i.conf
-					gen_redsocks_config $redsocks_config_file udp $port $address $port $server_username $server_password
-					$redsocks_bin -c $redsocks_config_file >/dev/null &
+				ipt2socks_bin=$(find_bin ipt2socks)
+				[ -n "$ipt2socks_bin" ] && {
+					$ipt2socks_bin -U -l $port -b 0.0.0.0 -s $address -p $port -R >/dev/null &
 				}
+				
+				#redsocks_bin=$(find_bin redsocks2)
+				#[ -n "$redsocks_bin" ] && {
+				#	local redsocks_config_file=$CONFIG_PATH/UDP_$i.conf
+				#	gen_redsocks_config $redsocks_config_file udp $port $address $port $server_username $server_password
+				#	$redsocks_bin -c $redsocks_config_file >/dev/null &
+				#}
 			elif [ "$TYPE" == "ss" -o "$TYPE" == "ssr" ]; then
 				ss_bin=$(find_bin "$TYPE"-redir)
 				[ -n "$ss_bin" ] && {
