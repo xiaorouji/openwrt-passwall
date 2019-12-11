@@ -17,8 +17,8 @@ include $(INCLUDE_DIR)/package.mk
 define Package/$(PKG_NAME)/config
 menu "Configuration"
 
-config PACKAGE_$(PKG_NAME)_INCLUDE_redsocks2
-	bool "Include RedSocks2"
+config PACKAGE_$(PKG_NAME)_INCLUDE_ipt2socks
+	bool "Include ipt2socks"
 	default n
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks
@@ -83,7 +83,7 @@ define Package/$(PKG_NAME)
   PKGARCH:=all
   DEPENDS:=+curl +wget +libcurl +libmbedtls +ca-bundle +ca-certificates +resolveip +iptables-mod-tproxy +kmod-ipt-tproxy +iptables-mod-ipopt +kmod-ipt-ipopt +ip +ipset +coreutils +coreutils-base64 +coreutils-nohup +luci-lib-jsonc +unzip \
   +dnsmasq-full +tcping +bash \
-  +PACKAGE_$(PKG_NAME)_INCLUDE_redsocks2:redsocks2 \
+  +PACKAGE_$(PKG_NAME)_INCLUDE_ipt2socks:ipt2socks \
   +PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks:shadowsocks-libev-ss-redir \
   +PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR:shadowsocksr-libev-alt \
   +PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_socks:shadowsocks-libev-ss-local \
