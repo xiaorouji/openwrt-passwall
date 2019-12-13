@@ -134,7 +134,7 @@ get_remote_config(){
 		remarks="${node_address}:${node_port}"
 	fi
 	
-	# 把全部服务器节点写入文件 /usr/share/${CONFIG}/sub/all_onlinenodes
+	# 把全部节点节点写入文件 /usr/share/${CONFIG}/sub/all_onlinenodes
 	if [ ! -f "/usr/share/${CONFIG}/sub/all_onlinenodes" ]; then
 		echo $node_address > /usr/share/${CONFIG}/sub/all_onlinenodes
 	else
@@ -249,7 +249,7 @@ update_config(){
 }
 
 del_config(){
-	# 删除订阅服务器已经不存在的节点
+	# 删除订阅节点已经不存在的节点
 	for localaddress in $(cat /usr/share/${CONFIG}/sub/all_localnodes)
 	do
 		[ "`cat /usr/share/${CONFIG}/sub/all_onlinenodes |grep -c "$localaddress"`" -eq 0 ] && {
@@ -276,16 +276,59 @@ del_config(){
 del_all_config(){
 	get_node_index
 	[ "`uci show $CONFIG | grep -c 'sub_node'`" -eq 0 ] && exit 0
-	current_tcp_node1=$(config_t_get global tcp_node1)
-	is_sub_node=`uci -q get $CONFIG.$current_tcp_node1.group`
+	TCP_NODE_NUM=$(uci get $CONFIG.@global_other[0].tcp_node_num)
+	for i in $(seq 1 $TCP_NODE_NUM); do
+		eval TCP_NODE$i=$(config_t_get global tcp_node$i)
+	done
+
+	UDP_NODE_NUM=$(uci get $CONFIG.@global_other[0].udp_node_num)
+	for i in $(seq 1 $UDP_NODE_NUM); do
+		eval UDP_NODE$i=$(config_t_get global udp_node$i)
+	done
+
+	SOCKS5_NODE_NUM=$(uci get $CONFIG.@global_other[0].socks5_node_num)
+	for i in $(seq 1 $SOCKS5_NODE_NUM); do
+		eval SOCKS5_NODE$i=$(config_t_get global socks5_node$i)
+	done
+	
+	[ "$UDP_NODE1" == "default" ] && UDP_NODE1=$TCP_NODE1
+	
+	for i in $(seq 1 $TCP_NODE_NUM); do
+		eval node=\$TCP_NODE$i
+		[ -n "$node" -a "$node" != "nil" ] && {
+			is_sub_node=`uci -q get $CONFIG.$node.group`
+			[ -n "$is_sub_node" ] && {
+				uci set $CONFIG.@global[0].tcp_node$i="nil" && uci commit $CONFIG
+			}
+		}
+	done
+	
+	for i in $(seq 1 $UDP_NODE_NUM); do
+		eval node=\$UDP_NODE$i
+		[ "$node" != "nil" ] && {
+			is_sub_node=`uci -q get $CONFIG.$node.group`
+			[ -n "$is_sub_node" ] && {
+				uci set $CONFIG.@global[0].udp_node$i="nil" && uci commit $CONFIG
+			}
+		}
+	done
+	
+	for i in $(seq 1 $SOCKS5_NODE_NUM); do
+		eval node=\$SOCKS5_NODE$i
+		[ "$node" != "nil" ] && {
+			is_sub_node=`uci -q get $CONFIG.$node.group`
+			[ -n "$is_sub_node" ] && {
+				uci set $CONFIG.@global[0].socks5_node$i="nil" && uci commit $CONFIG
+			}
+		}
+	done
+	
 	for i in `seq $nodes_index -1 1`
 	do
 		[ "$(uci show $CONFIG.@nodes[$(($i-1))] | grep -c 'sub_node')" -eq 1 ] && uci delete $CONFIG.@nodes[$(($i-1))] && uci commit $CONFIG
 	done
-	[ -n "$is_sub_node" ] && {
-		uci set $CONFIG.global[0].tcp_node1="nil"
-		uci commit $CONFIG && /etc/init.d/$CONFIG stop
-	}
+	
+	/etc/init.d/$CONFIG stop
 }
 
 add() {
@@ -393,10 +436,10 @@ start() {
 		done
 	done
 	[ -f "/usr/share/${CONFIG}/sub/all_localnodes" ] && del_config
-	echo "$Date: 本次更新，SS新增服务器节点 $addnum_ss 个，修改 $updatenum_ss 个，删除 $delnum_ss 个。" >> $LOG_FILE
-	echo "$Date: 本次更新，SSR新增服务器节点 $addnum_ssr 个，修改 $updatenum_ssr 个，删除 $delnum_ssr 个。" >> $LOG_FILE
-	echo "$Date: 本次更新，V2ray新增服务器节点 $addnum_v2ray 个，修改 $updatenum_v2ray 个，删除 $delnum_v2ray 个。" >> $LOG_FILE
-	echo "$Date: 本次更新，Trojan新增服务器节点 $addnum_trojan 个，修改 $updatenum_trojan 个，删除 $delnum_trojan 个。" >> $LOG_FILE
+	echo "$Date: 本次更新，SS节点新增 $addnum_ss 个，修改 $updatenum_ss 个，删除 $delnum_ss 个。" >> $LOG_FILE
+	echo "$Date: 本次更新，SSR节点新增 $addnum_ssr 个，修改 $updatenum_ssr 个，删除 $delnum_ssr 个。" >> $LOG_FILE
+	echo "$Date: 本次更新，V2ray节点新增 $addnum_v2ray 个，修改 $updatenum_v2ray 个，删除 $delnum_v2ray 个。" >> $LOG_FILE
+	echo "$Date: 本次更新，Trojan节点新增 $addnum_trojan 个，修改 $updatenum_trojan 个，删除 $delnum_trojan 个。" >> $LOG_FILE
 	echo "$Date: 订阅完毕..." >> $LOG_FILE
 	rm -f "$LOCK_FILE"
 	exit 0
@@ -404,8 +447,8 @@ start() {
 
 stop() {
 	[ "`uci show $CONFIG | grep -c 'sub_node'`" -gt 0 ] && {
-		echo "$Date: 在线订阅节点已全部删除" >> $LOG_FILE
 		del_all_config
+		echo "$Date: 在线订阅节点已全部删除" >> $LOG_FILE
 	}
 	rm -rf /var/${CONFIG}_sub
 	rm -rf /usr/share/${CONFIG}/sub
