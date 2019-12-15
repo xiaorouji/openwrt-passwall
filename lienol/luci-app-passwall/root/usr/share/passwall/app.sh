@@ -655,6 +655,7 @@ start_dns() {
 		chinadns_bin=$(find_bin ChinaDNS)
 		[ -n "$chinadns_bin" ] && {
 			other=1
+			other_port=$(expr $DNS_PORT + 1)
 			echolog "运行DNS转发模式：ChinaDNS..."
 			dns1=$(config_t_get global_dns dns_1)
 			[ "$dns1" = "dnsbyisp" ] && dns1=$(cat /tmp/resolv.conf.auto 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | sort -u | grep -v 0.0.0.0 | grep -v 127.0.0.1 | sed -n '2P')
@@ -678,20 +679,20 @@ start_dns() {
 			dnsproxy)
 				dnsproxy_bin=$(find_bin dnsproxy)
 				[ -n "$dnsproxy_bin" ] && {
-					nohup $dnsproxy_bin -d -T -p $DNS_PORT -R $DNS_FORWARD_IP -P $DNS_FORWARD_PORT >/dev/null 2>&1 &
+					nohup $dnsproxy_bin -d -T -p $other_port -R $DNS_FORWARD_IP -P $DNS_FORWARD_PORT >/dev/null 2>&1 &
 					echolog "运行ChinaDNS上游转发模式：dnsproxy..."
 				}
 				;;
 			dns-forwarder)
 				dnsforwarder_bin=$(find_bin dns-forwarder)
 				[ -n "$dnsforwarder_bin" ] && {
-					nohup $dnsforwarder_bin -p $DNS_PORT -s $DNS_FORWARD >/dev/null 2>&1 &
+					nohup $dnsforwarder_bin -p $other_port -s $DNS_FORWARD >/dev/null 2>&1 &
 					echolog "运行ChinaDNS上游转发模式：dns-forwarder..."
 				}
 				;;
 			esac
 			if [ "$other" = "1" ]; then
-				nohup $chinadns_bin -p 7923 -c $RULE_PATH/chnroute -m -d -s $dns1,127.0.0.1:$DNS_PORT >/dev/null 2>&1 &
+				nohup $chinadns_bin -p $DNS_PORT -c $RULE_PATH/chnroute -m -d -s $dns1,127.0.0.1:$other_port >/dev/null 2>&1 &
 			fi
 		}
 	;;

@@ -293,11 +293,14 @@ del_all_config(){
 	
 	[ "$UDP_NODE1" == "default" ] && UDP_NODE1=$TCP_NODE1
 	
+	is_stop=0
+	
 	for i in $(seq 1 $TCP_NODE_NUM); do
 		eval node=\$TCP_NODE$i
 		[ -n "$node" -a "$node" != "nil" ] && {
 			is_sub_node=`uci -q get $CONFIG.$node.group`
 			[ -n "$is_sub_node" ] && {
+				is_stop=1
 				uci set $CONFIG.@global[0].tcp_node$i="nil" && uci commit $CONFIG
 			}
 		}
@@ -308,6 +311,7 @@ del_all_config(){
 		[ "$node" != "nil" ] && {
 			is_sub_node=`uci -q get $CONFIG.$node.group`
 			[ -n "$is_sub_node" ] && {
+				is_stop=1
 				uci set $CONFIG.@global[0].udp_node$i="nil" && uci commit $CONFIG
 			}
 		}
@@ -318,6 +322,7 @@ del_all_config(){
 		[ "$node" != "nil" ] && {
 			is_sub_node=`uci -q get $CONFIG.$node.group`
 			[ -n "$is_sub_node" ] && {
+				is_stop=1
 				uci set $CONFIG.@global[0].socks5_node$i="nil" && uci commit $CONFIG
 			}
 		}
@@ -328,7 +333,7 @@ del_all_config(){
 		[ "$(uci show $CONFIG.@nodes[$(($i-1))] | grep -c 'sub_node')" -eq 1 ] && uci delete $CONFIG.@nodes[$(($i-1))] && uci commit $CONFIG
 	done
 	
-	/etc/init.d/$CONFIG stop
+	[ "$is_stop" == 1 ] && /etc/init.d/$CONFIG restart
 }
 
 add() {
