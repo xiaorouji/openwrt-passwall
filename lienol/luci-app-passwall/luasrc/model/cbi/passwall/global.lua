@@ -90,8 +90,8 @@ for i = 1, socks5_node_num, 1 do
 end
 
 ---- DNS Forward Mode
-o = s:option(ListValue, "dns_mode", translate("DNS Forward Mode"),
-             translate("if you use no patterns are used, DNS of wan will be used by default as upstream of dnsmasq"))
+o = s:option(ListValue, "dns_mode", translate("DNS Forward Mode"), translate(
+                 "if you use no patterns are used, DNS of wan will be used by default as upstream of dnsmasq"))
 o.rmempty = false
 o:reset_values()
 if is_installed("ChinaDNS") or is_finded("chinadns") then
@@ -108,6 +108,14 @@ if is_installed("pdnsd") or is_installed("pdnsd-alt") or is_finded("pdnsd") then
 end
 o:value("local_7913", translate("Use local port 7913 as DNS"))
 o:value("nonuse", translate("No patterns are used"))
+
+o = s:option(Value, "dns2socks_forward", translate("DNS Forward Address"))
+o.default = "8.8.4.4"
+o:value("8.8.4.4", "8.8.4.4(Google DNS1)")
+o:value("8.8.8.8", "8.8.8.8(Google DNS2)")
+o:value("208.67.222.222", "208.67.222.222(OpenDNS DNS1)")
+o:value("208.67.220.220", "208.67.220.220(OpenDNS DNS2)")
+o:depends("dns_mode", "dns2socks")
 
 ---- upstreamm DNS Server for ChinaDNS
 o = s:option(ListValue, "up_chinadns_mode",
@@ -130,6 +138,15 @@ o = s:option(Value, "up_chinadns_custom", translate("DNS Server"), translate(
                  "example: 114.114.114.114,208.67.222.222:443,8.8.8.8<br>Need at least one,Other DNS services can be used as upstream, such as smartdns."))
 o.default = "114.114.114.114,208.67.222.222:5353"
 o:depends("up_chinadns_mode", "custom")
+
+o = s:option(Value, "chinadns_dns_forward", translate("DNS Forward Address"))
+o.default = "208.67.222.222:5353"
+o:value("208.67.222.222:5353", "208.67.222.222:5353(OpenDNS DNS1_5353)")
+o:value("208.67.222.222:443", "208.67.222.222:443(OpenDNS DNS1_443)")
+o:value("208.67.220.220:5353", "208.67.220.220:5353(OpenDNS DNS2_5353)")
+o:value("208.67.220.220:443", "208.67.220.220:443(OpenDNS DNS2_443)")
+o:depends("up_chinadns_mode", "dnsproxy")
+o:depends("up_chinadns_mode", "dns-forwarder")
 
 ---- Default Proxy Mode
 o = s:option(ListValue, "proxy_mode",
