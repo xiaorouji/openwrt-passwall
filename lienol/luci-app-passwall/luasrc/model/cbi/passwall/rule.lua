@@ -57,7 +57,7 @@ function o.write(e, e)
 end
 
 ---- Subscribe via proxy
-o = s:option(Flag, "subscribe_by_ss", translate("Subscribe via proxy"))
+o = s:option(Flag, "subscribe_proxy", translate("Subscribe via proxy"))
 o.default = 0
 o.rmempty = false
 

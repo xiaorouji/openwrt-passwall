@@ -86,8 +86,6 @@ get_remote_config(){
 		decode_link="$2"
 		decode_link=$(decode_url_link $decode_link 1)
 		node_address=$(echo "$decode_link" | awk -F ':' '{print $1}')
-		node_address=$(echo $node_address |awk '{print gensub(/[^!-~]/,"","g",$0)}')
-		[ -z "$node_address" -o "$node_address" == "" ] && isAdd=0
 		node_port=$(echo "$decode_link" | awk -F ':' '{print $2}')
 		protocol=$(echo "$decode_link" | awk -F ':' '{print $3}')
 		ssr_encrypt_method=$(echo "$decode_link" | awk -F ':' '{print $4}')
@@ -133,6 +131,9 @@ get_remote_config(){
 		node_port=$(echo "$link" | sed 's/trojan:\/\///g' | awk -F '@' '{print $2}' | awk -F ':' '{print $2}')
 		remarks="${node_address}:${node_port}"
 	fi
+	
+	node_address=$(echo $node_address |awk '{print gensub(/[^!-~]/,"","g",$0)}')
+	[ -z "$node_address" -o "$node_address" == "" ] && isAdd=0
 	
 	# 把全部节点节点写入文件 /usr/share/${CONFIG}/sub/all_onlinenodes
 	if [ ! -f "/usr/share/${CONFIG}/sub/all_onlinenodes" ]; then
@@ -234,14 +235,11 @@ add_nodes(){
 
 update_config(){
 	[ "$isAdd" == 1 ] && {
-		isadded_address=$(uci show $CONFIG | grep -c "remarks='$remarks'")
-		if [ "$isadded_address" -eq 0 ]; then
+		isadded_remarks=$(uci show $CONFIG | grep -c "remarks='$remarks'")
+		if [ "$isadded_remarks" -eq 0 ]; then
 			add_nodes add "$link_type"
 		else
 			index=$(uci show $CONFIG | grep -w "remarks='$remarks'" | cut -d '[' -f2|cut -d ']' -f1)
-			local_port=$(config_t_get nodes port $index)
-			local_vmess_id=$(config_t_get nodes v2ray_VMess_id $index)
-			
 			uci delete $CONFIG.@nodes[$index]
 			add_nodes update "$link_type"
 		fi
