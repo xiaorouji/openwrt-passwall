@@ -4,9 +4,9 @@
 
 使用大雕源码务必按此操作执行 (https://github.com/Lienol/openwrt-package/issues/54#issuecomment-562859266)
 
-可尝试本人处女作(https://github.com/Lienol/openwrt) 体验一下和官方原版luci19有什么不同？
+可尝试本人源码(https://github.com/Lienol/openwrt) Mysterious Speed !!!
 
-一些实用的OpenWRT Luci包
+OpenWRT-Actions (https://github.com/Lienol/openwrt-actions/actions)
 
 使用方法：
 
