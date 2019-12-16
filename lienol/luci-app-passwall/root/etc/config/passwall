@@ -3,10 +3,9 @@ config global
 	option tcp_node1 'nil'
 	option udp_node1 'nil'
 	option socks5_node1 'nil'
-	option dns_mode 'chinadns'
-	option up_chinadns_mode 'OpenDNS_1'
+	option dns_mode 'pdnsd'
 	option proxy_mode 'chnroute'
-	option localhost_proxy_mode 'default'
+	option localhost_proxy_mode 'gfwlist'
 
 config global_haproxy
 	option balancing_enable '0'
@@ -20,7 +19,7 @@ config global_dns
 	option dns_port '0'
 	option wan_port '0'
 	option dns_53 '1'
-	option dns_forward '8.8.4.4:53'
+	option dns_forward '208.67.222.222:443'
 	option dns_1 '114.114.114.114'
 	option dns_2 '119.29.29.29'
 
@@ -37,6 +36,7 @@ config global_proxy
 	option proxy_ipv6 '0'
 	
 config global_other
+	option use_tcping '1'
 	option auto_ping '0'
 	option tcp_node_num '1'
 	option udp_node_num '1'
@@ -47,7 +47,7 @@ config global_rules
 	option auto_update '0'
 	option gfwlist_update '1'
 	option chnroute_update '1'
-	option gfwlist_version '2019-12-01'
+	option gfwlist_version '2019-12-10'
 	option chnroute_version '2019-12-05'
 	
 config global_app

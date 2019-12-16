@@ -52,6 +52,8 @@ function index()
         true
     entry({"admin", "vpn", "passwall", "auto_ping_node"}, call("auto_ping_node")).leaf =
         true
+    entry({"admin", "vpn", "passwall", "auto_ping_node_list"},
+          call("auto_ping_node_list")).leaf = true
     entry({"admin", "vpn", "passwall", "ping_node"}, call("ping_node")).leaf =
         true
     entry({"admin", "vpn", "passwall", "set_node"}, call("set_node")).leaf =
@@ -184,9 +186,11 @@ function auto_ping_node()
     local port = luci.http.formvalue("port")
     local e = {}
     e.index = index
-    if luci.sys.exec("echo -n `command -v tcping`") ~= "" then
+    if luci.sys.exec("echo -n `uci -q get %s.@global_other[0].use_tcping`" %
+                         appname) == "1" and
+        luci.sys.exec("echo -n `command -v tcping`") ~= "" then
         e.ping = luci.sys.exec(
-                     "echo -n `tcping -q -c 1 -i 3 -p " .. port .. " " ..
+                     "echo -n `tcping -q -c 1 -i 1 -p " .. port .. " " ..
                          address ..
                          " 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print$2}'`")
     else
@@ -198,13 +202,45 @@ function auto_ping_node()
     luci.http.write_json(e)
 end
 
+function auto_ping_node_list()
+    local e = {}
+    local json_str = luci.http.formvalue("json")
+    local json = luci.jsonc.parse(json_str)
+    for k1, k2 in pairs(json) do
+        local index = json[k1]["index"]
+        local address = json[k1]["address"]
+        local port = json[k1]["port"]
+
+        local obj = {}
+        obj.index = index
+        if luci.sys.exec("echo -n `uci -q get %s.@global_other[0].use_tcping`" %
+                             appname) == "1" and
+            luci.sys.exec("echo -n `command -v tcping`") ~= "" then
+            obj.ping = luci.sys.exec(
+                           "echo -n `tcping -q -c 1 -i 1 -p " .. port .. " " ..
+                               address ..
+                               " 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print$2}'`")
+        else
+            obj.ping = luci.sys.exec(
+                           "echo -n `ping -c 1 -W 1 %q 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print$2}'`" %
+                               address)
+        end
+        e[k1] = obj
+    end
+
+    luci.http.prepare_content("application/json")
+    luci.http.write_json(e)
+end
+
 function ping_node()
     local e = {}
     local address = luci.http.formvalue("address")
     local port = luci.http.formvalue("port")
-    if luci.sys.exec("echo -n `command -v tcping`") ~= "" then
+    if luci.sys.exec("echo -n `uci -q get %s.@global_other[0].use_tcping`" %
+                         appname) == "1" and
+        luci.sys.exec("echo -n `command -v tcping`") ~= "" then
         e.ping = luci.sys.exec(
-                     "echo -n `tcping -q -c 1 -i 3 -p " .. port .. " " ..
+                     "echo -n `tcping -q -c 1 -i 1 -p " .. port .. " " ..
                          address ..
                          " 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print$2}'`")
     else
@@ -217,26 +253,14 @@ function ping_node()
 end
 
 function set_node()
-    local e = {}
     local protocol = luci.http.formvalue("protocol")
     local number = luci.http.formvalue("number")
     local section = luci.http.formvalue("section")
-    if protocol == "tcp" then
-        luci.sys.call("uci set passwall.@global[0].tcp_node" .. number .. "=" ..
-                          section ..
-                          " && uci commit passwall && /etc/init.d/passwall restart")
-    elseif protocol == "udp" then
-        luci.sys.call("uci set passwall.@global[0].udp_node" .. number .. "=" ..
-                          section ..
-                          " && uci commit passwall && /etc/init.d/passwall restart")
-    elseif protocol == "socks5" then
-        luci.sys.call(
-            "uci set passwall.@global[0].socks5_node" .. number .. "=" ..
-                section ..
-                " && uci commit passwall && /etc/init.d/passwall restart")
-    end
-    luci.http.prepare_content("application/json")
-    luci.http.write_json(e)
+    luci.sys.call("uci set passwall.@global[0]." .. protocol .. "_node" ..
+                      number .. "=" .. section ..
+                      " && uci commit passwall && /etc/init.d/passwall restart > /dev/null 2>&1 &")
+    luci.http.redirect(luci.dispatcher.build_url("admin", "vpn", "passwall",
+                                                 "log"))
 end
 
 function copy_node()
@@ -255,7 +279,9 @@ function check_port()
     retstring = retstring ..
                     "<font color='red'>暂时不支持UDP检测</font><br />"
 
-    if luci.sys.exec("echo -n `command -v tcping`") ~= "" then
+    if luci.sys.exec("echo -n `uci -q get %s.@global_other[0].use_tcping`" %
+                         appname) == "1" and
+        luci.sys.exec("echo -n `command -v tcping`") ~= "" then
         retstring = retstring ..
                         "<font color='green'>使用tcping检测端口延迟</font><br />"
         uci:foreach("passwall", "nodes", function(s)
@@ -292,15 +318,6 @@ function check_port()
             local udp_socket
             if (s.use_kcp and s.use_kcp == "1" and s.kcp_port) or
                 (s.v2ray_transport and s.v2ray_transport == "mkcp" and s.port) then
-                --[[local port = (s.use_kcp == "1" and s.kcp_port) and s.kcp_port or (s.v2ray_transport == "mkcp" and s.port) and s.port or nil
-			if port then
-				udp_socket = nixio.socket("inet", "dgram")
-				udp_socket:setopt("socket", "rcvtimeo", 3)
-				udp_socket:setopt("socket", "sndtimeo", 3)
-				udp_socket:sendto("test", s.address, port)
-				r,c,d=udp_socket:recvfrom(10)
-				ret=""
-			end--]]
             else
                 if s.type and s.address and s.port and s.remarks then
                     node_name = "%s：[%s] %s:%s" %
