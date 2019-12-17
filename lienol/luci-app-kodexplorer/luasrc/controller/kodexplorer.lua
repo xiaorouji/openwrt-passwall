@@ -1,4 +1,4 @@
--- Copyright 2018-2019 Lienol <lawlienol@gmail.com>
+-- Copyright 2018-2020 Lienol <lawlienol@gmail.com>
 module("luci.controller.kodexplorer", package.seeall)
 
 local http = require "luci.http"
