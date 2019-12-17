@@ -117,6 +117,24 @@ get_not_exists_port_after() {
 	fi
 }
 
+set_subscribe_proxy() {
+	local enabled
+	local url
+	config_get enabled $1 enabled
+	config_get url $1 url
+	[ "$enabled" == "1" ] && {
+		[ -n "$url" -a "$url" != "" ] && {
+			if [ -n "$(echo -n "$url" | grep "//")" ]; then
+				echo -n "$url" | awk -F'/' '{print $3}' | sed "s/^/server=&\/./g" | sed "s/$/\/127.0.0.1#$DNS_PORT/g" >>$TMP_DNSMASQ_PATH/subscribe.conf
+				echo -n "$url" | awk -F'/' '{print $3}' | sed "s/^/ipset=&\/./g" | sed "s/$/\/router/g" >>$TMP_DNSMASQ_PATH/subscribe.conf
+			else
+				echo -n "$url" | awk -F'/' '{print $1}' | sed "s/^/server=&\/./g" | sed "s/$/\/127.0.0.1#$DNS_PORT/g" >>$TMP_DNSMASQ_PATH/subscribe.conf
+				echo -n "$url" | awk -F'/' '{print $1}' | sed "s/^/ipset=&\/./g" | sed "s/$/\/router/g" >>$TMP_DNSMASQ_PATH/subscribe.conf
+			fi
+		}
+	}
+}
+
 TCP_NODE_NUM=$(config_t_get global_other tcp_node_num 1)
 for i in $(seq 1 $TCP_NODE_NUM); do
 	eval TCP_NODE$i=$(config_t_get global tcp_node$i nil)
@@ -777,19 +795,8 @@ EOF
 
 	subscribe_proxy=$(config_t_get global_subscribe subscribe_proxy 0)
 	[ "$subscribe_proxy" -eq 1 ] && {
-		subscribe_url=$(config_t_get global_subscribe subscribe_url)
-		[ -n "$subscribe_url" ] && {
-			for url in $subscribe_url; do
-				if [ -n "$(echo -n "$url" | grep "//")" ]; then
-					echo -n "$url" | awk -F'/' '{print $3}' | sed "s/^/server=&\/./g" | sed "s/$/\/127.0.0.1#$DNS_PORT/g" >>$TMP_DNSMASQ_PATH/subscribe.conf
-					echo -n "$url" | awk -F'/' '{print $3}' | sed "s/^/ipset=&\/./g" | sed "s/$/\/router/g" >>$TMP_DNSMASQ_PATH/subscribe.conf
-				else
-					echo -n "$url" | awk -F'/' '{print $1}' | sed "s/^/server=&\/./g" | sed "s/$/\/127.0.0.1#$DNS_PORT/g" >>$TMP_DNSMASQ_PATH/subscribe.conf
-					echo -n "$url" | awk -F'/' '{print $1}' | sed "s/^/ipset=&\/./g" | sed "s/$/\/router/g" >>$TMP_DNSMASQ_PATH/subscribe.conf
-				fi
-			done
-			restdns=1
-		}
+		config_foreach set_subscribe_proxy "subscribe_list"
+		restdns=1
 	}
 
 	if [ ! -f "$TMP_DNSMASQ_PATH/gfwlist.conf" -a "$DNS_MODE" != "nonuse" ]; then

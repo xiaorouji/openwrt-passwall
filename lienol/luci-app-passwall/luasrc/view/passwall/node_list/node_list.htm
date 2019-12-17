@@ -97,19 +97,21 @@ table td, .table .td {
 	function ping_node(cbi_id,dom) {
 		var address = document.getElementById("cbid.passwall." + cbi_id + ".address").value;
 		var port = document.getElementById("cbid.passwall." + cbi_id + ".port").value;
-		XHR.get('<%=dsp.build_url("admin/vpn/passwall/ping_node")%>', {
-				address: address,
-				port: port
-			},
-			function(x, result) {
-				if(x && x.status == 200) {
-					if (result.ping != null && result.ping != "")
-						dom.outerHTML = result.ping + " ms";
-					else
-						dom.outerHTML = "--";
+		if ((address != null && address != "") && (port != null && port != "")) {
+			XHR.get('<%=dsp.build_url("admin/vpn/passwall/ping_node")%>', {
+					address: address,
+					port: port
+				},
+				function(x, result) {
+					if(x && x.status == 200) {
+						if (result.ping != null && result.ping != "")
+							dom.outerHTML = result.ping + " ms";
+						else
+							dom.outerHTML = "--";
+					}
 				}
-			}
-		);
+			);
+		}
 	}
 	
 	/* 自动Ping */
@@ -120,13 +122,14 @@ table td, .table .td {
 		var cbi_id = auto_ping_value[i].getAttribute("cbiid");
 		var address = document.getElementById("cbid.passwall." + cbi_id + ".address").value;
 		var port = document.getElementById("cbid.passwall." + cbi_id + ".port").value;
-		
-		var data = {
-			index: i,
-			address: address,
-			port: port
-		};
-		node_list.push(data);
+		if ((address != null && address != "") && (port != null && port != "")) {
+			var data = {
+				index: i,
+				address: address,
+				port: port
+			};
+			node_list.push(data);
+		}
 	}
 	
 	for(var i = 0; i < node_list.length; i+=10){
