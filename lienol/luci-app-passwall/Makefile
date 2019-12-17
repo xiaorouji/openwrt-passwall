@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2019 Lienol
+# Copyright (C) 2018-2020 Lienol
 #
 # This is free software, licensed under the Apache License, Version 2.0 .
 #
@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
 PKG_VERSION:=3.0
-PKG_RELEASE:=129-20191217
+PKG_RELEASE:=130-20191218
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PO2LMO:=./po2lmo

@@ -634,13 +634,6 @@ start_dns() {
 			echolog "dns2socks模式需要使用Socks5代理节点，请开启！"
 		fi
 	;;
-	Pcap_DNSProxy)
-		Pcap_DNSProxy_bin=$(find_bin Pcap_DNSProxy)
-		[ -n "$Pcap_DNSProxy_bin" ] && {
-			nohup $Pcap_DNSProxy_bin -c /etc/pcap-dnsproxy >/dev/null 2>&1 &
-			echolog "运行DNS转发模式：Pcap_DNSProxy..."
-		}
-	;;
 	pdnsd)
 		pdnsd_bin=$(find_bin pdnsd)
 		[ -n "$pdnsd_bin" ] && {
@@ -673,24 +666,6 @@ start_dns() {
 				UP_CHINADNS_CUSTOM=$(config_t_get global up_chinadns_custom '114.114.114.114,208.67.222.222:5353')
 				nohup $chinadns_bin -p $DNS_PORT -c $RULE_PATH/chnroute -m -d -s $UP_CHINADNS_CUSTOM >/dev/null 2>&1 &
 				echolog "运行ChinaDNS上游转发模式：$UP_CHINADNS_CUSTOM..."
-				;;
-			dnsproxy)
-				dnsproxy_bin=$(find_bin dnsproxy)
-				[ -n "$dnsproxy_bin" ] && {
-					local DNS_FORWARD=$(config_t_get global chinadns_dns_forward 208.67.222.222:5353)
-					local DNS_FORWARD_IP=$(echo "$DNS_FORWARD" | awk -F':' '{print $1}')
-					local DNS_FORWARD_PORT=$(echo "$DNS_FORWARD" | awk -F':' '{print $2}')
-					nohup $dnsproxy_bin -d -T -p $other_port -R $DNS_FORWARD_IP -P $DNS_FORWARD_PORT >/dev/null 2>&1 &
-					echolog "运行ChinaDNS上游转发模式：dnsproxy..."
-				}
-				;;
-			dns-forwarder)
-				dnsforwarder_bin=$(find_bin dns-forwarder)
-				[ -n "$dnsforwarder_bin" ] && {
-					local DNS_FORWARD=$(config_t_get global chinadns_dns_forward 208.67.222.222:5353)
-					nohup $dnsforwarder_bin -p $other_port -s $DNS_FORWARD >/dev/null 2>&1 &
-					echolog "运行ChinaDNS上游转发模式：dns-forwarder..."
-				}
 				;;
 			esac
 			if [ "$other" = "1" ]; then
@@ -1155,7 +1130,7 @@ stop() {
 	clean_log
 	source $APP_PATH/iptables.sh stop
 	del_vps_port
-	kill_all pdnsd Pcap_DNSProxy brook dns2socks haproxy dns-forwarder chinadns dnsproxy ipt2socks
+	kill_all pdnsd brook dns2socks haproxy chinadns ipt2socks
 	ps -w | grep -E "$CONFIG_TCP_FILE|$CONFIG_UDP_FILE|$CONFIG_SOCKS5_FILE" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 	ps -w | grep -E "$CONFIG_PATH" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 	ps -w | grep "kcptun_client" | grep "$KCPTUN_REDIR_PORT" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
