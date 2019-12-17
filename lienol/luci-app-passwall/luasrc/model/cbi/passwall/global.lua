@@ -100,9 +100,6 @@ end
 if is_installed("dns2socks") or is_finded("dns2socks") then
     o:value("dns2socks", "dns2socks " .. translate("Need Socks5 server"))
 end
-if is_installed("pcap-dnsproxy") or is_finded("Pcap_DNSProxy") then
-    o:value("Pcap_DNSProxy", "Pcap_DNSProxy")
-end
 if is_installed("pdnsd") or is_installed("pdnsd-alt") or is_finded("pdnsd") then
     o:value("pdnsd", "pdnsd")
 end
@@ -123,12 +120,6 @@ o = s:option(ListValue, "up_chinadns_mode",
                  "Domestic DNS server 1 in advanced Settings is used as domestic DNS by default"))
 o.default = "OpenDNS_1"
 o:depends("dns_mode", "chinadns")
-if is_installed("dnsproxy") or is_finded("dnsproxy") then
-    o:value("dnsproxy", "dnsproxy")
-end
-if is_installed("dns-forwarder") or is_finded("dns-forwarder") then
-    o:value("dns-forwarder", "dns-forwarder")
-end
 o:value("OpenDNS_1", "OpenDNS_1")
 o:value("OpenDNS_2", "OpenDNS_2")
 o:value("custom", translate("custom"))
@@ -138,15 +129,6 @@ o = s:option(Value, "up_chinadns_custom", translate("DNS Server"), translate(
                  "example: 114.114.114.114,208.67.222.222:443,8.8.8.8<br>Need at least one,Other DNS services can be used as upstream, such as smartdns."))
 o.default = "114.114.114.114,208.67.222.222:5353"
 o:depends("up_chinadns_mode", "custom")
-
-o = s:option(Value, "chinadns_dns_forward", translate("DNS Forward Address"))
-o.default = "208.67.222.222:5353"
-o:value("208.67.222.222:5353", "208.67.222.222:5353(OpenDNS DNS1_5353)")
-o:value("208.67.222.222:443", "208.67.222.222:443(OpenDNS DNS1_443)")
-o:value("208.67.220.220:5353", "208.67.220.220:5353(OpenDNS DNS2_5353)")
-o:value("208.67.220.220:443", "208.67.220.220:443(OpenDNS DNS2_443)")
-o:depends("up_chinadns_mode", "dnsproxy")
-o:depends("up_chinadns_mode", "dns-forwarder")
 
 ---- Default Proxy Mode
 o = s:option(ListValue, "proxy_mode",

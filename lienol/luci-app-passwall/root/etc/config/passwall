@@ -5,7 +5,6 @@ config global
 	option socks5_node1 'nil'
 	option dns_mode 'pdnsd'
 	option dns2socks_forward '8.8.4.4'
-	option chinadns_dns_forward '208.67.222.222:443'
 	option proxy_mode 'chnroute'
 	option localhost_proxy_mode 'gfwlist'
 
