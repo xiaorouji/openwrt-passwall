@@ -4,6 +4,7 @@ config global
 	option udp_node1 'nil'
 	option socks5_node1 'nil'
 	option dns_mode 'pdnsd'
+	option dns2socks_forward '8.8.4.4'
 	option proxy_mode 'chnroute'
 	option localhost_proxy_mode 'gfwlist'
 
@@ -19,7 +20,6 @@ config global_dns
 	option dns_port '0'
 	option wan_port '0'
 	option dns_53 '1'
-	option dns_forward '208.67.222.222:443'
 	option dns_1 '114.114.114.114'
 	option dns_2 '119.29.29.29'
 
@@ -56,7 +56,7 @@ config global_app
 	option brook_file '/usr/bin/brook'
 
 config global_subscribe
-	option subscribe_by_ss '0'
+	option subscribe_proxy '0'
 	option auto_update_subscribe '0'
 
 config auto_switch

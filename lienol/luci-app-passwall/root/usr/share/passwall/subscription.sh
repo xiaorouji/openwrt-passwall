@@ -1,5 +1,6 @@
 #!/bin/bash
 
+. $IPKG_INSTROOT/lib/functions.sh
 . /usr/share/libubox/jshn.sh
 
 CONFIG=passwall
@@ -29,6 +30,76 @@ decode_url_link() {
 	else
 		echo -n "$link" | sed 's/-/+/g; s/_/\//g' | base64 -d -i 2> /dev/null
 	fi
+}
+
+start_subscribe() {
+	local enabled
+	local url
+	config_get enabled $1 enabled
+	config_get url $1 url
+	[ "$enabled" == "1" ] && {
+		[ -n "$url" -a "$url" != "" ] && {
+			local addnum_ss=0
+			local updatenum_ss=0
+			local delnum_ss=0
+			local addnum_ssr=0
+			local updatenum_ssr=0
+			local delnum_ssr=0
+			local addnum_v2ray=0
+			local updatenum_v2ray=0
+			local delnum_v2ray=0
+			local addnum_trojan=0
+			local updatenum_trojan=0
+			local delnum_trojan=0
+			config_get subscrib_remark $1 remark
+			let index+=1
+			echo "$Date: 正在订阅：$url" >> $LOG_FILE
+			result=$(/usr/bin/curl --connect-timeout 10 -sL $url)
+			[ "$?" != 0 ] || [ -z "$result" ] && {
+				result=$(/usr/bin/wget --no-check-certificate --timeout=8 -t 1 -O- $url)
+				[ "$?" != 0 ] || [ -z "$result" ] && echo "$Date: 订阅失败：$url，请检测订阅链接是否正常或使用代理尝试！" >> $LOG_FILE && continue
+			}
+			file="/var/${CONFIG}_sub/$index"
+			echo "$result" > $file
+			
+			get_local_nodes
+			
+			[ -z "$(du -sh $file 2> /dev/null)" ] && echo "$Date: 订阅失败：$url，解密失败！" >> $LOG_FILE && continue
+			decode_link=$(cat "$file" | base64 -d 2> /dev/null)
+			maxnum=$(echo -n "$decode_link" | grep "MAX=" | awk -F"=" '{print $2}')
+			if [ -n "$maxnum" ]; then
+				decode_link=$(echo -n "$decode_link" | sed '/MAX=/d' | shuf -n${maxnum})
+			else
+				decode_link=$(echo -n "$decode_link")
+			fi
+			
+			[ -z "$decode_link" ] && continue
+			for link in $decode_link
+			do
+				if expr "$link" : "ss://";then
+					link_type="ss"
+					new_link=$(echo -n "$link" | sed 's/ss:\/\///g')
+				elif expr "$link" : "ssr://";then
+					link_type="ssr"
+					new_link=$(echo -n "$link" | sed 's/ssr:\/\///g')
+				elif expr "$link" : "vmess://";then
+					link_type="v2ray"
+					new_link=$(echo -n "$link" | sed 's/vmess:\/\///g')
+				elif expr "$link" : "trojan://";then
+					link_type="trojan"
+					new_link=$(echo -n "$link" | sed 's/trojan:\/\///g')
+				fi
+				[ -z "$link_type" ] && continue
+				get_remote_config "$link_type" "$new_link"
+				update_config
+			done
+			
+			[ "$addnum_ss" -gt 0 ] || [ "$updatenum_ss" -gt 0 ] || [ "$delnum_ss" -gt 0 ] && echo "$Date: $subscrib_remark： SS节点新增 $addnum_ss 个，修改 $updatenum_ss 个，删除 $delnum_ss 个。" >> $LOG_FILE
+			[ "$addnum_ssr" -gt 0 ] || [ "$updatenum_ssr" -gt 0 ] || [ "$delnum_ssr" -gt 0 ] && echo "$Date: $subscrib_remark： SSR节点新增 $addnum_ssr 个，修改 $updatenum_ssr 个，删除 $delnum_ssr 个。" >> $LOG_FILE
+			[ "$addnum_v2ray" -gt 0 ] || [ "$updatenum_v2ray" -gt 0 ] || [ "$delnum_v2ray" -gt 0 ] && echo "$Date: $subscrib_remark： V2ray节点新增 $addnum_v2ray 个，修改 $updatenum_v2ray 个，删除 $delnum_v2ray 个。" >> $LOG_FILE
+			[ "$addnum_trojan" -gt 0 ] || [ "$updatenum_trojan" -gt 0 ] || [ "$delnum_trojan" -gt 0 ] && echo "$Date: $subscrib_remark： Trojan节点新增 $addnum_trojan 个，修改 $updatenum_trojan 个，删除 $delnum_trojan 个。" >> $LOG_FILE
+		}
+	}
 }
 
 ss_decode() {
@@ -71,7 +142,7 @@ get_local_nodes(){
 
 get_remote_config(){
 	isAdd=1
-	add_mode="订阅"
+	add_mode="$subscrib_remark"
 	[ -n "$3" ] && add_mode="导入"
 	group="sub_node"
 	if [ "$1" == "ss" ]; then
@@ -86,8 +157,6 @@ get_remote_config(){
 		decode_link="$2"
 		decode_link=$(decode_url_link $decode_link 1)
 		node_address=$(echo "$decode_link" | awk -F ':' '{print $1}')
-		node_address=$(echo $node_address |awk '{print gensub(/[^!-~]/,"","g",$0)}')
-		[ -z "$node_address" -o "$node_address" == "" ] && isAdd=0
 		node_port=$(echo "$decode_link" | awk -F ':' '{print $2}')
 		protocol=$(echo "$decode_link" | awk -F ':' '{print $3}')
 		ssr_encrypt_method=$(echo "$decode_link" | awk -F ':' '{print $4}')
@@ -133,6 +202,9 @@ get_remote_config(){
 		node_port=$(echo "$link" | sed 's/trojan:\/\///g' | awk -F '@' '{print $2}' | awk -F ':' '{print $2}')
 		remarks="${node_address}:${node_port}"
 	fi
+	
+	node_address=$(echo $node_address |awk '{print gensub(/[^!-~]/,"","g",$0)}')
+	#[ -z "$node_address" -o "$node_address" == "" ] && isAdd=0
 	
 	# 把全部节点节点写入文件 /usr/share/${CONFIG}/sub/all_onlinenodes
 	if [ ! -f "/usr/share/${CONFIG}/sub/all_onlinenodes" ]; then
@@ -234,14 +306,11 @@ add_nodes(){
 
 update_config(){
 	[ "$isAdd" == 1 ] && {
-		isadded_address=$(uci show $CONFIG | grep -c "remarks='$remarks'")
-		if [ "$isadded_address" -eq 0 ]; then
+		isadded_remarks=$(uci show $CONFIG | grep -c "remarks='$remarks'")
+		if [ "$isadded_remarks" -eq 0 ]; then
 			add_nodes add "$link_type"
 		else
 			index=$(uci show $CONFIG | grep -w "remarks='$remarks'" | cut -d '[' -f2|cut -d ']' -f1)
-			local_port=$(config_t_get nodes port $index)
-			local_vmess_id=$(config_t_get nodes v2ray_VMess_id $index)
-			
 			uci delete $CONFIG.@nodes[$index]
 			add_nodes update "$link_type"
 		fi
@@ -376,75 +445,17 @@ start() {
 	touch "$LOCK_FILE"
 	base64=$(command -v base64)
 	[ -z "$base64" ] && echo "$Date: 找不到Base64程序，请安装后重试！" >> $LOG_FILE && rm -f "$LOCK_FILE" && exit 0
-	addnum_ss=0
-	updatenum_ss=0
-	delnum_ss=0
-	addnum_ssr=0
-	updatenum_ssr=0
-	delnum_ssr=0
-	addnum_v2ray=0
-	updatenum_v2ray=0
-	delnum_v2ray=0
-	addnum_trojan=0
-	updatenum_trojan=0
-	delnum_trojan=0
-	subscribe_url=$(uci get $CONFIG.@global_subscribe[0].subscribe_url)  # 订阅地址
-	[ -z "$subscribe_url" ] && echo "$Date: 订阅地址为空，订阅失败！" >> $LOG_FILE && rm -f "$LOCK_FILE" && exit 0
+	has_subscribe=$(uci show $CONFIG | grep @subscribe_list | grep enabled=\'1\')
+	[ -z "$has_subscribe" -o "$has_subscribe" = "" ] && echo "$Date: 没有订阅地址或没启用！" >> $LOG_FILE && rm -f "$LOCK_FILE" && exit 0
 	
 	echo "$Date: 开始订阅..." >> $LOG_FILE
 	mkdir -p /var/${CONFIG}_sub && rm -f /var/${CONFIG}_sub/*
-	index=0
-	for url in $subscribe_url
-	do
-		let index+=1
-		echo "$Date: 正在订阅：$url" >> $LOG_FILE
-		result=$(/usr/bin/curl --connect-timeout 10 -sL $url)
-		[ "$?" != 0 ] || [ -z "$result" ] && {
-			result=$(/usr/bin/wget --no-check-certificate --timeout=8 -t 1 -O- $url)
-			[ "$?" != 0 ] || [ -z "$result" ] && echo "$Date: 订阅失败：$url，请检测订阅链接是否正常或使用代理尝试！" >> $LOG_FILE && continue
-		}
-		echo "$result" > /var/${CONFIG}_sub/$index
-	done
-	[ ! -d "/var/${CONFIG}_sub" ] || [ "$(ls /var/${CONFIG}_sub | wc -l)" -eq 0 ] && echo "$Date: 订阅失败" >> $LOG_FILE && rm -f "$LOCK_FILE" && exit 0
 	mkdir -p /usr/share/${CONFIG}/sub && rm -f /usr/share/${CONFIG}/sub/*
-	get_local_nodes
-	for file in /var/${CONFIG}_sub/*
-	do
-		[ -z "$(du -sh $file 2> /dev/null)" ] && echo "$Date: 订阅失败：$url，解密失败！" >> $LOG_FILE && continue
-		decode_link=$(cat "$file" | base64 -d 2> /dev/null)
-		maxnum=$(echo -n "$decode_link" | grep "MAX=" | awk -F"=" '{print $2}')
-		if [ -n "$maxnum" ]; then
-			decode_link=$(echo -n "$decode_link" | sed '/MAX=/d' | shuf -n${maxnum})
-		else
-			decode_link=$(echo -n "$decode_link")
-		fi
-		
-		[ -z "$decode_link" ] && continue
-		for link in $decode_link
-		do
-			if expr "$link" : "ss://";then
-				link_type="ss"
-				new_link=$(echo -n "$link" | sed 's/ss:\/\///g')
-			elif expr "$link" : "ssr://";then
-				link_type="ssr"
-				new_link=$(echo -n "$link" | sed 's/ssr:\/\///g')
-			elif expr "$link" : "vmess://";then
-				link_type="v2ray"
-				new_link=$(echo -n "$link" | sed 's/vmess:\/\///g')
-			elif expr "$link" : "trojan://";then
-				link_type="trojan"
-				new_link=$(echo -n "$link" | sed 's/trojan:\/\///g')
-			fi
-			[ -z "$link_type" ] && continue
-			get_remote_config "$link_type" "$new_link"
-			update_config
-		done
-	done
+	index=0
+	config_load $CONFIG
+	config_foreach start_subscribe "subscribe_list"
+	
 	[ -f "/usr/share/${CONFIG}/sub/all_localnodes" ] && del_config
-	echo "$Date: 本次更新，SS节点新增 $addnum_ss 个，修改 $updatenum_ss 个，删除 $delnum_ss 个。" >> $LOG_FILE
-	echo "$Date: 本次更新，SSR节点新增 $addnum_ssr 个，修改 $updatenum_ssr 个，删除 $delnum_ssr 个。" >> $LOG_FILE
-	echo "$Date: 本次更新，V2ray节点新增 $addnum_v2ray 个，修改 $updatenum_v2ray 个，删除 $delnum_v2ray 个。" >> $LOG_FILE
-	echo "$Date: 本次更新，Trojan节点新增 $addnum_trojan 个，修改 $updatenum_trojan 个，删除 $delnum_trojan 个。" >> $LOG_FILE
 	echo "$Date: 订阅完毕..." >> $LOG_FILE
 	rm -f "$LOCK_FILE"
 	exit 0

@@ -550,6 +550,9 @@ msgstr "如果你希望从内存中运行，请更改路径，例如/tmp/brook�
 msgid "Node Subscribe"
 msgstr "节点订阅"
 
+msgid "Subscribe Remark"
+msgstr "订阅备注（机场）"
+
 msgid "Subscribe URL"
 msgstr "订阅网址"
 
