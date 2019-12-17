@@ -67,11 +67,7 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_pdnsd
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_dns2socks
 	bool "Include dns2socks"
-	default n
-	
-config PACKAGE_$(PKG_NAME)_INCLUDE_dns-forwarder
-	bool "Include dns-forwarder"
-	default n
+	default y
 
 endmenu
 endef
@@ -95,8 +91,7 @@ define Package/$(PKG_NAME)
   +PACKAGE_$(PKG_NAME)_INCLUDE_haproxy:haproxy \
   +PACKAGE_$(PKG_NAME)_INCLUDE_ChinaDNS:ChinaDNS \
   +PACKAGE_$(PKG_NAME)_INCLUDE_pdnsd:pdnsd-alt \
-  +PACKAGE_$(PKG_NAME)_INCLUDE_dns2socks:dns2socks \
-  +PACKAGE_$(PKG_NAME)_INCLUDE_dns-forwarder:dns-forwarder
+  +PACKAGE_$(PKG_NAME)_INCLUDE_dns2socks:dns2socks
 endef
 
 define Build/Prepare
