@@ -37,7 +37,7 @@ config global_proxy
 	
 config global_other
 	option use_tcping '1'
-	option auto_ping '0'
+	option auto_ping '1'
 	option tcp_node_num '1'
 	option udp_node_num '1'
 	option socks5_node_num '1'
