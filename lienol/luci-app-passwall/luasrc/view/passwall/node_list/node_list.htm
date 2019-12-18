@@ -34,11 +34,15 @@ table td, .table .td {
 <script type="text/javascript">
 	//<![CDATA[
 	var ajax = {
-		post: function(url, data, fn) {
+		post: function(url, data, fn_success, fn_timeout) {
 			var xhr = new XMLHttpRequest();
 			var code = ajax.encode(data);
 			xhr.open("POST", url, true);
+			xhr.timeout = 2000;
 			xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+			xhr.ontimeout = function() {
+				fn_timeout(xhr);
+			}
 			xhr.onreadystatechange = function() {
 				if(xhr.readyState == 4 && (xhr.status == 200 || xhr.status == 304)) {
 					var json = null;
@@ -50,7 +54,7 @@ table td, .table .td {
 							json = null;
 						}
 					}
-					fn(xhr, json);
+					fn_success(xhr, json);
 				}
 			};
 			xhr.send(code);
@@ -116,7 +120,6 @@ table td, .table .td {
 	
 	/* 自动Ping */
 	var node_list = [];
-	var node_list2 = [];
 	var auto_ping_value = document.getElementsByClassName('auto_ping_value');
 	for(var i = 0; i < auto_ping_value.length; i++) {
 		var cbi_id = auto_ping_value[i].getAttribute("cbiid");
@@ -132,23 +135,30 @@ table td, .table .td {
 		}
 	}
 	
-	for(var i = 0; i < node_list.length; i+=10){
-		node_list2.push(node_list.slice(i, i + 10));
-	}
-	
-	for(var i = 0; i < node_list2.length; i++) {
+	var index = 0;
+	function auto_ping() {
+		if (index >= node_list.length){ 
+			return;
+		}
+		var json = JSON.stringify(node_list[index]);
 		ajax.post('<%=dsp.build_url("admin/vpn/passwall/auto_ping_node_list")%>', {
-				json: JSON.stringify(node_list2[i])
+				json: json
 			},
 			function(x, result) {
 				if(x && x.status == 200) {
-					for(var i = 0; i < result.length; i++) {
-						auto_ping_value[result[i].index].innerHTML = (result[i].ping ? result[i].ping : "--") + " ms";
-					}
+					auto_ping_value[result.index].innerHTML = (result.ping ? result.ping : "--") + " ms";
 				}
-			}
+				index++;
+				auto_ping();
+			},
+			function(x) {
+				index++;
+				auto_ping();
+			},
 		);
 	}
+	
+	auto_ping();
 	
 	//]]>
 </script>
