@@ -1109,11 +1109,9 @@ boot() {
 }
 
 start() {
-	#防止并发启动
+	! load_config && return 1
 	[ -f "$LOCK_FILE" ] && return 3
 	touch "$LOCK_FILE"
-	echolog "开始运行脚本！"
-	! load_config && return 1
 	add_vps_port
 	start_haproxy
 	start_socks5_proxy
