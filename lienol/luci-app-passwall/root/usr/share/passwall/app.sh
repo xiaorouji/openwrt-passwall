@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (C) 2018-2019 Lienol <lawlienol@gmail.com>
+# Copyright (C) 2018-2020 Lienol <lawlienol@gmail.com>
 
 . $IPKG_INSTROOT/lib/functions.sh
 . $IPKG_INSTROOT/lib/functions/service.sh
@@ -14,14 +14,14 @@ REDSOCKS_CONFIG_UDP_FILE=$CONFIG_PATH/redsocks_UDP.conf
 CONFIG_TCP_FILE=$CONFIG_PATH/TCP.json
 CONFIG_UDP_FILE=$CONFIG_PATH/UDP.json
 CONFIG_SOCKS5_FILE=$CONFIG_PATH/SOCKS5.json
-LOCK_FILE=$CONFIG_PATH/$CONFIG.lock
+LOCK_FILE=/var/lock/$CONFIG.lock
 LOG_FILE=/var/log/$CONFIG.log
+RULE_PATH=/etc/config/${CONFIG}_rule
 APP_PATH=/usr/share/$CONFIG
-APP_PATH_RULE=$APP_PATH/rule
-APP_PATH_DNSMASQ=$APP_PATH/dnsmasq.d
 TMP_DNSMASQ_PATH=/var/etc/dnsmasq-passwall.d
 DNSMASQ_PATH=/etc/dnsmasq.d
 lanip=$(uci get network.lan.ipaddr)
+DNS_PORT=7913
 
 get_date() {
 	echo "$(date "+%Y-%m-%d %H:%M:%S")"
@@ -117,35 +117,53 @@ get_not_exists_port_after() {
 	fi
 }
 
-TCP_REDIR_SERVER_NUM=$(config_t_get global_other tcp_redir_server_num 1)
-for i in $(seq 1 $TCP_REDIR_SERVER_NUM); do
-	eval TCP_REDIR_SERVER$i=$(config_t_get global tcp_redir_server$i nil)
+set_subscribe_proxy() {
+	local enabled
+	local url
+	config_get enabled $1 enabled
+	config_get url $1 url
+	[ "$enabled" == "1" ] && {
+		[ -n "$url" -a "$url" != "" ] && {
+			if [ -n "$(echo -n "$url" | grep "//")" ]; then
+				echo -n "$url" | awk -F'/' '{print $3}' | sed "s/^/server=&\/./g" | sed "s/$/\/127.0.0.1#$DNS_PORT/g" >>$TMP_DNSMASQ_PATH/subscribe.conf
+				echo -n "$url" | awk -F'/' '{print $3}' | sed "s/^/ipset=&\/./g" | sed "s/$/\/router/g" >>$TMP_DNSMASQ_PATH/subscribe.conf
+			else
+				echo -n "$url" | awk -F'/' '{print $1}' | sed "s/^/server=&\/./g" | sed "s/$/\/127.0.0.1#$DNS_PORT/g" >>$TMP_DNSMASQ_PATH/subscribe.conf
+				echo -n "$url" | awk -F'/' '{print $1}' | sed "s/^/ipset=&\/./g" | sed "s/$/\/router/g" >>$TMP_DNSMASQ_PATH/subscribe.conf
+			fi
+		}
+	}
+}
+
+TCP_NODE_NUM=$(config_t_get global_other tcp_node_num 1)
+for i in $(seq 1 $TCP_NODE_NUM); do
+	eval TCP_NODE$i=$(config_t_get global tcp_node$i nil)
 done
 
-UDP_REDIR_SERVER_NUM=$(config_t_get global_other udp_redir_server_num 1)
-for i in $(seq 1 $UDP_REDIR_SERVER_NUM); do
-	eval UDP_REDIR_SERVER$i=$(config_t_get global udp_redir_server$i nil)
+UDP_NODE_NUM=$(config_t_get global_other udp_node_num 1)
+for i in $(seq 1 $UDP_NODE_NUM); do
+	eval UDP_NODE$i=$(config_t_get global udp_node$i nil)
 done
 
-SOCKS5_PROXY_SERVER_NUM=$(config_t_get global_other socks5_proxy_server_num 1)
-for i in $(seq 1 $SOCKS5_PROXY_SERVER_NUM); do
-	eval SOCKS5_PROXY_SERVER$i=$(config_t_get global socks5_proxy_server$i nil)
+SOCKS5_NODE_NUM=$(config_t_get global_other socks5_node_num 1)
+for i in $(seq 1 $SOCKS5_NODE_NUM); do
+	eval SOCKS5_NODE$i=$(config_t_get global socks5_node$i nil)
 done
 
-[ "$UDP_REDIR_SERVER1" == "default" ] && UDP_REDIR_SERVER1=$TCP_REDIR_SERVER1
+[ "$UDP_NODE1" == "default" ] && UDP_NODE1=$TCP_NODE1
 
-TCP_REDIR_SERVER1_IP=""
-UDP_REDIR_SERVER1_IP=""
-SOCKS5_PROXY_SERVER1_IP=""
-TCP_REDIR_SERVER1_IPV6=""
-UDP_REDIR_SERVER1_IPV6=""
-SOCKS5_PROXY_SERVER1_IPV6=""
-TCP_REDIR_SERVER1_PORT=""
-UDP_REDIR_SERVER1_PORT=""
-SOCKS5_PROXY_SERVER1_PORT=""
-TCP_REDIR_SERVER1_TYPE=""
-UDP_REDIR_SERVER1_TYPE=""
-SOCKS5_PROXY_SERVER1_TYPE=""
+TCP_NODE1_IP=""
+UDP_NODE1_IP=""
+SOCKS5_NODE1_IP=""
+TCP_NODE1_IPV6=""
+UDP_NODE1_IPV6=""
+SOCKS5_NODE1_IPV6=""
+TCP_NODE1_PORT=""
+UDP_NODE1_PORT=""
+SOCKS5_NODE1_PORT=""
+TCP_NODE1_TYPE=""
+UDP_NODE1_TYPE=""
+SOCKS5_NODE1_TYPE=""
 
 BROOK_SOCKS5_CMD=""
 BROOK_TCP_CMD=""
@@ -157,8 +175,8 @@ KCPTUN_REDIR_PORT=$(config_t_get global_proxy kcptun_port 11183)
 PROXY_MODE=$(config_t_get global proxy_mode gfwlist)
 
 load_config() {
-	[ "$TCP_REDIR_SERVER1" == "nil" -a "$UDP_REDIR_SERVER1" == "nil" -a "$SOCKS5_PROXY_SERVER1" == "nil" ] && {
-		echolog "没有选择服务器！"
+	[ "$TCP_NODE1" == "nil" -a "$UDP_NODE1" == "nil" -a "$SOCKS5_NODE1" == "nil" ] && {
+		echolog "没有选择节点！"
 		return 1
 	}
 	DNS_MODE=$(config_t_get global dns_mode ChinaDNS)
@@ -170,9 +188,6 @@ load_config() {
 		process=$(config_t_get global_forwarding process)
 	fi
 	LOCALHOST_PROXY_MODE=$(config_t_get global localhost_proxy_mode default)
-	DNS_FORWARD=$(config_t_get global_dns dns_forward 208.67.222.222:443)
-	DNS_FORWARD_IP=$(echo "$DNS_FORWARD" | awk -F':' '{print $1}')
-	DNS_FORWARD_PORT=$(echo "$DNS_FORWARD" | awk -F':' '{print $2}')
 	DNS1=$(config_t_get global_dns dns_1)
 	DNS2=$(config_t_get global_dns dns_2)
 	TCP_REDIR_PORT1=$(config_t_get global_proxy tcp_redir_port 1041)
@@ -191,115 +206,117 @@ load_config() {
 }
 
 gen_ss_ssr_config_file() {
-	local server_type local_port kcptun server configfile
-	server_type=$1
+	local type local_port kcptun node configfile
+	type=$1
 	local_port=$2
 	kcptun=$3
-	server=$4
+	node=$4
 	configfile=$5
-	local server_port encrypt_method
-	server_port=$(config_get $server server_port)
-	encrypt_method=$(config_get $server ss_encrypt_method)
-	[ "$server_type" == "ssr" ] && encrypt_method=$(config_get $server ssr_encrypt_method)
+	local port encrypt_method
+	port=$(config_n_get $node port)
+	encrypt_method=$(config_n_get $node ss_encrypt_method)
+	[ "$type" == "ssr" ] && encrypt_method=$(config_n_get $node ssr_encrypt_method)
 	[ "$kcptun" == "1" ] && {
 		server_ip=127.0.0.1
 		server_host=127.0.0.1
-		server_port=$KCPTUN_REDIR_PORT
+		port=$KCPTUN_REDIR_PORT
 	}
 	cat <<-EOF >$configfile
 		{
 			"server": "$server_host",
 			"_comment": "$server_ip",
-			"server_port": $server_port,
+			"server_port": $port,
 			"local_address": "0.0.0.0",
 			"local_port": $local_port,
-			"password": "$(config_get $server password)",
-			"timeout": $(config_get $server timeout),
+			"password": "$(config_n_get $node password)",
+			"timeout": $(config_n_get $node timeout),
 			"method": "$encrypt_method",
-			"fast_open": $(config_get $server fast_open),
+			"fast_open": $(config_n_get $node tcp_fast_open false),
 			"reuse_port": true,
 	EOF
 	[ "$1" == "ssr" ] && {
 		cat <<-EOF >>$configfile
-			"protocol": "$(config_get $server protocol)",
-			"protocol_param": "$(config_get $server protocol_param)",
-			"obfs": "$(config_get $server obfs)",
-			"obfs_param": "$(config_get $server obfs_param)"
+			"protocol": "$(config_n_get $node protocol)",
+			"protocol_param": "$(config_n_get $node protocol_param)",
+			"obfs": "$(config_n_get $node obfs)",
+			"obfs_param": "$(config_n_get $node obfs_param)"
 		EOF
 	}
 	echo -e "}" >>$configfile
 }
 
 gen_config_file() {
-	local server local_port redir_type config_file_path server_host server_ip server_port server_type use_ipv6 network_type
-	server=$1
+	local node local_port redir_type config_file_path server_host server_ip port type use_ipv6 network_type
+	node=$1
 	local_port=$2
 	redir_type=$3
 	config_file_path=$4
-	server_host=$(config_get $server server)
-	use_ipv6=$(config_get $server use_ipv6)
+	remarks=$(config_n_get $node remarks)
+	server_host=$(config_n_get $node address)
+	use_ipv6=$(config_n_get $node use_ipv6)
 	network_type="ipv4"
 	[ "$use_ipv6" == "1" ] && network_type="ipv6"
 	server_ip=$(get_host_ip $network_type $server_host)
-	server_port=$(config_get $server server_port)
-	server_type=$(echo $(config_get $server server_type) | tr 'A-Z' 'a-z')
-	echolog "$redir_type服务器IP地址:$server_ip"
+	port=$(config_n_get $node port)
+	type=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
+	echolog "$redir_type节点：$remarks"
+	echolog "$redir_type节点IP：$server_ip"
 
 	if [ "$redir_type" == "Socks5" ]; then
 		if [ "$network_type" == "ipv6" ]; then
-			SOCKS5_PROXY_SERVER1_IPV6=$server_ip
+			SOCKS5_NODE1_IPV6=$server_ip
 		else
-			SOCKS5_PROXY_SERVER1_IP=$server_ip
+			SOCKS5_NODE1_IP=$server_ip
 		fi
-		SOCKS5_PROXY_SERVER1_PORT=$server_port
-		if [ "$server_type" == "ss" -o "$server_type" == "ssr" ]; then
-			gen_ss_ssr_config_file $server_type $local_port 0 $server $config_file_path
-		elif [ "$server_type" == "v2ray" ]; then
-			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_v2ray_client_config_file.lua $server nil nil $local_port >$config_file_path
-		elif [ "$server_type" == "brook" ]; then
-			BROOK_SOCKS5_CMD="client -l 0.0.0.0:$local_port -i 0.0.0.0 -s $server_ip:$server_port -p $(config_get $server password)"
-		elif [ "$server_type" == "trojan" ]; then
-			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_trojan_client_config_file.lua $server client $local_port >$config_file_path
+		SOCKS5_NODE1_PORT=$port
+		if [ "$type" == "ss" -o "$type" == "ssr" ]; then
+			gen_ss_ssr_config_file $type $local_port 0 $node $config_file_path
+		elif [ "$type" == "v2ray" ]; then
+			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_v2ray_client_config_file.lua $node nil nil $local_port >$config_file_path
+		elif [ "$type" == "brook" ]; then
+			BROOK_SOCKS5_CMD="client -l 0.0.0.0:$local_port -i 0.0.0.0 -s $server_ip:$port -p $(config_n_get $node password)"
+		elif [ "$type" == "trojan" ]; then
+			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_trojan_client_config_file.lua $node client $local_port >$config_file_path
 		fi
 	fi
 
 	if [ "$redir_type" == "UDP" ]; then
 		if [ "$network_type" == "ipv6" ]; then
-			UDP_REDIR_SERVER1_IPV6=$server_ip
+			UDP_NODE1_IPV6=$server_ip
 		else
-			UDP_REDIR_SERVER1_IP=$server_ip
+			UDP_NODE1_IP=$server_ip
 		fi
-		UDP_REDIR_SERVER1_PORT=$server_port
-		if [ "$server_type" == "ss" -o "$server_type" == "ssr" ]; then
-			gen_ss_ssr_config_file $server_type $local_port 0 $server $config_file_path
-		elif [ "$server_type" == "v2ray" ]; then
-			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_v2ray_client_config_file.lua $server udp $local_port nil >$config_file_path
-		elif [ "$server_type" == "brook" ]; then
-			BROOK_UDP_CMD="tproxy -l 0.0.0.0:$local_port -s $server_ip:$server_port -p $(config_get $server password)"
-		elif [ "$server_type" == "trojan" ]; then
+		UDP_NODE1_PORT=$port
+		if [ "$type" == "ss" -o "$type" == "ssr" ]; then
+			gen_ss_ssr_config_file $type $local_port 0 $node $config_file_path
+		elif [ "$type" == "v2ray" ]; then
+			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_v2ray_client_config_file.lua $node udp $local_port nil >$config_file_path
+		elif [ "$type" == "brook" ]; then
+			BROOK_UDP_CMD="tproxy -l 0.0.0.0:$local_port -s $server_ip:$port -p $(config_n_get $node password)"
+		elif [ "$type" == "trojan" ]; then
 			local_port=$(get_not_exists_port_after $SOCKS5_PROXY_PORT1 tcp)
 			socks5_port=$local_port
-			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_trojan_client_config_file.lua $server client $socks5_port >$config_file_path
+			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_trojan_client_config_file.lua $node client $socks5_port >$config_file_path
 		fi
 	fi
 
 	if [ "$redir_type" == "TCP" ]; then
 		if [ "$network_type" == "ipv6" ]; then
-			TCP_REDIR_SERVER1_IPV6=$server_ip
+			TCP_NODE1_IPV6=$server_ip
 		else
-			TCP_REDIR_SERVER1_IP=$server_ip
+			TCP_NODE1_IP=$server_ip
 		fi
-		TCP_REDIR_SERVER1_PORT=$server_port
-		if [ "$server_type" == "v2ray" ]; then
-			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_v2ray_client_config_file.lua $server tcp $local_port nil >$config_file_path
-		elif [ "$server_type" == "trojan" ]; then
-			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_trojan_client_config_file.lua $server nat $local_port >$config_file_path
+		TCP_NODE1_PORT=$port
+		if [ "$type" == "v2ray" ]; then
+			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_v2ray_client_config_file.lua $node tcp $local_port nil >$config_file_path
+		elif [ "$type" == "trojan" ]; then
+			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_trojan_client_config_file.lua $node nat $local_port >$config_file_path
 		else
 			local kcptun_use kcptun_server_host kcptun_port kcptun_config
-			kcptun_use=$(config_get $server use_kcp)
-			kcptun_server_host=$(config_get $server kcp_server)
-			kcptun_port=$(config_get $server kcp_port)
-			kcptun_config=$(config_get $server kcp_opts)
+			kcptun_use=$(config_n_get $node use_kcp)
+			kcptun_server_host=$(config_n_get $node kcp_server)
+			kcptun_port=$(config_n_get $node kcp_port)
+			kcptun_config=$(config_n_get $node kcp_opts)
 			kcptun_path=""
 			lbenabled=$(config_t_get global_haproxy balancing_enable 0)
 			if [ "$kcptun_use" == "1" ] && ([ -z "$kcptun_port" ] || [ -z "$kcptun_config" ]); then
@@ -326,26 +343,26 @@ gen_config_file() {
 				if [ -z "$kcptun_server_host" ]; then
 					start_kcptun "$kcptun_path" $server_ip $kcptun_port "$kcptun_config"
 				else
-					kcptun_use_ipv6=$(config_get $server kcp_use_ipv6)
+					kcptun_use_ipv6=$(config_n_get $node kcp_use_ipv6)
 					network_type="ipv4"
 					[ "$kcptun_use_ipv6" == "1" ] && network_type="ipv6"
 					kcptun_server_ip=$(get_host_ip $network_type $kcptun_server_host)
-					echolog "KCP服务器IP地址:$kcptun_server_ip"
-					TCP_REDIR_SERVER1_IP=$kcptun_server_ip
+					echolog "KCP节点IP地址:$kcptun_server_ip"
+					TCP_NODE1_IP=$kcptun_server_ip
 					start_kcptun "$kcptun_path" $kcptun_server_ip $kcptun_port "$kcptun_config"
 				fi
 				echolog "运行Kcptun..."
-				if [ "$server_type" == "ss" -o "$server_type" == "ssr" ]; then
-					gen_ss_ssr_config_file $server_type $local_port 1 $server $config_file_path
+				if [ "$type" == "ss" -o "$type" == "ssr" ]; then
+					gen_ss_ssr_config_file $type $local_port 1 $node $config_file_path
 				fi
-				if [ "$server_type" == "brook" ]; then
-					BROOK_TCP_CMD="tproxy -l 0.0.0.0:$local_port -s 127.0.0.1:$KCPTUN_REDIR_PORT -p $(config_get $server password)"
+				if [ "$type" == "brook" ]; then
+					BROOK_TCP_CMD="tproxy -l 0.0.0.0:$local_port -s 127.0.0.1:$KCPTUN_REDIR_PORT -p $(config_n_get $node password)"
 				fi
 			else
-				if [ "$server_type" == "ss" -o "$server_type" == "ssr" ]; then
-					gen_ss_ssr_config_file $server_type $local_port 0 $server $config_file_path
-				elif [ "$server_type" == "brook" ]; then
-					BROOK_TCP_CMD="tproxy -l 0.0.0.0:$local_port -s $server_ip:$server_port -p $(config_get $server password)"
+				if [ "$type" == "ss" -o "$type" == "ssr" ]; then
+					gen_ss_ssr_config_file $type $local_port 0 $node $config_file_path
+				elif [ "$type" == "brook" ]; then
+					BROOK_TCP_CMD="tproxy -l 0.0.0.0:$local_port -s $server_ip:$port -p $(config_n_get $node password)"
 				fi
 			fi
 		fi
@@ -363,17 +380,17 @@ start_kcptun() {
 }
 
 start_tcp_redir() {
-	for i in $(seq 1 $TCP_REDIR_SERVER_NUM); do
-		eval temp_server=\$TCP_REDIR_SERVER$i
+	for i in $(seq 1 $TCP_NODE_NUM); do
+		eval temp_server=\$TCP_NODE$i
 		[ "$temp_server" != "nil" ] && {
-			TYPE=$(echo $(config_get $temp_server server_type) | tr 'A-Z' 'a-z')
+			TYPE=$(echo $(config_n_get $temp_server type) | tr 'A-Z' 'a-z')
 			local config_file=$CONFIG_PATH/TCP_$i.json
 			eval current_port=\$TCP_REDIR_PORT$i
 			local port=$(echo $(get_not_exists_port_after $current_port tcp))
 			eval TCP_REDIR_PORT$i=$port
 			gen_config_file $temp_server $port TCP $config_file
 			if [ "$TYPE" == "v2ray" ]; then
-				v2ray_path=$(config_t_get global_v2ray v2ray_client_file)
+				v2ray_path=$(config_t_get global_app v2ray_file)
 				if [ -f "${v2ray_path}/v2ray" ]; then
 					${v2ray_path}/v2ray -config=$config_file >/dev/null &
 				else
@@ -381,26 +398,31 @@ start_tcp_redir() {
 					[ -n "$v2ray_bin" ] && $v2ray_bin -config=$config_file >/dev/null &
 				fi
 			elif [ "$TYPE" == "brook" ]; then
-				brook_bin=$(find_bin Brook)
-				[ -n "$brook_bin" ] && $brook_bin $BROOK_TCP_CMD &>/dev/null &
+				brook_bin=$(config_t_get global_app brook_file)
+				if [ -f "$brook_bin" ]; then
+					$brook_bin $BROOK_TCP_CMD &>/dev/null &
+				else
+					brook_bin=$(find_bin Brook)
+					[ -n "$brook_bin" ] && $brook_bin $BROOK_TCP_CMD &>/dev/null &
+				fi
 			elif [ "$TYPE" == "trojan" ]; then
 				trojan_bin=$(find_bin trojan)
 				[ -n "$trojan_bin" ] && $trojan_bin -c $config_file >/dev/null 2>&1 &
 			elif [ "$TYPE" == "socks5" ]; then
-				local server=$(config_get $temp_server server)
-				local server_port=$(config_get $temp_server server_port)
-				local server_username=$(config_get $temp_server username)
-				local server_password=$(config_get $temp_server password)
-				#ipt2socks_bin=$(find_bin ipt2socks)
-				#[ -n "$ipt2socks_bin" ] && {
-				#	$ipt2socks_bin -T -l $port -b 0.0.0.0 -s $server -p $server_port -R >/dev/null &
-				#}
-				redsocks_bin=$(find_bin redsocks2)
-				[ -n "$redsocks_bin" ] && {
-					local redsocks_config_file=$CONFIG_PATH/TCP_$i.conf
-					gen_redsocks_config $redsocks_config_file tcp $port $server $server_port $server_username $server_password
-					$redsocks_bin -c $redsocks_config_file >/dev/null &
+				local address=$(config_n_get $temp_server address)
+				local port=$(config_n_get $temp_server port)
+				local server_username=$(config_n_get $temp_server username)
+				local server_password=$(config_n_get $temp_server password)
+				ipt2socks_bin=$(find_bin ipt2socks)
+				[ -n "$ipt2socks_bin" ] && {
+					$ipt2socks_bin -T -l $port -b 0.0.0.0 -s $address -p $port -R >/dev/null &
 				}
+				#redsocks_bin=$(find_bin redsocks2)
+				#[ -n "$redsocks_bin" ] && {
+				#	local redsocks_config_file=$CONFIG_PATH/TCP_$i.conf
+				#	gen_redsocks_config $redsocks_config_file tcp $port $address $port $server_username $server_password
+				#	$redsocks_bin -c $redsocks_config_file >/dev/null &
+				#}
 			elif [ "$TYPE" == "ss" -o "$TYPE" == "ssr" ]; then
 				ss_bin=$(find_bin "$TYPE"-redir)
 				[ -n "$ss_bin" ] && {
@@ -415,17 +437,17 @@ start_tcp_redir() {
 }
 
 start_udp_redir() {
-	for i in $(seq 1 $UDP_REDIR_SERVER_NUM); do
-		eval temp_server=\$UDP_REDIR_SERVER$i
+	for i in $(seq 1 $UDP_NODE_NUM); do
+		eval temp_server=\$UDP_NODE$i
 		[ "$temp_server" != "nil" ] && {
-			TYPE=$(echo $(config_get $temp_server server_type) | tr 'A-Z' 'a-z')
+			TYPE=$(echo $(config_n_get $temp_server type) | tr 'A-Z' 'a-z')
 			local config_file=$CONFIG_PATH/UDP_$i.json
 			eval current_port=\$UDP_REDIR_PORT$i
 			local port=$(echo $(get_not_exists_port_after $current_port udp))
 			eval UDP_REDIR_PORT$i=$port
 			gen_config_file $temp_server $port UDP $config_file
 			if [ "$TYPE" == "v2ray" ]; then
-				v2ray_path=$(config_t_get global_v2ray v2ray_client_file)
+				v2ray_path=$(config_t_get global_app v2ray_file)
 				if [ -f "${v2ray_path}/v2ray" ]; then
 					${v2ray_path}/v2ray -config=$config_file >/dev/null &
 				else
@@ -433,42 +455,47 @@ start_udp_redir() {
 					[ -n "$v2ray_bin" ] && $v2ray_bin -config=$config_file >/dev/null &
 				fi
 			elif [ "$TYPE" == "brook" ]; then
-				brook_bin=$(find_bin brook)
-				[ -n "$brook_bin" ] && $brook_bin $BROOK_UDP_CMD >/dev/null &
+				brook_bin=$(config_t_get global_app brook_file)
+				if [ -f "$brook_bin" ]; then
+					$brook_bin $BROOK_UDP_CMD >/dev/null &
+				else
+					brook_bin=$(find_bin Brook)
+					[ -n "$brook_bin" ] && $brook_bin $BROOK_UDP_CMD >/dev/null &
+				fi
 			elif [ "$TYPE" == "trojan" ]; then
 				trojan_bin=$(find_bin trojan)
 				[ -n "$trojan_bin" ] && $trojan_bin -c $config_file >/dev/null 2>&1 &
-				local server=$(config_get $temp_server server)
-				local server_port=$(config_get $temp_server server_port)
-				local server_username=$(config_get $temp_server username)
-				local server_password=$(config_get $temp_server password)
-				#ipt2socks_bin=$(find_bin ipt2socks)
-				#[ -n "$ipt2socks_bin" ] && {
-				#	$ipt2socks_bin -U -l $port -b 0.0.0.0 -s 127.0.0.1 -p $socks5_port -R >/dev/null &
-				#}
-				
-				redsocks_bin=$(find_bin redsocks2)
-				[ -n "$redsocks_bin" ] && {
-					local redsocks_config_file=$CONFIG_PATH/redsocks_UDP_$i.conf
-					gen_redsocks_config $redsocks_config_file udp $port "127.0.0.1" $socks5_port
-					$redsocks_bin -c $redsocks_config_file >/dev/null &
+				local address=$(config_n_get $temp_server address)
+				local port=$(config_n_get $temp_server port)
+				local server_username=$(config_n_get $temp_server username)
+				local server_password=$(config_n_get $temp_server password)
+				ipt2socks_bin=$(find_bin ipt2socks)
+				[ -n "$ipt2socks_bin" ] && {
+					$ipt2socks_bin -U -l $port -b 0.0.0.0 -s 127.0.0.1 -p $socks5_port -R >/dev/null &
 				}
+				
+				#redsocks_bin=$(find_bin redsocks2)
+				#[ -n "$redsocks_bin" ] && {
+				#	local redsocks_config_file=$CONFIG_PATH/redsocks_UDP_$i.conf
+				#	gen_redsocks_config $redsocks_config_file udp $port "127.0.0.1" $socks5_port
+				#	$redsocks_bin -c $redsocks_config_file >/dev/null &
+				#}
 			elif [ "$TYPE" == "socks5" ]; then
-				local server=$(config_get $temp_server server)
-				local server_port=$(config_get $temp_server server_port)
-				local server_username=$(config_get $temp_server username)
-				local server_password=$(config_get $temp_server password)
-				#ipt2socks_bin=$(find_bin ipt2socks)
-				#[ -n "$ipt2socks_bin" ] && {
-				#	$ipt2socks_bin -U -l $port -b 0.0.0.0 -s $server -p $server_port -R >/dev/null &
-				#}
-				
-				redsocks_bin=$(find_bin redsocks2)
-				[ -n "$redsocks_bin" ] && {
-					local redsocks_config_file=$CONFIG_PATH/UDP_$i.conf
-					gen_redsocks_config $redsocks_config_file udp $port $server $server_port $server_username $server_password
-					$redsocks_bin -c $redsocks_config_file >/dev/null &
+				local address=$(config_n_get $temp_server address)
+				local port=$(config_n_get $temp_server port)
+				local server_username=$(config_n_get $temp_server username)
+				local server_password=$(config_n_get $temp_server password)
+				ipt2socks_bin=$(find_bin ipt2socks)
+				[ -n "$ipt2socks_bin" ] && {
+					$ipt2socks_bin -U -l $port -b 0.0.0.0 -s $address -p $port -R >/dev/null &
 				}
+				
+				#redsocks_bin=$(find_bin redsocks2)
+				#[ -n "$redsocks_bin" ] && {
+				#	local redsocks_config_file=$CONFIG_PATH/UDP_$i.conf
+				#	gen_redsocks_config $redsocks_config_file udp $port $address $port $server_username $server_password
+				#	$redsocks_bin -c $redsocks_config_file >/dev/null &
+				#}
 			elif [ "$TYPE" == "ss" -o "$TYPE" == "ssr" ]; then
 				ss_bin=$(find_bin "$TYPE"-redir)
 				[ -n "$ss_bin" ] && {
@@ -481,17 +508,17 @@ start_udp_redir() {
 }
 
 start_socks5_proxy() {
-	for i in $(seq 1 $SOCKS5_PROXY_SERVER_NUM); do
-		eval temp_server=\$SOCKS5_PROXY_SERVER$i
+	for i in $(seq 1 $SOCKS5_NODE_NUM); do
+		eval temp_server=\$SOCKS5_NODE$i
 		if [ "$temp_server" != "nil" ]; then
-			TYPE=$(echo $(config_get $temp_server server_type) | tr 'A-Z' 'a-z')
+			TYPE=$(echo $(config_n_get $temp_server type) | tr 'A-Z' 'a-z')
 			local config_file=$CONFIG_PATH/Socks5_$i.json
 			eval current_port=\$SOCKS5_PROXY_PORT$i
 			local port=$(get_not_exists_port_after $current_port tcp)
 			eval SOCKS5_PROXY_PORT$i=$port
 			gen_config_file $temp_server $port Socks5 $config_file
 			if [ "$TYPE" == "v2ray" ]; then
-				v2ray_path=$(config_t_get global_v2ray v2ray_client_file)
+				v2ray_path=$(config_t_get global_app v2ray_file)
 				if [ -f "${v2ray_path}/v2ray" ]; then
 					${v2ray_path}/v2ray -config=$config_file >/dev/null &
 				else
@@ -499,13 +526,18 @@ start_socks5_proxy() {
 					[ -n "$v2ray_bin" ] && $v2ray_bin -config=$config_file >/dev/null &
 				fi
 			elif [ "$TYPE" == "brook" ]; then
-				brook_bin=$(find_bin brook)
-				[ -n "$brook_bin" ] && $brook_bin $BROOK_SOCKS5_CMD >/dev/null &
+				brook_bin=$(config_t_get global_app brook_file)
+				if [ -f "$brook_bin" ]; then
+					$brook_bin $BROOK_SOCKS5_CMD >/dev/null &
+				else
+					brook_bin=$(find_bin Brook)
+					[ -n "$brook_bin" ] && $brook_bin $BROOK_SOCKS5_CMD >/dev/null &
+				fi
 			elif [ "$TYPE" == "trojan" ]; then
 				trojan_bin=$(find_bin trojan)
 				[ -n "$trojan_bin" ] && $trojan_bin -c $config_file >/dev/null 2>&1 &
 			elif [ "$TYPE" == "socks5" ]; then
-				echolog "Socks5服务器不能使用Socks5代理服务器！"
+				echolog "Socks5节点不能使用Socks5代理节点！"
 			elif [ "$TYPE" == "ss" -o "$TYPE" == "ssr" ]; then
 				ss_bin=$(find_bin "$TYPE"-local)
 				[ -n "$ss_bin" ] && $ss_bin -c $config_file -b 0.0.0.0 >/dev/null 2>&1 &
@@ -545,10 +577,10 @@ set_cru() {
 	if [ "$autoupdatesubscribe" = "1" ]; then
 		if [ "$weekupdatesubscribe" = "7" ]; then
 			echo "0 $dayupdatesubscribe * * * $APP_PATH/subscription.sh" >>/etc/crontabs/root
-			echolog "设置服务器订阅自动更新规则在每天 $dayupdatesubscribe 点。"
+			echolog "设置节点订阅自动更新规则在每天 $dayupdatesubscribe 点。"
 		else
 			echo "0 $dayupdatesubscribe * * $weekupdate $APP_PATH/subscription.sh" >>/etc/crontabs/root
-			echolog "设置服务器订阅自动更新规则在星期 $weekupdate 的 $dayupdatesubscribe 点。"
+			echolog "设置节点订阅自动更新规则在星期 $weekupdate 的 $dayupdatesubscribe 点。"
 		fi
 	else
 		sed -i '/subscription.sh/d' /etc/crontabs/root >/dev/null 2>&1 &
@@ -602,24 +634,24 @@ stop_crontab() {
 
 start_dns() {
 	case "$DNS_MODE" in
+	nonuse)
+		echolog "不使用任何DNS转发模式，将会直接将WAN口DNS给dnsmasq上游！"
+	;;
+	local_7913)
+		echolog "运行DNS转发模式：使用本机7913端口DNS服务器解析域名..."
+	;;
 	dns2socks)
-		if [ -n "$SOCKS5_PROXY_SERVER1" -a "$SOCKS5_PROXY_SERVER1" != "nil" ]; then
+		if [ -n "$SOCKS5_NODE1" -a "$SOCKS5_NODE1" != "nil" ]; then
 			dns2socks_bin=$(find_bin dns2socks)
 			[ -n "$dns2socks_bin" ] && {
-				nohup $dns2socks_bin 127.0.0.1:$SOCKS5_PROXY_PORT1 $DNS_FORWARD 127.0.0.1:7913 >/dev/null 2>&1 &
+				local dns=$(config_t_get global dns2socks_forward 8.8.4.4)
+				nohup $dns2socks_bin 127.0.0.1:$SOCKS5_PROXY_PORT1 ${dns}:53 127.0.0.1:$DNS_PORT >/dev/null 2>&1 &
 				echolog "运行DNS转发模式：dns2socks..."
 			}
 		else
-			echolog "dns2socks模式需要使用Socks5代理服务器，请开启！"
+			echolog "dns2socks模式需要使用Socks5代理节点，请开启！"
 		fi
-		;;
-	Pcap_DNSProxy)
-		Pcap_DNSProxy_bin=$(find_bin Pcap_DNSProxy)
-		[ -n "$Pcap_DNSProxy_bin" ] && {
-			nohup $Pcap_DNSProxy_bin -c /etc/pcap-dnsproxy >/dev/null 2>&1 &
-			echolog "运行DNS转发模式：Pcap_DNSProxy..."
-		}
-		;;
+	;;
 	pdnsd)
 		pdnsd_bin=$(find_bin pdnsd)
 		[ -n "$pdnsd_bin" ] && {
@@ -627,54 +659,38 @@ start_dns() {
 			nohup $pdnsd_bin --daemon -c $CACHEDIR/pdnsd.conf -p $RUN_PID_PATH/pdnsd.pid -d >/dev/null 2>&1 &
 			echolog "运行DNS转发模式：Pdnsd..."
 		}
-		;;
-	local_7913)
-		echolog "运行DNS转发模式：使用本机7913端口DNS服务解析域名..."
-		;;
+	;;
 	chinadns)
 		chinadns_bin=$(find_bin ChinaDNS)
 		[ -n "$chinadns_bin" ] && {
 			other=1
+			other_port=$(expr $DNS_PORT + 1)
 			echolog "运行DNS转发模式：ChinaDNS..."
-			dns1=$(config_t_get global_dns dns_1)
-			[ "$dns1" = "dnsbyisp" ] && dns1=$(cat /tmp/resolv.conf.auto 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | sort -u | grep -v 0.0.0.0 | grep -v 127.0.0.1 | sed -n '2P')
+			local dns1=$DNS1
+			[ "$DNS1" = "dnsbyisp" ] && dns1=$(cat /tmp/resolv.conf.auto 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | grep -v 0.0.0.0 | grep -v 127.0.0.1 | sed -n '1P')
 			case "$UP_CHINADNS_MODE" in
 			OpenDNS_1)
 				other=0
-				nohup $chinadns_bin -p 7913 -c $APP_PATH_RULE/chnroute -m -d -s $dns1,208.67.222.222:443,208.67.222.222:5353 >/dev/null 2>&1 &
+				nohup $chinadns_bin -p $DNS_PORT -c $RULE_PATH/chnroute -m -d -s $dns1,208.67.222.222:443,208.67.222.222:5353 >/dev/null 2>&1 &
 				echolog "运行ChinaDNS上游转发模式：$dns1,208.67.222.222..."
 				;;
 			OpenDNS_2)
 				other=0
-				nohup $chinadns_bin -p 7913 -c $APP_PATH_RULE/chnroute -m -d -s $dns1,208.67.220.220:443,208.67.220.220:5353 >/dev/null 2>&1 &
+				nohup $chinadns_bin -p $DNS_PORT -c $RULE_PATH/chnroute -m -d -s $dns1,208.67.220.220:443,208.67.220.220:5353 >/dev/null 2>&1 &
 				echolog "运行ChinaDNS上游转发模式：$dns1,208.67.220.220..."
 				;;
 			custom)
 				other=0
 				UP_CHINADNS_CUSTOM=$(config_t_get global up_chinadns_custom '114.114.114.114,208.67.222.222:5353')
-				nohup $chinadns_bin -p 7913 -c $APP_PATH_RULE/chnroute -m -d -s $UP_CHINADNS_CUSTOM >/dev/null 2>&1 &
+				nohup $chinadns_bin -p $DNS_PORT -c $RULE_PATH/chnroute -m -d -s $UP_CHINADNS_CUSTOM >/dev/null 2>&1 &
 				echolog "运行ChinaDNS上游转发模式：$UP_CHINADNS_CUSTOM..."
-				;;
-			dnsproxy)
-				dnsproxy_bin=$(find_bin dnsproxy)
-				[ -n "$dnsproxy_bin" ] && {
-					nohup $dnsproxy_bin -d -T -p 7913 -R $DNS_FORWARD_IP -P $DNS_FORWARD_PORT >/dev/null 2>&1 &
-					echolog "运行ChinaDNS上游转发模式：dnsproxy..."
-				}
-				;;
-			dns-forwarder)
-				dnsforwarder_bin=$(find_bin dns-forwarder)
-				[ -n "$dnsforwarder_bin" ] && {
-					nohup $dnsforwarder_bin -p 7913 -s $DNS_FORWARD >/dev/null 2>&1 &
-					echolog "运行ChinaDNS上游转发模式：dns-forwarder..."
-				}
 				;;
 			esac
 			if [ "$other" = "1" ]; then
-				nohup $chinadns_bin -p 7923 -c $APP_PATH_RULE/chnroute -m -d -s $dns1,127.0.0.1:7913 >/dev/null 2>&1 &
+				nohup $chinadns_bin -p $DNS_PORT -c $RULE_PATH/chnroute -m -d -s $dns1,127.0.0.1:$other_port >/dev/null 2>&1 &
 			fi
 		}
-		;;
+	;;
 	esac
 	echolog "若不正常，请尝试其他模式！"
 }
@@ -697,7 +713,6 @@ EOF
 		echolog "生成Dnsmasq配置文件。"
 
 		if [ "$dnsport" != "0" ]; then
-			isp_dns=$(cat /tmp/resolv.conf.auto 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | sort -u | grep -v 0.0.0.0 | grep -v 127.0.0.1)
 			failcount=0
 			while [ "$failcount" -lt "10" ]; do
 				interface=$(ifconfig | grep "$dnsport" | awk '{print $1}')
@@ -707,13 +722,6 @@ EOF
 					[ "$failcount" -ge 10 ] && exit 0
 					sleep 1m
 				else
-					[ -n "$isp_dns" ] && {
-						for isp_ip in $isp_dns; do
-							echo server=$isp_ip >>/etc/dnsmasq.conf
-							route add -host ${isp_ip} dev ${dnsport}
-							echolog "添加运营商DNS出口路由表：$dnsport"
-						done
-					}
 					[ "$DNS1" != "dnsbyisp" ] && {
 						route add -host ${DNS1} dev ${dnsport}
 						echolog "添加DNS1出口路由表：$dnsport"
@@ -728,10 +736,10 @@ EOF
 				fi
 			done
 		else
-			isp_dns=$(cat /tmp/resolv.conf.auto 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | sort -u | grep -v 0.0.0.0 | grep -v 127.0.0.1)
-			[ -n "$isp_dns" ] && {
-				for isp_ip in $isp_dns; do
-					echo server=$isp_ip >>/etc/dnsmasq.conf
+			isp_dnss=$(cat /tmp/resolv.conf.auto 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | sort -u | grep -v 0.0.0.0 | grep -v 127.0.0.1)
+			[ -n "$isp_dnss" ] && {
+				for isp_dns in $isp_dnss; do
+					echo server=$isp_dns >>/etc/dnsmasq.conf
 				done
 			}
 			[ "$DNS1" != "dnsbyisp" ] && {
@@ -785,47 +793,35 @@ EOF
 	# done
 	# fi
 
-	subscribe_by_ss=$(config_t_get global_subscribe subscribe_by_ss)
-	[ -z "$subscribe_by_ss" ] && subscribe_by_ss=0
-	[ "$subscribe_by_ss" -eq 1 ] && {
-		subscribe_url=$(config_t_get global_subscribe subscribe_url)
-		[ -n "$subscribe_url" ] && {
-			for url in $subscribe_url; do
-				if [ -n "$(echo -n "$url" | grep "//")" ]; then
-					echo -n "$url" | awk -F'/' '{print $3}' | sed "s/^/server=&\/./g" | sed "s/$/\/127.0.0.1#7913/g" >>$TMP_DNSMASQ_PATH/subscribe.conf
-					echo -n "$url" | awk -F'/' '{print $3}' | sed "s/^/ipset=&\/./g" | sed "s/$/\/router/g" >>$TMP_DNSMASQ_PATH/subscribe.conf
-				else
-					echo -n "$url" | awk -F'/' '{print $1}' | sed "s/^/server=&\/./g" | sed "s/$/\/127.0.0.1#7913/g" >>$TMP_DNSMASQ_PATH/subscribe.conf
-					echo -n "$url" | awk -F'/' '{print $1}' | sed "s/^/ipset=&\/./g" | sed "s/$/\/router/g" >>$TMP_DNSMASQ_PATH/subscribe.conf
-				fi
-			done
-			restdns=1
-		}
+	subscribe_proxy=$(config_t_get global_subscribe subscribe_proxy 0)
+	[ "$subscribe_proxy" -eq 1 ] && {
+		config_foreach set_subscribe_proxy "subscribe_list"
+		restdns=1
 	}
 
-	if [ ! -f "$TMP_DNSMASQ_PATH/gfwlist.conf" ]; then
-		ln -s $APP_PATH_DNSMASQ/gfwlist.conf $TMP_DNSMASQ_PATH/gfwlist.conf
+	if [ ! -f "$TMP_DNSMASQ_PATH/gfwlist.conf" -a "$DNS_MODE" != "nonuse" ]; then
+		ln -s $RULE_PATH/gfwlist.conf $TMP_DNSMASQ_PATH/gfwlist.conf
 		restdns=1
 	fi
 
-	if [ ! -f "$TMP_DNSMASQ_PATH/blacklist_host.conf" ]; then
-		cat $APP_PATH_RULE/blacklist_host | awk '{print "server=/."$1"/127.0.0.1#7913\nipset=/."$1"/blacklist"}' >>$TMP_DNSMASQ_PATH/blacklist_host.conf
+	if [ ! -f "$TMP_DNSMASQ_PATH/blacklist_host.conf" -a "$DNS_MODE" != "nonuse" ]; then
+		cat $RULE_PATH/blacklist_host | awk '{print "server=/."$1"/127.0.0.1#'$DNS_PORT'\nipset=/."$1"/blacklist"}' >>$TMP_DNSMASQ_PATH/blacklist_host.conf
 		restdns=1
 	fi
 
 	if [ ! -f "$TMP_DNSMASQ_PATH/whitelist_host.conf" ]; then
-		cat $APP_PATH_RULE/whitelist_host | sed "s/^/ipset=&\/./g" | sed "s/$/\/&whitelist/g" | sort | awk '{if ($0!=line) print;line=$0}' >$TMP_DNSMASQ_PATH/whitelist_host.conf
+		cat $RULE_PATH/whitelist_host | sed "s/^/ipset=&\/./g" | sed "s/$/\/&whitelist/g" | sort | awk '{if ($0!=line) print;line=$0}' >$TMP_DNSMASQ_PATH/whitelist_host.conf
 		restdns=1
 	fi
 
-	if [ ! -f "$TMP_DNSMASQ_PATH/router.conf" ]; then
-		cat $APP_PATH_RULE/router | awk '{print "server=/."$1"/127.0.0.1#7913\nipset=/."$1"/router"}' >>$TMP_DNSMASQ_PATH/router.conf
+	if [ ! -f "$TMP_DNSMASQ_PATH/router.conf" -a "$DNS_MODE" != "nonuse" ]; then
+		cat $RULE_PATH/router | awk '{print "server=/."$1"/127.0.0.1#'$DNS_PORT'\nipset=/."$1"/router"}' >>$TMP_DNSMASQ_PATH/router.conf
 		restdns=1
 	fi
 
-	userconf=$(grep -c "" $APP_PATH_DNSMASQ/user.conf)
+	userconf=$(grep -c "" $RULE_PATH/user.conf)
 	if [ "$userconf" -gt 0 ]; then
-		ln -s $APP_PATH_DNSMASQ/user.conf $TMP_DNSMASQ_PATH/user.conf
+		ln -s $RULE_PATH/user.conf $TMP_DNSMASQ_PATH/user.conf
 		restdns=1
 	fi
 
@@ -925,7 +921,7 @@ gen_pdnsd_config() {
 			cache_dir="/var/pdnsd";
 			run_as="root";
 			server_ip = 127.0.0.1;
-			server_port=7913;
+			server_port=$DNS_PORT;
 			status_ctl = on;
 			query_method=tcp_only;
 			min_ttl=1d;
@@ -957,13 +953,10 @@ gen_pdnsd_config() {
 }
 
 stop_dnsmasq() {
-	if [ "$TCP_REDIR_SERVER1" == "nil" ]; then
-		rm -rf /var/dnsmasq.d/dnsmasq-$CONFIG.conf
-		rm -rf $DNSMASQ_PATH/dnsmasq-$CONFIG.conf
-		rm -rf $TMP_DNSMASQ_PATH
-		/etc/init.d/dnsmasq restart 2>/dev/null
-		echolog "没有选择服务器！"
-	fi
+	rm -rf /var/dnsmasq.d/dnsmasq-$CONFIG.conf
+	rm -rf $DNSMASQ_PATH/dnsmasq-$CONFIG.conf
+	rm -rf $TMP_DNSMASQ_PATH
+	/etc/init.d/dnsmasq restart 2>/dev/null
 }
 
 start_haproxy() {
@@ -1015,10 +1008,10 @@ start_haproxy() {
 				fi
 				if [ "$bbackup" = "1" ]; then
 					bbackup=" backup"
-					echolog "添加故障转移备服务器:$bips"
+					echolog "添加故障转移备节点:$bips"
 				else
 					bbackup=""
-					echolog "添加负载均衡主服务器:$bips"
+					echolog "添加负载均衡主节点:$bips"
 				fi
 				#si=$(echo $bips | grep -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}")
 				#if [ -z "$si" ]; then
@@ -1048,25 +1041,22 @@ start_haproxy() {
 				fi
 			done
 			#生成负载均衡控制台
-			adminstatus=$(config_t_get global_haproxy admin_enable)
-			if [ "$adminstatus" = "1" ]; then
-				adminport=$(config_t_get global_haproxy admin_port)
-				adminuser=$(config_t_get global_haproxy admin_user)
-				adminpassword=$(config_t_get global_haproxy admin_password)
-				cat <<-EOF >>$HAPROXY_FILE
-					
-					listen status
-					    bind 0.0.0.0:$adminport
-					    mode http                   
-					    stats refresh 30s
-					    stats uri  /  
-					    stats auth $adminuser:$adminpassword
-					    #stats hide-version
-					    stats admin if TRUE
-				EOF
-			fi
+			console_port=$(config_t_get global_haproxy console_port)
+			console_user=$(config_t_get global_haproxy console_user)
+			console_password=$(config_t_get global_haproxy console_password)
+			cat <<-EOF >>$HAPROXY_FILE
+			
+				listen status
+				    bind 0.0.0.0:$console_port
+				    mode http                   
+				    stats refresh 30s
+				    stats uri  /  
+				    stats auth $console_user:$console_password
+				    #stats hide-version
+				    stats admin if TRUE
+			EOF
 			nohup $haproxy_bin -f $HAPROXY_FILE 2>&1
-			echolog "负载均衡服务运行成功！"
+			echolog "负载均衡运行成功！"
 		}
 	}
 }
@@ -1083,11 +1073,11 @@ add_vps_port() {
 				[ "$failcount" -ge 10 ] && exit 0
 				sleep 1m
 			else
-				route add -host ${TCP_REDIR_SERVER1_IP} dev ${multiwan}
-				route add -host ${UDP_REDIR_SERVER1_IP} dev ${multiwan}
+				route add -host ${TCP_NODE1_IP} dev ${multiwan}
+				route add -host ${UDP_NODE1_IP} dev ${multiwan}
 				echolog "添加SS出口路由表：$multiwan"
-				echo "$TCP_REDIR_SERVER1_IP" >$CONFIG_PATH/tcp_ip
-				echo "$UDP_REDIR_SERVER1_IP" >$CONFIG_PATH/udp_ip
+				echo "$TCP_NODE1_IP" >$CONFIG_PATH/tcp_ip
+				echo "$UDP_NODE1_IP" >$CONFIG_PATH/udp_ip
 				break
 			fi
 		done
@@ -1108,7 +1098,7 @@ kill_all() {
 boot() {
 	local delay=$(config_t_get global_delay start_delay 0)
 	if [ "$delay" -gt 0 ]; then
-		[ "$TCP_REDIR_SERVER1" != "nil" -o "$UDP_REDIR_SERVER1" != "nil" ] && {
+		[ "$TCP_NODE1" != "nil" -o "$UDP_NODE1" != "nil" ] && {
 			echolog "执行启动延时 $delay 秒后再启动!"
 			sleep $delay && start >/dev/null 2>&1 &
 		}
@@ -1119,13 +1109,13 @@ boot() {
 }
 
 start() {
+	#防止并发启动
+	[ -f "$LOCK_FILE" ] && return 3
+	touch "$LOCK_FILE"
 	echolog "开始运行脚本！"
 	! load_config && return 1
 	add_vps_port
 	start_haproxy
-	#防止并发开启服务
-	[ -f "$LOCK_FILE" ] && return 3
-	touch "$LOCK_FILE"
 	start_socks5_proxy
 	start_tcp_redir
 	start_udp_redir
@@ -1147,7 +1137,7 @@ stop() {
 	clean_log
 	source $APP_PATH/iptables.sh stop
 	del_vps_port
-	kill_all pdnsd Pcap_DNSProxy brook dns2socks haproxy dns-forwarder chinadns dnsproxy ipt2socks
+	kill_all pdnsd brook dns2socks haproxy chinadns ipt2socks
 	ps -w | grep -E "$CONFIG_TCP_FILE|$CONFIG_UDP_FILE|$CONFIG_SOCKS5_FILE" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 	ps -w | grep -E "$CONFIG_PATH" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 	ps -w | grep "kcptun_client" | grep "$KCPTUN_REDIR_PORT" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
@@ -1156,7 +1146,7 @@ stop() {
 	rm -rf $CONFIG_PATH
 	stop_dnsmasq
 	stop_crontab
-	echolog "关闭相关服务，清理相关文件和缓存完成。\n"
+	echolog "关闭相关程序，清理相关文件和缓存完成。\n"
 	sleep 1s
 }
 

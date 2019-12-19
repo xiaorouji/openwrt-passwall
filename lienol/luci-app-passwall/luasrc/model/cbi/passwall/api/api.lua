@@ -5,6 +5,8 @@ local uci = require"luci.model.uci".cursor()
 local util = require "luci.util"
 local i18n = require "luci.i18n"
 
+local appname = "passwall"
+
 local wget = "/usr/bin/wget"
 local wget_args = {
     "--no-check-certificate", "--quiet", "--timeout=100", "--tries=3"
@@ -14,6 +16,27 @@ local command_timeout = 300
 
 local LEDE_BOARD = nil
 local DISTRIB_TARGET = nil
+
+function uci_get_type(type, config, default)
+    value = uci:get(appname, "@" .. type .. "[0]", config) or sys.exec(
+                "echo -n `uci -q get " .. appname .. ".@" .. type .. "[0]." ..
+                    config .. "`")
+    if (value == nil or value == "") and (default and default ~= "") then
+        value = default
+    end
+    return value
+end
+
+function uci_get_type_id(id, config, default)
+    value = uci:get(appname, id, config) or
+                sys.exec(
+                    "echo -n `uci -q get " .. appname .. "." .. id .. "." ..
+                        config .. "`")
+    if (value == nil or value == "") and (default and default ~= "") then
+        value = default
+    end
+    return value
+end
 
 function _unpack(t, i)
     i = i or 1

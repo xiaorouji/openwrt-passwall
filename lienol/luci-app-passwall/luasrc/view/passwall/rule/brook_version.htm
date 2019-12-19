@@ -1,7 +1,9 @@
 <%
-local brook_path = luci.sys.exec("echo -n `uci get passwall.@global_app[0].brook_client_file`")
-local brook_version = luci.sys.exec("[ -f '" .. brook_path .. "' ] && " .. brook_path .. " -v | awk '{print $3}'")
+local api = require "luci.model.cbi.passwall.api.api"
 local dsp = require "luci.dispatcher"
+
+local brook_path = api.uci_get_type("global_app", "brook_file")
+local brook_version = luci.sys.exec("[ -f '" .. brook_path .. "' ] && " .. brook_path .. " -v | awk '{print $3}'")
 -%>
 
 <script type="text/javascript">
@@ -149,7 +151,6 @@ local dsp = require "luci.dispatcher"
 	</label>
 	<div class="cbi-value-field">
 		<div class="cbi-value-description">
-			<img src="/luci-static/resources/cbi/help.gif">
 			<span>【 <%=brook_version%>】</span>
 			<input class="cbi-button cbi-input-apply" type="submit" id="_brook-check_btn" onclick="onBtnClick_brook(this);" value="<%:Manually update%>">
 			<span id="_brook-check_btn-detail"></span>

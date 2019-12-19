@@ -1,7 +1,9 @@
 <%
-local kcptun_path = luci.sys.exec("echo -n `uci get passwall.@global_app[0].kcptun_client_file`")
-local kcptun_version = luci.sys.exec("[ -f '" .. kcptun_path .. "' ] && " .. kcptun_path .. " -v | awk '{print $3}'")
+local api = require "luci.model.cbi.passwall.api.api"
 local dsp = require "luci.dispatcher"
+
+local kcptun_path = api.uci_get_type("global_app", "kcptun_client_file")
+local kcptun_version = luci.sys.exec("[ -f '" .. kcptun_path .. "' ] && " .. kcptun_path .. " -v | awk '{print $3}'")
 -%>
 
 <script type="text/javascript">
@@ -165,7 +167,6 @@ local dsp = require "luci.dispatcher"
 	</label>
 	<div class="cbi-value-field">
 		<div class="cbi-value-description">
-			<img src="/luci-static/resources/cbi/help.gif">
 			<span>【 <%=kcptun_version%>】</span>
 			<input class="cbi-button cbi-input-apply" type="submit" id="_kcptun-check_btn" onclick="onBtnClick_kcptun(this);" value="<%:Manually update%>">
 			<span id="_kcptun-check_btn-detail"></span>

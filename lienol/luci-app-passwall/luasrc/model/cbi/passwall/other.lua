@@ -51,19 +51,6 @@ s = m:section(TypedSection, "global_dns", translate("DNS Settings"))
 s.anonymous = true
 s.addremove = false
 
----- DNS Forward Address
-o = s:option(Value, "dns_forward", translate("DNS Forward Address"))
-o.rmempty = false
-o.default = "8.8.4.4:53"
-o:value("8.8.4.4:53", "8.8.4.4:53(Google DNS1)")
-o:value("8.8.8.8:53", "8.8.8.8:53(Google DNS2)")
-o:value("208.67.222.222:53", "208.67.222.222:53(OpenDNS DNS1_53)")
-o:value("208.67.222.222:5353", "208.67.222.222:5353(OpenDNS DNS1_5353)")
-o:value("208.67.222.222:443", "208.67.222.222:443(OpenDNS DNS1_443)")
-o:value("208.67.220.220:53", "208.67.220.220:53(OpenDNS DNS2_53)")
-o:value("208.67.220.220:5353", "208.67.220.220:5353(OpenDNS DNS2_5353)")
-o:value("208.67.220.220:443", "208.67.220.220:443(OpenDNS DNS2_443)")
-
 ---- Mainland DNS Sever 1
 o = s:option(Value, "dns_1", translate("Mainland DNS Sever 1"))
 o.rmempty = false
@@ -95,7 +82,9 @@ o:value("210.2.4.8", "210.2.4.8(CNNIC DNS2)")
 o:value("180.76.76.76", "180.76.76.76(" .. translate("Baidu") .. "DNS)")
 
 ---- DNS Export Of Multi WAN
-o = s:option(ListValue, "dns_port", translate("DNS Export Of Multi WAN"))
+o = s:option(ListValue, "dns_port", translate("DNS Export Of Multi WAN"),
+             translate(
+                 "Only support Multi Wan. If no effect, please go to mwan3 to set."))
 o.rmempty = false
 o.default = 0
 o:value(0, translate("Auto"))
@@ -109,8 +98,10 @@ for _, iface in ipairs(ifaces) do
     end
 end
 
----- Designated Export for Client
-o = s:option(ListValue, "wan_port", translate("Designated Export for Client"))
+---- Node Export Of Multi WAN
+o = s:option(ListValue, "wan_port", translate("Node Export Of Multi WAN"),
+             translate(
+                 "Only support Multi Wan. If no effect, please go to mwan3 to set."))
 o.default = 0
 o.rmempty = false
 o:value(0, translate("Auto"))
@@ -200,11 +191,10 @@ s = m:section(TypedSection, "global_other", translate("Other Settings"))
 s.anonymous = true
 s.addremove = false
 
----- TCP Servers Number Option
-o = s:option(ListValue, "tcp_redir_server_num",
-             translate("TCP Redir Server Number"),
+---- TCP Node Number Option
+o = s:option(ListValue, "tcp_node_num", "TCP" .. translate("Node Number"),
              translatef(
-                 "You can only set up a maximum of %s servers for the time being",
+                 "You can only set up a maximum of %s nodes for the time being",
                  "3"))
 o.default = "1"
 o.rmempty = false
@@ -212,11 +202,10 @@ o:value("1")
 o:value("2")
 o:value("3")
 
----- UDP Servers Number Option
-o = s:option(ListValue, "udp_redir_server_num",
-             translate("UDP Redir Server Number"),
+---- UDP Node Number Option
+o = s:option(ListValue, "udp_node_num", "UDP" .. translate("Node Number"),
              translatef(
-                 "You can only set up a maximum of %s servers for the time being",
+                 "You can only set up a maximum of %s nodes for the time being",
                  "3"))
 o.default = "1"
 o.rmempty = false
@@ -224,11 +213,10 @@ o:value("1")
 o:value("2")
 o:value("3")
 
----- Socks5 Servers Number Option
-o = s:option(ListValue, "socks5_proxy_server_num",
-             translate("Socks5 Proxy Server Number"),
+---- Socks5 Node Number Option
+o = s:option(ListValue, "socks5_node_num", "Socks5" .. translate("Node Number"),
              translatef(
-                 "You can only set up a maximum of %s servers for the time being",
+                 "You can only set up a maximum of %s nodes for the time being",
                  "5"))
 o.default = "1"
 o.rmempty = false
