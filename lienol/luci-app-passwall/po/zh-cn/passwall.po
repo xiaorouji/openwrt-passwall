@@ -271,6 +271,9 @@ msgstr "Ping延迟"
 msgid "Ping Value"
 msgstr "Ping值"
 
+msgid "Group"
+msgstr "组"
+
 msgid "Use TCPing"
 msgstr "使用TCPing"
 
@@ -282,6 +285,9 @@ msgstr "自动Ping"
 
 msgid "This will automatically ping the node for latency"
 msgstr "选中后保存应用后即自动Ping节点"
+
+msgid "Concise display nodes"
+msgstr "简洁显示节点"
 
 msgid "Apply"
 msgstr "应用"
