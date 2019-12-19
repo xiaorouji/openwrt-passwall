@@ -356,28 +356,26 @@ https://github.com/pure-css/pure/blob/master/LICENSE.md
 				var div = s.parentNode.parentNode.parentNode.parentNode;
 				div.removeAttribute('onclick');
 				s.innerHTML = '<%:Check...%>';
-				var sendDate = (new Date()).getTime();
 				XHR.get('<%=dsp.build_url("admin/vpn/passwall/connect_status")%>', {
 						type: type
 					},
 					function(x, rv) {
 						if (rv.status) {
-							var receiveDate = (new Date()).getTime();
-							var responseTimeMs = receiveDate - sendDate;
+							var time = parseFloat(rv.time).toFixed(2);
 							var speed = "";
-							if (responseTimeMs < 300) {
+							if (time < 0.5) {
 								s.className="green";
 								speed = "<%:very good%>";
-							} else if (responseTimeMs < 600) {
+							} else if (time < 0.8) {
 								s.className="green";
 								speed = "<%:good%>";
-							}  else if (responseTimeMs < 2000) {
+							}  else if (time < 1.5) {
 								s.className="yellow";
 								speed = "<%:general%>";
-							} else if (responseTimeMs < 5000) {
+							} else if (time < 3) {
 								s.className="red";
 								speed = "<%:bad%>";
-							} else if (responseTimeMs >= 5000) {
+							} else if (time >= 3) {
 								s.className="red";
 								speed = "<%:very bad%>";
 							}
