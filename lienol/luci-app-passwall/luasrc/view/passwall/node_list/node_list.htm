@@ -5,6 +5,7 @@
 	local tcp_node_num = api.uci_get_type("global_other", "tcp_node_num", 1)
 	local udp_node_num = api.uci_get_type("global_other", "udp_node_num", 1)
 	local socks5_node_num = api.uci_get_type("global_other", "socks5_node_num", 1)
+	local compact_display_nodes = api.uci_get_type("global_other", "compact_display_nodes", 1)
 -%>
 
 <style>
@@ -99,8 +100,15 @@ table td, .table .td {
 	}
 	
 	function ping_node(cbi_id,dom) {
-		var address = document.getElementById("cbid.passwall." + cbi_id + ".address").value;
-		var port = document.getElementById("cbid.passwall." + cbi_id + ".port").value;
+		<% if compact_display_nodes and tonumber(compact_display_nodes) == 1 then %>
+			var remarks = document.getElementById("cbid.passwall." + cbi_id + ".remarks").value;
+			var address_full = remarks.substring(remarks.lastIndexOf("（") + 1, remarks.lastIndexOf("）"));
+			var address = address_full.substring(0, address_full.lastIndexOf(":"));
+			var port = address_full.substring(address_full.lastIndexOf(":") + 1);
+		<% else %>
+			var address = document.getElementById("cbid.passwall." + cbi_id + ".address").value;
+			var port = document.getElementById("cbid.passwall." + cbi_id + ".port").value;
+		<% end %>
 		if ((address != null && address != "") && (port != null && port != "")) {
 			XHR.get('<%=dsp.build_url("admin/vpn/passwall/ping_node")%>', {
 					address: address,
@@ -123,8 +131,15 @@ table td, .table .td {
 	var auto_ping_value = document.getElementsByClassName('auto_ping_value');
 	for(var i = 0; i < auto_ping_value.length; i++) {
 		var cbi_id = auto_ping_value[i].getAttribute("cbiid");
-		var address = document.getElementById("cbid.passwall." + cbi_id + ".address").value;
-		var port = document.getElementById("cbid.passwall." + cbi_id + ".port").value;
+		<% if compact_display_nodes and tonumber(compact_display_nodes) == 1 then %>
+			var remarks = document.getElementById("cbid.passwall." + cbi_id + ".remarks").value;
+			var address_full = remarks.substring(remarks.lastIndexOf("（") + 1, remarks.lastIndexOf("）"));
+			var address = address_full.substring(0, address_full.lastIndexOf(":"));
+			var port = address_full.substring(address_full.lastIndexOf(":") + 1);
+		<% else %>
+			var address = document.getElementById("cbid.passwall." + cbi_id + ".address").value;
+			var port = document.getElementById("cbid.passwall." + cbi_id + ".port").value;
+		<% end %>
 		if ((address != null && address != "") && (port != null && port != "")) {
 			var data = {
 				index: i,

@@ -125,11 +125,11 @@ get_node_index(){
 }
 
 get_local_nodes(){
-	[ -f "/etc/config/$CONFIG" ] && [ "`uci show $CONFIG | grep -c 'sub_node'`" -gt 0 ] && {
+	[ -f "/etc/config/$CONFIG" ] && [ "`uci show $CONFIG | grep -c 'is_sub'`" -gt 0 ] && {
 		get_node_index
 		for i in `seq $nodes_index -1 1`
 		do
-			[ "$(uci show $CONFIG.@nodes[$(($i-1))]|grep -c "sub_node")" -eq 1 ] && {
+			[ "$(uci show $CONFIG.@nodes[$(($i-1))]|grep -c "is_sub")" -eq 1 ] && {
 				if [ ! -f "/usr/share/${CONFIG}/sub/all_localnodes" ]; then
 					echo $(config_t_get nodes address $(($i-1))) > /usr/share/${CONFIG}/sub/all_localnodes
 				else
@@ -144,7 +144,6 @@ get_remote_config(){
 	isAdd=1
 	add_mode="$subscrib_remark"
 	[ -n "$3" ] && add_mode="导入"
-	group="sub_node"
 	if [ "$1" == "ss" ]; then
 		decode_link="$2"
 		decode_link=$(ss_decode $decode_link)
@@ -170,6 +169,7 @@ get_remote_config(){
 		remarks_temp=$(echo "$decode_link" |grep -Eo "remarks.+" |sed 's/remarks=//g'|awk -F'&' '{print $1}')
 		[ -n "$remarks_temp" ] && remarks="$(decode_url_link $remarks_temp 0)"
 		group_temp=$(echo "$decode_link" |grep -Eo "group.+" |sed 's/group=//g'|awk -F'&' '{print $1}')
+		[ -n "$group_temp" ] && group="$(decode_url_link $group_temp 0)"
 	elif [ "$1" == "v2ray" ]; then
 		decode_link=$(decode_url_link $2 1)
 		json_load "$decode_link"
@@ -219,7 +219,7 @@ add_nodes(){
 	get_node_index
 	uci_set="uci set $CONFIG.@nodes[$nodes_index]."
 	uci add $CONFIG nodes > /dev/null
-	[ -z "$3" ] && ${uci_set}group="$group"
+	[ -z "$3" ] && ${uci_set}is_sub="is_sub"
 	if [ "$2" == "ss" ]; then
 		${uci_set}add_mode="$add_mode"
 		${uci_set}remarks="$remarks"
@@ -253,6 +253,7 @@ add_nodes(){
 		${uci_set}obfs_param="$obfsparam"
 		${uci_set}timeout=300
 		${uci_set}tcp_fast_open=false
+		${uci_set}group="$group"
 		
 		if [ "$1" == "add" ]; then
 			let addnum_ssr+=1
@@ -344,7 +345,7 @@ del_config(){
 
 del_all_config(){
 	get_node_index
-	[ "`uci show $CONFIG | grep -c 'sub_node'`" -eq 0 ] && exit 0
+	[ "`uci show $CONFIG | grep -c 'is_sub'`" -eq 0 ] && exit 0
 	TCP_NODE_NUM=$(uci get $CONFIG.@global_other[0].tcp_node_num)
 	for i in $(seq 1 $TCP_NODE_NUM); do
 		eval TCP_NODE$i=$(config_t_get global tcp_node$i)
@@ -367,7 +368,7 @@ del_all_config(){
 	for i in $(seq 1 $TCP_NODE_NUM); do
 		eval node=\$TCP_NODE$i
 		[ -n "$node" -a "$node" != "nil" ] && {
-			is_sub_node=`uci -q get $CONFIG.$node.group`
+			is_sub_node=`uci -q get $CONFIG.$node.is_sub`
 			[ -n "$is_sub_node" ] && {
 				is_stop=1
 				uci set $CONFIG.@global[0].tcp_node$i="nil" && uci commit $CONFIG
@@ -378,7 +379,7 @@ del_all_config(){
 	for i in $(seq 1 $UDP_NODE_NUM); do
 		eval node=\$UDP_NODE$i
 		[ "$node" != "nil" ] && {
-			is_sub_node=`uci -q get $CONFIG.$node.group`
+			is_sub_node=`uci -q get $CONFIG.$node.is_sub`
 			[ -n "$is_sub_node" ] && {
 				is_stop=1
 				uci set $CONFIG.@global[0].udp_node$i="nil" && uci commit $CONFIG
@@ -389,7 +390,7 @@ del_all_config(){
 	for i in $(seq 1 $SOCKS5_NODE_NUM); do
 		eval node=\$SOCKS5_NODE$i
 		[ "$node" != "nil" ] && {
-			is_sub_node=`uci -q get $CONFIG.$node.group`
+			is_sub_node=`uci -q get $CONFIG.$node.is_sub`
 			[ -n "$is_sub_node" ] && {
 				is_stop=1
 				uci set $CONFIG.@global[0].socks5_node$i="nil" && uci commit $CONFIG
@@ -399,7 +400,7 @@ del_all_config(){
 	
 	for i in `seq $nodes_index -1 1`
 	do
-		[ "$(uci show $CONFIG.@nodes[$(($i-1))] | grep -c 'sub_node')" -eq 1 ] && uci delete $CONFIG.@nodes[$(($i-1))] && uci commit $CONFIG
+		[ "$(uci show $CONFIG.@nodes[$(($i-1))] | grep -c 'is_sub')" -eq 1 ] && uci delete $CONFIG.@nodes[$(($i-1))] && uci commit $CONFIG
 	done
 	
 	[ "$is_stop" == 1 ] && /etc/init.d/$CONFIG restart
@@ -462,7 +463,7 @@ start() {
 }
 
 stop() {
-	[ "`uci show $CONFIG | grep -c 'sub_node'`" -gt 0 ] && {
+	[ "`uci show $CONFIG | grep -c 'is_sub'`" -gt 0 ] && {
 		del_all_config
 		echo "$Date: 在线订阅节点已全部删除" >> $LOG_FILE
 	}
