@@ -356,12 +356,13 @@ https://github.com/pure-css/pure/blob/master/LICENSE.md
 				var div = s.parentNode.parentNode.parentNode.parentNode;
 				div.removeAttribute('onclick');
 				s.innerHTML = '<%:Check...%>';
+				var sendDate = (new Date()).getTime();
 				XHR.get('<%=dsp.build_url("admin/vpn/passwall/connect_status")%>', {
 						type: type
 					},
 					function(x, rv) {
 						if (rv.status) {
-							var time = parseFloat(rv.time).toFixed(2);
+							var time = ((new Date()).getTime() - sendDate) / 1000;
 							var speed = "";
 							if (time < 0.5) {
 								s.className="green";

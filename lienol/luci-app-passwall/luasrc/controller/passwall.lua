@@ -167,7 +167,6 @@ end
 
 function connect_status()
     local e = {}
-    local begin_time = os.clock()
     if luci.http.formvalue("type") == "google" then
         e.status = luci.sys.call(
                        "echo `/usr/share/passwall/test.sh test_url 'https://www.google.com'` | grep 200 >/dev/null") ==
@@ -177,8 +176,6 @@ function connect_status()
                        "echo `/usr/share/passwall/test.sh test_url 'https://www.baidu.com'` | grep 200 >/dev/null") ==
                        0
     end
-    local end_time = os.clock()
-    e.time = string.format((end_time - begin_time) * 10000)
     luci.http.prepare_content("application/json")
     luci.http.write_json(e)
 end
