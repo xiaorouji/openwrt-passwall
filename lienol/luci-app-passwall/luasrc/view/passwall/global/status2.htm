@@ -208,6 +208,7 @@ local socks5_node_num = api.uci_get_type("global_other", "socks5_node_num", 1)
 	function check_connect(btn, type) {
 		btn.disabled = true;
 		btn.value = '<%:Check...%>';
+		var sendDate = (new Date()).getTime();
 		XHR.get('<%=dsp.build_url("admin/vpn/passwall/connect_status")%>', {
 				type: type
 			},
@@ -215,7 +216,7 @@ local socks5_node_num = api.uci_get_type("global_other", "socks5_node_num", 1)
 				var s = document.getElementById('_' + type + '_status');
 				if(s) {
 					if(rv.status) {
-						var time = parseFloat(rv.time).toFixed(2);
+						var time = ((new Date()).getTime() - sendDate) / 1000;
 						var speed = "";
 						var color="red";
 						if (time < 0.5) {
