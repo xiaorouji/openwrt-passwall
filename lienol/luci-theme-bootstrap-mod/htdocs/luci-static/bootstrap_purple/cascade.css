@@ -15,7 +15,7 @@ body {
 }
 
 a {
-    color: #118af3;
+    color: #726bda;
     text-decoration: none;
     outline: 0;
 }
@@ -33,7 +33,7 @@ h6,
 p,
 .cbi-map-descr,
 .cbi-section-descr {
-    color: #19a4e6;
+    color: #726bda;
     margin-top: 0;
     margin-bottom: 10px;
 }
@@ -51,7 +51,7 @@ tr,
 }
 
 legend {
-    color: #19a4e6;
+    color: #726bda;
     font-size: 18px;
     font-weight: bold;
     padding: 0 0 3px;
@@ -105,7 +105,7 @@ legend {
 }
 
 .container {
-    max-width: 1000px;
+    max-width: 1200px;
     margin: 0 auto;
 }
 
@@ -117,10 +117,10 @@ header {
     top: 0;
     left: 0;
     right: 0;
-    background: #34aee8;
+    background: #948fe1;
     box-shadow: 0 2px 2px rgba(0, 0, 0, .1);
     z-index: 100;
-    border-bottom: 3px solid #19a4e6;
+    border-bottom: 3px solid #726bda;
 }
 
 .brand {
@@ -163,7 +163,7 @@ header {
 }
 
 .dropdown:hover {
-    background-color: #0088cc;
+    background-color: #726bda;
 }
 
 .dropdown:hover .dropdown-menu {
@@ -174,7 +174,7 @@ header {
     display: none;
     position: absolute;
     top: 40px;
-    background: #34aee8;
+    background: #948fe1;
     border-radius: 5px;
     padding: 5px 0px;
     z-index: 100;
@@ -192,14 +192,14 @@ header {
 
 .dropdown-menu a {
     color: #fff;
-    line-height: 32px;
+    line-height: 30px;
     min-width: 160px;
     padding: 0 20px;
     font-size: 15px;
 }
 
 .dropdown-menu a:hover {
-    background: #118af3;
+    background: #726bda;
     /* color: #3fc3ef; */
 }
 
@@ -406,11 +406,11 @@ header {
 }
 
 .label.success {
-    background: #118af3;
+    background: #726bda;
 }
 
 .label.notice {
-    background: #118af3;
+    background: #726bda;
 }
 
 .label.important {
@@ -440,7 +440,7 @@ h2+.cbi-map-descr {
     position: relative;
     padding: 15px;
     margin-bottom: 10px;
-    background: #b4e7ff;
+    background: #d9d6ff;
     /* border: 1px solid rgba(0, 0, 0, .1);
 	border-width: 2px 0; */
     border-radius: 2px;
@@ -550,7 +550,7 @@ p {
 
 .tabs,
 .cbi-tabmenu {
-    border-bottom: 1.5px solid #34aee8;
+    border-bottom: 1.5px solid #948fe1;
     margin-bottom: 20px;
 }
 
@@ -562,7 +562,7 @@ p {
 .tabs a,
 .cbi-tabmenu a {
     display: block;
-    color: #19a4e6;
+    color: #726bda;
     line-height: 34px;
     margin-bottom: -2px;
     margin-right: 20px;
@@ -781,7 +781,7 @@ tr tr {
 #conns>div>div,
 #swaptotal>div>div,
 #swapfree>div>div {
-    background: #00adff7a !important;
+    background: #948fe1a6 !important;
     height: 18px !important;
     border-radius: 3px;
 }
@@ -795,7 +795,7 @@ select {
     display: inline-block;
     width: 16em;
     padding: 0.5em;
-    border: 1px solid #118af3;
+    border: 1px solid #726bda;
     border-radius: 5px;
     box-sizing: border-box;
     color: #111;
@@ -821,7 +821,7 @@ table.cbi-section-table select,
 input:active,
 input:focus {
     outline: 0;
-    border-color: #118af3;
+    border-color: #726bda;
 }
 
 input[type=file]:focus,
@@ -917,7 +917,8 @@ button {
 }
 
 .cbi-button:active,
-.cbi-button:focus button:active,
+.cbi-button:focus,
+button:active,
 button:focus {
     border-color: #bbb;
 }
@@ -938,8 +939,8 @@ button:focus {
 
 .cbi-button-add,
 .cbi-input-add {
-    background: #19a4e6;
-    border-color: #19a4e6;
+    background: #948fe1;
+    border-color: #948fe1;
     color: #fff;
 }
 
@@ -947,7 +948,7 @@ button:focus {
 .cbi-button-add:focus,
 .cbi-input-add:active,
 .cbi-input-add:focus {
-    border-color: #19a4e6;
+    border-color: #948fe1;
     opacity: .8;
 }
 
@@ -971,8 +972,8 @@ button:focus {
 
 .cbi-button-reload,
 .cbi-input-reload {
-    background: rgb(148, 143, 225);
-    border-color: rgb(148, 143, 225);
+    background: rgb(0, 171, 232);
+    border-color: rgb(0, 171, 232);
     color: #fff;
 }
 
@@ -980,7 +981,7 @@ button:focus {
 .cbi-button-reload:focus,
 .cbi-input-reload:active,
 .cbi-input-reload:focus {
-    border-color: rgb(148, 143, 225);
+    border-color: rgb(0, 171, 232);
     opacity: .8;
 }
 
@@ -1016,8 +1017,8 @@ button:focus {
 
 .cbi-button-apply,
 .cbi-input-apply {
-    background: rgb(0, 171, 232);
-    border-color: rgb(0, 171, 232);
+    background: rgb(148, 143, 225);
+    border-color: rgb(148, 143, 225);
     color: #fff;
 }
 
@@ -1025,14 +1026,14 @@ button:focus {
 .cbi-button-apply:focus,
 .cbi-input-apply:active,
 .cbi-input-apply:focus {
-    border-color: rgb(0, 171, 232);
+    border-color: rgb(148, 143, 225);
     opacity: .8;
 }
 
 .cbi-button-save,
 .cbi-input-save {
-    background: rgb(148, 143, 225);
-    border-color: rgb(148, 143, 225);
+    background: rgb(0, 171, 232);
+    border-color: rgb(0, 171, 232);
     color: #fff;
 }
 
@@ -1040,7 +1041,7 @@ button:focus {
 .cbi-button-save:focus,
 .cbi-input-save:active,
 .cbi-input-save:focus {
-    border-color: rgb(148, 143, 225);
+    border-color: rgb(0, 171, 232);
     opacity: .8;
 }
 
@@ -1077,7 +1078,7 @@ button:focus {
 }
 
 .ifacebox .ifacebox-head.active {
-    background: #85d8ff;
+    background: #b9b6eb;
 }
 
 .ifacebox .ifacebox-body {
@@ -1161,11 +1162,6 @@ button:focus {
 }
 
 .network-status-table {
-    display: flex;
-    flex-wrap: wrap;
-}
-
-.cbi-tooltip {
     position: absolute;
     z-index: 1000;
     left: -10000px;
@@ -1176,6 +1172,14 @@ button:focus {
     opacity: 0;
     transition: opacity .25s ease-in;
     padding: 2px 5px;
+}
+
+.cbi-tooltip {
+    position: absolute;
+    z-index: 1000;
+    left: -1000px;
+    opacity: 0;
+    transition: opacity .25s ease-out;
 }
 
 .cbi-tooltip-container {
@@ -1230,7 +1234,7 @@ button:focus {
 /* Footer */
 
 footer {
-    border-top: 2px solid #34aee8;
+    border-top: 2px solid #948fe1;
     color: #111;
     text-align: center;
     padding: 10px 0;
@@ -1238,7 +1242,7 @@ footer {
 }
 
 footer a {
-    color: #118af3;
+    color: #726bda;
 }
 
 footer a:hover {
@@ -1300,7 +1304,7 @@ body.node-main-login .alert-message {
     text-indent: -500px;
     overflow: hidden;
     border-radius: 60px;
-    /* border: #118af3 3px solid; */
+    /* border: #948fe1 3px solid; */
     background-image: url(wifi.png);
     background-size: cover;
     /* box-shadow: 0 4px 20px 0px rgba(0, 0, 0, 0.14), 0 7px 10px -5px rgba(156, 39, 176, 0.4); */
@@ -1352,7 +1356,7 @@ body.modal-overlay-active #modal_overlay>.modal {
     max-width: unset;
     min-height: 32px;
     min-width: 270px;
-    background: #b4e7ff !important;
+    background: #d9d6ff !important;
     border-radius: 3px;
     padding: 1em;
     margin: 0;
@@ -1386,7 +1390,7 @@ body.modal-overlay-active #modal_overlay>.modal {
     position: absolute;
     padding: 15px;
     margin-bottom: 10px;
-    background: #b4e7ff;
+    background: #d9d6ff;
     border: 1px solid rgba(0, 0, 0, .1);
     border-width: 2px 0;
 }*/
@@ -1520,7 +1524,7 @@ body.modal-overlay-active #modal_overlay>.modal {
 }
 
 .cbi-progressbar>div {
-    background: #85d8ff;
+    background: #d9d6ff;
     height: 100%;
     transition: width .25s ease-in;
     width: 0%;
