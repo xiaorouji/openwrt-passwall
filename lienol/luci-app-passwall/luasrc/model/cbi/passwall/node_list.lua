@@ -23,6 +23,10 @@ o.default = 1
 
 ---- Concise display nodes
 o = s:option(Flag, "compact_display_nodes", translate("Concise display nodes"))
+o.default = 0
+
+---- Show Add Mode
+o = s:option(Flag, "show_add_mode", translate("Show Add Mode"))
 o.default = 1
 
 ---- Show group
@@ -60,9 +64,7 @@ end
 
 -- 简洁模式
 if api.uci_get_type("global_other", "compact_display_nodes", "0") == "1" then
-    if show_group then
-        show_group.width = "25%"
-    end
+    if show_group then show_group.width = "25%" end
     o = s:option(DummyValue, "remarks", translate("Remarks"))
     o.cfgvalue = function(t, n)
         local str = ""
@@ -86,15 +88,17 @@ else
     o = s:option(DummyValue, "remarks", translate("Remarks"))
 
     ---- Add Mode
-    o = s:option(DummyValue, "add_mode", translate("Add Mode"))
-    o.cfgvalue = function(t, n)
-        local v = Value.cfgvalue(t, n)
-        if v and v ~= '' then
-            return v
-        else
-            return '手动'
+    if api.uci_get_type("global_other", "show_add_mode", "1") == "1" then
+        o = s:option(DummyValue, "add_mode", translate("Add Mode"))
+        o.cfgvalue = function(t, n)
+            local v = Value.cfgvalue(t, n)
+            if v and v ~= '' then
+                return v
+            else
+                return '手动'
+            end
+            return str
         end
-        return str
     end
 
     ---- Type
@@ -137,9 +141,5 @@ o = s:option(DummyValue, "apply", translate("Apply"))
 o.template = "passwall/node_list/apply"
 
 m:append(Template("passwall/node_list/node_list"))
-
-if luci.http.formvalue("cbi.apply") then
-    luci.http.redirect(d.build_url("admin", "vpn", "passwall", "node_list"))
-end
 
 return m
