@@ -44,6 +44,7 @@ config global_other
 	option status_use_big_icon '1'
 	option compact_display_nodes '0'
 	option show_group '0'
+	option show_add_mode '0'
 
 config global_rules
 	option auto_update '0'
