@@ -120,8 +120,7 @@ o = s:option(ListValue, "up_chinadns_mode",
                  "Domestic DNS server 1 in advanced Settings is used as domestic DNS by default"))
 o.default = "OpenDNS_1"
 o:depends("dns_mode", "chinadns")
-o:value("OpenDNS_1", "OpenDNS_1")
-o:value("OpenDNS_2", "OpenDNS_2")
+o:value("OpenDNS", "OpenDNS")
 o:value("custom", translate("custom"))
 
 ---- upstreamm DNS Server
