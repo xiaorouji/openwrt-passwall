@@ -271,6 +271,9 @@ msgstr "Ping延迟"
 msgid "Ping Value"
 msgstr "Ping值"
 
+msgid "Show Group"
+msgstr "显示组"
+
 msgid "Group"
 msgstr "组"
 
