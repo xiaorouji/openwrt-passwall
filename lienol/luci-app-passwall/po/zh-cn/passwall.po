@@ -646,6 +646,12 @@ msgstr "TCP快速打开"
 msgid "Need node support required"
 msgstr "需要节点支持"
 
+msgid "plugin"
+msgstr "插件"
+
+msgid "opts"
+msgstr "插件选项"
+
 msgid "Protocol"
 msgstr "协议名称"
 
