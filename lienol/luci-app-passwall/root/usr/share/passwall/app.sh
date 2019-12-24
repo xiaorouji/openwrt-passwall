@@ -180,7 +180,6 @@ load_config() {
 		return 1
 	}
 	DNS_MODE=$(config_t_get global dns_mode ChinaDNS)
-	UP_CHINADNS_MODE=$(config_t_get global up_chinadns_mode OpenDNS_1)
 	process=1
 	if [ "$(config_t_get global_forwarding process 0)" = "0" ]; then
 		process=$(cat /proc/cpuinfo | grep 'processor' | wc -l)
@@ -715,30 +714,34 @@ start_dns() {
 			echolog "运行DNS转发模式：Pdnsd..."
 		}
 	;;
-	chinadns)
-		chinadns_bin=$(find_bin ChinaDNS)
-		[ -n "$chinadns_bin" ] && {
-			other=1
-			other_port=$(expr $DNS_PORT + 1)
-			echolog "运行DNS转发模式：ChinaDNS..."
+	chinadns-ng)
+		chinadns_ng_bin=$(find_bin chinadns-ng)
+		[ -n "$chinadns_ng_bin" ] && {
+			echolog "运行DNS转发模式：ChinaDNS-NG..."
 			local dns1=$DNS1
 			[ "$DNS1" = "dnsbyisp" ] && dns1=$(cat /tmp/resolv.conf.auto 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | grep -v 0.0.0.0 | grep -v 127.0.0.1 | sed -n '1P')
-			case "$UP_CHINADNS_MODE" in
-			OpenDNS)
-				other=0
-				nohup $chinadns_bin -p $DNS_PORT -c $RULE_PATH/chnroute -m -d -s $dns1,208.67.222.222:443,208.67.222.222:5353,208.67.220.220:443,208.67.220.220:5353 >/dev/null 2>&1 &
-				echolog "运行ChinaDNS上游转发模式：$dns1,208.67.222.222,208.67.220.220..."
+			local dns2=$DNS2
+			[ "$DNS2" = "dnsbyisp" ] && dns2=$(cat /tmp/resolv.conf.auto 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | grep -v 0.0.0.0 | grep -v 127.0.0.1 | sed -n '2P')
+			#other_port=$(expr $DNS_PORT + 1)
+			up_chinadns_ng_mode=$(config_t_get global up_chinadns_ng_mode OpenDNS_1)
+			case "$up_chinadns_ng_mode" in
+			OpenDNS_1)
+				nohup $chinadns_ng_bin -l $DNS_PORT -c $dns1,$dns2 -t 208.67.222.222#443,208.67.222.222#5353 >/dev/null 2>&1 &
+				echolog "运行ChinaDNS-NG上游转发模式，国内DNS：$dns1, $dns2."
+				echolog "运行ChinaDNS-NG上游转发模式，可信DNS：208.67.222.222"
+				;;
+			OpenDNS_2)
+				nohup $chinadns_ng_bin -l $DNS_PORT -c $dns1,$dns2 -t 208.67.220.220#443,208.67.220.220#5353 >/dev/null 2>&1 &
+				echolog "运行ChinaDNS-NG上游转发模式，国内DNS：$dns1, $dns2."
+				echolog "运行ChinaDNS-NG上游转发模式，可信DNS：208.67.220.220"
 				;;
 			custom)
-				other=0
-				UP_CHINADNS_CUSTOM=$(config_t_get global up_chinadns_custom '114.114.114.114,208.67.220.220:5353')
-				nohup $chinadns_bin -p $DNS_PORT -c $RULE_PATH/chnroute -m -d -s $UP_CHINADNS_CUSTOM >/dev/null 2>&1 &
-				echolog "运行ChinaDNS上游转发模式：$UP_CHINADNS_CUSTOM..."
+				up_chinadns_ng_custom=$(config_t_get global up_chinadns_ng_custom '208.67.222.222#443,208.67.222.222#5353')
+				nohup $chinadns_ng_bin -l $DNS_PORT -c $dns1,$dns2 -t $up_chinadns_ng_custom >/dev/null 2>&1 &
+				echolog "运行ChinaDNS-NG上游转发模式，国内DNS：$dns1, $dns2."
+				echolog "运行ChinaDNS-NG上游转发模式，可信DNS：$up_chinadns_ng_custom"
 				;;
 			esac
-			if [ "$other" = "1" ]; then
-				nohup $chinadns_bin -p $DNS_PORT -c $RULE_PATH/chnroute -m -d -s $dns1,127.0.0.1:$other_port >/dev/null 2>&1 &
-			fi
 		}
 	;;
 	esac
@@ -1185,7 +1188,7 @@ stop() {
 	clean_log
 	source $APP_PATH/iptables.sh stop
 	del_vps_port
-	kill_all pdnsd brook dns2socks haproxy chinadns ipt2socks v2ray-plugin
+	kill_all pdnsd brook dns2socks haproxy chinadns-ng ipt2socks v2ray-plugin
 	ps -w | grep -E "$CONFIG_TCP_FILE|$CONFIG_UDP_FILE|$CONFIG_SOCKS5_FILE" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 	ps -w | grep -E "$CONFIG_PATH" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 	ps -w | grep "kcptun_client" | grep "$KCPTUN_REDIR_PORT" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &

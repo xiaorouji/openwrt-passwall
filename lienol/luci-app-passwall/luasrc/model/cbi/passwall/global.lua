@@ -94,10 +94,10 @@ o = s:option(ListValue, "dns_mode", translate("DNS Forward Mode"), translate(
                  "if you use no patterns are used, DNS of wan will be used by default as upstream of dnsmasq"))
 o.rmempty = false
 o:reset_values()
-if is_installed("ChinaDNS") or is_finded("chinadns") then
-    o:value("chinadns", "ChinaDNS")
+if is_finded("chinadns-ng") then
+    o:value("chinadns-ng", "ChinaDNS-NG")
 end
-if is_installed("dns2socks") or is_finded("dns2socks") then
+if is_finded("dns2socks") then
     o:value("dns2socks", "dns2socks " .. translate("Need Socks5 server"))
 end
 if is_installed("pdnsd") or is_installed("pdnsd-alt") or is_finded("pdnsd") then
@@ -114,20 +114,20 @@ o:value("208.67.222.222", "208.67.222.222(OpenDNS DNS1)")
 o:value("208.67.220.220", "208.67.220.220(OpenDNS DNS2)")
 o:depends("dns_mode", "dns2socks")
 
----- upstreamm DNS Server for ChinaDNS
-o = s:option(ListValue, "up_chinadns_mode",
-             translate("upstreamm DNS Server for ChinaDNS"), translate(
-                 "Domestic DNS server 1 in advanced Settings is used as domestic DNS by default"))
+---- upstreamm DNS Server for ChinaDNS-NG
+o = s:option(ListValue, "up_chinadns_ng_mode",
+             translate("upstreamm DNS Server for ChinaDNS-NG"), translate(
+                 "Domestic DNS server in advanced Settings is used as domestic DNS by default"))
 o.default = "OpenDNS_1"
-o:depends("dns_mode", "chinadns")
-o:value("OpenDNS", "OpenDNS")
+o:value("OpenDNS_1", "OpenDNS_1")
+o:value("OpenDNS_2", "OpenDNS_2")
 o:value("custom", translate("custom"))
+o:depends("dns_mode", "chinadns-ng")
 
----- upstreamm DNS Server
-o = s:option(Value, "up_chinadns_custom", translate("DNS Server"), translate(
-                 "example: 114.114.114.114,208.67.222.222:443,8.8.8.8<br>Need at least one,Other DNS services can be used as upstream, such as smartdns."))
-o.default = "114.114.114.114,208.67.222.222:5353"
-o:depends("up_chinadns_mode", "custom")
+o = s:option(Value, "up_chinadns_ng_custom", translate("DNS Server"), translate(
+                 "example: 127.0.0.1#5335<br>Need at least one,Other DNS services can be used as upstream, such as dns2socks."))
+o.default = "208.67.222.222#443"
+o:depends("up_chinadns_ng_mode", "custom")
 
 ---- Default Proxy Mode
 o = s:option(ListValue, "proxy_mode",
