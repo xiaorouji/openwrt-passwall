@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
 PKG_VERSION:=3.0
-PKG_RELEASE:=138-20191223
+PKG_RELEASE:=139-20191224
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PO2LMO:=./po2lmo
@@ -57,16 +57,16 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_haproxy
 	bool "Include haproxy"
 	default n
 	
-config PACKAGE_$(PKG_NAME)_INCLUDE_ChinaDNS
-	bool "Include ChinaDNS"
-	default y
-
-config PACKAGE_$(PKG_NAME)_INCLUDE_pdnsd
-	bool "Include pdnsd"
+config PACKAGE_$(PKG_NAME)_INCLUDE_ChinaDNS_NG
+	bool "Include ChinaDNS-NG"
 	default y
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_dns2socks
 	bool "Include dns2socks"
+	default y
+	
+config PACKAGE_$(PKG_NAME)_INCLUDE_pdnsd
+	bool "Include pdnsd"
 	default y
 
 endmenu
@@ -89,7 +89,7 @@ define Package/$(PKG_NAME)
   +PACKAGE_$(PKG_NAME)_INCLUDE_Brook:brook \
   +PACKAGE_$(PKG_NAME)_INCLUDE_kcptun:kcptun-client \
   +PACKAGE_$(PKG_NAME)_INCLUDE_haproxy:haproxy \
-  +PACKAGE_$(PKG_NAME)_INCLUDE_ChinaDNS:ChinaDNS \
+  +PACKAGE_$(PKG_NAME)_INCLUDE_ChinaDNS_NG:chinadns-ng \
   +PACKAGE_$(PKG_NAME)_INCLUDE_pdnsd:pdnsd-alt \
   +PACKAGE_$(PKG_NAME)_INCLUDE_dns2socks:dns2socks
 endef
