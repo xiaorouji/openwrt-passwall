@@ -106,14 +106,6 @@ end
 o:value("local_7913", translate("Use local port 7913 as DNS"))
 o:value("nonuse", translate("No patterns are used"))
 
-o = s:option(Value, "dns2socks_forward", translate("DNS Forward Address"))
-o.default = "8.8.4.4"
-o:value("8.8.4.4", "8.8.4.4(Google DNS1)")
-o:value("8.8.8.8", "8.8.8.8(Google DNS2)")
-o:value("208.67.222.222", "208.67.222.222(OpenDNS DNS1)")
-o:value("208.67.220.220", "208.67.220.220(OpenDNS DNS2)")
-o:depends("dns_mode", "dns2socks")
-
 ---- upstreamm DNS Server for ChinaDNS-NG
 o = s:option(ListValue, "up_chinadns_ng_mode",
              translate("upstreamm DNS Server for ChinaDNS-NG"), translate(
@@ -121,6 +113,9 @@ o = s:option(ListValue, "up_chinadns_ng_mode",
 o.default = "OpenDNS_1"
 o:value("OpenDNS_1", "OpenDNS_1")
 o:value("OpenDNS_2", "OpenDNS_2")
+if is_finded("dns2socks") then
+    o:value("dns2socks", "dns2socks " .. translate("Need Socks5 server"))
+end
 o:value("custom", translate("custom"))
 o:depends("dns_mode", "chinadns-ng")
 
@@ -128,6 +123,15 @@ o = s:option(Value, "up_chinadns_ng_custom", translate("DNS Server"), translate(
                  "example: 127.0.0.1#5335<br>Need at least one,Other DNS services can be used as upstream, such as dns2socks."))
 o.default = "208.67.222.222#443"
 o:depends("up_chinadns_ng_mode", "custom")
+
+o = s:option(Value, "dns2socks_forward", translate("DNS Forward Address"))
+o.default = "8.8.4.4"
+o:value("8.8.4.4", "8.8.4.4(Google DNS1)")
+o:value("8.8.8.8", "8.8.8.8(Google DNS2)")
+o:value("208.67.222.222", "208.67.222.222(OpenDNS DNS1)")
+o:value("208.67.220.220", "208.67.220.220(OpenDNS DNS2)")
+o:depends("dns_mode", "dns2socks")
+o:depends("up_chinadns_ng_mode", "dns2socks")
 
 ---- Default Proxy Mode
 o = s:option(ListValue, "proxy_mode",
