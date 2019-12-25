@@ -19,10 +19,9 @@
 ./scripts/feeds update -a
 ./scripts/feeds install -a
 ```
-或者你可以把该源码手动下载或Git Clone下载放到OpenWRT源码的Package目录里面，然后编译。
-passwall（科学上网）的路径在：Luci for Lienol>applacations>luci-app-passwall以及configuration
-如果你使用的是Luci19，请编译时选上"luci","luci-compat","luci-lib-ipkg"后编译
-
+或者你可以把该源码手动下载或Git Clone下载放到OpenWRT源码的Package目录里面，然后编译。                 
+passwall（科学上网）的路径在：Luci for Lienol>applacations>luci-app-passwall以及configuration。                   
+如果你使用的是Luci19，请编译时选上"luci","luci-compat","luci-lib-ipkg"后编译。                             
 
 Some OpenWrt/LEDE LuCI for Commonly Used Package
 
