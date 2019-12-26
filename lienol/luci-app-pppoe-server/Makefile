@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2019 Lienol
+# Copyright (C) 2018-2020 Lienol <lawlienol@gmail.com>
 #
 # This is free software, licensed under the Apache License, Version 2.0 .
 #
@@ -11,15 +11,13 @@ LUCI_PKGARCH:=all
 PKG_VERSION:=1.0
 PKG_RELEASE:=8-20190704
 
-define Package/luci-app-lienol-pppoe-server/preinst
+define Package/luci-app-pppoe-server/preinst
 #!/bin/sh
 rm -rf $${IPKG_INSTROOT}/etc/config/pppoe-server >/dev/null 2>&1
 rm -rf $${IPKG_INSTROOT}/etc/init.d/pppoe-server >/dev/null 2>&1
 exit 0
 endef
 
-include ../luci_my.mk
+include $(TOPDIR)/feeds/luci/luci.mk
 
 # call BuildPackage - OpenWrt buildroot signature
-
-

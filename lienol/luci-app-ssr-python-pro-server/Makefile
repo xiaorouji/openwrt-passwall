@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2019 Lienol
+# Copyright (C) 2018-2020 Lienol <lawlienol@gmail.com>
 #
 # This is free software, licensed under the Apache License, Version 2.0 .
 #
@@ -11,7 +11,7 @@ LUCI_PKGARCH:=all
 PKG_VERSION:=1.0
 PKG_RELEASE:=6-20190704
 
-include ../luci_my.mk
+include $(TOPDIR)/feeds/luci/luci.mk
 
 # call BuildPackage - OpenWrt buildroot signature
 
