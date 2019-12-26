@@ -1,6 +1,6 @@
 # Copyright (C) 2018-2020 Lienol <lawlienol@gmail.com>
 #
-# This is free software, licensed under the Apache License, Version 2.0 .
+# This is free software, licensed under the GNU General Public License v3.
 #
 
 include $(TOPDIR)/rules.mk
