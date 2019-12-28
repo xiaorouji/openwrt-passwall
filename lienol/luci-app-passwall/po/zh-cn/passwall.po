@@ -118,8 +118,8 @@ msgstr "检测中..."
 msgid "Clear"
 msgstr "清除"
 
-msgid "Global Setting"
-msgstr "全局配置"
+msgid "If you can use it, very stable. If not, GG !!!"
+msgstr "如果你会用，稳得一批。否则，GG！！！"
 
 msgid "TCP Node"
 msgstr "TCP节点"
@@ -156,6 +156,12 @@ msgstr "不使用"
 
 msgid "if you use no patterns are used, DNS of wan will be used by default as upstream of dnsmasq"
 msgstr "如果您没有使用任何模式，则会使用WAN的DNS"
+
+msgid "Use TCP Node Resolve DNS"
+msgstr "使用TCP节点解析DNS"
+
+msgid "If checked, DNS is resolved using the TCP node."
+msgstr "如果勾选，则使用TCP节点解析DNS解决污染。"
 
 msgid "upstreamm DNS Server for ChinaDNS-NG"
 msgstr "ChinaDNS-NG的上游服务器"
