@@ -3,8 +3,9 @@ config global
 	option tcp_node1 'nil'
 	option udp_node1 'nil'
 	option socks5_node1 'nil'
-	option dns_mode 'chinadns-ng'
-	option up_chinadns_ng_mode 'OpenDNS_1'
+	option dns_mode 'pdnsd'
+	option dns_forward '8.8.4.4'
+	option use_tcp_node_resolve_dns '1'
 	option proxy_mode 'chnroute'
 	option localhost_proxy_mode 'gfwlist'
 
@@ -50,8 +51,10 @@ config global_rules
 	option auto_update '0'
 	option gfwlist_update '1'
 	option chnroute_update '1'
+	option chnlist_update '1'
 	option gfwlist_version '2019-12-10'
 	option chnroute_version '2019-12-05'
+	option chnlist_version '2019-12-27'
 	
 config global_app
 	option v2ray_file '/usr/bin/v2ray/'
