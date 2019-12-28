@@ -722,16 +722,19 @@ start_dns() {
 			local dns2=$DNS2
 			[ "$DNS2" = "dnsbyisp" ] && dns2=$(cat /tmp/resolv.conf.auto 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | grep -v 0.0.0.0 | grep -v 127.0.0.1 | sed -n '2P')
 			other_port=$(expr $DNS_PORT + 1)
+			cat $RULE_PATH/gfwlist.conf | sort | uniq | sed -e '/127.0.0.1/d' | sed 's/ipset=\/.//g' | sed 's/\/gfwlist//g' > $CONFIG_PATH/gfwlist_chinadns_ng.txt
+			[ -f "$CONFIG_PATH/gfwlist_chinadns_ng.txt" ] && local gfwlist_param="-g $CONFIG_PATH/gfwlist_chinadns_ng.txt"
+			[ -f "$RULE_PATH/chnlist" ] && local chnlist_param="-m $RULE_PATH/chnlist -M"
 			up_chinadns_ng_mode=$(config_t_get global up_chinadns_ng_mode "208.67.222.222")
 			case "$up_chinadns_ng_mode" in
 			208.67.222.222)
 				DNS_FORWARD=$up_chinadns_ng_mode
-				nohup $chinadns_ng_bin -l $DNS_PORT -c $dns1,$dns2 -t 208.67.222.222#443,208.67.222.222#5353 >/dev/null 2>&1 &
+				nohup $chinadns_ng_bin -l $DNS_PORT -c $dns1,$dns2 -t 208.67.222.222#443,208.67.222.222#5353 $gfwlist_param $chnlist_param >/dev/null 2>&1 &
 				echolog "运行DNS转发模式：ChinaDNS-NG，国内DNS：$dns1, $dns2，可信DNS：208.67.222.222"
 				;;
 			208.67.220.220)
 				DNS_FORWARD=$up_chinadns_ng_mode
-				nohup $chinadns_ng_bin -l $DNS_PORT -c $dns1,$dns2 -t 208.67.220.220#443,208.67.220.220#5353 >/dev/null 2>&1 &
+				nohup $chinadns_ng_bin -l $DNS_PORT -c $dns1,$dns2 -t 208.67.220.220#443,208.67.220.220#5353 $gfwlist_param $chnlist_param >/dev/null 2>&1 &
 				echolog "运行DNS转发模式：ChinaDNS-NG，国内DNS：$dns1, $dns2，可信DNS：208.67.220.220"
 				;;
 			dns2socks)
@@ -739,7 +742,7 @@ start_dns() {
 					dns2socks_bin=$(find_bin dns2socks)
 					[ -n "$dns2socks_bin" ] && {
 						nohup $dns2socks_bin 127.0.0.1:$SOCKS5_PROXY_PORT1 ${DNS_FORWARD}:53 127.0.0.1:$other_port >/dev/null 2>&1 &
-						nohup $chinadns_ng_bin -l $DNS_PORT -c $dns1,$dns2 -t 127.0.0.1#$other_port >/dev/null 2>&1 &
+						nohup $chinadns_ng_bin -l $DNS_PORT -c $dns1,$dns2 -t 127.0.0.1#$other_port $gfwlist_param $chnlist_param >/dev/null 2>&1 &
 						echolog "运行DNS转发模式：ChinaDNS-NG + dns2socks，国内DNS：$dns1, $dns2"
 					}
 				else
@@ -748,7 +751,7 @@ start_dns() {
 			;;
 			custom)
 				up_chinadns_ng_custom=$(config_t_get global up_chinadns_ng_custom '208.67.222.222#443,208.67.222.222#5353')
-				nohup $chinadns_ng_bin -l $DNS_PORT -c $dns1,$dns2 -t $up_chinadns_ng_custom >/dev/null 2>&1 &
+				nohup $chinadns_ng_bin -l $DNS_PORT -c $dns1,$dns2 -t $up_chinadns_ng_custom $gfwlist_param $chnlist_param >/dev/null 2>&1 &
 				echolog "运行DNS转发模式：ChinaDNS-NG，国内DNS：$dns1, $dns2，可信DNS：$up_chinadns_ng_custom"
 				;;
 			esac
