@@ -180,6 +180,8 @@ load_config() {
 		return 1
 	}
 	DNS_MODE=$(config_t_get global dns_mode pdnsd)
+	DNS_FORWARD=$(config_t_get global dns_forward 8.8.4.4)
+	use_tcp_node_resolve_dns=$(config_t_get global use_tcp_node_resolve_dns 0)
 	process=1
 	if [ "$(config_t_get global_forwarding process 0)" = "0" ]; then
 		process=$(cat /proc/cpuinfo | grep 'processor' | wc -l)
@@ -697,8 +699,7 @@ start_dns() {
 		if [ -n "$SOCKS5_NODE1" -a "$SOCKS5_NODE1" != "nil" ]; then
 			dns2socks_bin=$(find_bin dns2socks)
 			[ -n "$dns2socks_bin" ] && {
-				local dns=$(config_t_get global dns2socks_forward 8.8.4.4)
-				nohup $dns2socks_bin 127.0.0.1:$SOCKS5_PROXY_PORT1 ${dns}:53 127.0.0.1:$DNS_PORT >/dev/null 2>&1 &
+				nohup $dns2socks_bin 127.0.0.1:$SOCKS5_PROXY_PORT1 ${DNS_FORWARD}:53 127.0.0.1:$DNS_PORT >/dev/null 2>&1 &
 				echolog "运行DNS转发模式：dns2socks..."
 			}
 		else
@@ -721,13 +722,15 @@ start_dns() {
 			local dns2=$DNS2
 			[ "$DNS2" = "dnsbyisp" ] && dns2=$(cat /tmp/resolv.conf.auto 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | grep -v 0.0.0.0 | grep -v 127.0.0.1 | sed -n '2P')
 			other_port=$(expr $DNS_PORT + 1)
-			up_chinadns_ng_mode=$(config_t_get global up_chinadns_ng_mode OpenDNS_1)
+			up_chinadns_ng_mode=$(config_t_get global up_chinadns_ng_mode "208.67.222.222")
 			case "$up_chinadns_ng_mode" in
-			OpenDNS_1)
+			208.67.222.222)
+				DNS_FORWARD=$up_chinadns_ng_mode
 				nohup $chinadns_ng_bin -l $DNS_PORT -c $dns1,$dns2 -t 208.67.222.222#443,208.67.222.222#5353 >/dev/null 2>&1 &
 				echolog "运行DNS转发模式：ChinaDNS-NG，国内DNS：$dns1, $dns2，可信DNS：208.67.222.222"
 				;;
-			OpenDNS_2)
+			208.67.220.220)
+				DNS_FORWARD=$up_chinadns_ng_mode
 				nohup $chinadns_ng_bin -l $DNS_PORT -c $dns1,$dns2 -t 208.67.220.220#443,208.67.220.220#5353 >/dev/null 2>&1 &
 				echolog "运行DNS转发模式：ChinaDNS-NG，国内DNS：$dns1, $dns2，可信DNS：208.67.220.220"
 				;;
@@ -735,8 +738,7 @@ start_dns() {
 				if [ -n "$SOCKS5_NODE1" -a "$SOCKS5_NODE1" != "nil" ]; then
 					dns2socks_bin=$(find_bin dns2socks)
 					[ -n "$dns2socks_bin" ] && {
-						local dns=$(config_t_get global dns2socks_forward 8.8.4.4)
-						nohup $dns2socks_bin 127.0.0.1:$SOCKS5_PROXY_PORT1 ${dns}:53 127.0.0.1:$other_port >/dev/null 2>&1 &
+						nohup $dns2socks_bin 127.0.0.1:$SOCKS5_PROXY_PORT1 ${DNS_FORWARD}:53 127.0.0.1:$other_port >/dev/null 2>&1 &
 						nohup $chinadns_ng_bin -l $DNS_PORT -c $dns1,$dns2 -t 127.0.0.1#$other_port >/dev/null 2>&1 &
 						echolog "运行DNS转发模式：ChinaDNS-NG + dns2socks，国内DNS：$dns1, $dns2"
 					}
@@ -973,7 +975,7 @@ gen_pdnsd_config() {
 	mkdir -p $pdnsd_dir
 	touch $pdnsd_dir/pdnsd.cache
 	chown -R root.nogroup $pdnsd_dir
-	cat >$pdnsd_dir/pdnsd.conf <<-EOF
+	cat > $pdnsd_dir/pdnsd.conf <<-EOF
 		global {
 		    perm_cache = 1024;
 		    cache_dir = "$pdnsd_dir";
@@ -991,6 +993,27 @@ gen_pdnsd_config() {
 		    neg_domain_pol = on;
 		    udpbufsize = 1024;
 		}
+		
+		EOF
+		
+	[ "$use_tcp_node_resolve_dns" == 1 ] && {
+		cat >> $pdnsd_dir/pdnsd.conf <<-EOF
+		server {
+		    label = "node";
+		    ip = $DNS_FORWARD;
+		    edns_query = on;
+		    port = 53;
+		    timeout = 4;
+		    interval = 60;
+		    uptest = none;
+		    purge_cache = off;
+		    caching = on;
+		}
+		
+		EOF
+	}
+	
+	cat >> $pdnsd_dir/pdnsd.conf <<-EOF
 		server {
 		    label = "opendns";
 		    ip = 208.67.222.222, 208.67.220.220;
