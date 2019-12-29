@@ -39,7 +39,7 @@ table td, .table .td {
 			var xhr = new XMLHttpRequest();
 			var code = ajax.encode(data);
 			xhr.open("POST", url, true);
-			xhr.timeout = 2000;
+			xhr.timeout = 1000;
 			xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 			xhr.ontimeout = function() {
 				fn_timeout(xhr);
@@ -167,6 +167,7 @@ table td, .table .td {
 				auto_ping();
 			},
 			function(x) {
+				auto_ping_value[index].innerHTML = "<font style='color:red'><%:Timeout%></font>";
 				index++;
 				auto_ping();
 			},
