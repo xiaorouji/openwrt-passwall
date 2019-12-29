@@ -404,18 +404,18 @@ start_tcp_redir() {
 				trojan_bin=$(find_bin trojan)
 				[ -n "$trojan_bin" ] && $trojan_bin -c $config_file >/dev/null 2>&1 &
 			elif [ "$TYPE" == "socks5" ]; then
-				local address=$(config_n_get $temp_server address)
-				local port=$(config_n_get $temp_server port)
+				local node_address=$(config_n_get $temp_server address)
+				local node_port=$(config_n_get $temp_server port)
 				local server_username=$(config_n_get $temp_server username)
 				local server_password=$(config_n_get $temp_server password)
 				ipt2socks_bin=$(find_bin ipt2socks)
 				[ -n "$ipt2socks_bin" ] && {
-					$ipt2socks_bin -T -l $port -b 0.0.0.0 -s $address -p $port -R >/dev/null &
+					$ipt2socks_bin -T -l $port -b 0.0.0.0 -s $node_address -p $socks5_port -R >/dev/null &
 				}
 				#redsocks_bin=$(find_bin redsocks2)
 				#[ -n "$redsocks_bin" ] && {
 				#	local redsocks_config_file=$CONFIG_PATH/TCP_$i.conf
-				#	gen_redsocks_config $redsocks_config_file tcp $port $address $port $server_username $server_password
+				#	gen_redsocks_config $redsocks_config_file tcp $port $node_address $socks5_port $server_username $server_password
 				#	$redsocks_bin -c $redsocks_config_file >/dev/null &
 				#}
 			elif [ "$TYPE" == "ssr" ]; then
@@ -482,8 +482,8 @@ start_udp_redir() {
 			elif [ "$TYPE" == "trojan" ]; then
 				trojan_bin=$(find_bin trojan)
 				[ -n "$trojan_bin" ] && $trojan_bin -c $config_file >/dev/null 2>&1 &
-				local address=$(config_n_get $temp_server address)
-				local port=$(config_n_get $temp_server port)
+				local node_address=$(config_n_get $temp_server address)
+				local node_port=$(config_n_get $temp_server port)
 				local server_username=$(config_n_get $temp_server username)
 				local server_password=$(config_n_get $temp_server password)
 				ipt2socks_bin=$(find_bin ipt2socks)
@@ -498,19 +498,19 @@ start_udp_redir() {
 				#	$redsocks_bin -c $redsocks_config_file >/dev/null &
 				#}
 			elif [ "$TYPE" == "socks5" ]; then
-				local address=$(config_n_get $temp_server address)
-				local port=$(config_n_get $temp_server port)
+				local node_address=$(config_n_get $temp_server address)
+				local node_port=$(config_n_get $temp_server port)
 				local server_username=$(config_n_get $temp_server username)
 				local server_password=$(config_n_get $temp_server password)
 				ipt2socks_bin=$(find_bin ipt2socks)
 				[ -n "$ipt2socks_bin" ] && {
-					$ipt2socks_bin -U -l $port -b 0.0.0.0 -s $address -p $port -R >/dev/null &
+					$ipt2socks_bin -U -l $port -b 0.0.0.0 -s $node_address -p $node_port -R >/dev/null &
 				}
 				
 				#redsocks_bin=$(find_bin redsocks2)
 				#[ -n "$redsocks_bin" ] && {
 				#	local redsocks_config_file=$CONFIG_PATH/UDP_$i.conf
-				#	gen_redsocks_config $redsocks_config_file udp $port $address $port $server_username $server_password
+				#	gen_redsocks_config $redsocks_config_file udp $port $node_address $node_port $server_username $server_password
 				#	$redsocks_bin -c $redsocks_config_file >/dev/null &
 				#}
 			elif [ "$TYPE" == "ssr" ]; then
