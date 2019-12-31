@@ -6,6 +6,7 @@ local i18n = require "luci.i18n"
 
 module("luci.model.cbi.filebrowser.api", package.seeall)
 
+local appname = "filebrowser"
 local api_url =
     "https://api.github.com/repos/filebrowser/filebrowser/releases/latest"
 
@@ -13,11 +14,20 @@ local wget = "/usr/bin/wget"
 local wget_args = {
     "--no-check-certificate", "--quiet", "--timeout=10", "--tries=2"
 }
-local curl = "/usr/bin/curl"
-local command_timeout = 40
+local command_timeout = 300
 
 local LEDE_BOARD = nil
 local DISTRIB_TARGET = nil
+
+function uci_get_type(type, config, default)
+    value = uci:get(appname, "@" .. type .. "[0]", config) or sys.exec(
+                "echo -n `uci -q get " .. appname .. ".@" .. type .. "[0]." ..
+                    config .. "`")
+    if (value == nil or value == "") and (default and default ~= "") then
+        value = default
+    end
+    return value
+end
 
 local function _unpack(t, i)
     i = i or 1
@@ -161,18 +171,16 @@ local function get_api_json(url)
     --	function(chunk) output[#output + 1] = chunk end)
     -- local json_content = util.trim(table.concat(output))
 
-    local json_content = luci.sys.exec(curl .. " -sL " .. url)
+    local json_content = luci.sys.exec(wget ..
+                                           " --no-check-certificate --timeout=10 -t 1 -O- " ..
+                                           url)
 
     if json_content == "" then return {} end
 
     return jsonc.parse(json_content) or {}
 end
 
-function get_config_option(option, default)
-    return uci:get("filebrowser", "global", option) or default
-end
-
-function get_version() return get_config_option("version", "0") end
+function get_version() return uci_get_type("global", "version", "0") end
 
 function to_check(arch)
     if not arch or arch == "" then arch = auto_get_arch() end
@@ -296,8 +304,8 @@ function to_move(file)
         return {code = 1, error = i18n.translate("Client file is required.")}
     end
 
-    local client_file = get_config_option("project_directory",
-                                          "/tmp/filebrowser")
+    local client_file = uci_get_type("global", "project_directory",
+                                     "/tmp/filebrowser")
     local client_file_bak
 
     if fs.access(client_file) then
