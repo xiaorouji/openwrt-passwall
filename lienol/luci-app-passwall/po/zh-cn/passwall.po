@@ -169,8 +169,8 @@ msgstr "ChinaDNS-NG的上游服务器"
 msgid "Domestic DNS server in advanced Settings is used as domestic DNS by default"
 msgstr "默认使用高级设置里的国内DNS服务器作为国内DNS"
 
-msgid "example: 127.0.0.1#5335<br>Need at least one,Other DNS services can be used as upstream, such as dns2socks."
-msgstr "例：127.0.0.1#5335<br>需要至少一个服务器，其他DNS服务可以作为上游使用，比如：dns2socks。"
+msgid "example: 127.0.0.1#5335<br />Need at least one,Other DNS services can be used as upstream, such as dns2socks."
+msgstr "例：127.0.0.1#5335<br />需要至少一个服务器，其他DNS服务可以作为上游使用，比如：dns2socks。"
 
 msgid "custom"
 msgstr "自定义"
@@ -739,8 +739,8 @@ msgstr "域名"
 msgid "Whether unsafe connections are allowed. When checked, V2Ray does not check the validity of the TLS certificate provided by the remote host."
 msgstr "是否允许不安全连接。当勾选时，V2Ray 不会检查远端主机所提供的 TLS 证书的有效性。"
 
-msgid "<br>none: default, no masquerade, data sent is packets with no characteristics.<br>srtp: disguised as an SRTP packet, it will be recognized as video call data (such as FaceTime).<br>utp: packets disguised as uTP will be recognized as bittorrent downloaded data.<br>wechat-video: packets disguised as WeChat video calls.<br>dtls: disguised as DTLS 1.2 packet.<br>wireguard: disguised as a WireGuard packet. (not really WireGuard protocol)"
-msgstr "<br>none：默认值，不进行伪装，发送的数据是没有特征的数据包。<br>srtp：伪装成 SRTP 数据包，会被识别为视频通话数据（如 FaceTime）。<br>utp：伪装成 uTP 数据包，会被识别为 BT 下载数据。<br>wechat-video：伪装成微信视频通话的数据包。<br>dtls：伪装成 DTLS 1.2 数据包。<br>wireguard：伪装成 WireGuard 数据包。(并不是真正的 WireGuard 协议)"
+msgid "<br />none: default, no masquerade, data sent is packets with no characteristics.<br />srtp: disguised as an SRTP packet, it will be recognized as video call data (such as FaceTime).<br />utp: packets disguised as uTP will be recognized as bittorrent downloaded data.<br />wechat-video: packets disguised as WeChat video calls.<br />dtls: disguised as DTLS 1.2 packet.<br />wireguard: disguised as a WireGuard packet. (not really WireGuard protocol)"
+msgstr "<br />none：默认值，不进行伪装，发送的数据是没有特征的数据包。<br />srtp：伪装成 SRTP 数据包，会被识别为视频通话数据（如 FaceTime）。<br />utp：伪装成 uTP 数据包，会被识别为 BT 下载数据。<br />wechat-video：伪装成微信视频通话的数据包。<br />dtls：伪装成 DTLS 1.2 数据包。<br />wireguard：伪装成 WireGuard 数据包。(并不是真正的 WireGuard 协议)"
 
 msgid "A legal file path. This file must not exist before running V2Ray."
 msgstr "一个合法的文件路径。在运行 V2Ray 之前，这个文件必须不存在。"
