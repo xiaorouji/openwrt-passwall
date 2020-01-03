@@ -136,7 +136,7 @@ o:value("custom", translate("custom"))
 o:depends("dns_mode", "chinadns-ng")
 
 o = s:option(Value, "up_chinadns_ng_custom", translate("DNS Server"), translate(
-                 "example: 127.0.0.1#5335<br>Need at least one,Other DNS services can be used as upstream, such as dns2socks."))
+                 "example: 127.0.0.1#5335<br />Need at least one,Other DNS services can be used as upstream, such as dns2socks."))
 o.default = "208.67.222.222#443"
 o:depends("up_chinadns_ng_mode", "custom")
 
