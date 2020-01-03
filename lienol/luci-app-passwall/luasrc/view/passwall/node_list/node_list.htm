@@ -183,21 +183,21 @@ table td, .table .td {
 	<div class="cbi-value">
 		<% if tcp_node_num and tonumber(tcp_node_num) >= 1 then %>
 			<% for i = 1, tcp_node_num, 1 do %>
-				<input class="cbi-button cbi-button-edit" type="button" onclick="set_node('tcp',<%=i%>)" value="TCP_<%=i%>">
+				<input class="cbi-button cbi-button-edit" type="button" onclick="set_node('tcp',<%=i%>)" value="TCP_<%=i%>" />
 			<% end %>
 		<% end %>
 		
 		<% if udp_node_num and tonumber(udp_node_num) >= 1 then %>
 			<% for i = 1, udp_node_num, 1 do %>
-				<input class="cbi-button cbi-button-edit" type="button" onclick="set_node('udp',<%=i%>)" value="UDP_<%=i%>">
+				<input class="cbi-button cbi-button-edit" type="button" onclick="set_node('udp',<%=i%>)" value="UDP_<%=i%>" />
 			<% end %>
 		<% end %>
 		
 		<% if socks5_node_num and tonumber(socks5_node_num) >= 1 then %>
 			<% for i = 1, socks5_node_num, 1 do %>
-				<input class="cbi-button cbi-button-edit" type="button" onclick="set_node('socks5',<%=i%>)" value="Socks5_<%=i%>">
+				<input class="cbi-button cbi-button-edit" type="button" onclick="set_node('socks5',<%=i%>)" value="Socks5_<%=i%>" />
 			<% end %>
 		<% end %>
-		<input class="cbi-button cbi-button-remove" type="button" onclick="close_set_node_div()" value="<%:Close%>">
+		<input class="cbi-button cbi-button-remove" type="button" onclick="close_set_node_div()" value="<%:Close%>" />
 	</div>
 </div>
