@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=v2ray
-PKG_VERSION:=4.21.3
+PKG_VERSION:=4.22.1
 PKG_RELEASE:=2
 
 include $(INCLUDE_DIR)/package.mk
@@ -41,11 +41,11 @@ ifeq ($(ARCH),i386)
 endif
 ifeq ($(ARCH),arm)
 	PKG_ARCH_V2RAY:=arm
-	ifneq ($(BOARD),bcm53xx)
-		V2RAY_BIN:=v2ray_armv7
+  ifneq ($(BOARD),bcm53xx)
+	V2RAY_BIN:=v2ray_armv6
   endif
   ifeq ($(BOARD),kirkwood)
-		V2RAY_BIN:=v2ray
+	V2RAY_BIN:=v2ray
   endif
 endif
 ifeq ($(ARCH),aarch64)
