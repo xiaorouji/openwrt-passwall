@@ -340,8 +340,8 @@ msgstr "国内DNS指定解析出口"
 msgid "Node Export Of Multi WAN"
 msgstr "节点指定出口"
 
-msgid "Only support Multi Wan. If no effect, please go to mwan3 to set."
-msgstr "只有多线接入才有效，如果设置后还是无效，请到mwan3设置。"
+msgid "Only support Multi Wan."
+msgstr "只有多线接入才有效。"
 
 msgid "Not Specify"
 msgstr "不指定"

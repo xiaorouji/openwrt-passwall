@@ -40,8 +40,8 @@ else
 end
 
 -- [[ Global Settings ]]--
-s = m:section(TypedSection, "global", translate("Global Settings"),
-              translate("If you can use it, very stable. If not, GG !!!"))
+s = m:section(TypedSection, "global", translate("Global Settings"))
+--s.description = translate("If you can use it, very stable. If not, GG !!!")
 s.anonymous = true
 s.addremove = false
 
@@ -124,20 +124,23 @@ o:depends("dns_mode", "pdnsd")
 
 ---- upstreamm DNS Server for ChinaDNS-NG
 o = s:option(ListValue, "up_chinadns_ng_mode",
-             translate("upstreamm DNS Server for ChinaDNS-NG"), translate(
+             translate("upstreamm DNS Server for ChinaDNS-NG") .. "(UDP)",
+             translate(
                  "Domestic DNS server in advanced Settings is used as domestic DNS by default"))
-o.default = "208.67.222.222"
-o:value("208.67.222.222", "208.67.222.222 (OpenDNS DNS)")
-o:value("208.67.220.220", "208.67.220.220 (OpenDNS DNS)")
+o.default = "8.8.4.4,8.8.8.8"
+o:value("8.8.4.4,8.8.8.8", "8.8.4.4, 8.8.8.8 (Google DNS)")
+o:value("208.67.222.222,208.67.220.220",
+        "208.67.222.222, 208.67.220.220 (OpenDNS DNS)")
 if is_finded("dns2socks") then
     o:value("dns2socks", "dns2socks " .. translate("Need Socks5 server"))
 end
 o:value("custom", translate("custom"))
 o:depends("dns_mode", "chinadns-ng")
 
-o = s:option(Value, "up_chinadns_ng_custom", translate("DNS Server"), translate(
+o = s:option(Value, "up_chinadns_ng_custom", translate("DNS Server") .. "(UDP)",
+             translate(
                  "example: 127.0.0.1#5335<br />Need at least one,Other DNS services can be used as upstream, such as dns2socks."))
-o.default = "208.67.222.222#443"
+o.default = "208.67.222.222#5353"
 o:depends("up_chinadns_ng_mode", "custom")
 
 ---- Default Proxy Mode
