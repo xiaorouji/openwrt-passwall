@@ -41,7 +41,7 @@ end
 
 -- [[ Global Settings ]]--
 s = m:section(TypedSection, "global", translate("Global Settings"))
---s.description = translate("If you can use it, very stable. If not, GG !!!")
+-- s.description = translate("If you can use it, very stable. If not, GG !!!")
 s.anonymous = true
 s.addremove = false
 
@@ -158,11 +158,12 @@ o:value("returnhome", translate("Return Home"))
 ---- Localhost Proxy Mode
 o = s:option(ListValue, "localhost_proxy_mode",
              translate("Localhost") .. translate("Proxy Mode"), translate(
-                 "The server client can also use this rule to scientifically surf the Internet"))
+                 "The server client can also use this rule to scientifically surf the Internet, Global and continental whitelist are not recommended for non-special cases!"))
 o:value("default", translate("Default"))
--- o:value("global", translate("Global Proxy").."（"..translate("Danger").."）")
+o:value("global",
+        translate("Global Proxy") .. "（" .. translate("Danger") .. "）")
 o:value("gfwlist", translate("GFW List"))
--- o:value("chnroute", translate("China WhiteList"))
+o:value("chnroute", translate("China WhiteList"))
 o.default = "default"
 o.rmempty = false
 
