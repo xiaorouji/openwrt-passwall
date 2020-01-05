@@ -407,6 +407,12 @@ add_firewall_rule() {
 				local UDP_NODE_TYPE=$(echo $(config_get $temp_server type) | tr 'A-Z' 'a-z')
 				[ -n "$UDP_NODE_IP" -a -n "$UDP_NODE_PORT" ] && $iptables_mangle -A SS -p udp -d $UDP_NODE_IP -m multiport --dports $UDP_NODE_PORT -j RETURN
 				[ "$UDP_NODE_TYPE" == "brook" ] && $iptables_mangle -A SS_ACL -p udp -m socket -j MARK --set-mark 1
+				[ "$use_udp_node_resolve_dns" == 1 -a -n "$DNS_FORWARD" ] && {
+					for dns in $DNS_FORWARD
+					do
+						$iptables_mangle -A OUTPUT -p udp -d $dns -m multiport --dport 1:65535 -m comment --comment "PassWall" -j MARK --set-mark 1
+					done
+				}
 				#  全局模式
 				$iptables_mangle -A SS_GLO$k -p udp -j TPROXY --on-port $local_port --tproxy-mark 0x1/0x1
 
@@ -462,6 +468,18 @@ del_firewall_rule() {
 			rules=$($iptables_nat -L OUTPUT --line-numbers | grep -E "PassWall" | awk '{print $1}')
 			for rule in $rules; do
 				$iptables_nat -D OUTPUT $rule 2>/dev/null
+				break
+			done
+			ipv4_output_exist=$(expr $ipv4_output_exist - 1)
+		done
+	}
+	
+	ipv4_output_exist=$($iptables_mangle -L OUTPUT 2>/dev/null | grep -c -E "PassWall")
+	[ -n "$ipv4_output_exist" ] && {
+		until [ "$ipv4_output_exist" = 0 ]; do
+			rules=$($iptables_mangle -L OUTPUT --line-numbers | grep -E "PassWall" | awk '{print $1}')
+			for rule in $rules; do
+				$iptables_mangle -D OUTPUT $rule 2>/dev/null
 				break
 			done
 			ipv4_output_exist=$(expr $ipv4_output_exist - 1)

@@ -81,27 +81,10 @@ o:value("1.2.4.8", "1.2.4.8(CNNIC DNS1)")
 o:value("210.2.4.8", "210.2.4.8(CNNIC DNS2)")
 o:value("180.76.76.76", "180.76.76.76(" .. translate("Baidu") .. "DNS)")
 
----- DNS Export Of Multi WAN
-o = s:option(ListValue, "dns_port", translate("DNS Export Of Multi WAN"),
-             translate(
-                 "Only support Multi Wan. If no effect, please go to mwan3 to set."))
-o.rmempty = false
-o.default = 0
-o:value(0, translate("Auto"))
-for _, iface in ipairs(ifaces) do
-    if (iface:match("^pppoe*")) then
-        local nets = net:get_interface(iface)
-        nets = nets and nets:get_networks() or {}
-        for k, v in pairs(nets) do nets[k] = nets[k].sid end
-        nets = table.concat(nets, ",")
-        o:value(iface, ((#nets > 0) and "%s (%s)" % {iface, nets} or iface))
-    end
-end
-
 ---- Node Export Of Multi WAN
 o = s:option(ListValue, "wan_port", translate("Node Export Of Multi WAN"),
              translate(
-                 "Only support Multi Wan. If no effect, please go to mwan3 to set."))
+                 "Only support Multi Wan."))
 o.default = 0
 o.rmempty = false
 o:value(0, translate("Auto"))
