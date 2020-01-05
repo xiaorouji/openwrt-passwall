@@ -54,9 +54,9 @@ start_subscribe() {
 			config_get subscrib_remark $1 remark
 			let index+=1
 			echo "$Date: 正在订阅：$url" >> $LOG_FILE
-			result=$(/usr/bin/curl --connect-timeout 10 -sL $url)
+			result=$(/usr/bin/curl --connect-timeout 5 -sL $url)
 			[ "$?" != 0 ] || [ -z "$result" ] && {
-				result=$(/usr/bin/wget --no-check-certificate --timeout=8 -t 1 -O- $url)
+				result=$(/usr/bin/wget --no-check-certificate --timeout=5 -t 1 -O- $url)
 				[ "$?" != 0 ] || [ -z "$result" ] && echo "$Date: 订阅失败：$url，请检测订阅链接是否正常或使用代理尝试！" >> $LOG_FILE && continue
 			}
 			file="/var/${CONFIG}_sub/$index"
@@ -91,7 +91,6 @@ start_subscribe() {
 				fi
 				[ -z "$link_type" ] && continue
 				get_remote_config "$link_type" "$new_link"
-				update_config
 			done
 			
 			[ "$addnum_ss" -gt 0 ] || [ "$updatenum_ss" -gt 0 ] || [ "$delnum_ss" -gt 0 ] && echo "$Date: $subscrib_remark： SS节点新增 $addnum_ss 个，修改 $updatenum_ss 个，删除 $delnum_ss 个。" >> $LOG_FILE
@@ -141,7 +140,6 @@ get_local_nodes(){
 }
 
 get_remote_config(){
-	isAdd=1
 	add_mode="$subscrib_remark"
 	[ -n "$3" ] && add_mode="导入"
 	if [ "$1" == "ss" ]; then
@@ -203,8 +201,10 @@ get_remote_config(){
 		remarks="${node_address}:${node_port}"
 	fi
 	
-	node_address=$(echo $node_address |awk '{print gensub(/[^!-~]/,"","g",$0)}')
-	#[ -z "$node_address" -o "$node_address" == "" ] && isAdd=0
+	node_address=$(echo -n $node_address | awk '{print gensub(/[^!-~]/,"","g",$0)}')
+	node_address=$(echo -n $node_address | grep -F ".")
+	
+	[ -z "$node_address" -o "$node_address" == "" ] && return
 	
 	# 把全部节点节点写入文件 /usr/share/${CONFIG}/sub/all_onlinenodes
 	if [ ! -f "/usr/share/${CONFIG}/sub/all_onlinenodes" ]; then
@@ -213,6 +213,7 @@ get_remote_config(){
 		echo $node_address >> /usr/share/${CONFIG}/sub/all_onlinenodes
 	fi
 	
+	update_config
 }
 
 add_nodes(){
@@ -306,18 +307,16 @@ add_nodes(){
 }
 
 update_config(){
-	[ "$isAdd" == 1 ] && {
-		isadded_remarks=$(uci show $CONFIG | grep "@nodes" | grep "remarks" | grep -c -F "$remarks")
-		if [ "$isadded_remarks" -eq 0 ]; then
-			add_nodes add "$link_type"
-		else
-			index=$(uci show $CONFIG | grep "@nodes" | grep "remarks" | grep -w -F "$remarks" | cut -d '[' -f2|cut -d ']' -f1)
-			[ "$?" == 0 ] && {
-				uci delete $CONFIG.@nodes[$index]
-				add_nodes update "$link_type"
-			}
-		fi
-	}
+	isadded_remarks=$(uci show $CONFIG | grep "@nodes" | grep "remarks" | grep -c -F "$remarks")
+	if [ "$isadded_remarks" -eq 0 ]; then
+		add_nodes add "$link_type"
+	else
+		index=$(uci show $CONFIG | grep "@nodes" | grep "remarks" | grep -w -F "$remarks" | cut -d '[' -f2|cut -d ']' -f1)
+		[ "$?" == 0 ] && {
+			uci delete $CONFIG.@nodes[$index]
+			add_nodes update "$link_type"
+		}
+	fi
 }
 
 del_config(){
@@ -433,7 +432,6 @@ add() {
 			fi
 			[ -z "$link_type" ] && continue
 			get_remote_config "$link_type" "$new_link" 1
-			update_config
 		done
 		[ -f "/usr/share/${CONFIG}/sub/all_onlinenodes" ] && rm -f /usr/share/${CONFIG}/sub/all_onlinenodes
 	}
