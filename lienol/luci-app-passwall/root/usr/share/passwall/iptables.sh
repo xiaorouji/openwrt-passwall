@@ -132,17 +132,22 @@ load_acl() {
 				[ -n "$ip" ] && echolog "访问控制：IP：$ip，代理模式：$(get_action_chain_name $proxy_mode)"
 				[ -n "$mac" ] && echolog "访问控制：MAC：$mac，代理模式：$(get_action_chain_name $proxy_mode)"
 			fi
-			[ "$TCP_NODE" != "nil" ] && {
-				#local TCP_NODE_TYPE=$(echo $(config_get $TCP_NODE type) | tr 'A-Z' 'a-z')
-				$iptables_mangle -A SS_ACL $(factor $ip "-s") -p tcp -m set --match-set $IPSET_BLACKLIST dst -m comment --comment "$remarks" -j TTL --ttl-set 14$tcp_node
-				$iptables_mangle -A SS_ACL $(factor $ip "-s") -p tcp $(factor $mac "-m mac --mac-source") $(factor $tcp_redir_ports "-m multiport --dport") -m comment --comment "$remarks" -$(get_jump_mode $proxy_mode) $(get_action_chain $proxy_mode)$tcp_node
-			}
-			[ "$UDP_NODE" != "nil" ] && {
-				#local UDP_NODE_TYPE=$(echo $(config_get $UDP_NODE type) | tr 'A-Z' 'a-z')
-				eval udp_redir_port=\$UDP_REDIR_PORT$udp_node
-				$iptables_mangle -A SS_ACL $(factor $ip "-s") -p udp -m set --match-set $IPSET_BLACKLIST dst -m comment --comment "$remarks" -j TPROXY --on-port $udp_redir_port --tproxy-mark 0x1/0x1
-				$iptables_mangle -A SS_ACL $(factor $ip "-s") -p udp $(factor $mac "-m mac --mac-source") $(factor $udp_redir_ports "-m multiport --dport") -m comment --comment "$remarks" -$(get_jump_mode $proxy_mode) $(get_action_chain $proxy_mode)$udp_node
-			}
+			
+			if [ "$proxy_mode" == "disable" ]; then
+				$iptables_mangle -A SS_ACL $(factor $ip "-s") $(factor $mac "-m mac --mac-source") -m comment --comment "$remarks" -j RETURN
+			else
+				[ "$TCP_NODE" != "nil" ] && {
+					#local TCP_NODE_TYPE=$(echo $(config_get $TCP_NODE type) | tr 'A-Z' 'a-z')
+					$iptables_mangle -A SS_ACL $(factor $ip "-s") $(factor $mac "-m mac --mac-source") -p tcp -m set --match-set $IPSET_BLACKLIST dst -m comment --comment "$remarks" -j TTL --ttl-set 14$tcp_node
+					$iptables_mangle -A SS_ACL $(factor $ip "-s") $(factor $mac "-m mac --mac-source") -p tcp $(factor $tcp_redir_ports "-m multiport --dport") -m comment --comment "$remarks" -$(get_jump_mode $proxy_mode) $(get_action_chain $proxy_mode)$tcp_node
+				}
+				[ "$UDP_NODE" != "nil" ] && {
+					#local UDP_NODE_TYPE=$(echo $(config_get $UDP_NODE type) | tr 'A-Z' 'a-z')
+					eval udp_redir_port=\$UDP_REDIR_PORT$udp_node
+					$iptables_mangle -A SS_ACL $(factor $ip "-s") $(factor $mac "-m mac --mac-source") -p udp -m set --match-set $IPSET_BLACKLIST dst -m comment --comment "$remarks" -j TPROXY --on-port $udp_redir_port --tproxy-mark 0x1/0x1
+					$iptables_mangle -A SS_ACL $(factor $ip "-s") $(factor $mac "-m mac --mac-source") -p udp $(factor $udp_redir_ports "-m multiport --dport") -m comment --comment "$remarks" -$(get_jump_mode $proxy_mode) $(get_action_chain $proxy_mode)$udp_node
+				}
+			fi
 			[ -z "$ip" ] && {
 				lower_mac=$(echo $mac | tr '[A-Z]' '[a-z]')
 				ip=$(ip neigh show | grep -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}" | grep $lower_mac | awk '{print $1}')
