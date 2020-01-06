@@ -142,6 +142,7 @@ get_local_nodes(){
 get_remote_config(){
 	add_mode="$subscrib_remark"
 	[ -n "$3" ] && add_mode="导入"
+	new_node_type=$(echo $1 | tr '[a-z]' '[A-Z]')
 	if [ "$1" == "ss" ]; then
 		decode_link="$2"
 		decode_link=$(ss_decode $decode_link)
@@ -307,15 +308,26 @@ add_nodes(){
 }
 
 update_config(){
-	isadded_remarks=$(uci show $CONFIG | grep "@nodes" | grep "remarks" | grep -c -F "$remarks")
-	if [ "$isadded_remarks" -eq 0 ]; then
+	indexs=$(uci show $CONFIG | grep "@nodes" | grep "remarks=" | grep -F "$remarks" | cut -d '[' -f2|cut -d ']' -f1)
+	if [ -z "$indexs" ]; then
 		add_nodes add "$link_type"
 	else
-		index=$(uci show $CONFIG | grep "@nodes" | grep "remarks" | grep -w -F "$remarks" | cut -d '[' -f2|cut -d ']' -f1)
-		[ "$?" == 0 ] && {
-			uci delete $CONFIG.@nodes[$index]
+		action="add"
+		for index in $indexs
+		do
+			local old_node_type=$(uci -q get $CONFIG.@nodes[$index].type | tr '[a-z]' '[A-Z]')
+			if [ -n "$old_node_type" -a "$old_node_type" == "$new_node_type" ]; then
+				action="update"
+				update_index=$index
+				break
+			fi
+		done
+		if [ "$action" == "add" ]; then
+			add_nodes add "$link_type"
+		elif [ "$action" == "update" ]; then
+			uci delete $CONFIG.@nodes[$update_index]
 			add_nodes update "$link_type"
-		}
+		fi
 	fi
 }
 
