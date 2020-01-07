@@ -54,7 +54,7 @@ start_subscribe() {
 			config_get subscrib_remark $1 remark
 			let index+=1
 			echo "$Date: 正在订阅：$url" >> $LOG_FILE
-			result=$(/usr/bin/curl --connect-timeout 5 -sL $url)
+			result=$(/usr/bin/curl --connect-timeout 5 --retry 1 -sL $url)
 			[ "$?" != 0 ] || [ -z "$result" ] && {
 				result=$(/usr/bin/wget --no-check-certificate --timeout=5 -t 1 -O- $url)
 				[ "$?" != 0 ] || [ -z "$result" ] && echo "$Date: 订阅失败：$url，请检测订阅链接是否正常或使用代理尝试！" >> $LOG_FILE && continue

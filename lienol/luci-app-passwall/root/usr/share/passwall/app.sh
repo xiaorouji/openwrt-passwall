@@ -435,7 +435,7 @@ start_tcp_redir() {
 					if [ "$plugin" != "none" ]; then
 						[ "$plugin" == "v2ray-plugin" ] && {
 							local opts=$(config_n_get $temp_server ss_plugin_v2ray_opts)
-							plugin_params="--plugin v2ray-plugin --plugin-opts \"$opts\""
+							plugin_params="--plugin v2ray-plugin --plugin-opts $opts"
 						}
 					fi
 					for k in $(seq 1 $process); do
@@ -519,7 +519,7 @@ start_udp_redir() {
 					if [ "$plugin" != "none" ]; then
 						[ "$plugin" == "v2ray-plugin" ] && {
 							local opts=$(config_n_get $temp_server ss_plugin_v2ray_opts)
-							plugin_params="--plugin v2ray-plugin --plugin-opts \"$opts\""
+							plugin_params="--plugin v2ray-plugin --plugin-opts $opts"
 						}
 					fi
 					$ss_bin -c $config_file -f $RUN_PID_PATH/udp_${TYPE}_1_$i -U $plugin_params >/dev/null 2>&1 &
@@ -572,7 +572,7 @@ start_socks5_proxy() {
 					if [ "$plugin" != "none" ]; then
 						[ "$plugin" == "v2ray-plugin" ] && {
 							local opts=$(config_n_get $temp_server ss_plugin_v2ray_opts)
-							plugin_params="--plugin v2ray-plugin --plugin-opts \"$opts\""
+							plugin_params="--plugin v2ray-plugin --plugin-opts $opts"
 						}
 					fi
 					$ss_bin -c $config_file -b 0.0.0.0 -u $plugin_params >/dev/null 2>&1 &
