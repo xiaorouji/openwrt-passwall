@@ -1,12 +1,14 @@
 # openwrt-package
 
-创了个讨论交流群，有兴趣的朋友们可[点击加入](https://t.me/opdiscuss)
+[OP讨论交流群](https://t.me/opdiscuss)
 
 本源码兼容[官方](https://github.com/openwrt/openwrt)和[大雕Lean](https://github.com/coolsnowwolf/lede)源码
 
 使用[大雕源码](https://github.com/coolsnowwolf/lede)务必按[此](https://github.com/Lienol/openwrt-package/issues/54#issuecomment-562859266)操作执行 
 
-可尝试本人[基于官方openwrt19.07分支源码](https://github.com/Lienol/openwrt) Mysterious Speed !!! 或[基于大雕源码](https://github.com/Lienol/lean-lede) 跟着README操作即可
+可尝试本人[基于官方openwrt19.07分支源码](https://github.com/Lienol/openwrt) 神秘的优化速度！
+
+可尝试本人[基于大雕源码](https://github.com/Lienol/lean-lede) 跟着README操作即可
 
 [OpenWRT-Actions](https://github.com/Lienol/openwrt-actions/actions)
 
