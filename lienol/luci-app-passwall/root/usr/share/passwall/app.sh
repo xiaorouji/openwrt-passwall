@@ -190,8 +190,24 @@ load_config() {
 		process=$(config_t_get global_forwarding process)
 	fi
 	LOCALHOST_PROXY_MODE=$(config_t_get global localhost_proxy_mode default)
-	DNS1=$(config_t_get global_dns dns_1)
-	DNS2=$(config_t_get global_dns dns_2)
+	DNS1=$(config_t_get global_dns dns_1 114.114.114.114)
+	DNS2=$(config_t_get global_dns dns_2 223.5.5.5)
+	[ "$DNS1" == "dnsbyisp" ] && {
+		local dns1=$(cat /tmp/resolv.conf.auto 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | grep -v 0.0.0.0 | grep -v 127.0.0.1 | sed -n '1P')
+		if [ -n "$dns1" ]; then
+			DNS1=$dns1
+		else
+			DNS1="114.114.114.114"
+		fi
+	}
+	[ "$DNS2" == "dnsbyisp" ] && {
+		local dns2=$(cat /tmp/resolv.conf.auto 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | grep -v 0.0.0.0 | grep -v 127.0.0.1 | sed -n '2P')
+		if [ -n "$dns2" ]; then
+			DNS2=$dns2
+		else
+			DNS2=""
+		fi
+	}
 	TCP_REDIR_PORT1=$(config_t_get global_proxy tcp_redir_port 1041)
 	TCP_REDIR_PORT2=$(expr $TCP_REDIR_PORT1 + 1)
 	TCP_REDIR_PORT3=$(expr $TCP_REDIR_PORT2 + 1)
@@ -698,40 +714,38 @@ start_dns() {
 	chinadns-ng)
 		chinadns_ng_bin=$(find_bin chinadns-ng)
 		[ -n "$chinadns_ng_bin" ] && {
-			local dns1=$DNS1
-			[ "$DNS1" = "dnsbyisp" ] && dns1=$(cat /tmp/resolv.conf.auto 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | grep -v 0.0.0.0 | grep -v 127.0.0.1 | sed -n '1P')
-			local dns2=$DNS2
-			[ "$DNS2" = "dnsbyisp" ] && dns2=$(cat /tmp/resolv.conf.auto 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | grep -v 0.0.0.0 | grep -v 127.0.0.1 | sed -n '2P')
 			other_port=$(expr $DNS_PORT + 1)
 			cat $RULE_PATH/gfwlist.conf | sort | uniq | sed -e '/127.0.0.1/d' | sed 's/ipset=\/.//g' | sed 's/\/gfwlist//g' > $CONFIG_PATH/gfwlist_chinadns_ng.txt
 			[ -f "$CONFIG_PATH/gfwlist_chinadns_ng.txt" ] && local gfwlist_param="-g $CONFIG_PATH/gfwlist_chinadns_ng.txt"
 			[ -f "$RULE_PATH/chnlist" ] && local chnlist_param="-m $RULE_PATH/chnlist -M"
-			up_chinadns_ng_mode=$(config_t_get global up_chinadns_ng_mode "8.8.4.4,8.8.8.8")
-			if [ "$up_chinadns_ng_mode" == "dns2socks" ]; then
+			up_china_chinadns_ng_dns=$(config_t_get global up_china_chinadns_ng_dns "default")
+			[ "$up_china_chinadns_ng_dns" == "default" ] && up_china_chinadns_ng_dns="$DNS1,$DNS2"
+			local dns1=$(echo $up_china_chinadns_ng_dns | awk -F "," '{print $1}')
+			[ -n "$dns1" ] && DNS1=$dns1
+			DNS2=$(echo $up_china_chinadns_ng_dns | awk -F "," '{print $2}')
+			
+			up_trust_chinadns_ng_dns=$(config_t_get global up_trust_chinadns_ng_dns "8.8.4.4,8.8.8.8")
+			if [ "$up_trust_chinadns_ng_dns" == "dns2socks" ]; then
 				if [ -n "$SOCKS5_NODE1" -a "$SOCKS5_NODE1" != "nil" ]; then
 					dns2socks_bin=$(find_bin dns2socks)
 					[ -n "$dns2socks_bin" ] && {
 						nohup $dns2socks_bin 127.0.0.1:$SOCKS5_PROXY_PORT1 ${DNS_FORWARD}:53 127.0.0.1:$other_port >/dev/null 2>&1 &
-						nohup $chinadns_ng_bin -l $DNS_PORT -c $dns1,$dns2 -t 127.0.0.1#$other_port $gfwlist_param $chnlist_param >/dev/null 2>&1 &
-						echolog "运行DNS转发模式：ChinaDNS-NG + dns2socks，国内DNS：$dns1, $dns2"
+						nohup $chinadns_ng_bin -l $DNS_PORT -c $up_china_chinadns_ng_dns -t 127.0.0.1#$other_port $gfwlist_param $chnlist_param >/dev/null 2>&1 &
+						echolog "运行DNS转发模式：ChinaDNS-NG + dns2socks，国内DNS：$up_china_chinadns_ng_dns"
 					}
 				else
 					echolog "dns2socks模式需要使用Socks5代理节点，请开启！"
 					force_stop
 				fi
-			elif [ "$up_chinadns_ng_mode" == "custom" ]; then
-				up_chinadns_ng_custom=$(config_t_get global up_chinadns_ng_custom '208.67.222.222#443,208.67.222.222#5353')
-				nohup $chinadns_ng_bin -l $DNS_PORT -c $dns1,$dns2 -t $up_chinadns_ng_custom $gfwlist_param $chnlist_param >/dev/null 2>&1 &
-				echolog "运行DNS转发模式：ChinaDNS-NG，国内DNS：$dns1, $dns2，可信DNS：$up_chinadns_ng_custom"
 			else
 				if [ -z "$UDP_NODE1" -o "$UDP_NODE1" == "nil" ]; then
-					nohup $chinadns_ng_bin -l $DNS_PORT -c $dns1,$dns2 -t 208.67.222.222#443,208.67.222.222#5353 $gfwlist_param $chnlist_param >/dev/null 2>&1 &
-					echolog "运行DNS转发模式：ChinaDNS-NG，国内DNS：$dns1, $dns2，因为你没有使用UDP节点，只能使用OpenDNS 443端口或5353端口作为可信DNS。"
+					nohup $chinadns_ng_bin -l $DNS_PORT -c $up_china_chinadns_ng_dns -t 208.67.222.222#443,208.67.222.222#5353 $gfwlist_param $chnlist_param >/dev/null 2>&1 &
+					echolog "运行DNS转发模式：ChinaDNS-NG，国内DNS：$up_china_chinadns_ng_dns，因为你没有使用UDP节点，只能使用OpenDNS 443端口或5353端口作为可信DNS。"
 				else
 					use_udp_node_resolve_dns=1
-					DNS_FORWARD=$(echo $up_chinadns_ng_mode | sed 's/,/ /g')
-					nohup $chinadns_ng_bin -l $DNS_PORT -c $dns1,$dns2 -t $up_chinadns_ng_mode $gfwlist_param $chnlist_param >/dev/null 2>&1 &
-					echolog "运行DNS转发模式：ChinaDNS-NG，国内DNS：$dns1, $dns2，可信DNS：$up_chinadns_ng_mode"
+					DNS_FORWARD=$(echo $up_trust_chinadns_ng_dns | sed 's/,/ /g')
+					nohup $chinadns_ng_bin -l $DNS_PORT -c $up_china_chinadns_ng_dns -t $up_trust_chinadns_ng_dns $gfwlist_param $chnlist_param >/dev/null 2>&1 &
+					echolog "运行DNS转发模式：ChinaDNS-NG，国内DNS：$up_china_chinadns_ng_dns，可信DNS：$up_trust_chinadns_ng_dns"
 				fi
 			fi
 		}
@@ -742,48 +756,21 @@ start_dns() {
 
 add_dnsmasq() {
 	mkdir -p $TMP_DNSMASQ_PATH $DNSMASQ_PATH /var/dnsmasq.d
-	local wirteconf dnsconf isp_dns isp_ip
-	if [ "$DNS1" = "dnsbyisp" -o "$DNS2" = "dnsbyisp" ]; then
-		cat <<-EOF > /etc/dnsmasq.conf
-			all-servers
-			no-poll
-			no-resolv
-			cache-size=2048
-			local-ttl=60
-			neg-ttl=3600
-			max-cache-ttl=1200
-			EOF
-		echolog "生成Dnsmasq配置文件。"
-		isp_dnss=$(cat /tmp/resolv.conf.auto 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | sort -u | grep -v 0.0.0.0 | grep -v 127.0.0.1)
-		[ -n "$isp_dnss" ] && {
-			for isp_dns in $isp_dnss; do
-				echo server=$isp_dns >>/etc/dnsmasq.conf
-			done
-		}
-		[ "$DNS1" != "dnsbyisp" ] && {
-			echo server=$DNS1 >>/etc/dnsmasq.conf
-		}
-		[ "$DNS2" != "dnsbyisp" ] && {
-			echo server=$DNS2 >>/etc/dnsmasq.conf
-		}
-	else
-		wirteconf=$(cat /etc/dnsmasq.conf 2>/dev/null | grep "server=$DNS1")
-		dnsconf=$(cat /etc/dnsmasq.conf 2>/dev/null | grep "server=$DNS2")
-		if [ -z "$wirteconf" ] || [ -z "$dnsconf" ]; then
-			cat <<-EOF > /etc/dnsmasq.conf
-				all-servers
-				no-poll
-				no-resolv
-				server=$DNS1
-				server=$DNS2
-				cache-size=2048
-				local-ttl=60
-				neg-ttl=3600
-				max-cache-ttl=1200
-			EOF
-			echolog "生成Dnsmasq配置文件。"
-		fi
-	fi
+	local server_1 server_2
+	[ -n "$DNS1" ] && server_1="server=$DNS1"
+	[ -n "$DNS2" ] && server_2="server=$DNS2"
+	cat <<-EOF > /etc/dnsmasq.conf
+		all-servers
+		no-poll
+		no-resolv
+		$server_1
+		$server_2
+		cache-size=2048
+		local-ttl=60
+		neg-ttl=3600
+		max-cache-ttl=1200
+	EOF
+	echolog "生成Dnsmasq配置文件。"
 	# if [ -n "cat /var/state/network |grep pppoe|awk -F '.' '{print $2}'" ]; then
 	# sed -i '/except-interface/d' /etc/dnsmasq.conf >/dev/null 2>&1 &
 	# for wanname in $(cat /var/state/network |grep pppoe|awk -F '.' '{print $2}')
