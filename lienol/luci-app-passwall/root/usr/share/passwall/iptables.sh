@@ -412,12 +412,6 @@ add_firewall_rule() {
 				local UDP_NODE_TYPE=$(echo $(config_get $temp_server type) | tr 'A-Z' 'a-z')
 				[ -n "$UDP_NODE_IP" -a -n "$UDP_NODE_PORT" ] && $iptables_mangle -A SS -p udp -d $UDP_NODE_IP -m multiport --dports $UDP_NODE_PORT -j RETURN
 				[ "$UDP_NODE_TYPE" == "brook" ] && $iptables_mangle -A SS_ACL -p udp -m socket -j MARK --set-mark 1
-				[ "$use_udp_node_resolve_dns" == 1 -a -n "$DNS_FORWARD" ] && {
-					for dns in $DNS_FORWARD
-					do
-						$iptables_mangle -A OUTPUT -p udp -d $dns -m multiport --dport 1:65535 -m comment --comment "PassWall" -j MARK --set-mark 1
-					done
-				}
 				#  全局模式
 				$iptables_mangle -A SS_GLO$k -p udp -j TPROXY --on-port $local_port --tproxy-mark 0x1/0x1
 
@@ -435,6 +429,26 @@ add_firewall_rule() {
 				#  游戏模式
 				$iptables_mangle -A SS_GAME$k -p udp -m set --match-set $IPSET_CHN dst -j RETURN
 				$iptables_mangle -A SS_GAME$k -p udp -j TPROXY --on-port $local_port --tproxy-mark 0x1/0x1
+				
+				# 用于本机流量转发，默认只走router
+				#$iptables_mangle -I OUTPUT -j SS
+				$iptables_mangle -A OUTPUT -p udp -m set --match-set $IPSET_LANIPLIST dst -m comment --comment "PassWall" -j RETURN
+				$iptables_mangle -A OUTPUT -p udp -m set --match-set $IPSET_VPSIPLIST dst -m comment --comment "PassWall" -j RETURN
+				$iptables_mangle -A OUTPUT -p udp -m set --match-set $IPSET_WHITELIST dst -m comment --comment "PassWall" -j RETURN
+				[ "$use_udp_node_resolve_dns" == 1 -a -n "$DNS_FORWARD" ] && {
+					for dns in $DNS_FORWARD
+					do
+						$iptables_mangle -A OUTPUT -p udp -d $dns -m multiport --dport 1:65535 -m comment --comment "PassWall" -j MARK --set-mark 1
+					done
+				}
+				$iptables_mangle -A OUTPUT -p udp -m multiport --dport $UDP_REDIR_PORTS -m set --match-set $IPSET_ROUTER dst -m comment --comment "PassWall" -j MARK --set-mark 1
+				$iptables_mangle -A OUTPUT -p udp -m multiport --dport $UDP_REDIR_PORTS -m set --match-set $IPSET_BLACKLIST dst -m comment --comment "PassWall" -j MARK --set-mark 1
+
+				[ "$LOCALHOST_PROXY_MODE" == "global" ] && $iptables_mangle -A OUTPUT -p udp -m multiport --dport $UDP_REDIR_PORTS -m comment --comment "PassWall" -j MARK --set-mark 1
+				[ "$LOCALHOST_PROXY_MODE" == "gfwlist" ] && $iptables_mangle -A OUTPUT -p udp -m multiport --dport $UDP_REDIR_PORTS -m set --match-set $IPSET_GFW dst -m comment --comment "PassWall" -j MARK --set-mark 1
+				[ "$LOCALHOST_PROXY_MODE" == "chnroute" ] && {
+					$iptables_mangle -A OUTPUT -p udp -m multiport --dport $UDP_REDIR_PORTS -m set ! --match-set $IPSET_CHN dst -m comment --comment "PassWall" -j MARK --set-mark 1
+				}
 
 				echolog "IPv4 防火墙UDP转发规则加载完成！"
 			fi
