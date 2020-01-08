@@ -218,9 +218,13 @@ get_remote_config(){
 }
 
 add_nodes(){
-	get_node_index
+	if [ "$1" == "add" ]; then
+		get_node_index
+		uci add $CONFIG nodes
+	elif [ "$1" == "update" ]; then
+		nodes_index=$update_index
+	fi
 	uci_set="uci set $CONFIG.@nodes[$nodes_index]."
-	uci add $CONFIG nodes > /dev/null
 	[ -z "$3" ] && ${uci_set}is_sub="is_sub"
 	if [ "$2" == "ss" ]; then
 		${uci_set}add_mode="$add_mode"
@@ -325,7 +329,6 @@ update_config(){
 		if [ "$action" == "add" ]; then
 			add_nodes add "$link_type"
 		elif [ "$action" == "update" ]; then
-			uci delete $CONFIG.@nodes[$update_index]
 			add_nodes update "$link_type"
 		fi
 	fi
