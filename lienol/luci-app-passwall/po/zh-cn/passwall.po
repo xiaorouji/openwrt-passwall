@@ -586,14 +586,17 @@ msgstr "订阅网址"
 msgid "Please input the subscription url first, save and submit before updating. If you subscribe to update, it is recommended to delete all subscriptions and then re-subscribe."
 msgstr "请输入订阅网址保存应用后再更新，如果订阅节点更新了，建议删除所有订阅，然后重新订阅。"
 
-msgid "Delete All Subscribe Node"
-msgstr "删除所有订阅节点"
-
 msgid "Subscribe via proxy"
 msgstr "通过代理订阅"
 
 msgid "Enable auto update subscribe"
 msgstr "开启自动更新订阅"
+
+msgid "Manual subscription"
+msgstr "手动订阅"
+
+msgid "Delete All Subscribe Node"
+msgstr "删除所有订阅节点"
 
 msgid "Add"
 msgstr "添加"

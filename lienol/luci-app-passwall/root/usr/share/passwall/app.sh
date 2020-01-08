@@ -759,17 +759,19 @@ add_dnsmasq() {
 	local server_1 server_2
 	[ -n "$DNS1" ] && server_1="server=$DNS1"
 	[ -n "$DNS2" ] && server_2="server=$DNS2"
-	cat <<-EOF > /etc/dnsmasq.conf
-		all-servers
-		no-poll
-		no-resolv
-		$server_1
-		$server_2
-		cache-size=2048
-		local-ttl=60
-		neg-ttl=3600
-		max-cache-ttl=1200
-	EOF
+	
+	#cat <<-EOF > /etc/dnsmasq.conf
+	#	$server_1
+	#	$server_2
+	#	all-servers
+	#	no-poll
+	#	no-resolv
+	#	cache-size=2048
+	#	local-ttl=60
+	#	neg-ttl=3600
+	#	max-cache-ttl=1200
+	#EOF
+	
 	echolog "生成Dnsmasq配置文件。"
 	# if [ -n "cat /var/state/network |grep pppoe|awk -F '.' '{print $2}'" ]; then
 	# sed -i '/except-interface/d' /etc/dnsmasq.conf >/dev/null 2>&1 &
@@ -820,8 +822,16 @@ add_dnsmasq() {
 		echolog "生成回国模式Dnsmasq配置文件。"
 	fi
 
-	echo "conf-dir=$TMP_DNSMASQ_PATH" >/var/dnsmasq.d/dnsmasq-$CONFIG.conf
-	echo "conf-dir=$TMP_DNSMASQ_PATH" >$DNSMASQ_PATH/dnsmasq-$CONFIG.conf
+	echo "conf-dir=$TMP_DNSMASQ_PATH" > /var/dnsmasq.d/dnsmasq-$CONFIG.conf
+	cat <<-EOF > /var/dnsmasq.d/dnsmasq-$CONFIG.conf
+		$server_1
+		$server_2
+		all-servers
+		no-poll
+		cache-size=2048
+		conf-dir=$TMP_DNSMASQ_PATH
+	EOF
+	cp -rf /var/dnsmasq.d/dnsmasq-$CONFIG.conf $DNSMASQ_PATH/dnsmasq-$CONFIG.conf
 	if [ "$restdns" == 1 ]; then
 		echolog "重启Dnsmasq。。。"
 		/etc/init.d/dnsmasq restart 2>/dev/null
@@ -1133,13 +1143,13 @@ start() {
 	! load_config && return 1
 	[ -f "$LOCK_FILE" ] && return 3
 	touch "$LOCK_FILE"
+	start_dns
+	add_dnsmasq
 	add_vps_port
 	start_haproxy
 	start_socks5_proxy
 	start_tcp_redir
 	start_udp_redir
-	start_dns
-	add_dnsmasq
 	source $APP_PATH/iptables.sh start
 	/etc/init.d/dnsmasq restart >/dev/null 2>&1 &
 	start_crontab
