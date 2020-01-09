@@ -4,17 +4,20 @@ local net = require"luci.model.network".init()
 local uci = require"luci.model.uci".cursor()
 local ifaces = e.net:devices()
 local appname = "passwall"
-local nodes_name = {}
-local nodes_port = {}
 
+local n = {}
 uci:foreach(appname, "nodes", function(e)
-    if e.address and e.port and e.address ~= "127.0.0.1" then
-        nodes_name[e[".name"]] = "%s" % {e.address}
-        nodes_port[e[".name"]] = "%s" % {e.port}
+    if e.remarks and e.address and e.port and e.address ~= "127.0.0.1" then
+        e.remark = "[%s] %s:%s" % {e.remarks, e.address, e.port}
+        n[e[".name"]] = e
     end
 end)
 
-m = Map("passwall")
+local key_table = {}
+for key, _ in pairs(n) do table.insert(key_table, key) end
+table.sort(key_table)
+
+m = Map(appname)
 
 -- [[ Haproxy Settings ]]--
 s = m:section(TypedSection, "global_haproxy", translate("Load Balancing"))
@@ -59,12 +62,14 @@ s.addremove = true
 
 ---- Node Address
 o = s:option(Value, "lbss", translate("Node Address"))
-for m, s in pairs(nodes_name) do o:value(s) end
+for _, key in pairs(key_table) do
+    o:value(n[key].address .. ":" .. n[key].port, n[key].remark)
+end
 o.rmempty = false
 
 ---- Node Port
 o = s:option(Value, "lbort", translate("Node Port"))
-for m, s in pairs(nodes_port) do o:value(s) end
+o:value("default", translate("Default"))
 o.rmempty = false
 
 ---- Node Weight
