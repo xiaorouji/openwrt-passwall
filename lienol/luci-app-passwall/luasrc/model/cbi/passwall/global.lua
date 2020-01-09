@@ -81,7 +81,7 @@ local socks5_node_num = api.uci_get_type("global_other", "socks5_node_num", 1)
 for i = 1, socks5_node_num, 1 do
     if i == 1 then
         o = s:option(ListValue, "socks5_node" .. i, translate("Socks5 Node"),
-                     translate("The client can use the router's Socks5 proxy"))
+                     translate("The client can use the router's Socks5 proxy."))
     else
         o = s:option(ListValue, "socks5_node" .. i,
                      translate("Socks5 Node") .. " " .. i)
@@ -92,7 +92,7 @@ end
 
 ---- DNS Forward Mode
 o = s:option(ListValue, "dns_mode", translate("DNS Forward Mode"), translate(
-                 "if you use no patterns are used, DNS of wan will be used by default as upstream of dnsmasq"))
+                 "if you use no patterns are used, DNS of wan will be used by default as upstream of dnsmasq.<br />if has problem, please try another mode."))
 o.rmempty = false
 o:reset_values()
 if is_finded("chinadns-ng") then o:value("chinadns-ng", "ChinaDNS-NG") end
@@ -116,7 +116,7 @@ o:depends("dns_mode", "pdnsd")
 o = s:option(Value, "up_china_chinadns_ng_dns",
              translate("Upstream china DNS Server for ChinaDNS-NG") .. "(UDP)",
              translate(
-                 "Domestic DNS server in Advanced Settings is used as domestic DNS by default.<br />Example: 127.0.0.1#5335,223.5.5.5#53<br />Only use two at most."))
+                 "Domestic DNS server in Advanced Settings is used as domestic DNS by default.<br />Example: 127.0.0.1#5335,223.5.5.5#53<br />Only use two at most. such as smartdns,AdGuard Home..."))
 o.default = "default"
 o:value("default", translate("default"))
 o:value("223.5.5.5", "223.5.5.5(" .. translate("Ali") .. "DNS1)")
@@ -134,7 +134,7 @@ o:depends("dns_mode", "chinadns-ng")
 o = s:option(Value, "up_trust_chinadns_ng_dns",
              translate("Upstream trust DNS Server for ChinaDNS-NG") .. "(UDP)",
              translate(
-                 "Example: 127.0.0.1#5353<br />Only use two at most. such as smartdns,dns2socks..."))
+                 "Example: 127.0.0.1#5353<br />Only use two at most. such as dns2socks,dns-forwarder..."))
 o.default = "8.8.4.4,8.8.8.8"
 o:value("8.8.4.4,8.8.8.8", "8.8.4.4, 8.8.8.8 (Google DNS)")
 o:value("208.67.222.222,208.67.220.220",
@@ -170,7 +170,7 @@ o:value("returnhome", translate("Return Home"))
 ---- Localhost Proxy Mode
 o = s:option(ListValue, "localhost_proxy_mode",
              translate("Localhost") .. translate("Proxy Mode"), translate(
-                 "The server client can also use this rule to scientifically surf the Internet, Global and continental whitelist are not recommended for non-special cases!"))
+                 "The server client can also use this rule to scientifically surf the Internet.<br /> Global and continental whitelist are not recommended for non-special cases!"))
 o:value("default", translate("Default"))
 o:value("global",
         translate("Global Proxy") .. "（" .. translate("Danger") .. "）")

@@ -731,7 +731,7 @@ start_dns() {
 					[ -n "$dns2socks_bin" ] && {
 						nohup $dns2socks_bin 127.0.0.1:$SOCKS5_PROXY_PORT1 ${DNS_FORWARD}:53 127.0.0.1:$other_port >/dev/null 2>&1 &
 						nohup $chinadns_ng_bin -l $DNS_PORT -c $up_china_chinadns_ng_dns -t 127.0.0.1#$other_port $gfwlist_param $chnlist_param >/dev/null 2>&1 &
-						echolog "运行DNS转发模式：ChinaDNS-NG + dns2socks，国内DNS：$up_china_chinadns_ng_dns"
+						echolog "运行DNS转发模式：ChinaDNS-NG + dns2socks(${DNS_FORWARD}:53)，国内DNS：$up_china_chinadns_ng_dns"
 					}
 				else
 					echolog "dns2socks模式需要使用Socks5代理节点，请开启！"
@@ -751,7 +751,6 @@ start_dns() {
 		}
 	;;
 	esac
-	echolog "若不正常，请尝试其他模式！"
 }
 
 add_dnsmasq() {
@@ -772,7 +771,6 @@ add_dnsmasq() {
 	#	max-cache-ttl=1200
 	#EOF
 	
-	echolog "生成Dnsmasq配置文件。"
 	# if [ -n "cat /var/state/network |grep pppoe|awk -F '.' '{print $2}'" ]; then
 	# sed -i '/except-interface/d' /etc/dnsmasq.conf >/dev/null 2>&1 &
 	# for wanname in $(cat /var/state/network |grep pppoe|awk -F '.' '{print $2}')
@@ -819,7 +817,6 @@ add_dnsmasq() {
 		rm -rf $TMP_DNSMASQ_PATH/blacklist_host.conf
 		rm -rf $TMP_DNSMASQ_PATH/whitelist_host.conf
 		restdns=1
-		echolog "生成回国模式Dnsmasq配置文件。"
 	fi
 
 	echo "conf-dir=$TMP_DNSMASQ_PATH" > /var/dnsmasq.d/dnsmasq-$CONFIG.conf
@@ -833,7 +830,7 @@ add_dnsmasq() {
 	EOF
 	cp -rf /var/dnsmasq.d/dnsmasq-$CONFIG.conf $DNSMASQ_PATH/dnsmasq-$CONFIG.conf
 	if [ "$restdns" == 1 ]; then
-		echolog "重启Dnsmasq。。。"
+		echolog "dnsmasq：生成配置文件并重启服务。"
 		/etc/init.d/dnsmasq restart 2>/dev/null
 	fi
 }
@@ -1023,7 +1020,7 @@ start_haproxy() {
 				    bind 0.0.0.0:$bport
 				    mode tcp
 			EOF
-			for i in $(seq 0 100); do
+			for i in $(seq 0 50); do
 				bips=$(config_t_get balancing lbss '' $i)
 				bports=$(config_t_get balancing lbort '' $i)
 				bweight=$(config_t_get balancing lbweight '' $i)
@@ -1032,35 +1029,39 @@ start_haproxy() {
 				if [ -z "$bips" ] || [ -z "$bports" ]; then
 					break
 				fi
+				local bip=$(echo $bips | awk -F ":" '{print $1}')
+				local bport=$(echo $bips | awk -F ":" '{print $2}')
+				[ "$bports" != "default" ] && bport=$bports
+				[ -z "$bport" ] && break
 				if [ "$bbackup" = "1" ]; then
 					bbackup=" backup"
-					echolog "添加故障转移备节点:$bips"
+					echolog "负载均衡：添加故障转移备节点:$bip"
 				else
 					bbackup=""
-					echolog "添加负载均衡主节点:$bips"
+					echolog "负载均衡：添加负载均衡主节点:$bip"
 				fi
-				#si=$(echo $bips | grep -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}")
+				#si=$(echo $bip | grep -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}")
 				#if [ -z "$si" ]; then
-				#	bips=$(resolveip -4 -t 2 $bips | awk 'NR==1{print}')
-				#	if [ -z "$bips" ]; then
-				#		bips=$(nslookup $bips localhost | sed '1,4d' | awk '{print $3}' | grep -v : | awk 'NR==1{print}')
+				#	bip=$(resolveip -4 -t 2 $bip | awk 'NR==1{print}')
+				#	if [ -z "$bip" ]; then
+				#		bip=$(nslookup $bip localhost | sed '1,4d' | awk '{print $3}' | grep -v : | awk 'NR==1{print}')
 				#	fi
-				#	echolog "负载均衡${i} IP为：$bips"
+				#	echolog "负载均衡${i} IP为：$bip"
 				#fi
-				echo "    server server_$i $bips:$bports weight $bweight check inter 1500 rise 1 fall 3 $bbackup" >>$HAPROXY_FILE
+				echo "    server $bip:$bport $bip:$bport weight $bweight check inter 1500 rise 1 fall 3 $bbackup" >> $HAPROXY_FILE
 				if [ "$exports" != "0" ]; then
 					failcount=0
-					while [ "$failcount" -lt "10" ]; do
+					while [ "$failcount" -lt "3" ]; do
 						interface=$(ifconfig | grep "$exports" | awk '{print $1}')
 						if [ -z "$interface" ]; then
 							echolog "找不到出口接口：$exports，1分钟后再重试"
 							let "failcount++"
-							[ "$failcount" -ge 10 ] && exit 0
+							[ "$failcount" -ge 3 ] && exit 0
 							sleep 1m
 						else
-							route add -host ${bips} dev ${exports}
+							route add -host ${bip} dev ${exports}
 							echolog "添加SS出口路由表：$exports"
-							echo "$bips" >>/tmp/balancing_ip
+							echo "$bip" >>/tmp/balancing_ip
 							break
 						fi
 					done
@@ -1070,7 +1071,7 @@ start_haproxy() {
 			console_port=$(config_t_get global_haproxy console_port)
 			console_user=$(config_t_get global_haproxy console_user)
 			console_password=$(config_t_get global_haproxy console_password)
-			cat <<-EOF >>$HAPROXY_FILE
+			cat <<-EOF >> $HAPROXY_FILE
 			
 				listen status
 				    bind 0.0.0.0:$console_port
@@ -1082,7 +1083,7 @@ start_haproxy() {
 				    stats admin if TRUE
 			EOF
 			nohup $haproxy_bin -f $HAPROXY_FILE 2>&1
-			echolog "负载均衡运行成功！"
+			[ "$?" == 0 ] && echolog "负载均衡：运行成功！" || echolog "负载均衡：运行失败！"
 		}
 	}
 }
@@ -1091,12 +1092,12 @@ add_vps_port() {
 	multiwan=$(config_t_get global_dns wan_port 0)
 	if [ "$multiwan" != "0" ]; then
 		failcount=0
-		while [ "$failcount" -lt "10" ]; do
+		while [ "$failcount" -lt "3" ]; do
 			interface=$(ifconfig | grep "$multiwan" | awk '{print $1}')
 			if [ -z "$interface" ]; then
 				echolog "找不到出口接口：$multiwan，1分钟后再重试"
 				let "failcount++"
-				[ "$failcount" -ge 10 ] && exit 0
+				[ "$failcount" -ge 3 ] && exit 0
 				sleep 1m
 			else
 				route add -host ${TCP_NODE1_IP} dev ${multiwan}
@@ -1155,7 +1156,7 @@ start() {
 	start_crontab
 	set_cru
 	rm -f "$LOCK_FILE"
-	echolog "运行完成！"
+	echolog "运行完成！\n"
 	return 0
 }
 
@@ -1175,7 +1176,7 @@ stop() {
 	rm -rf $CONFIG_PATH
 	stop_dnsmasq
 	stop_crontab
-	echolog "关闭相关程序，清理相关文件和缓存完成。\n"
+	echolog "关闭相关程序，清理相关文件和缓存完成。"
 	sleep 1s
 }
 

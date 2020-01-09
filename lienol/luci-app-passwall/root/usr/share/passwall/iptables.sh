@@ -180,15 +180,15 @@ dns_hijack() {
 		chromecast_nu=$($iptables_nat -L SS -v -n --line-numbers | grep "dpt:53" | awk '{print $1}')
 		is_right_lanip=$($iptables_nat -L SS -v -n --line-numbers | grep "dpt:53" | grep "$lanip")
 		if [ -z "$chromecast_nu" ]; then
-			echolog "添加接管局域网DNS解析规则..."
+			echolog "添加DNS劫持规则..."
 			$iptables_nat -I SS -i br-lan -p udp --dport 53 -j DNAT --to $lanip 2>/dev/null
 		else
 			if [ -z "$is_right_lanip" ]; then
-				echolog "添加接管局域网DNS解析规则..."
+				echolog "添加DNS劫持规则..."
 				$iptables_nat -D SS $chromecast_nu >/dev/null 2>&1 &
 				$iptables_nat -I SS -i br-lan -p udp --dport 53 -j DNAT --to $lanip 2>/dev/null
 			else
-				echolog " DNS劫持规则已经添加，跳过~" >>$LOG_FILE
+				echolog "DNS劫持规则已经添加，跳过~" >>$LOG_FILE
 			fi
 		fi
 	fi
