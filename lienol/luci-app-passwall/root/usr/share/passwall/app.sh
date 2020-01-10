@@ -756,6 +756,7 @@ start_dns() {
 add_dnsmasq() {
 	mkdir -p $TMP_DNSMASQ_PATH $DNSMASQ_PATH /var/dnsmasq.d
 	local server_1 server_2
+	#[ -n "$DNS1" ] && server_1="server=127.0.0.1#$DNS_PORT"
 	[ -n "$DNS1" ] && server_1="server=$DNS1"
 	[ -n "$DNS2" ] && server_2="server=$DNS2"
 	
@@ -819,13 +820,15 @@ add_dnsmasq() {
 		restdns=1
 	fi
 
+	echo "" > /etc/dnsmasq.conf
 	echo "conf-dir=$TMP_DNSMASQ_PATH" > /var/dnsmasq.d/dnsmasq-$CONFIG.conf
 	cat <<-EOF > /var/dnsmasq.d/dnsmasq-$CONFIG.conf
 		$server_1
 		$server_2
 		all-servers
 		no-poll
-		cache-size=2048
+		no-resolv
+		cache-size=1024
 		conf-dir=$TMP_DNSMASQ_PATH
 	EOF
 	cp -rf /var/dnsmasq.d/dnsmasq-$CONFIG.conf $DNSMASQ_PATH/dnsmasq-$CONFIG.conf

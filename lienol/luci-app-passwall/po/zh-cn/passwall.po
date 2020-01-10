@@ -154,8 +154,8 @@ msgstr "使用本机7913端口的DNS"
 msgid "No patterns are used"
 msgstr "不使用"
 
-msgid "if you use no patterns are used, DNS of wan will be used by default as upstream of dnsmasq.<br />if has problem, please try another mode."
-msgstr "如果您没有使用任何模式，则会使用WAN的DNS。<br />如果有问题，请尝试其他模式。"
+msgid "if has problem, please try another mode.<br />if you use no patterns are used, DNS of wan will be used by default as upstream of dnsmasq."
+msgstr "如果有问题，请尝试其他模式。<br />如果您没有使用任何模式，则会使用WAN的DNS。"
 
 msgid "Use TCP Node Resolve DNS"
 msgstr "使用TCP节点解析DNS"
@@ -166,8 +166,8 @@ msgstr "如果勾选，则使用TCP节点解析DNS解决污染。"
 msgid "Upstream china DNS Server for ChinaDNS-NG"
 msgstr "ChinaDNS-NG国内服务器"
 
-msgid "Domestic DNS server in Advanced Settings is used as domestic DNS by default.<br />Example: 127.0.0.1#5335,223.5.5.5#53<br />Only use two at most. such as smartdns,AdGuard Home..."
-msgstr "默认使用高级设置里的国内DNS服务器作为国内DNS。<br />例：127.0.0.1#5335,223.5.5.5#53<br />最多使用2个DNS服务器，例：smartdns，AdGuardHome等等。"
+msgid "Example: 127.0.0.1#5335<br />such as smartdns,AdGuard Home... Only use two at most, english comma separation.<br />Domestic DNS server in Advanced Settings is used as domestic DNS by default."
+msgstr "例：127.0.0.1#5335<br />例：smartdns，AdGuardHome等等。最多使用2个DNS服务器，英文逗号分隔。<br />默认使用高级设置里的国内DNS服务器作为国内DNS。"
 
 msgid "Upstream trust DNS Server for ChinaDNS-NG"
 msgstr "ChinaDNS-NG可信服务器"
