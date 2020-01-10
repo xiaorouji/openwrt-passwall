@@ -194,6 +194,7 @@ get_remote_config(){
 		
 		remarks="${json_ps}"
 		node_address=$json_node_address
+		node_port=$json_node_port
 	elif [ "$1" == "trojan" ]; then
 		link="$2"
 		node_password=$(echo "$link" | sed 's/trojan:\/\///g' | awk -F '@' '{print $1}')
@@ -204,8 +205,9 @@ get_remote_config(){
 	
 	node_address=$(echo -n $node_address | awk '{print gensub(/[^!-~]/,"","g",$0)}')
 	node_address=$(echo -n $node_address | grep -F ".")
-	
 	[ -z "$node_address" -o "$node_address" == "" ] && return
+	
+	[ -z "$remarks" -o "$remarks" == "" ] && remarks="${node_address}:${node_port}"
 	
 	# 把全部节点节点写入文件 /usr/share/${CONFIG}/sub/all_onlinenodes
 	if [ ! -f "/usr/share/${CONFIG}/sub/all_onlinenodes" ]; then
@@ -225,7 +227,7 @@ add_nodes(){
 		nodes_index=$update_index
 	fi
 	uci_set="uci set $CONFIG.@nodes[$nodes_index]."
-	[ -z "$3" ] && ${uci_set}is_sub="is_sub"
+	[ "$add_mode" != "导入" ] && ${uci_set}is_sub="is_sub"
 	if [ "$2" == "ss" ]; then
 		${uci_set}add_mode="$add_mode"
 		${uci_set}remarks="$remarks"
@@ -312,6 +314,7 @@ add_nodes(){
 }
 
 update_config(){
+	[ -z "$remarks" -o "$remarks" == "" ] && return
 	indexs=$(uci show $CONFIG | grep "@nodes" | grep "remarks=" | grep -F "$remarks" | cut -d '[' -f2|cut -d ']' -f1)
 	if [ -z "$indexs" ]; then
 		add_nodes add "$link_type"
