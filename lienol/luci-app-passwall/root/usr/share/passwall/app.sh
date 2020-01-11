@@ -190,23 +190,16 @@ load_config() {
 		process=$(config_t_get global_forwarding process)
 	fi
 	LOCALHOST_PROXY_MODE=$(config_t_get global localhost_proxy_mode default)
-	DNS1=$(config_t_get global_dns dns_1 114.114.114.114)
-	DNS2=$(config_t_get global_dns dns_2 223.5.5.5)
-	[ "$DNS1" == "dnsbyisp" ] && {
+	UP_CHINA_DNS=$(config_t_get global up_china_dns 223.5.5.5,114.114.114.114)
+	[ "$UP_CHINA_DNS" == "dnsbyisp" ] && {
 		local dns1=$(cat /tmp/resolv.conf.auto 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | grep -v 0.0.0.0 | grep -v 127.0.0.1 | sed -n '1P')
 		if [ -n "$dns1" ]; then
-			DNS1=$dns1
+			UP_CHINA_DNS=$dns1
 		else
-			DNS1="114.114.114.114"
+			UP_CHINA_DNS="223.5.5.5,114.114.114.114"
 		fi
-	}
-	[ "$DNS2" == "dnsbyisp" ] && {
 		local dns2=$(cat /tmp/resolv.conf.auto 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | grep -v 0.0.0.0 | grep -v 127.0.0.1 | sed -n '2P')
-		if [ -n "$dns2" ]; then
-			DNS2=$dns2
-		else
-			DNS2=""
-		fi
+		[ -n "$dns1" -a -n "$dns2" ] && UP_CHINA_DNS="$dns1,$dns2"
 	}
 	TCP_REDIR_PORT1=$(config_t_get global_proxy tcp_redir_port 1041)
 	TCP_REDIR_PORT2=$(expr $TCP_REDIR_PORT1 + 1)
@@ -718,11 +711,6 @@ start_dns() {
 			cat $RULE_PATH/gfwlist.conf | sort | uniq | sed -e '/127.0.0.1/d' | sed 's/ipset=\/.//g' | sed 's/\/gfwlist//g' > $CONFIG_PATH/gfwlist_chinadns_ng.txt
 			[ -f "$CONFIG_PATH/gfwlist_chinadns_ng.txt" ] && local gfwlist_param="-g $CONFIG_PATH/gfwlist_chinadns_ng.txt"
 			[ -f "$RULE_PATH/chnlist" ] && local chnlist_param="-m $RULE_PATH/chnlist -M"
-			up_china_chinadns_ng_dns=$(config_t_get global up_china_chinadns_ng_dns "default")
-			[ "$up_china_chinadns_ng_dns" == "default" ] && up_china_chinadns_ng_dns="$DNS1,$DNS2"
-			local dns1=$(echo $up_china_chinadns_ng_dns | awk -F "," '{print $1}')
-			[ -n "$dns1" ] && DNS1=$dns1
-			DNS2=$(echo $up_china_chinadns_ng_dns | awk -F "," '{print $2}')
 			
 			up_trust_chinadns_ng_dns=$(config_t_get global up_trust_chinadns_ng_dns "8.8.4.4,8.8.8.8")
 			if [ "$up_trust_chinadns_ng_dns" == "dns2socks" ]; then
@@ -730,8 +718,8 @@ start_dns() {
 					dns2socks_bin=$(find_bin dns2socks)
 					[ -n "$dns2socks_bin" ] && {
 						nohup $dns2socks_bin 127.0.0.1:$SOCKS5_PROXY_PORT1 ${DNS_FORWARD}:53 127.0.0.1:$other_port >/dev/null 2>&1 &
-						nohup $chinadns_ng_bin -l $DNS_PORT -c $up_china_chinadns_ng_dns -t 127.0.0.1#$other_port $gfwlist_param $chnlist_param >/dev/null 2>&1 &
-						echolog "运行DNS转发模式：ChinaDNS-NG + dns2socks(${DNS_FORWARD}:53)，国内DNS：$up_china_chinadns_ng_dns"
+						nohup $chinadns_ng_bin -l $DNS_PORT -c $UP_CHINA_DNS -t 127.0.0.1#$other_port $gfwlist_param $chnlist_param >/dev/null 2>&1 &
+						echolog "运行DNS转发模式：ChinaDNS-NG + dns2socks(${DNS_FORWARD}:53)，国内DNS：$UP_CHINA_DNS"
 					}
 				else
 					echolog "dns2socks模式需要使用Socks5代理节点，请开启！"
@@ -739,13 +727,13 @@ start_dns() {
 				fi
 			else
 				if [ -z "$UDP_NODE1" -o "$UDP_NODE1" == "nil" ]; then
-					nohup $chinadns_ng_bin -l $DNS_PORT -c $up_china_chinadns_ng_dns -t 208.67.222.222#443,208.67.222.222#5353 $gfwlist_param $chnlist_param >/dev/null 2>&1 &
-					echolog "运行DNS转发模式：ChinaDNS-NG，国内DNS：$up_china_chinadns_ng_dns，因为你没有使用UDP节点，只能使用OpenDNS 443端口或5353端口作为可信DNS。"
+					nohup $chinadns_ng_bin -l $DNS_PORT -c $UP_CHINA_DNS -t 208.67.222.222#443,208.67.222.222#5353 $gfwlist_param $chnlist_param >/dev/null 2>&1 &
+					echolog "运行DNS转发模式：ChinaDNS-NG，国内DNS：$UP_CHINA_DNS，因为你没有使用UDP节点，只能使用OpenDNS 443端口或5353端口作为可信DNS。"
 				else
 					use_udp_node_resolve_dns=1
 					DNS_FORWARD=$(echo $up_trust_chinadns_ng_dns | sed 's/,/ /g')
-					nohup $chinadns_ng_bin -l $DNS_PORT -c $up_china_chinadns_ng_dns -t $up_trust_chinadns_ng_dns $gfwlist_param $chnlist_param >/dev/null 2>&1 &
-					echolog "运行DNS转发模式：ChinaDNS-NG，国内DNS：$up_china_chinadns_ng_dns，可信DNS：$up_trust_chinadns_ng_dns"
+					nohup $chinadns_ng_bin -l $DNS_PORT -c $UP_CHINA_DNS -t $up_trust_chinadns_ng_dns $gfwlist_param $chnlist_param >/dev/null 2>&1 &
+					echolog "运行DNS转发模式：ChinaDNS-NG，国内DNS：$UP_CHINA_DNS，可信DNS：$up_trust_chinadns_ng_dns"
 				fi
 			fi
 		}
@@ -756,9 +744,13 @@ start_dns() {
 add_dnsmasq() {
 	mkdir -p $TMP_DNSMASQ_PATH $DNSMASQ_PATH /var/dnsmasq.d
 	local server_1 server_2
-	#[ -n "$DNS1" ] && server_1="server=127.0.0.1#$DNS_PORT"
-	[ -n "$DNS1" ] && server_1="server=$DNS1"
-	[ -n "$DNS2" ] && server_2="server=$DNS2"
+	#server_1="server=127.0.0.1#$DNS_PORT"
+	
+	local china_dns1=$(echo $UP_CHINA_DNS | awk -F "," '{print $1}')
+	local china_dns2=$(echo $UP_CHINA_DNS | awk -F "," '{print $2}')
+	
+	[ -n "$china_dns1" ] && server_1="server=$china_dns1"
+	[ -n "$china_dns2" ] && server_2="server=$china_dns2"
 	
 	#cat <<-EOF > /etc/dnsmasq.conf
 	#	$server_1
@@ -1091,36 +1083,6 @@ start_haproxy() {
 	}
 }
 
-add_vps_port() {
-	multiwan=$(config_t_get global_dns wan_port 0)
-	if [ "$multiwan" != "0" ]; then
-		failcount=0
-		while [ "$failcount" -lt "3" ]; do
-			interface=$(ifconfig | grep "$multiwan" | awk '{print $1}')
-			if [ -z "$interface" ]; then
-				echolog "找不到出口接口：$multiwan，1分钟后再重试"
-				let "failcount++"
-				[ "$failcount" -ge 3 ] && exit 0
-				sleep 1m
-			else
-				route add -host ${TCP_NODE1_IP} dev ${multiwan}
-				route add -host ${UDP_NODE1_IP} dev ${multiwan}
-				echolog "添加SS出口路由表：$multiwan"
-				echo "$TCP_NODE1_IP" >$CONFIG_PATH/tcp_ip
-				echo "$UDP_NODE1_IP" >$CONFIG_PATH/udp_ip
-				break
-			fi
-		done
-	fi
-}
-
-del_vps_port() {
-	tcp_ip=$(cat $CONFIG_PATH/tcp_ip 2>/dev/null)
-	udp_ip=$(cat $CONFIG_PATH/udp_ip 2>/dev/null)
-	[ -n "$tcp_ip" ] && route del -host ${tcp_ip}
-	[ -n "$udp_ip" ] && route del -host ${udp_ip}
-}
-
 kill_all() {
 	kill -9 $(pidof $@) >/dev/null 2>&1 &
 }
@@ -1149,7 +1111,6 @@ start() {
 	touch "$LOCK_FILE"
 	start_dns
 	add_dnsmasq
-	add_vps_port
 	start_haproxy
 	start_socks5_proxy
 	start_tcp_redir
@@ -1169,7 +1130,6 @@ stop() {
 	done
 	clean_log
 	source $APP_PATH/iptables.sh stop
-	del_vps_port
 	kill_all brook dns2socks haproxy chinadns-ng ipt2socks v2ray-plugin
 	ps -w | grep -E "$CONFIG_TCP_FILE|$CONFIG_UDP_FILE|$CONFIG_SOCKS5_FILE" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 	ps -w | grep -E "$CONFIG_PATH" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &

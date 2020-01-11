@@ -11,14 +11,14 @@ m = Map(appname)
 s = m:section(TypedSection, "global_other")
 s.anonymous = true
 
----- Use TCPing
-o = s:option(Flag, "use_tcping", translate("Use TCPing"),
-             translate("This will use tcping replace ping detection of node"))
-o.default = 1
-
 ---- Auto Ping
 o = s:option(Flag, "auto_ping", translate("Auto Ping"),
              translate("This will automatically ping the node for latency"))
+o.default = 1
+
+---- Use TCP Detection delay
+o = s:option(Flag, "use_tcping", translate("Use TCP Detection delay"),
+             translate("This will use tcping replace ping detection of node"))
 o.default = 1
 
 ---- Concise display nodes
@@ -128,17 +128,12 @@ end--]]
 end
 
 ---- Ping
-o = s:option(DummyValue, "ping", translate("Ping"))
-o.width = "10%"
+o = s:option(DummyValue, "ping", translate("Latency"))
 if api.uci_get_type("global_other", "auto_ping", "0") == "0" then
     o.template = "passwall/node_list/ping"
 else
     o.template = "passwall/node_list/auto_ping"
 end
-
----- Apply
-o = s:option(DummyValue, "apply", translate("Apply"))
-o.template = "passwall/node_list/apply"
 
 m:append(Template("passwall/node_list/node_list"))
 
