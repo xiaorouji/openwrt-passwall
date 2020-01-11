@@ -206,6 +206,21 @@ table td, .table .td {
 	
 	auto_ping();
 	
+	//添加"应用"按钮到"修改"按钮前
+	var edit_btn = document.getElementsByClassName("cbi-button cbi-button-edit");
+	for(var i = 0; i < edit_btn.length; i++) {
+		try {
+			var onclick_str = edit_btn[i].getAttribute("onclick");
+			var id = onclick_str.substring(onclick_str.lastIndexOf('/') + 1, onclick_str.length - 1);
+			var td = edit_btn[i].parentNode;
+			var apply = '<input class="cbi-button cbi-button-add" type="button" value="<%:Use%>" onclick="open_set_node_div(\'' + id + '\')" alt="<%:Use%>" title="<%:Use%>" />';
+			td.innerHTML = apply + "&nbsp;&nbsp;" + td.innerHTML;
+		}
+		catch(err) {
+			console.error(err);
+		}
+	}
+	
 	//]]>
 </script>
 

@@ -178,7 +178,7 @@ filter_vpsip() {
 }
 
 dns_hijack() {
-	dnshijack=$(config_t_get global_dns dns_53)
+	dnshijack=$(config_t_get global dns_53)
 	if [ "$dnshijack" = "1" -o "$1" = "force" ]; then
 		chromecast_nu=$($iptables_nat -L PSW -v -n --line-numbers | grep "dpt:53" | awk '{print $1}')
 		is_right_lanip=$($iptables_nat -L PSW -v -n --line-numbers | grep "dpt:53" | grep "$lanip")

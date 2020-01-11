@@ -105,20 +105,13 @@ end
 o:value("local_7913", translate("Use local port 7913 as DNS"))
 o:value("nonuse", translate("No patterns are used"))
 
----- Use TCP Node Resolve DNS
-o = s:option(Flag, "use_tcp_node_resolve_dns",
-             translate("Use TCP Node Resolve DNS"),
-             translate("If checked, DNS is resolved using the TCP node."))
-o.default = 1
-o:depends("dns_mode", "pdnsd")
-
----- Upstream china DNS Server for ChinaDNS-NG
-o = s:option(Value, "up_china_chinadns_ng_dns",
-             translate("Upstream china DNS Server for ChinaDNS-NG") .. "(UDP)",
+---- China DNS Server
+o = s:option(Value, "up_china_dns",
+             translate("China DNS Server") .. "(UDP)",
              translate(
-                 "Example: 127.0.0.1#5335<br />such as smartdns,AdGuard Home... Only use two at most, english comma separation.<br />Domestic DNS server in Advanced Settings is used as domestic DNS by default."))
-o.default = "default"
-o:value("default", translate("default"))
+                 "Example: 127.0.0.1#6053 ,Represents DNS on using 127.0.0.1 the 6053 port.<br />such as smartdns,AdGuard Home... Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53.<br />Domestic DNS server in Advanced Settings is used as domestic DNS by default."))
+o.default = "223.5.5.5"
+o:value("dnsbyisp", translate("dnsbyisp"))
 o:value("223.5.5.5", "223.5.5.5(" .. translate("Ali") .. "DNS1)")
 o:value("223.6.6.6", "223.6.6.6(" .. translate("Ali") .. "DNS2)")
 o:value("114.114.114.114", "114.114.114.114(114DNS1)")
@@ -128,7 +121,6 @@ o:value("182.254.116.116", "182.254.116.116(DNSPOD DNS2)")
 o:value("1.2.4.8", "1.2.4.8(CNNIC DNS1)")
 o:value("210.2.4.8", "210.2.4.8(CNNIC DNS2)")
 o:value("180.76.76.76", "180.76.76.76(" .. translate("Baidu") .. "DNS)")
-o:depends("dns_mode", "chinadns-ng")
 
 ---- Upstream trust DNS Server for ChinaDNS-NG
 o = s:option(Value, "up_trust_chinadns_ng_dns",
@@ -144,6 +136,13 @@ if is_finded("dns2socks") then
 end
 o:depends("dns_mode", "chinadns-ng")
 
+---- Use TCP Node Resolve DNS
+o = s:option(Flag, "use_tcp_node_resolve_dns",
+             translate("Use TCP Node Resolve DNS"),
+             translate("If checked, DNS is resolved using the TCP node."))
+o.default = 1
+o:depends("dns_mode", "pdnsd")
+
 ---- DNS Forward
 o = s:option(Value, "dns_forward", translate("DNS Forward Address"))
 o.default = "8.8.4.4"
@@ -154,6 +153,12 @@ o:value("208.67.220.220", "208.67.220.220 (OpenDNS DNS)")
 o:depends("dns_mode", "dns2socks")
 o:depends("dns_mode", "pdnsd")
 o:depends("up_trust_chinadns_ng_dns", "dns2socks")
+
+---- DNS Hijack
+o = s:option(Flag, "dns_53", translate("DNS Hijack"), translate(
+                 "If the GFW mode cannot be used normally, please enable it"))
+o.default = 1
+o.rmempty = false
 
 ---- Default Proxy Mode
 o = s:option(ListValue, "proxy_mode",
