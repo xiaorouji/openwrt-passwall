@@ -1,6 +1,9 @@
 msgid "File Browser"
 msgstr "文件浏览器"
 
+msgid "Global Settings"
+msgstr "全局设置"
+
 msgid "Can't determine ARCH, or ARCH not supported."
 msgstr "无法确认ARCH架构，或是不支持。"
 
