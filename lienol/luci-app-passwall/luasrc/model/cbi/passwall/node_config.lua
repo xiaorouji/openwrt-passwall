@@ -3,8 +3,12 @@ local ipkg = require("luci.model.ipkg")
 
 local appname = "passwall"
 
+local function get_customed_path(e)
+    return luci.model.cbi.passwall.api.api.uci_get_type("global_app", e .. "_file")
+end
+
 local function is_finded(e)
-    return luci.sys.exec("find /usr/*bin -iname " .. e .. " -type f") ~= "" and
+    return luci.sys.exec("find /usr/*bin %s -iname %s -type f" % {get_customed_path(e), e}) ~= "" and
                true or false
 end
 
@@ -62,7 +66,9 @@ if ((is_installed("redsocks2") or is_finded("redsocks2")) or
 end
 if is_finded("ss-redir") then type:value("SS", translate("Shadowsocks")) end
 if is_finded("ssr-redir") then type:value("SSR", translate("ShadowsocksR")) end
-if is_installed("v2ray") then type:value("V2ray", translate("V2ray")) end
+if is_installed("v2ray") or is_finded("v2ray") then
+    type:value("V2ray", translate("V2ray"))
+end
 if is_installed("brook") or is_finded("brook") then
     type:value("Brook", translate("Brook"))
 end

@@ -8,9 +8,9 @@ get_date() {
 }
 
 test_url() {
-	status=$(/usr/bin/curl -I -o /dev/null -s --connect-timeout 2 -w %{http_code} "$1" | grep 200)
+	status=$(/usr/bin/curl -I -o /dev/null -s --connect-timeout 2 --retry 1 -w %{http_code} "$1" | grep 200)
 	[ "$?" != 0 ] && {
-		status=$(/usr/bin/wget --no-check-certificate --spider --timeout=2 "$1")
+		status=$(/usr/bin/wget --no-check-certificate --spider --timeout=2 --tries 1 "$1")
 		[ "$?" == 0 ] && status=200
 	}
 	echo $status
