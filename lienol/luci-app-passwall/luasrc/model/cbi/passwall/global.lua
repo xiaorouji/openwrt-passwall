@@ -109,7 +109,7 @@ o:value("nonuse", translate("No patterns are used"))
 o = s:option(Value, "up_china_dns",
              translate("China DNS Server") .. "(UDP)",
              translate(
-                 "Example: 127.0.0.1#6053 ,Represents DNS on using 127.0.0.1 the 6053 port.<br />such as smartdns,AdGuard Home... Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53.<br />Domestic DNS server in Advanced Settings is used as domestic DNS by default."))
+                 "Example: 127.0.0.1#6053 ,Represents DNS on using 127.0.0.1 the 6053 port.<br />such as smartdns,AdGuard Home... Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53."))
 o.default = "223.5.5.5"
 o:value("dnsbyisp", translate("dnsbyisp"))
 o:value("223.5.5.5", "223.5.5.5(" .. translate("Ali") .. "DNS1)")
