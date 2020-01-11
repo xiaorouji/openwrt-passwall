@@ -2,7 +2,7 @@ m = Map("filebrowser", translate("FileBrowser"), translate(
             "文件浏览器是一种创建你自己的云的软件，你可以在服务器上安装它，将它指向一个路径，然后通过一个漂亮的web界面访问你的文件。您有许多可用的特性!"))
 m:append(Template("filebrowser/status"))
 
-s = m:section(TypedSection, "global", translate("Global Setting"))
+s = m:section(TypedSection, "global", translate("Global Settings"))
 s.anonymous = true
 s.addremove = false
 
