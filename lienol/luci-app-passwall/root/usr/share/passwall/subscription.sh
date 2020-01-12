@@ -222,10 +222,13 @@ get_remote_config(){
 		json_get_var json_url url
 		json_get_var json_plugin plugin
 		json_get_var json_plugin_options plugin_options
-		json_get_var json_obfs obfs
 		
 		ss_encrypt_method=$json_encryption
 		password=$json_password
+		plugin=$json_plugin
+		plugin_options=$json_plugin_options
+		
+		[ -n "$plugin" -a "$plugin" == "simple-obfs" ] && echo "$Date: 不支持simple-obfs插件，导入失败！" >> $LOG_FILE && return
 
 		if json_get_type Type servers && [ "$Type" == array ]
 		then
@@ -302,6 +305,8 @@ add_nodes(){
 		${uci_set}ss_encrypt_method="$ss_encrypt_method"
 		${uci_set}timeout=300
 		${uci_set}tcp_fast_open=false
+		[ -n "$plugin" ] && ${uci_set}ss_plugin="$plugin"
+		[ -n "$plugin_options" ] && ${uci_set}ss_plugin_v2ray_opts="$plugin_options"
 		
 		if [ "$1" == "add" ]; then
 			let addnum_ss+=1
