@@ -43,13 +43,12 @@ remote_port.datatype = "port"
 remote_port.default = "80"
 remote_port:depends("remote_enable", 1)
 
--- [[ SSL部分 ]] --
 tls_certFile = t:option(Value, "ssl_certFile",
-                        translate("Public key absolute path"),
+                        "HTTPS" .. translate("Public key absolute path"),
                         translate("as:") .. "/etc/ssl/fullchain.pem")
 
 tls_keyFile = t:option(Value, "ssl_keyFile",
-                       translate("Private key absolute path"),
+                       "HTTPS" .. translate("Private key absolute path"),
                        translate("as:") .. "/etc/ssl/private.key")
 
 return map
