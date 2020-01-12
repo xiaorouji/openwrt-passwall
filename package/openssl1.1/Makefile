@@ -92,7 +92,7 @@ OPENSSL_OPTIONS += no-whirlpool
 
 OPENSSL_OPTIONS += no-deprecated
 
-TARGET_CFLAGS := $(filter-out -O%,$(TARGET_CFLAGS)) -O0 -g3
+TARGET_CFLAGS := $(filter-out -O%,$(TARGET_CFLAGS)) -O3
 
 
 
@@ -120,8 +120,7 @@ define Build/Configure
 
 endef
 
-#$(FPIC)
-TARGET_CFLAGS += -ffunction-sections -fdata-sections
+TARGET_CFLAGS += $(FPIC) -ffunction-sections -fdata-sections
 TARGET_LDFLAGS += -Wl,--gc-sections
 
 define Build/Compile
