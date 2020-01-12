@@ -8,17 +8,17 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=trojan
 PKG_VERSION:=1.14.0
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/trojan-gfw/trojan.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=18763b7529963efef8dcb01f50389a6f49213ae1
+PKG_SOURCE_VERSION:=4ab621dc001d15358762bad9f068b0993399ffd0
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 CMAKE_INSTALL:=1
 PKG_BUILD_PARALLEL:=0
 
-PKG_BUILD_DEPENDS:=openssl1.1
+PKG_BUILD_DEPENDS:=openssl1.1 boost
 
 PKG_LICENSE:=GPL-3.0
 
@@ -58,7 +58,8 @@ CMAKE_OPTIONS += \
 	-DFORCE_TCP_FASTOPEN=OFF \
 	-DSYSTEMD_SERVICE=OFF \
 	-DOPENSSL_USE_STATIC_LIBS=TRUE \
-	-DBoost_DEBUG=ON \
+	-DBoost_DEBUG=OFF \
+	-DBoost_USE_STATIC_LIBS=ON \
 	-DBoost_NO_BOOST_CMAKE=ON
 
 
@@ -68,8 +69,7 @@ define Package/trojan
 	CATEGORY:=Network
 	TITLE:=An unidentifiable mechanism that helps you bypass GFW
 	URL:=https://github.com/trojan-gfw/trojan
-	DEPENDS:=+libpthread +libstdcpp \
-		+boost +boost-system +boost-program_options +boost-date_time
+	DEPENDS:=+libpthread +libstdcpp
 endef
 
 
