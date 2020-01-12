@@ -743,14 +743,6 @@ start_dns() {
 
 add_dnsmasq() {
 	mkdir -p $TMP_DNSMASQ_PATH $DNSMASQ_PATH /var/dnsmasq.d
-	local server_1 server_2
-	#server_1="server=127.0.0.1#$DNS_PORT"
-	
-	local china_dns1=$(echo $UP_CHINA_DNS | awk -F "," '{print $1}')
-	local china_dns2=$(echo $UP_CHINA_DNS | awk -F "," '{print $2}')
-	
-	[ -n "$china_dns1" ] && server_1="server=$china_dns1"
-	[ -n "$china_dns2" ] && server_2="server=$china_dns2"
 	
 	#cat <<-EOF > /etc/dnsmasq.conf
 	#	$server_1
@@ -814,15 +806,29 @@ add_dnsmasq() {
 
 	echo "" > /etc/dnsmasq.conf
 	echo "conf-dir=$TMP_DNSMASQ_PATH" > /var/dnsmasq.d/dnsmasq-$CONFIG.conf
-	cat <<-EOF > /var/dnsmasq.d/dnsmasq-$CONFIG.conf
-		$server_1
-		$server_2
-		all-servers
-		no-poll
-		no-resolv
-		cache-size=1024
-		conf-dir=$TMP_DNSMASQ_PATH
-	EOF
+	
+	if [ "$DNS_MODE" != "chinadns-ng" ]; then
+		local china_dns1=$(echo $UP_CHINA_DNS | awk -F "," '{print $1}')
+		local china_dns2=$(echo $UP_CHINA_DNS | awk -F "," '{print $2}')
+		local server_1 server_2
+		[ -n "$china_dns1" ] && server_1="server=$china_dns1"
+		[ -n "$china_dns2" ] && server_2="server=$china_dns2"
+		cat <<-EOF > /var/dnsmasq.d/dnsmasq-$CONFIG.conf
+			$server_1
+			$server_2
+			all-servers
+			no-poll
+			no-resolv
+			conf-dir=$TMP_DNSMASQ_PATH
+		EOF
+	else
+		cat <<-EOF > /var/dnsmasq.d/dnsmasq-$CONFIG.conf
+			server=127.0.0.1#$DNS_PORT
+			all-servers
+			no-poll
+			conf-dir=$TMP_DNSMASQ_PATH
+		EOF
+	fi
 	cp -rf /var/dnsmasq.d/dnsmasq-$CONFIG.conf $DNSMASQ_PATH/dnsmasq-$CONFIG.conf
 	if [ "$restdns" == 1 ]; then
 		echolog "dnsmasq：生成配置文件并重启服务。"
