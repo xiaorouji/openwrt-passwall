@@ -1,7 +1,7 @@
 msgid "File Browser"
 msgstr "文件浏览器"
 
-msgid "File Browser"
+msgid "File explorer is software that creates your own cloud that you can install on a server, point it to a path, and then access your files through a beautiful web interface. You have many features available!"
 msgstr "文件浏览器是一种创建你自己的云的软件，你可以在服务器上安装它，将它指向一个路径，然后通过一个漂亮的web界面访问你的文件。您有许多可用的特性！"
 
 msgid "RUNNING"
