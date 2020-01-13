@@ -1,4 +1,4 @@
--- Copyright 2018-2019 Lienol <lawlienol@gmail.com>
+-- Copyright 2018-2020 Lienol <lawlienol@gmail.com>
 module("luci.controller.filebrowser", package.seeall)
 
 local http = require "luci.http"
@@ -16,6 +16,10 @@ function index()
     entry({"admin", "nas", "filebrowser", "download"}, call("action_download")).leaf =
         true
     entry({"admin", "nas", "filebrowser", "status"}, call("act_status")).leaf =
+        true
+    entry({"admin", "nas", "filebrowser", "get_log"}, call("get_log")).leaf =
+        true
+    entry({"admin", "nas", "filebrowser", "clear_log"}, call("clear_log")).leaf =
         true
 end
 
@@ -49,3 +53,9 @@ function action_download()
     end
     http_write_json(json)
 end
+
+function get_log()
+    luci.http.write(luci.sys.exec(
+                        "[ -f '/var/log/filebrowser.log' ] && cat /var/log/filebrowser.log"))
+end
+function clear_log() luci.sys.call("echo '' > /var/log/filebrowser.log") end

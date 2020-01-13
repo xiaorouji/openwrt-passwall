@@ -1,5 +1,5 @@
 m = Map("filebrowser", translate("FileBrowser"), translate(
-            "文件浏览器是一种创建你自己的云的软件，你可以在服务器上安装它，将它指向一个路径，然后通过一个漂亮的web界面访问你的文件。您有许多可用的特性!"))
+            "File explorer is software that creates your own cloud that you can install on a server, point it to a path, and then access your files through a beautiful web interface. You have many features available!"))
 m:append(Template("filebrowser/status"))
 
 s = m:section(TypedSection, "global", translate("Global Settings"))
@@ -9,27 +9,29 @@ s.addremove = false
 o = s:option(Flag, "enable", translate("Enable"))
 o.rmempty = false
 
-o = s:option(Value, "port", translate("监听端口"))
+o = s:option(Value, "port", translate("Listen port"))
 o.datatype = "port"
 o.default = 8088
 o.rmempty = false
 
-o = s:option(Value, "root_path", translate("指向路径"), translate(
-                 "指向一个路径，可在web界面访问你的文件，默认为 /"))
+o = s:option(Value, "root_path", translate("Root path"), translate(
+                 "Point to a path to access your files in the web interface, default is /"))
 o.default = "/"
 o.rmempty = false
 
-o = s:option(Value, "project_directory", translate("项目存放目录"),
+o = s:option(Value, "project_directory", translate("Project directory"),
              translate(
-                 "文件较大，至少需要32M空间。建议插入U盘或硬盘，或放入tmp目录里使用<br>例如：/mnt/sda1<br>例如：/tmp"))
+                 "The file size is large, requiring at least 32M space. It is recommended to insert a usb flash drive or hard disk, or use it in the tmp directory<br />For example, /mnt/sda1<br />For example, /tmp"))
 o.default = "/tmp"
 o.rmempty = false
 
-o = s:option(Button, "_download", translate("手动下载"), translate(
-                 "请确保具有足够的空间。<br /><font style='color:red'>第一次运行务必填好项目存放目录，然后保存应用。再手动下载，否则无法使用！</font>"))
+o = s:option(Button, "_download", translate("Manually download"), translate(
+                 "Make sure you have enough space. <br /><font style='color:red'>Be sure to fill out the project storage directory the first time you run it, and then save the application. Then manually download, otherwise can not use!</font>"))
 o.template = "filebrowser/download"
 o.inputstyle = "apply"
 o.btnclick = "downloadClick(this);"
 o.id = "download_btn"
+
+m:append(Template("filebrowser/log"))
 
 return m
