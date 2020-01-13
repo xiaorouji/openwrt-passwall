@@ -67,7 +67,7 @@ o:value("1:65535", translate("All"))
 o:value("53", "53")
 
 ---- Multi SS/SSR Process Option
-o = s:option(Value, "process", translate("Multi Process Option"),
+--[[ o = s:option(Value, "process", translate("Multi Process Option"),
              translate("you can start SS/SSR with multiple process"))
 o.default = "0"
 o.rmempty = false
@@ -76,6 +76,7 @@ o:value("1", translate("1 Process"))
 o:value("2", "2 " .. translate("Process"))
 o:value("3", "3 " .. translate("Process"))
 o:value("4", "4 " .. translate("Process"))
+--]]
 
 -- [[ Proxy Settings ]]--
 s = m:section(TypedSection, "global_proxy", translate("Proxy Settings"))
@@ -145,6 +146,16 @@ o:value("3")
 
 ---- 状态使用大图标
 o = s:option(Flag, "status_use_big_icon", translate("Status Use Big Icon"))
+o.default = "1"
+o.rmempty = false
+
+---- 显示节点检测
+o = s:option(Flag, "status_show_check_port", translate("Status Show Check Port"))
+o.default = "0"
+o.rmempty = false
+
+---- 显示IP111
+o = s:option(Flag, "status_show_ip111", translate("Status Show IP111"))
 o.default = "0"
 o.rmempty = false
 

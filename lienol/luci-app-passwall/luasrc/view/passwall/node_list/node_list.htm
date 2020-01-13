@@ -121,10 +121,17 @@ table td, .table .td {
 				},
 				function(x, result) {
 					if(x && x.status == 200) {
-						if (result.ping != null && result.ping != "")
-							dom.outerHTML = result.ping + " ms";
-						else
-							dom.outerHTML = "--";
+						if (result.ping == null || result.ping.trim() == "") {
+							dom.outerHTML = "<font style='color:red'><%:Timeout%></font>";
+						} else {
+							var ping = parseInt(result.ping);
+							if (ping < 100)
+								dom.outerHTML = "<font style='color:green'>" + result.ping + " ms" + "</font>";
+							else if (ping < 200)
+								dom.outerHTML = "<font style='color:#fb9a05'>" + result.ping + " ms" + "</font>";
+							else if (ping >= 200)
+								dom.outerHTML = "<font style='color:red'>" + result.ping + " ms" + "</font>";
+						}
 					}
 				}
 			);
@@ -181,10 +188,17 @@ table td, .table .td {
 							
 							if (address == obj_address && port == obj_port) {
 								auto_ping_value[i].setAttribute("ping", "1");
-								if (result.ping == null || result.ping.trim() == "")
+								if (result.ping == null || result.ping.trim() == "") {
 									auto_ping_value[i].innerHTML = "<font style='color:red'><%:Timeout%></font>";
-								else
-									auto_ping_value[i].innerHTML = result.ping + " ms";
+								} else {
+									var ping = parseInt(result.ping);
+									if (ping < 100)
+										auto_ping_value[i].innerHTML = "<font style='color:green'>" + result.ping + " ms" + "</font>";
+									else if (ping < 200)
+										auto_ping_value[i].innerHTML = "<font style='color:#fb9a05'>" + result.ping + " ms" + "</font>";
+									else if (ping >= 200)
+										auto_ping_value[i].innerHTML = "<font style='color:red'>" + result.ping + " ms" + "</font>";
+								}
 							}
 						}
 					}

@@ -45,6 +45,10 @@ s = m:section(TypedSection, "global", translate("Global Settings"))
 s.anonymous = true
 s.addremove = false
 
+---- Main switch
+o = s:option(Flag, "enabled", translate("Main switch"))
+o.rmempty = false
+
 ---- TCP Node
 local tcp_node_num = api.uci_get_type("global_other", "tcp_node_num", 1)
 for i = 1, tcp_node_num, 1 do
@@ -106,21 +110,20 @@ o:value("local_7913", translate("Use local port 7913 as DNS"))
 o:value("nonuse", translate("No patterns are used"))
 
 ---- China DNS Server
-o = s:option(Value, "up_china_dns",
-             translate("China DNS Server") .. "(UDP)",
+o = s:option(Value, "up_china_dns", translate("China DNS Server") .. "(UDP)",
              translate(
-                 "Example: 127.0.0.1#6053 ,Represents DNS on using 127.0.0.1 the 6053 port. such as smartdns,AdGuard Home...<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53."))
+                 "Example: 127.0.0.1#6053 ,Represents DNS on using 127.0.0.1 the 6053 port. such as smartdns,AdGuard Home...<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53.<br />If you use custom, unless you know what you're doing, setting it up incorrectly can cause your stuck to crash!"))
 o.default = "223.5.5.5"
 o:value("dnsbyisp", translate("dnsbyisp"))
-o:value("223.5.5.5", "223.5.5.5(" .. translate("Ali") .. "DNS1)")
-o:value("223.6.6.6", "223.6.6.6(" .. translate("Ali") .. "DNS2)")
-o:value("114.114.114.114", "114.114.114.114(114DNS1)")
-o:value("114.114.115.115", "114.114.115.115(114DNS2)")
-o:value("119.29.29.29", "119.29.29.29(DNSPOD DNS1)")
-o:value("182.254.116.116", "182.254.116.116(DNSPOD DNS2)")
-o:value("1.2.4.8", "1.2.4.8(CNNIC DNS1)")
-o:value("210.2.4.8", "210.2.4.8(CNNIC DNS2)")
-o:value("180.76.76.76", "180.76.76.76(" .. translate("Baidu") .. "DNS)")
+o:value("223.5.5.5", "223.5.5.5 (" .. translate("Ali") .. "DNS)")
+o:value("223.6.6.6", "223.6.6.6 (" .. translate("Ali") .. "DNS)")
+o:value("114.114.114.114", "114.114.114.114 (114DNS)")
+o:value("114.114.115.115", "114.114.115.115 (114DNS)")
+o:value("119.29.29.29", "119.29.29.29 (DNSPOD DNS)")
+o:value("182.254.116.116", "182.254.116.116 (DNSPOD DNS)")
+o:value("1.2.4.8", "1.2.4.8 (CNNIC DNS)")
+o:value("210.2.4.8", "210.2.4.8 (CNNIC DNS)")
+o:value("180.76.76.76", "180.76.76.76 (" .. translate("Baidu") .. "DNS)")
 
 ---- Upstream trust DNS Server for ChinaDNS-NG
 o = s:option(Value, "up_trust_chinadns_ng_dns",
@@ -130,7 +133,7 @@ o = s:option(Value, "up_trust_chinadns_ng_dns",
 o.default = "8.8.4.4,8.8.8.8"
 o:value("8.8.4.4,8.8.8.8", "8.8.4.4, 8.8.8.8 (Google DNS)")
 o:value("208.67.222.222,208.67.220.220",
-        "208.67.222.222, 208.67.220.220 (OpenDNS DNS)")
+        "208.67.222.222, 208.67.220.220 (Open DNS)")
 if is_finded("dns2socks") then
     o:value("dns2socks", "dns2socks " .. translate("Need Socks5 server"))
 end
@@ -148,8 +151,8 @@ o = s:option(Value, "dns_forward", translate("DNS Forward Address"))
 o.default = "8.8.4.4"
 o:value("8.8.4.4", "8.8.4.4 (Google DNS)")
 o:value("8.8.8.8", "8.8.8.8 (Google DNS)")
-o:value("208.67.222.222", "208.67.222.222 (OpenDNS DNS)")
-o:value("208.67.220.220", "208.67.220.220 (OpenDNS DNS)")
+o:value("208.67.222.222", "208.67.222.222 (Open DNS)")
+o:value("208.67.220.220", "208.67.220.220 (Open DNS)")
 o:depends("dns_mode", "dns2socks")
 o:depends("dns_mode", "pdnsd")
 o:depends("up_trust_chinadns_ng_dns", "dns2socks")
@@ -182,6 +185,9 @@ o:value("gfwlist", translate("GFW List"))
 o:value("chnroute", translate("China WhiteList"))
 o.default = "default"
 o.rmempty = false
+
+---- Tips
+s:append(Template("passwall/global/tips"))
 
 --[[
 local apply = luci.http.formvalue("cbi.apply")
