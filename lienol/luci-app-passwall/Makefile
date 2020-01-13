@@ -6,8 +6,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
-PKG_VERSION:=3.2
-PKG_RELEASE:=22-20200112
+PKG_VERSION:=3.3
+PKG_RELEASE:=23-20200114
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
@@ -18,7 +18,7 @@ menu "Configuration"
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_ipt2socks
 	bool "Include ipt2socks"
-	default n
+	default y
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks
 	bool "Include Shadowsocks Redir (ss-redir)"
@@ -54,19 +54,19 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_kcptun
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_haproxy
 	bool "Include haproxy"
-	default n
+	default y
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_ChinaDNS_NG
 	bool "Include ChinaDNS-NG"
 	default y
 	
-config PACKAGE_$(PKG_NAME)_INCLUDE_dns2socks
-	bool "Include dns2socks"
-	default y
-	
 config PACKAGE_$(PKG_NAME)_INCLUDE_pdnsd
 	bool "Include pdnsd"
 	default y
+	
+config PACKAGE_$(PKG_NAME)_INCLUDE_dns2socks
+	bool "Include dns2socks"
+	default n
 
 endmenu
 endef
@@ -76,8 +76,8 @@ define Package/$(PKG_NAME)
   SUBMENU:=3. Applications
   TITLE:=LuCI support for PassWall By Lienol
   PKGARCH:=all
-  DEPENDS:=+curl +wget +libcurl +libmbedtls +ca-bundle +ca-certificates +resolveip +iptables-mod-tproxy +kmod-ipt-tproxy +iptables-mod-ipopt +kmod-ipt-ipopt +ip +ipset +coreutils +coreutils-base64 +coreutils-nohup +luci-lib-jsonc +unzip \
-  +dnsmasq-full +tcping +bash \
+  DEPENDS:=+libmbedtls +iptables-mod-tproxy +kmod-ipt-tproxy +iptables-mod-ipopt +kmod-ipt-ipopt +ip +ipset +coreutils +coreutils-base64 +coreutils-nohup +luci-lib-jsonc \
+  +bash +wget +resolveip +unzip +dnsmasq-full +tcping \
   +PACKAGE_$(PKG_NAME)_INCLUDE_ipt2socks:ipt2socks \
   +PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks:shadowsocks-libev-ss-redir \
   +PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR:shadowsocksr-libev-alt \

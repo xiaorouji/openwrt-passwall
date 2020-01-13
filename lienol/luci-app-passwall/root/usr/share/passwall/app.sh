@@ -7,6 +7,8 @@
 CONFIG=passwall
 CONFIG_PATH=/var/etc/$CONFIG
 RUN_PID_PATH=$CONFIG_PATH/pid
+RUN_ID_PATH=$CONFIG_PATH/id
+RUN_IP_PATH=$CONFIG_PATH/ip
 RUN_PORT_PATH=$CONFIG_PATH/port
 HAPROXY_FILE=$CONFIG_PATH/haproxy.cfg
 REDSOCKS_CONFIG_TCP_FILE=$CONFIG_PATH/redsocks_TCP.conf
@@ -135,6 +137,8 @@ set_subscribe_proxy() {
 	}
 }
 
+ENABLED=$(config_t_get global enabled 0)
+
 TCP_NODE_NUM=$(config_t_get global_other tcp_node_num 1)
 for i in $(seq 1 $TCP_NODE_NUM); do
 	eval TCP_NODE$i=$(config_t_get global tcp_node$i nil)
@@ -175,6 +179,9 @@ KCPTUN_REDIR_PORT=$(config_t_get global_proxy kcptun_port 11183)
 PROXY_MODE=$(config_t_get global proxy_mode gfwlist)
 
 load_config() {
+	[ "$ENABLED" != 1 ] && {
+		return 1
+	}
 	[ "$TCP_NODE1" == "nil" -a "$UDP_NODE1" == "nil" -a "$SOCKS5_NODE1" == "nil" ] && {
 		echolog "没有选择节点！"
 		return 1
@@ -211,7 +218,7 @@ load_config() {
 	SOCKS5_PROXY_PORT2=$(expr $SOCKS5_PROXY_PORT1 + 1)
 	SOCKS5_PROXY_PORT3=$(expr $SOCKS5_PROXY_PORT2 + 1)
 	PROXY_IPV6=$(config_t_get global_proxy proxy_ipv6 0)
-	mkdir -p /var/etc $CONFIG_PATH $RUN_PID_PATH $RUN_PORT_PATH
+	mkdir -p /var/etc $CONFIG_PATH $RUN_PID_PATH $RUN_ID_PATH $RUN_IP_PATH $RUN_PORT_PATH
 	config_load $CONFIG
 	return 0
 }
@@ -274,11 +281,11 @@ gen_config_file() {
 
 	if [ "$redir_type" == "Socks5" ]; then
 		if [ "$network_type" == "ipv6" ]; then
-			SOCKS5_NODE1_IPV6=$server_ip
+			eval SOCKS5_NODE${5}_IPV6=$server_ip
 		else
-			SOCKS5_NODE1_IP=$server_ip
+			eval SOCKS5_NODE${5}_IP=$server_ip
 		fi
-		SOCKS5_NODE1_PORT=$port
+		eval SOCKS5_NODE${5}_PORT=$port
 		if [ "$type" == "ss" -o "$type" == "ssr" ]; then
 			gen_ss_ssr_config_file $type $local_port 0 $node $config_file_path
 		elif [ "$type" == "v2ray" ]; then
@@ -292,11 +299,11 @@ gen_config_file() {
 
 	if [ "$redir_type" == "UDP" ]; then
 		if [ "$network_type" == "ipv6" ]; then
-			UDP_NODE1_IPV6=$server_ip
+			eval UDP_NODE${5}_IPV6=$server_ip
 		else
-			UDP_NODE1_IP=$server_ip
+			eval UDP_NODE${5}_IP=$server_ip
 		fi
-		UDP_NODE1_PORT=$port
+		eval UDP_NODE${5}_PORT=$port
 		if [ "$type" == "ss" -o "$type" == "ssr" ]; then
 			gen_ss_ssr_config_file $type $local_port 0 $node $config_file_path
 		elif [ "$type" == "v2ray" ]; then
@@ -313,11 +320,12 @@ gen_config_file() {
 
 	if [ "$redir_type" == "TCP" ]; then
 		if [ "$network_type" == "ipv6" ]; then
-			TCP_NODE1_IPV6=$server_ip
+			eval TCP_NODE${5}_IPV6=$server_ip
 		else
-			TCP_NODE1_IP=$server_ip
+			eval TCP_NODE${5}_IP=$server_ip
 		fi
-		TCP_NODE1_PORT=$port
+		eval TCP_NODE${5}_PORT=$port
+		
 		if [ "$type" == "v2ray" ]; then
 			lua /usr/lib/lua/luci/model/cbi/passwall/api/gen_v2ray_client_config_file.lua $node tcp $local_port nil >$config_file_path
 		elif [ "$type" == "trojan" ]; then
@@ -394,7 +402,7 @@ start_tcp_redir() {
 			eval current_port=\$TCP_REDIR_PORT$i
 			local port=$(echo $(get_not_exists_port_after $current_port tcp))
 			eval TCP_REDIR_PORT$i=$port
-			gen_config_file $temp_server $port TCP $config_file
+			gen_config_file $temp_server $port TCP $config_file $i
 			if [ "$TYPE" == "v2ray" ]; then
 				v2ray_path=$(config_t_get global_app v2ray_file)
 				if [ -f "${v2ray_path}/v2ray" ]; then
@@ -452,7 +460,10 @@ start_tcp_redir() {
 					done
 				}
 			fi
-			echo $port > $CONFIG_PATH/port/TCP_${i}
+			echo $port > $RUN_PORT_PATH/TCP_${i}
+			eval ip=\$TCP_NODE${i}_IP
+			echo $ip > $RUN_IP_PATH/TCP_${i}
+			echo $temp_server > $RUN_ID_PATH/TCP_${i}
 		}
 	done
 }
@@ -466,7 +477,7 @@ start_udp_redir() {
 			eval current_port=\$UDP_REDIR_PORT$i
 			local port=$(echo $(get_not_exists_port_after $current_port udp))
 			eval UDP_REDIR_PORT$i=$port
-			gen_config_file $temp_server $port UDP $config_file
+			gen_config_file $temp_server $port UDP $config_file $i
 			if [ "$TYPE" == "v2ray" ]; then
 				v2ray_path=$(config_t_get global_app v2ray_file)
 				if [ -f "${v2ray_path}/v2ray" ]; then
@@ -534,7 +545,10 @@ start_udp_redir() {
 					$ss_bin -c $config_file -f $RUN_PID_PATH/udp_${TYPE}_1_$i -U $plugin_params >/dev/null 2>&1 &
 				}
 			fi
-			echo $port > $CONFIG_PATH/port/UDP_${i}
+			echo $port > $RUN_PORT_PATH/UDP_${i}
+			eval ip=\$UDP_NODE${i}_IP
+			echo $ip > $RUN_IP_PATH/UDP_${i}
+			echo $temp_server > $RUN_ID_PATH/UDP_${i}
 		}
 	done
 }
@@ -548,7 +562,7 @@ start_socks5_proxy() {
 			eval current_port=\$SOCKS5_PROXY_PORT$i
 			local port=$(get_not_exists_port_after $current_port tcp)
 			eval SOCKS5_PROXY_PORT$i=$port
-			gen_config_file $temp_server $port Socks5 $config_file
+			gen_config_file $temp_server $port Socks5 $config_file $i
 			if [ "$TYPE" == "v2ray" ]; then
 				v2ray_path=$(config_t_get global_app v2ray_file)
 				if [ -f "${v2ray_path}/v2ray" ]; then
@@ -587,7 +601,10 @@ start_socks5_proxy() {
 					$ss_bin -c $config_file -b 0.0.0.0 -u $plugin_params >/dev/null 2>&1 &
 				}
 			fi
-			echo $port > $CONFIG_PATH/port/Socks5_${i}
+			echo $port > $RUN_PORT_PATH/Socks5_${i}
+			eval ip=\$SOCKS5_NODE${i}_IP
+			echo $ip > $RUN_IP_PATH/SOCKS5_${i}
+			echo $temp_server > $RUN_ID_PATH/SOCKS5_${i}
 		fi
 	done
 }
@@ -701,7 +718,7 @@ start_dns() {
 		[ -n "$pdnsd_bin" ] && {
 			gen_pdnsd_config
 			nohup $pdnsd_bin --daemon -c $pdnsd_dir/pdnsd.conf -d >/dev/null 2>&1 &
-			echolog "运行DNS转发模式：Pdnsd..."
+			echolog "运行DNS转发模式：pdnsd..."
 		}
 	;;
 	chinadns-ng)
@@ -728,7 +745,7 @@ start_dns() {
 			else
 				if [ -z "$UDP_NODE1" -o "$UDP_NODE1" == "nil" ]; then
 					nohup $chinadns_ng_bin -l $DNS_PORT -c $UP_CHINA_DNS -t 208.67.222.222#443,208.67.222.222#5353 $gfwlist_param $chnlist_param >/dev/null 2>&1 &
-					echolog "运行DNS转发模式：ChinaDNS-NG，国内DNS：$UP_CHINA_DNS，因为你没有使用UDP节点，只能使用OpenDNS 443端口或5353端口作为可信DNS。"
+					echolog "运行DNS转发模式：ChinaDNS-NG，国内DNS：$UP_CHINA_DNS，因为你没有使用UDP节点，将使用OpenDNS 443端口或5353端口作为可信DNS。"
 				else
 					use_udp_node_resolve_dns=1
 					DNS_FORWARD=$(echo $up_trust_chinadns_ng_dns | sed 's/,/ /g')
@@ -1151,6 +1168,7 @@ stop() {
 
 case $1 in
 stop)
+	[ -n "$2" -a "$2" == "force" ] && force_stop
 	stop
 	;;
 start)

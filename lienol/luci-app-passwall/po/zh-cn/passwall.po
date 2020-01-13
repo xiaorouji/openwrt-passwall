@@ -82,6 +82,9 @@ msgstr "高级设置"
 msgid "Load Balancing"
 msgstr "负载均衡"
 
+msgid "Enter interface"
+msgstr "进入界面"
+
 msgid "Rule Update"
 msgstr "自动更新"
 
@@ -166,8 +169,8 @@ msgstr "如果勾选，则使用TCP节点解析DNS解决污染。"
 msgid "China DNS Server"
 msgstr "国内DNS服务器"
 
-msgid "Example: 127.0.0.1#6053 ,Represents DNS on using 127.0.0.1 the 6053 port. such as smartdns,AdGuard Home...<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53."
-msgstr "例：127.0.0.1#6053 使用本机的6053端口的DNS服务。例：smartdns，AdGuardHome等等。<br />最多使用2个DNS服务器，英文逗号分隔，如果没有填#和后面的端口，则使用53端口。"
+msgid "Example: 127.0.0.1#6053 ,Represents DNS on using 127.0.0.1 the 6053 port. such as smartdns,AdGuard Home...<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53.<br />If you use custom, unless you know what you're doing, setting it up incorrectly can cause your stuck to crash!"
+msgstr "例：127.0.0.1#6053 使用本机的6053端口的DNS服务。例：smartdns，AdGuardHome等等。<br />最多使用2个DNS服务器，英文逗号分隔，如果没有填#和后面的端口，则使用53端口。<br />如果你使用自定义，除非你知道你在做什么，否则设置不当会直接导致卡到崩溃！"
 
 msgid "Upstream trust DNS Server for ChinaDNS-NG"
 msgstr "ChinaDNS-NG可信DNS"
@@ -178,8 +181,11 @@ msgstr "例：127.0.0.1#5353 例：dns2socks，dns-forwarder等等。<br />最�
 msgid "The server client can also use this rule to scientifically surf the Internet.<br /> Global and continental whitelist are not recommended for non-special cases!"
 msgstr "本机服务器的客户端也可以使用这个代理模式上网。<br />非特殊情况不推荐使用全局和大陆白名单！"
 
-msgid "DNS Forward Address"
-msgstr "DNS转发地址"
+msgid "Tips"
+msgstr "小提示"
+
+msgid "You can use load balancing for failover."
+msgstr "可以使用负载均衡实现故障切换功能。"
 
 msgid "dnsbyisp"
 msgstr "运营商DNS(自动分配)"
@@ -424,8 +430,11 @@ msgstr "检测时间"
 msgid "Automatic switching cannot be used when this option is checked"
 msgstr "当勾选此选项时，不能使用自动切换"
 
-msgid "List of alternate TCP forwarding servers"
-msgstr "备用TCP转发服务器的列表"
+msgid "List of backup nodes"
+msgstr "备用节点的列表"
+
+msgid "List of backup nodes, the first of which must be the primary node and the others the standby node."
+msgstr "备用节点的列表，第一个必须是主节点，其他是备用节点。"
 
 msgid "Configure this node with 127.0.0.1: this port"
 msgstr "使用127.0.0.1和此端口配置节点"
