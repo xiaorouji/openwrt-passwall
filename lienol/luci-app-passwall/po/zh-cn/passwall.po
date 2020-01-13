@@ -124,6 +124,9 @@ msgstr "清除"
 msgid "If you can use it, very stable. If not, GG !!!"
 msgstr "如果你会用，稳得一批。否则，GG！！！"
 
+msgid "Main switch"
+msgstr "总开关"
+
 msgid "TCP Node"
 msgstr "TCP节点"
 
@@ -774,6 +777,12 @@ msgstr "目前最多只能设置%s个节点"
 
 msgid "Status Use Big Icon"
 msgstr "状态信息使用大图标"
+
+msgid "Status Show Check Port"
+msgstr "状态信息显示节点检测"
+
+msgid "Status Show IP111"
+msgstr "状态信息显示IP111"
 
 msgid "Hide Menu"
 msgstr "隐藏菜单"
