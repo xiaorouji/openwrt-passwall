@@ -50,7 +50,7 @@ local ipkg = require "luci.model.ipkg"
 				port: port
 			},
 			function(x, result) {
-				ssr_python_users_status[result.index].innerHTML = (result.status ? '<b><font color=green>✓</font></b>' : '<b><font color=red>X</font></b>');
+				ssr_python_users_status[result.index].innerHTML = (result.status ? '<b><font color="green">✓</font></b>' : '<b><font color="red">X</font></b>');
 			}
 		);
 	} */
