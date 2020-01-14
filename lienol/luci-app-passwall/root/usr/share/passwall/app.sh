@@ -761,18 +761,6 @@ start_dns() {
 add_dnsmasq() {
 	mkdir -p $TMP_DNSMASQ_PATH $DNSMASQ_PATH /var/dnsmasq.d
 	
-	#cat <<-EOF > /etc/dnsmasq.conf
-	#	$server_1
-	#	$server_2
-	#	all-servers
-	#	no-poll
-	#	no-resolv
-	#	cache-size=2048
-	#	local-ttl=60
-	#	neg-ttl=3600
-	#	max-cache-ttl=1200
-	#EOF
-	
 	# if [ -n "cat /var/state/network |grep pppoe|awk -F '.' '{print $2}'" ]; then
 	# sed -i '/except-interface/d' /etc/dnsmasq.conf >/dev/null 2>&1 &
 	# for wanname in $(cat /var/state/network |grep pppoe|awk -F '.' '{print $2}')
@@ -822,30 +810,18 @@ add_dnsmasq() {
 	fi
 
 	echo "" > /etc/dnsmasq.conf
-	echo "conf-dir=$TMP_DNSMASQ_PATH" > /var/dnsmasq.d/dnsmasq-$CONFIG.conf
-	
-	if [ "$DNS_MODE" != "chinadns-ng" ]; then
-		local china_dns1=$(echo $UP_CHINA_DNS | awk -F "," '{print $1}')
-		local china_dns2=$(echo $UP_CHINA_DNS | awk -F "," '{print $2}')
-		local server_1 server_2
-		[ -n "$china_dns1" ] && server_1="server=$china_dns1"
-		[ -n "$china_dns2" ] && server_2="server=$china_dns2"
-		cat <<-EOF > /var/dnsmasq.d/dnsmasq-$CONFIG.conf
-			$server_1
-			$server_2
+	server="server=127.0.0.1#$DNS_PORT"
+	local china_dns1=$(echo $UP_CHINA_DNS | awk -F "," '{print $1}')
+	local china_dns2=$(echo $UP_CHINA_DNS | awk -F "," '{print $2}')
+	[ -n "$china_dns1" ] && server="server=$china_dns1"
+	[ -n "$china_dns2" ] && server="${server}\n${server_2}"
+	cat <<-EOF > /var/dnsmasq.d/dnsmasq-$CONFIG.conf
+			$(echo -e $server)
 			all-servers
 			no-poll
 			no-resolv
 			conf-dir=$TMP_DNSMASQ_PATH
-		EOF
-	else
-		cat <<-EOF > /var/dnsmasq.d/dnsmasq-$CONFIG.conf
-			server=127.0.0.1#$DNS_PORT
-			all-servers
-			no-poll
-			conf-dir=$TMP_DNSMASQ_PATH
-		EOF
-	fi
+	EOF
 	cp -rf /var/dnsmasq.d/dnsmasq-$CONFIG.conf $DNSMASQ_PATH/dnsmasq-$CONFIG.conf
 	if [ "$restdns" == 1 ]; then
 		echolog "dnsmasq：生成配置文件并重启服务。"
@@ -1100,7 +1076,7 @@ start_haproxy() {
 				    #stats hide-version
 				    stats admin if TRUE
 			EOF
-			nohup $haproxy_bin -f $HAPROXY_FILE 2>&1
+			nohup $haproxy_bin -f $HAPROXY_FILE >/dev/null 2>&1 &
 			[ "$?" == 0 ] && echolog "负载均衡：运行成功！" || echolog "负载均衡：运行失败！"
 		}
 	}

@@ -151,8 +151,8 @@ msgstr "选中的服务器不会使用Kcptun。"
 msgid "The client can use the router's Socks5 proxy."
 msgstr "客户端可以使用路由器的Socks5代理。"
 
-msgid "DNS Forward Mode"
-msgstr "DNS转发模式"
+msgid "DNS Mode"
+msgstr "DNS模式"
 
 msgid "Use local port 7913 as DNS"
 msgstr "使用本机7913端口的DNS"
@@ -168,6 +168,9 @@ msgstr "使用TCP节点解析DNS"
 
 msgid "If checked, DNS is resolved using the TCP node."
 msgstr "如果勾选，则使用TCP节点解析DNS解决污染。"
+
+msgid "DNS Address"
+msgstr "DNS地址"
 
 msgid "China DNS Server"
 msgstr "国内DNS服务器"
@@ -237,6 +240,9 @@ msgstr "单进程"
 
 msgid "Proxy Mode"
 msgstr "代理模式"
+
+msgid "If using GFW mode is not available, try clearing the native cache."
+msgstr "如果使用GFW模式无法使用，请尝试清除本机缓存。"
 
 msgid "No Proxy"
 msgstr "不代理"
