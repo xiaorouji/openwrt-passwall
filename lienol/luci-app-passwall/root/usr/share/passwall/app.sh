@@ -711,12 +711,13 @@ start_dns() {
 			}
 		else
 			echolog "dns2socks模式需要使用Socks5代理节点，请开启！"
+			force_stop
 		fi
 	;;
 	pdnsd)
 		pdnsd_bin=$(find_bin pdnsd)
 		[ -n "$pdnsd_bin" ] && {
-			gen_pdnsd_config
+			gen_pdnsd_config $DNS_PORT
 			nohup $pdnsd_bin --daemon -c $pdnsd_dir/pdnsd.conf -d >/dev/null 2>&1 &
 			echolog "运行DNS转发模式：pdnsd..."
 		}
@@ -729,8 +730,22 @@ start_dns() {
 			[ -f "$CONFIG_PATH/gfwlist_chinadns_ng.txt" ] && local gfwlist_param="-g $CONFIG_PATH/gfwlist_chinadns_ng.txt"
 			[ -f "$RULE_PATH/chnlist" ] && local chnlist_param="-m $RULE_PATH/chnlist"
 			
-			up_trust_chinadns_ng_dns=$(config_t_get global up_trust_chinadns_ng_dns "8.8.4.4,8.8.8.8")
-			if [ "$up_trust_chinadns_ng_dns" == "dns2socks" ]; then
+			up_trust_chinadns_ng_dns=$(config_t_get global up_trust_chinadns_ng_dns "pdnsd")
+			if [ "$up_trust_chinadns_ng_dns" == "pdnsd" ]; then
+				if [ -z "$TCP_NODE1" -o "$TCP_NODE1" == "nil" ]; then
+					echolog "ChinaDNS-NG + pdnsd 模式需要启用TCP节点！"
+					force_stop
+				else
+					use_tcp_node_resolve_dns=1
+					gen_pdnsd_config $other_port
+					pdnsd_bin=$(find_bin pdnsd)
+					[ -n "$pdnsd_bin" ] && {
+						nohup $pdnsd_bin --daemon -c $pdnsd_dir/pdnsd.conf -d >/dev/null 2>&1 &
+						nohup $chinadns_ng_bin -l $DNS_PORT -c $UP_CHINA_DNS -t 127.0.0.1#$other_port $gfwlist_param $chnlist_param >/dev/null 2>&1 &
+						echolog "运行DNS转发模式：ChinaDNS-NG + pdnsd(${DNS_FORWARD}:53)，国内DNS：$UP_CHINA_DNS"
+					}
+				fi
+			elif [ "$up_trust_chinadns_ng_dns" == "dns2socks" ]; then
 				if [ -n "$SOCKS5_NODE1" -a "$SOCKS5_NODE1" != "nil" ]; then
 					dns2socks_bin=$(find_bin dns2socks)
 					[ -n "$dns2socks_bin" ] && {
@@ -894,72 +909,74 @@ gen_pdnsd_config() {
 	chown -R root.nogroup $pdnsd_dir
 	cat > $pdnsd_dir/pdnsd.conf <<-EOF
 		global {
-		    perm_cache = 1024;
-		    cache_dir = "$pdnsd_dir";
-		    pid_file = "$RUN_PID_PATH/pdnsd.pid";
-		    run_as = "root";
-		    server_ip = 127.0.0.1;
-		    server_port = $DNS_PORT;
-		    status_ctl = on;
-		    query_method = tcp_only;
-		    min_ttl = 1d;
-		    max_ttl = 1w;
-		    timeout = 10;
-		    tcp_qtimeout = 1;
-		    par_queries = 2;
-		    neg_domain_pol = on;
-		    udpbufsize = 1024;
+			perm_cache = 1024;
+			cache_dir = "$pdnsd_dir";
+			pid_file = "$RUN_PID_PATH/pdnsd.pid";
+			run_as = "root";
+			server_ip = 127.0.0.1;
+			server_port = $1;
+			status_ctl = on;
+			query_method = tcp_only;
+			min_ttl = 1d;
+			max_ttl = 1w;
+			timeout = 10;
+			tcp_qtimeout = 1;
+			par_queries = 2;
+			neg_domain_pol = on;
+			udpbufsize = 1024;
 		}
 		
-		EOF
-		
+	EOF
+			
 	[ "$use_tcp_node_resolve_dns" == 1 ] && {
 		cat >> $pdnsd_dir/pdnsd.conf <<-EOF
-		server {
-		    label = "node";
-		    ip = $DNS_FORWARD;
-		    edns_query = on;
-		    port = 53;
-		    timeout = 4;
-		    interval = 60;
-		    uptest = none;
-		    purge_cache = off;
-		    caching = on;
-		}
-		
+			server {
+				label = "node";
+				ip = $DNS_FORWARD;
+				edns_query = on;
+				port = 53;
+				timeout = 4;
+				interval = 60;
+				uptest = none;
+				purge_cache = off;
+				caching = on;
+			}
+			
 		EOF
 	}
-	
-	cat >> $pdnsd_dir/pdnsd.conf <<-EOF
-		server {
-		    label = "opendns";
-		    ip = 208.67.222.222, 208.67.220.220;
-		    edns_query = on;
-		    port = 443;
-		    timeout = 4;
-		    interval = 60;
-		    uptest = none;
-		    purge_cache = off;
-		    caching = on;
-		}
-		server {
-		    label = "opendns";
-		    ip = 208.67.222.222, 208.67.220.220;
-		    edns_query = on;
-		    port = 5353;
-		    timeout = 4;
-		    interval = 60;
-		    uptest = none;
-		    purge_cache = off;
-		    caching = on;
-		}
-		source {
-		    ttl = 86400;
-		    owner = "localhost.";
-		    serve_aliases = on;
-		    file = "/etc/hosts";
-		}
-	EOF
+		
+	[ "$DNS_MODE" != "chinadns-ng" ] && {
+		cat >> $pdnsd_dir/pdnsd.conf <<-EOF
+			server {
+				label = "opendns";
+				ip = 208.67.222.222, 208.67.220.220;
+				edns_query = on;
+				port = 443;
+				timeout = 4;
+				interval = 60;
+				uptest = none;
+				purge_cache = off;
+				caching = on;
+			}
+			server {
+				label = "opendns";
+				ip = 208.67.222.222, 208.67.220.220;
+				edns_query = on;
+				port = 5353;
+				timeout = 4;
+				interval = 60;
+				uptest = none;
+				purge_cache = off;
+				caching = on;
+			}
+			source {
+				ttl = 86400;
+				owner = "localhost.";
+				serve_aliases = on;
+				file = "/etc/hosts";
+			}
+		EOF
+	}
 }
 
 stop_dnsmasq() {

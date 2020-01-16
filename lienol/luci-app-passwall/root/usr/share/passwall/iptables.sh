@@ -127,6 +127,8 @@ load_acl() {
 	[ -z "$proxy_mode" -o "$proxy_mode" = "default" ] && proxy_mode=$PROXY_MODE
 	[ -z "$tcp_redir_ports" -o "$tcp_redir_ports" = "default" ] && tcp_redir_ports=$TCP_REDIR_PORTS
 	[ -z "$udp_redir_ports" -o "$udp_redir_ports" = "default" ] && udp_redir_ports=$UDP_REDIR_PORTS
+	[ -z "$tcp_node" -o "$TCP_NODE_NUM" == "1" ] && tcp_node=1
+	[ -z "$udp_node" -o "$UDP_NODE_NUM" == "1" ] && udp_node=1
 	eval TCP_NODE=\$TCP_NODE$tcp_node
 	eval UDP_NODE=\$UDP_NODE$udp_node
 	local ip_mark=$(get_ip_mark $ip)
