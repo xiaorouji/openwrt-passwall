@@ -717,7 +717,7 @@ start_dns() {
 	pdnsd)
 		pdnsd_bin=$(find_bin pdnsd)
 		[ -n "$pdnsd_bin" ] && {
-			gen_pdnsd_config $DNS_PORT
+			gen_pdnsd_config $DNS_PORT "cache"
 			nohup $pdnsd_bin --daemon -c $pdnsd_dir/pdnsd.conf -d >/dev/null 2>&1 &
 			echolog "运行DNS转发模式：pdnsd..."
 		}
@@ -907,10 +907,10 @@ gen_pdnsd_config() {
 	mkdir -p $pdnsd_dir
 	touch $pdnsd_dir/pdnsd.cache
 	chown -R root.nogroup $pdnsd_dir
+	[ "$2" == "cache" ] && cache_param="perm_cache = 1024;\ncache_dir = \"$pdnsd_dir\";"
 	cat > $pdnsd_dir/pdnsd.conf <<-EOF
 		global {
-			perm_cache = 1024;
-			cache_dir = "$pdnsd_dir";
+			$(echo -e $cache_param)
 			pid_file = "$RUN_PID_PATH/pdnsd.pid";
 			run_as = "root";
 			server_ip = 127.0.0.1;
