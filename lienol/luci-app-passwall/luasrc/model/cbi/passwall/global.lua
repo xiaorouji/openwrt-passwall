@@ -117,7 +117,8 @@ o.rmempty = false
 o:reset_values()
 if is_finded("chinadns-ng") then o:value("chinadns-ng", "ChinaDNS-NG") end
 if is_finded("dns2socks") then
-    o:value("dns2socks", "dns2socks + " .. translate("Use Socks5 Node Resolve DNS"))
+    o:value("dns2socks",
+            "dns2socks + " .. translate("Use Socks5 Node Resolve DNS"))
 end
 if is_installed("pdnsd") or is_installed("pdnsd-alt") or is_finded("pdnsd") then
     o:value("pdnsd", "pdnsd")
@@ -135,7 +136,8 @@ if is_installed("pdnsd") or is_installed("pdnsd-alt") or is_finded("pdnsd") then
     o:value("pdnsd", "pdnsd + " .. translate("Use TCP Node Resolve DNS"))
 end
 if is_finded("dns2socks") then
-    o:value("dns2socks", "dns2socks + " .. translate("Use Socks5 Node Resolve DNS"))
+    o:value("dns2socks",
+            "dns2socks + " .. translate("Use Socks5 Node Resolve DNS"))
 end
 o:value("8.8.4.4,8.8.8.8", "8.8.4.4, 8.8.8.8 (Google DNS)")
 o:value("208.67.222.222,208.67.220.220",
