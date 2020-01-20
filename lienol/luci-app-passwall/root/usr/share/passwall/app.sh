@@ -659,7 +659,8 @@ start_dns() {
 		if [ -n "$SOCKS5_NODE1" -a "$SOCKS5_NODE1" != "nil" ]; then
 			dns2socks_bin=$(find_bin dns2socks)
 			[ -n "$dns2socks_bin" ] && {
-				nohup $dns2socks_bin 127.0.0.1:$SOCKS5_PROXY_PORT1 ${DNS_FORWARD}:53 127.0.0.1:$DNS_PORT >/dev/null 2>&1 &
+				DNS2SOCKS_FORWARD=$(config_t_get global dns2socks_forward 8.8.4.4)
+				nohup $dns2socks_bin 127.0.0.1:$SOCKS5_PROXY_PORT1 $DNS2SOCKS_FORWARD 127.0.0.1:$DNS_PORT >/dev/null 2>&1 &
 				echolog "运行DNS转发模式：dns2socks..."
 			}
 		else
@@ -671,6 +672,7 @@ start_dns() {
 		pdnsd_bin=$(find_bin pdnsd)
 		[ -n "$pdnsd_bin" ] && {
 			gen_pdnsd_config $DNS_PORT "cache"
+			DNS_FORWARD=$(echo $DNS_FORWARD | sed 's/,/ /g')
 			nohup $pdnsd_bin --daemon -c $pdnsd_dir/pdnsd.conf -d >/dev/null 2>&1 &
 			echolog "运行DNS转发模式：pdnsd..."
 		}
@@ -693,18 +695,20 @@ start_dns() {
 					gen_pdnsd_config $other_port
 					pdnsd_bin=$(find_bin pdnsd)
 					[ -n "$pdnsd_bin" ] && {
+						DNS_FORWARD=$(echo $DNS_FORWARD | sed 's/,/ /g')
 						nohup $pdnsd_bin --daemon -c $pdnsd_dir/pdnsd.conf -d >/dev/null 2>&1 &
 						nohup $chinadns_ng_bin -l $DNS_PORT -c $UP_CHINA_DNS -t 127.0.0.1#$other_port $gfwlist_param $chnlist_param >/dev/null 2>&1 &
-						echolog "运行DNS转发模式：ChinaDNS-NG + pdnsd(${DNS_FORWARD}:53)，国内DNS：$UP_CHINA_DNS"
+						echolog "运行DNS转发模式：ChinaDNS-NG + pdnsd($DNS_FORWARD)，国内DNS：$UP_CHINA_DNS"
 					}
 				fi
 			elif [ "$up_trust_chinadns_ng_dns" == "dns2socks" ]; then
 				if [ -n "$SOCKS5_NODE1" -a "$SOCKS5_NODE1" != "nil" ]; then
 					dns2socks_bin=$(find_bin dns2socks)
 					[ -n "$dns2socks_bin" ] && {
-						nohup $dns2socks_bin 127.0.0.1:$SOCKS5_PROXY_PORT1 ${DNS_FORWARD}:53 127.0.0.1:$other_port >/dev/null 2>&1 &
+						DNS2SOCKS_FORWARD=$(config_t_get global dns2socks_forward 8.8.4.4)
+						nohup $dns2socks_bin 127.0.0.1:$SOCKS5_PROXY_PORT1 $DNS2SOCKS_FORWARD 127.0.0.1:$other_port >/dev/null 2>&1 &
 						nohup $chinadns_ng_bin -l $DNS_PORT -c $UP_CHINA_DNS -t 127.0.0.1#$other_port $gfwlist_param $chnlist_param >/dev/null 2>&1 &
-						echolog "运行DNS转发模式：ChinaDNS-NG + dns2socks(${DNS_FORWARD}:53)，国内DNS：$UP_CHINA_DNS"
+						echolog "运行DNS转发模式：ChinaDNS-NG + dns2socks($DNS2SOCKS_FORWARD)，国内DNS：$UP_CHINA_DNS"
 					}
 				else
 					echolog "dns2socks模式需要使用Socks5代理节点，请开启！"
@@ -874,7 +878,7 @@ gen_pdnsd_config() {
 			max_ttl = 1w;
 			timeout = 10;
 			tcp_qtimeout = 1;
-			par_queries = 2;
+			par_queries = 1;
 			neg_domain_pol = on;
 			udpbufsize = 1024;
 		}
@@ -892,7 +896,6 @@ gen_pdnsd_config() {
 				interval = 60;
 				uptest = none;
 				purge_cache = off;
-				caching = on;
 			}
 			
 		EOF
@@ -909,7 +912,6 @@ gen_pdnsd_config() {
 				interval = 60;
 				uptest = none;
 				purge_cache = off;
-				caching = on;
 			}
 			server {
 				label = "opendns";
@@ -920,7 +922,6 @@ gen_pdnsd_config() {
 				interval = 60;
 				uptest = none;
 				purge_cache = off;
-				caching = on;
 			}
 			source {
 				ttl = 86400;
