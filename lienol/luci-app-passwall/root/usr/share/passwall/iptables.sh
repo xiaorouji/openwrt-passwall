@@ -497,6 +497,19 @@ add_firewall_rule() {
 	else
 		echolog "UDP节点未选择，无法转发UDP！"
 	fi
+		
+	if [ -n "$balancing_node_address" ]; then
+		balancing_node_address=$(echo -e $balancing_node_address)
+		for balancing_node in $balancing_node_address
+		do
+			local ip=$(echo $balancing_node | awk -F ":" '{print $1}')
+			local port=$(echo $balancing_node | awk -F ":" '{print $2}')
+			$iptables_nat -I PSW 2 -p tcp -d $ip --dport $port -j RETURN
+			$iptables_nat -I OUTPUT 2 -p tcp -d $ip --dport $port $iptables_comment -j RETURN
+			$iptables_mangle -I PSW 2 -p udp -d $ip --dport $port -j RETURN
+			$iptables_mangle -I OUTPUT 2 -p udp -d $ip --dport $port $iptables_comment -j RETURN
+		done
+	fi
 
 	$iptables_mangle -A PREROUTING -j PSW
 	

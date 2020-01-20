@@ -16,12 +16,15 @@ end
 
 local n = {}
 uci:foreach(appname, "nodes", function(e)
-    if e.type and e.address and e.remarks then
+    local type = e.type
+    local address = e.address
+    if address == nil then address = "" end
+    if type and address and e.remarks then
         if e.use_kcp and e.use_kcp == "1" then
             n[e[".name"]] = "%s+%s：[%s] %s" %
-                                {e.type, "Kcptun", e.remarks, e.address}
+                                {translate(type), "Kcptun", e.remarks, address}
         else
-            n[e[".name"]] = "%s：[%s] %s" % {e.type, e.remarks, e.address}
+            n[e[".name"]] = "%s：[%s] %s" % {translate(type), e.remarks, address}
         end
     end
 end)

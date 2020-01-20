@@ -273,15 +273,17 @@ gen_start_config() {
 	local_port=$2
 	redir_type=$3
 	config_file=$4
+	type=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
 	remarks=$(config_n_get $node remarks)
 	server_host=$(config_n_get $node address)
-	use_ipv6=$(config_n_get $node use_ipv6)
-	network_type="ipv4"
-	[ "$use_ipv6" == "1" ] && network_type="ipv6"
-	server_ip=$(get_host_ip $network_type $server_host)
 	port=$(config_n_get $node port)
-	type=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
-	echolog "$redir_type节点：$remarks，节点地址端口：${server_ip}:${port}"
+	[ -n "$server_host" -a -n "$port" ] && {
+		use_ipv6=$(config_n_get $node use_ipv6)
+		network_type="ipv4"
+		[ "$use_ipv6" == "1" ] && network_type="ipv6"
+		server_ip=$(get_host_ip $network_type $server_host)
+		echolog "$redir_type节点：$remarks，节点地址端口：${server_ip}:${port}"
+	}
 
 	if [ "$redir_type" == "SOCKS5" ]; then
 		if [ "$network_type" == "ipv6" ]; then
@@ -443,6 +445,28 @@ gen_start_config() {
 			#	$redsocks_bin -c $redsocks_config_file >/dev/null &
 			#}
 		elif [ "$type" == "v2ray" ]; then
+			lua $API_GEN_V2RAY $node tcp $local_port nil >$config_file
+			v2ray_path=$(config_t_get global_app v2ray_file $(find_bin v2ray))
+			if [ -f "${v2ray_path}/v2ray" ]; then
+				${v2ray_path}/v2ray -config=$config_file >/dev/null &
+			else
+				echolog "找不到V2ray客户端主程序，无法启用！"
+			fi
+		elif [ "$type" == "v2ray_balancing" ]; then
+			local balancing_node=$(config_n_get $node v2ray_balancing_node)
+			balancing_node_address=""
+			for node_id in $balancing_node
+			do
+				local address=$(config_n_get $node_id address)
+				local port=$(config_n_get $node_id port)
+				local temp=""
+				if [ -z "$balancing_node_address" ]; then
+					temp="${address}:${port}"
+				else
+					temp="${balancing_node_address}\n${address}:${port}"
+				fi
+				balancing_node_address="$temp"
+			done
 			lua $API_GEN_V2RAY $node tcp $local_port nil >$config_file
 			v2ray_path=$(config_t_get global_app v2ray_file $(find_bin v2ray))
 			if [ -f "${v2ray_path}/v2ray" ]; then
