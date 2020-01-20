@@ -1,24 +1,6 @@
 msgid "Pass Wall"
 msgstr "正确上网姿势 √"
 
-msgid "Shadowsocks Server"
-msgstr "ShadowSocks 服务器"
-
-msgid "ShadowsocksR Server"
-msgstr "ShadowSocksR 服务器"
-
-msgid "Socks5 Server"
-msgstr "Socks5 服务器"
-
-msgid "V2ray Server"
-msgstr "V2ray 服务器"
-
-msgid "Brook Server"
-msgstr "Brook 服务器"
-
-msgid "Trojan Server"
-msgstr "Trojan 服务器"
-
 msgid "Auto"
 msgstr "自动"
 
@@ -300,6 +282,12 @@ msgstr "添加方式"
 
 msgid "Type"
 msgstr "类型"
+
+msgid "V2ray Balancing"
+msgstr "V2ray 负载均衡"
+
+msgid "V2ray_balancing"
+msgstr "V2ray 负载均衡"
 
 msgid "Address"
 msgstr "地址"

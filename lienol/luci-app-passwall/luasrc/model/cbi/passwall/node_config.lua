@@ -81,7 +81,7 @@ if is_finded("ss-redir") then type:value("SS", translate("Shadowsocks")) end
 if is_finded("ssr-redir") then type:value("SSR", translate("ShadowsocksR")) end
 if is_installed("v2ray") or is_finded("v2ray") then
     type:value("V2ray", translate("V2ray"))
-    --type:value("V2ray_balancing", translate("V2ray Balancing"))
+    type:value("V2ray_balancing", translate("V2ray Balancing"))
 end
 if is_installed("brook") or is_finded("brook") then
     type:value("Brook", translate("Brook"))
@@ -94,6 +94,7 @@ v2ray_protocol = s:option(ListValue, "v2ray_protocol",
                           translate("V2ray Protocol"))
 v2ray_protocol:value("vmess", translate("Vmess"))
 v2ray_protocol:depends("type", "V2ray")
+v2ray_protocol:depends("type", "V2ray_balancing")
 
 v2ray_balancing_node = s:option(DynamicList, "v2ray_balancing_node",
                                 translate("List of backup nodes"), translate(
