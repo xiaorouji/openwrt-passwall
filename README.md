@@ -1,7 +1,5 @@
 # openwrt-package
 
-源码是我的，我强push又关你什么事？求你用了？我删了都行~！
-
 [OP讨论交流群](https://t.me/opdiscuss)
 
 本源码兼容[官方](https://github.com/openwrt/openwrt)和[大雕Lean](https://github.com/coolsnowwolf/lede)源码
