@@ -842,7 +842,6 @@ add_dnsmasq() {
 		rm -rf $TMP_DNSMASQ_PATH/whitelist_host.conf
 	fi
 
-	echo "" > /etc/dnsmasq.conf
 	server="server=127.0.0.1#$DNS_PORT"
 	[ "$DNS_MODE" != "chinadns-ng" ] && {
 		local china_dns1=$(echo $UP_CHINA_DNS | awk -F "," '{print $1}')
@@ -859,7 +858,7 @@ add_dnsmasq() {
 	EOF
 	cp -rf /var/dnsmasq.d/dnsmasq-$CONFIG.conf $DNSMASQ_PATH/dnsmasq-$CONFIG.conf
 	echolog "dnsmasq：生成配置文件并重启服务。"
-	/etc/init.d/dnsmasq restart 2>/dev/null
+	/etc/init.d/dnsmasq restart >/dev/null 2>&1 &
 }
 
 gen_redsocks_config() {
@@ -1005,7 +1004,7 @@ stop_dnsmasq() {
 	rm -rf /var/dnsmasq.d/dnsmasq-$CONFIG.conf
 	rm -rf $DNSMASQ_PATH/dnsmasq-$CONFIG.conf
 	rm -rf $TMP_DNSMASQ_PATH
-	/etc/init.d/dnsmasq restart 2>/dev/null
+	/etc/init.d/dnsmasq restart >/dev/null 2>&1 &
 }
 
 start_haproxy() {
@@ -1147,7 +1146,6 @@ start() {
 	start_redir TCP REDIR tcp
 	start_redir UDP REDIR udp
 	source $APP_PATH/iptables.sh start
-	/etc/init.d/dnsmasq restart >/dev/null 2>&1 &
 	start_crontab
 	set_cru
 	rm -f "$LOCK_FILE"
