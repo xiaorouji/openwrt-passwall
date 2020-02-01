@@ -458,28 +458,30 @@ add_firewall_rule() {
 				$iptables_mangle -A PSW_GAME$k -p udp $(dst $IPSET_CHN) -j RETURN
 				$iptables_mangle -A PSW_GAME$k -p udp -j TPROXY --tproxy-mark 0x1/0x1 --on-port $local_port
 				
-				# 用于本机流量转发
-				$iptables_mangle -A OUTPUT -j PSW_OUTPUT
-				$iptables_mangle -A PSW_OUTPUT -p udp $(dst $IPSET_LANIPLIST) -j RETURN
-				[ "$use_udp_node_resolve_dns" == 1 -a -n "$DNS_FORWARD" ] && {
-					for dns in $DNS_FORWARD
-					do
-						local dns_ip=$(echo $dns | awk -F "#" '{print $1}')
-						local dns_port=$(echo $dns | awk -F "#" '{print $2}')
-						[ -z "$dns_port" ] && dns_port=53
-						$iptables_mangle -A PSW_OUTPUT -p udp -d $dns_ip --dport $dns_port -j MARK --set-mark 1
-						$iptables_mangle -I PSW 2 -p udp -d $dns_ip --dport $dns_port -j TPROXY --tproxy-mark 0x1/0x1 --on-port $local_port
-					done
-				}
-				$iptables_mangle -A PSW_OUTPUT -p udp $(dst $IPSET_VPSIPLIST) -j RETURN
-				$iptables_mangle -A PSW_OUTPUT -p udp $(dst $IPSET_WHITELIST) -j RETURN
-				$iptables_mangle -A PSW_OUTPUT -p udp -m multiport --dport $UDP_REDIR_PORTS $(dst $IPSET_ROUTER) -j MARK --set-mark 1
-				$iptables_mangle -A PSW_OUTPUT -p udp -m multiport --dport $UDP_REDIR_PORTS $(dst $IPSET_BLACKLIST) -j MARK --set-mark 1
+				[ "$k" == 1 ] && {
+					# 用于本机流量转发
+					$iptables_mangle -A OUTPUT -j PSW_OUTPUT
+					$iptables_mangle -A PSW_OUTPUT -p udp $(dst $IPSET_LANIPLIST) -j RETURN
+					[ "$use_udp_node_resolve_dns" == 1 -a -n "$DNS_FORWARD" ] && {
+						for dns in $DNS_FORWARD
+						do
+							local dns_ip=$(echo $dns | awk -F "#" '{print $1}')
+							local dns_port=$(echo $dns | awk -F "#" '{print $2}')
+							[ -z "$dns_port" ] && dns_port=53
+							$iptables_mangle -A PSW_OUTPUT -p udp -d $dns_ip --dport $dns_port -j MARK --set-mark 1
+							$iptables_mangle -I PSW 2 -p udp -d $dns_ip --dport $dns_port -j TPROXY --tproxy-mark 0x1/0x1 --on-port $local_port
+						done
+					}
+					$iptables_mangle -A PSW_OUTPUT -p udp $(dst $IPSET_VPSIPLIST) -j RETURN
+					$iptables_mangle -A PSW_OUTPUT -p udp $(dst $IPSET_WHITELIST) -j RETURN
+					$iptables_mangle -A PSW_OUTPUT -p udp -m multiport --dport $UDP_REDIR_PORTS $(dst $IPSET_ROUTER) -j MARK --set-mark 1
+					$iptables_mangle -A PSW_OUTPUT -p udp -m multiport --dport $UDP_REDIR_PORTS $(dst $IPSET_BLACKLIST) -j MARK --set-mark 1
 
-				[ "$LOCALHOST_PROXY_MODE" == "global" ] && $iptables_mangle -A PSW_OUTPUT -p udp -m multiport --dport $UDP_REDIR_PORTS -j MARK --set-mark 1
-				[ "$LOCALHOST_PROXY_MODE" == "gfwlist" ] && $iptables_mangle -A PSW_OUTPUT -p udp -m multiport --dport $UDP_REDIR_PORTS $(dst $IPSET_GFW) -j MARK --set-mark 1
-				[ "$LOCALHOST_PROXY_MODE" == "chnroute" ] && {
-					$iptables_mangle -A PSW_OUTPUT -p udp -m multiport --dport $UDP_REDIR_PORTS -m set ! --match-set $IPSET_CHN dst -j MARK --set-mark 1
+					[ "$LOCALHOST_PROXY_MODE" == "global" ] && $iptables_mangle -A PSW_OUTPUT -p udp -m multiport --dport $UDP_REDIR_PORTS -j MARK --set-mark 1
+					[ "$LOCALHOST_PROXY_MODE" == "gfwlist" ] && $iptables_mangle -A PSW_OUTPUT -p udp -m multiport --dport $UDP_REDIR_PORTS $(dst $IPSET_GFW) -j MARK --set-mark 1
+					[ "$LOCALHOST_PROXY_MODE" == "chnroute" ] && {
+						$iptables_mangle -A PSW_OUTPUT -p udp -m multiport --dport $UDP_REDIR_PORTS -m set ! --match-set $IPSET_CHN dst -j MARK --set-mark 1
+					}
 				}
 
 				echolog "IPv4 防火墙UDP转发规则加载完成！"
