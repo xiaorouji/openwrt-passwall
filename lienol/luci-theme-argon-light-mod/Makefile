@@ -6,10 +6,10 @@
 
 include $(TOPDIR)/rules.mk
 
-LUCI_TITLE:=Argon Mod Theme
+LUCI_TITLE:=Argon Light Mod Theme
 LUCI_DEPENDS:=
-PKG_VERSION:=1.5
-PKG_RELEASE:=08-20191221
+PKG_VERSION:=1.4
+PKG_RELEASE:=02-20200101
 
 include $(TOPDIR)/feeds/luci/luci.mk
 
