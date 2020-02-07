@@ -344,35 +344,22 @@ add_firewall_rule() {
 								$iptables_nat -I PSW 2 -p tcp -d $dns_ip --dport $dns_port -j REDIRECT --to-ports $local_port
 							done
 						}
-
-						is_add_prerouting=0
-
-						KP_INDEX=$($iptables_nat -L PREROUTING | tail -n +3 | sed -n -e '/^KOOLPROXY/=')
-						if [ -n "$KP_INDEX" ]; then
-							let KP_INDEX+=1
-							#确保添加到KOOLPROXY规则之后
-							$iptables_nat -I PREROUTING $KP_INDEX -j PSW
-							is_add_prerouting=1
+						
+						PRE_INDEX=1
+						KP_INDEX=$($iptables_nat -L PREROUTING --line-numbers | grep "KOOLPROXY" | sed -n '$p' | awk '{print $1}')
+						ADBYBY_INDEX=$($iptables_nat -L PREROUTING --line-numbers | grep "ADBYBY" | sed -n '$p' | awk '{print $1}')
+						if [ -n "$KP_INDEX" -a -z "$ADBYBY_INDEX" ]; then
+							PRE_INDEX=$(expr $KP_INDEX + 1)
+						elif [ -z "$KP_INDEX" -a -n "$ADBYBY_INDEX" ]; then
+							PRE_INDEX=$(expr $ADBYBY_INDEX + 1)
+						elif [ -z "$KP_INDEX" -a -z "$ADBYBY_INDEX" ]; then
+							PR_INDEX=$($iptables_nat -L PREROUTING --line-numbers | grep "prerouting_rule" | sed -n '$p' | awk '{print $1}')
+							[ -n "$PR_INDEX" ] && {
+								PRE_INDEX=$(expr $PR_INDEX + 1)
+							}
 						fi
-
-						ADBYBY_INDEX=$($iptables_nat -L PREROUTING | tail -n +3 | sed -n -e '/^ADBYBY/=')
-						if [ -n "$ADBYBY_INDEX" ]; then
-							let ADBYBY_INDEX+=1
-							#确保添加到ADBYBY规则之后
-							$iptables_nat -I PREROUTING $ADBYBY_INDEX -j PSW
-							is_add_prerouting=1
-						fi
-
-						if [ "$is_add_prerouting" == 0 ]; then
-							#如果去广告没有运行，确保添加到prerouting_rule规则之后
-							PR_INDEX=$($iptables_nat -L PREROUTING | tail -n +3 | sed -n -e '/^prerouting_rule/=')
-							if [ -z "$PR_INDEX" ]; then
-								PR_INDEX=1
-							else
-								let PR_INDEX+=1
-							fi
-							$iptables_nat -I PREROUTING $PR_INDEX -j PSW
-						fi
+						$iptables_nat -I PREROUTING $PRE_INDEX -j PSW
+						
 						# 用于本机流量转发
 						$iptables_nat -A OUTPUT -j PSW_OUTPUT
 						$iptables_nat -A PSW_OUTPUT $(dst $IPSET_LANIPLIST) -j RETURN
