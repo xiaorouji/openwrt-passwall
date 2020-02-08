@@ -19,13 +19,13 @@ function index()
     end
     entry({"admin", "vpn", "passwall", "settings"}, cbi("passwall/global"),
           _("Basic Settings"), 1).dependent = true
-    entry({"admin", "vpn", "passwall", "node_list"},
-          cbi("passwall/node_list", {autoapply = true}), _("Node List"), 2).dependent =
-        true
+    entry({"admin", "vpn", "passwall", "node_list"}, cbi("passwall/node_list"),
+          _("Node List"), 2).dependent = true
     -- entry({"admin", "vpn", "passwall", "auto_switch"},
     --      cbi("passwall/auto_switch"), _("Auto Switch"), 3).leaf = true
-    entry({"admin", "vpn", "passwall", "other"}, cbi("passwall/other"),
-          _("Other Settings"), 94).leaf = true
+    entry({"admin", "vpn", "passwall", "other"},
+          cbi("passwall/other", {autoapply = true}), _("Other Settings"), 94).leaf =
+        true
     if nixio.fs.access("/usr/sbin/haproxy") then
         entry({"admin", "vpn", "passwall", "balancing"},
               cbi("passwall/balancing"), _("Load Balancing"), 95).leaf = true
@@ -34,10 +34,12 @@ function index()
           _("Rule Update"), 96).leaf = true
     entry({"admin", "vpn", "passwall", "acl"}, cbi("passwall/acl"),
           _("Access control"), 97).leaf = true
-    entry({"admin", "vpn", "passwall", "rule_list"}, cbi("passwall/rule_list"),
+    entry({"admin", "vpn", "passwall", "rule_list"},
+          cbi("passwall/rule_list", {autoapply = true}),
           _("Set Blacklist And Whitelist"), 98).leaf = true
-    entry({"admin", "vpn", "passwall", "log"}, cbi("passwall/log"),
-          _("Watch Logs"), 99).leaf = true
+    entry({"admin", "vpn", "passwall", "log"},
+          cbi("passwall/log", {autoapply = true}), _("Watch Logs"), 99).leaf =
+        true
     entry({"admin", "vpn", "passwall", "node_config"},
           cbi("passwall/node_config")).leaf = true
 
@@ -151,11 +153,11 @@ function status()
     for i = 1, socks5_node_num, 1 do
         local listen_port = luci.sys.exec(
                                 string.format(
-                                    "[ -f '/var/etc/passwall/port/Socks5_%s' ] && echo -n `cat /var/etc/passwall/port/Socks5_%s`",
+                                    "[ -f '/var/etc/passwall/port/SOCKS5_%s' ] && echo -n `cat /var/etc/passwall/port/SOCKS5_%s`",
                                     i, i))
         e["socks5_node%s_status" % i] = luci.sys.call(
                                             string.format(
-                                                "ps -w | grep -v grep | grep -i -E '%s/Socks5_%s|brook client -l 0.0.0.0:%s' >/dev/null",
+                                                "ps -w | grep -v grep | grep -i -E '%s/SOCKS5_%s|brook client -l 0.0.0.0:%s' >/dev/null",
                                                 appname, i, listen_port)) == 0
     end
     luci.http.prepare_content("application/json")
@@ -223,8 +225,7 @@ function check_port()
     local uci = luci.model.uci.cursor()
 
     local retstring = "<br />"
-    retstring = retstring ..
-                    "<font color='red'>暂时不支持UDP检测</font><br />"
+    -- retstring = retstring .. "<font color='red'>暂时不支持UDP检测</font><br />"
 
     if luci.sys.exec("echo -n `uci -q get %s.@global_other[0].use_tcping`" %
                          appname) == "1" and
@@ -237,23 +238,24 @@ function check_port()
             if (s.use_kcp and s.use_kcp == "1" and s.kcp_port) or
                 (s.v2ray_transport and s.v2ray_transport == "mkcp" and s.port) then
             else
-                if s.type and s.address and s.port and s.remarks then
+                local type = s.type
+                if type and type ~= "V2ray_balancing" and s.address and s.port and
+                    s.remarks then
                     node_name = "[%s] [%s:%s]" % {s.remarks, s.address, s.port}
+                    result = luci.sys.exec(
+                                 "echo -n `tcping -q -c 1 -i 1 -p " .. s.port ..
+                                     " " .. s.address ..
+                                     " 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print$2}'`")
+                    if result and result ~= "" then
+                        retstring = retstring .. "<font color='green'>" ..
+                                        node_name .. "   " .. result ..
+                                        "ms.</font><br />"
+                    else
+                        retstring = retstring .. "<font color='red'>" ..
+                                        node_name .. "   Error.</font><br />"
+                    end
+                    ret = ""
                 end
-
-                result = luci.sys.exec("echo -n `tcping -q -c 1 -i 3 -p " ..
-                                           s.port .. " " .. s.address ..
-                                           " 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print$2}'`")
-                if result and result ~= "" then
-                    retstring =
-                        retstring .. "<font color='green'>" .. node_name ..
-                            "   " .. result .. "ms.</font><br />"
-                else
-                    retstring =
-                        retstring .. "<font color='red'>" .. node_name ..
-                            "   Error.</font><br />"
-                end
-                ret = ""
             end
         end)
     else
@@ -266,24 +268,24 @@ function check_port()
             if (s.use_kcp and s.use_kcp == "1" and s.kcp_port) or
                 (s.v2ray_transport and s.v2ray_transport == "mkcp" and s.port) then
             else
-                if s.type and s.address and s.port and s.remarks then
+                local type = s.type
+                if type and type ~= "V2ray_balancing" and s.address and s.port and
+                    s.remarks then
                     node_name = "%s：[%s] %s:%s" %
                                     {s.type, s.remarks, s.address, s.port}
+                    tcp_socket = nixio.socket("inet", "stream")
+                    tcp_socket:setopt("socket", "rcvtimeo", 3)
+                    tcp_socket:setopt("socket", "sndtimeo", 3)
+                    ret = tcp_socket:connect(s.address, s.port)
+                    if tostring(ret) == "true" then
+                        retstring = retstring .. "<font color='green'>" ..
+                                        node_name .. "   OK.</font><br />"
+                    else
+                        retstring = retstring .. "<font color='red'>" ..
+                                        node_name .. "   Error.</font><br />"
+                    end
+                    ret = ""
                 end
-                tcp_socket = nixio.socket("inet", "stream")
-                tcp_socket:setopt("socket", "rcvtimeo", 3)
-                tcp_socket:setopt("socket", "sndtimeo", 3)
-                ret = tcp_socket:connect(s.address, s.port)
-                if tostring(ret) == "true" then
-                    retstring =
-                        retstring .. "<font color='green'>" .. node_name ..
-                            "   OK.</font><br />"
-                else
-                    retstring =
-                        retstring .. "<font color='red'>" .. node_name ..
-                            "   Error.</font><br />"
-                end
-                ret = ""
             end
             if tcp_socket then tcp_socket:close() end
             if udp_socket then udp_socket:close() end

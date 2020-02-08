@@ -1,24 +1,6 @@
 msgid "Pass Wall"
 msgstr "正确上网姿势 √"
 
-msgid "Shadowsocks Server"
-msgstr "ShadowSocks 服务器"
-
-msgid "ShadowsocksR Server"
-msgstr "ShadowSocksR 服务器"
-
-msgid "Socks5 Server"
-msgstr "Socks5 服务器"
-
-msgid "V2ray Server"
-msgstr "V2ray 服务器"
-
-msgid "Brook Server"
-msgstr "Brook 服务器"
-
-msgid "Trojan Server"
-msgstr "Trojan 服务器"
-
 msgid "Auto"
 msgstr "自动"
 
@@ -82,6 +64,9 @@ msgstr "高级设置"
 msgid "Load Balancing"
 msgstr "负载均衡"
 
+msgid "Enter interface"
+msgstr "进入界面"
+
 msgid "Rule Update"
 msgstr "自动更新"
 
@@ -121,6 +106,9 @@ msgstr "清除"
 msgid "If you can use it, very stable. If not, GG !!!"
 msgstr "如果你会用，稳得一批。否则，GG！！！"
 
+msgid "Main switch"
+msgstr "总开关"
+
 msgid "TCP Node"
 msgstr "TCP节点"
 
@@ -145,8 +133,8 @@ msgstr "选中的服务器不会使用Kcptun。"
 msgid "The client can use the router's Socks5 proxy."
 msgstr "客户端可以使用路由器的Socks5代理。"
 
-msgid "DNS Forward Mode"
-msgstr "DNS转发模式"
+msgid "DNS Mode"
+msgstr "DNS模式"
 
 msgid "Use local port 7913 as DNS"
 msgstr "使用本机7913端口的DNS"
@@ -163,23 +151,29 @@ msgstr "使用TCP节点解析DNS"
 msgid "If checked, DNS is resolved using the TCP node."
 msgstr "如果勾选，则使用TCP节点解析DNS解决污染。"
 
+msgid "DNS Address"
+msgstr "DNS地址"
+
 msgid "China DNS Server"
 msgstr "国内DNS服务器"
 
-msgid "Example: 127.0.0.1#6053 ,Represents DNS on using 127.0.0.1 the 6053 port. such as smartdns,AdGuard Home...<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53."
-msgstr "例：127.0.0.1#6053 使用本机的6053端口的DNS服务。例：smartdns，AdGuardHome等等。<br />最多使用2个DNS服务器，英文逗号分隔，如果没有填#和后面的端口，则使用53端口。"
+msgid "If you want to work with other DNS acceleration services, use the default.<br />Example: 127.0.0.1#6053 ,Represents DNS on using 127.0.0.1 the 6053 port. such as SmartDNS, AdGuard Home...<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53.<br />If you use custom, unless you know what you're doing, setting it up incorrectly can cause your stuck to crash !"
+msgstr "如果你想和其他DNS加速服务一起工作，请使用默认。<br />例：127.0.0.1#6053 使用本机的6053端口的DNS服务。例：SmartDNS，AdGuardHome等等。<br />最多使用2个DNS服务器，英文逗号分隔，如果没有填#和后面的端口，则使用53端口。<br />如果你使用自定义，除非你知道你在做什么，否则设置不当会直接导致卡到崩溃！"
 
 msgid "Upstream trust DNS Server for ChinaDNS-NG"
 msgstr "ChinaDNS-NG可信DNS"
 
-msgid "Example: 127.0.0.1#5353 ,such as dns2socks,dns-forwarder...<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53."
-msgstr "例：127.0.0.1#5353 例：dns2socks，dns-forwarder等等。<br />最多使用2个DNS服务器，英文逗号分隔，如果没有填#和后面的端口，则使用53端口。"
+msgid "You can use other resolving DNS services as trusted DNS, Example: dns2socks, dns-forwarder... 127.0.0.1#5353<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53."
+msgstr "你可以使用其他解决污染DNS服务作为可信DNS，例：dns2socks，dns-forwarder等等。127.0.0.1#5353<br />最多使用2个DNS服务器，英文逗号分隔，如果没有填#和后面的端口，则使用53端口。"
 
 msgid "The server client can also use this rule to scientifically surf the Internet.<br /> Global and continental whitelist are not recommended for non-special cases!"
 msgstr "本机服务器的客户端也可以使用这个代理模式上网。<br />非特殊情况不推荐使用全局和大陆白名单！"
 
-msgid "DNS Forward Address"
-msgstr "DNS转发地址"
+msgid "Tips"
+msgstr "小提示"
+
+msgid "You can use load balancing for failover."
+msgstr "可以使用负载均衡实现故障切换功能。"
 
 msgid "dnsbyisp"
 msgstr "运营商DNS(自动分配)"
@@ -211,14 +205,14 @@ msgstr "自定义"
 msgid "DNS Server"
 msgstr "DNS服务器"
 
-msgid "Need Socks5 server"
-msgstr "需要Socks5"
+msgid "Use Socks5 Node Resolve DNS"
+msgstr "使用Socks5节点解析DNS"
 
 msgid "Multi Process Option"
-msgstr "多进程并发转发"
+msgstr "多进程并发"
 
 msgid "you can start SS/SSR with multiple process"
-msgstr "当使用SS/SSR时可使用多个进程并发转发"
+msgstr "当使用SS/SSR时可使用多进程并发"
 
 msgid "Process"
 msgstr "进程"
@@ -228,6 +222,9 @@ msgstr "单进程"
 
 msgid "Proxy Mode"
 msgstr "代理模式"
+
+msgid "If using GFW mode is not available, try clearing the native cache."
+msgstr "如果使用GFW模式无法使用，请尝试清除本机缓存。"
 
 msgid "No Proxy"
 msgstr "不代理"
@@ -285,6 +282,18 @@ msgstr "添加方式"
 
 msgid "Type"
 msgstr "类型"
+
+msgid "V2ray Balancing"
+msgstr "V2ray 负载均衡"
+
+msgid "V2ray_balancing"
+msgstr "V2ray 负载均衡"
+
+msgid "Load balancing node list"
+msgstr "负载均衡节点列表"
+
+msgid "Load balancing node list, <a target='_blank' href='https://toutyrater.github.io/app/balance.html'>document</a>"
+msgstr "负载均衡节点列表，<a target='_blank' href='https://toutyrater.github.io/app/balance.html'>文档原理</a>"
 
 msgid "Address"
 msgstr "地址"
@@ -424,8 +433,11 @@ msgstr "检测时间"
 msgid "Automatic switching cannot be used when this option is checked"
 msgstr "当勾选此选项时，不能使用自动切换"
 
-msgid "List of alternate TCP forwarding servers"
-msgstr "备用TCP转发服务器的列表"
+msgid "List of backup nodes"
+msgstr "备用节点的列表"
+
+msgid "List of backup nodes, the first of which must be the primary node and the others the standby node."
+msgstr "备用节点的列表，第一个必须是主节点，其他是备用节点。"
 
 msgid "Configure this node with 127.0.0.1: this port"
 msgstr "使用127.0.0.1和此端口配置节点"
@@ -760,11 +772,17 @@ msgstr "账号密码"
 msgid "Node Number"
 msgstr "节点数量"
 
-msgid "You can only set up a maximum of %s nodes for the time being"
-msgstr "目前最多只能设置%s个节点"
+msgid "You can only set up a maximum of %s nodes for the time being, Used for access control."
+msgstr "目前最多只能设置%s个节点，用于给访问控制使用。"
 
 msgid "Status Use Big Icon"
 msgstr "状态信息使用大图标"
+
+msgid "Status Show Check Port"
+msgstr "状态信息显示节点检测"
+
+msgid "Status Show IP111"
+msgstr "状态信息显示IP111"
 
 msgid "Hide Menu"
 msgstr "隐藏菜单"

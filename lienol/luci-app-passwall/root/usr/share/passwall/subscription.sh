@@ -11,7 +11,7 @@ LOG_FILE=/var/log/$CONFIG.log
 config_t_get() {
 	local index=0
 	[ -n "$3" ] && index=$3
-	local ret=$(uci get $CONFIG.@$1[$index].$2 2>/dev/null)
+	local ret=$(uci -q get $CONFIG.@$1[$index].$2 2>/dev/null)
 	#echo ${ret:=$3}
 	echo $ret
 }
@@ -150,16 +150,26 @@ get_remote_config(){
 	add_mode="$subscrib_remark"
 	[ -n "$3" ] && add_mode="导入"
 	new_node_type=$(echo $1 | tr '[a-z]' '[A-Z]')
-	decode_link="$2"
 	if [ "$1" == "ss" ]; then
-		decode_link=$(ss_decode $decode_link)
+		decode_link=$(ss_decode $2)
 		ss_encrypt_method=$(echo "$decode_link" | awk -F ':' '{print $1}')
 		password=$(echo "$decode_link" | awk -F ':' '{print $2}' | awk -F '@' '{print $1}')
 		node_address=$(echo "$decode_link" | awk -F ':' '{print $2}' | awk -F '@' '{print $2}')
-		node_port=$(echo "$decode_link" | awk -F '@' '{print $2}' | awk -F '#' '{print $1}' | awk -F ':' '{print $2}')
+		
+		plugin_tmp=$(echo "$decode_link" | awk -F '\\/\\?' '{print $2}' | awk -F '#' '{print $1}')
+		if [ "$plugin_tmp" != "" ]; then 
+			plugin_tmp=$(urldecode $plugin_tmp)
+			plugin=$(echo "$plugin_tmp" | awk -F 'plugin=' '{print $2}' | awk -F ';' '{print $1}')
+			plugin_options=$(echo "$plugin_tmp" | awk -F "$plugin;" '{print $2}' | awk -F '&' '{print $1}')
+			node_port=$(echo "$decode_link" | awk -F '@' '{print $2}' | awk -F '\\/\\?' '{print $1}' | awk -F ':' '{print $2}')
+		else
+			node_port=$(echo "$decode_link" | awk -F '@' '{print $2}' | awk -F '#' '{print $1}' | awk -F ':' '{print $2}')
+		fi
+
 		remarks=$(urldecode $(echo "$decode_link" | awk -F '#' '{print $2}'))
+		[ "$plugin" == "simple-obfs" -o "$plugin" == "obfs-local" ] && echo "$Date: 不支持simple-obfs插件，订阅节点：$remarks:$node_address失败！" >> $LOG_FILE && return
 	elif [ "$1" == "ssr" ]; then
-		decode_link=$(decode_url_link $decode_link 1)
+		decode_link=$(decode_url_link $2 1)
 		node_address=$(echo "$decode_link" | awk -F ':' '{print $1}')
 		node_port=$(echo "$decode_link" | awk -F ':' '{print $2}')
 		protocol=$(echo "$decode_link" | awk -F ':' '{print $3}')
@@ -254,6 +264,11 @@ get_remote_config(){
 				[ -z "$node_address" -o "$node_address" == "" ] && return
 				
 				[ -z "$remarks" -o "$remarks" == "" ] && remarks="${node_address}:${node_port}"
+				tmp=$(echo $remarks | grep -E "过期时间|剩余流量|QQ群|官网")
+				[ -n "$tmp" ] && {
+					echo "$Date: 丢弃无用节点：$tmp" >> $LOG_FILE
+					return
+				}
 				
 				# 把全部节点节点写入文件 /usr/share/${CONFIG}/sub/all_onlinenodes
 				if [ ! -f "/usr/share/${CONFIG}/sub/all_onlinenodes" ]; then
@@ -266,7 +281,6 @@ get_remote_config(){
 			done
 			return
 		fi
-	
 	fi
 	
 	node_address=$(echo -n $node_address | awk '{print gensub(/[^!-~]/,"","g",$0)}')
@@ -274,6 +288,11 @@ get_remote_config(){
 	[ -z "$node_address" -o "$node_address" == "" ] && return
 	
 	[ -z "$remarks" -o "$remarks" == "" ] && remarks="${node_address}:${node_port}"
+	tmp=$(echo $remarks | grep -E "过期时间|剩余流量|QQ群|官网")
+	[ -n "$tmp" ] && {
+		echo "$Date: 丢弃无用节点：$tmp" >> $LOG_FILE
+		return
+	}
 	
 	# 把全部节点节点写入文件 /usr/share/${CONFIG}/sub/all_onlinenodes
 	if [ ! -f "/usr/share/${CONFIG}/sub/all_onlinenodes" ]; then
@@ -356,6 +375,7 @@ add_nodes(){
 		${uci_set}v2ray_ws_path="$json_path"
 		${uci_set}v2ray_h2_host="$json_host"
 		${uci_set}v2ray_h2_path="$json_path"
+		${uci_set}tls_allowInsecure=1
 		
 		if [ "$1" == "add" ]; then
 			let addnum_v2ray+=1
@@ -414,7 +434,7 @@ del_config(){
 		[ "`cat /usr/share/${CONFIG}/sub/all_onlinenodes |grep -c "$localaddress"`" -eq 0 ] && {
 			for localindex in $(uci show $CONFIG | grep -w "$localaddress" | grep -w "address=" |cut -d '[' -f2|cut -d ']' -f1)
 			do
-				del_type=$(uci get $CONFIG.@nodes[$localindex].type)
+				del_type=$(uci -q get $CONFIG.@nodes[$localindex].type)
 				uci delete $CONFIG.@nodes[$localindex]
 				uci commit $CONFIG
 				if [ "$del_type" == "SS" ]; then
@@ -435,17 +455,20 @@ del_config(){
 del_all_config(){
 	get_node_index
 	[ "`uci show $CONFIG | grep -c 'is_sub'`" -eq 0 ] && exit 0
-	TCP_NODE_NUM=$(uci get $CONFIG.@global_other[0].tcp_node_num)
+	TCP_NODE_NUM=$(uci -q get $CONFIG.@global_other[0].tcp_node_num)
+	[ -z "$TCP_NODE_NUM" ] && TCP_NODE_NUM=1
 	for i in $(seq 1 $TCP_NODE_NUM); do
 		eval TCP_NODE$i=$(config_t_get global tcp_node$i)
 	done
 
-	UDP_NODE_NUM=$(uci get $CONFIG.@global_other[0].udp_node_num)
+	UDP_NODE_NUM=$(uci -q get $CONFIG.@global_other[0].udp_node_num)
+	[ -z "$UDP_NODE_NUM" ] && UDP_NODE_NUM=1
 	for i in $(seq 1 $UDP_NODE_NUM); do
 		eval UDP_NODE$i=$(config_t_get global udp_node$i)
 	done
 
-	SOCKS5_NODE_NUM=$(uci get $CONFIG.@global_other[0].socks5_node_num)
+	SOCKS5_NODE_NUM=$(uci -q get $CONFIG.@global_other[0].socks5_node_num)
+	[ -z "$SOCKS5_NODE_NUM" ] && SOCKS5_NODE_NUM=1
 	for i in $(seq 1 $SOCKS5_NODE_NUM); do
 		eval SOCKS5_NODE$i=$(config_t_get global socks5_node$i)
 	done
@@ -572,4 +595,3 @@ add)
 	start
 	;;
 esac
-
