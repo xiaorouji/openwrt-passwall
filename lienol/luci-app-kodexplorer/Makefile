@@ -8,8 +8,8 @@ include $(TOPDIR)/rules.mk
 LUCI_TITLE:=LuCI support for KodExplorer
 LUCI_DEPENDS:=+nginx +zoneinfo-asia +php7 +php7-fpm +php7-mod-curl +php7-mod-gd +php7-mod-iconv +php7-mod-json +php7-mod-mbstring +php7-mod-opcache +php7-mod-session +php7-mod-zip
 LUCI_PKGARCH:=all
-PKG_VERSION:=1.0
-PKG_RELEASE:=11-20200111
+PKG_VERSION:=1.1
+PKG_RELEASE:=20200210
 
 include $(TOPDIR)/feeds/luci/luci.mk
 
