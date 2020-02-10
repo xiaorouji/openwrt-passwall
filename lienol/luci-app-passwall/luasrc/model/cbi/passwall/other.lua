@@ -57,6 +57,7 @@ s.addremove = false
 ---- TCP Redir Ports
 o = s:option(Value, "tcp_redir_ports", translate("TCP Redir Ports"))
 o.default = "80,443"
+o:value("disable", translate("No Proxy"))
 o:value("1:65535", translate("All"))
 o:value("80,443", "80,443")
 o:value("80:", "80 " .. translate("or more"))
@@ -65,6 +66,7 @@ o:value(":443", "443 " .. translate("or less"))
 ---- UDP Redir Ports
 o = s:option(Value, "udp_redir_ports", translate("UDP Redir Ports"))
 o.default = "1:65535"
+o:value("disable", translate("No Proxy"))
 o:value("1:65535", translate("All"))
 o:value("53", "53")
 

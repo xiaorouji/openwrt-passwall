@@ -37,9 +37,8 @@ function index()
     entry({"admin", "vpn", "passwall", "rule_list"},
           cbi("passwall/rule_list", {autoapply = true}),
           _("Set Blacklist And Whitelist"), 98).leaf = true
-    entry({"admin", "vpn", "passwall", "log"},
-          cbi("passwall/log", {autoapply = true}), _("Watch Logs"), 99).leaf =
-        true
+    entry({"admin", "vpn", "passwall", "log"}, cbi("passwall/log"),
+          _("Watch Logs"), 99).leaf = true
     entry({"admin", "vpn", "passwall", "node_config"},
           cbi("passwall/node_config")).leaf = true
 
