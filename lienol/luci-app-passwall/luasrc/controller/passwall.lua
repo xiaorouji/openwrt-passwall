@@ -9,6 +9,7 @@ local v2ray = require "luci.model.cbi.passwall.api.v2ray"
 function index()
     if not nixio.fs.access("/etc/config/passwall") then return end
     entry({"admin", "vpn"}, firstchild(), "VPN", 45).dependent = false
+    entry({"admin", "vpn", "passwall", "reset_config"}, call("reset_config")).leaf = true
     entry({"admin", "vpn", "passwall", "show"}, call("show_menu")).leaf = true
     entry({"admin", "vpn", "passwall", "hide"}, call("hide_menu")).leaf = true
     if nixio.fs.access("/etc/config/passwall") and
@@ -77,6 +78,11 @@ end
 local function http_write_json(content)
     http.prepare_content("application/json")
     http.write_json(content or {code = 1})
+end
+
+function reset_config()
+    luci.sys.call('[ -f "/usr/share/passwall/config.default" ] && cp -f /usr/share/passwall/config.default /etc/config/passwall && /etc/init.d/passwall reload')
+    luci.http.redirect(luci.dispatcher.build_url("admin", "vpn", "passwall"))
 end
 
 function show_menu()
@@ -251,7 +257,7 @@ function check_port()
                                         "ms.</font><br />"
                     else
                         retstring = retstring .. "<font color='red'>" ..
-                                        node_name .. "   Error.</font><br />"
+                                        node_name .. "   Timeout.</font><br />"
                     end
                     ret = ""
                 end
