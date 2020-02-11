@@ -325,7 +325,7 @@ add_nodes(){
 		${uci_set}timeout=300
 		${uci_set}tcp_fast_open=false
 		[ -n "$plugin" ] && ${uci_set}ss_plugin="$plugin"
-		[ -n "$plugin_options" ] && ${uci_set}ss_plugin_v2ray_opts="$plugin_options"
+		[ -n "$plugin_options" ] && ${uci_set}ss_plugin_opts="$plugin_options"
 		
 		if [ "$1" == "add" ]; then
 			let addnum_ss+=1
