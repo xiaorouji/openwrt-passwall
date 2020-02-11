@@ -157,7 +157,8 @@ for i in $(seq 1 $SOCKS5_NODE_NUM); do
 	eval SOCKS5_NODE$i=$(config_t_get global socks5_node$i nil)
 done
 
-[ "$UDP_NODE1" == "default" ] && UDP_NODE1=$TCP_NODE1
+[ "$UDP_NODE1" == "tcp" ] && UDP_NODE1=$TCP_NODE1
+[ "$SOCKS5_NODE1" == "tcp" ] && SOCKS5_NODE1=$TCP_NODE1
 
 TCP_NODE1_IP=""
 UDP_NODE1_IP=""
@@ -181,9 +182,7 @@ KCPTUN_REDIR_PORT=$(config_t_get global_forwarding kcptun_port 12948)
 PROXY_MODE=$(config_t_get global proxy_mode chnroute)
 
 load_config() {
-	[ "$ENABLED" != 1 ] && {
-		return 1
-	}
+	[ "$ENABLED" != 1 ] && return 1
 	[ "$TCP_NODE1" == "nil" -a "$UDP_NODE1" == "nil" -a "$SOCKS5_NODE1" == "nil" ] && {
 		echolog "没有选择节点！"
 		return 1
@@ -1096,13 +1095,15 @@ force_stop() {
 }
 
 boot() {
-	local delay=$(config_t_get global_delay start_delay 1)
-	if [ "$delay" -gt 0 ]; then
-		echolog "执行启动延时 $delay 秒后再启动!"
-		sleep $delay && start >/dev/null 2>&1 &
-	else
-		start
-	fi
+	[ "$ENABLED" == 1 ] && {
+		local delay=$(config_t_get global_delay start_delay 1)
+		if [ "$delay" -gt 0 ]; then
+			echolog "执行启动延时 $delay 秒后再启动!"
+			sleep $delay && start >/dev/null 2>&1 &
+		else
+			start
+		fi
+	}
 	return 0
 }
 
