@@ -72,6 +72,10 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_v2ray-plugin
 	bool "Include v2ray-plugin (Shadowsocks plugin)"
 	default n
 
+config PACKAGE_$(PKG_NAME)_INCLUDE_simple-obfs
+	bool "Include simple-obfs (Shadowsocks plugin)"
+	default n
+
 endmenu
 endef
 
@@ -96,7 +100,8 @@ define Package/$(PKG_NAME)
   +PACKAGE_$(PKG_NAME)_INCLUDE_ChinaDNS_NG:chinadns-ng \
   +PACKAGE_$(PKG_NAME)_INCLUDE_pdnsd:pdnsd-alt \
   +PACKAGE_$(PKG_NAME)_INCLUDE_dns2socks:dns2socks \
-  +PACKAGE_$(PKG_NAME)_INCLUDE_v2ray-plugin:v2ray-plugin
+  +PACKAGE_$(PKG_NAME)_INCLUDE_v2ray-plugin:v2ray-plugin \
+  +PACKAGE_$(PKG_NAME)_INCLUDE_simple-obfs:simple-obfs
 endef
 
 define Build/Prepare

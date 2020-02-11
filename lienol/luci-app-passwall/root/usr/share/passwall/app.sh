@@ -347,9 +347,9 @@ gen_start_config() {
 				local plugin_params=""
 				local plugin=$(config_n_get $node ss_plugin)
 				if [ "$plugin" != "none" ]; then
-					[ "$plugin" == "v2ray-plugin" ] && {
-						local opts=$(config_n_get $node ss_plugin_v2ray_opts)
-						plugin_params="--plugin v2ray-plugin --plugin-opts $opts"
+					[ "$plugin" == "v2ray-plugin" -o "$plugin" == "obfs-local" ] && {
+						local opts=$(config_n_get $node ss_plugin_opts)
+						plugin_params="--plugin $plugin --plugin-opts $opts"
 					}
 				fi
 				$ss_bin -c $config_file -b 0.0.0.0 -u $plugin_params >/dev/null 2>&1 &
@@ -455,9 +455,9 @@ gen_start_config() {
 				local plugin_params=""
 				local plugin=$(config_n_get $node ss_plugin)
 				if [ "$plugin" != "none" ]; then
-					[ "$plugin" == "v2ray-plugin" ] && {
-						local opts=$(config_n_get $node ss_plugin_v2ray_opts)
-						plugin_params="--plugin v2ray-plugin --plugin-opts $opts"
+					[ "$plugin" == "v2ray-plugin" -o "$plugin" == "obfs-local" ] && {
+						local opts=$(config_n_get $node ss_plugin_opts)
+						plugin_params="--plugin $plugin --plugin-opts $opts"
 					}
 				fi
 				$ss_bin -c $config_file -f $RUN_PID_PATH/udp_ss_1_$5 -U $plugin_params >/dev/null 2>&1 &
@@ -568,9 +568,9 @@ gen_start_config() {
 					local plugin_params=""
 					local plugin=$(config_n_get $node ss_plugin)
 					if [ "$plugin" != "none" ]; then
-						[ "$plugin" == "v2ray-plugin" ] && {
-						local opts=$(config_n_get $node ss_plugin_v2ray_opts)
-						plugin_params="--plugin v2ray-plugin --plugin-opts $opts"
+						[ "$plugin" == "v2ray-plugin" -o "$plugin" == "obfs-local" ] && {
+						local opts=$(config_n_get $node ss_plugin_opts)
+						plugin_params="--plugin $plugin --plugin-opts $opts"
 						}
 					fi
 					for k in $(seq 1 $process); do
@@ -1137,7 +1137,7 @@ stop() {
 	done
 	clean_log
 	source $APP_PATH/iptables.sh stop
-	kill_all brook dns2socks haproxy chinadns-ng ipt2socks v2ray-plugin
+	kill_all brook dns2socks haproxy chinadns-ng ipt2socks v2ray-plugin obfs-local
 	ps -w | grep -E "$CONFIG_TCP_FILE|$CONFIG_UDP_FILE|$CONFIG_SOCKS5_FILE" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 	ps -w | grep -E "$CONFIG_PATH" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 	rm -rf $TMP_DNSMASQ_PATH $CONFIG_PATH
