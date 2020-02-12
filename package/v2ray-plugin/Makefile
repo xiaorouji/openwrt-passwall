@@ -31,8 +31,15 @@ ifeq ($(ARCH),x86_64)
 	PKG_ARCH:=amd64
 	BIN_ARCH:=amd64
 endif
+ifeq ($(ARCH),aarch64)
+	PKG_ARCH:=arm64
+	BIN_ARCH:=arm64
+endif
 ifeq ($(ARCH),arm)
 	BIN_ARCH:=arm7
+endif
+ifeq ($(BOARD),bcm53xx)
+	BIN_ARCH:=arm6
 endif
 
 PKG_SOURCE:=v2ray-plugin-linux-$(PKG_ARCH)-v$(PKG_VERSION).tar.gz
