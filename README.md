@@ -1,6 +1,6 @@
 # openwrt-package
 
-[OP讨论交流群](https://t.me/opdiscuss)
+[OpenWRT讨论群](https://t.me/joinchat/IUAfG09LxGyUlfBz8YZNWA)
 
 本源码兼容[官方](https://github.com/openwrt/openwrt)和[大雕Lean](https://github.com/coolsnowwolf/lede)源码
 
