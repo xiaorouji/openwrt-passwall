@@ -180,15 +180,13 @@ load_acl() {
 }
 
 filter_vpsip() {
-	local address server_ip use_ipv6 network_type
-	address=$(config_get $1 address)
+	local server_ip use_ipv6 network_type
 	use_ipv6=$(config_get $1 use_ipv6)
 	network_type="ipv4"
 	[ "$use_ipv6" == "1" ] && network_type="ipv6"
-	server_ip=$(get_host_ip $network_type $address)
-
-	[ -n "$server_ip" -a "$server_ip" != "$TCP_NODE_IP" ] && {
-		[ "$network_type" == "ipv4" ] && ipset add $IPSET_VPSIPLIST $server_ip >/dev/null 2>&1 &
+	server_ip=$(get_node_host_ip $1)
+	[ -n "$server_ip" ] && {
+		[ "$network_type" == "ipv4" ] && ipset -! add $IPSET_VPSIPLIST $server_ip >/dev/null 2>&1 &
 	}
 }
 
@@ -204,12 +202,11 @@ dns_hijack() {
 add_firewall_rule() {
 	echolog "开始加载防火墙规则..."
 	echolog "默认代理模式：$(get_action_chain_name $PROXY_MODE)"
-	ipset -! create $IPSET_LANIPLIST nethash && ipset flush $IPSET_LANIPLIST
-	ipset -! create $IPSET_VPSIPLIST nethash && ipset flush $IPSET_VPSIPLIST
-	ipset -! create $IPSET_ROUTER nethash && ipset flush $IPSET_ROUTER
-	#ipset -! create $IPSET_GFW nethash && ipset flush $IPSET_GFW
+	ipset -! create $IPSET_LANIPLIST nethash
+	ipset -! create $IPSET_VPSIPLIST nethash
+	ipset -! create $IPSET_ROUTER nethash
 	ipset -! create $IPSET_GFW nethash
-	ipset -! create $IPSET_CHN nethash && ipset flush $IPSET_CHN
+	ipset -! create $IPSET_CHN nethash
 	ipset -! create $IPSET_BLACKLIST nethash && ipset flush $IPSET_BLACKLIST
 	ipset -! create $IPSET_WHITELIST nethash && ipset flush $IPSET_WHITELIST
 
@@ -231,7 +228,7 @@ add_firewall_rule() {
 	# 忽略特殊IP段
 	lan_ip=$(ifconfig br-lan | grep "inet addr" | awk '{print $2}' | awk -F : '{print $2}') #路由器lan IP
 	lan_ipv4=$(ip address show br-lan | grep -w "inet" | awk '{print $2}')                  #当前LAN IPv4段
-	[ -n "$lan_ipv4" ] && ipset add $IPSET_LANIPLIST $lan_ipv4 >/dev/null 2>&1 &
+	[ -n "$lan_ipv4" ] && ipset -! add $IPSET_LANIPLIST $lan_ipv4 >/dev/null 2>&1 &
 
 	#  过滤所有节点IP
 	config_foreach filter_vpsip "nodes"
@@ -278,9 +275,8 @@ add_firewall_rule() {
 			local k=$i
 			eval node=\$SOCKS5_NODE$k
 			if [ "$node" != "nil" ]; then
-				local address=$(config_get $node address)
 				local SOCKS5_NODE_PORT=$(config_get $node port)
-				local SOCKS5_NODE_IP=$(get_host_ip "ipv4" $address)
+				local SOCKS5_NODE_IP=$(get_node_host_ip $node)
 				[ -n "$SOCKS5_NODE_IP" -a -n "$SOCKS5_NODE_PORT" ] && $ipt_n -A PSW -p tcp -d $SOCKS5_NODE_IP -m multiport --dports $SOCKS5_NODE_PORT -j RETURN
 			fi
 		done
@@ -294,9 +290,8 @@ add_firewall_rule() {
 			eval local_port=\$TCP_REDIR_PORT$k
 			# 生成TCP转发规则
 			if [ "$node" != "nil" ]; then
-				local address=$(config_get $node address)
 				local TCP_NODE_PORT=$(config_get $node port)
-				local TCP_NODE_IP=$(get_host_ip "ipv4" $address)
+				local TCP_NODE_IP=$(get_node_host_ip $node)
 				local TCP_NODE_TYPE=$(echo $(config_get $node type) | tr 'A-Z' 'a-z')
 				[ -n "$TCP_NODE_IP" -a -n "$TCP_NODE_PORT" ] && $ipt_n -A PSW -p tcp -d $TCP_NODE_IP -m multiport --dports $TCP_NODE_PORT -j RETURN
 				if [ "$TCP_NODE_TYPE" == "brook" ]; then
@@ -329,7 +324,6 @@ add_firewall_rule() {
 					$ipt_n -A PSW_GLO$k -p tcp -j REDIRECT --to-ports $local_port
 
 					# GFWLIST模式
-					$ipt_n -A PSW_GFW$k -p tcp $(dst $IPSET_ROUTER) -j REDIRECT --to-ports $local_port
 					$ipt_n -A PSW_GFW$k -p tcp $(dst $IPSET_GFW) -j REDIRECT --to-ports $local_port
 
 					# 大陆白名单模式
@@ -437,9 +431,8 @@ add_firewall_rule() {
 			eval local_port=\$UDP_REDIR_PORT$k
 			#  生成UDP转发规则
 			if [ "$node" != "nil" ]; then
-				local address=$(config_get $node address)
 				local UDP_NODE_PORT=$(config_get $node port)
-				local UDP_NODE_IP=$(get_host_ip "ipv4" $address)
+				local UDP_NODE_IP=$(get_node_host_ip $node)
 				local UDP_NODE_TYPE=$(echo $(config_get $node type) | tr 'A-Z' 'a-z')
 				[ -n "$UDP_NODE_IP" -a -n "$UDP_NODE_PORT" ] && $ipt_m -A PSW -p udp -d $UDP_NODE_IP -m multiport --dports $UDP_NODE_PORT -j RETURN
 				[ "$UDP_NODE_TYPE" == "brook" ] && $ipt_m -A PSW_ACL -p udp -m socket -j MARK --set-mark 1
@@ -606,13 +599,23 @@ del_firewall_rule() {
 		done
 	fi
 
+	ipset -F $IPSET_LANIPLIST >/dev/null 2>&1 && ipset -X $IPSET_LANIPLIST >/dev/null 2>&1 &
+	ipset -F $IPSET_VPSIPLIST >/dev/null 2>&1 && ipset -X $IPSET_VPSIPLIST >/dev/null 2>&1 &
 	ipset -F $IPSET_ROUTER >/dev/null 2>&1 && ipset -X $IPSET_ROUTER >/dev/null 2>&1 &
 	#ipset -F $IPSET_GFW >/dev/null 2>&1 && ipset -X $IPSET_GFW >/dev/null 2>&1 &
 	#ipset -F $IPSET_CHN >/dev/null 2>&1 && ipset -X $IPSET_CHN >/dev/null 2>&1 &
 	ipset -F $IPSET_BLACKLIST >/dev/null 2>&1 && ipset -X $IPSET_BLACKLIST >/dev/null 2>&1 &
 	ipset -F $IPSET_WHITELIST >/dev/null 2>&1 && ipset -X $IPSET_WHITELIST >/dev/null 2>&1 &
-	ipset -F $IPSET_VPSIPLIST >/dev/null 2>&1 && ipset -X $IPSET_VPSIPLIST >/dev/null 2>&1 &
+}
+
+flush_ipset() {
 	ipset -F $IPSET_LANIPLIST >/dev/null 2>&1 && ipset -X $IPSET_LANIPLIST >/dev/null 2>&1 &
+	ipset -F $IPSET_VPSIPLIST >/dev/null 2>&1 && ipset -X $IPSET_VPSIPLIST >/dev/null 2>&1 &
+	ipset -F $IPSET_ROUTER >/dev/null 2>&1 && ipset -X $IPSET_ROUTER >/dev/null 2>&1 &
+	ipset -F $IPSET_GFW >/dev/null 2>&1 && ipset -X $IPSET_GFW >/dev/null 2>&1 &
+	ipset -F $IPSET_CHN >/dev/null 2>&1 && ipset -X $IPSET_CHN >/dev/null 2>&1 &
+	ipset -F $IPSET_BLACKLIST >/dev/null 2>&1 && ipset -X $IPSET_BLACKLIST >/dev/null 2>&1 &
+	ipset -F $IPSET_WHITELIST >/dev/null 2>&1 && ipset -X $IPSET_WHITELIST >/dev/null 2>&1 &
 }
 
 start() {
@@ -625,6 +628,9 @@ stop() {
 }
 
 case $1 in
+flush_ipset)
+	flush_ipset
+	;;
 stop)
 	stop
 	;;
