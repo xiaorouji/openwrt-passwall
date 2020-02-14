@@ -311,6 +311,7 @@ add_nodes(){
 	elif [ "$1" == "update" ]; then
 		nodes_index=$update_index
 	fi
+	uci_add_list="uci add_list $CONFIG.@nodes[$nodes_index]."
 	uci_set="uci set $CONFIG.@nodes[$nodes_index]."
 	[ "$add_mode" != "导入" ] && ${uci_set}is_sub="is_sub"
 	if [ "$2" == "ss" ]; then
@@ -373,9 +374,18 @@ add_nodes(){
 		${uci_set}v2ray_tcp_guise="$json_type"
 		${uci_set}v2ray_ws_host="$json_host"
 		${uci_set}v2ray_ws_path="$json_path"
-		${uci_set}v2ray_h2_host="$json_host"
 		${uci_set}v2ray_h2_path="$json_path"
 		${uci_set}tls_allowInsecure=1
+		[ "$json_net" == "tcp" -o "$json_net" == "h2" ] && {
+			local tmp
+			[ "$json_net" == "tcp" ] && tmp="v2ray_tcp_guise_http_host"
+			[ "$json_net" == "h2" ] && tmp="v2ray_h2_host"
+			hosts=$(echo $json_host | sed 's/,/ /g')
+			for host in $hosts
+			do
+				${uci_add_list}${tmp}="$host"
+			done
+		}
 		
 		if [ "$1" == "add" ]; then
 			let addnum_v2ray+=1
