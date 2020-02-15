@@ -110,7 +110,7 @@ start_subscribe() {
 
 ss_decode() {
 	temp_link=$1
-	if [[ "$(echo $temp_link | grep "@")" != "" ]]; then
+	if [[ "$(echo $temp_link | awk -F '#' '{print $1}' | grep "@")" != "" ]]; then
 		link1=$(decode_url_link $(echo -n "$temp_link" | awk -F '@' '{print $1}') 1)
 		link2=$(echo -n "$temp_link" | awk -F '@' '{print $2}')
 		echo -n "${link1}@${link2}"
@@ -161,9 +161,9 @@ get_remote_config(){
 			plugin_tmp=$(urldecode $plugin_tmp)
 			plugin=$(echo "$plugin_tmp" | awk -F 'plugin=' '{print $2}' | awk -F ';' '{print $1}')
 			plugin_options=$(echo "$plugin_tmp" | awk -F "$plugin;" '{print $2}' | awk -F '&' '{print $1}')
-			node_port=$(echo "$decode_link" | awk -F '@' '{print $2}' | awk -F '\\/\\?' '{print $1}' | awk -F ':' '{print $2}')
+			node_port=$(echo "$decode_link" | awk -F ':' '{print $3}' | awk -F '\\/\\?' '{print $1}')
 		else
-			node_port=$(echo "$decode_link" | awk -F '@' '{print $2}' | awk -F '#' '{print $1}' | awk -F ':' '{print $2}')
+			node_port=$(echo "$decode_link" | awk -F ':' '{print $3}' | awk -F '#' '{print $1}')
 		fi
 
 		[ -n "$plugin" -a "$plugin" == "simple-obfs" ] && plugin=obfs-local
