@@ -1,4 +1,5 @@
 -- Copyright 2018-2020 Lienol <lawlienol@gmail.com>
+-- 试着把passwall移动“服务”菜单之下
 module("luci.controller.passwall", package.seeall)
 local appname = "passwall"
 local http = require "luci.http"
