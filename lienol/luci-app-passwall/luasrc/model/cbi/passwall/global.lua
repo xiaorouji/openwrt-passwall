@@ -24,7 +24,8 @@ uci:foreach(appname, "nodes", function(e)
             n[e[".name"]] = "%s+%s：[%s] %s" %
                                 {translate(type), "Kcptun", e.remarks, address}
         else
-            n[e[".name"]] = "%s：[%s] %s" % {translate(type), e.remarks, address}
+            n[e[".name"]] = "%s：[%s] %s" %
+                                {translate(type), e.remarks, address}
         end
     end
 end)
@@ -74,7 +75,7 @@ for i = 1, udp_node_num, 1 do
                      translate("For Game Mode or DNS resolution and more.") ..
                          translate("The selected server will not use Kcptun."))
         o:value("nil", translate("Close"))
-        o:value("default", translate("Same as the tcp node"))
+        o:value("tcp", translate("Same as the tcp node"))
     else
         o = s:option(ListValue, "udp_node" .. i,
                      translate("UDP Node") .. " " .. i)
@@ -89,43 +90,46 @@ for i = 1, socks5_node_num, 1 do
     if i == 1 then
         o = s:option(ListValue, "socks5_node" .. i, translate("Socks5 Node"),
                      translate("The client can use the router's Socks5 proxy."))
+        o:value("nil", translate("Close"))
+        o:value("tcp", translate("Same as the tcp node"))
     else
         o = s:option(ListValue, "socks5_node" .. i,
                      translate("Socks5 Node") .. " " .. i)
+        o:value("nil", translate("Close"))
     end
-    o:value("nil", translate("Close"))
     for _, key in pairs(key_table) do o:value(key, n[key]) end
 end
 
----- China DNS Server
-o = s:option(Value, "up_china_dns", translate("China DNS Server") .. "(UDP)",
-             translate(
-                 "If you want to work with other DNS acceleration services, use the default.<br />Example: 127.0.0.1#6053 ,Represents DNS on using 127.0.0.1 the 6053 port. such as SmartDNS, AdGuard Home...<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53.<br />If you use custom, unless you know what you're doing, setting it up incorrectly can cause your stuck to crash !"))
-o.default = "default"
-o:value("default", translate("default"))
-o:value("dnsbyisp", translate("dnsbyisp"))
-o:value("223.5.5.5", "223.5.5.5 (" .. translate("Ali") .. "DNS)")
-o:value("223.6.6.6", "223.6.6.6 (" .. translate("Ali") .. "DNS)")
-o:value("114.114.114.114", "114.114.114.114 (114DNS)")
-o:value("114.114.115.115", "114.114.115.115 (114DNS)")
-o:value("119.29.29.29", "119.29.29.29 (DNSPOD DNS)")
-o:value("182.254.116.116", "182.254.116.116 (DNSPOD DNS)")
-o:value("1.2.4.8", "1.2.4.8 (CNNIC DNS)")
-o:value("210.2.4.8", "210.2.4.8 (CNNIC DNS)")
-o:value("180.76.76.76", "180.76.76.76 (" .. translate("Baidu") .. "DNS)")
+if tonumber(api.uci_get_type("global_other", "wangejibadns", 0)) == 1 then
+    o = s:option(Value, "up_china_dns", translate("China DNS Server") .. "(UDP)",
+                translate(
+                    "If you want to work with other DNS acceleration services, use the default.<br />Example: 127.0.0.1#6053 ,Represents DNS on using 127.0.0.1 the 6053 port. such as SmartDNS, AdGuard Home...<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53.<br />If you use custom, unless you know what you're doing, setting it up incorrectly can cause your stuck to crash !"))
+    o.default = "default"
+    o:value("default", translate("default"))
+    o:value("dnsbyisp", translate("dnsbyisp"))
+    o:value("223.5.5.5", "223.5.5.5 (" .. translate("Ali") .. "DNS)")
+    o:value("223.6.6.6", "223.6.6.6 (" .. translate("Ali") .. "DNS)")
+    o:value("114.114.114.114", "114.114.114.114 (114DNS)")
+    o:value("114.114.115.115", "114.114.115.115 (114DNS)")
+    o:value("119.29.29.29", "119.29.29.29 (DNSPOD DNS)")
+    o:value("182.254.116.116", "182.254.116.116 (DNSPOD DNS)")
+    o:value("1.2.4.8", "1.2.4.8 (CNNIC DNS)")
+    o:value("210.2.4.8", "210.2.4.8 (CNNIC DNS)")
+    o:value("180.76.76.76", "180.76.76.76 (" .. translate("Baidu") .. "DNS)")
+end
 
 ---- DNS Forward Mode
 o = s:option(ListValue, "dns_mode", translate("DNS Mode"), translate(
                  "if has problem, please try another mode.<br />if you use no patterns are used, DNS of wan will be used by default as upstream of dnsmasq."))
 o.rmempty = false
 o:reset_values()
-if is_finded("chinadns-ng") then o:value("chinadns-ng", "ChinaDNS-NG") end
+if is_finded("chinadns-ng") and tonumber(api.uci_get_type("global_other", "wangejibadns", 0)) == 1 then o:value("chinadns-ng", "ChinaDNS-NG") end
+if is_installed("pdnsd") or is_installed("pdnsd-alt") or is_finded("pdnsd") then
+    o:value("pdnsd", "pdnsd")
+end
 if is_finded("dns2socks") then
     o:value("dns2socks",
             "dns2socks + " .. translate("Use Socks5 Node Resolve DNS"))
-end
-if is_installed("pdnsd") or is_installed("pdnsd-alt") or is_finded("pdnsd") then
-    o:value("pdnsd", "pdnsd")
 end
 o:value("local_7913", translate("Use local port 7913 as DNS"))
 o:value("nonuse", translate("No patterns are used"))
@@ -183,26 +187,25 @@ o.rmempty = false
 
 ---- Default Proxy Mode
 o = s:option(ListValue, "proxy_mode",
-             translate("Default") .. translate("Proxy Mode"), translate(
-                 "If using GFW mode is not available, try clearing the native cache."))
+             translate("Default") .. translate("Proxy Mode"),
+             translate("If not available, try clearing the cache."))
 o.default = "chnroute"
 o.rmempty = false
 o:value("disable", translate("No Proxy"))
 o:value("global", translate("Global Proxy"))
 o:value("gfwlist", translate("GFW List"))
 o:value("chnroute", translate("China WhiteList"))
-o:value("gamemode", translate("Game Mode"))
+-- o:value("gamemode", translate("Game Mode"))
 o:value("returnhome", translate("Return Home"))
 
 ---- Localhost Proxy Mode
 o = s:option(ListValue, "localhost_proxy_mode",
              translate("Localhost") .. translate("Proxy Mode"), translate(
-                 "The server client can also use this rule to scientifically surf the Internet.<br /> Global and continental whitelist are not recommended for non-special cases!"))
+                 "The server client can also use this rule to scientifically surf the Internet."))
 o:value("default", translate("Default"))
-o:value("global",
-        translate("Global Proxy") .. "（" .. translate("Danger") .. "）")
 o:value("gfwlist", translate("GFW List"))
 o:value("chnroute", translate("China WhiteList"))
+o:value("global", translate("Global Proxy"))
 o.default = "default"
 o.rmempty = false
 

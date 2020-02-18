@@ -81,8 +81,22 @@ o:value("disable", translate("No Proxy"))
 o:value("global", translate("Global Proxy"))
 o:value("gfwlist", translate("GFW List"))
 o:value("chnroute", translate("China WhiteList"))
-o:value("gamemode", translate("Game Mode"))
+-- o:value("gamemode", translate("Game Mode"))
 o:value("returnhome", translate("Return Home"))
+
+---- TCP No Redir Ports
+o = s:option(Value, "tcp_no_redir_ports", translate("TCP No Redir Ports"))
+o.default = "default"
+o:value("disable", translate("No patterns are used"))
+o:value("default", translate("Default"))
+o:value("1:65535", translate("All"))
+
+---- UDP No Redir Ports
+o = s:option(Value, "udp_no_redir_ports", translate("UDP No Redir Ports"))
+o.default = "default"
+o:value("disable", translate("No patterns are used"))
+o:value("default", translate("Default"))
+o:value("1:65535", translate("All"))
 
 ---- TCP Redir Ports
 o = s:option(Value, "tcp_redir_ports", translate("TCP Redir Ports"))
