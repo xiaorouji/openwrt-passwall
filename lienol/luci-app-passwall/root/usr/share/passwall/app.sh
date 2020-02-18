@@ -942,6 +942,9 @@ gen_pdnsd_config() {
 				interval = 60;
 				uptest = none;
 				purge_cache = off;
+				reject=::/0;
+				reject_policy=negate;
+				reject_recursively=on;
 			}
 			
 		EOF
