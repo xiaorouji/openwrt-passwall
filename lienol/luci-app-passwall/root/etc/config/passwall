@@ -1,0 +1,55 @@
+
+config global
+	option proxy_mode 'chnroute'
+	option dns_mode 'chinadns'
+	option up_dns_mode 'OpenDNS_443'
+	option use_multithreading '0'
+	option ssr_server_passwall '0'
+	option auto_switch '0'
+	option tcp_redir '0'
+	option udp_redir '0'
+	option socks5_proxy '0'
+
+config global_haproxy
+	option admin_enable '0'
+	option balancing_enable '0'
+
+config global_delay
+	option auto_on '0'
+	option start_delay '20'
+
+config global_dns
+	option dns_1 '180.76.76.76'
+	option dns_2 '114.114.114.114'
+	option dns_port '0'
+	option wan_port '0'
+	option dns_53 '0'
+	option dns_forward '8.8.8.8:53'
+
+config global_proxy
+	option tcp_redir_port '1031'
+	option udp_redir_port '1032'
+	option socks5_port '1033'
+	option kcptun_port '11183'
+	option proxy_ipv6 '0'
+
+config global_rules
+	option gfwlist_update '1'
+	option chnroute_update '1'
+	option Pcap_Routing_update '1'
+	option Pcap_WhiteList_update '1'
+	option auto_update '0'
+	option gfwlist_version '2018-12-07'
+	option chnroute_version '2018-12-25'
+	option pcap_Routing_version '2018-12-25'
+	option pcap_WhiteList_version '2018-12-25'
+
+config global_kcptun
+	option kcptun_client_file '/usr/bin/kcptun_client'
+
+config global_subscribe
+	option subscribe_by_ss '0'
+	option auto_update_subscribe '0'
+	
+config auto_switch
+	option testing_time '30'
