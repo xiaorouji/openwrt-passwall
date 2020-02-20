@@ -21,7 +21,6 @@ local nodeResult = setmetatable({}, { __index = cache })  -- update result
 local name = 'passwall'
 local uciType = 'nodes'
 local ucic = luci.model.uci.cursor()
-local api = require "luci.model.cbi.passwall.api.api"
 local arg2 = arg[2]
 
 local log = function(...)
@@ -299,7 +298,7 @@ local function truncate_nodes()
 	for i = 1, tcp_node_num, 1 do
 		local node = ucic:get_first(name, "global", "tcp_node"..i, nil)
 		if node and node ~= "nil" then
-			local is_sub_node = api.uci_get_type_id(node, "is_sub", "0")
+			local is_sub_node = ucic:get(name, node, "is_sub", "0")
 			if is_sub_node == "1" then
 				is_stop = 1
 				ucic:set(name, ucic:get_first(name, 'global'), "tcp_node"..i, "nil")
@@ -310,7 +309,7 @@ local function truncate_nodes()
 	for i = 1, udp_node_num, 1 do
 		local node = ucic:get_first(name, "global", "udp_node"..i, nil)
 		if node and node ~= "nil" then
-			local is_sub_node = api.uci_get_type_id(node, "is_sub", "0")
+			local is_sub_node = ucic:get(name, node, "is_sub", "0")
 			if is_sub_node == "1" then
 				is_stop = 1
 				ucic:set(name, ucic:get_first(name, 'global'), "udp_node"..i, "nil")
@@ -321,7 +320,7 @@ local function truncate_nodes()
 	for i = 1, socks5_node_num, 1 do
 		local node = ucic:get_first(name, "global", "socks5_node"..i, nil)
 		if node and node ~= "nil" then
-			local is_sub_node = api.uci_get_type_id(node, "is_sub", "0")
+			local is_sub_node = ucic:get(name, node, "is_sub", "0")
 			if is_sub_node == "1" then
 				is_stop = 1
 				ucic:set(name, ucic:get_first(name, 'global'), "socks5_node"..i, "nil")
