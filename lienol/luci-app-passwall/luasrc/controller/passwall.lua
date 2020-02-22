@@ -274,8 +274,7 @@ end
 
 function update_rules()
     local update = luci.http.formvalue("update")
-    luci.sys.call("nohup /usr/share/passwall/rule_update.sh '" .. update ..
-                      "' 2>&1 &")
+    luci.sys.call("lua /usr/share/passwall/rule_update.lua log '" .. update .. "' > /dev/null 2>&1 &")
 end
 
 function kcptun_check()

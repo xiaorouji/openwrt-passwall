@@ -585,7 +585,7 @@ start_crontab() {
 	if [ "$autoupdate" = "1" ]; then
 		local t="0 $dayupdate * * $weekupdate"
 		[ "$weekupdate" = "7" ] && t="0 $dayupdate * * *"
-		echo "$t $APP_PATH/rule_update.sh" >>/etc/crontabs/root
+		echo "$t lua $APP_PATH/rule_update.lua nil log > /dev/null 2>&1 &" >>/etc/crontabs/root
 		echolog "配置定时任务：自动更新规则。"
 	fi
 
