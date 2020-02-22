@@ -847,7 +847,7 @@ stop_dnsmasq() {
 	rm -rf /var/dnsmasq.d/dnsmasq-$CONFIG.conf
 	rm -rf $DNSMASQ_PATH/dnsmasq-$CONFIG.conf
 	rm -rf $TMP_DNSMASQ_PATH
-	/etc/init.d/dnsmasq reload >/dev/null 2>&1 &
+	/etc/init.d/dnsmasq restart >/dev/null 2>&1 &
 }
 
 start_haproxy() {
@@ -1015,7 +1015,7 @@ start() {
 	source $APP_PATH/iptables.sh start
 	gen_include
 	start_crontab
-	/etc/init.d/dnsmasq reload >/dev/null 2>&1 &
+	/etc/init.d/dnsmasq restart >/dev/null 2>&1 &
 	echolog "运行完成！\n"
 	rm -f "$LOCK_FILE"
 	return 0
