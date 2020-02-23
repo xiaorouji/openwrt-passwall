@@ -4,6 +4,7 @@ local server_section = arg[1]
 local server = ucursor:get_all("v2ray_server", server_section)
 
 local settings = nil
+local routing = nil
 
 if server.protocol == "vmess" then
     if server.VMess_id then
@@ -31,6 +32,19 @@ elseif server.protocol == "shadowsocks" then
         level = tonumber(server.ss_level),
         network = server.ss_network,
         ota = (server.ss_ota == '1') and true or false
+    }
+end
+
+if server.accept_lan == nil or server.accept_lan == "0" then
+    routing = {
+        domainStrategy = "IPOnDemand",
+        rules = {
+            {
+                type = "field",
+                ip = {"10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"},
+                outboundTag = "blocked"
+            }
+        }
     }
 end
 
@@ -86,6 +100,7 @@ local v2ray = {
     -- 传出连接
     outbound = {protocol = "freedom"},
     -- 额外传出连接
-    outboundDetour = {{protocol = "blackhole", tag = "blocked"}}
+    outboundDetour = {{protocol = "blackhole", tag = "blocked"}},
+    routing = routing
 }
 print(json.stringify(v2ray, 1))

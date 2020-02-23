@@ -193,6 +193,12 @@ tls_keyFile = t:option(Value, "tls_keyFile",
                        translate("as:") .. "/etc/ssl/private.key")
 tls_keyFile:depends("tls_enable", 1)
 
+accept_lan = t:option(Flag, "accept_lan", translate("Accept LAN Access"),
+                      translate(
+                          "When selected, it can accessed lan , this will not be safe!"))
+accept_lan.default = "0"
+accept_lan.rmempty = false
+
 function rmempty_restore()
     VMess_id.rmempty = true
     VMess_alterId.rmempty = true
