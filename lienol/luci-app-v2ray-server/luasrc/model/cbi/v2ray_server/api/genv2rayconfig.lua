@@ -20,9 +20,27 @@ if server.protocol == "vmess" then
     end
 elseif server.protocol == "socks" then
     settings = {
-        auth = "password",
+        auth = (server.socks_username == nil and server.socks_password == nil) and
+            "password" or "noauth",
         accounts = {
-            {user = server.socks_username, pass = server.socks_password}
+            {
+                user = (server.socks_username == nil) and "" or
+                    server.socks_username,
+                pass = (server.socks_password == nil) and "" or
+                    server.socks_password
+            }
+        }
+    }
+elseif server.protocol == "http" then
+    settings = {
+        allowTransparent = false,
+        accounts = {
+            {
+                user = (server.socks_username == nil) and "" or
+                    server.socks_username,
+                pass = (server.socks_password == nil) and "" or
+                    server.socks_password
+            }
         }
     }
 elseif server.protocol == "shadowsocks" then
