@@ -26,7 +26,6 @@ gen_v2ray_config_file() {
 start_v2ray_server() {
 	mkdir -p $CONFIG_PATH $LOG_PATH
 	touch $LOG_APP_FILE
-	caddy_file=$(uci get $CONFIG.@global[0].caddy_file)
 	config_foreach gen_v2ray_config_file "user"
 	fw3 reload >/dev/null 2>&1 &
 }

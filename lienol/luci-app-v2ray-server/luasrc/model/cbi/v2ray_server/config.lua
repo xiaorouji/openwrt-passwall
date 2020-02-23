@@ -30,14 +30,26 @@ port.rmempty = false
 protocol = t:option(ListValue, "protocol", translate("Protocol"))
 protocol:value("vmess", translate("Vmess"))
 protocol:value("socks", translate("Socks"))
+protocol:value("http",translate("Http"))
 protocol:value("shadowsocks", translate("Shadowsocks"))
 
 socks_username = t:option(Value, "socks_username", translate("User name"))
+socks_username.rmempty = true
 socks_username:depends("protocol", "socks")
 
 socks_password = t:option(Value, "socks_password", translate("Password"))
+socks_password.rmempty = true
 socks_password.password = true
 socks_password:depends("protocol", "socks")
+
+http_username = t:option(Value, "http_username", translate("User name"))
+http_username.rmempty = true
+http_username:depends("protocol", "http")
+
+http_password = t:option(Value, "http_password", translate("Password"))
+http_password.rmempty = true
+http_password.password = true
+http_password:depends("protocol", "http")
 
 ss_method = t:option(ListValue, "ss_method", translate("Encrypt Method"))
 ss_method:value("aes-128-cfb")
