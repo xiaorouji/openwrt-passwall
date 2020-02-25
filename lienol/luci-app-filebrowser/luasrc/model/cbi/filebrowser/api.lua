@@ -20,7 +20,7 @@ local LEDE_BOARD = nil
 local DISTRIB_TARGET = nil
 
 function uci_get_type(type, config, default)
-    value = uci:get(appname, "@" .. type .. "[0]", config) or sys.exec(
+    value = uci:get_first(appname, type, config, default) or sys.exec(
                 "echo -n `uci -q get " .. appname .. ".@" .. type .. "[0]." ..
                     config .. "`")
     if (value == nil or value == "") and (default and default ~= "") then
@@ -303,34 +303,34 @@ function to_move(file)
         sys.call("/bin/rm -rf /tmp/filebrowser_extract.*")
         return {code = 1, error = i18n.translate("Client file is required.")}
     end
+    local project_directory =
+        uci_get_type("global", "project_directory", "/tmp")
+    luci.sys.exec("mkdir -p " .. project_directory)
+    local client_path = project_directory .. "/" .. appname
+    local client_path_bak
 
-    local client_file = uci_get_type("global", "project_directory",
-                                     "/tmp/filebrowser")
-    local client_file_bak
-
-    if fs.access(client_file) then
-        client_file_bak = client_file .. ".bak"
-        exec("/bin/mv", {"-f", client_file, client_file_bak})
+    if fs.access(client_path) then
+        client_path_bak = "/tmp/" .. appname .. ".bak"
+        exec("/bin/mv", {"-f", client_path, client_path_bak})
     end
 
-    local result = exec("/bin/mv", {"-f", file, client_file}, nil,
+    local result = exec("/bin/mv", {"-f", file, client_path}, nil,
                         command_timeout) == 0
 
-    if not result or not fs.access(client_file) then
-        sys.call("/bin/rm -rf /tmp/filebrowser_extract.*")
-        if client_file_bak then
-            exec("/bin/mv", {"-f", client_file_bak, client_file})
+    if not result or not fs.access(client_path) then
+        if client_path_bak then
+            exec("/bin/mv", {"-f", client_path_bak, client_path})
         end
         return {
             code = 1,
             error = i18n.translatef("Can't move new file to path: %s",
-                                    client_file)
+                                    client_path)
         }
     end
 
-    exec("/bin/chmod", {"755", client_file})
+    exec("/bin/chmod", {"755", client_path})
 
-    if client_file_bak then exec("/bin/rm", {"-f", client_file_bak}) end
+    if client_path_bak then exec("/bin/rm", {"-f", client_path_bak}) end
 
     sys.call("/bin/rm -rf /tmp/filebrowser_extract.*")
 
