@@ -7,8 +7,8 @@ include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=LuCI support for FileBrowser
 LUCI_PKGARCH:=all
-PKG_VERSION:=1.0
-PKG_RELEASE:=12-20200113
+PKG_VERSION:=1.1
+PKG_RELEASE:=1
 
 include $(TOPDIR)/feeds/luci/luci.mk
 
