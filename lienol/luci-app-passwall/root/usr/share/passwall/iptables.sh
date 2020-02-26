@@ -2,7 +2,6 @@
 
 IPSET_LANIPLIST="laniplist"
 IPSET_VPSIPLIST="vpsiplist"
-IPSET_ROUTER="router"
 IPSET_GFW="gfwlist"
 IPSET_CHN="chnroute"
 IPSET_BLACKLIST="blacklist"
@@ -266,15 +265,14 @@ add_firewall_rule() {
 	echolog "默认代理模式：$(get_action_chain_name $PROXY_MODE)"
 	ipset -! create $IPSET_LANIPLIST nethash
 	ipset -! create $IPSET_VPSIPLIST nethash
-	ipset -! create $IPSET_ROUTER nethash
 	ipset -! create $IPSET_GFW nethash
 	ipset -! create $IPSET_CHN nethash
 	ipset -! create $IPSET_BLACKLIST nethash && ipset flush $IPSET_BLACKLIST
 	ipset -! create $IPSET_WHITELIST nethash && ipset flush $IPSET_WHITELIST
 
-	cat $RULE_PATH/chnroute | sed -e "/^$/d" | sed -e "s/^/add $IPSET_CHN &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
-	cat $RULE_PATH/blacklist_ip | sed -e "/^$/d" | sed -e "s/^/add $IPSET_BLACKLIST &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
-	cat $RULE_PATH/whitelist_ip | sed -e "/^$/d" | sed -e "s/^/add $IPSET_WHITELIST &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
+	cat $RULES_PATH/chnroute | sed -e "/^$/d" | sed -e "s/^/add $IPSET_CHN &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
+	cat $RULES_PATH/blacklist_ip | sed -e "/^$/d" | sed -e "s/^/add $IPSET_BLACKLIST &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
+	cat $RULES_PATH/whitelist_ip | sed -e "/^$/d" | sed -e "s/^/add $IPSET_WHITELIST &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
 
 	ipset -! -R <<-EOF || return 1
 		$(gen_laniplist | sed -e "s/^/add $IPSET_LANIPLIST /")
@@ -416,7 +414,6 @@ add_firewall_rule() {
 						# 用于本机流量转发
 						$ipt_m -A OUTPUT -p tcp -j PSW_OUTPUT
 						[ "$TCP_NO_REDIR_PORTS" != "disable" ] && $ipt_m -A PSW_OUTPUT -p tcp -m multiport --dport $TCP_NO_REDIR_PORTS -j RETURN
-						$ipt_m -A PSW_OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS $(dst $IPSET_ROUTER) $(factor $TCP_REDIR_PORTS "-m multiport --dport") -j MARK --set-mark 1
 						$ipt_m -A PSW_OUTPUT -p tcp -m multiport --dport $TCP_REDIR_PORTS $(dst $IPSET_BLACKLIST) $(factor $TCP_REDIR_PORTS "-m multiport --dport") -j MARK --set-mark 1
 						[ "$LOCALHOST_PROXY_MODE" == "global" ] && $ipt_m -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") -j MARK --set-mark 1
 						[ "$LOCALHOST_PROXY_MODE" == "gfwlist" ] && $ipt_m -A PSW_OUTPUT -p tcp $(dst $IPSET_GFW) $(factor $TCP_REDIR_PORTS "-m multiport --dport") -j MARK --set-mark 1
@@ -448,7 +445,6 @@ add_firewall_rule() {
 							done
 						}
 						[ "$TCP_NO_REDIR_PORTS" != "disable" ] && $ipt_n -A PSW_OUTPUT -p tcp -m multiport --dport $TCP_NO_REDIR_PORTS -j RETURN
-						$ipt_n -A PSW_OUTPUT -p tcp $(dst $IPSET_ROUTER) $(factor $TCP_REDIR_PORTS "-m multiport --dport") -j REDIRECT --to-ports $TCP_REDIR_PORT1
 						$ipt_n -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") -j $(get_action_chain $LOCALHOST_PROXY_MODE)1
 					fi
 				}
@@ -529,7 +525,6 @@ add_firewall_rule() {
 					}
 					
 					[ "$UDP_NO_REDIR_PORTS" != "disable" ] && $ipt_m -A PSW_OUTPUT -p udp -m multiport --dport $UDP_NO_REDIR_PORTS -j RETURN
-					$ipt_m -A PSW_OUTPUT -p udp -m multiport --dport $UDP_REDIR_PORTS $(dst $IPSET_ROUTER) -j MARK --set-mark 1
 					$ipt_m -A PSW_OUTPUT -p udp -m multiport --dport $UDP_REDIR_PORTS $(dst $IPSET_BLACKLIST) -j MARK --set-mark 1
 					[ "$LOCALHOST_PROXY_MODE" == "global" ] && $ipt_m -A PSW_OUTPUT -p udp -m multiport --dport $UDP_REDIR_PORTS -j MARK --set-mark 1
 					[ "$LOCALHOST_PROXY_MODE" == "gfwlist" ] && $ipt_m -A PSW_OUTPUT -p udp -m multiport --dport $UDP_REDIR_PORTS $(dst $IPSET_GFW) -j MARK --set-mark 1
@@ -632,7 +627,6 @@ del_firewall_rule() {
 
 	ipset -F $IPSET_LANIPLIST >/dev/null 2>&1 && ipset -X $IPSET_LANIPLIST >/dev/null 2>&1 &
 	ipset -F $IPSET_VPSIPLIST >/dev/null 2>&1 && ipset -X $IPSET_VPSIPLIST >/dev/null 2>&1 &
-	ipset -F $IPSET_ROUTER >/dev/null 2>&1 && ipset -X $IPSET_ROUTER >/dev/null 2>&1 &
 	#ipset -F $IPSET_GFW >/dev/null 2>&1 && ipset -X $IPSET_GFW >/dev/null 2>&1 &
 	#ipset -F $IPSET_CHN >/dev/null 2>&1 && ipset -X $IPSET_CHN >/dev/null 2>&1 &
 	ipset -F $IPSET_BLACKLIST >/dev/null 2>&1 && ipset -X $IPSET_BLACKLIST >/dev/null 2>&1 &
@@ -642,7 +636,6 @@ del_firewall_rule() {
 flush_ipset() {
 	ipset -F $IPSET_LANIPLIST >/dev/null 2>&1 && ipset -X $IPSET_LANIPLIST >/dev/null 2>&1 &
 	ipset -F $IPSET_VPSIPLIST >/dev/null 2>&1 && ipset -X $IPSET_VPSIPLIST >/dev/null 2>&1 &
-	ipset -F $IPSET_ROUTER >/dev/null 2>&1 && ipset -X $IPSET_ROUTER >/dev/null 2>&1 &
 	ipset -F $IPSET_GFW >/dev/null 2>&1 && ipset -X $IPSET_GFW >/dev/null 2>&1 &
 	ipset -F $IPSET_CHN >/dev/null 2>&1 && ipset -X $IPSET_CHN >/dev/null 2>&1 &
 	ipset -F $IPSET_BLACKLIST >/dev/null 2>&1 && ipset -X $IPSET_BLACKLIST >/dev/null 2>&1 &

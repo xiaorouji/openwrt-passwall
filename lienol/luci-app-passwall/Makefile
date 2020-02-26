@@ -7,8 +7,8 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
 PKG_VERSION:=3.6
-PKG_RELEASE:=3
-PKG_DATE:=20200226
+PKG_RELEASE:=4
+PKG_DATE:=20200227
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
@@ -83,7 +83,7 @@ endef
 define Package/$(PKG_NAME)
   CATEGORY:=LuCI
   SUBMENU:=3. Applications
-  TITLE:=LuCI support for PassWall By Lienol
+  TITLE:=LuCI support for PassWall
   PKGARCH:=all
   DEPENDS:=+libmbedtls +iptables-mod-tproxy +kmod-ipt-tproxy +iptables-mod-ipopt +kmod-ipt-ipopt +ip +ipset +coreutils +coreutils-base64 +coreutils-nohup +luci-lib-jsonc \
   +wget +resolveip +unzip +dnsmasq-full +tcping \
@@ -112,6 +112,14 @@ define Build/Configure
 endef
  
 define Build/Compile
+endef
+
+define Package/$(PKG_NAME)/conffiles
+/etc/config/passwall
+/usr/share/passwall/rules/blacklist_host
+/usr/share/passwall/rules/blacklist_ip
+/usr/share/passwall/rules/whitelist_host
+/usr/share/passwall/rules/whitelist_ip
 endef
 
 define Package/$(PKG_NAME)/install

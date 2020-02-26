@@ -235,10 +235,6 @@ kcp_server = s:option(Value, "kcp_server", translate("Kcptun Server"))
 kcp_server.placeholder = translate("Default:Current Server")
 kcp_server:depends("use_kcp", "1")
 
-kcp_use_ipv6 = s:option(Flag, "kcp_use_ipv6", translate("Use IPv6"))
-kcp_use_ipv6.default = 0
-kcp_use_ipv6:depends("use_kcp", "1")
-
 kcp_port = s:option(Value, "kcp_port", translate("Kcptun Port"))
 kcp_port.datatype = "port"
 kcp_port:depends("use_kcp", "1")
