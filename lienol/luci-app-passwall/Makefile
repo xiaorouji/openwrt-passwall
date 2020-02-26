@@ -127,9 +127,6 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_CONF) ./root/etc/config/passwall $(1)/etc/config/passwall
 	$(INSTALL_CONF) ./root/etc/config/passwall_show $(1)/etc/config/passwall_show
 	
-	$(INSTALL_DIR) $(1)/etc/config/passwall_rule
-	cp -pR ./root/etc/config/passwall_rule/* $(1)/etc/config/passwall_rule/
-	
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_CONF) ./root/etc/uci-defaults/* $(1)/etc/uci-defaults
 	
