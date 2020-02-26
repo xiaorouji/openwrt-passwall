@@ -183,22 +183,27 @@ load_config() {
 	[ "$LOCALHOST_PROXY_MODE" == "default" ] && LOCALHOST_PROXY_MODE=$PROXY_MODE
 	UP_CHINA_DNS=$(config_t_get global up_china_dns dnsbyisp)
 	wangejibadns=$(config_t_get global_other wangejibadns 0)
-	[ "$wangejibadns" == "0" ] && {
-		UP_CHINA_DNS="default"
-		[ "$DNS_MODE" == "chinadns-ng" ] && DNS_MODE="pdnsd" && use_udp_node_resolve_dns=0
-	}
+	[ "$wangejibadns" == "0" ] && UP_CHINA_DNS="default"
 	[ "$UP_CHINA_DNS" == "default" ] && IS_DEFAULT_CHINA_DNS=1
 	[ ! -f "$RESOLVFILE" -o ! -s "$RESOLVFILE" ] && RESOLVFILE=/tmp/resolv.conf.auto
-	[ "$UP_CHINA_DNS" == "dnsbyisp" -o "$UP_CHINA_DNS" == "default" ] && {
-		local dns1=$(cat $RESOLVFILE 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | grep -v 0.0.0.0 | grep -v 127.0.0.1 | sed -n '1P')
-		if [ -n "$dns1" ]; then
-			UP_CHINA_DNS=$dns1
+	if [ "$UP_CHINA_DNS" == "dnsbyisp" -o "$UP_CHINA_DNS" == "default" ]; then
+		UP_CHINA_DNS1=$(cat $RESOLVFILE 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | grep -v 0.0.0.0 | grep -v 127.0.0.1 | sed -n '1P')
+		if [ -n "$UP_CHINA_DNS1" ]; then
+			UP_CHINA_DNS=$UP_CHINA_DNS1
 		else
 			UP_CHINA_DNS="223.5.5.5"
 		fi
-		local dns2=$(cat $RESOLVFILE 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | grep -v 0.0.0.0 | grep -v 127.0.0.1 | sed -n '2P')
-		[ -n "$dns1" -a -n "$dns2" ] && UP_CHINA_DNS="$dns1,$dns2"
-	}
+		local UP_CHINA_DNS2=$(cat $RESOLVFILE 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | grep -v 0.0.0.0 | grep -v 127.0.0.1 | sed -n '2P')
+		[ -n "$UP_CHINA_DNS1" -a -n "$UP_CHINA_DNS2" ] && UP_CHINA_DNS="$UP_CHINA_DNS1,$UP_CHINA_DNS2"
+	else
+		UP_CHINA_DNS1=$(echo $UP_CHINA_DNS | awk -F ',' '{print $1}')
+		if [ -n "$UP_CHINA_DNS1" ]; then
+			UP_CHINA_DNS2=$(echo $UP_CHINA_DNS | awk -F ',' '{print $2}')
+			[ -n "$UP_CHINA_DNS2" ] && UP_CHINA_DNS="${UP_CHINA_DNS1},${UP_CHINA_DNS2}"
+		else
+			UP_CHINA_DNS="223.5.5.5"
+		fi
+	fi
 	TCP_REDIR_PORT1=$(config_t_get global_forwarding tcp_redir_port 1041)
 	TCP_REDIR_PORT2=$(expr $TCP_REDIR_PORT1 + 1)
 	TCP_REDIR_PORT3=$(expr $TCP_REDIR_PORT2 + 1)
@@ -274,7 +279,12 @@ gen_start_config() {
 			lua $API_GEN_TROJAN $node client "0.0.0.0" $local_port >$config_file
 			ln_start_bin $(find_bin trojan) trojan "-c $config_file"
 		elif [ "$type" == "brook" ]; then
-			ln_start_bin $(config_t_get global_app brook_file $(find_bin brook)) brook "client -l 0.0.0.0:$local_port -i 0.0.0.0 -s $server_host:$port -p $(config_n_get $node password)"
+			local protocol=$(config_n_get $node brook_protocol client)
+			local brook_tls=$(config_n_get $node brook_tls 0)
+			[ "$protocol" == "wsclient" ] && {
+				[ "$brook_tls" == "1" ] && server_host="wss://${server_host}" || server_host="ws://${server_host}" 
+			}
+			ln_start_bin $(config_t_get global_app brook_file $(find_bin brook)) brook_socks_$5 "$protocol -l 0.0.0.0:$local_port -i 0.0.0.0 -s $server_host:$port -p $(config_n_get $node password)"
 		elif [ "$type" == "ssr" ]; then
 			gen_ss_ssr_config_file ssr $local_port 0 $node $config_file
 			ln_start_bin $(find_bin ssr-local) ssr-local "-c $config_file -b 0.0.0.0 -u"
@@ -301,7 +311,7 @@ gen_start_config() {
 			local server_username=$(config_n_get $node username)
 			local server_password=$(config_n_get $node password)
 			eval port=\$UDP_REDIR_PORT$5
-			ln_start_bin $(find_bin ipt2socks) ipt2socks "-U -l $port -b 0.0.0.0 -s $node_address -p $node_port -R"
+			ln_start_bin $(find_bin ipt2socks) ipt2socks_udp_$5 "-U -l $port -b 0.0.0.0 -s $node_address -p $node_port -R"
 			
 			# local redsocks_config_file=$CONFIG_PATH/UDP_$i.conf
 			# gen_redsocks_config $redsocks_config_file udp $port $node_address $node_port $server_username $server_password
@@ -321,13 +331,18 @@ gen_start_config() {
 			local server_username=$(config_n_get $node username)
 			local server_password=$(config_n_get $node password)
 			eval port=\$UDP_REDIR_PORT$5
-			ln_start_bin $(find_bin ipt2socks) ipt2socks "-U -l $port -b 0.0.0.0 -s 127.0.0.1 -p $socks5_port -R"
+			ln_start_bin $(find_bin ipt2socks) ipt2socks_udp_$5 "-U -l $port -b 0.0.0.0 -s 127.0.0.1 -p $socks5_port -R"
 				
 			# local redsocks_config_file=$CONFIG_PATH/redsocks_UDP_$i.conf
 			# gen_redsocks_config $redsocks_config_file udp $port "127.0.0.1" $socks5_port
 			# ln_start_bin $(find_bin redsocks2) redsocks2 "-c $redsocks_config_file"
 		elif [ "$type" == "brook" ]; then
-			ln_start_bin $(config_t_get global_app brook_file $(find_bin brook)) brook "tproxy -l 0.0.0.0:$local_port -s $server_host:$port -p $(config_n_get $node password)"
+			local protocol=$(config_n_get $node brook_protocol client)
+			if [ "$protocol" == "wsclient" ]; then
+				echolog "Brook的WebSocket不支持UDP转发！"
+			else
+				ln_start_bin $(config_t_get global_app brook_file $(find_bin brook)) brook_udp_$5 "tproxy -l 0.0.0.0:$local_port -s $server_host:$port -p $(config_n_get $node password)"
+			fi
 		elif [ "$type" == "ssr" ]; then
 			gen_ss_ssr_config_file ssr $local_port 0 $node $config_file
 			ln_start_bin $(find_bin ssr-redir) ssr-redir "-c $config_file -U"
@@ -354,7 +369,7 @@ gen_start_config() {
 			local server_username=$(config_n_get $node username)
 			local server_password=$(config_n_get $node password)
 			eval port=\$TCP_REDIR_PORT$5
-			ln_start_bin $(find_bin ipt2socks) ipt2socks "-T -l $port -b 0.0.0.0 -s $node_address -p $node_port -R"
+			ln_start_bin $(find_bin ipt2socks) ipt2socks_tcp_$5 "-T -l $port -b 0.0.0.0 -s $node_address -p $node_port -R"
 			
 			# local redsocks_config_file=$CONFIG_PATH/TCP_$i.conf
 			# gen_redsocks_config $redsocks_config_file tcp $port $node_address $socks5_port $server_username $server_password
@@ -403,11 +418,22 @@ gen_start_config() {
 				done
 			elif [ "$type" == "brook" ]; then
 				local server_ip=$server_host
-				[ "$kcptun_use" == "1" ] && {
-					server_ip=127.0.0.1
-					port=$KCPTUN_REDIR_PORT
-				}
-				ln_start_bin $(config_t_get global_app brook_file $(find_bin brook)) brook "tproxy -l 0.0.0.0:$local_port -s $server_ip:$port -p $(config_n_get $node password)"
+				local protocol=$(config_n_get $node brook_protocol client)
+				local brook_tls=$(config_n_get $node brook_tls 0)
+				if [ "$protocol" == "wsclient" ]; then
+					[ "$brook_tls" == "1" ] && server_ip="wss://${server_ip}" || server_ip="ws://${server_ip}" 
+					socks5_port=$(get_not_exists_port_after $(expr $SOCKS5_PROXY_PORT3 + 3) tcp)
+					ln_start_bin $(config_t_get global_app brook_file $(find_bin brook)) brook_tcp_$5 "wsclient -l 127.0.0.1:$socks5_port -i 127.0.0.1 -s $server_ip:$port -p $(config_n_get $node password)"
+					eval port=\$TCP_REDIR_PORT$5
+					ln_start_bin $(find_bin ipt2socks) ipt2socks_tcp_$5 "-T -l $port -b 0.0.0.0 -s 127.0.0.1 -p $socks5_port -R"
+					echolog "Brook的WebSocket不支持透明代理，将使用ipt2socks转换透明代理！"
+				else
+					[ "$kcptun_use" == "1" ] && {
+						server_ip=127.0.0.1
+						port=$KCPTUN_REDIR_PORT
+					}
+					ln_start_bin $(config_t_get global_app brook_file $(find_bin brook)) brook_tcp_$5 "tproxy -l 0.0.0.0:$local_port -s $server_ip:$port -p $(config_n_get $node password)"
+				fi
 			fi
 		fi
 	fi
@@ -613,10 +639,8 @@ add_dnsmasq() {
 	[ -z "$IS_DEFAULT_CHINA_DNS" -o "$IS_DEFAULT_CHINA_DNS" == 0 ] && {
 		server="server=127.0.0.1#$DNS_PORT"
 		[ "$DNS_MODE" != "chinadns-ng" ] && {
-			local china_dns1=$(echo $UP_CHINA_DNS | awk -F "," '{print $1}')
-			local china_dns2=$(echo $UP_CHINA_DNS | awk -F "," '{print $2}')
-			[ -n "$china_dns1" ] && server="server=$china_dns1"
-			[ -n "$china_dns2" ] && server="${server}\n${server_2}"
+			[ -n "$UP_CHINA_DNS1" ] && server="server=$UP_CHINA_DNS1"
+			[ -n "$UP_CHINA_DNS2" ] && server="${server}\n${UP_CHINA_DNS2}"
 			server="${server}\nno-resolv"
 		}
 		cat <<-EOF > /var/dnsmasq.d/dnsmasq-$CONFIG.conf

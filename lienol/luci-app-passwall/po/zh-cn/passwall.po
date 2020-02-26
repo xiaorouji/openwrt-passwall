@@ -157,8 +157,8 @@ msgstr "DNS地址"
 msgid "China DNS Server"
 msgstr "国内DNS服务器"
 
-msgid "If you want to work with other DNS acceleration services, use the default.<br />Example: 127.0.0.1#6053 ,Represents DNS on using 127.0.0.1 the 6053 port. such as SmartDNS, AdGuard Home...<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53.<br />If you use custom, unless you know what you're doing, setting it up incorrectly can cause your stuck to crash !"
-msgstr "如果你想和其他DNS加速服务一起工作，请使用默认。<br />例：127.0.0.1#6053 使用本机的6053端口的DNS服务。例：SmartDNS，AdGuardHome等等。<br />最多使用2个DNS服务器，英文逗号分隔，如果没有填#和后面的端口，则使用53端口。<br />如果你使用自定义，除非你知道你在做什么，否则设置不当会直接导致卡到崩溃！"
+msgid "If you want to work with other DNS acceleration services, use the default.<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53."
+msgstr "如果你想和其他DNS加速服务一起工作，请使用默认。<br />最多使用2个DNS服务器，英文逗号分隔，如果没有填#和后面的端口，则使用53端口。"
 
 msgid "Upstream trust DNS Server for ChinaDNS-NG"
 msgstr "ChinaDNS-NG可信DNS"
@@ -728,7 +728,7 @@ msgid "Use Kcptun"
 msgstr "使用Kcptun"
 
 msgid "Please confirm whether the Kcptun is installed. If not, please go to Rule Update download installation."
-msgstr "请确认KCP是否已安装，若没有请到自动更新下载安装。"
+msgstr "请确认Kcptun是否已安装，若没有请到自动更新下载安装。"
 
 msgid "Kcptun Server"
 msgstr "Kcptun服务器"
@@ -741,6 +741,12 @@ msgstr "Kcptun参数配置"
 
 msgid "--crypt aes192 --key abc123 --mtu 1350 --sndwnd 128 --rcvwnd 1024 --mode fast"
 msgstr "默认Kcptun和SS服务器相同IP,参数中无需配置服务器IP和本地端口，需要配置的参数和格式如：--crypt aes192 --key abc123 --mtu 1350 --sndwnd 128 --rcvwnd 1024 --mode fast"
+
+msgid "Brook Protocol"
+msgstr "Brook协议"
+
+msgid "Use TLS"
+msgstr "使用TLS"
 
 msgid "V2ray Protocol"
 msgstr "V2ray协议"
