@@ -411,8 +411,8 @@ gen_start_config() {
 				local plugin=$(config_n_get $node ss_plugin)
 				if [ "$plugin" != "none" ]; then
 					[ "$plugin" == "v2ray-plugin" -o "$plugin" == "obfs-local" ] && {
-					local opts=$(config_n_get $node ss_plugin_opts)
-					plugin_params="--plugin $plugin --plugin-opts $opts"
+						local opts=$(config_n_get $node ss_plugin_opts)
+						plugin_params="--plugin $plugin --plugin-opts $opts"
 					}
 				fi
 				for k in $(seq 1 $process); do
@@ -471,7 +471,7 @@ start_crontab() {
 	sed -i '/$CONFIG/d' /etc/crontabs/root >/dev/null 2>&1 &
 	start_daemon=$(config_t_get global_delay start_daemon)
 	if [ "$start_daemon" = "1" ]; then
-		echo "*/2 * * * * nohup $APP_PATH/monitor.sh > /dev/null 2>&1" >>/etc/crontabs/root
+		echo "*/1 * * * * nohup $APP_PATH/monitor.sh > /dev/null 2>&1" >>/etc/crontabs/root
 		echolog "已启动守护进程。"
 	fi
 
@@ -509,12 +509,12 @@ start_crontab() {
 	autoupdatesubscribe=$(config_t_get global_subscribe auto_update_subscribe)
 	weekupdatesubscribe=$(config_t_get global_subscribe week_update_subscribe)
 	dayupdatesubscribe=$(config_t_get global_subscribe time_update_subscribe)
-	if [ "$autoupdate" = "1" ]; then
-		local t="0 $dayupdate * * $weekupdate"
-		[ "$weekupdate" = "7" ] && t="0 $dayupdate * * *"
-		echo "$t lua $APP_PATH/rule_update.lua nil log > /dev/null 2>&1 &" >>/etc/crontabs/root
-		echolog "配置定时任务：自动更新规则。"
-	fi
+	#if [ "$autoupdate" = "1" ]; then
+	#	local t="0 $dayupdate * * $weekupdate"
+	#	[ "$weekupdate" = "7" ] && t="0 $dayupdate * * *"
+	#	echo "$t lua $APP_PATH/rule_update.lua nil log > /dev/null 2>&1 &" >>/etc/crontabs/root
+	#	echolog "配置定时任务：自动更新规则。"
+	#fi
 
 	if [ "$autoupdatesubscribe" = "1" ]; then
 		local t="0 $dayupdatesubscribe * * $weekupdate"

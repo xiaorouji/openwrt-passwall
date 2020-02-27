@@ -251,15 +251,6 @@ filter_node() {
 	fi
 }
 
-dns_hijack() {
-	dnshijack=$(config_t_get global dns_53)
-	if [ "$dnshijack" = "1" -o "$1" = "force" ]; then
-		echolog "添加DNS劫持规则..."
-		$ipt_n -I PSW -p udp --dport 53 -j REDIRECT --to-ports 53
-		$ipt_n -I PSW -p tcp --dport 53 -j REDIRECT --to-ports 53
-	fi
-}
-
 add_firewall_rule() {
 	echolog "开始加载防火墙规则..."
 	echolog "默认代理模式：$(get_action_chain_name $PROXY_MODE)"
@@ -644,7 +635,6 @@ flush_ipset() {
 
 start() {
 	add_firewall_rule
-	dns_hijack
 }
 
 stop() {

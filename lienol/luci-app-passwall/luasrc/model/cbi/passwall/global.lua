@@ -183,11 +183,6 @@ o:value("208.67.220.220", "208.67.220.220 (Open DNS)")
 o:depends("dns_mode", "pdnsd")
 o:depends("up_trust_chinadns_ng_dns", "pdnsd")
 
----- DNS Hijack
-o = s:option(Flag, "dns_53", translate("DNS Hijack"))
-o.default = 1
-o.rmempty = false
-
 ---- Default Proxy Mode
 o = s:option(ListValue, "proxy_mode",
              translate("Default") .. translate("Proxy Mode"),
