@@ -1,6 +1,8 @@
 # openwrt-package
 
-[OpenWRT讨论群](https://t.me/joinchat/IUAfG09LxGyUlfBz8YZNWA)
+[OpenWRT吹水讨论群](https://t.me/joinchat/IUAfG09LxGwx4PIcc3k76w)
+
+[Lienol的源码反馈群](https://t.me/passwallQA)
 
 本源码兼容[官方](https://github.com/openwrt/openwrt)和[大雕Lean](https://github.com/coolsnowwolf/lede)源码
 
