@@ -1,26 +1,18 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2018-2019 Lienol <lawlienol@gmail.com>
 
 START=99
 CONFIG=pptpd
 CONFIG_FILE=/var/etc/$CONFIG.conf
-BIN=/usr/sbin/$CONFIG
-DEFAULT=/etc/default/$BIN
 RUN_D=/var/run
-PID_F=$RUN_D/$BIN.pid
 CHAP_SECRETS=/var/etc/chap-secrets
 SERVER_NAME="pptp-server"
 TEMP=/tmp/pptpd.tmp
 
-setup_dns() {
-	[ -n "$1" ] || return 0
-	echo ms-dns $1>>/etc/ppp/options.pptpd
-}
 setup_login() {
 	config_get enabled $1 enabled
 	[ "$enabled" -eq 0 ] && return 0
 	config_get ipaddress $1 ipaddress
-	[ -n "$ipaddress" ] || local ipaddress = "*"
+	[ -n "$ipaddress" ] || local ipaddress="*"
 	config_get username $1 username
 	config_get password $1 password
 	[ -n "$username" ] || return 0
@@ -37,39 +29,37 @@ setup_config() {
 	
 	config_get localip $1 localip
 	config_get remoteip $1 remoteip
-	config_get is_nat $1 is_nat
 
-	[ -z "$localip" ] && localip=$(ifconfig br-lan 2>/dev/null | grep "inet addr:" | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\."|head -1)2
-	[ -z "$localip" ] && remoteip=$(ifconfig br-lan 2>/dev/null | grep "inet addr:" | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\."|head -1)10-20
-	options="cat /etc/pptpd.conf |grep options"
+	[ -z "$localip" ] && localip="172.16.100.1"
+	[ -z "$remoteip" ] && remoteip="172.16.100.10-20"
 	[ -n "$localip" ] && echo "localip  $localip" >> $CONFIG_FILE
 	[ -n "$remoteip" ] && echo "remoteip  $remoteip" >> $CONFIG_FILE
-	[ -n "$options" ] && echo "option /etc/ppp/options.pptpd" >> $CONFIG_FILE
+	echo "option /etc/ppp/options.pptpd" >> $CONFIG_FILE
 
-	fw3 reload
+	fw3 reload >/dev/null 2>&1
 	
 	config_get mppe $1 mppe
-	[ -n "$(cat "/etc/ppp/options.pptpd" |grep mppe)" ] && sed -i '/mppe/'d /etc/ppp/options.pptpd
-	[ -z "$(cat "/etc/ppp/options.pptpd" |grep mppe)" ] && echo "mppe required,no40,no56,stateless" >> /etc/ppp/options.pptpd
-	if [ "$mppe" -eq 0 ]; then
-		sed -i -e 's/mppe/#mppe/g' /etc/ppp/options.pptpd
+	if [ -n "$(cat "/etc/ppp/options.pptpd" | grep mppe)" ]; then
+		sed -i '/mppe/'d /etc/ppp/options.pptpd
+	else
+		echo "mppe required,no40,no56,stateless" >> /etc/ppp/options.pptpd
 	fi
+	[ "$mppe" -eq 0 ] && sed -i -e 's/mppe/#mppe/g' /etc/ppp/options.pptpd
 	sed -i -e '/ms-dns/d' /etc/ppp/options.pptpd
 	config_get dns $1 dns
-	setup_dns $dns
-	echo ms-dns 223.5.5.5 >>/etc/ppp/options.pptpd
+	[ -z "$dns" ] && dns="8.8.4.4"
+	echo "ms-dns $dns">>/etc/ppp/options.pptpd
 	return 0
 }
 
 start_pptpd() {
-	[ -f $DEFAULT ] && . $DEFAULT
 	mkdir -p $RUN_D
 	for m in arc4 sha1_generic slhc crc-ccitt ppp_generic ppp_async ppp_mppe; do
 		insmod $m >/dev/null 2>&1
 	done
 	ln -sfn $CHAP_SECRETS /etc/ppp/chap-secrets
 	chmod 600 /etc/ppp/*-secrets
-	service_start $BIN $OPTIONS -c $CONFIG_FILE
+	/usr/sbin/$CONFIG -c $CONFIG_FILE
 }
 
 del_user()
@@ -88,8 +78,8 @@ start() {
 }
 
 stop() {
-	service_stop $BIN
-	ps | grep "pppd local" | grep -v "grep" | awk '{print $1}' | xargs kill -9
-	fw3 reload
+	ps -w | grep "$CONFIG_FILE" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+	ps -w | grep "pppd local" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+	fw3 reload >/dev/null 2>&1
 	del_user
 }
