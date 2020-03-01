@@ -16,9 +16,4 @@ o = s:option(Value, "ipaddress", translate("IP address"))
 o.placeholder = translate("Automatically")
 o.datatype = "ipaddr"
 o.rmempty = true
-function o.cfgvalue(e, t)
-    value = e.map:get(t, "ipaddress")
-    return value == "*" and "" or value
-end
-function o.remove(e, t) Value.write(e, t, "*") end
 return m
