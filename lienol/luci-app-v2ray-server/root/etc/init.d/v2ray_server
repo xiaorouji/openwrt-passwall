@@ -27,11 +27,11 @@ start_v2ray_server() {
 	mkdir -p $CONFIG_PATH $LOG_PATH
 	touch $LOG_APP_FILE
 	config_foreach gen_v2ray_config_file "user"
-	fw3 reload >/dev/null 2>&1 &
+	fw3 reload > /dev/null 2>&1
 }
 
 stop_v2ray_server() {
-	fw3 reload >/dev/null 2>&1 &
+	fw3 reload > /dev/null 2>&1
 	ps -w | grep "$CONFIG_PATH/" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 	rm -rf $CONFIG_PATH
 	rm -rf $LOG_PATH
