@@ -16,6 +16,8 @@ table th, .table .th {
 
 table td, .table .td {
 	text-align: center;
+    white-space: nowrap;
+    word-break: keep-all;
 }
 
 #set_node_div{
@@ -139,14 +141,14 @@ table td, .table .td {
 	}
 	
 	/* 自动Ping */
-	var auto_ping_value = document.getElementsByClassName('auto_ping_value');
+	const auto_ping_value = document.getElementsByClassName('auto_ping_value');
 	var index = 0;
 	function auto_ping() {
 		if (index >= auto_ping_value.length) { 
 			return;
 		}
-		var is_ping = auto_ping_value[index].getAttribute("ping");
-		if (is_ping == null) {
+		var has_ping = auto_ping_value[index].getAttribute("has_ping");
+		if (has_ping == null) {
 			var cbi_id = auto_ping_value[index].getAttribute("cbiid");
 			<% if compact_display_nodes and tonumber(compact_display_nodes) == 1 then %>
 				var remarks = document.getElementById("cbid.passwall." + cbi_id + ".remarks").value;
@@ -161,7 +163,9 @@ table td, .table .td {
 				var address = document.getElementById("cbid.passwall." + cbi_id + ".address").value;
 				var port = document.getElementById("cbid.passwall." + cbi_id + ".port").value;
 			<% end %>
-			if ((address != null && address != "") && (port != null && port != "")) {
+			//判断是否含有汉字
+			var reg = new RegExp("[\\u4E00-\\u9FFF]+","g");
+			if ((address != null && address != "") && (port != null && port != "") && reg.test(address) == false && (address.indexOf(".") != -1 && address.charAt(address.address - 1) != ".")) {
 				ajax.post('<%=dsp.build_url("admin/vpn/passwall/ping_node")%>', {
 						index: index,
 						address: address,
@@ -187,7 +191,7 @@ table td, .table .td {
 								<% end %>
 								
 								if (address == obj_address && port == obj_port) {
-									auto_ping_value[i].setAttribute("ping", "1");
+									auto_ping_value[i].setAttribute("has_ping", "1");
 									if (result.ping == null || result.ping.trim() == "") {
 										auto_ping_value[i].innerHTML = "<font style='color:red'><%:Timeout%></font>";
 									} else {

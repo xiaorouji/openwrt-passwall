@@ -21,7 +21,6 @@ local nodeResult = setmetatable({}, { __index = cache })  -- update result
 local name = 'passwall'
 local uciType = 'nodes'
 local ucic = luci.model.uci.cursor()
-local api = require "luci.model.cbi.passwall.api.api"
 local arg2 = arg[2]
 
 local log = function(...)
@@ -41,22 +40,25 @@ end
 
 -- 分割字符串
 local function split(full, sep)
-	full = full:gsub("%z", "")  -- 这里不是很清楚 有时候结尾带个\0
-	local off, result = 1, {}
-	while true do
-		local nStart, nEnd = full:find(sep, off)
-		if not nEnd then
-			local res = ssub(full, off, slen(full))
-			if #res > 0 then -- 过滤掉 \0
-				tinsert(result, res)
+	if full then
+		full = full:gsub("%z", "")  -- 这里不是很清楚 有时候结尾带个\0
+		local off, result = 1, {}
+		while true do
+			local nStart, nEnd = full:find(sep, off)
+			if not nEnd then
+				local res = ssub(full, off, slen(full))
+				if #res > 0 then -- 过滤掉 \0
+					tinsert(result, res)
+				end
+				break
+			else
+				tinsert(result, ssub(full, off, nStart - 1))
+				off = nEnd + 1
 			end
-			break
-		else
-			tinsert(result, ssub(full, off, nStart - 1))
-			off = nEnd + 1
 		end
+		return result
 	end
-	return result
+	return {}
 end
 -- urlencode
 local function get_urlencode(c)
@@ -271,6 +273,9 @@ local function processData(szType, content, add_mode)
 		result.ss_plugin_opts = content.plugin_options
 		result.group = content.airport
 		result.remarks = content.remarks
+	else
+		log('暂时不支持' .. szType .. "类型的节点订阅，跳过此节点。")
+		return nil
 	end
 	if not result.remarks then
 		result.remarks = result.address .. ':' .. result.port
@@ -284,7 +289,7 @@ local function processData(szType, content, add_mode)
 end
 -- wget
 local function wget(url)
-	local stdout = luci.sys.exec('/usr/bin/wget --user-agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36" --no-check-certificate -t 3 -T 10 -O- "' .. url .. '"')
+	local stdout = luci.sys.exec('/usr/bin/wget --user-agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.122 Safari/537.36" --no-check-certificate -t 3 -T 10 -O- "' .. url .. '"')
 	return trim(stdout)
 end
 
@@ -296,7 +301,7 @@ local function truncate_nodes()
 	for i = 1, tcp_node_num, 1 do
 		local node = ucic:get_first(name, "global", "tcp_node"..i, nil)
 		if node and node ~= "nil" then
-			local is_sub_node = api.uci_get_type_id(node, "is_sub", "0")
+			local is_sub_node = ucic:get(name, node, "is_sub", "0")
 			if is_sub_node == "1" then
 				is_stop = 1
 				ucic:set(name, ucic:get_first(name, 'global'), "tcp_node"..i, "nil")
@@ -307,7 +312,7 @@ local function truncate_nodes()
 	for i = 1, udp_node_num, 1 do
 		local node = ucic:get_first(name, "global", "udp_node"..i, nil)
 		if node and node ~= "nil" then
-			local is_sub_node = api.uci_get_type_id(node, "is_sub", "0")
+			local is_sub_node = ucic:get(name, node, "is_sub", "0")
 			if is_sub_node == "1" then
 				is_stop = 1
 				ucic:set(name, ucic:get_first(name, 'global'), "udp_node"..i, "nil")
@@ -318,7 +323,7 @@ local function truncate_nodes()
 	for i = 1, socks5_node_num, 1 do
 		local node = ucic:get_first(name, "global", "socks5_node"..i, nil)
 		if node and node ~= "nil" then
-			local is_sub_node = api.uci_get_type_id(node, "is_sub", "0")
+			local is_sub_node = ucic:get(name, node, "is_sub", "0")
 			if is_sub_node == "1" then
 				is_stop = 1
 				ucic:set(name, ucic:get_first(name, 'global'), "socks5_node"..i, "nil")
@@ -340,7 +345,10 @@ local function truncate_nodes()
 end
 
 local function update_node(manual)
-	assert(next(nodeResult), "node result is empty")
+	if next(nodeResult) == nil then
+			log("更新失败，没有可用的节点信息")
+			return
+	end
 	local add, del = 0, 0
 	ucic:foreach(name, uciType, function(old)
 		if old.grouphashkey or old.hashkey then -- 没有 hash 的不参与删除
@@ -399,6 +407,7 @@ local function parse_link(raw, remark, md5_str, manual)
 		-- SSD 似乎是这种格式 ssd:// 开头的
 		if raw:find('ssd://') then
 			szType = 'ssd'
+			add_mode = remark
 			local nEnd = select(2, raw:find('ssd://'))
 			nodes = base64Decode(raw:sub(nEnd + 1, #raw))
 			nodes = jsonParse(nodes)
@@ -449,7 +458,10 @@ local function parse_link(raw, remark, md5_str, manual)
 						result.remarks:find("剩余流量") or
 						result.remarks:find("QQ群") or
 						result.remarks:find("官网") or
-						not result.address
+						not result.address or
+						result.address:match("[^0-9a-zA-Z%-%_%.%s]") or -- 中文做地址的 也没有人拿中文域名搞，就算中文域也有Puny Code SB 机场
+						not result.address:find("%.") or -- 虽然没有.也算域，不过应该没有人会这样干吧
+						result.address:sub(#result.address) == "." -- 结尾是.
 					then
 						log('丢弃无效节点: ' .. result.type ..' 节点, ' .. result.remarks)
 					else
@@ -462,6 +474,10 @@ local function parse_link(raw, remark, md5_str, manual)
 			end
 		end
 		log('成功解析节点数量: ' ..#nodes)
+	else
+		if not manual then
+			log('获取到的节点内容为空...')
+		end
 	end
 end
 
@@ -473,6 +489,7 @@ local execute = function()
 			if enabled and enabled == "1" then
 				local remark = obj.remark
 				local url = obj.url
+				log('正在订阅: ' .. url)
 				local md5_str = md5(url)
 				local raw = wget(url)
 				parse_link(raw, remark, md5_str)

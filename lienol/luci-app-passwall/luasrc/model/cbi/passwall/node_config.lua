@@ -71,6 +71,7 @@ if is_finded("ssr-redir") then type:value("SSR", translate("ShadowsocksR")) end
 if is_installed("v2ray") or is_finded("v2ray") then
     type:value("V2ray", translate("V2ray"))
     type:value("V2ray_balancing", translate("V2ray Balancing"))
+    type:value("V2ray_shunt", translate("V2ray Shunt"))
 end
 if is_installed("brook") or is_finded("brook") then
     type:value("Brook", translate("Brook"))
@@ -83,12 +84,22 @@ v2ray_protocol = s:option(ListValue, "v2ray_protocol",
                           translate("V2ray Protocol"))
 v2ray_protocol:value("vmess", translate("Vmess"))
 v2ray_protocol:depends("type", "V2ray")
-v2ray_protocol:depends("type", "V2ray_balancing")
+
+brook_protocol = s:option(ListValue, "brook_protocol",
+                          translate("Brook Protocol"))
+brook_protocol:value("client", translate("Brook"))
+brook_protocol:value("wsclient", translate("WebSocket"))
+brook_protocol:depends("type", "Brook")
+
+brook_tls = s:option(Flag, "brook_tls", translate("Use TLS"))
+brook_tls:depends("brook_protocol", "wsclient")
 
 local n = {}
 uci:foreach(appname, "nodes", function(e)
     if e.type and e.type == "V2ray" and e.remarks and e.port then
-        n[e[".name"]] = "[%s] %s:%s" % {e.remarks, e.address, e.port}
+        if e.address:match("[\u4e00-\u9fa5]") and e.address:find("%.") and e.address:sub(#e.address) ~= "." then
+            n[e[".name"]] = "[%s] %s:%s" % {e.remarks, e.address, e.port}
+        end
     end
 end)
 
@@ -97,10 +108,29 @@ for key, _ in pairs(n) do table.insert(key_table, key) end
 table.sort(key_table)
 
 v2ray_balancing_node = s:option(DynamicList, "v2ray_balancing_node",
-                                translate("Load balancing node list"), translate(
-                                    "Load balancing node list, <a target='_blank' href='https://toutyrater.github.io/app/balance.html'>document</a>"))
+                                translate("Load balancing node list"),
+                                translate(
+                                    "Load balancing node list, <a target='_blank' href='https://toutyrater.github.io/routing/balance2.html'>document</a>"))
 for _, key in pairs(key_table) do v2ray_balancing_node:value(key, n[key]) end
 v2ray_balancing_node:depends("type", "V2ray_balancing")
+
+youtube_node = s:option(ListValue, "youtube_node",
+                        "Youtube " .. translate("Node"))
+youtube_node:value("nil", translate("Close"))
+for _, key in pairs(key_table) do youtube_node:value(key, n[key]) end
+youtube_node:depends("type", "V2ray_shunt")
+
+netflix_node = s:option(ListValue, "netflix_node",
+                        "Netflix " .. translate("Node"))
+netflix_node:value("nil", translate("Close"))
+for _, key in pairs(key_table) do netflix_node:value(key, n[key]) end
+netflix_node:depends("type", "V2ray_shunt")
+
+default_node = s:option(ListValue, "default_node",
+                        translate("Default") .. " " .. translate("Node"))
+default_node:value("nil", translate("Close"))
+for _, key in pairs(key_table) do default_node:value(key, n[key]) end
+default_node:depends("type", "V2ray_shunt")
 
 address = s:option(Value, "address", translate("Address (Support Domain Name)"))
 address.rmempty = false
@@ -190,8 +220,7 @@ if is_finded("v2ray-plugin") then ss_plugin:value("v2ray-plugin") end
 if is_finded("obfs-local") then ss_plugin:value("obfs-local") end
 ss_plugin:depends("type", "SS")
 
-ss_plugin_opts =
-    s:option(Value, "ss_plugin_opts", translate("opts"))
+ss_plugin_opts = s:option(Value, "ss_plugin_opts", translate("opts"))
 ss_plugin_opts:depends("ss_plugin", "v2ray-plugin")
 ss_plugin_opts:depends("ss_plugin", "obfs-local")
 
@@ -207,10 +236,6 @@ use_kcp:depends("type", "Brook")
 kcp_server = s:option(Value, "kcp_server", translate("Kcptun Server"))
 kcp_server.placeholder = translate("Default:Current Server")
 kcp_server:depends("use_kcp", "1")
-
-kcp_use_ipv6 = s:option(Flag, "kcp_use_ipv6", translate("Use IPv6"))
-kcp_use_ipv6.default = 0
-kcp_use_ipv6:depends("use_kcp", "1")
 
 kcp_port = s:option(Value, "kcp_port", translate("Kcptun Port"))
 kcp_port.datatype = "port"
@@ -243,7 +268,6 @@ v2ray_stream_security = s:option(ListValue, "v2ray_stream_security",
 v2ray_stream_security:value("none", "none")
 v2ray_stream_security:value("tls", "tls")
 v2ray_stream_security:depends("type", "V2ray")
-v2ray_stream_security:depends("type", "V2ray_balancing")
 
 -- [[ TLS部分 ]] --
 tls_serverName = s:option(Value, "tls_serverName", translate("Domain"))
@@ -265,7 +289,6 @@ v2ray_transport:value("h2", "HTTP/2")
 v2ray_transport:value("ds", "DomainSocket")
 v2ray_transport:value("quic", "QUIC")
 v2ray_transport:depends("type", "V2ray")
-v2ray_transport:depends("type", "V2ray_balancing")
 
 -- [[ TCP部分 ]]--
 
@@ -363,7 +386,6 @@ v2ray_quic_guise:depends("v2ray_transport", "quic")
 
 v2ray_mux = s:option(Flag, "v2ray_mux", translate("Mux"))
 v2ray_mux:depends("type", "V2ray")
-v2ray_mux:depends("type", "V2ray_balancing")
 
 v2ray_mux_concurrency = s:option(Value, "v2ray_mux_concurrency",
                                  translate("Mux Concurrency"))
@@ -412,7 +434,6 @@ trojan_cert_path:depends("trojan_verify_cert", "1")
 
 -- v2ray_insecure = s:option(Flag, "v2ray_insecure", translate("allowInsecure"))
 -- v2ray_insecure:depends("type", "V2ray")
--- v2ray_insecure:depends("type", "V2ray_balancing")
 
 function rmempty_restore()
     address.rmempty = true
@@ -420,7 +441,7 @@ function rmempty_restore()
     password.rmempty = true
     timeout.rmempty = true
     tcp_fast_open.rmempty = true
-    --v2ray_protocol.rmempty = true
+    -- v2ray_protocol.rmempty = true
     v2ray_VMess_id.rmempty = true
     v2ray_VMess_alterId.rmempty = true
 end
@@ -442,7 +463,7 @@ type.validate = function(self, value)
     elseif value == "V2ray" then
         address.rmempty = false
         port.rmempty = false
-        --v2ray_protocol.rmempty = false
+        -- v2ray_protocol.rmempty = false
         v2ray_VMess_id.rmempty = false
         v2ray_VMess_alterId.rmempty = false
     elseif value == "V2ray_balancing" then

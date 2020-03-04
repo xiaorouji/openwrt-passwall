@@ -23,8 +23,8 @@ function index()
           _("Basic Settings"), 1).dependent = true
     entry({"admin", "vpn", "passwall", "node_list"}, cbi("passwall/node_list"),
           _("Node List"), 2).dependent = true
-    -- entry({"admin", "vpn", "passwall", "auto_switch"},
-    --      cbi("passwall/auto_switch"), _("Auto Switch"), 3).leaf = true
+    entry({"admin", "vpn", "passwall", "auto_switch"},
+          cbi("passwall/auto_switch"), _("Auto Switch"), 3).leaf = true
     entry({"admin", "vpn", "passwall", "other"},
           cbi("passwall/other", {autoapply = true}), _("Other Settings"), 94).leaf =
         true
@@ -36,10 +36,7 @@ function index()
           _("Rule Update"), 96).leaf = true
     entry({"admin", "vpn", "passwall", "acl"}, cbi("passwall/acl"),
           _("Access control"), 97).leaf = true
-    entry({"admin", "vpn", "passwall", "rule_list"},
-          cbi("passwall/rule_list", {autoapply = true}),
-          _("Set Blacklist And Whitelist"), 98).leaf = true
-    entry({"admin", "vpn", "passwall", "log"}, cbi("passwall/log"),
+    entry({"admin", "vpn", "passwall", "log"}, form("passwall/log"),
           _("Watch Logs"), 99).leaf = true
     entry({"admin", "vpn", "passwall", "node_config"},
           cbi("passwall/node_config")).leaf = true
@@ -120,52 +117,42 @@ function status()
     e.haproxy_status = luci.sys.call(string.format(
                                          "ps -w | grep -v grep | grep '%s/bin/' | grep haproxy >/dev/null",
                                          appname)) == 0
-    e.kcptun_status = luci.sys.call(
-                          "ps -w | grep -v grep | grep -i 'log /var/etc/" ..
-                              appname .. "/kcptun' >/dev/null") == 0
-
     local tcp_node_num = luci.sys.exec(
                              "echo -n `uci -q get %s.@global_other[0].tcp_node_num`" %
                                  appname)
     for i = 1, tcp_node_num, 1 do
-        local listen_port = luci.sys.exec(
-                                string.format(
-                                    "[ -f '/var/etc/passwall/port/TCP_%s' ] && echo -n `cat /var/etc/passwall/port/TCP_%s`",
-                                    i, i))
+        e["kcptun_tcp_node%s_status" % i] =
+            luci.sys.call(string.format(
+                              "ps -w | grep -v grep | grep '%s/bin/' | grep 'kcptun_tcp_%s' >/dev/null",
+                              appname, i)) == 0
         e["tcp_node%s_status" % i] = luci.sys.call(
                                          string.format(
-                                             "ps -w | grep -v grep | grep '%s/bin/' | grep -i -E 'TCP_%s|brook tproxy -l 0.0.0.0:%s|ipt2socks -T -l %s' >/dev/null",
-                                             appname, i, listen_port,
-                                             listen_port)) == 0
+                                             "ps -w | grep -v grep | grep -v kcptun | grep '%s/bin/' | grep -i -E 'TCP_%s' >/dev/null",
+                                             appname, i)) == 0
     end
 
     local udp_node_num = luci.sys.exec(
                              "echo -n `uci -q get %s.@global_other[0].udp_node_num`" %
                                  appname)
     for i = 1, udp_node_num, 1 do
-        local listen_port = luci.sys.exec(
-                                string.format(
-                                    "[ -f '/var/etc/passwall/port/UDP_%s' ] && echo -n `cat /var/etc/passwall/port/UDP_%s`",
-                                    i, i))
         e["udp_node%s_status" % i] = luci.sys.call(
                                          string.format(
-                                             "ps -w | grep -v grep | grep '%s/bin/' | grep -i -E 'UDP_%s|brook tproxy -l 0.0.0.0:%s|ipt2socks -U -l %s' >/dev/null",
-                                             appname, i, listen_port,
-                                             listen_port)) == 0
+                                             "ps -w | grep -v grep | grep '%s/bin/' | grep -i -E 'UDP_%s' >/dev/null",
+                                             appname, i)) == 0
     end
 
     local socks5_node_num = luci.sys.exec(
                                 "echo -n `uci -q get %s.@global_other[0].socks5_node_num`" %
                                     appname)
     for i = 1, socks5_node_num, 1 do
-        local listen_port = luci.sys.exec(
-                                string.format(
-                                    "[ -f '/var/etc/passwall/port/SOCKS5_%s' ] && echo -n `cat /var/etc/passwall/port/SOCKS5_%s`",
-                                    i, i))
+        e["kcptun_socks_node%s_status" % i] =
+            luci.sys.call(string.format(
+                              "ps -w | grep -v grep | grep '%s/bin/' | grep 'kcptun_socks_%s' >/dev/null",
+                              appname, i)) == 0
         e["socks5_node%s_status" % i] = luci.sys.call(
                                             string.format(
-                                                "ps -w | grep -v grep | grep '%s/bin/' | grep -i -E 'SOCKS5_%s|brook client -l 0.0.0.0:%s' >/dev/null",
-                                                appname, i, listen_port)) == 0
+                                                "ps -w | grep -v grep | grep -v kcptun | grep '%s/bin/' | grep -i -E 'SOCKS_%s|SOCKS5_%s' >/dev/null",
+                                                appname, i, i)) == 0
     end
     luci.http.prepare_content("application/json")
     luci.http.write_json(e)
@@ -198,11 +185,13 @@ function ping_node()
     e.index = index
     if luci.sys.exec("echo -n `uci -q get %s.@global_other[0].use_tcping`" %
                          appname) == "1" and
-        luci.sys.exec("echo -n `command -v tcping`") ~= "" then
-        e.ping = luci.sys.exec(
-                     "echo -n `tcping -q -c 1 -i 1 -p " .. port .. " " ..
-                         address ..
-                         " 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print$2}'`")
+        luci.sys.exec("echo -n $(command -v tcping)") ~= "" then
+        luci.sys.call(string.format(
+                          "ps -w | grep 'tcping -q -c 1 -i 1 -p %s %s' | grep -v grep | awk '{print $1}' | xargs kill -9 > /dev/null",
+                          port, address))
+        e.ping = luci.sys.exec(string.format(
+                                   "echo -n $(tcping -q -c 1 -i 1 -p %s %s 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print$2}')",
+                                   port, address))
     else
         e.ping = luci.sys.exec(
                      "echo -n `ping -c 1 -W 1 %q 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print$2}'`" %
@@ -238,78 +227,45 @@ function check_port()
     local retstring = "<br />"
     -- retstring = retstring .. "<font color='red'>暂时不支持UDP检测</font><br />"
 
-    if luci.sys.exec("echo -n `uci -q get %s.@global_other[0].use_tcping`" %
-                         appname) == "1" and
-        luci.sys.exec("echo -n `command -v tcping`") ~= "" then
-        retstring = retstring ..
-                        "<font color='green'>使用tcping检测端口延迟</font><br />"
-        uci:foreach("passwall", "nodes", function(s)
-            local ret = ""
-            local tcp_socket
-            if (s.use_kcp and s.use_kcp == "1" and s.kcp_port) or
-                (s.v2ray_transport and s.v2ray_transport == "mkcp" and s.port) then
-            else
-                local type = s.type
-                if type and type ~= "V2ray_balancing" and s.address and s.port and
-                    s.remarks then
-                    node_name = "[%s] [%s:%s]" % {s.remarks, s.address, s.port}
-                    result = luci.sys.exec(
-                                 "echo -n `tcping -q -c 1 -i 1 -p " .. s.port ..
-                                     " " .. s.address ..
-                                     " 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print$2}'`")
-                    if result and result ~= "" then
-                        retstring = retstring .. "<font color='green'>" ..
-                                        node_name .. "   " .. result ..
-                                        "ms.</font><br />"
-                    else
-                        retstring = retstring .. "<font color='red'>" ..
-                                        node_name .. "   Timeout.</font><br />"
-                    end
-                    ret = ""
+    retstring = retstring ..
+                    "<font color='green'>检测端口可用性</font><br />"
+    uci:foreach("passwall", "nodes", function(s)
+        local ret = ""
+        local tcp_socket
+        if (s.use_kcp and s.use_kcp == "1" and s.kcp_port) or
+            (s.v2ray_transport and s.v2ray_transport == "mkcp" and s.port) then
+        else
+            local type = s.type
+            if type and type ~= "V2ray_balancing" and s.address and s.port and
+                s.remarks then
+                node_name = "%s：[%s] %s:%s" %
+                                {s.type, s.remarks, s.address, s.port}
+                tcp_socket = nixio.socket("inet", "stream")
+                tcp_socket:setopt("socket", "rcvtimeo", 3)
+                tcp_socket:setopt("socket", "sndtimeo", 3)
+                ret = tcp_socket:connect(s.address, s.port)
+                if tostring(ret) == "true" then
+                    retstring =
+                        retstring .. "<font color='green'>" .. node_name ..
+                            "   OK.</font><br />"
+                else
+                    retstring =
+                        retstring .. "<font color='red'>" .. node_name ..
+                            "   Error.</font><br />"
                 end
+                ret = ""
             end
-        end)
-    else
-        retstring = retstring ..
-                        "<font color='green'>使用socket检测端口是否打开</font><br />"
-        uci:foreach("passwall", "nodes", function(s)
-            local ret = ""
-            local tcp_socket
-            local udp_socket
-            if (s.use_kcp and s.use_kcp == "1" and s.kcp_port) or
-                (s.v2ray_transport and s.v2ray_transport == "mkcp" and s.port) then
-            else
-                local type = s.type
-                if type and type ~= "V2ray_balancing" and s.address and s.port and
-                    s.remarks then
-                    node_name = "%s：[%s] %s:%s" %
-                                    {s.type, s.remarks, s.address, s.port}
-                    tcp_socket = nixio.socket("inet", "stream")
-                    tcp_socket:setopt("socket", "rcvtimeo", 3)
-                    tcp_socket:setopt("socket", "sndtimeo", 3)
-                    ret = tcp_socket:connect(s.address, s.port)
-                    if tostring(ret) == "true" then
-                        retstring = retstring .. "<font color='green'>" ..
-                                        node_name .. "   OK.</font><br />"
-                    else
-                        retstring = retstring .. "<font color='red'>" ..
-                                        node_name .. "   Error.</font><br />"
-                    end
-                    ret = ""
-                end
-            end
-            if tcp_socket then tcp_socket:close() end
-            if udp_socket then udp_socket:close() end
-        end)
-    end
+        end
+        if tcp_socket then tcp_socket:close() end
+    end)
     luci.http.prepare_content("application/json")
     luci.http.write_json({ret = retstring})
 end
 
 function update_rules()
     local update = luci.http.formvalue("update")
-    luci.sys.call("nohup /usr/share/passwall/rule_update.sh '" .. update ..
-                      "' 2>&1 &")
+    luci.sys.call("lua /usr/share/passwall/rule_update.lua log '" .. update ..
+                      "' > /dev/null 2>&1 &")
 end
 
 function kcptun_check()

@@ -6,9 +6,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
-PKG_VERSION:=3.5
-PKG_RELEASE:=15
-PKG_DATA:=20200218
+PKG_VERSION:=3.6
+PKG_RELEASE:=12
+PKG_DATE:=20200305
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
@@ -83,10 +83,10 @@ endef
 define Package/$(PKG_NAME)
   CATEGORY:=LuCI
   SUBMENU:=3. Applications
-  TITLE:=LuCI support for PassWall By Lienol
+  TITLE:=LuCI support for PassWall
   PKGARCH:=all
   DEPENDS:=+libmbedtls +iptables-mod-tproxy +kmod-ipt-tproxy +iptables-mod-ipopt +kmod-ipt-ipopt +ip +ipset +coreutils +coreutils-base64 +coreutils-nohup +luci-lib-jsonc \
-  +bash +wget +resolveip +unzip +dnsmasq-full +tcping \
+  +wget +resolveip +unzip +dnsmasq-full +tcping \
   +PACKAGE_$(PKG_NAME)_INCLUDE_ipt2socks:ipt2socks \
   +PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks:shadowsocks-libev-ss-redir \
   +PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR:shadowsocksr-libev-alt \
@@ -114,13 +114,18 @@ endef
 define Build/Compile
 endef
 
+define Package/$(PKG_NAME)/conffiles
+/etc/config/passwall
+/usr/share/passwall/rules/blacklist_host
+/usr/share/passwall/rules/blacklist_ip
+/usr/share/passwall/rules/whitelist_host
+/usr/share/passwall/rules/whitelist_ip
+endef
+
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./root/etc/config/passwall $(1)/etc/config/passwall
 	$(INSTALL_CONF) ./root/etc/config/passwall_show $(1)/etc/config/passwall_show
-	
-	$(INSTALL_DIR) $(1)/etc/config/passwall_rule
-	cp -pR ./root/etc/config/passwall_rule/* $(1)/etc/config/passwall_rule/
 	
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_CONF) ./root/etc/uci-defaults/* $(1)/etc/uci-defaults
