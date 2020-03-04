@@ -10,8 +10,8 @@ LUCI_TITLE:=LuCI support for V2ray Server
 LUCI_DEPENDS:=+unzip +v2ray 
 LUCI_PKGARCH:=all
 PKG_VERSION:=1.1
-PKG_RELEASE:=5
-PKG_DATE:=20200302
+PKG_RELEASE:=6
+PKG_DATE:=20200304
 
 include $(TOPDIR)/feeds/luci/luci.mk
 
