@@ -9,8 +9,13 @@ local luci_api =
     "https://api.github.com/repos/lienol/openwrt-package/releases/latest"
 
 function get_luci_version()
-    
-    return "3.6-11"
+    local ipkg = require "luci.model.ipkg"
+    local package_name = "luci-app-passwall"
+    local package_info = ipkg.info(package_name) or {}
+    if next(package_info) ~= nil then
+        return package_info[package_name]["Version"]
+    end
+    return ""
 end
 
 function to_check()
@@ -33,11 +38,11 @@ function to_check()
         html_url = json.html_url
         for _, v in ipairs(json.assets) do
             local n = v.name
-			if n then
-				if n:match("luci%-app%-passwall") then
-					download_url = v.browser_download_url
-				end
-			end
+            if n then
+                if n:match("luci%-app%-passwall") then
+                    download_url = v.browser_download_url
+                end
+            end
         end
     end
 
@@ -62,46 +67,42 @@ function to_check()
 end
 
 function update_luci(url, save)
-	if not url or url == "" then
-		return {
-			code = 1,
-			error = i18n.translate("Download url is required.")
-		}
-	end
+    if not url or url == "" then
+        return {code = 1, error = i18n.translate("Download url is required.")}
+    end
 
-	sys.call("/bin/rm -f /tmp/luci_passwall.*.ipk")
+    sys.call("/bin/rm -f /tmp/luci_passwall.*.ipk")
 
-	local tmp_file = util.trim(util.exec("mktemp -u -t luci_passwall.XXXXXX")) .. ".ipk"
+    local tmp_file =
+        util.trim(util.exec("mktemp -u -t luci_passwall.XXXXXX")) .. ".ipk"
 
-	local result = api.exec(api.wget, {
-		"-O", tmp_file, url, api._unpack(api.wget_args) }, nil, api.command_timeout) == 0
+    local result = api.exec(api.wget,
+                            {"-O", tmp_file, url, api._unpack(api.wget_args)},
+                            nil, api.command_timeout) == 0
 
-	if not result then
-		api.exec("/bin/rm", { "-f", tmp_file })
-		return {
-			code = 1,
-			error = i18n.translatef("File download failed or timed out: %s", url)
-		}
-	end
+    if not result then
+        api.exec("/bin/rm", {"-f", tmp_file})
+        return {
+            code = 1,
+            error = i18n.translatef("File download failed or timed out: %s", url)
+        }
+    end
 
-	local opkg_args = { "--force-downgrade", "--force-reinstall" }
+    local opkg_args = {"--force-downgrade", "--force-reinstall"}
 
-	if save ~= "true" then
-		opkg_args[#opkg_args + 1] = "--force-maintainer"
-	end
+    if save ~= "true" then opkg_args[#opkg_args + 1] = "--force-maintainer" end
 
-	result = api.exec("/bin/opkg", { "install", tmp_file, api._unpack(opkg_args) }) == 0
+    result =
+        api.exec("/bin/opkg", {"install", tmp_file, api._unpack(opkg_args)}) ==
+            0
 
-	if not result then
-		api.exec("/bin/rm", { "-f", tmp_file })
-		return {
-			code = 1,
-			error = i18n.translate("Package update failed.")
-		}
-	end
+    if not result then
+        api.exec("/bin/rm", {"-f", tmp_file})
+        return {code = 1, error = i18n.translate("Package update failed.")}
+    end
 
-	api.exec("/bin/rm", { "-f", tmp_file })
-	api.exec("/bin/rm", { "-rf", "/tmp/luci-indexcache", "/tmp/luci-modulecache" })
+    api.exec("/bin/rm", {"-f", tmp_file})
+    api.exec("/bin/rm", {"-rf", "/tmp/luci-indexcache", "/tmp/luci-modulecache"})
 
-	return { code = 0 }
+    return {code = 0}
 end
