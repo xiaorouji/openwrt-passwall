@@ -17,15 +17,20 @@ end
 local n = {}
 uci:foreach(appname, "nodes", function(e)
     local type = e.type
+    if type == nil then type = "" end
     local address = e.address
     if address == nil then address = "" end
-    if type and address and e.remarks then
-        if e.use_kcp and e.use_kcp == "1" then
-            n[e[".name"]] = "%s+%s：[%s] %s" %
-                                {translate(type), "Kcptun", e.remarks, address}
-        else
-            n[e[".name"]] = "%s：[%s] %s" %
-                                {translate(type), e.remarks, address}
+    if (type == "V2ray_balancing" or type == "V2ray_shunt") or (address:match("[\u4e00-\u9fa5]") and address:find("%.") and address:sub(#address) ~= ".") then
+        if type and address and e.remarks then
+            if e.use_kcp and e.use_kcp == "1" then
+                n[e[".name"]] = "%s+%s：[%s] %s" %
+                                    {
+                        translate(type), "Kcptun", e.remarks, address
+                    }
+            else
+                n[e[".name"]] = "%s：[%s] %s" %
+                                    {translate(type), e.remarks, address}
+            end
         end
     end
 end)
@@ -102,23 +107,20 @@ for i = 1, socks5_node_num, 1 do
     for _, key in pairs(key_table) do o:value(key, n[key]) end
 end
 
-if api.uci_get_type("global_other", "wangejibadns", "0") == "1" then
-    o =
-        s:option(Value, "up_china_dns", translate("China DNS Server") .. "(UDP)")
-    -- o.description = translate("If you want to work with other DNS acceleration services, use the default.<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53.")
-    o.default = "default"
-    o:value("default", translate("default"))
-    o:value("dnsbyisp", translate("dnsbyisp"))
-    o:value("223.5.5.5", "223.5.5.5 (" .. translate("Ali") .. "DNS)")
-    o:value("223.6.6.6", "223.6.6.6 (" .. translate("Ali") .. "DNS)")
-    o:value("114.114.114.114", "114.114.114.114 (114DNS)")
-    o:value("114.114.115.115", "114.114.115.115 (114DNS)")
-    o:value("119.29.29.29", "119.29.29.29 (DNSPOD DNS)")
-    o:value("182.254.116.116", "182.254.116.116 (DNSPOD DNS)")
-    o:value("1.2.4.8", "1.2.4.8 (CNNIC DNS)")
-    o:value("210.2.4.8", "210.2.4.8 (CNNIC DNS)")
-    o:value("180.76.76.76", "180.76.76.76 (" .. translate("Baidu") .. "DNS)")
-end
+o = s:option(Value, "up_china_dns", translate("China DNS Server") .. "(UDP)")
+-- o.description = translate("If you want to work with other DNS acceleration services, use the default.<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53.")
+o.default = "default"
+o:value("default", translate("default"))
+o:value("dnsbyisp", translate("dnsbyisp"))
+o:value("223.5.5.5", "223.5.5.5 (" .. translate("Ali") .. "DNS)")
+o:value("223.6.6.6", "223.6.6.6 (" .. translate("Ali") .. "DNS)")
+o:value("114.114.114.114", "114.114.114.114 (114DNS)")
+o:value("114.114.115.115", "114.114.115.115 (114DNS)")
+o:value("119.29.29.29", "119.29.29.29 (DNSPOD DNS)")
+o:value("182.254.116.116", "182.254.116.116 (DNSPOD DNS)")
+o:value("1.2.4.8", "1.2.4.8 (CNNIC DNS)")
+o:value("210.2.4.8", "210.2.4.8 (CNNIC DNS)")
+o:value("180.76.76.76", "180.76.76.76 (" .. translate("Baidu") .. "DNS)")
 
 ---- DNS Forward Mode
 o = s:option(ListValue, "dns_mode", translate("DNS Mode"))
