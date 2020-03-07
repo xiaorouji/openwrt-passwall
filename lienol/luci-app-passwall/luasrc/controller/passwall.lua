@@ -34,7 +34,7 @@ function index()
               cbi("passwall/balancing"), _("Load Balancing"), 95).leaf = true
     end
     entry({"admin", "vpn", "passwall", "rule"},
-          cbi("passwall/rule", {autoapply = true}), _("Rule Update"), 96).leaf =
+          cbi("passwall/rule"), _("Rule Update"), 96).leaf =
         true
     entry({"admin", "vpn", "passwall", "acl"}, cbi("passwall/acl"),
           _("Access control"), 97).leaf = true
