@@ -414,7 +414,7 @@ local function update_node()
 	end)
 	for _, v in ipairs(nodeResult) do
 		for _, vv in ipairs(v) do
-			local cfgid = ucic2:add(application, uciType, vv)
+			local cfgid = ucic2:add(application, uciType)
 			for kkk, vvv in pairs(vv) do
 				ucic2:set(application, cfgid, kkk, vvv)
 			end
@@ -433,9 +433,9 @@ local function update_node()
 		for _, config in pairs(CONFIG) do
 			select_node(nodes, config)
 		end
+		ucic3:commit(application)
+		luci.sys.call("/etc/init.d/" .. application .. " restart > /dev/null 2>&1 &") -- 不加&的话日志会出现的更早
 	end
-	ucic2:commit(application)
-	luci.sys.call("/etc/init.d/" .. application .. " restart > /dev/null 2>&1 &") -- 不加&的话日志会出现的更早
 end
 
 local function parse_link(raw, remark, manual)
@@ -460,7 +460,7 @@ local function parse_link(raw, remark, manual)
 			local servers = {}
 			-- SS里面包着 干脆直接这样
 			for _, server in ipairs(nodes.servers) do
-				tinsert(servers, setmetatable(server, {__index = extra}))
+				tinsert(servers, setmetatable(server, { __index = extra }))
 			end
 			nodes = servers
 		else
