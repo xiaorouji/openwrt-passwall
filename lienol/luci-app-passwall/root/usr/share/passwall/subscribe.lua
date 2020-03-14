@@ -302,8 +302,7 @@ local function processData(szType, content, add_mode)
 		result.group = content.airport
 		result.remarks = content.remarks
 	else
-		log('暂时不支持' .. szType ..
-				"类型的节点订阅，跳过此节点。")
+		log('暂时不支持' .. szType .. "类型的节点订阅，跳过此节点。")
 		return nil
 	end
 	if not result.remarks then
@@ -313,7 +312,8 @@ local function processData(szType, content, add_mode)
 end
 -- wget
 local function wget(url)
-	local stdout = luci.sys.exec('/usr/bin/wget --user-agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.122 Safari/537.36" --no-check-certificate -t 3 -T 10 -O- "' .. url .. '"')
+	local ua = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.122 Safari/537.36"
+	local stdout = luci.sys.exec('/usr/bin/wget --user-agent="' .. ua .. '" --no-check-certificate -t 3 -T 10 -O- "' .. url .. '"')
 	return trim(stdout)
 end
 
@@ -351,6 +351,16 @@ end
 
 local function select_node(nodes, config)
 	local server
+	-- 特别优先级 分流类型 + 备注
+	if config.currentNode.type == 'V2ray_shunt' then
+		for id, node in pairs(nodes) do
+			if node.remarks == config.currentNode.remarks then
+				log('选择【' .. config.remarks .. '】分流类型匹配节点：' .. node.remarks)
+				server = id
+				break
+			end
+		end
+	end
 	-- 第一优先级 IP + 端口
 	for id, node in pairs(nodes) do
 		if node.address .. ':' .. node.port == config.currentNode.address .. ':' .. config.currentNode.port then
@@ -427,7 +437,7 @@ local function update_node(manual)
 		local nodes = {}
 		local ucic3 = uci.cursor()
 		ucic3:foreach(application, uciType, function(node)
-			if node.port and node.address and node.remarks then
+			if (node.port and node.address and node.remarks) or node.type == 'V2ray_shunt' then
 				nodes[node['.name']] = node
 			end
 		end)
@@ -498,7 +508,8 @@ local function parse_link(raw, remark, manual)
 					if result.remarks:find("过期时间") or
 						result.remarks:find("剩余流量") or
 						result.remarks:find("QQ群") or
-						result.remarks:find("官网") or not result.address or
+						result.remarks:find("官网") or
+						not result.address or
 						result.address:match("[^0-9a-zA-Z%-%_%.%s]") or -- 中文做地址的 也没有人拿中文域名搞，就算中文域也有Puny Code SB 机场
 						not result.address:find("%.") or -- 虽然没有.也算域，不过应该没有人会这样干吧
 						result.address:sub(#result.address) == "." -- 结尾是.
