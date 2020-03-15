@@ -351,41 +351,59 @@ end
 
 local function select_node(nodes, config)
 	local server
-	-- 特别优先级 分流类型 + 备注
+	-- 特别优先级 V2ray分流 + 备注
 	if config.currentNode.type == 'V2ray_shunt' then
 		for id, node in pairs(nodes) do
 			if node.remarks == config.currentNode.remarks then
-				log('选择【' .. config.remarks .. '】分流类型匹配节点：' .. node.remarks)
+				log('选择【' .. config.remarks .. '】V2ray分流匹配节点：' .. node.remarks)
+				server = id
+				break
+			end
+		end
+	end
+	-- 特别优先级 V2ray负载均衡 + 备注
+	if config.currentNode.type == 'V2ray_balancing' then
+		for id, node in pairs(nodes) do
+			if node.remarks == config.currentNode.remarks then
+				log('选择【' .. config.remarks .. '】V2ray负载均衡匹配节点：' .. node.remarks)
 				server = id
 				break
 			end
 		end
 	end
 	-- 第一优先级 IP + 端口
-	for id, node in pairs(nodes) do
-		if node.address .. ':' .. node.port == config.currentNode.address .. ':' .. config.currentNode.port then
-			log('选择【' .. config.remarks .. '】第一匹配节点：' .. node.remarks)
-			server = id
-			break
+	if not server then
+		for id, node in pairs(nodes) do
+			if node.address and node.port then
+				if node.address .. ':' .. node.port == config.currentNode.address .. ':' .. config.currentNode.port then
+					log('选择【' .. config.remarks .. '】第一匹配节点：' .. node.remarks)
+					server = id
+					break
+				end
+			end
 		end
 	end
 	-- 第二优先级 IP
 	if not server then
 		for id, node in pairs(nodes) do
-			if node.address == config.currentNode.address then
-				log('选择【' .. config.remarks .. '】第二匹配节点：' .. node.remarks)
-				server = id
-				break
+			if node.address then
+				if node.address == config.currentNode.address then
+					log('选择【' .. config.remarks .. '】第二匹配节点：' .. node.remarks)
+					server = id
+					break
+				end
 			end
 		end
 	end
 	-- 第三优先级备注
 	if not server then
 		for id, node in pairs(nodes) do
-			if node.remarks == config.currentNode.remarks then
-				log('选择【' .. config.remarks .. '】第三匹配节点：' .. node.remarks)
-				server = id
-				break
+			if node.remarks then
+				if node.remarks == config.currentNode.remarks then
+					log('选择【' .. config.remarks .. '】第三匹配节点：' .. node.remarks)
+					server = id
+					break
+				end
 			end
 		end
 	end
@@ -437,7 +455,7 @@ local function update_node(manual)
 		local nodes = {}
 		local ucic3 = uci.cursor()
 		ucic3:foreach(application, uciType, function(node)
-			if (node.port and node.address and node.remarks) or node.type == 'V2ray_shunt' then
+			if (node.port and node.address and node.remarks) or node.type == 'V2ray_shunt' or node.type == 'V2ray_balancing' then
 				nodes[node['.name']] = node
 			end
 		end)
@@ -559,7 +577,7 @@ if arg[1] then
 			end)
 			log('订阅完毕...')
 		else
-			log('未设置或启用订阅, 请检查设置...')
+			log('未设置订阅或未启用订阅, 请检查设置...')
 		end
 	elseif arg[1] == "add" then
 		local f = assert(io.open("/tmp/links.conf", 'r'))
