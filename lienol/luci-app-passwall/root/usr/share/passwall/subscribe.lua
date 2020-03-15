@@ -444,7 +444,7 @@ local function update_node(manual)
 		for _, config in pairs(CONFIG) do
 			select_node(nodes, config)
 		end
-		ucic3:commit(application)
+		ucic2:commit(application)
 		luci.sys.call("/etc/init.d/" .. application .. " restart > /dev/null 2>&1 &") -- 不加&的话日志会出现的更早
 	end
 end
