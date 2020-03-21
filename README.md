@@ -1,12 +1,6 @@
 # openwrt-package
 
-[OpenWRT吹水讨论群](https://t.me/joinchat/IUAfG09LxGwx4PIcc3k76w)
-
-[Lienol的源码反馈群](https://t.me/passwallQA)
-
 本源码兼容[官方](https://github.com/openwrt/openwrt)和[大雕Lean](https://github.com/coolsnowwolf/lede)源码
-
-使用[大雕源码](https://github.com/coolsnowwolf/lede)务必按[此](https://github.com/Lienol/openwrt-package/issues/54#issuecomment-562859266)操作执行 
 
 可尝试本人[基于官方openwrt源码](https://github.com/Lienol/openwrt) 神秘的优化速度！
 
