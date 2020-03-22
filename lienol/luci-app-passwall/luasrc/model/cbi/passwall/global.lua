@@ -110,7 +110,7 @@ end
 o = s:option(Value, "up_china_dns", translate("China DNS Server") .. "(UDP)")
 -- o.description = translate("If you want to work with other DNS acceleration services, use the default.<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53.")
 o.default = "default"
-o:value("default", translate("default"))
+o:value("default", translate("Default"))
 o:value("dnsbyisp", translate("dnsbyisp"))
 o:value("223.5.5.5", "223.5.5.5 (" .. translate("Ali") .. "DNS)")
 o:value("223.6.6.6", "223.6.6.6 (" .. translate("Ali") .. "DNS)")
