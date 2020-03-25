@@ -336,7 +336,7 @@ gen_start_config() {
 			local server_username=$(config_n_get $node username)
 			local server_password=$(config_n_get $node password)
 			eval port=\$UDP_REDIR_PORT$5
-			ln_start_bin $(find_bin ipt2socks) ipt2socks_udp_$5 "-U -l $port -b 0.0.0.0 -s $node_address -p $node_port -R"
+			ln_start_bin $(find_bin ipt2socks) ipt2socks_udp_$5 "-4 -U -l $port -b 0.0.0.0 -s $node_address -p $node_port -R"
 		elif [ "$type" == "v2ray" ]; then
 			lua $API_GEN_V2RAY $node udp $local_port nil >$config_file
 			ln_start_bin $(config_t_get global_app v2ray_file $(find_bin v2ray))/v2ray v2ray_udp_$5 "-config=$config_file"
@@ -358,7 +358,7 @@ gen_start_config() {
 			local server_username=$(config_n_get $node username)
 			local server_password=$(config_n_get $node password)
 			eval port=\$UDP_REDIR_PORT$5
-			ln_start_bin $(find_bin ipt2socks) ipt2socks_udp_$5 "-U -l $port -b 0.0.0.0 -s 127.0.0.1 -p $socks5_port -R"
+			ln_start_bin $(find_bin ipt2socks) ipt2socks_udp_$5 "-4 -U -l $port -b 0.0.0.0 -s 127.0.0.1 -p $socks5_port -R"
 		elif [ "$type" == "brook" ]; then
 			local protocol=$(config_n_get $node brook_protocol client)
 			if [ "$protocol" == "wsclient" ]; then
@@ -392,7 +392,7 @@ gen_start_config() {
 			local server_username=$(config_n_get $node username)
 			local server_password=$(config_n_get $node password)
 			eval port=\$TCP_REDIR_PORT$5
-			ln_start_bin $(find_bin ipt2socks) ipt2socks_tcp_$5 "-T -l $port -b 0.0.0.0 -s $node_address -p $node_port -R"
+			ln_start_bin $(find_bin ipt2socks) ipt2socks_tcp_$5 "-4 -T -l $port -b 0.0.0.0 -s $node_address -p $node_port -R"
 		elif [ "$type" == "v2ray" ]; then
 			lua $API_GEN_V2RAY $node tcp $local_port nil >$config_file
 			ln_start_bin $(config_t_get global_app v2ray_file $(find_bin v2ray))/v2ray v2ray_tcp_$5 "-config=$config_file"
@@ -451,7 +451,7 @@ gen_start_config() {
 					socks5_port=$(get_new_port $(expr $SOCKS5_PROXY_PORT3 + 3) tcp)
 					ln_start_bin $(config_t_get global_app brook_file $(find_bin brook)) brook_tcp_$5 "wsclient -l 127.0.0.1:$socks5_port -i 127.0.0.1 -s $server_ip:$port -p $(config_n_get $node password)"
 					eval port=\$TCP_REDIR_PORT$5
-					ln_start_bin $(find_bin ipt2socks) ipt2socks_tcp_$5 "-T -l $port -b 0.0.0.0 -s 127.0.0.1 -p $socks5_port -R"
+					ln_start_bin $(find_bin ipt2socks) ipt2socks_tcp_$5 "-4 -T -l $port -b 0.0.0.0 -s 127.0.0.1 -p $socks5_port -R"
 					echolog "Brook的WebSocket不支持透明代理，将使用ipt2socks转换透明代理！"
 				else
 					[ "$kcptun_use" == "1" ] && {
