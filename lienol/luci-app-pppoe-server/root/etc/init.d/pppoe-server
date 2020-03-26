@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2018-2019 Lienol <lawlienol@gmail.com>
+# Copyright (C) 2018-2020 Lienol <lawlienol@gmail.com>
 
 START=99
 
@@ -11,7 +11,7 @@ TEMP=/tmp/$CONFIG.tmp
 config_t_get() {
 	local index=0
 	[ -n "$4" ] && index=$4
-	local ret=$(uci get $CONFIG.@$1[$index].$2 2>/dev/null)
+	local ret=$(uci -q get $CONFIG.@$1[$index].$2 2>/dev/null)
 	echo ${ret:=$3}
 }
 
@@ -59,43 +59,43 @@ EOF
 	if [ "$is_nat" -eq 1 ];then
 		local export_interface=$(config_t_get service export_interface)
 		if [ "$export_interface" != "default" ];then
-			iptables -t nat -A POSTROUTING -s ${localip%.*}.0/24 -o ${export_interface} -m comment --comment "Rule For PPPoE Server" -j MASQUERADE
+			iptables -t nat -A POSTROUTING -s ${localip%.*}.0/24 -o ${export_interface} -m comment --comment "PPPoE Server" -j MASQUERADE
 		else
-			iptables -t nat -A POSTROUTING -s ${localip%.*}.0/24 -m comment --comment "Rule For PPPoE Server" -j MASQUERADE
+			iptables -t nat -A POSTROUTING -s ${localip%.*}.0/24 -m comment --comment "PPPoE Server" -j MASQUERADE
 		fi
-		iptables -A forwarding_rule -s ${localip%.*}.0/24 -m comment --comment "Rule For PPPoE Server" -j ACCEPT
+		iptables -A forwarding_rule -s ${localip%.*}.0/24 -m comment --comment "PPPoE Server" -j ACCEPT
 	fi
 	/usr/sbin/pppoe-server -k -I $(config_t_get service client_interface) -L $(config_t_get service localip) -R $(config_t_get service remoteip) -N $(config_t_get service count)
 }
 
 stop() {
 	del_user
-	nums=`iptables -t nat -L POSTROUTING 2> /dev/null|grep -c "Rule For PPPoE Server"`
+	nums=$(iptables -t nat -n -L POSTROUTING 2>/dev/null | grep -c "PPPoE Server")
 	if [ -n "$nums" ]; then
 		until [ "$nums" = 0 ]
 		do
-			rules=`iptables -t nat -L POSTROUTING --line-num 2> /dev/null|grep "Rule For PPPoE Server" |awk '{print $1}'`
+			rules=$(iptables -t nat -n -L POSTROUTING --line-num 2>/dev/null | grep "PPPoE Server" | awk '{print $1}')
 			for rule in $rules
 			do
 				iptables -t nat -D POSTROUTING $rule 2> /dev/null
 				break
 			done
-			nums=`expr $nums - 1`
+			nums=$(expr $nums - 1)
 		done
 	fi
-	nums2=`iptables -L forwarding_rule 2> /dev/null|grep -c "Rule For PPPoE Server"`
+	nums2=$(iptables -L forwarding_rule 2>/dev/null | grep -c "PPPoE Server")
 	if [ -n "$nums2" ]; then
 		until [ "$nums2" = 0 ]
 		do
-			rules=`iptables -L forwarding_rule --line-num 2> /dev/null|grep "Rule For PPPoE Server" |awk '{print $1}'`
+			rules=$(iptables -L forwarding_rule --line-num 2>/dev/null | grep "PPPoE Server" | awk '{print $1}')
 			for rule in $rules
 			do
 				iptables -D forwarding_rule $rule 2> /dev/null
 				break
 			done
-			nums2=`expr $nums2 - 1`
+			nums2=$(expr $nums2 - 1)
 		done
 	fi
-	ps | grep "pppd plugin rp-pppoe.so" | grep -v "grep" | awk '{print $1}' | xargs kill -9
-	killall -9 pppoe-server
+	ps | grep "pppd plugin rp-pppoe.so" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
+	killall -q -9 pppoe-server
 }
