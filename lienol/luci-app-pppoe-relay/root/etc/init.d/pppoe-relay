@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2018-2019 Lienol <lawlienol@gmail.com>
+# Copyright (C) 2018-2020 Lienol <lawlienol@gmail.com>
 
 START=99
 
@@ -22,5 +22,5 @@ start() {
 }
 
 stop() {
-	killall -9 pppoe-relay
+	killall -q -9 pppoe-relay
 }

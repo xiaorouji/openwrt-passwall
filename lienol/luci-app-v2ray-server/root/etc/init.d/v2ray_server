@@ -27,7 +27,7 @@ start_v2ray_server() {
 	mkdir -p $CONFIG_PATH $LOG_PATH
 	touch $LOG_APP_FILE
 	config_foreach gen_v2ray_config_file "user"
-	fw3 reload > /dev/null 2>&1
+	fw3 reload > /dev/null 2>&1 &
 }
 
 stop_v2ray_server() {
@@ -53,6 +53,5 @@ stop() {
 
 restart() {
 	stop
-	sleep 1
 	start
 }

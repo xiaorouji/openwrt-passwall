@@ -36,7 +36,7 @@ setup_config() {
 	[ -n "$remoteip" ] && echo "remoteip  $remoteip" >> $CONFIG_FILE
 	echo "option /etc/ppp/options.pptpd" >> $CONFIG_FILE
 
-	fw3 reload >/dev/null 2>&1
+	fw3 reload >/dev/null 2>&1 &
 	
 	config_get mppe $1 mppe
 	if [ -n "$(cat "/etc/ppp/options.pptpd" | grep mppe)" ]; then

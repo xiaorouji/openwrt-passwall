@@ -366,7 +366,7 @@ service_triggers() {
 }
 
 start_service() {
-	fw3 reload
+	fw3 reload >/dev/null 2>&1 &
 	local vt_enabled=$(uci -q get ipsec.@service[0].enabled)
 	local vt_clientip=$(uci -q get ipsec.@service[0].clientip)
 	local vt_clientdns=$(uci -q get ipsec.@service[0].clientdns)

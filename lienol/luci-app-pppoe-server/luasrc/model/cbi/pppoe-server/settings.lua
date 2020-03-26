@@ -18,8 +18,7 @@ o.rmempty = false
 o = s:option(ListValue, "client_interface", translate("Client Interface"),
              translate("Listen in this interface"))
 for _, iface in ipairs(ifaces) do
-    if (iface:match("^br*") or iface:match("^eth*") or iface:match("^pppoe*") or
-        iface:match("wlan*")) then
+    if (iface:match("^br") or iface:match("^eth*") or iface:match("^pppoe*") or iface:match("wlan*")) then
         local nets = net:get_interface(iface)
         nets = nets and nets:get_networks() or {}
         for k, v in pairs(nets) do nets[k] = nets[k].sid end
@@ -67,17 +66,7 @@ o = s:option(ListValue, "export_interface", translate("Interface"),
              translate("Specify interface forwarding traffic."))
 o:value("default", translate("default"))
 for _, iface in ipairs(ifaces) do
-    --	if not (iface == "lo" or iface:match("^ifb.*") or iface:match("gre*")) then
-    --		local nets = net:get_interface(iface)
-    --		nets = nets and nets:get_networks() or {}
-    --		for k, v in pairs(nets) do
-    --			nets[k] = nets[k].sid
-    --		end
-    --		nets = table.concat(nets, ",")
-    --		o:value(iface, ((#nets > 0) and "%s (%s)" % {iface, nets} or iface))
-    --	end
-    if (iface:match("^br*") or iface:match("^eth*") or iface:match("^pppoe*") or
-        iface:match("wlan*")) then
+    if (iface:match("^br") or iface:match("^eth*") or iface:match("^pppoe*") or iface:match("wlan*")) then
         local nets = net:get_interface(iface)
         nets = nets and nets:get_networks() or {}
         for k, v in pairs(nets) do nets[k] = nets[k].sid end
