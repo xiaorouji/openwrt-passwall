@@ -1,6 +1,6 @@
 # openwrt-package
 
-此项目停更，不再更新！
+luci-app-passwall停止开发，当然如果存在BUG，欢迎各位大佬PR。
 
 [OpenWRT-Actions](https://github.com/Lienol/openwrt-actions/actions)
 
@@ -27,6 +27,7 @@ Some OpenWrt/LEDE LuCI for Commonly Used Package
 Add "src-git lienol https://github.com/Lienol/openwrt-package" to feeds.conf.default.
 
 ```bash
+./scripts/feeds clean
 ./scripts/feeds update -a
 ./scripts/feeds install -a
 ```
