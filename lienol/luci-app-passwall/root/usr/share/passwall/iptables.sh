@@ -11,7 +11,6 @@ ipt_n="iptables -t nat"
 ipt_m="iptables -t mangle"
 ip6t_n="ip6tables -t nat"
 FWI=$(uci -q get firewall.passwall.path 2>/dev/null)
-RESOLVFILE=/tmp/resolv.conf.d/resolv.conf.auto
 
 factor() {
 	if [ -z "$1" ] || [ -z "$2" ]; then
