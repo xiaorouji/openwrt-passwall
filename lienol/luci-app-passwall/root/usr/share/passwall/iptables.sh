@@ -11,6 +11,7 @@ ipt_n="iptables -t nat"
 ipt_m="iptables -t mangle"
 ip6t_n="ip6tables -t nat"
 FWI=$(uci -q get firewall.passwall.path 2>/dev/null)
+RESOLVFILE=/tmp/resolv.conf.d/resolv.conf.auto
 
 factor() {
 	if [ -z "$1" ] || [ -z "$2" ]; then
@@ -231,7 +232,8 @@ add_firewall_rule() {
 		$(gen_laniplist | sed -e "s/^/add $IPSET_LANIPLIST /")
 	EOF
 
-	ISP_DNS=$(cat /tmp/resolv.conf.auto 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | sort -u | grep -v 0.0.0.0 | grep -v 127.0.0.1)
+	[ ! -f "$RESOLVFILE" -o ! -s "$RESOLVFILE" ] && RESOLVFILE=/tmp/resolv.conf.auto
+	ISP_DNS=$(cat $RESOLVFILE 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | sort -u | grep -v 0.0.0.0 | grep -v 127.0.0.1)
 	[ -n "$ISP_DNS" ] && {
 		for ispip in $ISP_DNS; do
 			ipset -! add $IPSET_LANIPLIST $ispip >/dev/null 2>&1 &

@@ -29,7 +29,7 @@ test_url() {
 test_proxy() {
 	local try=5
 	result=0
-	status=$(test_url "https://www.google.com" $try)
+	status=$(test_url "https://www.google.com/generate_204" $try)
 	if [ "$status" = "200" ]; then
 		result=0
 	else

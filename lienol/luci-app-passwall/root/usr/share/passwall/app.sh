@@ -319,8 +319,10 @@ gen_start_config() {
 			local plugin=$(config_n_get $node ss_plugin)
 			if [ "$plugin" != "none" ]; then
 				[ "$plugin" == "v2ray-plugin" -o "$plugin" == "obfs-local" ] && {
+					local plugin_opts=""
 					local opts=$(config_n_get $node ss_plugin_opts)
-					plugin_params="--plugin $plugin --plugin-opts $opts"
+					[ -n "$opts" ] && plugin_opts="--plugin-opts $opts"
+					plugin_params="--plugin $plugin $plugin_opts"
 				}
 			fi
 			ln_start_bin $(find_bin ss-local) ss-local_socks_$5 "-c $config_file -b $bind -u $plugin_params" 
@@ -375,8 +377,10 @@ gen_start_config() {
 			local plugin=$(config_n_get $node ss_plugin)
 			if [ "$plugin" != "none" ]; then
 				[ "$plugin" == "v2ray-plugin" -o "$plugin" == "obfs-local" ] && {
+					local plugin_opts=""
 					local opts=$(config_n_get $node ss_plugin_opts)
-					plugin_params="--plugin $plugin --plugin-opts $opts"
+					[ -n "$opts" ] && plugin_opts="--plugin-opts $opts"
+					plugin_params="--plugin $plugin $plugin_opts"
 				}
 			fi
 			ln_start_bin $(find_bin ss-redir) ss-redir_udp_$5 "-c $config_file -U $plugin_params"
