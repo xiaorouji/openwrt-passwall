@@ -22,17 +22,6 @@ factor() {
 	fi
 }
 
-get_jump_mode() {
-	case "$1" in
-	disable)
-		echo "j"
-		;;
-	*)
-		echo "g"
-		;;
-	esac
-}
-
 dst() {
 	echo "-m set $2 --match-set $1 dst"
 }
@@ -64,26 +53,6 @@ get_redirect_ipt() {
 		;;
 	returnhome)
 		echo "$(dst $IPSET_CHN) $(REDIRECT $2 $3)"
-		;;
-	esac
-}
-
-get_action_chain() {
-	case "$1" in
-	disable)
-		echo "RETURN"
-		;;
-	global)
-		echo "PSW_GLO"
-		;;
-	gfwlist)
-		echo "PSW_GFW"
-		;;
-	chnroute)
-		echo "PSW_CHN"
-		;;
-	returnhome)
-		echo "PSW_HOME"
 		;;
 	esac
 }
