@@ -33,5 +33,7 @@ if [ -n "$enable" -a "$enable" == 1 ]; then
 	clientip=$(uci -q get ipsec.ipsec.clientip)
 	iptables -t nat -I POSTROUTING -s ${clientip%.*}.0/24 -m comment --comment "IPSec VPN Server" -j MASQUERADE
 	iptables -I forwarding_rule -s ${clientip%.*}.0/24 -m comment --comment "IPSec VPN Server" -j ACCEPT
+	iptables -I forwarding_rule -m policy --dir in --pol ipsec --proto esp -m comment --comment "IPSec VPN Server" -j ACCEPT
+	iptables -I forwarding_rule -m policy --dir out --pol ipsec --proto esp -m comment --comment "IPSec VPN Server" -j ACCEPT
 	iptables -I INPUT -p udp -m multiport --dports 500,4500 -m comment --comment "IPSec VPN Server" -j ACCEPT
 fi

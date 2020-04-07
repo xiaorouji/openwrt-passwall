@@ -9,7 +9,7 @@ LUCI_TITLE:=LuCI support for IPSec VPN Server
 LUCI_DEPENDS:=+strongswan +strongswan-minimal +strongswan-mod-xauth-generic
 LUCI_PKGARCH:=all
 PKG_VERSION:=1
-PKG_RELEASE:=5-20200330
+PKG_RELEASE:=6-20200402
 
 include $(TOPDIR)/feeds/luci/luci.mk
 
