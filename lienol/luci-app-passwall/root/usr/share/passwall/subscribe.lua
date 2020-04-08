@@ -68,7 +68,7 @@ do
 	end
 	import_config("tcp")
 	import_config("udp")
-	import_config("socks5")
+	import_config("socks")
 
 	local tcp_node1_table = ucic2:get(application, "@auto_switch[0]", "tcp_node1")
 	if tcp_node1_table then
@@ -494,7 +494,7 @@ local function truncate_nodes()
 	end
 	clear("tcp")
 	clear("udp")
-	clear("socks5")
+	clear("socks")
 
 	ucic2:foreach(application, uciType, function(node)
 		if (node.is_sub or node.hashkey) and node.add_mode ~= '导入' then
