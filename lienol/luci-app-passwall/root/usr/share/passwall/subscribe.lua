@@ -213,24 +213,27 @@ do
 end
 
 -- 判断是否过滤节点关键字
+local filter_keyword_enabled = ucic2:get(application, "@global_subscribe[0]", "filter_enabled")
 local filter_keyword_table = ucic2:get(application, "@global_subscribe[0]", "filter_keyword")
 local filter_keyword_discarded = ucic2:get(application, "@global_subscribe[0]", "filter_keyword_discarded")
 local function is_filter_keyword(value)
-	if filter_keyword_table then
-		if filter_keyword_discarded and filter_keyword_discarded == "1" then
-			for k,v in ipairs(filter_keyword_table) do
-				if value:find(v) then
-					return true
+	if filter_keyword_enabled and filter_keyword_enabled == "1" then
+		if filter_keyword_table then
+			if filter_keyword_discarded and filter_keyword_discarded == "1" then
+				for k,v in ipairs(filter_keyword_table) do
+					if value:find(v) then
+						return true
+					end
 				end
-			end
-		else
-			local result = true
-			for k,v in ipairs(filter_keyword_table) do
-				if value:find(v) then
-					result = false
+			else
+				local result = true
+				for k,v in ipairs(filter_keyword_table) do
+					if value:find(v) then
+						result = false
+					end
 				end
+				return result
 			end
-			return result
 		end
 	end
 	return false

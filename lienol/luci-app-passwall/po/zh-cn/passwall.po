@@ -625,6 +625,12 @@ msgstr "手动订阅"
 msgid "Delete All Subscribe Node"
 msgstr "删除所有订阅节点"
 
+msgid "Filter keyword switch"
+msgstr "过滤关键字开关"
+
+msgid "When checked, below options can only be take effect."
+msgstr "当勾选时，下面的选项才生效。"
+
 msgid "Filter keyword"
 msgstr "过滤关键字"
 
