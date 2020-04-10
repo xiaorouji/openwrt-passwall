@@ -150,7 +150,7 @@ function status()
     end
 
     local socks_node_num = luci.sys.exec(
-                                "echo -n $(uci -q get %s.@global_other[0].socks_node_num)" %
+                                "echo -n $(uci -q get %s.@global_other[0].socks5_node_num)" %
                                     appname)
     for i = 1, socks_node_num, 1 do
         e["kcptun_socks_node%s_status" % i] =
