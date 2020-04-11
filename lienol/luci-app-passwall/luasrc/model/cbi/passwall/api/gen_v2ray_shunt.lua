@@ -159,10 +159,10 @@ end
 
 local rules = {}
 
-local youtube_node = node.youtube_node or nil
-if youtube_node and youtube_node ~= "nil" then
-    local node = ucursor:get_all("passwall", youtube_node)
-    local youtube_outbound = gen_outbound(node, "youtube")
+local youtube_node_id = node.youtube_node or nil
+if youtube_node_id and youtube_node_id ~= "nil" then
+    local youtube_node = ucursor:get_all("passwall", youtube_node_id)
+    local youtube_outbound = gen_outbound(youtube_node, "youtube")
     if youtube_outbound then
         table.insert(outbounds, youtube_outbound)
         local rule = {
@@ -177,10 +177,10 @@ if youtube_node and youtube_node ~= "nil" then
     end
 end
 
-local netflix_node = node.netflix_node or nil
-if netflix_node and netflix_node ~= "nil" then
-    local node = ucursor:get_all("passwall", netflix_node)
-    local netflix_outbound = gen_outbound(node, "netflix")
+local netflix_node_id = node.netflix_node or nil
+if netflix_node_id and netflix_node_id ~= "nil" then
+    local netflix_node = ucursor:get_all("passwall", netflix_node_id)
+    local netflix_outbound = gen_outbound(netflix_node, "netflix")
     if netflix_outbound then
         table.insert(outbounds, netflix_outbound)
         local rule = {
@@ -195,10 +195,10 @@ if netflix_node and netflix_node ~= "nil" then
     end
 end
 
-local default_node = node.default_node or nil
-if default_node and default_node ~= "nil" then
-    local node = ucursor:get_all("passwall", default_node)
-    local default_outbound = gen_outbound(node, "default")
+local default_node_id = node.default_node or nil
+if default_node_id and default_node_id ~= "nil" then
+    local default_node = ucursor:get_all("passwall", default_node_id)
+    local default_outbound = gen_outbound(default_node, "default")
     if default_outbound then
         table.insert(outbounds, default_outbound)
         local rule = {
