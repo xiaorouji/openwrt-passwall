@@ -35,7 +35,7 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_socks
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_socks
 	bool "Include ShadowsocksR Socks (ssr-local)"
-	default n
+	default y
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_V2ray
 	bool "Include V2ray"
