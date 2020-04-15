@@ -1,0 +1,11 @@
+{
+	"luci-app-pptp-vpnserver-manyusers": {
+		"description": "Grant UCI access for luci-app-pptp-vpnserver-manyusers",
+		"read": {
+			"uci": [ "pptpd" ]
+		},
+		"write": {
+			"uci": [ "pptpd" ]
+		}
+	}
+}
