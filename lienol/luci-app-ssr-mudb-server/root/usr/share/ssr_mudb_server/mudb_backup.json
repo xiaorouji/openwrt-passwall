@@ -1,0 +1,19 @@
+[
+   {
+     "enable": 1,
+     "method": "none",
+     "user": "test",
+     "u": 0,
+     "forbidden_port": "",
+     "d": 0,
+     "passwd": "123456",
+     "speed_limit_per_user": 0,
+     "port": 50005,
+     "transfer_enable": 900727656415232.0,
+     "protocol": "auth_chain_a",
+     "obfs": "plain",
+     "protocol_param": "10",
+     "speed_limit_per_con": 0,
+     "id": "cfg022e84"
+   }
+ ]
