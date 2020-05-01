@@ -13,6 +13,7 @@ config user
 	option transport 'tcp'
 	option tcp_guise 'none'
 	option port '12366'
+	option transit_node 'nil'
 
 config user
 	option enable '1'
@@ -26,4 +27,5 @@ config user
 	option ws_path '/websocket'
 	option tls_enable '0'
 	option port '30010'
+	option transit_node 'nil'
 	

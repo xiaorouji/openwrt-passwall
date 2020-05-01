@@ -1,4 +1,5 @@
 local app_name = "v2ray_server"
+local uci = require "luci.model.uci".cursor()
 local d = require "luci.dispatcher"
 
 local header_type = {"none", "srtp", "utp", "wechat-video", "dtls", "wireguard"}
@@ -204,6 +205,21 @@ tls_keyFile = t:option(Value, "tls_keyFile",
                        translate("Private key absolute path"),
                        translate("as:") .. "/etc/ssl/private.key")
 tls_keyFile:depends("tls_enable", 1)
+
+local nodes_table = {}
+uci:foreach("passwall", "nodes", function(e)
+    if e.type and e.type == "V2ray" and e.remarks and e.address and e.port then
+        nodes_table[#nodes_table + 1] = {
+            id = e[".name"],
+            remarks = "%s：[%s] %s:%s" % {e.type, e.remarks, e.address, e.port}
+        }
+    end
+end)
+
+transit_node = t:option(ListValue, "transit_node", translate("transit node"), translate("This is the node inside passwall, which you can't use if you don't have it installed."))
+transit_node:value("nil", translate("Close"))
+for k, v in pairs(nodes_table) do transit_node:value(v.id, v.remarks) end
+transit_node.default = "nil"
 
 accept_lan = t:option(Flag, "accept_lan", translate("Accept LAN Access"),
                       translate(
