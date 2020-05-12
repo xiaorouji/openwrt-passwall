@@ -4,7 +4,7 @@ uci -q batch <<-EOF >/dev/null
 	delete firewall.softethervpn
 	set firewall.softethervpn=include
 	set firewall.softethervpn.type=script
-	set firewall.softethervpn.path=/usr/share/softethervpn/firewall.include
+	set firewall.softethervpn.path=/var/etc/softethervpn.include
 	set firewall.softethervpn.reload=1
 EOF
 
@@ -19,7 +19,5 @@ EOF
 /etc/init.d/softethervpnclient disable && /etc/init.d/softethervpnclient stop
 /etc/init.d/softethervpnserver disable && /etc/init.d/softethervpnserver stop
 
-chmod a+x /usr/share/softethervpn/* >/dev/null 2>&1
-
-rm -f /tmp/luci-indexcache
+rm -rf /tmp/luci-*cache
 exit 0

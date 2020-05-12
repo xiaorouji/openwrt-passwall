@@ -5,6 +5,62 @@ START=99
 IPSEC_SECRETS_FILE=/etc/ipsec.secrets
 IPSEC_CONN_FILE=/etc/ipsec.conf
 
+add_rule() {
+	iptables -t nat -I POSTROUTING -s ${vt_clientip%.*}.0/24 -m comment --comment "IPSec VPN Server" -j MASQUERADE
+	iptables -I forwarding_rule -s ${vt_clientip%.*}.0/24 -m comment --comment "IPSec VPN Server" -j ACCEPT
+	iptables -I forwarding_rule -m policy --dir in --pol ipsec --proto esp -m comment --comment "IPSec VPN Server" -j ACCEPT
+	iptables -I forwarding_rule -m policy --dir out --pol ipsec --proto esp -m comment --comment "IPSec VPN Server" -j ACCEPT
+	iptables -I INPUT -p udp -m multiport --dports 500,4500 -m comment --comment "IPSec VPN Server" -j ACCEPT
+}
+
+del_rule() {
+	iptables -D INPUT -p udp -m multiport --dports 500,4500 -m comment --comment "IPSec VPN Server" -j ACCEPT 2> /dev/null
+	ipsec_nums=$(iptables -t nat -n -L POSTROUTING 2>/dev/null | grep -c "IPSec VPN Server")
+	if [ -n "$ipsec_nums" ]; then
+		until [ "$ipsec_nums" = 0 ]
+		do
+			rules=$(iptables -t nat -n -L POSTROUTING --line-num 2>/dev/null | grep "IPSec VPN Server" | awk '{print $1}')
+			for rule in $rules
+			do
+				iptables -t nat -D POSTROUTING $rule 2> /dev/null
+				break
+			done
+			ipsec_nums=$(expr $ipsec_nums - 1)
+		done
+	fi
+	nums=$(iptables -n -L forwarding_rule 2>/dev/null | grep -c "IPSec VPN Server")
+	if [ -n "$nums" ]; then
+		until [ "$nums" = 0 ]
+		do
+			rules=$(iptables -n -L forwarding_rule --line-num 2>/dev/null | grep "IPSec VPN Server" | awk '{print $1}')
+			for rule in $rules
+			do
+				iptables -D forwarding_rule $rule 2> /dev/null
+				break
+			done
+			nums=$(expr $nums - 1)
+		done
+	fi
+}
+
+gen_include() {
+	echo '#!/bin/sh' > /var/etc/ipsecvpn.include
+	extract_rules() {
+		echo "*$1"
+		iptables-save -t $1 | grep "IPSec VPN Server" | \
+		sed -e "s/^-A \(INPUT\)/-I \1 1/"
+		echo 'COMMIT'
+	}
+	cat <<-EOF >> /var/etc/ipsecvpn.include
+		iptables-save -c | grep -v "IPSec VPN Server" | iptables-restore -c
+		iptables-restore -n <<-EOT
+		$(extract_rules filter)
+		$(extract_rules nat)
+		EOT
+	EOF
+	return 0
+}
+
 setup_login() {
 	config_get enabled $1 enabled
 	[ "$enabled" -eq 0 ] && return 0
@@ -55,14 +111,17 @@ EOF
 : PSK "$vt_secret"
 EOF
 
+	add_rule
+	
 	config_load ipsec
 	config_foreach setup_login users
 	
 	/usr/lib/ipsec/starter --daemon charon --nofork > /dev/null 2>&1 &
-	fw3 -q reload 2>&1 &
+	gen_include
 }
 
 stop() {
 	ps -w | grep "/usr/lib/ipsec" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
-	fw3 -q reload 2>&1
+	del_rule
+	rm -rf /var/etc/ipsecvpn.include
 }

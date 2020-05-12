@@ -8,6 +8,60 @@ CHAP_SECRETS=/var/etc/chap-secrets
 SERVER_NAME="pptp-server"
 TEMP=/tmp/pptpd.tmp
 
+add_rule() {
+	iptables -t nat -I POSTROUTING -s ${localip%.*}.0/24 -m comment --comment "PPTP VPN Server" -j MASQUERADE
+	iptables -I forwarding_rule -s ${localip%.*}.0/24 -m comment --comment "PPTP VPN Server" -j ACCEPT
+	iptables -I INPUT -p tcp --dport 1723 -m comment --comment "PPTP VPN Server" -j ACCEPT 2>/dev/null
+}
+
+del_rule() {
+	iptables -D INPUT -p tcp --dport 1723 -m comment --comment "PPTP VPN Server" -j ACCEPT 2> /dev/null
+	pptp_nums=$(iptables -t nat -n -L POSTROUTING 2>/dev/null | grep -c "PPTP VPN Server")
+	if [ -n "$pptp_nums" ]; then
+		until [ "$pptp_nums" = 0 ]
+		do
+			pptp_rules=$(iptables -t nat -n -L POSTROUTING --line-num 2>/dev/null | grep "PPTP VPN Server" | awk '{print $1}')
+			for pptp_rule in $pptp_rules
+			do
+				iptables -t nat -D POSTROUTING $pptp_rule 2> /dev/null
+				break
+			done
+			pptp_nums=$(expr $pptp_nums - 1)
+		done
+	fi
+	nums=$(iptables -n -L forwarding_rule 2>/dev/null | grep -c "PPTP VPN Server")
+	if [ -n "$nums" ]; then
+		until [ "$nums" = 0 ]
+		do
+			rules=$(iptables -n -L forwarding_rule --line-num 2>/dev/null | grep "PPTP VPN Server" | awk '{print $1}')
+			for rule in $rules
+			do
+				iptables -D forwarding_rule $rule 2> /dev/null
+				break
+			done
+			nums=$(expr $nums - 1)
+		done
+	fi
+}
+
+gen_include() {
+	echo '#!/bin/sh' > /var/etc/$CONFIG.include
+	extract_rules() {
+		echo "*$1"
+		iptables-save -t $1 | grep "PPTP VPN Server" | \
+		sed -e "s/^-A \(INPUT\)/-I \1 1/"
+		echo 'COMMIT'
+	}
+	cat <<-EOF >> /var/etc/$CONFIG.include
+		iptables-save -c | grep -v "PPTP VPN Server" | iptables-restore -c
+		iptables-restore -n <<-EOT
+		$(extract_rules filter)
+		$(extract_rules nat)
+		EOT
+	EOF
+	return 0
+}
+
 setup_login() {
 	config_get enabled $1 enabled
 	[ "$enabled" -eq 0 ] && return 0
@@ -29,14 +83,11 @@ setup_config() {
 	
 	config_get localip $1 localip
 	config_get remoteip $1 remoteip
-
 	[ -z "$localip" ] && localip="172.16.100.1"
 	[ -z "$remoteip" ] && remoteip="172.16.100.10-20"
 	[ -n "$localip" ] && echo "localip  $localip" >> $CONFIG_FILE
 	[ -n "$remoteip" ] && echo "remoteip  $remoteip" >> $CONFIG_FILE
 	echo "option /etc/ppp/options.pptpd" >> $CONFIG_FILE
-
-	fw3 reload >/dev/null 2>&1 &
 	
 	config_get mppe $1 mppe
 	if [ -n "$(cat "/etc/ppp/options.pptpd" | grep mppe)" ]; then
@@ -49,6 +100,7 @@ setup_config() {
 	config_get dns $1 dns
 	[ -z "$dns" ] && dns="8.8.4.4"
 	echo "ms-dns $dns">>/etc/ppp/options.pptpd
+	
 	return 0
 }
 
@@ -66,20 +118,23 @@ del_user()
 {
 	cat $CHAP_SECRETS | grep -v $SERVER_NAME > $TEMP
 	cat $TEMP > $CHAP_SECRETS
-	rm $TEMP
+	rm -rf $TEMP
 }
 
 start() {
 	config_load $CONFIG
 	setup_config $CONFIG || return
 	del_user
+	add_rule
 	config_foreach setup_login users
 	start_pptpd
+	gen_include
 }
 
 stop() {
 	ps -w | grep "$CONFIG_FILE" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
 	ps -w | grep "pppd local" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
-	fw3 reload >/dev/null 2>&1
 	del_user
+	del_rule
+	rm -rf /var/etc/$CONFIG.include
 }

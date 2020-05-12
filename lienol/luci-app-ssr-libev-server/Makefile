@@ -9,7 +9,7 @@ LUCI_TITLE:=LuCI support for SSR Libev Server
 LUCI_DEPENDS:=+libsodium +shadowsocksr-libev-server
 LUCI_PKGARCH:=all
 PKG_VERSION:=1
-PKG_RELEASE:=8-20200326
+PKG_RELEASE:=9-20200513
 
 include $(TOPDIR)/feeds/luci/luci.mk
 

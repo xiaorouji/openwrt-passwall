@@ -10,6 +10,7 @@ if json then
 		local o = json[index]
 		if o.enable == 1 then
 			luci.sys.call(string.format("iptables -A SSR_MUDB-SERVER -p tcp --dport %s -m comment --comment %s -j ACCEPT", o.port, o.user))
+			luci.sys.call(string.format("iptables -A SSR_MUDB-SERVER -p udp --dport %s -m comment --comment %s -j ACCEPT", o.port, o.user))
 		end
 	end
 end

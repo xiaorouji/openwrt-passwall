@@ -6,6 +6,34 @@ START=99
 CONFIG=ssr_libev_server
 CONFIG_PATH=/var/etc/$CONFIG
 
+add_rule() {
+	iptables -N SSR_LIBEV-SERVER
+	iptables -I INPUT -j SSR_LIBEV-SERVER
+}
+
+del_rule() {
+	iptables -D INPUT -j SSR_LIBEV-SERVER 2>/dev/null
+	iptables -F SSR_LIBEV-SERVER 2>/dev/null
+	iptables -X SSR_LIBEV-SERVER 2>/dev/null
+}
+
+gen_include() {
+	echo '#!/bin/sh' > /var/etc/$CONFIG.include
+	extract_rules() {
+		echo "*$1"
+		iptables-save -t $1 | grep "SSR_LIBEV-SERVER" | \
+		sed -e "s/^-A \(INPUT\)/-I \1 1/"
+		echo 'COMMIT'
+	}
+	cat <<-EOF >> /var/etc/$CONFIG.include
+		iptables-save -c | grep -v "SSR_LIBEV-SERVER" | iptables-restore -c
+		iptables-restore -n <<-EOT
+		$(extract_rules filter)
+		EOT
+	EOF
+	return 0
+}
+
 gen_ssr_libev_config_file() {
 	config_get enable $1 enable
 	[ "$enable" = "0" ] && return 0
@@ -39,21 +67,25 @@ gen_ssr_libev_config_file() {
 		EOF
 		
 	/usr/bin/ssr-server -c $CONFIG_PATH/$1.json $udp_param >/dev/null 2>&1 &
+	iptables -A SSR_LIBEV-SERVER -p tcp --dport $port -m comment --comment "$remarks" -j ACCEPT
+	[ "$udp_forward" = "1" ] && iptables -A SSR_LIBEV-SERVER -p udp --dport $port -m comment --comment "$remarks" -j ACCEPT
 }
 
 start_ssr_libev_server() {
+	add_rule
+	config_load $CONFIG
 	config_foreach gen_ssr_libev_config_file "user"
-	fw3 reload >/dev/null 2>&1 &
+	gen_include
 }
 
 stop_ssr_libev_server() {
-	fw3 reload >/dev/null 2>&1
 	ps -w | grep "$CONFIG_PATH/" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
+	del_rule
+	rm -rf $CONFIG_PATH /var/etc/$CONFIG.include
 }
 
 start() {
-	config_load $CONFIG
-	enable=$(uci get $CONFIG.@global[0].enable)
+	enable=$(uci -q get $CONFIG.@global[0].enable)
 	if [ "$enable" = "0" ];then
 		stop_ssr_libev_server
 	else
@@ -64,7 +96,6 @@ start() {
 
 stop() {
 	stop_ssr_libev_server
-	rm -rf $CONFIG_PATH
 }
 
 restart() {

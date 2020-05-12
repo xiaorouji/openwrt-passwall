@@ -12,34 +12,67 @@ echolog() {
 	echo -e "$(date "+%Y-%m-%d %H:%M:%S"): $1" >> $LOG_APP_FILE
 }
 
+add_rule() {
+	iptables -N V2RAY-SERVER
+	iptables -I INPUT -j V2RAY-SERVER
+}
+
+del_rule() {
+	iptables -D INPUT -j V2RAY-SERVER 2>/dev/null
+	iptables -F V2RAY-SERVER 2>/dev/null
+	iptables -X V2RAY-SERVER 2>/dev/null
+}
+
+gen_include() {
+	echo '#!/bin/sh' > /var/etc/$CONFIG.include
+	extract_rules() {
+		echo "*$1"
+		iptables-save -t $1 | grep "V2RAY-SERVER" | \
+		sed -e "s/^-A \(INPUT\)/-I \1 1/"
+		echo 'COMMIT'
+	}
+	cat <<-EOF >> /var/etc/$CONFIG.include
+		iptables-save -c | grep -v "V2RAY-SERVER" | iptables-restore -c
+		iptables-restore -n <<-EOT
+		$(extract_rules filter)
+		EOT
+	EOF
+	return 0
+}
+
 gen_v2ray_config_file() {
 	config_get enable $1 enable
-	[ "$enable" = "0" ] && return 0
+	[ "$enable" != "1" ] && return 0
 	config_get remarks $1 remarks
+	config_get bind_local $1 bind_local
 	config_get port $1 port
 	config_get transport $1 transport
 	lua /usr/lib/lua/luci/model/cbi/v2ray_server/api/gen_config.lua $1 > $CONFIG_PATH/$1.json
-	echolog "$remarks $port 生成并运行 V2ray 配置文件 - $CONFIG_PATH/$1.json" 
-	/usr/bin/v2ray/v2ray -config $CONFIG_PATH/$1.json >/dev/null 2>&1 &
+	echolog "$remarks $port 生成并运行 V2ray 配置文件 - $CONFIG_PATH/$1.json"
+	/usr/bin/v2ray/v2ray -config $CONFIG_PATH/$1.json > /dev/null 2>&1 &
+	[ "$bind_local" != "1" ] && {
+		iptables -A V2RAY-SERVER -p tcp --dport $port -m comment --comment "$remarks" -j ACCEPT
+		iptables -A V2RAY-SERVER -p udp --dport $port -m comment --comment "$remarks" -j ACCEPT
+	}
 }
 
 start_v2ray_server() {
 	mkdir -p $CONFIG_PATH $LOG_PATH
 	touch $LOG_APP_FILE
+	add_rule
+	config_load $CONFIG
 	config_foreach gen_v2ray_config_file "user"
-	fw3 -q reload 2>&1 &
+	gen_include
 }
 
 stop_v2ray_server() {
-	fw3 -q reload 2>&1
 	ps -w | grep "$CONFIG_PATH/" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
-	rm -rf $CONFIG_PATH
-	rm -rf $LOG_PATH
+	del_rule
+	rm -rf $CONFIG_PATH $LOG_PATH /var/etc/$CONFIG.include
 }
 
 start() {
-	config_load $CONFIG
-	enable=$(uci get $CONFIG.@global[0].enable)
+	enable=$(uci -q get $CONFIG.@global[0].enable)
 	if [ "$enable" = "0" ];then
 		stop_v2ray_server
 	else

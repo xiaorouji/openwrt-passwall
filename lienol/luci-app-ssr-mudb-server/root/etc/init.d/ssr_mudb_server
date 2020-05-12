@@ -17,7 +17,6 @@ add_rule() {
 	iptables -N SSR_MUDB-SERVER
 	iptables -I INPUT -j SSR_MUDB-SERVER
 	lua $ssr_path/firewall.lua
-	echo "/etc/init.d/$CONFIG restart" > "/var/etc/$CONFIG.include"
 }
 
 del_rule() {
@@ -35,6 +34,23 @@ del_rule() {
 		done
 	fi
 	iptables -F SSR_MUDB-SERVER 2>/dev/null && iptables -X SSR_MUDB-SERVER 2>/dev/null
+}
+
+gen_include() {
+	echo '#!/bin/sh' > /var/etc/$CONFIG.include
+	extract_rules() {
+		echo "*$1"
+		iptables-save -t $1 | grep "SSR_MUDB-SERVER" | \
+		sed -e "s/^-A \(INPUT\)/-I \1 1/"
+		echo 'COMMIT'
+	}
+	cat <<-EOF >> /var/etc/$CONFIG.include
+		iptables-save -c | grep -v "SSR_MUDB-SERVER" | iptables-restore -c
+		iptables-restore -n <<-EOT
+		$(extract_rules filter)
+		EOT
+	EOF
+	return 0
 }
 
 set_ssr_python_crontab() {
@@ -57,13 +73,14 @@ start_ssr_python_server() {
 	/usr/bin/python3 $ssr_path/server.py >> /var/log/$CONFIG.log 2>&1 &
 	set_ssr_python_crontab 1
 	add_rule
+	gen_include
 }
 
 stop_ssr_python_server() {
 	ps -w | grep "$ssr_path/server.py" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
-	rm -rf /var/log/$CONFIG.log
 	set_ssr_python_crontab 0
 	del_rule
+	rm -rf /var/log/$CONFIG.log /var/etc/$CONFIG.include
 }
 
 start() {

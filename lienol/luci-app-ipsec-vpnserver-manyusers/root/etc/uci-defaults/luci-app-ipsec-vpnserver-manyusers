@@ -4,7 +4,7 @@ uci -q batch <<-EOF >/dev/null
 	delete firewall.ipsecvpn
 	set firewall.ipsecvpn=include
 	set firewall.ipsecvpn.type=script
-	set firewall.ipsecvpn.path=/usr/share/ipsecvpn/firewall.include
+	set firewall.ipsecvpn.path=/var/etc/ipsecvpn.include
 	set firewall.ipsecvpn.reload=1
 EOF
 
@@ -17,7 +17,5 @@ EOF
 
 /etc/init.d/ipsec disable && /etc/init.d/ipsec stop
 rm -f /etc/init.d/ipsec
-chmod a+x /usr/share/ipsecvpn/* >/dev/null 2>&1
-
 rm -rf /tmp/luci-*cache
 exit 0

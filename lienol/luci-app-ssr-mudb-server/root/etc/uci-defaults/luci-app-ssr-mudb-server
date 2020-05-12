@@ -17,5 +17,5 @@ EOF
 
 chmod a+x /usr/share/ssr_mudb_server/* >/dev/null 2>&1
 
-rm -f /tmp/luci-indexcache
+rm -rf /tmp/luci-*cache
 exit 0

@@ -4,7 +4,7 @@ uci -q batch <<-EOF >/dev/null
 	delete firewall.ssr_libev_server
 	set firewall.ssr_libev_server=include
 	set firewall.ssr_libev_server.type=script
-	set firewall.ssr_libev_server.path=/usr/share/ssr_libev_server/firewall.include
+	set firewall.ssr_libev_server.path=/var/etc/ssr_libev_server.include
 	set firewall.ssr_libev_server.reload=1
 EOF
 
@@ -15,7 +15,5 @@ uci -q batch <<-EOF >/dev/null
 	commit ucitrack
 EOF
 
-chmod a+x /usr/share/ssr_libev_server/* >/dev/null 2>&1
-
-rm -f /tmp/luci-indexcache
+rm -rf /tmp/luci-*cache
 exit 0
