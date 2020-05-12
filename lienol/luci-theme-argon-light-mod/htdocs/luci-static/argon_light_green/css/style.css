@@ -1693,7 +1693,7 @@ div>.table>.tbody>.tr:nth-of-type(2n) {
 }
 
 .notice {
-    background-color: #5e72e4 !important;
+    background: linear-gradient(65deg, #46c34a 0, #64ca58b8 100%)!important;
     color: #fff !important;
 }
 

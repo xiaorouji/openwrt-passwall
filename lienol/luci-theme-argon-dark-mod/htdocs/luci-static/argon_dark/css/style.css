@@ -673,6 +673,7 @@ header>.container>.brand {
 	border-radius: 0;
 	background-color: #FFF;
 	box-shadow: 0 2px 2px 0 rgba(0, 0, 0, .16), 0 0 2px 0 rgba(0, 0, 0, .12);
+	color: #fff;
 }
 
 .errorbox {
@@ -1847,7 +1848,7 @@ header>.container>.pull-right>* {
 }
 
 .notice {
-	background-color: #11cdef;
+	background: linear-gradient(87deg, #5e72e4 0, #825ee4 100%)!important;
 }
 
 .showSide {
