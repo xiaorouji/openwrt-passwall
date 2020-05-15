@@ -666,7 +666,7 @@ table td,
 .table .th,
 .table .td {
     color: #811;
-    padding: 5px 3px !important;
+    padding: 3px !important;
 }
 
 table tr+tr td,
