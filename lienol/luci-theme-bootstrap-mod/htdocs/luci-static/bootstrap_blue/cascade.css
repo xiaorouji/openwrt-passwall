@@ -555,7 +555,7 @@ p {
 
 .tabs,
 .cbi-tabmenu {
-    border-bottom: 1.5px solid #34aee8;
+    border-bottom: 2px solid #34aee8;
     margin-bottom: 20px;
 }
 
@@ -1037,6 +1037,13 @@ button:focus {
 .cbi-button-save:focus,
 .cbi-input-save:active,
 .cbi-input-save:focus {
+}
+
+/* LuCI 18 DynamicList */
+input[type="text"] + .cbi-button,
+input[type="password"] + .cbi-button,
+select + .cbi-button {
+	padding: 4px 8px;
 }
 
 
