@@ -577,7 +577,7 @@ td>table>tbody>tr>td,
 .cbi-button-action.important {
     color: #fff;
     background-color: #337ab7;
-	border: none;
+    border: none;
 }
 
 .cbi-page-actions .cbi-button-save,
@@ -586,7 +586,7 @@ td>table>tbody>tr>td,
 .cbi-button-positive.important {
     color: #fff;
     background-color: #5bc0de;
-	border: none;
+    border: none;
 }
 
 .cbi-button-remove.important,
@@ -594,7 +594,7 @@ td>table>tbody>tr>td,
 .cbi-button-negative.important {
     color: #fff;
     background-color: #d9534f;
-	border: none;
+    border: none;
 }
 
 .cbi-button-find,
@@ -602,7 +602,7 @@ td>table>tbody>tr>td,
 .cbi-button-neutral {
     color: #fff !important;
     background-color: #f0ad4e !important;
-	border: none;
+    border: none;
 }
 
 .cbi-button-edit,
@@ -611,7 +611,7 @@ td>table>tbody>tr>td,
 .cbi-button-action {
     color: #2e6da4;
     background-color: transparent;
-	border: none;
+    border: none;
 }
 
 .cbi-page-actions .cbi-button-apply+.cbi-button-save,
@@ -620,7 +620,7 @@ td>table>tbody>tr>td,
 .cbi-button-positive {
     color: #46b8da;
     background-color: transparent;
-	border: none;
+    border: none;
 }
 
 .cbi-section-remove>.cbi-button,
@@ -629,7 +629,7 @@ td>table>tbody>tr>td,
 .cbi-button-negative {
     color: #fff !important;
     background-color: #fb6340 !important;
-	border: none;
+    border: none;
 }
 
 .cbi-page-actions .cbi-button-link:first-child {
@@ -2158,8 +2158,7 @@ td>table>tbody>tr>td {
 }
 
 form.inline+form.inline,
-.cbi-button+.cbi-button {
-}
+.cbi-button+.cbi-button {}
 
 .cbi-button-reset,
 .cbi-input-remove {
@@ -2197,10 +2196,11 @@ form.inline+form.inline,
 
 .cbi-value-field .cbi-button-add,
 .cbi-value-field .cbi-button-remove,
-.cbi-value-field .cbi-button-neutral {
-}
+.cbi-value-field .cbi-button-neutral {}
 
-input[type="text"] + .cbi-button, input[type="password"] + .cbi-button, select + .cbi-button {
+input[type="text"]+.cbi-button,
+input[type="password"]+.cbi-button,
+select+.cbi-button {
     padding: 4px 8px;
 }
 
@@ -2384,7 +2384,7 @@ input[type="text"] + .cbi-button, input[type="password"] + .cbi-button, select +
 
 .cbi-dropdown[open]>ul.dropdown>li {
     border-bottom: 1px solid #ccc;
-	color: #000;
+    color: #000;
 }
 
 .cbi-dropdown[open]>ul.dropdown>li[selected] {
@@ -2900,16 +2900,17 @@ td>.ifacebadge {
 
 .zonebadge {
     display: inline-block;
-	border-radius: 4px;
+    border-radius: 4px;
     color: #000;
     white-space: nowrap;
     padding: 0 8px;
     cursor: pointer;
 }
 
-.zonebadge em, .zonebadge strong {
-	margin: 0 5px;
-	color: #000;
+.zonebadge em,
+.zonebadge strong {
+    margin: 0 5px;
+    color: #000;
 }
 
 .zonebadge>.ifacebadge {
@@ -3595,7 +3596,7 @@ header>.container>.pull-right>* {
         font-size: 0.8rem;
     }
 
-	div.cbi-section,
+    div.cbi-section,
     fieldset {
         padding: 0;
         margin: 1rem 0 0 0;

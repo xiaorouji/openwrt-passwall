@@ -1680,7 +1680,7 @@ div>.table>.tbody>.tr:nth-of-type(2n) {
 }
 
 .notice {
-    background: linear-gradient(65deg, #46c34a 0, #64ca58b8 100%)!important;
+    background: linear-gradient(65deg, #46c34a 0, #64ca58b8 100%) !important;
     color: #fff !important;
 }
 
@@ -2135,7 +2135,7 @@ td>table>tbody>tr>td {
     user-select: none;
     font-size: 0.8rem;
     width: auto !important;
-	margin-left: 0.3em;
+    margin-left: 0.3em;
 }
 
 .cbi-button:hover,
@@ -2162,8 +2162,7 @@ td>table>tbody>tr>td {
 }
 
 form.inline+form.inline,
-.cbi-button+.cbi-button {
-}
+.cbi-button+.cbi-button {}
 
 .cbi-button-reset,
 .cbi-input-remove {
@@ -2201,10 +2200,11 @@ form.inline+form.inline,
 
 .cbi-value-field .cbi-button-add,
 .cbi-value-field .cbi-button-remove,
-.cbi-value-field .cbi-button-neutral {
-}
+.cbi-value-field .cbi-button-neutral {}
 
-input[type="text"] + .cbi-button, input[type="password"] + .cbi-button, select + .cbi-button {
+input[type="text"]+.cbi-button,
+input[type="password"]+.cbi-button,
+select+.cbi-button {
     padding: 4px 8px;
 }
 
@@ -2911,9 +2911,10 @@ td>.ifacebadge {
     cursor: pointer;
 }
 
-.zonebadge em, .zonebadge strong {
-	margin: 0 5px;
-	color: #000;
+.zonebadge em,
+.zonebadge strong {
+    margin: 0 5px;
+    color: #000;
 }
 
 .zonebadge>.ifacebadge {
@@ -3599,12 +3600,12 @@ header>.container>.pull-right>* {
     body {
         font-size: 0.8rem;
     }
-	
-	div.cbi-section,
+
+    div.cbi-section,
     fieldset {
         padding: 0;
         margin: 1rem 0 0 0;
-		overflow-x: auto;
+        overflow-x: auto;
     }
 
     .tabs {
