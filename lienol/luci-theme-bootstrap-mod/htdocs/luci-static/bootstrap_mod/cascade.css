@@ -1523,9 +1523,7 @@ body.modal-overlay-active #modal_overlay>.modal {
 }
 
 .btn.primary,
-.cbi-button-action.important,
-.cbi-page-actions .cbi-button-apply,
-.cbi-section-actions .cbi-button-edit {
+.cbi-button-action.important {
     color: #fff;
     background: #0069d6;
     border: 1px solid #0069d6;
