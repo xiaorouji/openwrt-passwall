@@ -1,3 +1,4 @@
+local d = require "luci.dispatcher"
 local appname = "passwall"
 
 m = Map(appname)
@@ -48,6 +49,18 @@ o = s:option(ListValue, "time_update", translate("Day update rules"))
 for e = 0, 23 do o:value(e, e .. translate("oclock")) end
 o.default = 0
 o:depends("auto_update", 1)
+
+s = m:section(TypedSection, "shunt_rules", "V2ray" .. translate("Shunt") .. translate("Rule"))
+s.template = "cbi/tblsection"
+s.anonymous = false
+s.addremove = true
+s.extedit = d.build_url("admin", "vpn", appname, "shunt_rules", "%s")
+function s.create(e, t)
+    TypedSection.create(e, t)
+    luci.http.redirect(e.extedit:format(t))
+end
+
+o = s:option(DummyValue, "remarks", translate("Remarks"))
 
 -- [[ App Settings ]]--
 s = m:section(TypedSection, "global_app", translate("App Update"),

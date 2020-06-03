@@ -72,6 +72,7 @@ for i = 1, udp_node_num, 1 do
         -- o.description = translate("For Game Mode or DNS resolution and more.") .. translate("The selected server will not use Kcptun.")
         o:value("nil", translate("Close"))
         o:value("tcp", translate("Same as the tcp node"))
+        o:value("tcp_", translate("Same as the tcp node") .. "（" .. translate("New process") .. "）")
     else
         o = s:option(ListValue, "udp_node" .. i,
                      translate("UDP Node") .. " " .. i)

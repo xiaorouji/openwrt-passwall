@@ -113,23 +113,16 @@ for k, v in pairs(nodes_table) do v2ray_balancing_node:value(v.id, v.remarks) en
 v2ray_balancing_node:depends("v2ray_protocol", "_balancing")
 
 -- 分流
-youtube_node = s:option(ListValue, "youtube_node", "Youtube " .. translate("Node"))
-youtube_node:value("nil", translate("Close"))
-for k, v in pairs(nodes_table) do youtube_node:value(v.id, v.remarks) end
-youtube_node:depends("v2ray_protocol", "_shunt")
+uci:foreach(appname, "shunt_rules", function(e)
+    o = s:option(ListValue, e[".name"], translate(e.remarks))
+    o:value("nil", translate("Close"))
+    for k, v in pairs(nodes_table) do o:value(v.id, v.remarks) end
+    o:depends("v2ray_protocol", "_shunt")
 
-youtube_proxy = s:option(Flag, "youtube_proxy", "Youtube " .. translate("Node") .. translate("Preproxy"), "Youtube " .. translate("Node") .. translate("Use the default node for the transit."))
-youtube_proxy.default = 0
-youtube_proxy:depends("v2ray_protocol", "_shunt")
-
-netflix_node = s:option(ListValue, "netflix_node", "Netflix " .. translate("Node"))
-netflix_node:value("nil", translate("Close"))
-for k, v in pairs(nodes_table) do netflix_node:value(v.id, v.remarks) end
-netflix_node:depends("v2ray_protocol", "_shunt")
-
-netflix_proxy = s:option(Flag, "netflix_proxy", "Netflix " .. translate("Node") .. translate("Preproxy"), "Netflix " .. translate("Node") .. translate("Use the default node for the transit."))
-netflix_proxy.default = 0
-netflix_proxy:depends("v2ray_protocol", "_shunt")
+    o = s:option(Flag, e[".name"] .. "_proxy", translate(e.remarks) .. translate("Preproxy"), translate("Use the default node for the transit."))
+    o.default = 0
+    o:depends("v2ray_protocol", "_shunt")
+end)
 
 default_node = s:option(ListValue, "default_node", translate("Default") .. " " .. translate("Node"))
 default_node:value("nil", translate("Close"))

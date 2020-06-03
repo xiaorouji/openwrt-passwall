@@ -75,7 +75,7 @@ test_auto_switch() {
 		local main_node=$(echo $b_tcp_nodes | awk -F ' ' '{print $1}')
 		if [ "$now_node" != "$main_node" ]; then
 			local tmp_port=$(/usr/share/passwall/app.sh get_new_port 61080 tcp)
-			/usr/share/passwall/app.sh gen_socks_config "$main_node" "127.0.0.1" "$tmp_port" "/var/etc/passwall/auto_switch_main.json" "10"
+			/usr/share/passwall/app.sh run_socks "$main_node" "127.0.0.1" "$tmp_port" "/var/etc/passwall/auto_switch_main.json" "10"
 			proxy_status=$(test_url "https://www.google.com/generate_204" 3 3 "-x socks5h://127.0.0.1:$tmp_port")
 			ps -w | grep -v "grep" | grep "/var/etc/passwall/auto_switch_main.json" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
 			if [ "$proxy_status" -eq 200 ]; then

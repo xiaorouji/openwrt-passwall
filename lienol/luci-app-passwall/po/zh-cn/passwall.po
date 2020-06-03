@@ -124,6 +124,9 @@ msgstr "Socks节点"
 msgid "Same as the tcp node"
 msgstr "与TCP节点相同"
 
+msgid "New process"
+msgstr "另开进程"
+
 msgid "For used to surf the Internet."
 msgstr "用于科学上网。"
 
@@ -900,6 +903,60 @@ msgstr "隐藏菜单方法，地址栏输入例："
 
 msgid "After the hidden to the display, input example in the address bar:"
 msgstr "当你隐藏后想再次显示，地址栏输入例："
+
+msgid "When OTA is enabled, V2Ray will reject connections that are not OTA enabled. This option is invalid when using AEAD encryption."
+msgstr "开启 OTA 后，V2Ray 会拒绝未启用 OTA 的连接。当使用 AEAD 加密时，该选项无效。"
+
+msgid "transit node"
+msgstr "中转到此节点"
+
+msgid "Bind Local"
+msgstr "本机监听"
+
+msgid "When selected, it can only be accessed locally,It is recommended to turn on when using reverse proxies."
+msgstr "当勾选时，只能由本机访问此端口，当开启反向代理时建议勾选此项。"
+
+msgid "Accept LAN Access"
+msgstr "接受局域网访问"
+
+msgid "When selected, it can accessed lan , this will not be safe!"
+msgstr "当勾选时，可以直接访问局域网，这将不安全！（非特殊情况不建议开启）"
+
+msgid "Enable Remote"
+msgstr "启用转发"
+
+msgid "You can forward to Nginx/Caddy/V2ray WebSocket and more."
+msgstr "您可以转发到Nginx/Caddy/V2ray WebSocket等。"
+
+msgid "Remote Address"
+msgstr "远程地址"
+
+msgid "Remote Port"
+msgstr "远程端口"
+
+msgid "as:"
+msgstr "如："
+
+msgid "Public key absolute path"
+msgstr "公钥文件绝对路径"
+
+msgid "Private key absolute path"
+msgstr "私钥文件绝对路径"
+
+msgid "Server-Side"
+msgstr "服务器端"
+
+msgid "Server Config"
+msgstr "服务器配置"
+
+msgid "Users Manager"
+msgstr "用户管理"
+
+msgid "Logs"
+msgstr "日志"
+
+msgid "UDP Forward"
+msgstr "UDP转发"
 
 msgid "Can't determine ARCH, or ARCH not supported."
 msgstr "无法确认ARCH架构，或是不支持。"

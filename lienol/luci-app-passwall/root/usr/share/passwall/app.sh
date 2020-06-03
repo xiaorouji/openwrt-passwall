@@ -155,7 +155,8 @@ UDP_REDIR_PORT1=$(config_t_get global_forwarding udp_redir_port 1051)
 UDP_REDIR_PORT2=$(expr $UDP_REDIR_PORT1 + 1)
 UDP_REDIR_PORT3=$(expr $UDP_REDIR_PORT2 + 1)
 
-[ "$UDP_NODE1" == "tcp" ] && UDP_NODE1=$TCP_NODE1
+[ "$UDP_NODE1" == "tcp_" ] && UDP_NODE1=$TCP_NODE1
+[ "$UDP_NODE1" == "tcp" ] && UDP_REDIR_PORT1=$TCP_REDIR_PORT1
 
 # Dynamic variables (Used to record)
 # TCP_NODE1_IP="" UDP_NODE1_IP="" TCP_NODE1_PORT="" UDP_NODE1_PORT="" TCP_NODE1_TYPE="" UDP_NODE1_TYPE=""
@@ -226,26 +227,25 @@ load_config() {
 	return 0
 }
 
-gen_socks_config() {
-	local node bind local_port config_file server_host port type
-	node=$1
-	bind=$2
-	local_port=$3
-	config_file=$4
-	type=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
-	remarks=$(config_n_get $node remarks)
-	server_host=$(config_n_get $node address)
-	port=$(config_n_get $node port)
+run_socks() {
+	local node=$1
+	local bind=$2
+	local local_port=$3
+	local config_file=$4
+	local type=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
+	local remarks=$(config_n_get $node remarks)
+	local server_host=$(config_n_get $node address)
+	local port=$(config_n_get $node port)
 	[ -n "$server_host" -a -n "$port" ] && {
 		# 判断节点服务器地址是否URL并去掉~
-		server_host=$(echo $server_host | sed 's/^\(https:\/\/\|http:\/\/\)//g' | awk -F '/' '{print $1}')
+		local server_host=$(echo $server_host | sed 's/^\(https:\/\/\|http:\/\/\)//g' | awk -F '/' '{print $1}')
 		# 判断节点服务器地址是否包含汉字~
 		local tmp=$(echo -n $server_host | awk '{print gensub(/[!-~]/,"","g",$0)}')
 		[ -n "$tmp" ] && {
-			echolog "Socks节点，非法的服务器地址，无法启动！"
+			echolog "$remarks，非法的服务器地址，无法启动！"
 			return 1
 		}
-		echolog "Socks节点：$remarks，地址：${server_host}:${port}，监听端口：$local_port"
+		[ "$bind" != "127.0.0.1" ] && echolog "Socks节点：$remarks，地址：${server_host}:${port}，监听端口：$local_port"
 	}
 
 	if [ "$type" == "socks" ]; then
@@ -263,116 +263,90 @@ gen_socks_config() {
 			[ "$brook_tls" == "1" ] && server_host="wss://${server_host}" || server_host="ws://${server_host}" 
 		}
 		ln_start_bin $(config_t_get global_app brook_file $(find_bin brook)) brook_socks_$5 "$protocol -l $bind:$local_port -i $$bind -s $server_host:$port -p $(config_n_get $node password)"
-	elif [ "$type" == "ssr" ]; then
+	elif [ "$type" == "ssr" ] || [ "$type" == "ss" ]; then
 		lua $API_GEN_SS $node $local_port > $config_file
-		ln_start_bin $(find_bin ssr-local) ssr-local "-c $config_file -b $bind -u"
-	elif [ "$type" == "ss" ]; then
-		lua $API_GEN_SS $node $local_port > $config_file
-		local plugin_params=""
-		local plugin=$(config_n_get $node ss_plugin)
-		if [ "$plugin" != "none" ]; then
-			[ "$plugin" == "v2ray-plugin" -o "$plugin" == "obfs-local" ] && {
-				local plugin_opts=""
-				local opts=$(config_n_get $node ss_plugin_opts)
-				[ -n "$opts" ] && plugin_opts="--plugin-opts $opts"
-				plugin_params="--plugin $plugin $plugin_opts"
-			}
-		fi
-		ln_start_bin $(find_bin ss-local) ss-local "-c $config_file -b $bind -u $plugin_params" 
+		ln_start_bin $(find_bin ${type}-local) ${type}-local "-c $config_file -b $bind -u"
 	fi
 }
 
-gen_start_config() {
-	local node local_port redir_type config_file bind server_host port type
-	node=$1
-	local_port=$2
-	redir_type=$3
-	config_file=$4
-	bind="0.0.0.0"
-	[ -n "$6" ] && bind="$6"
-	type=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
-	remarks=$(config_n_get $node remarks)
-	server_host=$(config_n_get $node address)
-	port=$(config_n_get $node port)
+run_redir() {
+	local node=$1
+	local bind=$2
+	local local_port=$3
+	local config_file=$4
+	local redir_type=$5
+	local type=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
+	local remarks=$(config_n_get $node remarks)
+	local server_host=$(config_n_get $node address)
+	local port=$(config_n_get $node port)
 	[ -n "$server_host" -a -n "$port" ] && {
 		# 判断节点服务器地址是否URL并去掉~
-		server_host=$(echo $server_host | sed 's/^\(https:\/\/\|http:\/\/\)//g' | awk -F '/' '{print $1}')
+		local server_host=$(echo $server_host | sed 's/^\(https:\/\/\|http:\/\/\)//g' | awk -F '/' '{print $1}')
 		# 判断节点服务器地址是否包含汉字~
 		local tmp=$(echo -n $server_host | awk '{print gensub(/[!-~]/,"","g",$0)}')
 		[ -n "$tmp" ] && {
-			echolog "${redir_type}_${5}节点，非法的服务器地址，无法启动！"
+			echolog "$remarks节点，非法的服务器地址，无法启动！"
 			return 1
 		}
-		[ "$bind" == "0.0.0.0" ] && echolog "${redir_type}_${5}节点：$remarks，节点：${server_host}:${port}，监听端口：$local_port"
+		[ "$bind" != "127.0.0.1" ] && echolog "${redir_type}_${6}节点：$remarks，节点：${server_host}:${port}，监听端口：$local_port"
 	}
+	eval ${redir_type}_NODE${6}_PORT=$port
 
 	if [ "$redir_type" == "UDP" ]; then
-		eval UDP_NODE${5}_PORT=$port
-		
 		if [ "$type" == "socks" ]; then
 			local node_address=$(config_n_get $node address)
 			local node_port=$(config_n_get $node port)
 			local server_username=$(config_n_get $node username)
 			local server_password=$(config_n_get $node password)
-			eval port=\$UDP_REDIR_PORT$5
-			ln_start_bin $(find_bin ipt2socks) ipt2socks_udp_$5 "-U -l $port -b 0.0.0.0 -s $node_address -p $node_port -R"
+			eval port=\$UDP_REDIR_PORT$6
+			ln_start_bin $(find_bin ipt2socks) ipt2socks_udp_$6 "-U -l $port -b 0.0.0.0 -s $node_address -p $node_port -R"
 		elif [ "$type" == "v2ray" ]; then
 			lua $API_GEN_V2RAY $node udp $local_port nil > $config_file
-			ln_start_bin $(config_t_get global_app v2ray_file $(find_bin v2ray))/v2ray v2ray_udp_$5 "-config=$config_file"
+			ln_start_bin $(config_t_get global_app v2ray_file $(find_bin v2ray))/v2ray v2ray "-config=$config_file"
 		elif [ "$type" == "trojan" ]; then
 			local_port=$(get_new_port 2080 tcp)
 			lua $API_GEN_TROJAN $node client "127.0.0.1" $local_port > $config_file
-			ln_start_bin $(find_bin trojan) trojan_udp_$5 "-c $config_file"
+			ln_start_bin $(find_bin trojan) trojan "-c $config_file"
 			
 			local node_address=$(config_n_get $node address)
 			local node_port=$(config_n_get $node port)
 			local server_username=$(config_n_get $node username)
 			local server_password=$(config_n_get $node password)
-			eval port=\$UDP_REDIR_PORT$5
-			ln_start_bin $(find_bin ipt2socks) ipt2socks_udp_$5 "-U -l $port -b 0.0.0.0 -s 127.0.0.1 -p $local_port -R"
+			eval port=\$UDP_REDIR_PORT$6
+			ln_start_bin $(find_bin ipt2socks) ipt2socks_udp_$6 "-U -l $port -b 0.0.0.0 -s 127.0.0.1 -p $local_port -R"
 		elif [ "$type" == "brook" ]; then
 			local protocol=$(config_n_get $node brook_protocol client)
 			if [ "$protocol" == "wsclient" ]; then
 				echolog "Brook的WebSocket不支持UDP转发！"
 			else
-				ln_start_bin $(config_t_get global_app brook_file $(find_bin brook)) brook_udp_$5 "tproxy -l 0.0.0.0:$local_port -s $server_host:$port -p $(config_n_get $node password)"
+				ln_start_bin $(config_t_get global_app brook_file $(find_bin brook)) brook_udp_$6 "tproxy -l 0.0.0.0:$local_port -s $server_host:$port -p $(config_n_get $node password)"
 			fi
-		elif [ "$type" == "ssr" ]; then
+		elif [ "$type" == "ssr" ] || [ "$type" == "ss" ]; then
 			lua $API_GEN_SS $node $local_port > $config_file
-			ln_start_bin $(find_bin ssr-redir) ssr-redir_udp_$5 "-c $config_file -U"
-		elif [ "$type" == "ss" ]; then
-			lua $API_GEN_SS $node $local_port > $config_file
-			local plugin_params=""
-			local plugin=$(config_n_get $node ss_plugin)
-			if [ "$plugin" != "none" ]; then
-				[ "$plugin" == "v2ray-plugin" -o "$plugin" == "obfs-local" ] && {
-					local plugin_opts=""
-					local opts=$(config_n_get $node ss_plugin_opts)
-					[ -n "$opts" ] && plugin_opts="--plugin-opts $opts"
-					plugin_params="--plugin $plugin $plugin_opts"
-				}
-			fi
-			ln_start_bin $(find_bin ss-redir) ss-redir_udp_$5 "-c $config_file -U $plugin_params"
+			ln_start_bin $(find_bin ${type}-redir) ${type}-redir "-c $config_file -U"
 		fi
 	fi
 
 	if [ "$redir_type" == "TCP" ]; then
-		eval TCP_NODE${5}_PORT=$port
-		
 		if [ "$type" == "socks" ]; then
 			local node_address=$(config_n_get $node address)
 			local node_port=$(config_n_get $node port)
 			local server_username=$(config_n_get $node username)
 			local server_password=$(config_n_get $node password)
-			eval port=\$TCP_REDIR_PORT$5
-			ln_start_bin $(find_bin ipt2socks) ipt2socks_tcp_$5 "-T -l $port -b 0.0.0.0 -s $node_address -p $node_port -R"
+			eval port=\$TCP_REDIR_PORT$6
+			local extra_param="-T"
+			[ "$6" == 1 ] && [ "$UDP_NODE1" == "tcp" ] && extra_param=""
+			ln_start_bin $(find_bin ipt2socks) ipt2socks_tcp_$6 "-l $port -b 0.0.0.0 -s $node_address -p $node_port -R $extra_param"
 		elif [ "$type" == "v2ray" ]; then
-			lua $API_GEN_V2RAY $node tcp $local_port nil > $config_file
-			ln_start_bin $(config_t_get global_app v2ray_file $(find_bin v2ray))/v2ray v2ray_tcp_$5 "-config=$config_file"
+			local extra_param="tcp"
+			[ "$6" == 1 ] && [ "$UDP_NODE1" == "tcp" ] && extra_param="tcp,udp"
+			lua $API_GEN_V2RAY $node $extra_param $local_port nil > $config_file
+			ln_start_bin $(config_t_get global_app v2ray_file $(find_bin v2ray))/v2ray v2ray "-config=$config_file"
 		elif [ "$type" == "trojan" ]; then
 			lua $API_GEN_TROJAN $node nat "0.0.0.0" $local_port > $config_file
+			[ "$6" == 1 ] && [ "$UDP_NODE1" == "tcp" ] && echolog "Trojan的NAT模式不支持UDP转发！"
 			for k in $(seq 1 $process); do
-				ln_start_bin $(find_bin trojan) trojan_tcp_$5 "-c $config_file"
+				ln_start_bin $(find_bin trojan) trojan "-c $config_file"
 			done
 		else
 			local kcptun_use=$(config_n_get $node use_kcp 0)
@@ -388,36 +362,19 @@ gen_start_config() {
 					local run_kcptun_ip=$server_host
 					[ -n "$kcptun_server_host" ] && run_kcptun_ip=$(get_host_ip $network_type $kcptun_server_host)
 					KCPTUN_REDIR_PORT=$(get_new_port $KCPTUN_REDIR_PORT tcp)
-					ln_start_bin $(config_t_get global_app kcptun_client_file $(find_bin kcptun-client)) kcptun_tcp_$5 "-l 0.0.0.0:$KCPTUN_REDIR_PORT -r $run_kcptun_ip:$kcptun_port $kcptun_config"
+					ln_start_bin $(config_t_get global_app kcptun_client_file $(find_bin kcptun-client)) kcptun_tcp_$6 "-l 0.0.0.0:$KCPTUN_REDIR_PORT -r $run_kcptun_ip:$kcptun_port $kcptun_config"
 				fi
 			fi
-			if [ "$type" == "ssr" ]; then
+			if [ "$type" == "ssr" ] || [ "$type" == "ss" ]; then
 				if [ "$kcptun_use" == "1" ]; then
 					lua $API_GEN_SS $node $local_port 127.0.0.1 $KCPTUN_REDIR_PORT > $config_file
+					[ "$6" == 1 ] && [ "$UDP_NODE1" == "tcp" ] && echolog "Kcptun不支持UDP转发！"
 				else
 					lua $API_GEN_SS $node $local_port > $config_file
+					[ "$6" == 1 ] && [ "$UDP_NODE1" == "tcp" ] && extra_param="-u"
 				fi
 				for k in $(seq 1 $process); do
-					ln_start_bin $(find_bin ssr-redir) ssr-redir_tcp_$5 "-c $config_file"
-				done
-			elif [ "$type" == "ss" ]; then
-				if [ "$kcptun_use" == "1" ]; then
-					lua $API_GEN_SS $node $local_port 127.0.0.1 $KCPTUN_REDIR_PORT > $config_file
-				else
-					lua $API_GEN_SS $node $local_port > $config_file
-				fi
-				local plugin_params=""
-				local plugin=$(config_n_get $node ss_plugin)
-				if [ "$plugin" != "none" ]; then
-					[ "$plugin" == "v2ray-plugin" -o "$plugin" == "obfs-local" ] && {
-						local plugin_opts=""
-						local opts=$(config_n_get $node ss_plugin_opts)
-						[ -n "$opts" ] && plugin_opts="--plugin-opts $opts"
-						plugin_params="--plugin $plugin $plugin_opts"
-					}
-				fi
-				for k in $(seq 1 $process); do
-					ln_start_bin $(find_bin ss-redir) ss-redir_tcp_$5 "-c $config_file $plugin_params"
+					ln_start_bin $(find_bin ${type}-redir) ${type}-redir "-c $config_file $extra_param"
 				done
 			elif [ "$type" == "brook" ]; then
 				local server_ip=$server_host
@@ -426,16 +383,17 @@ gen_start_config() {
 				if [ "$protocol" == "wsclient" ]; then
 					[ "$brook_tls" == "1" ] && server_ip="wss://${server_ip}" || server_ip="ws://${server_ip}" 
 					socks_port=$(get_new_port 2081 tcp)
-					ln_start_bin $(config_t_get global_app brook_file $(find_bin brook)) brook_tcp_$5 "wsclient -l 127.0.0.1:$socks_port -i 127.0.0.1 -s $server_ip:$port -p $(config_n_get $node password)"
-					eval port=\$TCP_REDIR_PORT$5
-					ln_start_bin $(find_bin ipt2socks) ipt2socks_tcp_$5 "-T -l $port -b 0.0.0.0 -s 127.0.0.1 -p $socks_port -R"
+					ln_start_bin $(config_t_get global_app brook_file $(find_bin brook)) brook_tcp_$6 "wsclient -l 127.0.0.1:$socks_port -i 127.0.0.1 -s $server_ip:$port -p $(config_n_get $node password)"
+					eval port=\$TCP_REDIR_PORT$6
+					ln_start_bin $(find_bin ipt2socks) ipt2socks_tcp_$6 "-T -l $port -b 0.0.0.0 -s 127.0.0.1 -p $socks_port -R"
 					echolog "Brook的WebSocket不支持透明代理，将使用ipt2socks转换透明代理！"
+					[ "$6" == 1 ] && [ "$UDP_NODE1" == "tcp" ] && echolog "Brook的WebSocket不支持UDP转发！"
 				else
 					[ "$kcptun_use" == "1" ] && {
 						server_ip=127.0.0.1
 						port=$KCPTUN_REDIR_PORT
 					}
-					ln_start_bin $(config_t_get global_app brook_file $(find_bin brook)) brook_tcp_$5 "tproxy -l 0.0.0.0:$local_port -s $server_ip:$port -p $(config_n_get $node password)"
+					ln_start_bin $(config_t_get global_app brook_file $(find_bin brook)) brook_tcp_$6 "tproxy -l 0.0.0.0:$local_port -s $server_ip:$port -p $(config_n_get $node password)"
 				fi
 			fi
 		fi
@@ -451,7 +409,7 @@ node_switch() {
 		local config_file=$TMP_PATH/${1}_${i}.json
 		eval current_port=\$${1}_REDIR_PORT${i}
 		local port=$(cat $TMP_PORT_PATH/${1}_${i})
-		gen_start_config $node $port $1 $config_file $i
+		run_redir $node "0.0.0.0" $port $config_file $1 $i
 		echo $node > $TMP_ID_PATH/${1}_${i}
 		local node_net=$(echo $1 | tr 'A-Z' 'a-z')
 		uci set $CONFIG.@global[0].${node_net}_node${i}=$node
@@ -470,7 +428,7 @@ start_redir() {
 			eval current_port=\$${1}_REDIR_PORT$i
 			local port=$(echo $(get_new_port $current_port $2))
 			eval ${1}_REDIR${i}=$port
-			gen_start_config $node $port $1 $config_file $i
+			run_redir $node "0.0.0.0" $port $config_file $1 $i
 			#eval ip=\$${1}_NODE${i}_IP
 			echo $node > $TMP_ID_PATH/${1}_${i}
 			echo $port > $TMP_PORT_PATH/${1}_${i}
@@ -487,7 +445,7 @@ start_socks() {
 		[ "$node" == "nil" ] && continue
 		local config_file=$TMP_PATH/SOCKS_${id}.json
 		local port=$(config_n_get $id port)
-		gen_socks_config $node "0.0.0.0" $port $config_file $id
+		run_socks $node "0.0.0.0" $port $config_file $id
 	done
 }
 
@@ -932,7 +890,7 @@ stop() {
 	kill_all v2ray-plugin obfs-local
 	ps -w | grep -v "grep" | grep $CONFIG/test.sh | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 	ps -w | grep -v "grep" | grep $CONFIG/monitor.sh | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
-	ps -w | grep -v "grep" | grep -E "$TMP_PATH" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
+	ps -w | grep -v -E "grep|${TMP_PATH}_server" | grep -E "$TMP_PATH" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 	ps -w | grep -v "grep" | grep "sleep 1m" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 	rm -rf $TMP_DNSMASQ_PATH $TMP_PATH
 	stop_crontab
@@ -945,11 +903,11 @@ case $1 in
 get_new_port)
 	get_new_port $2 $3
 	;;
-gen_socks_config)
-	gen_socks_config $2 $3 $4 $5 $6
+run_socks)
+	run_socks $2 $3 $4 $5 $6
 	;;
-gen_start_config)
-	gen_start_config $2 $3 $4 $5 $6 $7
+run_redir)
+	run_redir $2 $3 $4 $5 $6 $7
 	;;
 node_switch)
 	node_switch $2 $3 $4 $5

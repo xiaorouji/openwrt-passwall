@@ -127,38 +127,27 @@ do
 	ucic2:foreach(application, uciType, function(node)
 		if node.type == 'V2ray' and node.v2ray_protocol == '_shunt' then
 			local node_id = node[".name"]
-			local youtube_node_id = node.youtube_node
-			local netflix_node_id = node.netflix_node
-			local default_node_id = node.default_node
+			ucic2:foreach(application, "shunt_rules", function(e)
+				local _node_id = node[e[".name"]] or nil
+				local _node
+				if _node_id then
+					_node = ucic2:get_all(application, _node_id)
+				end
+				CONFIG[#CONFIG + 1] = {
+					log = false,
+					currentNode = _node,
+					remarks = "V2ray分流" .. e.remarks .. "节点",
+					set = function(server)
+						ucic2:set(application, node_id, e[".name"], server)
+					end
+				}
+			end)
 
-			local youtube_node
-			local netflix_node
+			local default_node_id = node.default_node
 			local default_node
-			if youtube_node_id then
-				youtube_node = ucic2:get_all(application, youtube_node_id)
-			end
-			if netflix_node_id then
-				netflix_node = ucic2:get_all(application, netflix_node_id)
-			end
 			if default_node_id then
 				default_node = ucic2:get_all(application, default_node_id)
 			end
-			CONFIG[#CONFIG + 1] = {
-				log = false,
-				currentNode = youtube_node,
-				remarks = "V2ray分流youtube节点",
-				set = function(server)
-					ucic2:set(application, node_id, "youtube_node", server)
-				end
-			}
-			CONFIG[#CONFIG + 1] = {
-				log = false,
-				currentNode = netflix_node,
-				remarks = "V2ray分流Netflix节点",
-				set = function(server)
-					ucic2:set(application, node_id, "netflix_node", server)
-				end
-			}
 			CONFIG[#CONFIG + 1] = {
 				log = false,
 				currentNode = default_node,

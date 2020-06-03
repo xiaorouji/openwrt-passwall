@@ -6,9 +6,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
-PKG_VERSION:=3.6
-PKG_RELEASE:=64
-PKG_DATE:=20200602
+PKG_VERSION:=3.9
+PKG_RELEASE:=2
+PKG_DATE:=20200625
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
@@ -27,6 +27,10 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR
 	bool "Include ShadowsocksR"
+	default y
+
+config PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Server
+	bool "Include ShadowsocksR Server"
 	default y
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_V2ray
@@ -84,6 +88,7 @@ define Package/$(PKG_NAME)
   +PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks:shadowsocks-libev-ss-local \
   +PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR:shadowsocksr-libev-alt \
   +PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR:shadowsocksr-libev-ssr-local \
+  +PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Server:shadowsocksr-libev-server \
   +PACKAGE_$(PKG_NAME)_INCLUDE_V2ray:v2ray \
   +PACKAGE_$(PKG_NAME)_INCLUDE_Trojan:trojan \
   +PACKAGE_$(PKG_NAME)_INCLUDE_Trojan:ipt2socks \
@@ -108,6 +113,7 @@ endef
 
 define Package/$(PKG_NAME)/conffiles
 /etc/config/passwall
+/etc/config/passwall_server
 /usr/share/passwall/rules/blacklist_host
 /usr/share/passwall/rules/blacklist_ip
 /usr/share/passwall/rules/whitelist_host
@@ -117,12 +123,14 @@ endef
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./root/etc/config/passwall $(1)/etc/config/passwall
-	
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_CONF) ./root/etc/uci-defaults/* $(1)/etc/uci-defaults
+	$(INSTALL_CONF) ./root/etc/config/passwall_server $(1)/etc/config/passwall_server
 	
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./root/etc/init.d/passwall $(1)/etc/init.d/passwall
+	$(INSTALL_BIN) ./root/etc/init.d/passwall_server $(1)/etc/init.d/passwall_server
+	
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_CONF) ./root/etc/uci-defaults/* $(1)/etc/uci-defaults
 	
 	$(INSTALL_DIR) $(1)/usr/share/passwall
 	cp -pR ./root/usr/share/passwall/* $(1)/usr/share/passwall

@@ -22,7 +22,6 @@ local domain_pattern = "([%w%-%_]+%.[%w%.%-%_]+)[%/%*]*"
 local mydnsip = '127.0.0.1'
 local mydnsport = '7913'
 local ipsetname = 'gfwlist'
-local new_version = os.date("%Y-%m-%d")
 
 -- custom url
 local enable_custom_url = ucic:get_first(name, 'global_rules', "enable_custom_url", 0)
@@ -141,9 +140,9 @@ end
 --gfwlist转码至dnsmasq格式
 local function generate_gfwlist()
 	local domains = {}
-	local out = io.open("/tmp/gfwlist_tmp", "w") 
+	local out = io.open("/tmp/gfwlist_tmp", "w")
 
-	for line in io.lines("/tmp/gfwlist.txt") do  
+	for line in io.lines("/tmp/gfwlist.txt") do
 		if not (string.find(line, comment_pattern) or string.find(line, ip_pattern)) then
 			local start, finish, match = string.find(line, domain_pattern)
 			if (start) then
@@ -165,23 +164,23 @@ local function generate_chnlist()
 	local domains = {}
 	local out = io.open("/tmp/cdn_tmp", "w")
 
-	for line in io.lines("/tmp/chnlist_1") do  
+	for line in io.lines("/tmp/chnlist_1") do
 		local start, finish, match = string.find(line, domain_pattern)
-		if (start)  then
+		if (start) then
 			domains[match] = true
 		end
 	end
 
-	for line in io.lines("/tmp/chnlist_2") do  
+	for line in io.lines("/tmp/chnlist_2") do
 		local start, finish, match = string.find(line, domain_pattern)
-		if (start)  then
+		if (start) then
 			domains[match] = true
 		end
 	end
 
-	for line in io.lines("/tmp/chnlist_3") do  
+	for line in io.lines("/tmp/chnlist_3") do
 		local start, finish, match = string.find(line, domain_pattern)
-		if (start)  then
+		if (start) then
 			domains[match] = true
 		end
 	end
@@ -190,7 +189,7 @@ local function generate_chnlist()
 	for k,v in pairs(domains) do
 		out:write(string.format("%s\n", k))
 	end
-	
+
 	out:close()
 
 	--删除重复条目并排序
@@ -218,6 +217,7 @@ end
 
 log("开始更新规则...")
 if tonumber(enable_custom_url) == 1 then
+	local new_version = os.date("%Y-%m-%d")
 	log("已启用自定义规则地址...")
 	if tonumber(gfwlist_update) == 1 then
 		log("开始更新gfwlist...")

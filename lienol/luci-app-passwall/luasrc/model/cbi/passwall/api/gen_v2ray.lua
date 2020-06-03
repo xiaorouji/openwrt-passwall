@@ -27,7 +27,7 @@ local function gen_outbound(node, tag)
                 local node_type = (proto and proto ~= "nil") and proto or "socks"
                 local new_port = sys.exec(string.format("echo -n $(/usr/share/%s/app.sh get_new_port auto tcp)", appname))
                 node.port = new_port
-                sys.call(string.format("/usr/share/%s/app.sh gen_socks_config %s %s %s %s %s", 
+                sys.call(string.format("/usr/share/%s/app.sh run_socks %s %s %s %s %s", 
                     appname,
                     node_id,
                     "127.0.0.1",
@@ -161,41 +161,38 @@ end
 if node.v2ray_protocol == "_shunt" then
     local rules = {}
 
-    local youtube_node_id = node.youtube_node or nil
-    if youtube_node_id and youtube_node_id ~= "nil" then
-        local youtube_node = ucursor:get_all(appname, youtube_node_id)
-        local youtube_outbound = gen_outbound(youtube_node, "youtube")
-        if youtube_outbound then
-            table.insert(outbounds, youtube_outbound)
-            local rule = {
-                type = "field",
-                domain = {
-                    "youtube", "youtube.com", "youtu.be", "googlevideo.com",
-                    "ytimg.com", "gvt2.com"
-                },
-                outboundTag = "youtube"
-            }
-            table.insert(rules, rule)
+    ucursor:foreach(appname, "shunt_rules", function(e)
+        local _node_id = node[e[".name"]] or nil
+        if _node_id and _node_id ~= "nil" then
+            local _node = ucursor:get_all(appname, _node_id)
+            local _outbound = gen_outbound(_node, e[".name"])
+            if _outbound then
+                table.insert(outbounds, _outbound)
+                if e.domain_list then
+                    local _domain = {}
+                    string.gsub(e.domain_list, '[^' .. "\r\n" .. ']+', function(w)
+                        table.insert(_domain, w)
+                    end)
+                    table.insert(rules, {
+                        type = "field",
+                        outboundTag = e[".name"],
+                        domain = _domain
+                    })
+                end
+                if e.ip_list then
+                    local _ip = {}
+                    string.gsub(e.ip_list, '[^' .. "\r\n" .. ']+', function(w)
+                        table.insert(_ip, w)
+                    end)
+                    table.insert(rules, {
+                        type = "field",
+                        outboundTag = e[".name"],
+                        ip = _ip
+                    })
+                end
+            end
         end
-    end
-    
-    local netflix_node_id = node.netflix_node or nil
-    if netflix_node_id and netflix_node_id ~= "nil" then
-        local netflix_node = ucursor:get_all(appname, netflix_node_id)
-        local netflix_outbound = gen_outbound(netflix_node, "netflix")
-        if netflix_outbound then
-            table.insert(outbounds, netflix_outbound)
-            local rule = {
-                type = "field",
-                domain = {
-                    "netflix", "netflix.com", "nflxso.net", "nflxext.com",
-                    "nflximg.com", "nflximg.net", "nflxvideo.net", "fast.com"
-                },
-                outboundTag = "netflix"
-            }
-            table.insert(rules, rule)
-        end
-    end
+    end)
     
     local default_node_id = node.default_node or nil
     if default_node_id and default_node_id ~= "nil" then

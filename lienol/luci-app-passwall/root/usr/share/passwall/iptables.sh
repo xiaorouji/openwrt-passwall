@@ -220,34 +220,26 @@ filter_node() {
 		}
 	}
 	local v2ray_protocol=$(config_n_get $1 v2ray_protocol)
-	if [ "$v2ray_protocol" == "v2ray_shunt" ]; then
+	if [ "$v2ray_protocol" == "_shunt" ]; then
 		local default_node=$(config_n_get $1 default_node nil)
 		filter_rules $default_node $2
 		local default_node_address=$(get_host_ip ipv4 $(config_n_get $default_node address) 1)
 		local default_node_port=$(config_n_get $default_node port)
 		
-		local youtube_proxy=$(config_n_get $1 youtube_proxy 0)
-		local youtube_node=$(config_n_get $1 youtube_node nil)
-		[ "$youtube_proxy" == 1 ] && {
-			local youtube_node_address=$(get_host_ip ipv4 $(config_n_get $youtube_node address) 1)
-			local youtube_node_port=$(config_n_get $youtube_node port)
-			[ "$youtube_node_address" == "$default_node_address" ] && [ "$youtube_node_port" == "$default_node_port" ] && {
-				youtube_proxy=0
+		local shunt_ids=$(uci show $CONFIG | grep "=shunt_rules" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}')
+		for shunt_id in $shunt_ids; do
+			local _proxy=$(config_n_get $1 "${shunt_id}_proxy" 0)
+			local _node=$(config_n_get $1 "${shunt_id}" nil)
+			[ "$_proxy" == 1 ] && {
+				local _node_address=$(get_host_ip ipv4 $(config_n_get $_node address) 1)
+				local _node_port=$(config_n_get $_node port)
+				[ "$_node_address" == "$default_node_address" ] && [ "$_node_port" == "$default_node_port" ] && {
+					_proxy=0
+				}
 			}
-		}
-		filter_rules $(config_n_get $1 youtube_node) $2 $youtube_proxy $3
-		
-		local netflix_proxy=$(config_n_get $1 netflix_proxy 0)
-		local netflix_node=$(config_n_get $1 netflix_node nil)
-		[ "$netflix_proxy" == 1 ] && {
-			local netflix_node_address=$(get_host_ip ipv4 $(config_n_get $netflix_node address) 1)
-			local netflix_node_port=$(config_n_get $netflix_node port)
-			[ "$netflix_node_address" == "$default_node_address" ] && [ "$netflix_node_port" == "$default_node_port" ] && {
-				netflix_proxy=0
-			}
-		}
-		filter_rules $(config_n_get $1 netflix_node) $2 $netflix_proxy $3
-	elif [ "$v2ray_protocol" == "v2ray_balancing" ]; then
+			filter_rules $(config_n_get $1 $shunt_id) $2 $_proxy $3
+		done
+	elif [ "$v2ray_protocol" == "_balancing" ]; then
 		local balancing_node=$(config_n_get $1 v2ray_balancing_node)
 		for node_id in $balancing_node
 		do
@@ -399,6 +391,7 @@ add_firewall_rule() {
 	for i in $(seq 1 $UDP_NODE_NUM); do
 		eval node=\$UDP_NODE$i
 		eval port=\$UDP_REDIR_PORT$i
+		[ "$node" == "tcp" ] && eval node=\$TCP_NODE$i && eval port=\$TCP_REDIR_PORT$i
 		[ "$node" != "nil" ] && filter_node $node udp $port
 	done
 	

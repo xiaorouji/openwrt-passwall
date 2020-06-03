@@ -19,6 +19,10 @@ local config = {
 
 if node.type == "SS" then
     config.method = node.ss_encrypt_method
+    if node.ss_plugin and node.ss_plugin ~= "none" then
+        config.plugin = node.ss_plugin
+        config.plugin_opts = node.ss_plugin_opts or nil
+    end
 elseif node.type == "SSR" then
     config.method = node.ssr_encrypt_method
     config.protocol = node.protocol
