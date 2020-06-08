@@ -89,14 +89,11 @@ setup_config() {
 	[ -n "$remoteip" ] && echo "remoteip  $remoteip" >> $CONFIG_FILE
 	echo "option /etc/ppp/options.pptpd" >> $CONFIG_FILE
 	
+	sed -i '/mppe/d' /etc/ppp/options.pptpd
 	config_get mppe $1 mppe
-	if [ -n "$(cat "/etc/ppp/options.pptpd" | grep mppe)" ]; then
-		sed -i '/mppe/'d /etc/ppp/options.pptpd
-	else
-		echo "mppe required,no40,no56,stateless" >> /etc/ppp/options.pptpd
-	fi
-	[ "$mppe" -eq 0 ] && sed -i -e 's/mppe/#mppe/g' /etc/ppp/options.pptpd
-	sed -i -e '/ms-dns/d' /etc/ppp/options.pptpd
+	[ -n "$mppe" ] && [ "$mppe" -eq 1 ] && echo "mppe required,no40,no56,stateless" >> /etc/ppp/options.pptpd
+	
+	sed -i '/ms-dns/d' /etc/ppp/options.pptpd
 	config_get dns $1 dns
 	[ -z "$dns" ] && dns="8.8.4.4"
 	echo "ms-dns $dns">>/etc/ppp/options.pptpd
