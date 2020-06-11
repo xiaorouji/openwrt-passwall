@@ -32,8 +32,8 @@
 				<td class="td cbi-value-field" data-name="device_limit" data-title="设备数限制">{{user.protocol_param}}</td>
 				<td class="td cbi-value-field" data-name="speed_limit_per_con" data-title="单线程限速">{{user.speed_limit_per_con == '0' ? '无' : user.speed_limit_per_con + ' Kb/s'}}</td>
 				<td class="td cbi-value-field" data-name="speed_limit_per_user" data-title="总限速">{{user.speed_limit_per_user == '0' ? '无' : user.speed_limit_per_user + ' Kb/s'}}</td>
-				<td class="td cbi-value-field" data-name="used_total_traffic" data-title="已用流量">{{(user.u + user.d) / 1024 / 1024 / 1024}}</td>
-				<td class="td cbi-value-field" data-name="transfer_enable" data-title="可用流量">{{user.transfer_enable / 1024 / 1024 / 1024}}G</td>
+				<td class="td cbi-value-field" data-name="used_total_traffic" data-title="已用流量">{{byte_format(user.u + user.d)}}</td>
+				<td class="td cbi-value-field" data-name="transfer_enable" data-title="可用流量">{{byte_format(user.transfer_enable)}}</td>
 				<!-- <td class="td cbi-value-field" data-name="ssr_link" data-title="SSR链接"><a href="#" @click="get_link(user)">获取</a></td> -->
 
 				<td class="td cbi-section-table-cell nowrap cbi-section-actions">
@@ -109,6 +109,16 @@
 								window.location.replace(window.location.href);
 						}
 					)
+				}
+			},
+			byte_format: function(byte) {
+				var suff = [ "B", "KB", "MB", "GB", "TB" ];
+				for (var i = 0; i < suff.length; i++) {
+					if (byte > 1024 && i < suff.length) {
+						byte = (byte / 1024).toFixed(2);
+					} else {
+						return byte + " " + suff[i];
+					}
 				}
 			}
 		}

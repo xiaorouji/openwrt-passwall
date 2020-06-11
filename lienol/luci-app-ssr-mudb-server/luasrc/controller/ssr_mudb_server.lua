@@ -37,14 +37,14 @@ end
 
 function get_link()
     local e = {}
-    local link = luci.sys.exec("cd /usr/share/ssr_mudb_server && ./mujson_mgr.py -l -p " .. luci.http.formvalue("port") .. " | sed -n '$p'"):gsub("^%s*(.-)%s*$", "%1")
+    local link = luci.sys.exec("cd /usr/share/ssr_mudb_server && python3 mujson_mgr.py -l -p " .. luci.http.formvalue("port") .. " | sed -n '$p'"):gsub("^%s*(.-)%s*$", "%1")
     if link ~= "" then e.link = link end
     http_write_json(e)
 end
 
 function clear_traffic()
     local e = {}
-    e.status = luci.sys.call("cd /usr/share/ssr_mudb_server && ./mujson_mgr.py -c -p '" .. luci.http.formvalue("port") .. "' >/dev/null") == 0
+    e.status = luci.sys.call("cd /usr/share/ssr_mudb_server && python3 mujson_mgr.py -c -p '" .. luci.http.formvalue("port") .. "' >/dev/null") == 0
     http_write_json(e)
 end
 
