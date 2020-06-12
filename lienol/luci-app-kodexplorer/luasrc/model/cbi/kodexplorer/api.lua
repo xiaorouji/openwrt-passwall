@@ -67,6 +67,11 @@ function get_project_directory()
     return uci:get(appname, "@global[0]", "project_directory") or "/tmp/kodcloud"
 end
 
+function get_version()
+    local version = get_project_directory() .. "/config/version.php"
+    return sys.exec(string.format("echo -n $(cat %s 2>/dev/null | grep \"'KOD_VERSION'\" | cut -d \"'\" -f 4)", version))
+end
+
 local function compare_versions(ver1, comp, ver2)
     local table = table
 
@@ -98,7 +103,7 @@ local function get_api_json(url)
     --	function(chunk) output[#output + 1] = chunk end)
     -- local json_content = util.trim(table.concat(output))
 
-    local json_content = luci.sys.exec(wget .. " --no-check-certificate --timeout=10 -t 1 -O- " .. url)
+    local json_content = sys.exec(wget .. " --no-check-certificate --timeout=10 -t 1 -O- " .. url)
 
     if json_content == "" then return {} end
 
