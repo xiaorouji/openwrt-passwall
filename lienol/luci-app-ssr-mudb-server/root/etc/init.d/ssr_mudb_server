@@ -61,7 +61,7 @@ set_ssr_python_crontab() {
 		else
 			auto_clear_transfer_time=$(config_t_get global auto_clear_transfer_time)
 			[ -n "$auto_clear_transfer_time" ] && auto_clear_transfer_time=$(echo $auto_clear_transfer_time | tr ',' ' ')
-			echo "$auto_clear_transfer_time $ssr_path/sh/clear_traffic_all_users.sh >/dev/null 2>&1" >> /etc/crontabs/root
+			echo "$auto_clear_transfer_time $ssr_path/clear_traffic_all_users.sh >/dev/null 2>&1" >> /etc/crontabs/root
 		fi
 	else
 		sed -i '/clear_traffic_all_users.sh/d' /etc/crontabs/root >/dev/null 2>&1 &
@@ -86,7 +86,8 @@ stop_ssr_python_server() {
 start() {
 	enable=$(config_t_get global enable 0)
 	if [ "$enable" -eq 1 ];then
-		cp -rf $ssr_path/mudb.json $ssr_path/mudb_backup.json
+		users_config=$(cat $ssr_path/userapiconfig.py | grep "MUDB_FILE" | cut -d "'" -f 2)
+		[ -n "$users_config" ] && cp -rf $users_config $ssr_path/mudb_backup.json
 		start_ssr_python_server
 	else
 		stop_ssr_python_server

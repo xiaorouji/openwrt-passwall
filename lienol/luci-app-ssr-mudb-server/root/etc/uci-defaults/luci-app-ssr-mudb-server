@@ -16,6 +16,6 @@ uci -q batch <<-EOF >/dev/null
 EOF
 
 chmod a+x /usr/share/ssr_mudb_server/* >/dev/null 2>&1
-
+cp -rf /usr/bin/python3 /usr/bin/python
 rm -rf /tmp/luci-*cache
 exit 0

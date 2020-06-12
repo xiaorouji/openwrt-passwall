@@ -4,7 +4,7 @@ UPDATE_TIME = 60
 SERVER_PUB_ADDR = '127.0.0.1' # mujson_mgr need this to generate ssr link
 
 #mudb
-MUDB_FILE = 'mudb.json'
+MUDB_FILE = '/etc/config/ssr_mudb_server.json'
 
 # Mysql
 MYSQL_CONFIG = 'usermysql.json'

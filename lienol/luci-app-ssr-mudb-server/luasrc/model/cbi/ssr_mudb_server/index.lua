@@ -27,7 +27,8 @@ if apply then
     for key, val in pairs(luci.http.formvalue()) do
         if key:find("ssr_mudb_server_") == 1 then
             local port = key:gsub("ssr_mudb_server_",""):gsub(".enable","")
-            local str = luci.sys.exec("cat /usr/share/ssr_mudb_server/mudb.json")
+            local config_path = luci.sys.exec("echo -n $(cat /usr/share/ssr_mudb_server/userapiconfig.py | grep 'MUDB_FILE' | cut -d \"'\" -f 2)")
+            local str = luci.sys.exec("cat " .. config_path) or "[]"
             local json = jsonc.parse(str)
             if port and str and json then
                 for index = 1, table.maxn(json) do
@@ -37,7 +38,7 @@ if apply then
                         break
                     end
                 end
-                local f, err = io.open("/usr/share/ssr_mudb_server/mudb.json", "w")
+                local f, err = io.open(config_path, "w")
                 if f and err == nil then
                     f:write(jsonc.stringify(json, 1))
                     f:close()

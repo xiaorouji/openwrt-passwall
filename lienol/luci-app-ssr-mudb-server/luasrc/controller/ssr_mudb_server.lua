@@ -29,6 +29,14 @@ local function http_write_json(content)
     http.write_json(content or {code = 1})
 end
 
+local function get_config_path()
+    return luci.sys.exec("echo -n $(cat /usr/share/ssr_mudb_server/userapiconfig.py | grep 'MUDB_FILE' | cut -d \"'\" -f 2)")
+end
+
+local function get_config_json()
+    return luci.sys.exec("cat " .. get_config_path()) or "[]"
+end
+
 function status()
     local e = {}
     e.status = luci.sys.call("ps -w | grep -v grep | grep '/usr/share/ssr_mudb_server/server.py' >/dev/null") == 0
@@ -50,14 +58,13 @@ end
 
 function clear_traffic_all_users()
     local e = {}
-    e.status = luci.sys.call("/usr/share/ssr_mudb_server/sh/clear_traffic_all_users.sh >/dev/null") == 0
+    e.status = luci.sys.call("/usr/share/ssr_mudb_server/clear_traffic_all_users.sh >/dev/null") == 0
     http_write_json(e)
 end
 
 function user_list()
-    local e = luci.sys.exec("cat /usr/share/ssr_mudb_server/mudb.json")
     luci.http.prepare_content("application/json")
-    luci.http.write(e)
+    luci.http.write(get_config_json())
 end
 
 function user_save()
@@ -67,7 +74,7 @@ function user_save()
     if action and action == "add" or action == "edit" then
         local user = jsonc.parse(json_str)
         if user then
-            local json = jsonc.parse(luci.sys.exec("cat /usr/share/ssr_mudb_server/mudb.json"))
+            local json = jsonc.parse(get_config_json())
             if json then
                 local port = user.port
                 local is_exist_port = 0
@@ -118,7 +125,7 @@ function user_save()
                             end
                         end
                     end
-                    local f, err = io.open("/usr/share/ssr_mudb_server/mudb.json", "w")
+                    local f, err = io.open(get_config_path(), "w")
                     if f and err == nil then
                         f:write(jsonc.stringify(json, 1))
                         f:close()
@@ -137,7 +144,7 @@ end
 function user_get()
     local result = {}
     local port = luci.http.formvalue("port")
-    local str = luci.sys.exec("cat /usr/share/ssr_mudb_server/mudb.json")
+    local str = get_config_json()
     local json = jsonc.parse(str)
     if port and str and json then
         for index = 1, table.maxn(json) do
@@ -153,7 +160,7 @@ end
 
 function remove_user()
     local port = luci.http.formvalue("port")
-    local str = luci.sys.exec("cat /usr/share/ssr_mudb_server/mudb.json")
+    local str = get_config_json()
     local json = jsonc.parse(str)
     if port and str and json then
         for index = 1, table.maxn(json) do
@@ -163,7 +170,7 @@ function remove_user()
                 break
             end
         end
-        local f, err = io.open("/usr/share/ssr_mudb_server/mudb.json", "w")
+        local f, err = io.open(get_config_path(), "w")
 		if f and err == nil then
 			f:write(jsonc.stringify(json, 1))
 			f:close()
