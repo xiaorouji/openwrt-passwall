@@ -44,12 +44,13 @@ gen_nginx_config() {
 		        location = /50x.html {
 		            root   html;
 		        }
-		        location ~ \.php$ {
+		        location ~ \.php(.*) {
 		            root $project_directory;
-		            try_files \$uri = 404; # PHP 文件不存在返回404
 		            fastcgi_pass unix:/var/run/php7-fpm.sock; # 通过 Unix 套接字执行 PHP
 		            fastcgi_index index.php;
+		            fastcgi_split_path_info ^(.+\.php)(.*)$;
 		            fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name; # 修复 Nginx fastcgi 漏洞
+		            fastcgi_param PATH_INFO \$fastcgi_path_info;
 		            include /etc/nginx/fastcgi_params;
 		        }
 		    }
