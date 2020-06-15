@@ -5,11 +5,10 @@ START=99
 
 CONFIG="kodexplorer"
 
-TEMP_PATH="/var/etc/kodexplorer"
+TEMP_PATH="/var/etc/$CONFIG"
 NGINX_CONFIG="$TEMP_PATH/nginx.conf"
+PHP_CONFIG="$TEMP_PATH/php.ini"
 PHP_FPM_CONFIG="$TEMP_PATH/php-fpm.conf"
-PHP_CONFIG="/etc/php.ini"
-PHP_BACKUP_CONFIG="/etc/php.ini.backup"
 
 config_t_get() {
 	local index=0
@@ -20,11 +19,27 @@ config_t_get() {
 
 gen_nginx_config() {
 	port=$(config_t_get global port)
-	project_directory=$(config_t_get global project_directory)
+	https=$(config_t_get global https 0)
+	[ "$https" == "1" ] && {
+		certificate=$(config_t_get global certificate)
+		key=$(config_t_get global key)
+		isssl="ssl"
+		#local https_param="ssl_certificate $certificate;\n	ssl_certificate_key $key;\n	ssl_session_cache shared:SSL:1m;\n	ssl_session_timeout 5m;\n	ssl_ciphers HIGH:!aNULL:!MD5;\n	ssl_prefer_server_ciphers on;"
+		local https_param=$(cat <<-EOF
+		        \t\tssl_certificate $certificate;\n
+		        \t\tssl_certificate_key $key;\n
+		        \t\tssl_session_cache shared:SSL:1m;\n
+		        \t\tssl_session_timeout 5m;\n
+		        \t\tssl_ciphers HIGH:!aNULL:!MD5;\n
+		        \t\tssl_prefer_server_ciphers on;\n
+		EOF
+		)
+	}
+	
 	cat <<-EOF > $1
 		user root root;
-		worker_processes  1;
-		pid /var/run/nginx_kodexplorer.pid;
+		worker_processes auto;
+		pid $TEMP_PATH/nginx.pid;
 		events {
 		    worker_connections  1024;
 		}
@@ -33,17 +48,12 @@ gen_nginx_config() {
 		    sendfile on;
 		    keepalive_timeout 65;
 		    server {
-		        listen $port;
-		        listen [::]:$port;
+		        listen $port $isssl;
+		        listen [::]:$port $isssl;
 		        server_name  localhost;
-		        location / {
-		            root $project_directory;
-		            index index.html index.htm index.php;
-		        }
-		        error_page   500 502 503 504  /50x.html;
-		        location = /50x.html {
-		            root   html;
-		        }
+				$(echo -e $https_param)
+		        root $project_directory;
+		        index index.html index.htm index.php;
 		        location ~ \.php(.*) {
 		            root $project_directory;
 		            fastcgi_pass unix:/var/run/php7-fpm.sock; # 通过 Unix 套接字执行 PHP
@@ -52,6 +62,12 @@ gen_nginx_config() {
 		            fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name; # 修复 Nginx fastcgi 漏洞
 		            fastcgi_param PATH_INFO \$fastcgi_path_info;
 		            include /etc/nginx/fastcgi_params;
+		            client_max_body_size $upload_max_filesize;
+		            client_body_temp_path $TEMP_PATH/temp;
+		            client_body_timeout 3600s;
+		            fastcgi_connect_timeout 3600s;
+		            fastcgi_send_timeout 3600s;
+		            fastcgi_read_timeout 3600s;
 		        }
 		    }
 		}
@@ -59,11 +75,6 @@ gen_nginx_config() {
 }
 
 gen_php_config() {
-	storage_device_path=$(config_t_get global storage_device_path)
-	memory_limit=$(config_t_get global memory_limit)
-	post_max_size=$(config_t_get global post_max_size)
-	upload_max_filesize=$(config_t_get global upload_max_filesize)
-	cp $PHP_CONFIG $PHP_BACKUP_CONFIG
 	cat <<-EOF >$PHP_CONFIG
 		[PHP]
 		zend.ze1_compatibility_mode = Off
@@ -76,12 +87,12 @@ gen_php_config() {
 		unserialize_callback_func =
 		serialize_precision = 100
 
-		open_basedir = $storage_device_path:/tmp/:/proc/
+		open_basedir = /tmp:$project_directory:$open_basedir
 		disable_functions =
 		disable_classes =
 		expose_php = On
-		max_execution_time = 30
-		max_input_time = 60
+		max_execution_time = 3600
+		max_input_time = 3600
 		memory_limit = $memory_limit
 		error_reporting  =  E_ALL & ~E_NOTICE & ~E_STRICT
 
@@ -100,7 +111,7 @@ gen_php_config() {
 		register_long_arrays = Off
 		register_argc_argv = On
 		auto_globals_jit = On
-		post_max_size = $post_max_size
+		post_max_size = $upload_max_filesize
 		magic_quotes_runtime = Off
 		magic_quotes_sybase = Off
 		auto_prepend_file =
@@ -116,7 +127,7 @@ gen_php_config() {
 		file_uploads = On
 		upload_tmp_dir = "/tmp"
 		upload_max_filesize = $upload_max_filesize
-		max_file_uploads = 20
+		max_file_uploads = 1000
 
 		allow_url_fopen = On
 		allow_url_include = Off
@@ -125,8 +136,8 @@ gen_php_config() {
 		
 	cat <<-EOF >$PHP_FPM_CONFIG
 		[global]
-		pid = /var/run/kodexplorer_php7-fpm.pid
-		error_log = /var/log/kodexplorer_php7-fpm.log
+		pid = $TEMP_PATH/php7-fpm.pid
+		error_log = $TEMP_PATH/php7-fpm.log
 		[www]
 		user = root
 		listen = /var/run/php7-fpm.sock
@@ -144,24 +155,22 @@ gen_php_config() {
 start() {
 	ENABLED=$(config_t_get global enable 0)
 	[ "$ENABLED" = "0" ] && return 0
-	mkdir -p $TEMP_PATH /var/log/nginx /var/lib/nginx
+	mkdir -p $TEMP_PATH $TEMP_PATH/temp /var/log/nginx /var/lib/nginx
+	memory_limit=$(config_t_get global memory_limit 64M)
+	upload_max_filesize=$(config_t_get global upload_max_filesize 64M)
+	project_directory=$(config_t_get global project_directory)
+	open_basedir=$(config_t_get global open_basedir "/")
+	open_basedir=$(echo $open_basedir | sed "s/ /:/g")
 	gen_php_config
-	/usr/bin/php-fpm -R -y $PHP_FPM_CONFIG -g "/var/run/php7-fpm.pid"
+	/usr/bin/php-fpm -c $PHP_CONFIG -R -y $PHP_FPM_CONFIG
 	gen_nginx_config $NGINX_CONFIG
 	/usr/sbin/nginx -c $NGINX_CONFIG >/dev/null 2>&1 &
 }
 
 stop() {
-	/usr/sbin/nginx -c $NGINX_CONFIG -s stop >/dev/null 2>&1 &
-	killall -9 php-fpm >/dev/null 2>&1 &
-	rm -f /var/run/kodexplorer_php7-fpm.pid
-	rm -f /var/log/kodexplorer_php7-fpm.log
-	rm -f /var/run/php7-fpm.sock
-	[ -f "$PHP_BACKUP_CONFIG" -a -f "$PHP_CONFIG" ] && {
-		rm -f $PHP_CONFIG
-		cp $PHP_BACKUP_CONFIG $PHP_CONFIG
-		rm -f $PHP_BACKUP_CONFIG
-	}
+	/usr/sbin/nginx -c $NGINX_CONFIG -s stop >/dev/null 2>&1
+	[ -f "/var/etc/kodexplorer/php7-fpm.pid" ] && kill -2 $(cat /var/etc/kodexplorer/php7-fpm.pid) >/dev/null 2>&1
+	rm -rf $TEMP_PATH /var/run/php7-fpm.sock
 }
 
 restart() {
