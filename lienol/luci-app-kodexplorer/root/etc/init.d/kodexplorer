@@ -9,6 +9,7 @@ TEMP_PATH="/var/etc/$CONFIG"
 NGINX_CONFIG="$TEMP_PATH/nginx.conf"
 PHP_CONFIG="$TEMP_PATH/php.ini"
 PHP_FPM_CONFIG="$TEMP_PATH/php-fpm.conf"
+PHP_FPM_SOCK="$TEMP_PATH/php-fpm.sock"
 
 config_t_get() {
 	local index=0
@@ -19,137 +20,33 @@ config_t_get() {
 
 gen_nginx_config() {
 	port=$(config_t_get global port)
-	https=$(config_t_get global https 0)
-	[ "$https" == "1" ] && {
-		certificate=$(config_t_get global certificate)
-		key=$(config_t_get global key)
-		isssl="ssl"
-		#local https_param="ssl_certificate $certificate;\n	ssl_certificate_key $key;\n	ssl_session_cache shared:SSL:1m;\n	ssl_session_timeout 5m;\n	ssl_ciphers HIGH:!aNULL:!MD5;\n	ssl_prefer_server_ciphers on;"
-		local https_param=$(cat <<-EOF
-		        \t\tssl_certificate $certificate;\n
-		        \t\tssl_certificate_key $key;\n
-		        \t\tssl_session_cache shared:SSL:1m;\n
-		        \t\tssl_session_timeout 5m;\n
-		        \t\tssl_ciphers HIGH:!aNULL:!MD5;\n
-		        \t\tssl_prefer_server_ciphers on;\n
-		EOF
-		)
+	[ "$(config_t_get global https 0)" == "1" ] && {
+		port="$port ssl"
+		ssl_certificate="ssl_certificate $(config_t_get global certificate);"
+		ssl_certificate_key="ssl_certificate_key $(config_t_get global key);"
 	}
-	
-	cat <<-EOF > $1
-		user root root;
-		worker_processes auto;
-		pid $TEMP_PATH/nginx.pid;
-		events {
-		    worker_connections  1024;
-		}
-		http {
-		    include /etc/nginx/mime.types;
-		    sendfile on;
-		    keepalive_timeout 65;
-		    server {
-		        listen $port $isssl;
-		        listen [::]:$port $isssl;
-		        server_name  localhost;
-				$(echo -e $https_param)
-		        root $project_directory;
-		        index index.html index.htm index.php;
-		        location ~ \.php(.*) {
-		            root $project_directory;
-		            fastcgi_pass unix:/var/run/php7-fpm.sock; # 通过 Unix 套接字执行 PHP
-		            fastcgi_index index.php;
-		            fastcgi_split_path_info ^(.+\.php)(.*)$;
-		            fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name; # 修复 Nginx fastcgi 漏洞
-		            fastcgi_param PATH_INFO \$fastcgi_path_info;
-		            include /etc/nginx/fastcgi_params;
-		            client_max_body_size $upload_max_filesize;
-		            client_body_temp_path $TEMP_PATH/temp;
-		            client_body_timeout 3600s;
-		            fastcgi_connect_timeout 3600s;
-		            fastcgi_send_timeout 3600s;
-		            fastcgi_read_timeout 3600s;
-		        }
-		    }
-		}
-	EOF
+	sed -e "s#|PID|#$TEMP_PATH/nginx.pid#g" \
+	    -e "s#|PORT|#$port#g" \
+	    -e "s#|ssl_certificate|#$ssl_certificate#g" \
+	    -e "s#|ssl_certificate_key|#$ssl_certificate_key#g" \
+	    -e "s#|project_directory|#$project_directory#g" \
+	    -e "s#|SOCK|#$PHP_FPM_SOCK#g" \
+	    -e "s#|upload_max_filesize|#$upload_max_filesize#g" \
+	    -e "s#|temp_path|#$TEMP_PATH/temp#g" \
+	    /etc/$CONFIG/nginx.conf.template > $1
 }
 
 gen_php_config() {
-	cat <<-EOF >$PHP_CONFIG
-		[PHP]
-		zend.ze1_compatibility_mode = Off
-		engine = On
-		precision    =  12
-		y2k_compliance = On
-		output_buffering = Off
-		zlib.output_compression = Off
-		implicit_flush = Off
-		unserialize_callback_func =
-		serialize_precision = 100
-
-		open_basedir = /tmp:$project_directory:$open_basedir
-		disable_functions =
-		disable_classes =
-		expose_php = On
-		max_execution_time = 3600
-		max_input_time = 3600
-		memory_limit = $memory_limit
-		error_reporting  =  E_ALL & ~E_NOTICE & ~E_STRICT
-
-		display_errors = On
-		display_startup_errors = Off
-		log_errors = Off
-		log_errors_max_len = 1024
-		ignore_repeated_errors = Off
-		ignore_repeated_source = Off
-		report_memleaks = On
-		track_errors = Off
-
-		variables_order = "EGPCS"
-		request_order = "GP"
-		register_globals = Off
-		register_long_arrays = Off
-		register_argc_argv = On
-		auto_globals_jit = On
-		post_max_size = $upload_max_filesize
-		magic_quotes_runtime = Off
-		magic_quotes_sybase = Off
-		auto_prepend_file =
-		auto_append_file =
-		default_mimetype = "text/html"
-
-		;doc_root = "/www"
-		user_dir =
-		extension_dir = "/usr/lib/php"
-		enable_dl = On
-		cgi.fix_pathinfo=1
-
-		file_uploads = On
-		upload_tmp_dir = "/tmp"
-		upload_max_filesize = $upload_max_filesize
-		max_file_uploads = 1000
-
-		allow_url_fopen = On
-		allow_url_include = Off
-		default_socket_timeout = 60
-	EOF
-		
-	cat <<-EOF >$PHP_FPM_CONFIG
-		[global]
-		pid = $TEMP_PATH/php7-fpm.pid
-		error_log = $TEMP_PATH/php7-fpm.log
-		[www]
-		user = root
-		listen = /var/run/php7-fpm.sock
-		listen.mode = 0666
-		listen.allowed_clients = 127.0.0.1
-		pm = dynamic
-		pm.max_children = 5
-		pm.start_servers = 2
-		pm.min_spare_servers = 1
-		pm.max_spare_servers = 3
-		chdir = /
-	EOF
+	sed -e "s#|project_directory|#$project_directory#g" \
+	    -e "s#|open_basedir|#$open_basedir#g" \
+	    -e "s#|memory_limit|#$memory_limit#g" \
+	    -e "s#|upload_max_filesize|#$upload_max_filesize#g" \
+	    /etc/$CONFIG/php.ini.template > $PHP_CONFIG
+	
+	sed -e "s#|PID|#$TEMP_PATH/php-fpm.pid#g" \
+	    -e "s#|ERROR_LOG|#$TEMP_PATH/php-fpm.log#g" \
+	    -e "s#|SOCK|#$PHP_FPM_SOCK#g" \
+	    /etc/$CONFIG/php-fpm.conf.template > $PHP_FPM_CONFIG
 }
 
 start() {
@@ -169,8 +66,8 @@ start() {
 
 stop() {
 	/usr/sbin/nginx -c $NGINX_CONFIG -s stop >/dev/null 2>&1
-	[ -f "/var/etc/kodexplorer/php7-fpm.pid" ] && kill -2 $(cat /var/etc/kodexplorer/php7-fpm.pid) >/dev/null 2>&1
-	rm -rf $TEMP_PATH /var/run/php7-fpm.sock
+	[ -f "$TEMP_PATH/php-fpm.pid" ] && kill -2 $(cat $TEMP_PATH/php-fpm.pid) >/dev/null 2>&1
+	rm -rf $TEMP_PATH
 }
 
 restart() {

@@ -25,6 +25,18 @@ msgstr "全局设置"
 msgid "KodExplorer is a fast and efficient private cloud and online document management system that provides secure, controllable, easy-to-use and highly customizable private cloud products for personal websites, enterprise private cloud deployment, network storage, online document management, and online office. With Windows style interface and operation habits, it can be used quickly without adaptation. It supports online preview of hundreds of common file formats and is extensible and easy to customize."
 msgstr "KodExplorer是一款快捷高效的私有云和在线文档管理系统，为个人网站、企业私有云部署、网络存储、在线文档管理、在线办公等提供安全可控，简便易用、可高度定制的私有云产品。采用windows风格界面、操作习惯，无需适应即可快速上手，支持几百种常用文件格式的在线预览，可扩展易定制。"
 
+msgid "Edit Template"
+msgstr "编辑模板"
+
+msgid "Edit the template that is used for generating the %s configuration."
+msgstr "编辑生成 %s 的模板"
+
+msgid "This is the content of the file '%s'"
+msgstr "这是文件内容：%s"
+
+msgid "Values enclosed by pipe symbols ('|') should not be changed. They get their values from the '%s' tab."
+msgstr "由管道符（“|”）包围的值不应更改。它们将从 '%s' 标签中获取其值。"
+
 msgid "Nginx Port"
 msgstr "Nginx监听端口"
 
