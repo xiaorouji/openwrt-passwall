@@ -1,4 +1,4 @@
-m = Map("pingos", translate("pingos"))
+m = Map("pingos", translate("PingOS"))
 m:append(Template("pingos/status"))
 
 s = m:section(TypedSection, "global")

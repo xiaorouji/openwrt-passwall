@@ -3,12 +3,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-nginx-pingos
-PKG_VERSION:=1.17.7
+PKG_VERSION:=1.19.0
 PKG_RELEASE:=2
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
-PKG_HASH:=b62756842807e5693b794e5d0ae289bd8ae5b098e66538b2a91eb80f25c591ff
+PKG_HASH:=44a616171fcd7d7ad7c6af3e6f3ad0879b54db5a5d21be874cd458b5691e36c8
 
 PKG_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 PKG_BUILD_DIR:=$(PKG_DIR)/nginx-$(PKG_VERSION)
