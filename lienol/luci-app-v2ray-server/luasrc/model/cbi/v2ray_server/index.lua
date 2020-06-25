@@ -76,29 +76,6 @@ e.cfgvalue = function(self, section)
     end
     return t
 end
-e = t:option(DummyValue, "password", translate("Password"))
-e.width = "30%"
-e.cfgvalue = function(self, section)
-    local e = ""
-    local protocol = m:get(section, "protocol") or ""
-    if protocol == "vmess" then
-        e = "VMess_id"
-    elseif protocol == "shadowsocks" then
-        e = "ss_password"
-    elseif protocol == "socks" then
-        e = "socks_password"
-    elseif protocol == "http" then
-        e = "http_password"
-    end
-    local e = m:get(section, e) or ""
-    local t = ""
-    if type(e) == "table" then
-        for a = 1, #e do t = t .. e[a] end
-    else
-        t = e
-    end
-    return t
-end
 
 m:append(Template("v2ray_server/log"))
 

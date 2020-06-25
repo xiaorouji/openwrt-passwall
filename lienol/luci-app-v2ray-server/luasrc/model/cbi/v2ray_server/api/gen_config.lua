@@ -24,14 +24,11 @@ if server.protocol == "vmess" then
     end
 elseif server.protocol == "socks" then
     settings = {
-        auth = (server.socks_username == nil and server.socks_password == nil) and
-            "noauth" or "password",
+        auth = (server.username == nil and server.password == nil) and "noauth" or "password",
         accounts = {
             {
-                user = (server.socks_username == nil) and "" or
-                    server.socks_username,
-                pass = (server.socks_password == nil) and "" or
-                    server.socks_password
+                user = (server.username == nil) and "" or server.username,
+                pass = (server.password == nil) and "" or server.password
             }
         }
     }
@@ -40,17 +37,15 @@ elseif server.protocol == "http" then
         allowTransparent = false,
         accounts = {
             {
-                user = (server.http_username == nil) and "" or
-                    server.http_username,
-                pass = (server.http_password == nil) and "" or
-                    server.http_password
+                user = (server.username == nil) and "" or server.username,
+                pass = (server.password == nil) and "" or server.password
             }
         }
     }
 elseif server.protocol == "shadowsocks" then
     settings = {
         method = server.ss_method,
-        password = server.ss_password,
+        password = server.password,
         level = tonumber(server.ss_level),
         network = server.ss_network,
         ota = (server.ss_ota == '1') and true or false
@@ -163,7 +158,7 @@ end
 
 local v2ray = {
     log = {
-        -- error = "/var/log/v2ray.log",
+        --error = string.format("/var/log/v2ray_%s.log", server[".name"]),
         loglevel = "warning"
     },
     -- 传入连接
@@ -185,6 +180,17 @@ local v2ray = {
                         certificateFile = server.tls_certificateFile,
                         keyFile = server.tls_keyFile
                     }
+                }
+            } or nil,
+            tcpSettings = (server.transport == "tcp") and {
+                header = {
+                    type = server.tcp_guise,
+                    request = {
+                        path = server.tcp_guise_http_path or {"/"},
+                        headers = {
+                            Host = server.tcp_guise_http_host or {}
+                        }
+                    } or {}
                 }
             } or nil,
             kcpSettings = (server.transport == "mkcp") and {
