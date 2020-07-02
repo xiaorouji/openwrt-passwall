@@ -22,7 +22,8 @@ ngx_stream_zone_init_conf(ngx_cycle_t *cycle, void *conf);
 static char *
 ngx_stream_zone(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
 static char *
-ngx_stream_zone_shm_init(ngx_shm_t *shm, ngx_stream_zone_conf_t *szcf);
+ngx_stream_zone_shm_init(ngx_shm_t *shm, ngx_stream_zone_conf_t *szcf,
+    ngx_cycle_t *cycle);
 
 
 #define NAME_LEN    1024
@@ -185,7 +186,7 @@ ngx_stream_zone_init_conf(ngx_cycle_t *cycle, void *conf)
         return NGX_CONF_ERROR;
     }
 
-    return ngx_stream_zone_shm_init(&shm, szcf);
+    return ngx_stream_zone_shm_init(&shm, szcf, cycle);
 }
 
 static void
@@ -249,7 +250,8 @@ ngx_stream_zone_exit_process(ngx_cycle_t *cycle)
 }
 
 static char *
-ngx_stream_zone_shm_init(ngx_shm_t *shm, ngx_stream_zone_conf_t *szcf)
+ngx_stream_zone_shm_init(ngx_shm_t *shm, ngx_stream_zone_conf_t *szcf,
+    ngx_cycle_t *cycle)
 {
     u_char                             *p;
     ngx_int_t                           i, next;

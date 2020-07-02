@@ -32,6 +32,7 @@
 						document.getElementById("tips").innerHTML = '<%:If you need external network access, please open the port by yourself.%>';
 						str = '<font color="green"><%:RUNNING%> ✓</font><input type="button" class="cbi-button cbi-input-apply" value="<%:Enter interface%>" onclick="open_web()" />'
 					} else {
+						document.getElementById("tips").innerHTML = '';
 						str = '<font color="red"><%:NOT RUNNING%> X</font>';
 					}
 					nginx_status.innerHTML = str;

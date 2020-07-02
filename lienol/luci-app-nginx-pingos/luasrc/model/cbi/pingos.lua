@@ -8,9 +8,11 @@ s.addremove = false
 s:tab("global",  translate("Global Settings"))
 s:tab("template", translate("Edit Template"))
 
-nginx = s:taboption("template", Value, "_nginx", translatef("Edit the template that is used for generating the %s configuration.", "nginx"))
+nginx = s:taboption("template", Value, "_nginx", translatef("Edit the template that is used for generating the %s configuration.", "nginx"),
+	translatef("This is the content of the file '%s'", "/etc/pingos.template") .. "<br />" ..
+	translatef("Values enclosed by pipe symbols ('|') should not be changed. They get their values from the '%s' tab.", translate("Global Settings")))
 nginx.template = "cbi/tvalue"
-nginx.rows = 50
+nginx.rows = 30
 
 function nginx.cfgvalue(self, section)
 	return nixio.fs.readfile("/etc/pingos.template")

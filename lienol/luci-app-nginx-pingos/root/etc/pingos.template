@@ -1,7 +1,7 @@
 user  root;
 daemon on;
 master_process on;
-worker_processes  auto;
+worker_processes  1;
 #worker_rlimit 4g;
 
 #error_log |TMP_PATH|/error.log;
@@ -109,9 +109,7 @@ http {
         hash $arg_session consistent;
         # 这里需要注意，你要开几个进程，就要按这个规则写几条记录
         server unix:|TMP_PATH|/http.0;
-        server unix:|TMP_PATH|/http.1;
-        server unix:|TMP_PATH|/http.2;
-        server unix:|TMP_PATH|/http.3;
+        #server unix:|TMP_PATH|/http.1;
     }
 
     server {
