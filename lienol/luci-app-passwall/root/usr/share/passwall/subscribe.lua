@@ -473,7 +473,11 @@ local function processData(szType, content, add_mode)
 		return nil
 	end
 	if not result.remarks then
-		result.remarks = result.address .. ':' .. result.port
+		if result.address and result.port then
+			result.remarks = result.address .. ':' .. result.port
+		else
+			result.remarks = "NULL"
+		end
 	end
 	return result
 end
@@ -737,6 +741,7 @@ local function parse_link(raw, remark, manual)
 				if result then
 					if is_filter_keyword(result.remarks) or
 						not result.address or
+						result.remarks == "NULL" or
 						result.address:match("[^0-9a-zA-Z%-%_%.%s]") or -- 中文做地址的 也没有人拿中文域名搞，就算中文域也有Puny Code SB 机场
 						not result.address:find("%.") or -- 虽然没有.也算域，不过应该没有人会这样干吧
 						result.address:sub(#result.address) == "." -- 结尾是.
