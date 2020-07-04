@@ -149,8 +149,7 @@ function ping_node()
     local e = {}
     e.index = index
     if (ucic:get(appname, "@global_other[0]", "use_tcping") or 1)  == "1" and luci.sys.exec("echo -n $(command -v tcping)") ~= "" then
-        e.ping = luci.sys.exec(string.format("echo -n $(tcping -q -c 1 -i 1 -p %s %s 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print $2}') 2>/dev/null", port, address))
-        luci.sys.call(string.format("ps -w | grep 'tcping -q -c 1 -i 1 -p %s %s' | grep -v grep | awk '{print $1}' | xargs kill -9 2>/dev/null", port, address))
+        e.ping = luci.sys.exec(string.format("echo -n $(tcping -q -c 1 -i 1 -t 1 -p %s %s 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print $2}') 2>/dev/null", port, address))
     end
     if e.ping == nil or tonumber(e.ping) == 0 then
         e.ping = luci.sys.exec("echo -n $(ping -c 1 -W 1 %q 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print $2}') 2>/dev/null" % address)
