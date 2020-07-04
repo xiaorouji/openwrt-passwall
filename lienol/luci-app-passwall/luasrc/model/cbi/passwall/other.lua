@@ -199,7 +199,10 @@ o.default = 1
 o.rmempty = false
 
 o = s:option(ListValue, "node", translate("Socks Node"))
-o:value("nil", translate("Close"))
+local tcp_node_num = tonumber(m:get("@global_other[0]", "tcp_node_num") or 1)
+for i = 1, tcp_node_num, 1 do
+    o:value("tcp" .. i, translatef("Same as the tcp %s node", i))
+end
 for k, v in pairs(nodes_table) do o:value(v.id, v.remarks) end
 
 o = s:option(Value, "port", translate("Listen Port"))

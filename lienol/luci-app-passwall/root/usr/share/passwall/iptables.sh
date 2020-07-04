@@ -317,6 +317,10 @@ add_firewall_rule() {
 		local enabled=$(config_n_get $id enabled 0)
 		[ "$enabled" == "0" ] && continue
 		local node=$(config_n_get $id node nil)
+		if [ "$(echo $node | grep ^tcp)" ]; then
+			local num=$(echo $node | sed "s/tcp//g")
+			eval node=\$TCP_NODE$num
+		fi
 		[ "$node" == "nil" ] && continue
 		filter_node $node tcp
 		filter_node $node udp
