@@ -160,25 +160,27 @@ do
 			local node_id = node[".name"]
 			local nodes = {}
 			local new_nodes = {}
-			for k, v in pairs(node.v2ray_balancing_node) do
-				local node = v
-				local currentNode
-				if node then
-					currentNode = ucic2:get_all(application, node)
-				end
-				nodes[#nodes + 1] = {
-					log = false,
-					node = node,
-					currentNode = currentNode,
-					remarks = node,
-					set = function(server)
-						for kk, vv in pairs(CONFIG) do
-							if (vv.remarks == "V2ray负载均衡节点列表" .. node_id) then
-								table.insert(vv.new_nodes, server)
+			if node.v2ray_balancing_node then
+				for k, v in pairs(node.v2ray_balancing_node) do
+					local node = v
+					local currentNode
+					if node then
+						currentNode = ucic2:get_all(application, node)
+					end
+					nodes[#nodes + 1] = {
+						log = false,
+						node = node,
+						currentNode = currentNode,
+						remarks = node,
+						set = function(server)
+							for kk, vv in pairs(CONFIG) do
+								if (vv.remarks == "V2ray负载均衡节点列表" .. node_id) then
+									table.insert(vv.new_nodes, server)
+								end
 							end
 						end
-					end
-				}
+					}
+				end
 			end
 			CONFIG[#CONFIG + 1] = {
 				remarks = "V2ray负载均衡节点列表" .. node_id,
