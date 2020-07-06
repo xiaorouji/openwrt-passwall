@@ -556,25 +556,23 @@ local function select_node(nodes, config)
 				end
 			end
 		end
-		-- 第一优先级 IP + 端口
+		-- 第一优先级 cfgid
+		if not server then
+			for id, node in pairs(nodes) do
+				if id == config.currentNode['.name'] then
+					if config.log == nil or config.log == true then
+						log('选择【' .. config.remarks .. '】第一匹配节点：' .. node.remarks)
+					end
+					server = id
+					break
+				end
+			end
+		end
+		-- 第二优先级 IP + 端口
 		if not server then
 			for id, node in pairs(nodes) do
 				if node.address and node.port then
 					if node.address .. ':' .. node.port == config.currentNode.address .. ':' .. config.currentNode.port then
-						if config.log == nil or config.log == true then
-							log('选择【' .. config.remarks .. '】第一匹配节点：' .. node.remarks)
-						end
-						server = id
-						break
-					end
-				end
-			end
-		end
-		-- 第二优先级 IP
-		if not server then
-			for id, node in pairs(nodes) do
-				if node.address then
-					if node.address == config.currentNode.address then
 						if config.log == nil or config.log == true then
 							log('选择【' .. config.remarks .. '】第二匹配节点：' .. node.remarks)
 						end
@@ -584,11 +582,11 @@ local function select_node(nodes, config)
 				end
 			end
 		end
-		-- 第三优先级备注
+		-- 第三优先级 IP
 		if not server then
 			for id, node in pairs(nodes) do
-				if node.remarks then
-					if node.remarks == config.currentNode.remarks then
+				if node.address then
+					if node.address == config.currentNode.address then
 						if config.log == nil or config.log == true then
 							log('选择【' .. config.remarks .. '】第三匹配节点：' .. node.remarks)
 						end
@@ -598,15 +596,17 @@ local function select_node(nodes, config)
 				end
 			end
 		end
-		-- 第四 cfgid
+		-- 第四优先级备注
 		if not server then
 			for id, node in pairs(nodes) do
-				if id == config.currentNode['.name'] then
-					if config.log == nil or config.log == true then
-						log('选择【' .. config.remarks .. '】第四匹配节点：' .. node.remarks)
+				if node.remarks then
+					if node.remarks == config.currentNode.remarks then
+						if config.log == nil or config.log == true then
+							log('选择【' .. config.remarks .. '】第四匹配节点：' .. node.remarks)
+						end
+						server = id
+						break
 					end
-					server = id
-					break
 				end
 			end
 		end
