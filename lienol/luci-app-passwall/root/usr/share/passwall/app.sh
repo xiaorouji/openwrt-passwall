@@ -90,9 +90,9 @@ check_port_exists() {
 	protocol=$2
 	result=
 	if [ "$protocol" = "tcp" ]; then
-		result=$(netstat -tln | grep -c ":$port")
+		result=$(netstat -tln | grep -c ":$port ")
 	elif [ "$protocol" = "udp" ]; then
-		result=$(netstat -uln | grep -c ":$port")
+		result=$(netstat -uln | grep -c ":$port ")
 	fi
 	if [ "$result" = 1 ]; then
 		echo 1
@@ -151,7 +151,7 @@ UDP_NODE_NUM=$(config_t_get global_other udp_node_num 1)
 for i in $(seq 1 $UDP_NODE_NUM); do
 	eval UDP_NODE$i=$(config_t_get global udp_node$i nil)
 done
-UDP_REDIR_PORT1=$(config_t_get global_forwarding udp_redir_port 1051)
+UDP_REDIR_PORT1=$(config_t_get global_forwarding udp_redir_port 1041)
 UDP_REDIR_PORT2=$(expr $UDP_REDIR_PORT1 + 1)
 UDP_REDIR_PORT3=$(expr $UDP_REDIR_PORT2 + 1)
 
@@ -304,16 +304,8 @@ run_redir() {
 			lua $API_GEN_V2RAY $node udp $local_port nil > $config_file
 			ln_start_bin $(config_t_get global_app v2ray_file $(find_bin v2ray))/v2ray v2ray "-config=$config_file"
 		elif [ "$type" == "trojan" ]; then
-			local_port=$(get_new_port 2080 tcp)
-			lua $API_GEN_TROJAN $node client "127.0.0.1" $local_port > $config_file
-			ln_start_bin $(find_bin trojan) trojan "-c $config_file"
-			
-			local node_address=$(config_n_get $node address)
-			local node_port=$(config_n_get $node port)
-			local server_username=$(config_n_get $node username)
-			local server_password=$(config_n_get $node password)
-			eval port=\$UDP_REDIR_PORT$6
-			ln_start_bin $(find_bin ipt2socks) ipt2socks_udp_$6 "-U -l $port -b 0.0.0.0 -s 127.0.0.1 -p $local_port -R"
+			echo lua $API_GEN_TROJAN $node nat "0.0.0.0" $local_port >$config_file
+			ln_start_bin /sbin/logread trojan_udp_$5 "-f $config_file"
 		elif [ "$type" == "brook" ]; then
 			local protocol=$(config_n_get $node brook_protocol client)
 			if [ "$protocol" == "wsclient" ]; then
@@ -344,7 +336,6 @@ run_redir() {
 			ln_start_bin $(config_t_get global_app v2ray_file $(find_bin v2ray))/v2ray v2ray "-config=$config_file"
 		elif [ "$type" == "trojan" ]; then
 			lua $API_GEN_TROJAN $node nat "0.0.0.0" $local_port > $config_file
-			[ "$6" == 1 ] && [ "$UDP_NODE1" == "tcp" ] && echolog "Trojan的NAT模式不支持UDP转发！"
 			for k in $(seq 1 $process); do
 				ln_start_bin $(find_bin trojan) trojan "-c $config_file"
 			done
