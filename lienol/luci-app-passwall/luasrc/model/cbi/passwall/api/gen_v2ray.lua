@@ -52,6 +52,7 @@ local function gen_outbound(node, tag)
                 network = node.v2ray_transport,
                 security = node.v2ray_stream_security,
                 tlsSettings = (node.v2ray_stream_security == "tls") and {
+                    disableSessionResumption = node.sessionTicket ~= "1" and true or false,
                     serverName = node.tls_serverName,
                     allowInsecure = (node.tls_allowInsecure == "1") and true or false
                 } or nil,

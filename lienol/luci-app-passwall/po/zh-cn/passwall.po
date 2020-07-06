@@ -382,6 +382,12 @@ msgstr "验证证书"
 msgid "Trojan Cert Path"
 msgstr "证书路径"
 
+msgid "Finger Print"
+msgstr "指纹伪造"
+
+msgid "Shadowsocks2"
+msgstr "双重加密"
+
 msgid "Encrypt Method"
 msgstr "加密"
 
