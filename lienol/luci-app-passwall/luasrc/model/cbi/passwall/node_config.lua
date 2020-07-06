@@ -301,7 +301,6 @@ v2ray_stream_security = s:option(ListValue, "v2ray_stream_security",
 v2ray_stream_security:value("none", "none")
 v2ray_stream_security:value("tls", "tls")
 v2ray_stream_security:depends("v2ray_protocol", "vmess")
-v2ray_stream_security:depends("v2ray_protocol", "http")
 v2ray_stream_security:depends("v2ray_protocol", "shadowsocks")
 
 -- [[ TLS部分 ]] --

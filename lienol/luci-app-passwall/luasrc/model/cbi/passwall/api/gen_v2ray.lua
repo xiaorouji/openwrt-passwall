@@ -108,7 +108,7 @@ local function gen_outbound(node, tag)
                         }
                     }
                 } or nil,
-                servers = (node.v2ray_protocol == "socks") and {
+                servers = (node.v2ray_protocol == "socks" or node.v2ray_protocol == "http") and {
                     {
                         address = node.address,
                         port = tonumber(node.port),
