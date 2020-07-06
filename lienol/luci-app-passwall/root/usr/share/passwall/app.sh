@@ -151,7 +151,7 @@ UDP_NODE_NUM=$(config_t_get global_other udp_node_num 1)
 for i in $(seq 1 $UDP_NODE_NUM); do
 	eval UDP_NODE$i=$(config_t_get global udp_node$i nil)
 done
-UDP_REDIR_PORT1=$(config_t_get global_forwarding udp_redir_port 1041)
+UDP_REDIR_PORT1=$(config_t_get global_forwarding udp_redir_port 1051)
 UDP_REDIR_PORT2=$(expr $UDP_REDIR_PORT1 + 1)
 UDP_REDIR_PORT3=$(expr $UDP_REDIR_PORT2 + 1)
 
@@ -304,8 +304,8 @@ run_redir() {
 			lua $API_GEN_V2RAY $node udp $local_port nil > $config_file
 			ln_start_bin $(config_t_get global_app v2ray_file $(find_bin v2ray))/v2ray v2ray "-config=$config_file"
 		elif [ "$type" == "trojan" ]; then
-			echo lua $API_GEN_TROJAN $node nat "0.0.0.0" $local_port >$config_file
-			ln_start_bin /sbin/logread trojan_udp_$5 "-f $config_file"
+			lua $API_GEN_TROJAN $node nat "0.0.0.0" $local_port >$config_file
+			ln_start_bin $(find_bin trojan) trojan "-c $config_file"
 		elif [ "$type" == "brook" ]; then
 			local protocol=$(config_n_get $node brook_protocol client)
 			if [ "$protocol" == "wsclient" ]; then
