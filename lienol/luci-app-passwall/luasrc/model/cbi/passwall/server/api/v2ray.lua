@@ -79,6 +79,7 @@ function gen_config(user)
                     network = node.v2ray_transport,
                     security = node.v2ray_stream_security,
                     tlsSettings = (node.v2ray_stream_security == "tls") and {
+                        disableSessionResumption = node.sessionTicket ~= "1" and true or false,
                         serverName = node.tls_serverName,
                         allowInsecure = (node.tls_allowInsecure == "1") and true or
                             false
@@ -178,6 +179,7 @@ function gen_config(user)
                     network = user.v2ray_transport,
                     security = (user.tls_enable == '1') and "tls" or "none",
                     tlsSettings = (user.tls_enable == '1') and {
+                        disableSessionResumption = user.sessionTicket ~= "1" and true or false,
                         -- serverName = (user.tls_serverName),
                         allowInsecure = false,
                         disableSystemRoot = false,

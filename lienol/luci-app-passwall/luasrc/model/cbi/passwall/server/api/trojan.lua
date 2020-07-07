@@ -1,5 +1,7 @@
 module("luci.model.cbi.passwall.server.api.trojan", package.seeall)
 function gen_config(user)
+    local cipher = "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES128-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA:AES128-SHA:AES256-SHA:DES-CBC3-SHA"
+    local cipher13 = "TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_256_GCM_SHA384"
     local config = {
         run_type = "server",
         local_addr = "0.0.0.0",
@@ -12,17 +14,37 @@ function gen_config(user)
             cert = user.tls_certificateFile,
             key = user.tls_keyFile,
             key_password = "",
-            cipher = "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES128-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA:AES128-SHA:AES256-SHA:DES-CBC3-SHA",
-            cipher_tls13 = "TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_256_GCM_SHA384",
-            prefer_server_cipher = true,
-            alpn = {"http/1.1"},
+            cipher = user.fingerprint == nil and cipher or (user.fingerprint == "disable" and cipher13 .. ":" .. cipher or ""),
+            cipher_tls13 = user.fingerprint == nil and cipher13 or nil,
+            sni = "",
+            verify = false,
+            verify_hostname = false,
+            alpn = (user.trojan_ws == "1") and {} or {"h2", "http/1.1"},
             reuse_session = true,
-            session_ticket = false,
+            session_ticket = (user.tls_sessionTicket == "1") and true or false,
+            prefer_server_cipher = true,
             session_timeout = 600,
             plain_http_response = "",
             curves = "",
             dhparam = ""
         },
+        udp_timeout = 60,
+        disable_http_check = true,
+        mux = (user.mux == "1") and {
+            enabled = true,
+            concurrency = tonumber(user.mux_concurrency),
+            idle_timeout = 60,
+        } or nil,
+        websocket = (user.trojan_ws == "1") and {
+            enabled = true,
+            path = (user.v2ray_ws_path ~= nil) and user.v2ray_ws_path or "/",
+            hostname = (user.v2ray_ws_host ~= nil) and user.v2ray_ws_host or (user.tls_serverName ~= nil and user.tls_serverName or user.address)
+        } or nil,
+        shadowsocks = (user.ss_aead == "1") and {
+            enabled = true,
+            method = (user.ss_aead_method ~= nil) and user.ss_aead_method or "AEAD_AES_128_GCM",
+            password = (user.ss_aead_pwd ~= nil) and user.ss_aead_pwd or ""
+        } or nil,
         tcp = {
             prefer_ipv4 = false,
             no_delay = true,

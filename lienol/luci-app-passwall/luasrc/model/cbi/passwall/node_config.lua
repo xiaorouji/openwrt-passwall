@@ -53,6 +53,15 @@ local v2ray_security_list = {"none", "auto", "aes-128-gcm", "chacha20-poly1305"}
 local v2ray_header_type_list = {
     "none", "srtp", "utp", "wechat-video", "dtls", "wireguard"
 }
+local force_fp = {
+    "disable", "firefox", "chrome", "ios"
+}
+local encrypt_methods_ss_aead = {
+	"DUMMY",
+	"AEAD_CHACHA20_POLY1305",
+	"AEAD_AES_128_GCM",
+	"AEAD_AES_256_GCM"
+}
 
 m = Map(appname, translate("Node Config"))
 m.redirect = d.build_url("admin", "vpn", appname)
@@ -83,7 +92,10 @@ if is_installed("brook") or is_finded("brook") then
     type:value("Brook", translate("Brook"))
 end
 if is_installed("trojan") or is_finded("trojan") then
-    type:value("Trojan", translate("Trojan"))
+    type:value("Trojan", translate("Trojan-Plus"))
+end
+if is_installed("trojan-go") or is_finded("trojan-go") then
+    type:value("Trojan-Go", translate("Trojan-Go"))
 end
 
 v2ray_protocol = s:option(ListValue, "v2ray_protocol", translate("Protocol"))
@@ -150,6 +162,7 @@ address:depends({ type = "V2ray", v2ray_protocol = "socks" })
 address:depends({ type = "V2ray", v2ray_protocol = "shadowsocks" })
 address:depends("type", "Brook")
 address:depends("type", "Trojan")
+address:depends("type", "Trojan-Go")
 
 --[[
 use_ipv6 = s:option(Flag, "use_ipv6", translate("Use IPv6"))
@@ -163,6 +176,7 @@ use_ipv6:depends({ type = "V2ray", v2ray_protocol = "socks" })
 use_ipv6:depends({ type = "V2ray", v2ray_protocol = "shadowsocks" })
 use_ipv6:depends("type", "Brook")
 use_ipv6:depends("type", "Trojan")
+use_ipv6:depends("type", "Trojan-Go")
 --]]
 
 port = s:option(Value, "port", translate("Port"))
@@ -177,6 +191,7 @@ port:depends({ type = "V2ray", v2ray_protocol = "socks" })
 port:depends({ type = "V2ray", v2ray_protocol = "shadowsocks" })
 port:depends("type", "Brook")
 port:depends("type", "Trojan")
+port:depends("type", "Trojan-Go")
 
 username = s:option(Value, "username", translate("Username"))
 username:depends("type", "Socks")
@@ -190,6 +205,7 @@ password:depends("type", "SS")
 password:depends("type", "SSR")
 password:depends("type", "Brook")
 password:depends("type", "Trojan")
+password:depends("type", "Trojan-Go")
 password:depends("v2ray_protocol", "http")
 password:depends("v2ray_protocol", "socks")
 password:depends("v2ray_protocol", "shadowsocks")
@@ -246,6 +262,7 @@ tcp_fast_open:value("true")
 tcp_fast_open:depends("type", "SS")
 tcp_fast_open:depends("type", "SSR")
 tcp_fast_open:depends("type", "Trojan")
+tcp_fast_open:depends("type", "Trojan-Go")
 
 ss_plugin = s:option(ListValue, "ss_plugin", translate("plugin"))
 ss_plugin:value("none", translate("none"))
@@ -304,9 +321,38 @@ v2ray_stream_security:depends("v2ray_protocol", "vmess")
 v2ray_stream_security:depends("v2ray_protocol", "shadowsocks")
 
 -- [[ TLS部分 ]] --
+-- [[ Trojan TLS ]]--
+trojan_tls = s:option(Flag, "trojan_tls",
+                              translate("Trojan TLS"))
+trojan_tls.default = "1"
+trojan_tls:depends("type", "Trojan")
+trojan_tls:depends("type", "Trojan-Go")
+
+tls_sessionTicket = s:option(Flag, "tls_sessionTicket", translate("Session Ticket"))
+tls_sessionTicket.default = "0"
+tls_sessionTicket:depends("v2ray_stream_security", "tls")
+tls_sessionTicket:depends("trojan_tls", "1")
+
+trojan_force_fp = s:option(ListValue, "fingerprint",
+                             translate("Finger Print"))
+for a, t in ipairs(force_fp) do trojan_force_fp:value(t) end
+trojan_force_fp.default = "firefox"
+trojan_force_fp.rmempty = false
+trojan_force_fp:depends({ type = "Trojan-Go", trojan_tls = "1" })
+
 tls_serverName = s:option(Value, "tls_serverName", translate("Domain"))
 tls_serverName:depends("v2ray_stream_security", "tls")
 tls_serverName:depends("trojan_verify_cert", "1")
+
+-- [[ Trojan Cert ]]--
+trojan_verify_cert = s:option(Flag, "trojan_verify_cert",
+                              translate("Trojan Verify Cert"))
+trojan_verify_cert:depends("trojan_tls", "1")
+
+trojan_cert_path = s:option(Value, "trojan_cert_path",
+                            translate("Trojan Cert Path"))
+trojan_cert_path.default = ""
+trojan_cert_path:depends("trojan_verify_cert", "1")
 
 tls_allowInsecure = s:option(Flag, "tls_allowInsecure",
                              translate("allowInsecure"), translate(
@@ -386,13 +432,37 @@ v2ray_mkcp_writeBufferSize:depends("v2ray_transport", "mkcp")
 
 -- [[ WebSocket部分 ]]--
 
+trojan_ws = s:option(Flag, "trojan_ws",
+                              translate("Trojan Websocket"))
+trojan_ws:depends("type", "Trojan-Go")
+
 v2ray_ws_host = s:option(Value, "v2ray_ws_host", translate("WebSocket Host"))
 v2ray_ws_host:depends("v2ray_transport", "ws")
 v2ray_ws_host:depends("v2ray_ss_transport", "ws")
+v2ray_ws_host:depends("trojan_ws", "1")
 
 v2ray_ws_path = s:option(Value, "v2ray_ws_path", translate("WebSocket Path"))
 v2ray_ws_path:depends("v2ray_transport", "ws")
 v2ray_ws_path:depends("v2ray_ss_transport", "ws")
+v2ray_ws_path:depends("trojan_ws", "1")
+
+-- [[ Trojan-Go Websocket ]] --
+
+ss_aead = s:option(Flag, "ss_aead", translate("Shadowsocks2"))
+ss_aead:depends("type", "Trojan-Go")
+ss_aead.default = "0"
+ss_aead.rmempty = false
+
+ss_aead_method = s:option(ListValue, "ss_aead_method", translate("Encrypt Method"))
+for _, v in ipairs(encrypt_methods_ss_aead) do ss_aead_method:value(v, v:upper()) end
+ss_aead_method.default = "AEAD_AES_128_GCM"
+ss_aead_method.rmempty = false
+ss_aead_method:depends("ss_aead", "1")
+
+ss_aead_pwd = s:option(Value, "ss_aead_pwd", translate("Password"))
+ss_aead_pwd.password = true
+ss_aead_pwd.rmempty = false
+ss_aead_pwd:depends("ss_aead", "1")
 
 -- [[ HTTP/2部分 ]]--
 
@@ -433,6 +503,7 @@ v2ray_mux:depends({ type = "V2ray", v2ray_protocol = "vmess" })
 v2ray_mux:depends({ type = "V2ray", v2ray_protocol = "http" })
 v2ray_mux:depends({ type = "V2ray", v2ray_protocol = "socks" })
 v2ray_mux:depends({ type = "V2ray", v2ray_protocol = "shadowsocks" })
+v2ray_mux:depends("type", "Trojan-Go")
 
 v2ray_mux_concurrency = s:option(Value, "v2ray_mux_concurrency",
                                  translate("Mux Concurrency"))
@@ -470,15 +541,5 @@ v2ray_tcp_socks_auth_password = s:option(Value, "v2ray_tcp_socks_auth_password",
                                          "Socks " .. translate("Password"))
 v2ray_tcp_socks_auth_password:depends("v2ray_tcp_socks_auth", "password")
 --]]
-
--- [[ Trojan Cert ]]--
-trojan_verify_cert = s:option(Flag, "trojan_verify_cert",
-                              translate("Trojan Verify Cert"))
-trojan_verify_cert:depends("type", "Trojan")
-
-trojan_cert_path = s:option(Value, "trojan_cert_path",
-                            translate("Trojan Cert Path"))
-trojan_cert_path.default = ""
-trojan_cert_path:depends("trojan_verify_cert", "1")
 
 return m
