@@ -36,8 +36,8 @@ function to_check(arch)
         }
     end
 
-    if file_tree == "mips" then file_tree = "mips-hardfloat" end
-    if file_tree == "mipsle" then file_tree = "mipsle-hardfloat" end
+    if file_tree == "mips" then file_tree = "mips%-hardfloat" end
+    if file_tree == "mipsle" then file_tree = "mipsle%-hardfloat" end
     if is_armv7 then file_tree = file_tree .. "v7" end
 
     local json = api.get_api_json(trojan_api)
@@ -50,7 +50,7 @@ function to_check(arch)
     end
 
     local remote_version = json.tag_name:match("[^v]+")
-    local needs_update = api.compare_versions(get_trojan_version(), "<", remote_version)
+    local needs_update = api.compare_versions(get_trojan_version(), "~=", remote_version)
     local html_url, download_url
 
     if needs_update then
