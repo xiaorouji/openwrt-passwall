@@ -39,6 +39,13 @@ local v2ray_header_type_list = {
     "none", "srtp", "utp", "wechat-video", "dtls", "wireguard"
 }
 
+local encrypt_methods_ss_aead = {
+	"DUMMY",
+	"AEAD_CHACHA20_POLY1305",
+	"AEAD_AES_128_GCM",
+	"AEAD_AES_256_GCM"
+}
+
 map = Map("passwall_server", translate("Server Config"))
 map.redirect = d.build_url("admin", "vpn", "passwall", "server")
 
@@ -65,7 +72,10 @@ if is_installed("brook") or is_finded("brook") then
     type:value("Brook", translate("Brook"))
 end
 if is_installed("trojan") or is_finded("trojan") then
-    type:value("Trojan", translate("Trojan"))
+    type:value("Trojan", translate("Trojan-Plus"))
+end
+if is_installed("trojan-go") or is_finded("trojan-go") then
+    type:value("Trojan-Go", translate("Trojan-Go"))
 end
 
 v2ray_protocol = s:option(ListValue, "v2ray_protocol", translate("Protocol"))
@@ -95,6 +105,7 @@ port:depends({ type = "V2ray", v2ray_protocol = "socks" })
 port:depends({ type = "V2ray", v2ray_protocol = "shadowsocks" })
 port:depends("type", "Brook")
 port:depends("type", "Trojan")
+port:depends("type", "Trojan-Go")
 
 username = s:option(Value, "username", translate("Username"))
 username:depends("v2ray_protocol", "http")
@@ -105,6 +116,7 @@ password.password = true
 password:depends("type", "SSR")
 password:depends("type", "Brook")
 password:depends("type", "Trojan")
+password:depends("type", "Trojan-Go")
 password:depends({ type = "V2ray", v2ray_protocol = "http" })
 password:depends({ type = "V2ray", v2ray_protocol = "socks" })
 password:depends({ type = "V2ray", v2ray_protocol = "shadowsocks" })
@@ -152,6 +164,7 @@ tcp_fast_open:value("false")
 tcp_fast_open:value("true")
 tcp_fast_open:depends("type", "SSR")
 tcp_fast_open:depends("type", "Trojan")
+tcp_fast_open:depends("type", "Trojan-Go")
 
 udp_forward = s:option(Flag, "udp_forward", translate("UDP Forward"))
 udp_forward.default = "1"
@@ -228,13 +241,37 @@ v2ray_mkcp_writeBufferSize:depends("v2ray_transport", "mkcp")
 
 -- [[ WebSocket部分 ]]--
 
+trojan_ws = s:option(Flag, "trojan_ws",
+                              translate("Trojan Websocket"))
+trojan_ws:depends("type", "Trojan-Go")
+
 v2ray_ws_host = s:option(Value, "v2ray_ws_host", translate("WebSocket Host"))
 v2ray_ws_host:depends("v2ray_transport", "ws")
 v2ray_ws_host:depends("v2ray_ss_transport", "ws")
+v2ray_ws_host:depends("trojan_ws", "1")
 
 v2ray_ws_path = s:option(Value, "v2ray_ws_path", translate("WebSocket Path"))
 v2ray_ws_path:depends("v2ray_transport", "ws")
 v2ray_ws_path:depends("v2ray_ss_transport", "ws")
+v2ray_ws_path:depends("trojan_ws", "1")
+
+-- [[ Trojan-Go Websocket ]] --
+
+ss_aead = s:option(Flag, "ss_aead", translate("Shadowsocks2"))
+ss_aead:depends("type", "Trojan-Go")
+ss_aead.default = "0"
+ss_aead.rmempty = false
+
+ss_aead_method = s:option(ListValue, "ss_aead_method", translate("Encrypt Method"))
+for _, v in ipairs(encrypt_methods_ss_aead) do ss_aead_method:value(v, v:upper()) end
+ss_aead_method.default = "AEAD_AES_128_GCM"
+ss_aead_method.rmempty = false
+ss_aead_method:depends("ss_aead", "1")
+
+ss_aead_pwd = s:option(Value, "ss_aead_pwd", translate("Password"))
+ss_aead_pwd.password = true
+ss_aead_pwd.rmempty = false
+ss_aead_pwd:depends("ss_aead", "1")
 
 -- [[ HTTP/2部分 ]]--
 
@@ -280,19 +317,39 @@ remote_port.default = "80"
 remote_port:depends("remote_enable", 1)
 
 -- [[ TLS部分 ]] --
+
 tls_enable = s:option(Flag, "tls_enable", "TLS/SSL")
 tls_enable:depends({ type = "V2ray", v2ray_protocol = "vmess", v2ray_transport = "ws" })
 tls_enable:depends({ type = "V2ray", v2ray_protocol = "vmess", v2ray_transport = "h2" })
-tls_enable.default = "0"
+tls_enable:depends("type", "Trojan")
+tls_enable:depends("type", "Trojan-Go")
+tls_enable.default = "1"
 tls_enable.rmempty = false
+
+tls_sessionTicket = s:option(Flag, "tls_sessionTicket", translate("Session Ticket"))
+tls_sessionTicket.default = "0"
+tls_sessionTicket:depends("tls_enable", "1")
+
+trojan_force_fp = s:option(ListValue, "fingerprint",
+                             translate("Finger Print")) trojan_force_fp:value("disable")
+trojan_force_fp.default = "disable"
+trojan_force_fp.rmempty = false
+trojan_force_fp:depends({ type = "Trojan-Go", tls_enable = "1" })
 
 tls_certificateFile = s:option(Value, "tls_certificateFile", translate("Public key absolute path"), translate("as:") .. "/etc/ssl/fullchain.pem")
 tls_certificateFile:depends("tls_enable", 1)
-tls_certificateFile:depends("type", "Trojan")
 
 tls_keyFile = s:option(Value, "tls_keyFile", translate("Private key absolute path"), translate("as:") .. "/etc/ssl/private.key")
 tls_keyFile:depends("tls_enable", 1)
-tls_keyFile:depends("type", "Trojan")
+
+-- [[ Mux ]]--
+mux = s:option(Flag, "mux", translate("Mux"))
+mux:depends("type", "Trojan-Go")
+
+mux_concurrency = s:option(Value, "mux_concurrency",
+                                 translate("Mux Concurrency"))
+mux_concurrency.default = 8
+mux_concurrency:depends("mux", "1")
 
 local nodes_table = {}
 uci:foreach("passwall", "nodes", function(e)
