@@ -69,6 +69,7 @@ s = m:section(TypedSection, "global_app", translate("App Update"),
                   "</font>")
 s.anonymous = true
 s:append(Template(appname .. "/rule/v2ray_version"))
+s:append(Template(appname .. "/rule/trojan_version"))
 s:append(Template(appname .. "/rule/kcptun_version"))
 s:append(Template(appname .. "/rule/brook_version"))
 
@@ -76,6 +77,12 @@ s:append(Template(appname .. "/rule/brook_version"))
 o = s:option(Value, "v2ray_file", translate("V2ray Path"), translate(
                  "if you want to run from memory, change the path, such as /tmp/v2ray/, Then save the application and update it manually."))
 o.default = "/usr/bin/v2ray/"
+o.rmempty = false
+
+---- Trojan-Go Path
+o = s:option(Value, "trojan_file", translate("Trojan-Go Path"), translate(
+                 "if you want to run from memory, change the path, such as /tmp/trojan/, Then save the application and update it manually."))
+o.default = "/usr/bin/"
 o.rmempty = false
 
 ---- Kcptun client Path

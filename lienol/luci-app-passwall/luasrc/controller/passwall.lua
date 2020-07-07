@@ -6,6 +6,7 @@ local http = require "luci.http"
 local kcptun = require "luci.model.cbi.passwall.api.kcptun"
 local brook = require "luci.model.cbi.passwall.api.brook"
 local v2ray = require "luci.model.cbi.passwall.api.v2ray"
+local trojan = require "luci.model.cbi.passwall.api.trojan"
 
 function index()
     if not nixio.fs.access("/etc/config/passwall") then return end
@@ -57,6 +58,8 @@ function index()
     entry({"admin", "vpn", "passwall", "brook_update"}, call("brook_update")).leaf = true
     entry({"admin", "vpn", "passwall", "v2ray_check"}, call("v2ray_check")).leaf = true
     entry({"admin", "vpn", "passwall", "v2ray_update"}, call("v2ray_update")).leaf = true
+    entry({"admin", "vpn", "passwall", "trojan_check"}, call("trojan_check")).leaf = true
+    entry({"admin", "vpn", "passwall", "trojan_update"}, call("trojan_update")).leaf = true
 end
 
 local function http_write_json(content)
@@ -313,6 +316,26 @@ function v2ray_update()
         json = v2ray.to_move(http.formvalue("file"))
     else
         json = v2ray.to_download(http.formvalue("url"))
+    end
+
+    http_write_json(json)
+end
+
+function trojan_check()
+    local json = trojan.to_check("")
+    http_write_json(json)
+end
+
+function trojan_update()
+    local json = nil
+    local task = http.formvalue("task")
+    if task == "extract" then
+        json =
+            trojan.to_extract(http.formvalue("file"), http.formvalue("subfix"))
+    elseif task == "move" then
+        json = trojan.to_move(http.formvalue("file"))
+    else
+        json = trojan.to_download(http.formvalue("url"))
     end
 
     http_write_json(json)
