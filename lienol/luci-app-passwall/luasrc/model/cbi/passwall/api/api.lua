@@ -46,6 +46,17 @@ function get_v2ray_version()
     return version
 end
 
+function get_trojan_path()
+    local path = uci_get_type("global_app", "trojan_file")
+    return path .. "/trojan-go"
+end
+
+function get_trojan_version()
+    local path = get_trojan_path()
+    local version = sys.exec("[ -f '" .. path .. "' ] && " .. path .. " -version | awk '{print $2}' | sed -n 1P")
+    return version
+end
+
 function get_kcptun_path()
     local path = uci_get_type("global_app", "kcptun_client_file")
     return path
