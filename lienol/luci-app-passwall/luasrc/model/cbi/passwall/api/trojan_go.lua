@@ -1,4 +1,4 @@
-module("luci.model.cbi.passwall.api.trojan", package.seeall)
+module("luci.model.cbi.passwall.api.trojan_go", package.seeall)
 local fs = require "nixio.fs"
 local sys = require "luci.sys"
 local util = require "luci.util"
@@ -6,21 +6,8 @@ local i18n = require "luci.i18n"
 local ipkg = require("luci.model.ipkg")
 local api = require "luci.model.cbi.passwall.api.api"
 
-local trojan_api = "https://api.github.com/repos/peter-tank/trojan-go/releases/latest"
+local trojan_go_api = "https://api.github.com/repos/peter-tank/trojan-go/releases/latest"
 local is_armv7 = false
-
-function get_trojan_file_path()
-    return api.uci_get_type("global_app", "trojan_file")
-end
-
-function get_trojan_version()
-    if get_trojan_file_path() and get_trojan_file_path() ~= "" then
-        if fs.access(get_trojan_file_path() .. "/trojan-go") then
-            return sys.exec("echo -n $(" .. get_trojan_file_path() .. "/trojan-go -version | awk '{print $2}' | sed -n 1P" .. ")")
-        end
-    end
-    return ""
-end
 
 function to_check(arch)
     if not arch or arch == "" then arch = api.auto_get_arch() end
@@ -40,7 +27,7 @@ function to_check(arch)
     if file_tree == "mipsle" then file_tree = "mipsle%-hardfloat" end
     if is_armv7 then file_tree = file_tree .. "v7" end
 
-    local json = api.get_api_json(trojan_api)
+    local json = api.get_api_json(trojan_go_api)
 
     if json == nil or json.tag_name == nil then
         return {
@@ -49,8 +36,9 @@ function to_check(arch)
         }
     end
 
+    local now_version = api.get_trojan_go_version()
     local remote_version = json.tag_name:match("[^v]+")
-    local needs_update = api.compare_versions(get_trojan_version(), "~=", remote_version)
+    local needs_update = api.compare_versions(now_version, "<", remote_version)
     local html_url, download_url
 
     if needs_update then
@@ -66,7 +54,7 @@ function to_check(arch)
     if needs_update and not download_url then
         return {
             code = 1,
-            now_version = get_trojan_version(),
+            now_version = now_version,
             version = remote_version,
             html_url = html_url,
             error = i18n.translate(
@@ -77,7 +65,7 @@ function to_check(arch)
     return {
         code = 0,
         update = needs_update,
-        now_version = get_trojan_version(),
+        now_version = now_version,
         version = remote_version,
         url = {html = html_url, download = download_url}
     }
@@ -88,9 +76,9 @@ function to_download(url)
         return {code = 1, error = i18n.translate("Download url is required.")}
     end
 
-    sys.call("/bin/rm -f /tmp/trojan_download.*")
+    sys.call("/bin/rm -f /tmp/trojan-go_download.*")
 
-    local tmp_file = util.trim(util.exec("mktemp -u -t trojan_download.XXXXXX"))
+    local tmp_file = util.trim(util.exec("mktemp -u -t trojan-go_download.XXXXXX"))
 
     local result = api.exec(api.curl, {api._unpack(api.curl_args), "-o", tmp_file, url}, nil, api.command_timeout) == 0
 
@@ -116,8 +104,8 @@ function to_extract(file, subfix)
         return {code = 1, error = i18n.translate("File path required.")}
     end
 
-    sys.call("/bin/rm -rf /tmp/trojan_extract.*")
-    local tmp_dir = util.trim(util.exec("mktemp -d -t trojan_extract.XXXXXX"))
+    sys.call("/bin/rm -rf /tmp/trojan-go_extract.*")
+    local tmp_dir = util.trim(util.exec("mktemp -d -t trojan-go_extract.XXXXXX"))
 
     local output = {}
     api.exec("/usr/bin/unzip", {"-o", file, "-d", tmp_dir},
@@ -132,28 +120,20 @@ end
 
 function to_move(file)
     if not file or file == "" then
-        sys.call("/bin/rm -rf /tmp/trojan_extract.*")
+        sys.call("/bin/rm -rf /tmp/trojan-go_extract.*")
         return {code = 1, error = i18n.translate("Client file is required.")}
     end
 
-    local client_file = get_trojan_file_path()
+    local client_file = api.get_trojan_go_path()
+    local client_file_bak
 
-    sys.call("mkdir -p " .. client_file)
-
-    if not arch or arch == "" then arch = api.auto_get_arch() end
-    local file_tree, sub_version = api.get_file_info(arch)
-    if sub_version == "7" then is_armv7 = true end
-    local result = nil
-    if is_armv7 and is_armv7 == true then
-        result = api.exec("/bin/mv", {
-            "-f", file .. "/trojan-go", file, client_file
-        }, nil, api.command_timeout) == 0
-    else
-        result = api.exec("/bin/mv", {
-            "-f", file .. "/trojan-go", file, client_file
-        }, nil, api.command_timeout) == 0
+    if fs.access(client_file) then
+        client_file_bak = client_file .. ".bak"
+        api.exec("/bin/mv", {"-f", client_file, client_file_bak})
     end
-    sys.call("/bin/rm -rf /tmp/trojan_extract.*")
+
+    local result = api.exec("/bin/mv", { "-f", file .. "/trojan-go", client_file }, nil, api.command_timeout) == 0
+    sys.call("/bin/rm -rf /tmp/trojan-go_extract.*")
     if not result or not fs.access(client_file) then
         return {
             code = 1,

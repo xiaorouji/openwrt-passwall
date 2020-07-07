@@ -258,7 +258,7 @@ run_socks() {
 		ln_start_bin $(find_bin trojan) trojan "-c $config_file"
 	elif [ "$type" == "trojan-go" ]; then
 		lua $API_GEN_TROJAN $node client $bind $local_port > $config_file
-		ln_start_bin $(find_bin trojan-go) trojan-go "-config $config_file"
+		ln_start_bin $(config_t_get global_app trojan_go_file $(find_bin trojan-go)) trojan-go "-config $config_file"
 	elif [ "$type" == "brook" ]; then
 		local protocol=$(config_n_get $node brook_protocol client)
 		local brook_tls=$(config_n_get $node brook_tls 0)
@@ -311,7 +311,7 @@ run_redir() {
 			ln_start_bin $(find_bin trojan) trojan "-c $config_file"
 		elif [ "$type" == "trojan-go" ]; then
 			lua $API_GEN_TROJAN $node nat "0.0.0.0" $local_port >$config_file
-			ln_start_bin $(find_bin trojan-go) trojan-go "-config $config_file"
+			ln_start_bin $(config_t_get global_app trojan_go_file $(find_bin trojan-go)) trojan-go "-config $config_file"
 		elif [ "$type" == "brook" ]; then
 			local protocol=$(config_n_get $node brook_protocol client)
 			if [ "$protocol" == "wsclient" ]; then
@@ -347,7 +347,7 @@ run_redir() {
 			done
 		elif [ "$type" == "trojan-go" ]; then
 			lua $API_GEN_TROJAN $node nat "0.0.0.0" $local_port > $config_file
-			ln_start_bin $(find_bin trojan-go) trojan-go "-config $config_file"
+			ln_start_bin $(config_t_get global_app trojan_go_file $(find_bin trojan-go)) trojan-go "-config $config_file"
 		else
 			local kcptun_use=$(config_n_get $node use_kcp 0)
 			if [ "$kcptun_use" == "1" ]; then

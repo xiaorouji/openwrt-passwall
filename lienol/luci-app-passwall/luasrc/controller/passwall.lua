@@ -6,7 +6,7 @@ local http = require "luci.http"
 local kcptun = require "luci.model.cbi.passwall.api.kcptun"
 local brook = require "luci.model.cbi.passwall.api.brook"
 local v2ray = require "luci.model.cbi.passwall.api.v2ray"
-local trojan = require "luci.model.cbi.passwall.api.trojan"
+local trojan_go = require "luci.model.cbi.passwall.api.trojan_go"
 
 function index()
     if not nixio.fs.access("/etc/config/passwall") then return end
@@ -58,8 +58,8 @@ function index()
     entry({"admin", "vpn", "passwall", "brook_update"}, call("brook_update")).leaf = true
     entry({"admin", "vpn", "passwall", "v2ray_check"}, call("v2ray_check")).leaf = true
     entry({"admin", "vpn", "passwall", "v2ray_update"}, call("v2ray_update")).leaf = true
-    entry({"admin", "vpn", "passwall", "trojan_check"}, call("trojan_check")).leaf = true
-    entry({"admin", "vpn", "passwall", "trojan_update"}, call("trojan_update")).leaf = true
+    entry({"admin", "vpn", "passwall", "trojan_go_check"}, call("trojan_go_check")).leaf = true
+    entry({"admin", "vpn", "passwall", "trojan_go_update"}, call("trojan_go_update")).leaf = true
 end
 
 local function http_write_json(content)
@@ -152,7 +152,7 @@ function ping_node()
     local e = {}
     e.index = index
     if (ucic:get(appname, "@global_other[0]", "use_tcping") or 1)  == "1" and luci.sys.exec("echo -n $(command -v tcping)") ~= "" then
-        e.ping = luci.sys.exec(string.format("echo -n $(tcping -q -c 1 -i 1 -t 1 -p %s %s 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print $2}') 2>/dev/null", port, address))
+        e.ping = luci.sys.exec(string.format("echo -n $(tcping -q -c 1 -i 1 -t 2 -p %s %s 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print $2}') 2>/dev/null", port, address))
     end
     if e.ping == nil or tonumber(e.ping) == 0 then
         e.ping = luci.sys.exec("echo -n $(ping -c 1 -W 1 %q 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print $2}') 2>/dev/null" % address)
@@ -224,8 +224,7 @@ function check_port()
             local type = s.type
             if type and type ~= "V2ray_balancing" and type ~= "V2ray_shunt" and
                 s.address and s.port and s.remarks then
-                node_name = "%s：[%s] %s:%s" %
-                                {s.type, s.remarks, s.address, s.port}
+                node_name = "%s：[%s] %s:%s" % {s.type, s.remarks, s.address, s.port}
                 tcp_socket = nixio.socket("inet", "stream")
                 tcp_socket:setopt("socket", "rcvtimeo", 3)
                 tcp_socket:setopt("socket", "sndtimeo", 3)
@@ -273,8 +272,7 @@ function kcptun_update()
     local json = nil
     local task = http.formvalue("task")
     if task == "extract" then
-        json = kcptun.to_extract(http.formvalue("file"),
-                                 http.formvalue("subfix"))
+        json = kcptun.to_extract(http.formvalue("file"), http.formvalue("subfix"))
     elseif task == "move" then
         json = kcptun.to_move(http.formvalue("file"))
     else
@@ -310,8 +308,7 @@ function v2ray_update()
     local json = nil
     local task = http.formvalue("task")
     if task == "extract" then
-        json =
-            v2ray.to_extract(http.formvalue("file"), http.formvalue("subfix"))
+        json = v2ray.to_extract(http.formvalue("file"), http.formvalue("subfix"))
     elseif task == "move" then
         json = v2ray.to_move(http.formvalue("file"))
     else
@@ -321,21 +318,20 @@ function v2ray_update()
     http_write_json(json)
 end
 
-function trojan_check()
-    local json = trojan.to_check("")
+function trojan_go_check()
+    local json = trojan_go.to_check("")
     http_write_json(json)
 end
 
-function trojan_update()
+function trojan_go_update()
     local json = nil
     local task = http.formvalue("task")
     if task == "extract" then
-        json =
-            trojan.to_extract(http.formvalue("file"), http.formvalue("subfix"))
+        json = trojan_go.to_extract(http.formvalue("file"), http.formvalue("subfix"))
     elseif task == "move" then
-        json = trojan.to_move(http.formvalue("file"))
+        json = trojan_go.to_move(http.formvalue("file"))
     else
-        json = trojan.to_download(http.formvalue("url"))
+        json = trojan_go.to_download(http.formvalue("url"))
     end
 
     http_write_json(json)

@@ -1,8 +1,5 @@
 <%
-local api = require "luci.model.cbi.passwall.api.api"
-local dsp = require "luci.dispatcher"
-
-local trojan_version = api.get_trojan_version()
+local trojan_go_version = require "luci.model.cbi.passwall.api.api".get_trojan_go_version()
 -%>
 
 <script type="text/javascript">
@@ -74,7 +71,7 @@ local trojan_version = api.get_trojan_version()
 
 		var ckeckDetailElm = document.getElementById(btn.id + '-detail');
 
-		XHR.get('<%=dsp.build_url("admin/vpn/passwall/trojan_check")%>', {
+		XHR.get('<%=url([[admin]], [[vpn]], [[passwall]], [[trojan_go_check]])%>', {
 			token: tokenStr,
 			arch: ''
 		}, function(x,json) {
@@ -114,7 +111,7 @@ local trojan_version = api.get_trojan_version()
 
 		addPageNotice_trojan();
 
-		var trojanUpdateUrl = '<%=dsp.build_url("admin/vpn/passwall/trojan_update")%>';
+		var trojanUpdateUrl = '<%=url([[admin]], [[vpn]], [[passwall]], [[trojan_go_update]])%>';
 		// Download file
 		XHR.get(trojanUpdateUrl, {
 			token: tokenStr,
@@ -166,7 +163,7 @@ local trojan_version = api.get_trojan_version()
 	</label>
 	<div class="cbi-value-field">
 		<div class="cbi-value-description">
-			<span>【 <%=trojan_version%>】</span>
+			<span>【 <%=trojan_go_version%>】</span>
 			<input class="cbi-button cbi-input-apply" type="button" id="_trojan-check_btn" onclick="onBtnClick_trojan(this);" value="<%:Manually update%>" />
 			<span id="_trojan-check_btn-detail"></span>
 		</div>
