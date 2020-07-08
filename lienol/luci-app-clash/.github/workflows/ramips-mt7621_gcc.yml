@@ -1,0 +1,76 @@
+name: ramips-mt7621
+on:
+  release:
+    types:
+      - created
+
+  pull_request:
+    types:
+      - review_requested
+
+  push:
+    branches:
+      - patcher
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    env:
+      URL: https://downloads.openwrt.org/snapshots/targets/ramips/mt7621/openwrt-sdk-ramips-mt7621_gcc-8.4.0_musl.Linux-x86_64.tar.xz
+      REPF: ${{ github.repository }}
+      PKGN: ${{ 'luci-app-clash' }}
+
+    steps:
+    - name: Checkout - ${{ github.ref }}
+      uses: actions/checkout@v1
+
+    - name: Prepare SDK ENV
+      run: |
+        wget -q "${URL}"
+        tar xJf openwrt-sdk-*.tar.xz -C ../
+        mv -f "${GITHUB_WORKSPACE}" ../src
+        mv ../openwrt-sdk-* "${GITHUB_WORKSPACE}"
+
+    - name: Install dependencies
+      run: |
+        sudo -E apt-get -qq update
+        sudo -E apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion git-core gcc-multilib libelf-dev autoconf automake libtool
+        sudo -E apt-get -qq autoremove --purge
+        sudo -E apt-get -qq clean
+        
+    - name: Prepare targets
+      id: po2lmo
+      run: |
+        REP=$(basename "${REPF}")
+        mv -vf ../src "package/${REP}"
+        test -d "package/${REP}/tools/po2lmo"
+
+    - name: Prebuild po2lmo host tool
+      if: success()
+      run: |
+        REP=$(basename "${REPF}")
+        pushd "package/${REP}/tools/po2lmo"
+        make && sudo make install
+
+    - name: Load custom configuration
+      env:
+        DEBIAN_FRONTEND: noninteractive
+        CONFIG_FILE: '.config'
+      run: |
+        REP=$(basename "${REPF}")
+        [ -e "package/${REP}/${CONFIG_FILE}" ] && mv "${CONFIG}" .config
+        make defconfig
+
+    - name: Build target
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        make package/${PKGN}/compile -j$(nproc) V=s
+        mkdir ../bin
+        find bin/ -type f -name "*${PKGN}*" | xargs -t -i mv -vf {} ../bin
+
+    - name: Upload - push to artifact file
+      uses: actions/upload-artifact@v1
+      with:
+        name: ${{ format('{0}.{1}.{2}', github.workflow, github.actor, github.event_name) }}
+        path: ../bin
