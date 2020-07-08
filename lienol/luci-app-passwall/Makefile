@@ -7,8 +7,8 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
 PKG_VERSION:=3.9
-PKG_RELEASE:=9
-PKG_DATE:=20200707
+PKG_RELEASE:=10
+PKG_DATE:=20200708
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
@@ -39,6 +39,10 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_V2ray
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_Trojan
 	bool "Include Trojan"
+	default n
+	
+config PACKAGE_$(PKG_NAME)_INCLUDE_Trojan_GO
+	bool "Include Trojan_GO"
 	default n
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_Brook
@@ -91,7 +95,7 @@ define Package/$(PKG_NAME)
   +PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Server:shadowsocksr-libev-server \
   +PACKAGE_$(PKG_NAME)_INCLUDE_V2ray:v2ray \
   +PACKAGE_$(PKG_NAME)_INCLUDE_Trojan:trojan \
-  +PACKAGE_$(PKG_NAME)_INCLUDE_Trojan:ipt2socks \
+  +PACKAGE_$(PKG_NAME)_INCLUDE_Trojan_GO:trojan-go \
   +PACKAGE_$(PKG_NAME)_INCLUDE_Brook:brook \
   +PACKAGE_$(PKG_NAME)_INCLUDE_kcptun:kcptun-client \
   +PACKAGE_$(PKG_NAME)_INCLUDE_haproxy:haproxy \
