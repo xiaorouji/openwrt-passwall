@@ -432,7 +432,7 @@ local function processData(szType, content, add_mode)
 		end
 		local Info = split(content, "@")
 		if Info then
-			local address, port, peer
+			local address, port, peer, sni
 			local password = Info[1]
 			local allowInsecure = allowInsecure_default
 			local params = {}
@@ -450,14 +450,32 @@ local function processData(szType, content, add_mode)
 						allowInsecure = params.allowInsecure
 					end
 					if params.peer then peer = params.peer end
+					sni = params.sni and params.sni or ""
+					if params.mux then	result.v2ray_mux = 1 end
+					if params.ws then
+						result.trojan_ws = 1
+						if params.wshost then result.v2ray_ws_host = params.wshost end
+						if params.wspath then result.v2ray_ws_path = params.wspath end
+						if sni == "" and params.wshost then sni = params.wshost end
+					end
+					if params.ss then
+						result.ss_aead = 1
+						if params.ssmethod then result.ss_aead_method = params.ssmethod end
+						if params.sspasswd then result.ss_aead_pwd = params.sspasswd end
+					end
+					if params.peer then peer = params.peer end
 				end
 			end
-			result.type = "Trojan"
+			result.type = (result.v2ray_mux or result.trojan_ws or result.ss_aead) and "Trojan-Go" or "Trojan"
 			result.address = address
 			result.port = port
 			result.password = password
-			result.tls_allowInsecure = allowInsecure
-			result.tls_serverName = peer
+			result.trojan_tls = 1
+			if result.type == "Trojan-Go" then
+				result.fingerprint = ""
+			end
+			result.tls_serverName = peer and peer or sni
+			result.tls_allowInsecure = params.allowinsecure and 1 or allowInsecure
 			result.remarks = UrlDecode(alias)
 		end
 	elseif szType == "ssd" then

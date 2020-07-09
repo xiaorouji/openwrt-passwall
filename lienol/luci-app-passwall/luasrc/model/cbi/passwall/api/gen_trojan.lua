@@ -17,7 +17,7 @@ local trojan = {
     password = {node.password},
     log_level = 1,
     ssl = {
-        verify = (node.trojan_verify_cert == "1") and true or false,
+        verify = (node.tls_allowInsecure ~= "1") and true or false,
         verify_hostname = true,
         cert = node.trojan_cert_path,
         cipher =  node.fingerprint == nil and cipher or (node.fingerprint == "disable" and cipher13 .. ":" .. cipher or ""),

@@ -7,13 +7,11 @@ local ipkg = require("luci.model.ipkg")
 local api = require "luci.model.cbi.passwall.api.api"
 
 local trojan_go_api = "https://api.github.com/repos/peter-tank/trojan-go/releases/latest"
-local is_armv7 = false
 
 function to_check(arch)
     if not arch or arch == "" then arch = api.auto_get_arch() end
 
     local file_tree, sub_version = api.get_file_info(arch)
-    if sub_version == "7" then is_armv7 = true end
 
     if file_tree == "" then
         return {
@@ -25,7 +23,7 @@ function to_check(arch)
 
     if file_tree == "mips" then file_tree = "mips%-hardfloat" end
     if file_tree == "mipsle" then file_tree = "mipsle%-hardfloat" end
-    if is_armv7 then file_tree = file_tree .. "v7" end
+    if sub_version and sub_version:match("^[5-7]$") then file_tree = file_tree .. "v" .. sub_version end
 
     local json = api.get_api_json(trojan_go_api)
 
@@ -44,7 +42,7 @@ function to_check(arch)
     if needs_update then
         html_url = json.html_url
         for _, v in ipairs(json.assets) do
-            if v.name and v.name:match("linux%-" .. file_tree) then
+            if v.name and v.name:match("linux%-" .. file_tree .. "%.zip") then
                 download_url = v.browser_download_url
                 break
             end
@@ -58,7 +56,7 @@ function to_check(arch)
             version = remote_version,
             html_url = html_url,
             error = i18n.translate(
-                "New version found, but failed to get new version download url.")
+                "New version found, but failed to get new version download url.") .. " [linux-" .. file_tree .. ".zip]"
         }
     end
 
