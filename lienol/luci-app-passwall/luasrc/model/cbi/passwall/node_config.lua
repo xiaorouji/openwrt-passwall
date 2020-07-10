@@ -338,7 +338,7 @@ trojan_force_fp = s:option(ListValue, "fingerprint",
 for a, t in ipairs(force_fp) do trojan_force_fp:value(t) end
 trojan_force_fp.default = "firefox"
 trojan_force_fp.rmempty = false
-trojan_force_fp:depends({ type = "Trojan-Go", trojan_tls = "1" })
+trojan_force_fp:depends({ type = "Trojan-Go", trojan_tls = true })
 
 tls_serverName = s:option(Value, "tls_serverName", translate("Domain"))
 tls_serverName:depends("v2ray_stream_security", "tls")
@@ -357,7 +357,7 @@ tls_allowInsecure:depends("trojan_tls", "1")
 trojan_cert_path = s:option(Value, "trojan_cert_path",
                             translate("Trojan Cert Path"))
 trojan_cert_path.default = ""
-trojan_cert_path:depends("tls_allowInsecure", "0")
+trojan_cert_path:depends({ trojan_tls = true, tls_allowInsecure = false })
 
 v2ray_transport = s:option(ListValue, "v2ray_transport", translate("Transport"))
 v2ray_transport:value("tcp", "TCP")

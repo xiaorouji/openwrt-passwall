@@ -4,7 +4,7 @@
 -- @author William Chan <root@williamchan.me>
 ------------------------------------------------
 require 'nixio'
-require 'uci'
+require 'luci.model.uci'
 require 'luci.util'
 require 'luci.jsonc'
 require 'luci.sys'
@@ -20,9 +20,9 @@ local b64decode = nixio.bin.b64decode
 local nodeResult = {} -- update result
 local application = 'passwall'
 local uciType = 'nodes'
-local ucic2 = uci.cursor()
+local ucic2 = luci.model.uci.cursor()
 local arg2 = arg[2]
-local allowInsecure_default = ucic2:get(application, "@global_subscribe[0]", "allowInsecure")
+local allowInsecure_default = ucic2:get_bool(application, "@global_subscribe[0]", "allowInsecure")
 ucic2:revert(application)
 
 local log = function(...)
@@ -305,6 +305,7 @@ local function base64Decode(text)
 end
 -- 处理数据
 local function processData(szType, content, add_mode)
+	log(content, add_mode)
 	local result = {
 		timeout = 60,
 		add_mode = add_mode,
@@ -430,19 +431,24 @@ local function processData(szType, content, add_mode)
 			alias = content:sub(idx_sp + 1, -1)
 			content = content:sub(0, idx_sp - 1)
 		end
-		local Info = split(content, "@")
-		if Info then
-			local address, port, peer, sni
-			local password = Info[1]
-			local allowInsecure = allowInsecure_default
-			local params = {}
-			local hostInfo = split(Info[2], ":")
-			if hostInfo then
-				address = hostInfo[1]
-				hostInfo = split(hostInfo[2], "?")
-				if hostInfo then
-					port = hostInfo[1]
-					for _, v in pairs(split(hostInfo[2], '&')) do
+		result.type = "Trojan"
+		result.remarks = UrlDecode(alias)
+		if content:find("@") then
+			local Info = split(content, "@")
+			result.password = Info[1]
+			if Info[2]:find(":") then
+				local hostInfo = split(Info[2], ":")
+				result.address = hostInfo[1]
+				result.v2ray_mux = false
+				result.trojan_ws = false
+				result.ss_aead = false
+				local port, peer, sni
+				local allowInsecure = allowInsecure_default
+				if hostInfo[2]:find("?") then
+					local query = split(hostInfo[2], "?")
+					port = query[1]
+					local params = {}
+					for _, v in pairs(split(query[2], '&')) do
 						local t = split(v, '=')
 						params[t[1]] = t[2]
 					end
@@ -451,32 +457,31 @@ local function processData(szType, content, add_mode)
 					end
 					if params.peer then peer = params.peer end
 					sni = params.sni and params.sni or ""
-					if params.mux then	result.v2ray_mux = 1 end
-					if params.ws then
-						result.trojan_ws = 1
+					if params.mux and params.mux == "1" then result.v2ray_mux = true end
+					if params.ws and params.ws == "1" then
+						result.trojan_ws = true
 						if params.wshost then result.v2ray_ws_host = params.wshost end
 						if params.wspath then result.v2ray_ws_path = params.wspath end
 						if sni == "" and params.wshost then sni = params.wshost end
 					end
-					if params.ss then
-						result.ss_aead = 1
+					if params.ss and params.ss == "1" then
+						result.ss_aead = true
 						if params.ssmethod then result.ss_aead_method = params.ssmethod end
 						if params.sspasswd then result.ss_aead_pwd = params.sspasswd end
 					end
-					if params.peer then peer = params.peer end
+				else
+					port = hostInfo[2]
+					sni = ""
 				end
+				result.port = port
+				if result.v2ray_mux or result.trojan_ws or result.ss_aead then
+					result.type = "Trojan-Go"
+					result.fingerprint = "firefox"
+				end
+				result.trojan_tls = true
+				result.tls_serverName = peer and peer or sni
+				result.tls_allowInsecure = allowInsecure
 			end
-			result.type = (result.v2ray_mux or result.trojan_ws or result.ss_aead) and "Trojan-Go" or "Trojan"
-			result.address = address
-			result.port = port
-			result.password = password
-			result.trojan_tls = 1
-			if result.type == "Trojan-Go" then
-				result.fingerprint = ""
-			end
-			result.tls_serverName = peer and peer or sni
-			result.tls_allowInsecure = params.allowinsecure and 1 or allowInsecure
-			result.remarks = UrlDecode(alias)
 		end
 	elseif szType == "ssd" then
 		result.type = "SS"
@@ -658,9 +663,8 @@ local function update_node(manual)
 	end)
 	for _, v in ipairs(nodeResult) do
 		for _, vv in ipairs(v) do
-			local cfgid = ucic2:add(application, uciType)
 			local uuid = _api.gen_uuid()
-			ucic2:rename(application, cfgid, uuid)
+			local cfgid = ucic2:section(application, uciType, uuid)
 			cfgid = uuid
 			for kkk, vvv in pairs(vv) do
 				ucic2:set(application, cfgid, kkk, vvv)
