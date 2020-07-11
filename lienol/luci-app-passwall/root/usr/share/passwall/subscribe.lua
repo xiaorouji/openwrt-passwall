@@ -475,7 +475,7 @@ local function processData(szType, content, add_mode)
 					result.type = "Trojan-Go"
 					result.fingerprint = "firefox"
 				end
-				result.trojan_tls = true
+				result.trojan_tls = 1
 				result.tls_serverName = peer and peer or sni
 				result.tls_allowInsecure = allowInsecure and "1" or "0"
 			end
