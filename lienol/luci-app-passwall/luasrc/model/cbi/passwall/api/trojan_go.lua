@@ -6,7 +6,7 @@ local i18n = require "luci.i18n"
 local ipkg = require("luci.model.ipkg")
 local api = require "luci.model.cbi.passwall.api.api"
 
-local trojan_go_api = "https://api.github.com/repos/peter-tank/trojan-go/releases/latest"
+local trojan_go_api = api.uci_get_type("global_app", "trojan_go_latest", "https://api.github.com/repos/trojan-gfw/trojan-go/releases/latest")
 
 function to_check(arch)
     if not arch or arch == "" then arch = api.auto_get_arch() end
@@ -23,7 +23,11 @@ function to_check(arch)
 
     if file_tree == "mips" then file_tree = "mips%-hardfloat" end
     if file_tree == "mipsle" then file_tree = "mipsle%-hardfloat" end
-    if sub_version and sub_version:match("^[5-7]$") then file_tree = file_tree .. "v" .. sub_version end
+    if file_tree == "arm64" then
+        file_tree = "armv8"
+    else
+        if sub_version and sub_version:match("^[5-8]$") then file_tree = file_tree .. "v" .. sub_version end
+    end
 
     local json = api.get_api_json(trojan_go_api)
 

@@ -83,6 +83,9 @@ o = s:option(Value, "trojan_go_file", translate("Trojan-Go Path"), translatef("i
 o.default = "/usr/bin/trojan-go"
 o.rmempty = false
 
+o = s:option(Value, "trojan_go_latest", translate("Trojan-Go Version API"), translate("alternate API URL for version checking"))
+o.default = "https://api.github.com/repos/peter-tank/trojan-go/releases/latest"
+
 ---- Kcptun client Path
 o = s:option(Value, "kcptun_client_file", translate("Kcptun Client Path"), translatef("if you want to run from memory, change the path, such as %s, Then save the application and update it manually.", "/tmp/kcptun-client"))
 o.default = "/usr/bin/kcptun-client"

@@ -377,7 +377,7 @@ local function processData(szType, content, add_mode)
 		if info.tls == "tls" or info.tls == "1" then
 			result.v2ray_stream_security = "tls"
 			result.tls_serverName = info.host
-			result.tls_allowInsecure = allowInsecure_default
+			result.tls_allowInsecure = allowInsecure_default and "1" or "0"
 		else
 			result.v2ray_stream_security = "none"
 		end
@@ -439,9 +439,6 @@ local function processData(szType, content, add_mode)
 			if Info[2]:find(":") then
 				local hostInfo = split(Info[2], ":")
 				result.address = hostInfo[1]
-				result.v2ray_mux = false
-				result.trojan_ws = false
-				result.ss_aead = false
 				local port, peer, sni
 				local allowInsecure = allowInsecure_default
 				if hostInfo[2]:find("?") then
@@ -450,22 +447,22 @@ local function processData(szType, content, add_mode)
 					local params = {}
 					for _, v in pairs(split(query[2], '&')) do
 						local t = split(v, '=')
-						params[t[1]] = t[2]
+						params[string.lower(t[1])] = t[2]
 					end
-					if params.allowInsecure then
-						allowInsecure = params.allowInsecure
+					if params.allowinsecure then
+						allowInsecure = params.allowinsecure
 					end
 					if params.peer then peer = params.peer end
 					sni = params.sni and params.sni or ""
-					if params.mux and params.mux == "1" then result.v2ray_mux = true end
+					if params.mux and params.mux == "1" then result.v2ray_mux = "1" end
 					if params.ws and params.ws == "1" then
-						result.trojan_ws = true
+						result.trojan_ws = "1"
 						if params.wshost then result.v2ray_ws_host = params.wshost end
 						if params.wspath then result.v2ray_ws_path = params.wspath end
 						if sni == "" and params.wshost then sni = params.wshost end
 					end
 					if params.ss and params.ss == "1" then
-						result.ss_aead = true
+						result.ss_aead = "1"
 						if params.ssmethod then result.ss_aead_method = params.ssmethod end
 						if params.sspasswd then result.ss_aead_pwd = params.sspasswd end
 					end
@@ -480,7 +477,7 @@ local function processData(szType, content, add_mode)
 				end
 				result.trojan_tls = true
 				result.tls_serverName = peer and peer or sni
-				result.tls_allowInsecure = allowInsecure
+				result.tls_allowInsecure = allowInsecure and "1" or "0"
 			end
 		end
 	elseif szType == "ssd" then
