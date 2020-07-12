@@ -22,4 +22,4 @@ Or download it yourself and put it in the package folder.
 make after enjoy...
 
 If you use Luci-19 or higher, Please selected the "luci-compat" and "luci-lib-ipkg" before compile
-this is my first fork
+
