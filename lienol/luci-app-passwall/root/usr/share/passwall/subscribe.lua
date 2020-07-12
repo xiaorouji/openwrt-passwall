@@ -395,7 +395,7 @@ local function processData(szType, content, add_mode)
 		local userinfo = nil
 		if hostInfoLen > 2 then
 			host = split(hostInfo[hostInfoLen], ":")
-		    userinfo = {}
+			userinfo = {}
 			for i = 1, hostInfoLen - 1 do
 				tinsert(userinfo, hostInfo[i])
 			end
