@@ -390,14 +390,26 @@ local function processData(szType, content, add_mode)
 		end
 		local info = content:sub(1, idx_sp - 1)
 		local hostInfo = split(base64Decode(info), "@")
-		local host = split(hostInfo[2], ":")
-		local userinfo = base64Decode(hostInfo[1])
+		local hostInfoLen = #hostInfo
+		local host = nil
+		local userinfo = nil
+		if hostInfoLen > 2 then
+			host = split(hostInfo[hostInfoLen], ":")
+			userinfo = {}
+			for i = 1, hostInfoLen - 1 do
+				tinsert(userinfo, hostInfo[i])
+			end
+			userinfo = table.concat(userinfo, '@')
+		else
+			host = split(hostInfo[2], ":")
+			userinfo = base64Decode(hostInfo[1])
+		end
 		local method = userinfo:sub(1, userinfo:find(":") - 1)
 		local password = userinfo:sub(userinfo:find(":") + 1, #userinfo)
 		result.remarks = UrlDecode(alias)
 		result.type = "SS"
 		result.address = host[1]
-		if host[2]:find("/%?") then
+		if host[2] and host[2]:find("/%?") then
 			local query = split(host[2], "/%?")
 			result.port = query[1]
 			local params = {}
@@ -774,7 +786,7 @@ local function parse_link(raw, remark, manual)
 				end
 			end
 		end
-		log('成功解析节点数量: ' .. #nodes)
+		log('成功解析节点数量: ' .. #all_nodes)
 	else
 		if not manual then
 			log('获取到的节点内容为空...')
