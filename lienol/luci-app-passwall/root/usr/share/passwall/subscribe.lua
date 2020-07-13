@@ -513,25 +513,26 @@ local function processData(szType, content, add_mode)
 			local Info = split(content, "@")
 			result.password = UrlDecode(Info[1])
 			local port = "443"
+			Info[2] = (Info[2] or ""):gsub("/%?", "?")
 			local hostInfo = nil
 			if Info[2]:find(":") then
 				hostInfo = split(Info[2], ":")
 				result.address = hostInfo[1]
 				local idx_port = 2
-				if hostInfo[2]:find("/%?") then
-					hostInfo = split(hostInfo[2], "/%?")
+				if hostInfo[2]:find("?") then
+					hostInfo = split(hostInfo[2], "?")
 					idx_port = 1
 				end
 				if hostInfo[idx_port] ~= "" then port = hostInfo[idx_port] end
 			else
-				if Info[2]:find("/%?") then
-					hostInfo = split(Info[2], "/%?")
+				if Info[2]:find("?") then
+					hostInfo = split(Info[2], "?")
 				end
 				result.address = hostInfo and hostInfo[1] or Info[2]
 			end
 			local peer, sni = nil, ""
 			local allowInsecure = allowInsecure_default
-			local query = split(Info[2], "/%?")
+			local query = split(Info[2], "?")
 			local params = {}
 			for _, v in pairs(split(query[2], '&')) do
 				local t = split(v, '=')
