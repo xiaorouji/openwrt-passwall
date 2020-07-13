@@ -38,7 +38,7 @@ local trojan = {
     websocket = (node.trojan_ws == "1") and {
         enabled = true,
         path = (node.v2ray_ws_path ~= nil) and node.v2ray_ws_path or "/",
-        hostname = (node.v2ray_ws_host ~= nil) and node.v2ray_ws_host or (node.tls_serverName ~= nil and node.tls_serverName or node.address)
+        host = (node.v2ray_ws_host ~= nil) and node.v2ray_ws_host or (node.tls_serverName ~= nil and node.tls_serverName or node.address)
         } or nil,
     shadowsocks = (node.ss_aead == "1") and {
         enabled = true,

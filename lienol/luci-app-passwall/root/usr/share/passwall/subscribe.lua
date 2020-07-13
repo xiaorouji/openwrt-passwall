@@ -278,7 +278,7 @@ end
 
 local function get_urldecode(h) return schar(tonumber(h, 16)) end
 local function UrlDecode(szText)
-	return szText:gsub("+", " "):gsub("%%(%x%x)", get_urldecode)
+	return (szText and szText:gsub("+", " "):gsub("%%(%x%x)", get_urldecode)) or nil
 end
 
 -- trim
@@ -447,50 +447,118 @@ local function processData(szType, content, add_mode)
 		result.remarks = UrlDecode(alias)
 		if content:find("@") then
 			local Info = split(content, "@")
-			result.password = Info[1]
+			result.password = UrlDecode(Info[1])
+			local port = "443"
+			Info[2] = (Info[2] or ""):gsub("/%?", "?")
+			local hostInfo = nil
 			if Info[2]:find(":") then
-				local hostInfo = split(Info[2], ":")
+				hostInfo = split(Info[2], ":")
 				result.address = hostInfo[1]
-				local port, peer, sni
-				local allowInsecure = allowInsecure_default
+				local idx_port = 2
 				if hostInfo[2]:find("?") then
-					local query = split(hostInfo[2], "?")
-					port = query[1]
-					local params = {}
-					for _, v in pairs(split(query[2], '&')) do
-						local t = split(v, '=')
-						params[string.lower(t[1])] = t[2]
-					end
-					if params.allowinsecure then
-						allowInsecure = params.allowinsecure
-					end
-					if params.peer then peer = params.peer end
-					sni = params.sni and params.sni or ""
-					if params.mux and params.mux == "1" then result.v2ray_mux = "1" end
-					if params.ws and params.ws == "1" then
-						result.trojan_ws = "1"
-						if params.wshost then result.v2ray_ws_host = params.wshost end
-						if params.wspath then result.v2ray_ws_path = params.wspath end
-						if sni == "" and params.wshost then sni = params.wshost end
-					end
-					if params.ss and params.ss == "1" then
-						result.ss_aead = "1"
-						if params.ssmethod then result.ss_aead_method = params.ssmethod end
-						if params.sspasswd then result.ss_aead_pwd = params.sspasswd end
-					end
-				else
-					port = hostInfo[2]
-					sni = ""
+					hostInfo = split(hostInfo[2], "?")
+					idx_port = 1
 				end
-				result.port = port
-				if result.v2ray_mux or result.trojan_ws or result.ss_aead then
-					result.type = "Trojan-Go"
-					result.fingerprint = "firefox"
+				if hostInfo[idx_port] ~= "" then port = hostInfo[idx_port] end
+			else
+				if Info[2]:find("?") then
+					hostInfo = split(Info[2], "?")
 				end
-				result.trojan_tls = 1
-				result.tls_serverName = peer and peer or sni
-				result.tls_allowInsecure = allowInsecure and "1" or "0"
+				result.address = hostInfo and hostInfo[1] or Info[2]
 			end
+			local peer, sni = nil, ""
+			local allowInsecure = allowInsecure_default
+			local query = split(Info[2], "?")
+			local params = {}
+			for _, v in pairs(split(query[2], '&')) do
+				local t = split(v, '=')
+				params[string.lower(t[1])] = UrlDecode(t[2])
+			end
+			if params.allowinsecure then
+				allowInsecure = params.allowinsecure
+			end
+			if params.peer then peer = params.peer end
+			sni = params.sni and params.sni or ""
+			if params.mux and params.mux == "1" then result.v2ray_mux = "1" end
+			if params.ws and params.ws == "1" then
+				result.trojan_ws = "1"
+				if params.wshost then result.v2ray_ws_host = params.wshost end
+				if params.wspath then result.v2ray_ws_path = params.wspath end
+				if sni == "" and params.wshost then sni = params.wshost end
+			end
+			if params.ss and params.ss == "1" then
+				result.ss_aead = "1"
+				if params.ssmethod then result.ss_aead_method = params.ssmethod end
+				if params.sspasswd then result.ss_aead_pwd = params.sspasswd end
+			end
+			result.port = port
+			if result.v2ray_mux or result.trojan_ws or result.ss_aead then
+				result.type = "Trojan-Go"
+				result.fingerprint = "firefox"
+			end
+			result.trojan_tls = 1
+			result.tls_serverName = peer and peer or sni
+			result.tls_allowInsecure = allowInsecure and "1" or "0"
+		end
+	elseif szType == "trojan-go" then
+		local alias = ""
+		if content:find("#") then
+			local idx_sp = content:find("#")
+			alias = content:sub(idx_sp + 1, -1)
+			content = content:sub(0, idx_sp - 1)
+		end
+		result.type = "Trojan-Go"
+		result.remarks = UrlDecode(alias)
+		if content:find("@") then
+			local Info = split(content, "@")
+			result.password = UrlDecode(Info[1])
+			local port = "443"
+			Info[2] = (Info[2] or ""):gsub("/%?", "?")
+			local hostInfo = nil
+			if Info[2]:find(":") then
+				hostInfo = split(Info[2], ":")
+				result.address = hostInfo[1]
+				local idx_port = 2
+				if hostInfo[2]:find("?") then
+					hostInfo = split(hostInfo[2], "?")
+					idx_port = 1
+				end
+				if hostInfo[idx_port] ~= "" then port = hostInfo[idx_port] end
+			else
+				if Info[2]:find("?") then
+					hostInfo = split(Info[2], "?")
+				end
+				result.address = hostInfo and hostInfo[1] or Info[2]
+			end
+			local peer, sni = nil, ""
+			local allowInsecure = allowInsecure_default
+			local query = split(Info[2], "?")
+			local params = {}
+			for _, v in pairs(split(query[2], '&')) do
+				local t = split(v, '=')
+				params[string.lower(t[1])] = UrlDecode(t[2])
+			end
+			if params.allowinsecure then
+				allowInsecure = params.allowinsecure
+			end
+			if params.peer then peer = params.peer end
+			sni = params.sni and params.sni or ""
+			if params.mux and params.mux == "1" then result.v2ray_mux = "1" end
+			if params.type and params.type == "ws" then
+				result.trojan_ws = "1"
+				if params.host then result.v2ray_ws_host = params.host end
+				if params.path then result.v2ray_ws_path = params.path end
+				if sni == "" and params.host then sni = params.host end
+			end
+			if params.encryption and params.encryption:match('^ss;[^;]*;.*$') then
+				result.ss_aead = "1"
+				result.ss_aead_method, result.ss_aead_pwd = params.encryption:match('^ss;([^;]*);(.*)$')
+			end
+			result.port = port
+			result.fingerprint = "firefox"
+			result.trojan_tls = 1
+			result.tls_serverName = peer and peer or sni
+			result.tls_allowInsecure = allowInsecure and "1" or "0"
 		end
 	elseif szType == "ssd" then
 		result.type = "SS"
@@ -761,7 +829,7 @@ local function parse_link(raw, remark, manual)
 					local node = trim(v)
 					local dat = split(node, "://")
 					if dat and dat[1] and dat[2] then
-						if dat[1] == 'ss' or dat[1] == 'trojan' then
+						if dat[1] == 'ss' or dat[1] == 'trojan' or dat[1] == 'trojan-go' then
 							result = processData(dat[1], dat[2], add_mode)
 						else
 							result = processData(dat[1], base64Decode(dat[2]), add_mode)
