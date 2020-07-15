@@ -341,8 +341,8 @@ local function processData(szType, content, add_mode)
 		result.v2ray_VMess_alterId = info.aid
 		result.v2ray_VMess_id = info.id
 		result.remarks = info.ps
-		-- result.v2ray_mux = 1
-		-- result.v2ray_mux_concurrency = 8
+		-- result.mux = 1
+		-- result.mux_concurrency = 8
 		if info.net == 'ws' then
 			result.v2ray_ws_host = info.host
 			result.v2ray_ws_path = info.path
@@ -479,7 +479,7 @@ local function processData(szType, content, add_mode)
 			end
 			if params.peer then peer = params.peer end
 			sni = params.sni and params.sni or ""
-			if params.mux and params.mux == "1" then result.v2ray_mux = "1" end
+			if params.mux and params.mux == "1" then result.mux = "1" end
 			if params.ws and params.ws == "1" then
 				result.trojan_ws = "1"
 				if params.wshost then result.v2ray_ws_host = params.wshost end
@@ -492,7 +492,7 @@ local function processData(szType, content, add_mode)
 				if params.sspasswd then result.ss_aead_pwd = params.sspasswd end
 			end
 			result.port = port
-			if result.v2ray_mux or result.trojan_ws or result.ss_aead then
+			if result.mux or result.trojan_ws or result.ss_aead then
 				result.type = "Trojan-Go"
 				result.fingerprint = "firefox"
 			end
@@ -543,7 +543,7 @@ local function processData(szType, content, add_mode)
 			end
 			if params.peer then peer = params.peer end
 			sni = params.sni and params.sni or ""
-			if params.mux and params.mux == "1" then result.v2ray_mux = "1" end
+			if params.mux and params.mux == "1" then result.mux = "1" end
 			if params.type and params.type == "ws" then
 				result.trojan_ws = "1"
 				if params.host then result.v2ray_ws_host = params.host end

@@ -463,7 +463,7 @@ clean_log() {
 
 start_crontab() {
 	touch /etc/crontabs/root
-	sed -i '/$CONFIG/d' /etc/crontabs/root >/dev/null 2>&1 &
+	sed -i "/$CONFIG/d" /etc/crontabs/root >/dev/null 2>&1 &
 	auto_on=$(config_t_get global_delay auto_on 0)
 	if [ "$auto_on" = "1" ]; then
 		time_off=$(config_t_get global_delay time_off)
@@ -489,7 +489,6 @@ start_crontab() {
 	if [ "$autoupdate" = "1" ]; then
 		local t="0 $dayupdate * * $weekupdate"
 		[ "$weekupdate" = "7" ] && t="0 $dayupdate * * *"
-		sed -i "/rule_update.lua nil log/d" /etc/crontabs/root
 		echo "$t lua $APP_PATH/rule_update.lua nil log > /dev/null 2>&1 &" >>/etc/crontabs/root
 		echolog "配置定时任务：自动更新规则。"
 	fi
@@ -500,7 +499,6 @@ start_crontab() {
 	if [ "$autoupdatesubscribe" = "1" ]; then
 		local t="0 $dayupdatesubscribe * * $weekupdatesubscribe"
 		[ "$weekupdatesubscribe" = "7" ] && t="0 $dayupdatesubscribe * * *"
-		sed -i "/rule_update.lua start log/d" /etc/crontabs/root
 		echo "$t lua $APP_PATH/subscribe.lua start log > /dev/null 2>&1 &" >>/etc/crontabs/root
 		echolog "配置定时任务：自动更新节点订阅。"
 	fi

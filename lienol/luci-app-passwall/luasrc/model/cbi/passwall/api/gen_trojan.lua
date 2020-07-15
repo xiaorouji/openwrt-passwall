@@ -20,30 +20,19 @@ local trojan = {
         verify = (node.tls_allowInsecure ~= "1") and true or false,
         verify_hostname = true,
         cert = node.trojan_cert_path,
-        cipher =  node.fingerprint == nil and cipher or (node.fingerprint == "disable" and cipher13 .. ":" .. cipher or ""),
-        cipher_tls13 = node.fingerprint == nil and cipher13 or nil,
+        cipher = cipher,
+        cipher_tls13 = cipher13,
         sni = node.tls_serverName,
-        alpn = (node.trojan_ws == "1") and {} or {"h2", "http/1.1"},
+        alpn = {"h2", "http/1.1"},
         reuse_session = true,
         session_ticket = (node.tls_sessionTicket == "1") and true or false,
-        fingerprint = (node.fingerprint ~= nil and node.fingerprint ~= "disable" ) and node.fingerprint or "",
         curves = ""
     },
     udp_timeout = 60,
-    mux = (node.v2ray_mux == "1") and {
+    mux = (node.mux == "1") and {
         enabled = true,
-        concurrency = tonumber(node.v2ray_mux_concurrency),
+        concurrency = tonumber(node.mux_concurrency),
         idle_timeout = 60,
-        } or nil,
-    websocket = (node.trojan_ws == "1") and {
-        enabled = true,
-        path = (node.v2ray_ws_path ~= nil) and node.v2ray_ws_path or "/",
-        host = (node.v2ray_ws_host ~= nil) and node.v2ray_ws_host or (node.tls_serverName ~= nil and node.tls_serverName or node.address)
-        } or nil,
-    shadowsocks = (node.ss_aead == "1") and {
-        enabled = true,
-        method = (node.ss_aead_method ~= nil) and node.ss_aead_method or "AEAD_AES_128_GCM",
-        password = (node.ss_aead_pwd ~= nil) and node.ss_aead_pwd or ""
         } or nil,
     tcp = {
         no_delay = true,
@@ -53,4 +42,20 @@ local trojan = {
         fast_open_qlen = 20
     }
 }
+if node.type == "Trojan-Go" then
+    trojan.ssl.cipher = node.fingerprint == nil and cipher or (node.fingerprint == "disable" and cipher13 .. ":" .. cipher or "")
+    trojan.ssl.cipher_tls13 = node.fingerprint == nil and cipher13 or nil
+    trojan.ssl.fingerprint = (node.fingerprint ~= nil and node.fingerprint ~= "disable" ) and node.fingerprint or ""
+    trojan.ssl.alpn = (node.trojan_ws == "1") and {} or {"h2", "http/1.1"}
+    trojan.websocket = (node.trojan_ws == "1") and {
+        enabled = true,
+        path = (node.v2ray_ws_path ~= nil) and node.v2ray_ws_path or "/",
+        host = (node.v2ray_ws_host ~= nil) and node.v2ray_ws_host or (node.tls_serverName ~= nil and node.tls_serverName or node.address)
+        } or nil
+    trojan.shadowsocks = (node.ss_aead == "1") and {
+        enabled = true,
+        method = (node.ss_aead_method ~= nil) and node.ss_aead_method or "AEAD_AES_128_GCM",
+        password = (node.ss_aead_pwd ~= nil) and node.ss_aead_pwd or ""
+    } or nil
+end
 print(json.stringify(trojan, 1))

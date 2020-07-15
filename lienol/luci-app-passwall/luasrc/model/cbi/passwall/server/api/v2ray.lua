@@ -70,9 +70,8 @@ function gen_config(user)
                 tag = "transit",
                 protocol = node.v2ray_protocol or "vmess",
                 mux = {
-                    enabled = (node.v2ray_mux == "1") and true or false,
-                    concurrency = (node.v2ray_mux_concurrency) and
-                        tonumber(node.v2ray_mux_concurrency) or 8
+                    enabled = (node.mux == "1") and true or false,
+                    concurrency = (node.mux_concurrency) and tonumber(node.mux_concurrency) or 8
                 },
                 -- 底层传输配置
                 streamSettings = (node.v2ray_protocol == "vmess") and {

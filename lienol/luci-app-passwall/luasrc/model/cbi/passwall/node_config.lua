@@ -337,8 +337,7 @@ trojan_force_fp = s:option(ListValue, "fingerprint",
                              translate("Finger Print"))
 for a, t in ipairs(force_fp) do trojan_force_fp:value(t) end
 trojan_force_fp.default = "firefox"
-trojan_force_fp.rmempty = false
-trojan_force_fp:depends({ type = "Trojan-Go", trojan_tls = true })
+trojan_force_fp:depends({ type = "Trojan-Go", trojan_tls = "1" })
 
 tls_serverName = s:option(Value, "tls_serverName", translate("Domain"))
 tls_serverName:depends("v2ray_stream_security", "tls")
@@ -348,7 +347,6 @@ tls_allowInsecure = s:option(Flag, "tls_allowInsecure",
                              translate("allowInsecure"), translate(
                                  "Whether unsafe connections are allowed. When checked, V2Ray does not check the validity of the TLS certificate provided by the remote host."))
 tls_allowInsecure.default = "0"
-tls_allowInsecure.rmempty = false
 tls_allowInsecure:depends("v2ray_stream_security", "tls")
 tls_allowInsecure:depends("trojan_tls", "1")
 
@@ -449,17 +447,14 @@ v2ray_ws_path:depends("trojan_ws", "1")
 ss_aead = s:option(Flag, "ss_aead", translate("Shadowsocks2"))
 ss_aead:depends("type", "Trojan-Go")
 ss_aead.default = "0"
-ss_aead.rmempty = false
 
 ss_aead_method = s:option(ListValue, "ss_aead_method", translate("Encrypt Method"))
 for _, v in ipairs(encrypt_methods_ss_aead) do ss_aead_method:value(v, v:upper()) end
 ss_aead_method.default = "AEAD_AES_128_GCM"
-ss_aead_method.rmempty = false
 ss_aead_method:depends("ss_aead", "1")
 
 ss_aead_pwd = s:option(Value, "ss_aead_pwd", translate("Password"))
 ss_aead_pwd.password = true
-ss_aead_pwd.rmempty = false
 ss_aead_pwd:depends("ss_aead", "1")
 
 -- [[ HTTP/2部分 ]]--
@@ -496,17 +491,16 @@ for a, t in ipairs(v2ray_header_type_list) do v2ray_quic_guise:value(t) end
 v2ray_quic_guise:depends("v2ray_transport", "quic")
 
 -- [[ Mux ]]--
-v2ray_mux = s:option(Flag, "v2ray_mux", translate("Mux"))
-v2ray_mux:depends({ type = "V2ray", v2ray_protocol = "vmess" })
-v2ray_mux:depends({ type = "V2ray", v2ray_protocol = "http" })
-v2ray_mux:depends({ type = "V2ray", v2ray_protocol = "socks" })
-v2ray_mux:depends({ type = "V2ray", v2ray_protocol = "shadowsocks" })
-v2ray_mux:depends("type", "Trojan-Go")
+mux = s:option(Flag, "mux", translate("Mux"))
+mux:depends({ type = "V2ray", v2ray_protocol = "vmess" })
+mux:depends({ type = "V2ray", v2ray_protocol = "http" })
+mux:depends({ type = "V2ray", v2ray_protocol = "socks" })
+mux:depends({ type = "V2ray", v2ray_protocol = "shadowsocks" })
+mux:depends("type", "Trojan-Go")
 
-v2ray_mux_concurrency = s:option(Value, "v2ray_mux_concurrency",
-                                 translate("Mux Concurrency"))
-v2ray_mux_concurrency.default = 8
-v2ray_mux_concurrency:depends("v2ray_mux", "1")
+mux_concurrency = s:option(Value, "mux_concurrency", translate("Mux Concurrency"))
+mux_concurrency.default = 8
+mux_concurrency:depends("mux", "1")
 
 -- [[ 当作为TCP节点时，是否同时开启socks代理 ]]--
 --[[
@@ -539,5 +533,13 @@ v2ray_tcp_socks_auth_password = s:option(Value, "v2ray_tcp_socks_auth_password",
                                          "Socks " .. translate("Password"))
 v2ray_tcp_socks_auth_password:depends("v2ray_tcp_socks_auth", "password")
 --]]
+
+v2ray_protocol.validate = function(self, value)
+    if value == "_shunt" or value == "_balancing" then
+        address.rmempty = true
+        port.rmempty = true
+    end
+    return value
+end
 
 return m
