@@ -37,12 +37,12 @@ function gen_config(user)
         } or nil,
         websocket = (user.trojan_ws == "1") and {
             enabled = true,
-            path = (user.v2ray_ws_path ~= nil) and user.v2ray_ws_path or "/",
-            hostname = (user.v2ray_ws_host ~= nil) and user.v2ray_ws_host or (user.tls_serverName ~= nil and user.tls_serverName or user.address)
+            path = (user.ws_path ~= nil) and user.ws_path or "/",
+            hostname = (user.ws_host ~= nil) and user.ws_host or (user.tls_serverName ~= nil and user.tls_serverName or user.address)
         } or nil,
         shadowsocks = (user.ss_aead == "1") and {
             enabled = true,
-            method = (user.ss_aead_method ~= nil) and user.ss_aead_method or "AEAD_AES_128_GCM",
+            method = (user.ss_aead_method ~= nil) and user.ss_aead_method or "aead_aes_128_gcm",
             password = (user.ss_aead_pwd ~= nil) and user.ss_aead_pwd or ""
         } or nil,
         tcp = {

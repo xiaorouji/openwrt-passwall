@@ -26,6 +26,7 @@ local trojan = {
         alpn = {"h2", "http/1.1"},
         reuse_session = true,
         session_ticket = (node.tls_sessionTicket == "1") and true or false,
+        fingerprint = (node.fingerprint ~= nil and node.fingerprint ~= "disable" ) and node.fingerprint or "",
         curves = ""
     },
     udp_timeout = 60,
@@ -54,8 +55,7 @@ if node.type == "Trojan-Go" then
         } or nil
     trojan.shadowsocks = (node.ss_aead == "1") and {
         enabled = true,
-        method = (node.ss_aead_method ~= nil) and node.ss_aead_method or "AEAD_AES_128_GCM",
+        method = (node.ss_aead_method ~= nil) and node.ss_aead_method or "aead_aes_128_gcm",
         password = (node.ss_aead_pwd ~= nil) and node.ss_aead_pwd or ""
     } or nil
-end
-print(json.stringify(trojan, 1))
+endprint(json.stringify(trojan, 1))
