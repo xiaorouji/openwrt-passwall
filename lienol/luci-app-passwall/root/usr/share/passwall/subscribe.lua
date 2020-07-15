@@ -375,7 +375,7 @@ local function processData(szType, content, add_mode)
 		end
 		if not info.security then result.security = "auto" end
 		if info.tls == "tls" or info.tls == "1" then
-			result.tream_security = "tls"
+			result.stream_security = "tls"
 			result.tls_serverName = info.host
 			result.tls_allowInsecure = allowInsecure_default and "1" or "0"
 		else
