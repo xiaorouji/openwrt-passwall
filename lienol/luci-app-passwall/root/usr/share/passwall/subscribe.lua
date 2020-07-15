@@ -125,7 +125,7 @@ do
 	end
 
 	ucic2:foreach(application, uciType, function(node)
-		if node.type == 'V2ray' and node.v2ray_protocol == '_shunt' then
+		if node.type == 'V2ray' and node.protocol == '_shunt' then
 			local node_id = node[".name"]
 			ucic2:foreach(application, "shunt_rules", function(e)
 				local _node_id = node[e[".name"]] or nil
@@ -156,12 +156,12 @@ do
 					ucic2:set(application, node_id, "default_node", server)
 				end
 			}
-		elseif node.type == 'V2ray' and node.v2ray_protocol == '_balancing' then
+		elseif node.type == 'V2ray' and node.protocol == '_balancing' then
 			local node_id = node[".name"]
 			local nodes = {}
 			local new_nodes = {}
-			if node.v2ray_balancing_node then
-				for k, v in pairs(node.v2ray_balancing_node) do
+			if node.balancing_node then
+				for k, v in pairs(node.balancing_node) do
 					local node = v
 					local currentNode
 					if node then
@@ -193,7 +193,7 @@ do
 							ucic2:foreach(application, uciType, function(node2)
 								if node2[".name"] == node[".name"] then
 									local index = node2[".index"]
-									ucic2:set_list(application, "@nodes[" .. index .. "]", "v2ray_balancing_node", vv.new_nodes)
+									ucic2:set_list(application, "@nodes[" .. index .. "]", "balancing_node", vv.new_nodes)
 								end
 							end)
 						end
@@ -336,50 +336,50 @@ local function processData(szType, content, add_mode)
 		result.type = 'V2ray'
 		result.address = info.add
 		result.port = info.port
-		result.v2ray_protocol = 'vmess'
-		result.v2ray_transport = info.net
-		result.v2ray_VMess_alterId = info.aid
-		result.v2ray_VMess_id = info.id
+		result.protocol = 'vmess'
+		result.transport = info.net
+		result.VMess_alterId = info.aid
+		result.VMess_id = info.id
 		result.remarks = info.ps
 		-- result.mux = 1
 		-- result.mux_concurrency = 8
 		if info.net == 'ws' then
-			result.v2ray_ws_host = info.host
-			result.v2ray_ws_path = info.path
+			result.ws_host = info.host
+			result.ws_path = info.path
 		end
 		if info.net == 'h2' then
-			result.v2ray_h2_host = info.host
-			result.v2ray_h2_path = info.path
+			result.h2_host = info.host
+			result.h2_path = info.path
 		end
 		if info.net == 'tcp' then
 			if info.type and info.type ~= "http" then
 				info.type = "none"
 			end
-			result.v2ray_tcp_guise = info.type
-			result.v2ray_tcp_guise_http_host = info.host
-			result.v2ray_tcp_guise_http_path = info.path
+			result.tcp_guise = info.type
+			result.tcp_guise_http_host = info.host
+			result.tcp_guise_http_path = info.path
 		end
 		if info.net == 'kcp' then
-			result.v2ray_mkcp_guise = info.type
-			result.v2ray_mkcp_mtu = 1350
-			result.v2ray_mkcp_tti = 50
-			result.v2ray_mkcp_uplinkCapacity = 5
-			result.v2ray_mkcp_downlinkCapacity = 20
-			result.v2ray_mkcp_readBufferSize = 2
-			result.v2ray_mkcp_writeBufferSize = 2
+			result.mkcp_guise = info.type
+			result.mkcp_mtu = 1350
+			result.mkcp_tti = 50
+			result.mkcp_uplinkCapacity = 5
+			result.mkcp_downlinkCapacity = 20
+			result.mkcp_readBufferSize = 2
+			result.mkcp_writeBufferSize = 2
 		end
 		if info.net == 'quic' then
-			result.v2ray_quic_guise = info.type
-			result.v2ray_quic_key = info.key
-			result.v2ray_quic_security = info.securty
+			result.quic_guise = info.type
+			result.quic_key = info.key
+			result.quic_security = info.securty
 		end
-		if not info.security then result.v2ray_security = "auto" end
+		if not info.security then result.security = "auto" end
 		if info.tls == "tls" or info.tls == "1" then
-			result.v2ray_stream_security = "tls"
+			result.tream_security = "tls"
 			result.tls_serverName = info.host
 			result.tls_allowInsecure = allowInsecure_default and "1" or "0"
 		else
-			result.v2ray_stream_security = "none"
+			result.stream_security = "none"
 		end
 	elseif szType == "ss" then
 		local idx_sp = 0
@@ -482,13 +482,13 @@ local function processData(szType, content, add_mode)
 			if params.mux and params.mux == "1" then result.mux = "1" end
 			if params.ws and params.ws == "1" then
 				result.trojan_ws = "1"
-				if params.wshost then result.v2ray_ws_host = params.wshost end
-				if params.wspath then result.v2ray_ws_path = params.wspath end
+				if params.wshost then result.ws_host = params.wshost end
+				if params.wspath then result.ws_path = params.wspath end
 				if sni == "" and params.wshost then sni = params.wshost end
 			end
 			if params.ss and params.ss == "1" then
 				result.ss_aead = "1"
-				if params.ssmethod then result.ss_aead_method = params.ssmethod end
+				if params.ssmethod then result.ss_aead_method = string.lower(params.ssmethod) end
 				if params.sspasswd then result.ss_aead_pwd = params.sspasswd end
 			end
 			result.port = port
@@ -546,13 +546,14 @@ local function processData(szType, content, add_mode)
 			if params.mux and params.mux == "1" then result.mux = "1" end
 			if params.type and params.type == "ws" then
 				result.trojan_ws = "1"
-				if params.host then result.v2ray_ws_host = params.host end
-				if params.path then result.v2ray_ws_path = params.path end
+				if params.host then result.ws_host = params.host end
+				if params.path then result.ws_path = params.path end
 				if sni == "" and params.host then sni = params.host end
 			end
-			if params.encryption and params.encryption:match('^ss;[^;]*;.*$') then
+			if params.encryption and params.encryption:match('^ss;[^;:]*[;:].*$') then
 				result.ss_aead = "1"
-				result.ss_aead_method, result.ss_aead_pwd = params.encryption:match('^ss;([^;]*);(.*)$')
+				result.ss_aead_method, result.ss_aead_pwd = params.encryption:match('^ss;([^;:]*)[;:](.*)$')
+				result.ss_aead_method = string.lower(result.ss_aead_method)
 			end
 			result.port = port
 			result.fingerprint = "firefox"
@@ -637,7 +638,7 @@ local function select_node(nodes, config)
 	local server
 	if config.currentNode then
 		-- 特别优先级 V2ray分流 + 备注
-		if config.currentNode.type == 'V2ray' and config.currentNode.v2ray_protocol == '_shunt' then
+		if config.currentNode.type == 'V2ray' and config.currentNode.protocol == '_shunt' then
 			for id, node in pairs(nodes) do
 				if node.remarks == config.currentNode.remarks then
 					log('选择【' .. config.remarks .. '】V2ray分流匹配节点：' .. node.remarks)
@@ -647,7 +648,7 @@ local function select_node(nodes, config)
 			end
 		end
 		-- 特别优先级 V2ray负载均衡 + 备注
-		if config.currentNode.type == 'V2ray' and config.currentNode.v2ray_protocol == '_balancing' then
+		if config.currentNode.type == 'V2ray' and config.currentNode.protocol == '_balancing' then
 			for id, node in pairs(nodes) do
 				if node.remarks == config.currentNode.remarks then
 					log('选择【' .. config.remarks .. '】V2ray负载均衡匹配节点：' .. node.remarks)

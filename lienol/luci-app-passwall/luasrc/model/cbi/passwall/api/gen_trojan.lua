@@ -54,7 +54,7 @@ if node.type == "Trojan-Go" then
         } or nil
     trojan.shadowsocks = (node.ss_aead == "1") and {
         enabled = true,
-        method = (node.ss_aead_method ~= nil) and node.ss_aead_method or "AEAD_AES_128_GCM",
+        method = (node.ss_aead_method ~= nil) and node.ss_aead_method or "aead_aes_128_gcm",
         password = (node.ss_aead_pwd ~= nil) and node.ss_aead_pwd or ""
     } or nil
 end
