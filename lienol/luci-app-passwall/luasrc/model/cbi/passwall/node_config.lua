@@ -495,10 +495,10 @@ quic_guise:depends("transport", "quic")
 
 -- [[ Mux ]]--
 mux = s:option(Flag, "mux", translate("Mux"))
-mux:depends({ type = "V2ray", v2ray_protocol = "vmess" })
-mux:depends({ type = "V2ray", v2ray_protocol = "http" })
-mux:depends({ type = "V2ray", v2ray_protocol = "socks" })
-mux:depends({ type = "V2ray", v2ray_protocol = "shadowsocks" })
+mux:depends({ type = "V2ray", protocol = "vmess" })
+mux:depends({ type = "V2ray", protocol = "http" })
+mux:depends({ type = "V2ray", protocol = "socks" })
+mux:depends({ type = "V2ray", protocol = "shadowsocks" })
 mux:depends("type", "Trojan-Go")
 
 mux_concurrency = s:option(Value, "mux_concurrency", translate("Mux Concurrency"))
