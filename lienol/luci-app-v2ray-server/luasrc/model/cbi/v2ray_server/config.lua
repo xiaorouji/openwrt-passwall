@@ -69,20 +69,20 @@ ss_ota = t:option(Flag, "ss_ota", translate("OTA"), translate("When OTA is enabl
 ss_ota.default = "0"
 ss_ota:depends("protocol", "shadowsocks")
 
-VMess_id = t:option(DynamicList, "VMess_id", translate("ID"))
+vmess_id = t:option(DynamicList, "vmess_id", translate("ID"))
 for i = 1, 3 do
     local uuid = luci.sys.exec("cat /proc/sys/kernel/random/uuid")
-    VMess_id:value(uuid)
+    vmess_id:value(uuid)
 end
-VMess_id:depends("protocol", "vmess")
+vmess_id:depends("protocol", "vmess")
 
-VMess_alterId = t:option(Value, "VMess_alterId", translate("Alter ID"))
-VMess_alterId.default = 16
-VMess_alterId:depends("protocol", "vmess")
+alter_id = t:option(Value, "alter_id", translate("Alter ID"))
+alter_id.default = 16
+alter_id:depends("protocol", "vmess")
 
-VMess_level = t:option(Value, "VMess_level", translate("User Level"))
-VMess_level.default = 1
-VMess_level:depends("protocol", "vmess")
+vmess_level = t:option(Value, "vmess_level", translate("User Level"))
+vmess_level.default = 1
+vmess_level:depends("protocol", "vmess")
 
 transport = t:option(ListValue, "transport", translate("Transport"))
 transport:value("tcp", "TCP")

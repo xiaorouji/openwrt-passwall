@@ -11,13 +11,13 @@ local outbounds = {
 }
 
 if server.protocol == "vmess" then
-    if server.VMess_id then
+    if server.vmess_id then
         local clients = {}
-        for i = 1, #server.VMess_id do
+        for i = 1, #server.vmess_id do
             clients[i] = {
-                id = server.VMess_id[i],
-                level = tonumber(server.VMess_level),
-                alterId = tonumber(server.VMess_alterId)
+                id = server.vmess_id[i],
+                level = tonumber(server.vmess_level),
+                alterId = tonumber(server.alter_id)
             }
         end
         settings = {clients = clients}
@@ -70,78 +70,78 @@ if server.transit_node and server.transit_node ~= "nil" then
     if node and node ~= "nil" and node.type and node.type == "V2ray" then
         local transit_node = {
             tag = "transit",
-            protocol = node.v2ray_protocol or "vmess",
+            protocol = node.protocol or "vmess",
             mux = {
-                enabled = (node.v2ray_mux == "1") and true or false,
-                concurrency = (node.v2ray_mux_concurrency) and tonumber(node.v2ray_mux_concurrency) or 8
+                enabled = (node.mux == "1") and true or false,
+                concurrency = (node.mux_concurrency) and tonumber(node.mux_concurrency) or 8
             },
             -- 底层传输配置
-            streamSettings = (node.v2ray_protocol == "vmess") and {
-                network = node.v2ray_transport,
-                security = node.v2ray_stream_security,
-                tlsSettings = (node.v2ray_stream_security == "tls") and {
+            streamSettings = (node.protocol == "vmess") and {
+                network = node.transport,
+                security = node.stream_security,
+                tlsSettings = (node.stream_security == "tls") and {
                     serverName = node.tls_serverName,
                     allowInsecure = (node.tls_allowInsecure == "1") and true or false
                 } or nil,
-                tcpSettings = (node.v2ray_transport == "tcp") and {
+                tcpSettings = (node.transport == "tcp") and {
                     header = {
-                        type = node.v2ray_tcp_guise,
+                        type = node.tcp_guise,
                         request = {
-                            path = node.v2ray_tcp_guise_http_path or {"/"},
+                            path = node.tcp_guise_http_path or {"/"},
                             headers = {
-                                Host = node.v2ray_tcp_guise_http_host or {}
+                                Host = node.tcp_guise_http_host or {}
                             }
                         } or {}
                     }
                 } or nil,
-                kcpSettings = (node.v2ray_transport == "mkcp") and {
-                    mtu = tonumber(node.v2ray_mkcp_mtu),
-                    tti = tonumber(node.v2ray_mkcp_tti),
-                    uplinkCapacity = tonumber(node.v2ray_mkcp_uplinkCapacity),
-                    downlinkCapacity = tonumber(node.v2ray_mkcp_downlinkCapacity),
-                    congestion = (node.v2ray_mkcp_congestion == "1") and true or false,
-                    readBufferSize = tonumber(node.v2ray_mkcp_readBufferSize),
-                    writeBufferSize = tonumber(node.v2ray_mkcp_writeBufferSize),
-                    header = {type = node.v2ray_mkcp_guise}
+                kcpSettings = (node.transport == "mkcp") and {
+                    mtu = tonumber(node.mkcp_mtu),
+                    tti = tonumber(node.mkcp_tti),
+                    uplinkCapacity = tonumber(node.mkcp_uplinkCapacity),
+                    downlinkCapacity = tonumber(node.mkcp_downlinkCapacity),
+                    congestion = (node.mkcp_congestion == "1") and true or false,
+                    readBufferSize = tonumber(node.mkcp_readBufferSize),
+                    writeBufferSize = tonumber(node.mkcp_writeBufferSize),
+                    header = {type = node.mkcp_guise}
                 } or nil,
-                wsSettings = (node.v2ray_transport == "ws") and {
-                    path = node.v2ray_ws_path or "",
-                    headers = (node.v2ray_ws_host ~= nil) and {Host = node.v2ray_ws_host} or nil
+                wsSettings = (node.transport == "ws") and {
+                    path = node.ws_path or "",
+                    headers = (node.ws_host ~= nil) and {Host = node.ws_host} or nil
                 } or nil,
-                httpSettings = (node.v2ray_transport == "h2") and {
-                    path = node.v2ray_h2_path, host = node.v2ray_h2_host
+                httpSettings = (node.transport == "h2") and {
+                    path = node.h2_path, host = node.h2_host
                 } or nil,
-                dsSettings = (node.v2ray_transport == "ds") and {
-                    path = node.v2ray_ds_path
+                dsSettings = (node.transport == "ds") and {
+                    path = node.ds_path
                 } or nil,
-                quicSettings = (node.v2ray_transport == "quic") and {
-                    security = node.v2ray_quic_security,
-                    key = node.v2ray_quic_key,
-                    header = {type = node.v2ray_quic_guise}
+                quicSettings = (node.transport == "quic") and {
+                    security = node.quic_security,
+                    key = node.quic_key,
+                    header = {type = node.quic_guise}
                 } or nil
             } or nil,
             settings = {
-                vnext = (node.v2ray_protocol == "vmess") and {
+                vnext = (node.protocol == "vmess") and {
                     {
                         address = node.address,
                         port = tonumber(node.port),
                         users = {
                             {
-                                id = node.v2ray_VMess_id,
-                                alterId = tonumber(node.v2ray_VMess_alterId),
-                                level = tonumber(node.v2ray_VMess_level),
-                                security = node.v2ray_security
+                                id = node.vmess_id,
+                                alterId = tonumber(node.alter_id),
+                                level = tonumber(node.vmess_level),
+                                security = node.security
                             }
                         }
                     }
                 } or nil,
-                servers = (node.v2ray_protocol == "http" or node.v2ray_protocol == "socks" or node.v2ray_protocol == "shadowsocks") and {
+                servers = (node.protocol == "http" or node.protocol == "socks" or node.protocol == "shadowsocks") and {
                     {
                         address = node.address,
                         port = tonumber(node.port),
-                        method = node.v2ray_ss_encrypt_method,
+                        method = node.ss_encrypt_method,
                         password = node.password or "",
-                        ota = (node.v2ray_ss_ota == '1') and true or false,
+                        ota = (node.ss_ota == '1') and true or false,
                         users = (node.username and node.password) and {
                             {
                                 user = node.username or "",

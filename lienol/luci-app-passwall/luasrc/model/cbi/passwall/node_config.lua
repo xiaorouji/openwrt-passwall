@@ -301,18 +301,18 @@ kcp_opts.placeholder =
     "--crypt aes192 --key abc123 --mtu 1350 --sndwnd 128 --rcvwnd 1024 --mode fast"
 kcp_opts:depends("use_kcp", "1")
 
-VMess_id = s:option(Value, "VMess_id", translate("ID"))
-VMess_id.password = true
-VMess_id:depends("protocol", "vmess")
+vmess_id = s:option(Value, "vmess_id", translate("ID"))
+vmess_id.password = true
+vmess_id:depends("protocol", "vmess")
 
-VMess_alterId = s:option(Value, "VMess_alterId",
+alter_id = s:option(Value, "alter_id",
                                translate("Alter ID"))
-VMess_alterId:depends("protocol", "vmess")
+alter_id:depends("protocol", "vmess")
 
-VMess_level =
-    s:option(Value, "VMess_level", translate("User Level"))
-VMess_level.default = 1
-VMess_level:depends("protocol", "vmess")
+vmess_level =
+    s:option(Value, "vmess_level", translate("User Level"))
+vmess_level.default = 1
+vmess_level:depends("protocol", "vmess")
 
 stream_security = s:option(ListValue, "stream_security",
                                  translate("Transport Layer Encryption"),

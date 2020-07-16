@@ -181,9 +181,9 @@ for i = 1, 3 do
 end
 vmess_id:depends({ type = "V2ray", protocol = "vmess" })
 
-vmess_alterId = s:option(Value, "vmess_alterId", translate("Alter ID"))
-vmess_alterId.default = 16
-vmess_alterId:depends({ type = "V2ray", protocol = "vmess" })
+alter_id = s:option(Value, "alter_id", translate("Alter ID"))
+alter_id.default = 16
+alter_id:depends({ type = "V2ray", protocol = "vmess" })
 
 vmess_level = s:option(Value, "vmess_level", translate("User Level"))
 vmess_level.default = 1

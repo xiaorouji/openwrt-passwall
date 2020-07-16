@@ -101,9 +101,9 @@ local function gen_outbound(node, tag)
                         port = tonumber(node.port),
                         users = {
                             {
-                                id = node.VMess_id,
-                                alterId = tonumber(node.VMess_alterId),
-                                level = tonumber(node.VMess_level),
+                                id = node.vmess_id,
+                                alterId = tonumber(node.alter_id),
+                                level = tonumber(node.vmess_level),
                                 security = node.security
                             }
                         }
