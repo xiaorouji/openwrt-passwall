@@ -176,8 +176,8 @@ function gen_config(user)
                 settings = settings,
                 streamSettings = (user.protocol == "vmess") and {
                     network = user.transport,
-                    security = (user.tls_enable == '1') and "tls" or "none",
-                    tlsSettings = (user.tls_enable == '1') and {
+                    security = (user.stream_security == 'tls') and "tls" or "none",
+                    tlsSettings = (user.stream_security == 'tls') and {
                         disableSessionResumption = user.sessionTicket ~= "1" and true or false,
                         -- serverName = (user.tls_serverName),
                         allowInsecure = false,
