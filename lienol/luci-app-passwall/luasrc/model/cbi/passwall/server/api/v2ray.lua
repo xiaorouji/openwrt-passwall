@@ -15,7 +15,7 @@ function gen_config(user)
                 clients[i] = {
                     id = user.vmess_id[i],
                     level = tonumber(user.vmess_level),
-                    alterId = tonumber(user.vmess_alterId)
+                    alterId = tonumber(user.alter_id)
                 }
             end
             settings = {clients = clients}
@@ -130,9 +130,9 @@ function gen_config(user)
                             port = tonumber(node.port),
                             users = {
                                 {
-                                    id = node.VMess_id,
-                                    alterId = tonumber(node.VMess_alterId),
-                                    level = tonumber(node.VMess_level),
+                                    id = node.vmess_id,
+                                    alterId = tonumber(node.alter_id),
+                                    level = tonumber(node.vmess_level),
                                     security = node.security
                                 }
                             }
