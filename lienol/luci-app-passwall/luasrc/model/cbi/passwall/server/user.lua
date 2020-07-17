@@ -190,6 +190,30 @@ vmess_level.default = 1
 vmess_level:depends({ type = "V2ray", protocol = "vmess" })
 vmess_level:depends({ type = "V2ray", protocol = "shadowsocks" })
 
+stream_security = s:option(ListValue, "stream_security",
+                                 translate("Transport Layer Encryption"),
+                                 translate(
+                                     'Whether or not transport layer encryption is enabled, the supported options are "none" for unencrypted (default) and "TLS" for using TLS.'))
+stream_security:value("none", "none")
+stream_security:value("tls", "tls")
+stream_security.default = "tls"
+stream_security:depends({ type = "V2ray", protocol = "vmess", transport = "ws" })
+stream_security:depends({ type = "V2ray", protocol = "vmess", transport = "h2" })
+stream_security:depends("protocol", "shadowsocks")
+stream_security:depends("type", "Trojan-Go")
+
+-- [[ TLS部分 ]] --
+
+tls_sessionTicket = s:option(Flag, "tls_sessionTicket", translate("Session Ticket"))
+tls_sessionTicket.default = "0"
+tls_sessionTicket:depends("stream_security", "tls")
+
+tls_certificateFile = s:option(Value, "tls_certificateFile", translate("Public key absolute path"), translate("as:") .. "/etc/ssl/fullchain.pem")
+tls_certificateFile:depends("stream_security", "tls")
+
+tls_keyFile = s:option(Value, "tls_keyFile", translate("Private key absolute path"), translate("as:") .. "/etc/ssl/private.key")
+tls_keyFile:depends("stream_security", "tls")
+
 transport = s:option(ListValue, "transport", translate("Transport"))
 transport:value("tcp", "TCP")
 transport:value("mkcp", "mKCP")
@@ -198,6 +222,36 @@ transport:value("h2", "HTTP/2")
 transport:value("ds", "DomainSocket")
 transport:value("quic", "QUIC")
 transport:depends("protocol", "vmess")
+
+trojan_transport = s:option(ListValue, "trojan_transport", translate("Transport"))
+trojan_transport:value("original", "Original")
+trojan_transport:value("ws", "WebSocket")
+trojan_transport:value("h2", "HTTP/2")
+trojan_transport:value("h2+ws", "HTTP/2 & WebSocket")
+trojan_transport.default = "ws"
+trojan_transport:depends("type", "Trojan-Go")
+
+trojan_plugin = s:option(ListValue, "plugin_type", translate("Plugin Type"))
+trojan_plugin:value("plaintext", "Plain Text")
+trojan_plugin:value("shadowsocks", "ShadowSocks")
+trojan_plugin:value("other", "Other")
+trojan_plugin.default = "plaintext"
+trojan_plugin:depends({ stream_security = "none", trojan_transport = "original" })
+
+trojan_plugin_cmd = s:option(Value, "plugin_cmd", translate("Plugin Binary"))
+trojan_plugin_cmd.placeholder = "eg: /usr/bin/v2ray-plugin"
+trojan_plugin_cmd:depends({ plugin_type = "shadowsocks" })
+trojan_plugin_cmd:depends({ plugin_type = "other" })
+
+trojan_plugin_op = s:option(Value, "plugin_option", translate("Plugin Option"))
+trojan_plugin_op.placeholder = "eg: obfs=http;obfs-host=www.baidu.com"
+trojan_plugin_op:depends({ plugin_type = "shadowsocks" })
+trojan_plugin_op:depends({ plugin_type = "other" })
+
+trojan_plugin_arg = s:option(DynamicList, "plugin_arg", translate("Plugin Option Args"))
+trojan_plugin_arg.placeholder = "eg: [\"-config\", \"test.json\"]"
+trojan_plugin_arg:depends({ plugin_type = "shadowsocks" })
+trojan_plugin_arg:depends({ plugin_type = "other" })
 
 -- [[ TCP部分 ]]--
 
@@ -244,47 +298,31 @@ mkcp_writeBufferSize:depends("transport", "mkcp")
 
 -- [[ WebSocket部分 ]]--
 
-trojan_ws = s:option(Flag, "trojan_ws",
-                              translate("Trojan Websocket"))
-trojan_ws:depends("type", "Trojan-Go")
-
 ws_host = s:option(Value, "ws_host", translate("WebSocket Host"))
 ws_host:depends("transport", "ws")
 ws_host:depends("ss_transport", "ws")
-ws_host:depends("trojan_ws", "1")
+ws_host:depends("trojan_transport", "h2+ws")
+ws_host:depends("trojan_transport", "ws")
 
 ws_path = s:option(Value, "ws_path", translate("WebSocket Path"))
 ws_path:depends("transport", "ws")
 ws_path:depends("ss_transport", "ws")
-ws_path:depends("trojan_ws", "1")
-
--- [[ Trojan-Go Websocket ]] --
-
-ss_aead = s:option(Flag, "ss_aead", translate("Shadowsocks2"))
-ss_aead:depends("type", "Trojan-Go")
-ss_aead.default = "0"
-ss_aead.rmempty = false
-
-ss_aead_method = s:option(ListValue, "ss_aead_method", translate("Encrypt Method"))
-for _, v in ipairs(encrypt_methods_ss_aead) do ss_aead_method:value(v, v:upper()) end
-ss_aead_method.default = "aead_aes_128_gcm"
-ss_aead_method.rmempty = false
-ss_aead_method:depends("ss_aead", "1")
-
-ss_aead_pwd = s:option(Value, "ss_aead_pwd", translate("Password"))
-ss_aead_pwd.password = true
-ss_aead_pwd.rmempty = false
-ss_aead_pwd:depends("ss_aead", "1")
+ws_path:depends("trojan_transport", "h2+ws")
+ws_path:depends("trojan_transport", "ws")
 
 -- [[ HTTP/2部分 ]]--
 
-h2_host = s:option(DynamicList, "h2_host", translate("HTTP/2 Host"))
+h2_host = s:option(Value, "h2_host", translate("HTTP/2 Host"))
 h2_host:depends("transport", "h2")
 h2_host:depends("ss_transport", "h2")
+h2_host:depends("trojan_transport", "h2+ws")
+h2_host:depends("trojan_transport", "h2")
 
 h2_path = s:option(Value, "h2_path", translate("HTTP/2 Path"))
 h2_path:depends("transport", "h2")
 h2_path:depends("ss_transport", "h2")
+h2_path:depends("trojan_transport", "h2+ws")
+h2_path:depends("trojan_transport", "h2")
 
 -- [[ DomainSocket部分 ]]--
 
@@ -319,35 +357,23 @@ remote_port.datatype = "port"
 remote_port.default = "80"
 remote_port:depends("remote_enable", 1)
 
--- [[ TLS部分 ]] --
+ss_aead = s:option(Flag, "ss_aead", translate("Shadowsocks2"))
+ss_aead:depends("type", "Trojan-Go")
+ss_aead.default = "0"
 
-tls_enable = s:option(Flag, "tls_enable", "TLS/SSL")
-tls_enable:depends({ type = "V2ray", protocol = "vmess", transport = "ws" })
-tls_enable:depends({ type = "V2ray", protocol = "vmess", transport = "h2" })
-tls_enable:depends("type", "Trojan")
-tls_enable:depends("type", "Trojan-Go")
-tls_enable.default = "1"
-tls_enable.rmempty = false
+ss_aead_method = s:option(ListValue, "ss_aead_method", translate("Encrypt Method"))
+for _, v in ipairs(encrypt_methods_ss_aead) do ss_aead_method:value(v, v:upper()) end
+ss_aead_method.default = "aead_aes_128_gcm"
+ss_aead_method.rmempty = false
+ss_aead_method:depends("ss_aead", "1")
 
-tls_sessionTicket = s:option(Flag, "tls_sessionTicket", translate("Session Ticket"))
-tls_sessionTicket.default = "0"
-tls_sessionTicket:depends("tls_enable", "1")
-
-trojan_force_fp = s:option(ListValue, "fingerprint",
-                             translate("Finger Print")) trojan_force_fp:value("disable")
-trojan_force_fp.default = "disable"
-trojan_force_fp.rmempty = false
-trojan_force_fp:depends({ type = "Trojan-Go", tls_enable = "1" })
-
-tls_certificateFile = s:option(Value, "tls_certificateFile", translate("Public key absolute path"), translate("as:") .. "/etc/ssl/fullchain.pem")
-tls_certificateFile:depends("tls_enable", 1)
-
-tls_keyFile = s:option(Value, "tls_keyFile", translate("Private key absolute path"), translate("as:") .. "/etc/ssl/private.key")
-tls_keyFile:depends("tls_enable", 1)
+ss_aead_pwd = s:option(Value, "ss_aead_pwd", translate("Password"))
+ss_aead_pwd.password = true
+ss_aead_pwd.rmempty = false
+ss_aead_pwd:depends("ss_aead", "1")
 
 -- [[ Mux ]]--
 mux = s:option(Flag, "mux", translate("Mux"))
-mux:depends("type", "Trojan-Go")
 
 mux_concurrency = s:option(Value, "mux_concurrency",
                                  translate("Mux Concurrency"))
