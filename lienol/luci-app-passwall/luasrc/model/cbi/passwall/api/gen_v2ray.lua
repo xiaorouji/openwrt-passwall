@@ -109,10 +109,13 @@ local function gen_outbound(node, tag)
                         }
                     }
                 } or nil,
-                servers = (node.protocol == "socks" or node.protocol == "http") and {
+                servers = (node.protocol == "socks" or node.protocol == "http" or node.protocol == "shadowsocks") and {
                     {
                         address = node.address,
                         port = tonumber(node.port),
+                        method = node.v_ss_encrypt_method or nil,
+                        password = node.password or "",
+                        ota = node.ss_ota == '1' and true or false,
                         users = (node.username and node.password) and
                             {{user = node.username, pass = node.password}} or nil
                     }

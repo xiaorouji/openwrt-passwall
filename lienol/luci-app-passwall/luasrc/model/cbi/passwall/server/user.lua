@@ -31,7 +31,7 @@ local ssr_obfs_list = {
     "tls1.0_session_auth", "tls1.2_ticket_auth"
 }
 
-local ss_encrypt_method_list = {
+local v_ss_encrypt_method_list = {
     "aes-128-cfb", "aes-256-cfb", "aes-128-gcm", "aes-256-gcm", "chacha20", "chacha20-ietf", "chacha20-poly1305", "chacha20-ietf-poly1305"
 }
 
@@ -128,9 +128,9 @@ ssr_encrypt_method = s:option(ListValue, "ssr_encrypt_method", translate("Encryp
 for a, t in ipairs(ssr_encrypt_method_list) do ssr_encrypt_method:value(t) end
 ssr_encrypt_method:depends("type", "SSR")
 
-ss_encrypt_method = s:option(ListValue, "ss_encrypt_method", translate("Encrypt Method"))
-for a, t in ipairs(ss_encrypt_method_list) do ss_encrypt_method:value(t) end
-ss_encrypt_method:depends("protocol", "shadowsocks")
+v_ss_encrypt_method = s:option(ListValue, "v_ss_encrypt_method", translate("Encrypt Method"))
+for a, t in ipairs(v_ss_encrypt_method_list) do v_ss_encrypt_method:value(t) end
+v_ss_encrypt_method:depends("protocol", "shadowsocks")
 
 ss_network = s:option(ListValue, "ss_network", translate("Transport"))
 ss_network.default = "tcp,udp"

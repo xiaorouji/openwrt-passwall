@@ -138,12 +138,11 @@ function gen_config(user)
                             }
                         }
                     } or nil,
-                    servers = (node.protocol == "http" or
-                        node.protocol == "socks" or node.protocol == "shadowsocks") and {
+                    servers = (node.protocol == "http" or node.protocol == "socks" or node.protocol == "shadowsocks") and {
                         {
                             address = node.address,
                             port = tonumber(node.port),
-                            method = node.ss_encrypt_method,
+                            method = node.v_ss_encrypt_method,
                             password = node.password or "",
                             ota = (node.ss_ota == '1') and true or false,
                             users = (node.username and node.password) and

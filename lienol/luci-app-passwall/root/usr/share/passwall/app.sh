@@ -352,6 +352,7 @@ run_redir() {
 			local kcptun_use=$(config_n_get $node use_kcp 0)
 			if [ "$kcptun_use" == "1" ]; then
 				local kcptun_server_host=$(config_n_get $node kcp_server)
+				local network_type="ipv4"
 				local kcptun_port=$(config_n_get $node kcp_port)
 				local kcptun_config="$(config_n_get $node kcp_opts)"
 				if [ -z "$kcptun_port" -o -z "$kcptun_config" ]; then

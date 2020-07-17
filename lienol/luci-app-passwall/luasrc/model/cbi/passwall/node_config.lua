@@ -44,7 +44,7 @@ local ssr_obfs_list = {
     "tls1.0_session_auth", "tls1.2_ticket_auth"
 }
 
-local ss_encrypt_method_list = {
+local v_ss_encrypt_method_list = {
     "aes-128-cfb", "aes-256-cfb", "aes-128-gcm", "aes-256-gcm", "chacha20", "chacha20-ietf", "chacha20-poly1305", "chacha20-ietf-poly1305"
 }
 
@@ -228,10 +228,10 @@ security = s:option(ListValue, "security",
 for a, t in ipairs(security_list) do security:value(t) end
 security:depends("protocol", "vmess")
 
-ss_encrypt_method = s:option(ListValue, "ss_encrypt_method",
+v_ss_encrypt_method = s:option(ListValue, "v_ss_encrypt_method",
                              translate("Encrypt Method"))
-for a, t in ipairs(ss_encrypt_method_list) do ss_encrypt_method:value(t) end
-ss_encrypt_method:depends("protocol", "shadowsocks")
+for a, t in ipairs(v_ss_encrypt_method_list) do v_ss_encrypt_method:value(t) end
+v_ss_encrypt_method:depends("protocol", "shadowsocks")
 
 ss_ota = s:option(Flag, "ss_ota", translate("OTA"), translate(
                       "When OTA is enabled, V2Ray will reject connections that are not OTA enabled. This option is invalid when using AEAD encryption."))
