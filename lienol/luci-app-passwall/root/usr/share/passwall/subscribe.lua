@@ -317,7 +317,7 @@ local function processData(szType, content, add_mode)
 		result.type = "SSR"
 		result.address = hostInfo[1]
 		result.port = hostInfo[2]
-		result.protocol = hostInfo[3]
+		result.ssr_protocol = hostInfo[3]
 		result.ssr_encrypt_method = hostInfo[4]
 		result.obfs = hostInfo[5]
 		result.password = base64Decode(hostInfo[6])
