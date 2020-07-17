@@ -325,6 +325,12 @@ stream_security:depends("protocol", "vmess")
 stream_security:depends("protocol", "shadowsocks")
 stream_security:depends("type", "Trojan")
 stream_security:depends("type", "Trojan-Go")
+stream_security.validate = function(self, value)
+    if value == "none" and type:formvalue(arg[1]) == "Trojan" then
+        return nil, translate("'none' not supported for original Trojan.")
+    end
+    return value
+end
 
 -- [[ TLS部分 ]] --
 
