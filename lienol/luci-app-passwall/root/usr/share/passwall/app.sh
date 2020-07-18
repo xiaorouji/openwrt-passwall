@@ -258,7 +258,7 @@ run_socks() {
 		ln_start_bin $(find_bin trojan) trojan "-c $config_file"
 	elif [ "$type" == "trojan-go" ]; then
 		lua $API_GEN_TROJAN $node client $bind $local_port > $config_file
-		ln_start_bin $(find_bin trojan-go) trojan-go "-config $config_file"
+		ln_start_bin $(config_t_get global_app trojan_go_file $(find_bin trojan-go)) trojan-go "-config $config_file"
 	elif [ "$type" == "brook" ]; then
 		local protocol=$(config_n_get $node brook_protocol client)
 		local brook_tls=$(config_n_get $node brook_tls 0)
@@ -311,7 +311,7 @@ run_redir() {
 			ln_start_bin $(find_bin trojan) trojan "-c $config_file"
 		elif [ "$type" == "trojan-go" ]; then
 			lua $API_GEN_TROJAN $node nat "0.0.0.0" $local_port >$config_file
-			ln_start_bin $(find_bin trojan-go) trojan-go "-config $config_file"
+			ln_start_bin $(config_t_get global_app trojan_go_file $(find_bin trojan-go)) trojan-go "-config $config_file"
 		elif [ "$type" == "brook" ]; then
 			local protocol=$(config_n_get $node brook_protocol client)
 			if [ "$protocol" == "wsclient" ]; then
@@ -347,11 +347,12 @@ run_redir() {
 			done
 		elif [ "$type" == "trojan-go" ]; then
 			lua $API_GEN_TROJAN $node nat "0.0.0.0" $local_port > $config_file
-			ln_start_bin $(find_bin trojan-go) trojan-go "-config $config_file"
+			ln_start_bin $(config_t_get global_app trojan_go_file $(find_bin trojan-go)) trojan-go "-config $config_file"
 		else
 			local kcptun_use=$(config_n_get $node use_kcp 0)
 			if [ "$kcptun_use" == "1" ]; then
 				local kcptun_server_host=$(config_n_get $node kcp_server)
+				local network_type="ipv4"
 				local kcptun_port=$(config_n_get $node kcp_port)
 				local kcptun_config="$(config_n_get $node kcp_opts)"
 				if [ -z "$kcptun_port" -o -z "$kcptun_config" ]; then
@@ -463,7 +464,7 @@ clean_log() {
 
 start_crontab() {
 	touch /etc/crontabs/root
-	sed -i '/$CONFIG/d' /etc/crontabs/root >/dev/null 2>&1 &
+	sed -i "/$CONFIG/d" /etc/crontabs/root >/dev/null 2>&1 &
 	auto_on=$(config_t_get global_delay auto_on 0)
 	if [ "$auto_on" = "1" ]; then
 		time_off=$(config_t_get global_delay time_off)

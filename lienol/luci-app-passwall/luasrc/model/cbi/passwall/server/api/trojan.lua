@@ -8,9 +8,9 @@ function gen_config(user)
         local_port = tonumber(user.port),
         remote_addr = (user.remote_enable == "1" and user.remote_address) and user.remote_address or nil,
         remote_port = (user.remote_enable == "1" and user.remote_port) and user.remote_port or nil,
-        password = user.password,
+        password = { user.password },
         log_level = 1,
-        ssl = {
+        (user.stream_security == nil  or user.stream_security == "tls") and ssl = {
             cert = user.tls_certificateFile,
             key = user.tls_keyFile,
             key_password = "",
@@ -19,7 +19,6 @@ function gen_config(user)
             sni = "",
             verify = false,
             verify_hostname = false,
-            alpn = (user.trojan_ws == "1") and {} or {"h2", "http/1.1"},
             reuse_session = true,
             session_ticket = (user.tls_sessionTicket == "1") and true or false,
             prefer_server_cipher = true,
@@ -27,22 +26,26 @@ function gen_config(user)
             plain_http_response = "",
             curves = "",
             dhparam = ""
-        },
+        } or nil,
         udp_timeout = 60,
         disable_http_check = true,
-        mux = (user.mux == "1") and {
-            enabled = true,
-            concurrency = tonumber(user.mux_concurrency),
-            idle_timeout = 60,
+        tcp = {
+        transport_plugin = user.stream_security == "none" and user.trojan_transport == "original" and {
+            enabled = user.plugin_type ~= nil,
+            type = user.plugin_type or "plaintext",
+            command = user.plugin_type ~= "plaintext" and user.plugin_cmd or nil,
+            plugin_option = user.plugin_type ~= "plaintext" and user.plugin_option or nil,
+            arg = user.plugin_type ~= "plaintext" and { user.plugin_arg } or nil,
+            env = {}
         } or nil,
-        websocket = (user.trojan_ws == "1") and {
+        websocket = user.trojan_transport and user.trojan_transport:find('ws') and {
             enabled = true,
-            path = (user.v2ray_ws_path ~= nil) and user.v2ray_ws_path or "/",
-            hostname = (user.v2ray_ws_host ~= nil) and user.v2ray_ws_host or (user.tls_serverName ~= nil and user.tls_serverName or user.address)
+            path = (user.ws_path ~= nil) and user.ws_path or "/",
+            hostname = (user.ws_host ~= nil) and user.ws_host or (user.tls_serverName ~= nil and user.tls_serverName or user.address)
         } or nil,
         shadowsocks = (user.ss_aead == "1") and {
             enabled = true,
-            method = (user.ss_aead_method ~= nil) and user.ss_aead_method or "AEAD_AES_128_GCM",
+            method = (user.ss_aead_method ~= nil) and user.ss_aead_method or "aead_aes_128_gcm",
             password = (user.ss_aead_pwd ~= nil) and user.ss_aead_pwd or ""
         } or nil,
         tcp = {
