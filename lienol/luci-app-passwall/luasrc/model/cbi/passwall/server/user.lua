@@ -192,6 +192,7 @@ stream_security:depends({ type = "V2ray", protocol = "vmess", transport = "ws" }
 stream_security:depends({ type = "V2ray", protocol = "vmess", transport = "h2" })
 stream_security:depends({ type = "V2ray", protocol = "socks" })
 stream_security:depends({ type = "V2ray", protocol = "shadowsocks" })
+stream_security:depends("type", "Trojan")
 stream_security:depends("type", "Trojan-Go")
 
 -- [[ TLS部分 ]] --
@@ -213,9 +214,9 @@ transport:value("ws", "WebSocket")
 transport:value("h2", "HTTP/2")
 transport:value("ds", "DomainSocket")
 transport:value("quic", "QUIC")
-stream_security:depends({ type = "V2ray", protocol = "vmess" })
-stream_security:depends({ type = "V2ray", protocol = "socks" })
-stream_security:depends({ type = "V2ray", protocol = "shadowsocks" })
+transport:depends({ type = "V2ray", protocol = "vmess" })
+transport:depends({ type = "V2ray", protocol = "socks" })
+transport:depends({ type = "V2ray", protocol = "shadowsocks" })
 
 trojan_transport = s:option(ListValue, "trojan_transport", translate("Transport"))
 trojan_transport:value("original", "Original")

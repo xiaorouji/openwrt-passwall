@@ -10,7 +10,7 @@ function gen_config(user)
         remote_port = (user.remote_enable == "1" and user.remote_port) and user.remote_port or nil,
         password = { user.password },
         log_level = 1,
-        (user.stream_security == nil  or user.stream_security == "tls") and ssl = {
+        ssl = (user.stream_security == nil  or user.stream_security == "tls") and {
             cert = user.tls_certificateFile,
             key = user.tls_keyFile,
             key_password = "",
@@ -29,7 +29,6 @@ function gen_config(user)
         } or nil,
         udp_timeout = 60,
         disable_http_check = true,
-        tcp = {
         transport_plugin = user.stream_security == "none" and user.trojan_transport == "original" and {
             enabled = user.plugin_type ~= nil,
             type = user.plugin_type or "plaintext",
