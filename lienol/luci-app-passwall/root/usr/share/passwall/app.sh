@@ -85,6 +85,23 @@ get_node_host_ip() {
 	echo $ip
 }
 
+hosts_foreach() {
+	local __hosts
+	eval "__hosts=\$${1}"; shift 1
+	eval "__func=${1}"; shift 1
+	local __ret=1
+
+	[ -z "${__hosts}" ] && return 0
+	local __ip __port
+	for __host in $(echo $__hosts | sed 's/[ ,]/\n/g'); do
+		__ip=$(echo $__host | sed 's/\(^[^ :]*\).*$/\1/')
+		__port=$(echo $__host | sed -n 's/^[^:]*:\([0-9]*\).*$/\1/p')
+		eval "$__func \"${__host}\" \"\${__ip}\" \"\${__port:-$@}\""
+		__ret=$?
+		[ ${__ret} -ge ${ERROR_NO_CATCH:-1} ] && return ${__ret}
+	done
+}
+
 check_port_exists() {
 	port=$1
 	protocol=$2
@@ -123,13 +140,13 @@ ln_start_bin() {
 	local file=$1
 	[ "$file" != "null" ] && {
 		local bin=$2
-		local cmd=$3
+		shift 2
 		if [ -n "${TMP_BIN_PATH}/$bin" -a -f "${TMP_BIN_PATH}/$bin" ];then
-			${TMP_BIN_PATH}/$bin $cmd >/dev/null 2>&1 &
+			${TMP_BIN_PATH}/$bin $@ >/dev/null 2>&1 &
 		else
 			if [ -n "$file" -a -f "$file" ];then
 				ln -s $file ${TMP_BIN_PATH}/$bin
-				${TMP_BIN_PATH}/$bin $cmd >/dev/null 2>&1 &
+				${TMP_BIN_PATH}/$bin $@ >/dev/null 2>&1 &
 			else
 				echolog "找不到$bin主程序，无法启动！"
 			fi
@@ -192,7 +209,7 @@ load_config() {
 	}
 	
 	DNS_MODE=$(config_t_get global dns_mode pdnsd)
-	DNS_FORWARD=$(config_t_get global dns_forward 8.8.4.4)
+	DNS_FORWARD=$(config_t_get global dns_forward 8.8.4.4:53)
 	DNS_CACHE=$(config_t_get global dns_cache 1)
 	use_tcp_node_resolve_dns=0
 	use_udp_node_resolve_dns=0
@@ -532,11 +549,10 @@ start_dns() {
 	dns2socks)
 		DNS2SOCKS_SOCKS_SERVER=$(echo $(config_t_get global socks_server nil) | sed "s/#/:/g")
 		[ "$DNS2SOCKS_SOCKS_SERVER" != "nil" ] && {
-			DNS2SOCKS_FORWARD=$(echo $DNS_FORWARD | awk -F ',' '{print $1}')
-			[ -z "$DNS2SOCKS_FORWARD" ] && DNS2SOCKS_FORWARD="8.8.4.4"
+			DNS2SOCKS_FORWARD=$(echo ${DNS_FORWARD} | sed 's/\(^[^ ,]*\).*$/\1/')
 			[ "$DNS_CACHE" == "0" ] && local _cache="/d"
 			ln_start_bin $(find_bin dns2socks) dns2socks "$DNS2SOCKS_SOCKS_SERVER $DNS2SOCKS_FORWARD 127.0.0.1:$DNS_PORT $_cache"
-			echolog "DNS：dns2socks($DNS2SOCKS_FORWARD)..."
+			echolog "DNS：dns2socks(${DNS2SOCKS_FORWARD-D46.182.19.48:53})..."
 		}
 	;;
 	pdnsd)
@@ -547,7 +563,6 @@ start_dns() {
 			gen_pdnsd_config $DNS_PORT
 			ln_start_bin $(find_bin pdnsd) pdnsd "--daemon -c $pdnsd_dir/pdnsd.conf -d"
 			echolog "DNS：pdnsd + 使用TCP节点解析DNS（$DNS_FORWARD）..."
-			DNS_FORWARD=$(echo $DNS_FORWARD | sed 's/,/ /g')
 		fi
 	;;
 	chinadns-ng)
@@ -580,23 +595,21 @@ start_dns() {
 				ln_start_bin $(find_bin pdnsd) pdnsd "--daemon -c $pdnsd_dir/pdnsd.conf -d"
 				ln_start_bin $(find_bin chinadns-ng) chinadns-ng "-l $DNS_PORT -c $UP_CHINA_DNS -t 127.0.0.1#$other_port $gfwlist_param $chnlist_param $fair_mode"
 				echolog "DNS：ChinaDNS-NG + pdnsd($DNS_FORWARD)，国内DNS：$UP_CHINA_DNS"
-				DNS_FORWARD=$(echo $DNS_FORWARD | sed 's/,/ /g')
 			fi
 		elif [ "$up_trust_chinadns_ng_dns" == "dns2socks" ]; then
-			DNS2SOCKS_SOCKS_SERVER=$(echo $(config_t_get global socks_server nil) | sed "s/#/:/g")
+			DNS2SOCKS_SOCKS_SERVER=$(config_t_get global socks_server nil)
 			[ "$DNS2SOCKS_SOCKS_SERVER" != "nil" ] && {
-				DNS2SOCKS_FORWARD=$(echo $DNS_FORWARD | awk -F ',' '{print $1}')
-				[ -z "$DNS2SOCKS_FORWARD" ] && DNS2SOCKS_FORWARD="8.8.4.4"
+				DNS2SOCKS_FORWARD=$(echo $DNS_FORWARD | sed 's/\(^[^ ,]*\).*$/\1/')
 				[ "$DNS_CACHE" == "0" ] && local _cache="/d"
 				ln_start_bin $(find_bin dns2socks) dns2socks "$DNS2SOCKS_SOCKS_SERVER $DNS2SOCKS_FORWARD 127.0.0.1:$other_port $_cache"
 				ln_start_bin $(find_bin chinadns-ng) chinadns-ng "-l $DNS_PORT -c $UP_CHINA_DNS -t 127.0.0.1#$other_port $gfwlist_param $chnlist_param $fair_mode"
-				echolog "DNS：ChinaDNS-NG + dns2socks($DNS2SOCKS_FORWARD)，国内DNS：$UP_CHINA_DNS"
+				echolog "DNS：ChinaDNS-NG + dns2socks(${DNS2SOCKS_FORWARD:-D46.182.19.48:53})，国内DNS：$UP_CHINA_DNS"
 			}
 		elif [ "$up_trust_chinadns_ng_dns" == "udp" ]; then
+			china_ng_dns=$(echo $DNS_FORWARD | sed -e 's/:/#/g' -e 's/ /,/g' -e 's/,,/,/g')
 			use_udp_node_resolve_dns=1
-			ln_start_bin $(find_bin chinadns-ng) chinadns-ng "-l $DNS_PORT -c $UP_CHINA_DNS -t $DNS_FORWARD $gfwlist_param $chnlist_param $fair_mode"
-			echolog "DNS：ChinaDNS-NG，国内DNS：$UP_CHINA_DNS，可信DNS：$up_trust_chinadns_ng_dns，如果不能使用，请确保UDP节点已打开并且支持UDP转发。"
-			DNS_FORWARD=$(echo $DNS_FORWARD | sed 's/,/ /g')
+			ln_start_bin $(find_bin chinadns-ng) chinadns-ng "-l $DNS_PORT -c $UP_CHINA_DNS -t $china_ng_dns $gfwlist_param $chnlist_param $fair_mode"
+			echolog "DNS：ChinaDNS-NG，国内DNS：$UP_CHINA_DNS，可信DNS：$up_trust_chinadns_ng_dns[$china_ng_dns]，如果不能使用，请确保UDP节点已打开并且支持UDP转发。"
 		fi
 	;;
 	esac
@@ -707,22 +720,26 @@ gen_pdnsd_config() {
 		}
 		
 	EOF
-	
-	cat >> $pdnsd_dir/pdnsd.conf <<-EOF
-		server {
-			label = "node";
-			ip = $DNS_FORWARD;
-			edns_query = on;
-			port = 53;
-			timeout = 4;
-			interval = 10m;
-			uptest = none;
-			purge_cache = off;
-			caching = $_cache;
-		}
-		
-	EOF
-	
+
+	append_pdnsd_updns() {
+		[ -z "${2}" ] && echolog "略过错误配置的 DNS : [${1}]" && return 0
+		echolog "配置 pdnsd 的上游DNS[${2}:${3}]"
+		cat >> $pdnsd_dir/pdnsd.conf <<-EOF
+			server {
+				label = "node-${2}_${3}";
+				ip = ${1};
+				edns_query = on;
+				port = ${3};
+				timeout = 4;
+				interval = 10m;
+				uptest = none;
+				purge_cache = off;
+				caching = $_cache;
+			}
+		EOF
+	}
+	hosts_foreach DNS_FORWARD append_pdnsd_updns 53
+
 	use_tcp_node_resolve_dns=1
 }
 
