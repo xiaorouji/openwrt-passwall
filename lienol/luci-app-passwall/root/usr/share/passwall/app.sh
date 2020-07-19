@@ -566,6 +566,7 @@ start_dns() {
 		fi
 	;;
 	chinadns-ng)
+		UP_CHINA_DNS=$(echo $UP_CHINA_DNS | sed 's/:/#/g')
 		other_port=$(expr $DNS_PORT + 1)
 		[ -f "$RULES_PATH/gfwlist.conf" ] && cat $RULES_PATH/gfwlist.conf | sort | uniq | sed -e '/127.0.0.1/d' | sed 's/ipset=\/.//g' | sed 's/\/gfwlist//g' > $TMP_PATH/gfwlist.txt
 		[ -f "$TMP_PATH/gfwlist.txt" ] && {
