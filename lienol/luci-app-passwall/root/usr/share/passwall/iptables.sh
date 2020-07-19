@@ -30,6 +30,23 @@ comment() {
 	echo "-m comment --comment '$1'"
 }
 
+hosts_foreach() {
+	local __hosts
+	eval "__hosts=\$${1}"; shift 1
+	eval "__func=${1}"; shift 1
+	local __ret=1
+
+	[ -z "${__hosts}" ] && return 0
+	local __ip __port
+	for __host in $(echo $__hosts | sed 's/[ ,]/\n/g'); do
+		__ip=$(echo $__host | sed 's/\(^[^ :]*\).*$/\1/')
+		__port=$(echo $__host | sed -n 's/^[^:]*:\([0-9]*\).*$/\1/p')
+		eval "$__func \"${__host}\" \"\${__ip}\" \"\${__port:-$@}\""
+		__ret=$?
+		[ ${__ret} -ge ${ERROR_NO_CATCH:-1} ] && return ${__ret}
+	done
+}
+
 REDIRECT() {
 	local redirect="-j REDIRECT --to-ports $1"
 	[ "$2" == "TPROXY" ] && redirect="-j TPROXY --tproxy-mark 0x1/0x1 --on-port $1"
@@ -347,18 +364,14 @@ add_firewall_rule() {
 			blist_r=$(REDIRECT 1 MARK)
 			p_r=$(get_redirect_ipt $LOCALHOST_TCP_PROXY_MODE 1 MARK)
 		fi
-		[ "$use_tcp_node_resolve_dns" == 1 ] && [ -n "$DNS_FORWARD" ] && {
-			local updns_ip updns_port
-			for updns in $(echo $DNS_FORWARD | sed 's/[ ,]/\n/g'); do
-				updns_ip=$(echo $updns | sed 's/\(^[^ :]*\).*$/\1/')
-				updns_port=$(echo $updns | sed -n 's/^[^:]*:\([0-9]*\).*$/\1/p')
-				[ -z "$updns_ip" ] && continue
-				ipset test $IPSET_LANIPLIST $updns_ip 2>/dev/null
-				[ $? == 0 ] && continue
-				$ipt_tmp -I $dns_l 2 -p tcp -d $updns_ip --dport ${updns_port:-53} $dns_r
-				[ "$ipt_tmp" == "$ipt_m" ] && $ipt_tmp -I PSW_OUTPUT 2 -p tcp -d $updns_ip --dport ${updns_port:-53} $(REDIRECT 1 MARK)
-			done
+		_proxy_tcp_access() {
+			[ -n "${2}" ] && return 0
+			ipset test $IPSET_LANIPLIST ${2} 2>/dev/null
+			[ $? == 0 ] && return 0
+			$ipt_tmp -I $dns_l 2 -p tcp -d ${2} --dport ${3} $dns_r
+			[ "$ipt_tmp" == "$ipt_m" ] && $ipt_tmp -I PSW_OUTPUT 2 -p tcp -d ${2} --dport ${3} $(REDIRECT 1 MARK)
 		}
+		[ "$use_tcp_node_resolve_dns" == 1 ] && hosts_foreach DNS_FORWARD _proxy_tcp_access 53
 		$ipt_tmp -A OUTPUT -p tcp -j PSW_OUTPUT
 		[ "$TCP_NO_REDIR_PORTS" != "disable" ] && $ipt_tmp -A PSW_OUTPUT -p tcp -m multiport --dport $TCP_NO_REDIR_PORTS -j RETURN
 		$ipt_tmp -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST) $blist_r
@@ -403,19 +416,15 @@ add_firewall_rule() {
 	# 加载路由器自身代理 UDP
 	if [ "$UDP_NODE1" != "nil" ]; then
 		local UDP_NODE1_TYPE=$(echo $(config_n_get $UDP_NODE1 type) | tr 'A-Z' 'a-z')
-		[ "$use_udp_node_resolve_dns" == 1 ] && [ -n "$DNS_FORWARD" ] && {
-			local updns_ip updns_port
-			for updns in $(echo $DNS_FORWARD | sed 's/[ ,]/\n/g'); do
-				updns_ip=$(echo $updns | sed 's/\(^[^ :]*\).*$/\1/')
-				updns_port=$(echo $updns | sed -n 's/^[^:]*:\([0-9]*\).*$/\1/p')
-				[ -z "$updns_ip" ] && continue
-				ipset test $IPSET_LANIPLIST $updns_ip 2>/dev/null
-				[ $? == 0 ] && continue
-				local ADD_INDEX=2
-				$ipt_m -I PSW $ADD_INDEX -p udp -d $updns_ip --dport ${updns_port:-53} $(REDIRECT $UDP_REDIR_PORT1 TPROXY)
-				$ipt_m -I PSW_OUTPUT $ADD_INDEX -p udp -d $updns_ip --dport ${updns_port:-53} $(REDIRECT 1 MARK)
-			done
+		_proxy_udp_access() {
+			[ -n "${2}" ] && return 0
+			ipset test $IPSET_LANIPLIST ${2} 2>/dev/null
+			[ $? == 0 ] && return 0
+			local ADD_INDEX=2
+			$ipt_m -I PSW $ADD_INDEX -p udp -d ${2} --dport ${3} $(REDIRECT $UDP_REDIR_PORT1 TPROXY)
+			$ipt_m -I PSW_OUTPUT $ADD_INDEX -p udp -d ${2} --dport ${3} $(REDIRECT 1 MARK)
 		}
+		[ "$use_udp_node_resolve_dns" == 1 ] && hosts_foreach DNS_FORWARD _proxy_udp_access 53
 		$ipt_m -A OUTPUT -p udp -j PSW_OUTPUT
 		[ "$UDP_NO_REDIR_PORTS" != "disable" ] && $ipt_m -A PSW_OUTPUT -p udp -m multiport --dport $UDP_NO_REDIR_PORTS -j RETURN
 		$ipt_m -A PSW_OUTPUT -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST) $(REDIRECT 1 MARK)

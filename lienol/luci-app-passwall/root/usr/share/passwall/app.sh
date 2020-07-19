@@ -85,6 +85,23 @@ get_node_host_ip() {
 	echo $ip
 }
 
+hosts_foreach() {
+	local __hosts
+	eval "__hosts=\$${1}"; shift 1
+	eval "__func=${1}"; shift 1
+	local __ret=1
+
+	[ -z "${__hosts}" ] && return 0
+	local __ip __port
+	for __host in $(echo $__hosts | sed 's/[ ,]/\n/g'); do
+		__ip=$(echo $__host | sed 's/\(^[^ :]*\).*$/\1/')
+		__port=$(echo $__host | sed -n 's/^[^:]*:\([0-9]*\).*$/\1/p')
+		eval "$__func \"${__host}\" \"\${__ip}\" \"\${__port:-$@}\""
+		__ret=$?
+		[ ${__ret} -ge ${ERROR_NO_CATCH:-1} ] && return ${__ret}
+	done
+}
+
 check_port_exists() {
 	port=$1
 	protocol=$2
@@ -703,19 +720,16 @@ gen_pdnsd_config() {
 		}
 		
 	EOF
-	
-	local updns_ip updns_port
-	for updns in $(echo $DNS_FORWARD | sed 's/[ ,]/\n/g'); do
-		updns_ip=$(echo $updns | sed 's/\(^[^ :]*\).*$/\1/')
-		updns_port=$(echo $updns | sed -n 's/^[^:]*:\([0-9]*\).*$/\1/p')
-		[ -z "$updns_ip" ] && echolog "略过错误配置的 DNS : [$updns]" && continue
-		echolog "配置 pdnsd 的上游DNS: [${updns_ip}:${updns_port:-53}]"
+
+	append_pdnsd_updns() {
+		[ -z "${2}" ] && echolog "略过错误配置的 DNS : [${1}]" && return 0
+		echolog "配置 pdnsd 的上游DNS[${2}:${3}]"
 		cat >> $pdnsd_dir/pdnsd.conf <<-EOF
 			server {
-				label = "node-${updns}";
-				ip = ${updns_ip};
+				label = "node-${2}_${3}";
+				ip = ${1};
 				edns_query = on;
-				port = ${updns_port:-53};
+				port = ${3};
 				timeout = 4;
 				interval = 10m;
 				uptest = none;
@@ -723,7 +737,8 @@ gen_pdnsd_config() {
 				caching = $_cache;
 			}
 		EOF
-	done
+	}
+	hosts_foreach DNS_FORWARD append_pdnsd_updns 53
 
 	use_tcp_node_resolve_dns=1
 }
