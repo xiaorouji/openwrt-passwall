@@ -123,13 +123,13 @@ ln_start_bin() {
 	local file=$1
 	[ "$file" != "null" ] && {
 		local bin=$2
-		local cmd=$3
+		shift 2
 		if [ -n "${TMP_BIN_PATH}/$bin" -a -f "${TMP_BIN_PATH}/$bin" ];then
-			${TMP_BIN_PATH}/$bin $cmd >/dev/null 2>&1 &
+			${TMP_BIN_PATH}/$bin $@ >/dev/null 2>&1 &
 		else
 			if [ -n "$file" -a -f "$file" ];then
 				ln -s $file ${TMP_BIN_PATH}/$bin
-				${TMP_BIN_PATH}/$bin $cmd >/dev/null 2>&1 &
+				${TMP_BIN_PATH}/$bin $@ >/dev/null 2>&1 &
 			else
 				echolog "找不到$bin主程序，无法启动！"
 			fi
