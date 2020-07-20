@@ -33,8 +33,8 @@ comment() {
 hosts_foreach() {
 	local __hosts
 	eval "__hosts=\$${1}"; shift 1
-	eval "__func=${1}"; shift 1
-	eval "__default_port=${1}"; shift 1
+	local __func=${1}; shift 1
+	local __default_port=${1}; shift 1
 	local __ret=1
 
 	[ -z "${__hosts}" ] && return 0
