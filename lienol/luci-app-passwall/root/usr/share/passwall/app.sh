@@ -96,7 +96,7 @@ hosts_foreach() {
 	local __ip __port
 	for __host in $(echo $__hosts | sed 's/[ ,]/\n/g'); do
 		__ip=$(echo $__host | sed -n 's/\(^[^:#]*\).*$/\1/p')
-		__port=$(echo $__host | sed -n 's/^[^:#]*[:#]\([0-9]*\).*$/\1/p')
+		[ -n "${__default_port}" ] && __port=$(echo $__host | sed -n 's/^[^:#]*[:#]\([0-9]*\).*$/\1/p')
 		eval "$__func \"${__host}\" \"\${__ip}\" \"\${__port:-${__default_port}}\" $@"
 		__ret=$?
 		[ ${__ret} -ge ${ERROR_NO_CATCH:-1} ] && return ${__ret}
