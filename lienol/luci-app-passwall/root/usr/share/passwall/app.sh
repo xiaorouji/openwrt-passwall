@@ -748,7 +748,7 @@ gen_pdnsd_config() {
 		cat >> $pdnsd_dir/pdnsd.conf <<-EOF
 			server {
 				label = "node-${2}_${3}";
-				ip = ${1};
+				ip = ${2};
 				edns_query = on;
 				port = ${3};
 				timeout = 4;
