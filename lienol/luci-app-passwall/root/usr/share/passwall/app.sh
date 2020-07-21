@@ -20,7 +20,6 @@ LUA_API_PATH=/usr/lib/lua/luci/model/cbi/$CONFIG/api
 API_GEN_SS=$LUA_API_PATH/gen_shadowsocks.lua
 API_GEN_V2RAY=$LUA_API_PATH/gen_v2ray.lua
 API_GEN_TROJAN=$LUA_API_PATH/gen_trojan.lua
-
 echolog() {
 	local d="$(date "+%Y-%m-%d %H:%M:%S")"
 	echo -e "$d: $1" >>$LOG_FILE
@@ -103,22 +102,22 @@ hosts_foreach() {
 	done
 }
 
-get_first_host() {
+get_first_dns() {
 	local __hosts_val=${1}; shift 1
 	__first() {
 		[ -z "${2}" ] && return 0
-		echo "${2}:${3}"
+		echo "${2}#${3}"
 		return 1
 	}
 	eval "hosts_foreach \"${__hosts_val}\" __first $@"
 }
 
-get_last_host() {
+get_last_dns() {
 	local __hosts_val=${1}; shift 1
 	local __first __last
 	__every() {
 		[ -z "${2}" ] && return 0
-		__last="${2}:${3}"
+		__last="${2}#${3}"
 		__first=${__first:-${__last}}
 	}
 	eval "hosts_foreach \"${__hosts_val}\" __every $@"
@@ -253,9 +252,9 @@ load_config() {
 		UP_CHINA_DNS2=$(cat $RESOLVFILE 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | grep -v 0.0.0.0 | grep -v 127.0.0.1 | sed -n '2P')
 		[ -n "$UP_CHINA_DNS1" -a -n "$UP_CHINA_DNS2" ] && UP_CHINA_DNS="$UP_CHINA_DNS1,$UP_CHINA_DNS2"
 	else
-		UP_CHINA_DNS1=$(get_first_host UP_CHINA_DNS 53)
+		UP_CHINA_DNS1=$(get_first_dns UP_CHINA_DNS 53)
 		if [ -n "$UP_CHINA_DNS1" ]; then
-			UP_CHINA_DNS2=$(get_last_host UP_CHINA_DNS 53)
+			UP_CHINA_DNS2=$(get_last_dns UP_CHINA_DNS 53)
 			[ -n "$UP_CHINA_DNS2" ] && UP_CHINA_DNS="${UP_CHINA_DNS1},${UP_CHINA_DNS2}"
 		else
 			UP_CHINA_DNS1="119.29.29.29"
@@ -563,7 +562,7 @@ stop_crontab() {
 
 start_dns() {
 	DNS2SOCKS_SOCKS_SERVER=$(echo $(config_t_get global socks_server nil) | sed "s/#/:/g")
-	DNS2SOCKS_FORWARD=$(get_first_host DNS_FORWARD 53)
+	DNS2SOCKS_FORWARD=$(get_first_dns DNS_FORWARD 53 | sed 's/#/:/g')
 	case "$DNS_MODE" in
 	nonuse)
 		echolog "DNS：不使用，将会直接使用上级DNS！"
