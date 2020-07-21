@@ -8,7 +8,7 @@ function gen_config(user)
         local_port = tonumber(user.port),
         remote_addr = (user.remote_enable == "1" and user.remote_address) and user.remote_address or nil,
         remote_port = (user.remote_enable == "1" and user.remote_port) and user.remote_port or nil,
-        password = { user.password },
+        password = user.type == "Trojan-Go" and user.passwords or { user.password },
         log_level = 1,
         ssl = (user.stream_security == nil  or user.stream_security == "tls") and {
             cert = user.tls_certificateFile,
@@ -16,8 +16,8 @@ function gen_config(user)
             key_password = "",
             cipher = user.fingerprint == nil and cipher or (user.fingerprint == "disable" and cipher13 .. ":" .. cipher or ""),
             cipher_tls13 = user.fingerprint == nil and cipher13 or nil,
-            sni = "",
-            verify = false,
+            sni = user.tls_serverName,
+            verify = (user.tls_allowInsecure ~= "1") and true or false,
             verify_hostname = false,
             reuse_session = true,
             session_ticket = (user.tls_sessionTicket == "1") and true or false,
@@ -39,13 +39,13 @@ function gen_config(user)
         } or nil,
         websocket = user.trojan_transport and user.trojan_transport:find('ws') and {
             enabled = true,
-            path = (user.ws_path ~= nil) and user.ws_path or "/",
-            hostname = (user.ws_host ~= nil) and user.ws_host or (user.tls_serverName ~= nil and user.tls_serverName or user.address)
+            path = user.ws_path or "/",
+            host = user.ws_host or (user.tls_serverName or user.address)
         } or nil,
         shadowsocks = (user.ss_aead == "1") and {
             enabled = true,
-            method = (user.ss_aead_method ~= nil) and user.ss_aead_method or "aead_aes_128_gcm",
-            password = (user.ss_aead_pwd ~= nil) and user.ss_aead_pwd or ""
+            method = user.ss_aead_method or "aead_aes_128_gcm",
+            password = user.ss_aead_pwd or ""
         } or nil,
         tcp = {
             prefer_ipv4 = false,
