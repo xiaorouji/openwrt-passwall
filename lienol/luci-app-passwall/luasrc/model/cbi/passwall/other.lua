@@ -180,6 +180,4 @@ uci:foreach(appname, "nodes", function(e)
     end
 end)
 
-m:append(Template(appname .. "/other/footer"))
-
 return m

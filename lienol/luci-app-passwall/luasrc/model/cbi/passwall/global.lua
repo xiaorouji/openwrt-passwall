@@ -252,7 +252,7 @@ function s.create(e, t)
 end
 
 o = s:option(DummyValue, "status", translate("Status"))
-o.template = appname .. "/other/socks_status"
+o.template = appname .. "/global/socks_status"
 
 ---- Enable
 o = s:option(Flag, "enabled", translate("Enable"))
@@ -272,6 +272,8 @@ o.rmempty = false
 
 ---- Tips
 m:append(Template(appname .. "/global/tips"))
+
+m:append(Template(appname .. "/global/footer"))
 
 --[[
 local apply = luci.http.formvalue("cbi.apply")
