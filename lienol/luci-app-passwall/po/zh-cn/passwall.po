@@ -49,8 +49,8 @@ msgstr "TCP服务器"
 msgid "UDP Server"
 msgstr "UDP服务器"
 
-msgid "Global Settings"
-msgstr "全局设置"
+msgid "Main Settings"
+msgstr "节点选择"
 
 msgid "Basic Settings"
 msgstr "基本设置"
@@ -165,6 +165,9 @@ msgstr "如果勾选，则使用TCP节点解析DNS解决污染。"
 
 msgid "Socks Server"
 msgstr "Socks服务器"
+
+msgid "Misconfigured"
+msgstr "配置不当"
 
 msgid "Fair Mode"
 msgstr "公平模式"
