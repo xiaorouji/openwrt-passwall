@@ -348,7 +348,7 @@ add_firewall_rule() {
 			p_r=$(get_redirect_ipt $LOCALHOST_TCP_PROXY_MODE 1 MARK)
 		fi
 		_proxy_tcp_access() {
-			[ -n "${2}" ] && return 0
+			[ -n "${2}" ] || return 0
 			ipset test $IPSET_LANIPLIST ${2} 2>/dev/null
 			[ $? == 0 ] && return 0
 			$ipt_tmp -I $dns_l 2 -p tcp -d ${2} --dport ${3} $dns_r
@@ -400,7 +400,7 @@ add_firewall_rule() {
 	if [ "$UDP_NODE1" != "nil" ]; then
 		local UDP_NODE1_TYPE=$(echo $(config_n_get $UDP_NODE1 type) | tr 'A-Z' 'a-z')
 		_proxy_udp_access() {
-			[ -n "${2}" ] && return 0
+			[ -n "${2}" ] || return 0
 			ipset test $IPSET_LANIPLIST ${2} 2>/dev/null
 			[ $? == 0 ] && return 0
 			local ADD_INDEX=2
