@@ -744,7 +744,7 @@ gen_pdnsd_config() {
 			min_ttl = 1h;
 			max_ttl = 1w;
 			timeout = 10;
-			par_queries = 1;
+			par_queries = 2;
 			neg_domain_pol = on;
 			udpbufsize = 1024;
 			proc_limit = 2;
@@ -766,6 +766,7 @@ gen_pdnsd_config() {
 				interval = 10m;
 				uptest = none;
 				purge_cache = off;
+				proxy_only = on;
 				caching = $_cache;
 			}
 		EOF
