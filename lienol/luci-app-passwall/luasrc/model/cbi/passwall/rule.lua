@@ -54,7 +54,7 @@ s = m:section(TypedSection, "shunt_rules", "V2ray" .. translate("Shunt") .. tran
 s.template = "cbi/tblsection"
 s.anonymous = false
 s.addremove = true
-s.extedit = d.build_url("admin", "vpn", appname, "shunt_rules", "%s")
+s.extedit = d.build_url("admin", "services", appname, "shunt_rules", "%s")
 function s.create(e, t)
     TypedSection.create(e, t)
     luci.http.redirect(e.extedit:format(t))
