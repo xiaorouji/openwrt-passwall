@@ -1032,3 +1032,6 @@ msgstr "客户端文件不适合当前设备。"
 
 msgid "Can't move new file to path: %s"
 msgstr "无法移动新文件到：%s"
+
+msgid "DNS Settings"
+msgstr "DNS设置"
