@@ -10,12 +10,10 @@ local trojan_go = require "luci.model.cbi.passwall.api.trojan_go"
 
 function index()
 	if not nixio.fs.access("/etc/config/passwall") then return end
-	entry({"admin", "services"}, firstchild(), "services", 45).dependent = false
 	entry({"admin", "services", "passwall", "reset_config"}, call("reset_config")).leaf = true
 	entry({"admin", "services", "passwall", "show"}, call("show_menu")).leaf = true
 	entry({"admin", "services", "passwall", "hide"}, call("hide_menu")).leaf = true
-	if nixio.fs.access("/etc/config/passwall") and
-		nixio.fs.access("/etc/config/passwall_show") then
+	if nixio.fs.access("/etc/config/passwall_show") then
 		entry({"admin", "services", "passwall"}, alias("admin", "services", "passwall", "settings"), _("Pass Wall"), 1).dependent = true
 	end
 	entry({"admin", "services", "passwall", "settings"}, cbi("passwall/global"), _("Basic Settings"), 1).dependent = true
