@@ -182,13 +182,13 @@ load_acl() {
 			$ipt_m -A PSW $(comment "$remarks") $(factor $ip "-s") $(factor $mac "-m mac --mac-source") -p udp -j RETURN
 		done
 	}
-	
+
 	#  加载TCP默认代理模式
 	local ipt_tmp=$ipt_n
 	local is_tproxy msg
-	[ "$TCP_NODE1" != "nil" ] && [ "$TCP_PROXY_MODE" != "disable" ] && {
+	unset is_tproxy msg
+	if [ "$TCP_NODE1" != "nil" ] && [ "$TCP_PROXY_MODE" != "disable" ]; then
 		local TCP_NODE1_TYPE=$(echo $(config_n_get $TCP_NODE1 type) | tr 'A-Z' 'a-z')
-		unset is_tproxy
 		[ "$TCP_NODE1_TYPE" == "brook" ] && [ "$(config_n_get $TCP_NODE1 brook_protocol client)" == "client" ] && is_tproxy=1
 		[ "$TCP_NODE1_TYPE" == "trojan-go" ] && is_tproxy=1
 			msg="TCP默认代理：使用TCP节点1 [$(get_action_chain_name $TCP_PROXY_MODE)]"
@@ -199,23 +199,23 @@ load_acl() {
 			msg="${msg}(REDIRECT:${TCP_REDIR_PORT1})代理"
 		fi
 		[ "$TCP_NO_REDIR_PORTS" != "disable" ] && $ipt_tmp -A PSW $(comment "默认") -p tcp -m multiport --dport $TCP_NO_REDIR_PORTS -j RETURN && msg="除${TCP_NO_REDIR_PORTS}外的"
-					msg="${msg}所有端口"
+		msg="${msg}所有端口"
 		$ipt_tmp -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST) $(REDIRECT $TCP_REDIR_PORT1 $is_tproxy)
 		$ipt_tmp -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ipt $TCP_PROXY_MODE $TCP_REDIR_PORT1 $is_tproxy)
-	}
-	$ipt_tmp -A PSW $(comment "默认") -p tcp -j RETURN
-	echolog "${msg}"
-	
+		$ipt_tmp -A PSW $(comment "默认") -p tcp -j RETURN
+		echolog "${msg}"
+	fi
+
 	#  加载UDP默认代理模式
 	if [ "$UDP_NODE1" != "nil" ] && [ "$UDP_PROXY_MODE" != "disable" ]; then
 		msg="UDP默认代理：使用UDP节点1 [$(get_action_chain_name $UDP_PROXY_MODE)](TPROXY:${UDP_REDIR_PORT1})代理"
 		[ "$UDP_NO_REDIR_PORTS" != "disable" ] && $ipt_m -A PSW $(comment "默认") -p udp -m multiport --dport $UDP_NO_REDIR_PORTS -j RETURN && msg="除${TCP_NO_REDIR_PORTS}外的"
-					msg="${msg}所有端口"
+		msg="${msg}所有端口"
 		$ipt_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST) $(REDIRECT $UDP_REDIR_PORT1 TPROXY)
 		$ipt_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ipt $UDP_PROXY_MODE $UDP_REDIR_PORT1 TPROXY)
+		$ipt_m -A PSW $(comment "默认") -p udp -j RETURN
+		echolog "${msg}"
 	fi
-	$ipt_m -A PSW $(comment "默认") -p udp -j RETURN
-	echolog "${msg}"
 }
 
 filter_vpsip() {
