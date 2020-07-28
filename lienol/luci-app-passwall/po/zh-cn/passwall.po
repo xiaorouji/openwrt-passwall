@@ -67,7 +67,7 @@ msgstr "负载均衡"
 msgid "Enter interface"
 msgstr "进入界面"
 
-msgid "Rule"
+msgid "Rule Manage"
 msgstr "规则管理"
 
 msgid "Access control"
