@@ -1,10 +1,10 @@
 <%
-local trojan_go_version = require "luci.model.cbi.passwall.api.api".get_trojan_go_version()
+local kcptun_version = require "luci.model.cbi.passwall.api.api".get_kcptun_version()
 -%>
 
 <script type="text/javascript">
 	//<![CDATA[
-	var trojanInfo;
+	var kcptunInfo;
 	var tokenStr = '<%=token%>';
 	var noUpdateText = '<%:It is the latest version%>';
 	var updateSuccessText = '<%:Update successful%>';
@@ -17,22 +17,22 @@ local trojan_go_version = require "luci.model.cbi.passwall.api.api".get_trojan_g
 	var movingText = '<%:Moving...%>';
 
 	window.onload = function() {
-		var trojanCheckBtn = document.getElementById('_trojan-check_btn');
-		var trojanDetailElm = document.getElementById('_trojan-check_btn-detail');
+		var kcptunCheckBtn = document.getElementById('_kcptun-check_btn');
+		var kcptunDetailElm = document.getElementById('_kcptun-check_btn-detail');
 	};
 
-	function addPageNotice_trojan() {
+	function addPageNotice_kcptun() {
 		window.onbeforeunload = function(e) {
 			e.returnValue = updateInProgressNotice;
 			return updateInProgressNotice;
 		};
 	}
 
-	function removePageNotice_trojan() {
+	function removePageNotice_kcptun() {
 		window.onbeforeunload = undefined;
 	}
 
-	function onUpdateSuccess_trojan(btn) {
+	function onUpdateSuccess_kcptun(btn) {
 		alert(updateSuccessText);
 
 		if(btn) {
@@ -46,7 +46,7 @@ local trojan_go_version = require "luci.model.cbi.passwall.api.api".get_trojan_g
 		}, 1000);
 	}
 
-	function onRequestError_trojan(btn, errorMessage) {
+	function onRequestError_kcptun(btn, errorMessage) {
 		btn.disabled = false;
 		btn.value = btn.placeholder;
 
@@ -55,34 +55,34 @@ local trojan_go_version = require "luci.model.cbi.passwall.api.api".get_trojan_g
 		}
 	}
 
-	function onBtnClick_trojan(btn) {
-		if(trojanInfo === undefined) {
-			checkUpdate_trojan(btn);
+	function onBtnClick_kcptun(btn) {
+		if(kcptunInfo === undefined) {
+			checkUpdate_kcptun(btn);
 		} else {
-			doUpdate_trojan(btn);
+			doUpdate_kcptun(btn);
 		}
 	}
 
-	function checkUpdate_trojan(btn) {
+	function checkUpdate_kcptun(btn) {
 		btn.disabled = true;
 		btn.value = inProgressText;
 
-		addPageNotice_trojan();
+		addPageNotice_kcptun();
 
 		var ckeckDetailElm = document.getElementById(btn.id + '-detail');
 
-		XHR.get('<%=url([[admin]], [[vpn]], [[passwall]], [[trojan_go_check]])%>', {
+		XHR.get('<%=url([[admin]], [[services]], [[passwall]], [[kcptun_check]])%>', {
 			token: tokenStr,
 			arch: ''
 		}, function(x,json) {
-			removePageNotice_trojan();
+			removePageNotice_kcptun();
 
 			if(json.code) {
-				trojanInfo = undefined;
-				onRequestError_trojan(btn, json.error);
+				kcptunInfo = undefined;
+				onRequestError_kcptun(btn, json.error);
 			} else {
 				if(json.update) {
-					trojanInfo = json;
+					kcptunInfo = json;
 					btn.disabled = false;
 					btn.value = clickToUpdateText;
 					btn.placeholder = clickToUpdateText;
@@ -95,7 +95,7 @@ local trojan_go_version = require "luci.model.cbi.passwall.api.api".get_trojan_g
 								urlNode = '<a href="' + json.url.html + '" target="_blank">' + urlNode + '</a>';
 							}
 						}
-					ckeckDetailElm.innerHTML = urlNode;
+						ckeckDetailElm.innerHTML = urlNode;
 					}
 				} else {
 					btn.disabled = true;
@@ -105,48 +105,48 @@ local trojan_go_version = require "luci.model.cbi.passwall.api.api".get_trojan_g
 		},300);
 	}
 
-	function doUpdate_trojan(btn) {
+	function doUpdate_kcptun(btn) {
 		btn.disabled = true;
 		btn.value = downloadingText;
 
-		addPageNotice_trojan();
+		addPageNotice_kcptun();
 
-		var trojanUpdateUrl = '<%=url([[admin]], [[vpn]], [[passwall]], [[trojan_go_update]])%>';
+		var kcptunUpdateUrl = '<%=url([[admin]], [[services]], [[passwall]], [[kcptun_update]])%>';
 		// Download file
-		XHR.get(trojanUpdateUrl, {
+		XHR.get(kcptunUpdateUrl, {
 			token: tokenStr,
-			url: trojanInfo ? trojanInfo.url.download : ''
+			url: kcptunInfo ? kcptunInfo.url.download : ''
 		}, function(x,json) {
 			if(json.code) {
-				removePageNotice_trojan();
-				onRequestError_trojan(btn, json.error);
+				removePageNotice_kcptun();
+				onRequestError_kcptun(btn, json.error);
 			} else {
 				btn.value = decompressioningText;
 
 				// Extract file
-				XHR.get(trojanUpdateUrl, {
+				XHR.get(kcptunUpdateUrl, {
 					token: tokenStr,
 					task: 'extract',
 					file: json.file,
-					subfix: trojanInfo ? trojanInfo.type : ''
+					subfix: kcptunInfo ? kcptunInfo.type : ''
 				}, function(x,json) {
 					if(json.code) {
-						removePageNotice_trojan();
-						onRequestError_trojan(btn, json.error);
+						removePageNotice_kcptun();
+						onRequestError_kcptun(btn, json.error);
 					} else {
 						btn.value = movingText;
 
 						// Move file to target dir
-						XHR.get(trojanUpdateUrl, {
+						XHR.get(kcptunUpdateUrl, {
 							token: tokenStr,
 							task: 'move',
 							file: json.file
 						}, function(x,json) {
-							removePageNotice_trojan();
+							removePageNotice_kcptun();
 							if(json.code) {
-								onRequestError_trojan(btn, json.error);
+								onRequestError_kcptun(btn, json.error);
 							} else {
-								onUpdateSuccess_trojan(btn);
+								onUpdateSuccess_kcptun(btn);
 							}
 						},300)
 					}
@@ -158,14 +158,14 @@ local trojan_go_version = require "luci.model.cbi.passwall.api.api".get_trojan_g
 </script>
 
 <div class="cbi-value">
-	<label class="cbi-value-title">Trojan-Go
+	<label class="cbi-value-title">Kcptun
 		<%:Version%>
 	</label>
 	<div class="cbi-value-field">
 		<div class="cbi-value-description">
-			<span>【 <%=trojan_go_version%> 】</span>
-			<input class="cbi-button cbi-input-apply" type="button" id="_trojan-check_btn" onclick="onBtnClick_trojan(this);" value="<%:Manually update%>" />
-			<span id="_trojan-check_btn-detail"></span>
+			<span>【 <%=kcptun_version%> 】</span>
+			<input class="cbi-button cbi-input-apply" type="button" id="_kcptun-check_btn" onclick="onBtnClick_kcptun(this);" value="<%:Manually update%>" />
+			<span id="_kcptun-check_btn-detail"></span>
 		</div>
 	</div>
 </div>

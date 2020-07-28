@@ -27,7 +27,7 @@ local function gen_outbound(node, tag)
                 local node_type = (proto and proto ~= "nil") and proto or "socks"
                 local new_port = sys.exec(string.format("echo -n $(/usr/share/%s/app.sh get_new_port auto tcp)", appname))
                 node.port = new_port
-                sys.call(string.format("/usr/share/%s/app.sh run_socks %s %s %s %s %s", 
+                sys.call(string.format("/usr/share/%s/app.sh run_socks %s %s %s %s %s > /dev/null", 
                     appname,
                     node_id,
                     "127.0.0.1",
@@ -75,6 +75,7 @@ local function gen_outbound(node, tag)
                     congestion = (node.mkcp_congestion == "1") and true or false,
                     readBufferSize = tonumber(node.mkcp_readBufferSize),
                     writeBufferSize = tonumber(node.mkcp_writeBufferSize),
+                    seed = (node.mkcp_seed and node.mkcp_seed ~= "") and node.mkcp_seed or nil,
                     header = {type = node.mkcp_guise}
                 } or nil,
                 wsSettings = (node.transport == "ws") and {
@@ -122,6 +123,12 @@ local function gen_outbound(node, tag)
             }
         }
     end
+
+    if node.transport == "mkcp" or node.transport == "ds" or node.transport == "quic" then
+        result.streamSettings.security = "none"
+        result.streamSettings.tlsSettings = nil
+    end
+
     return result
 end
 

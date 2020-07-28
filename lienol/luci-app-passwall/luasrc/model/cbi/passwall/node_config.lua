@@ -66,13 +66,13 @@ local encrypt_methods_ss_aead = {
 }
 
 m = Map(appname, translate("Node Config"))
-m.redirect = d.build_url("admin", "vpn", appname)
+m.redirect = d.build_url("admin", "services", appname)
 
 s = m:section(NamedSection, arg[1], "nodes", "")
 s.addremove = false
 s.dynamic = false
 
-share = s:option(DummyValue, "share_url", translate("Share Current"))
+share = s:option(DummyValue, "passwall", translate("Share Current"))
 share.rawhtml  = true
 share.template = "passwall/node_list/link_share_man"
 share.value = arg[1]
@@ -414,25 +414,34 @@ for a, t in ipairs(header_type_list) do mkcp_guise:value(t) end
 mkcp_guise:depends("transport", "mkcp")
 
 mkcp_mtu = s:option(Value, "mkcp_mtu", translate("KCP MTU"))
+mkcp_mtu.default = "1350"
 mkcp_mtu:depends("transport", "mkcp")
 
 mkcp_tti = s:option(Value, "mkcp_tti", translate("KCP TTI"))
+mkcp_tti.default = "20"
 mkcp_tti:depends("transport", "mkcp")
 
 mkcp_uplinkCapacity = s:option(Value, "mkcp_uplinkCapacity", translate("KCP uplinkCapacity"))
+mkcp_uplinkCapacity.default = "5"
 mkcp_uplinkCapacity:depends("transport", "mkcp")
 
 mkcp_downlinkCapacity = s:option(Value, "mkcp_downlinkCapacity", translate("KCP downlinkCapacity"))
+mkcp_downlinkCapacity.default = "20"
 mkcp_downlinkCapacity:depends("transport", "mkcp")
 
 mkcp_congestion = s:option(Flag, "mkcp_congestion", translate("KCP Congestion"))
 mkcp_congestion:depends("transport", "mkcp")
 
 mkcp_readBufferSize = s:option(Value, "mkcp_readBufferSize", translate("KCP readBufferSize"))
+mkcp_readBufferSize.default = "1"
 mkcp_readBufferSize:depends("transport", "mkcp")
 
 mkcp_writeBufferSize = s:option(Value, "mkcp_writeBufferSize", translate("KCP writeBufferSize"))
+mkcp_writeBufferSize.default = "1"
 mkcp_writeBufferSize:depends("transport", "mkcp")
+
+mkcp_seed = s:option(Value, "mkcp_seed", translate("KCP Seed"))
+mkcp_seed:depends("transport", "mkcp")
 
 -- [[ WebSocket部分 ]]--
 ws_host = s:option(Value, "ws_host", translate("WebSocket Host"))
@@ -484,7 +493,7 @@ ss_aead:depends("type", "Trojan-Go")
 ss_aead.default = "0"
 
 ss_aead_method = s:option(ListValue, "ss_aead_method", translate("Encrypt Method"))
-for _, v in ipairs(encrypt_methods_ss_aead) do ss_aead_method:value(v, v:upper()) end
+for _, v in ipairs(encrypt_methods_ss_aead) do ss_aead_method:value(v, v) end
 ss_aead_method.default = "aead_aes_128_gcm"
 ss_aead_method:depends("ss_aead", "1")
 
