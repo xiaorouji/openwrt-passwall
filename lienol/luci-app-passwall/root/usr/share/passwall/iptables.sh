@@ -114,7 +114,7 @@ load_acl() {
 		local TCP_NODE UDP_NODE TCP_NODE_TYPE UDP_NODE_TYPE ipt_tmp is_tproxy tcp_port udp_port msg msg2
 		for item in $items; do
 			unset ip mac tcp_port udp_port is_tproxy msg
-			eval $(uci -q show $CONFIG.${item} | cut -d'.' -sf 3-)
+			eval $(uci -q show $CONFIG.${item} | cut -d'.' -sf 3- | grep -v '^$')
 			[ -z "${ip}${mac}" ] && continue
 			tcp_proxy_mode=${tcp_proxy_mode:-default}
 			udp_proxy_mode=${udp_proxy_mode:-default}
@@ -182,7 +182,7 @@ load_acl() {
 			$ipt_m -A PSW $(comment "$remarks") $(factor $ip "-s") $(factor $mac "-m mac --mac-source") -p udp -j RETURN
 		done
 	}
-	
+
 	#  加载TCP默认代理模式
 	local ipt_tmp=$ipt_n
 	local is_tproxy msg
@@ -199,7 +199,7 @@ load_acl() {
 			msg="${msg}(REDIRECT:${TCP_REDIR_PORT1})代理"
 		fi
 		[ "$TCP_NO_REDIR_PORTS" != "disable" ] && $ipt_tmp -A PSW $(comment "默认") -p tcp -m multiport --dport $TCP_NO_REDIR_PORTS -j RETURN && msg="除${TCP_NO_REDIR_PORTS}外的"
-					msg="${msg}所有端口"
+		msg="${msg}所有端口"
 		$ipt_tmp -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST) $(REDIRECT $TCP_REDIR_PORT1 $is_tproxy)
 		$ipt_tmp -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ipt $TCP_PROXY_MODE $TCP_REDIR_PORT1 $is_tproxy)
 	}
@@ -210,7 +210,7 @@ load_acl() {
 	if [ "$UDP_NODE1" != "nil" ] && [ "$UDP_PROXY_MODE" != "disable" ]; then
 		msg="UDP默认代理：使用UDP节点1 [$(get_action_chain_name $UDP_PROXY_MODE)](TPROXY:${UDP_REDIR_PORT1})代理"
 		[ "$UDP_NO_REDIR_PORTS" != "disable" ] && $ipt_m -A PSW $(comment "默认") -p udp -m multiport --dport $UDP_NO_REDIR_PORTS -j RETURN && msg="除${TCP_NO_REDIR_PORTS}外的"
-					msg="${msg}所有端口"
+		msg="${msg}所有端口"
 		$ipt_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST) $(REDIRECT $UDP_REDIR_PORT1 TPROXY)
 		$ipt_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ipt $UDP_PROXY_MODE $UDP_REDIR_PORT1 TPROXY)
 	fi
@@ -251,8 +251,8 @@ filter_node() {
 				msg="REDIRECT"
 			fi
 		else
-				echolog "  - 节点配置不正常，略过"
-				return 0
+			echolog "  - 节点配置不正常，略过"
+			return 0
 		fi
 
 		local ADD_INDEX=$FORCE_INDEX

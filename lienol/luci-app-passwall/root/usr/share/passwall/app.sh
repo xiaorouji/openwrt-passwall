@@ -838,7 +838,8 @@ start_haproxy() {
 				sorted_items="${sorted_items}${IFS}${lport} ${item}"
 			done
 
-			items=$(echo "${sort_items}" | sort -n | cut -d' ' -sf 2)
+			items=$(echo "${sorted_items}" | sort -n | cut -d' ' -sf 2)
+			
 			unset lport
 			[ -n "$items" ] && {
 				local haproxy_port lbss lbort lbweight export backup
@@ -846,25 +847,26 @@ start_haproxy() {
 				for item in ${items}; do
 					unset haproxy_port lbort bbackup
 
-					eval $(uci -q show $CONFI.${item} | cut -d'.' -sf 3-)
+					eval $(uci -q show $CONFIG.${item} | cut -d'.' -sf 3- | grep -v '^$')
 					get_ip_port_from "$lbss" bip bport
-					[ -z "$haproxy_port" ] || [ -z "$bport" ] || [ -z "$lbort" ] && echolog "  - 丢弃1个明显无效的节点" && continue
-
-					[ "$lbort" != "default" ] && bport=$lbort
+					
+					[ "$lbort" == "default" ] && lbort=$bport || bport=$lbort
+					[ -z "$haproxy_port" ] || [ -z "$bip" ] || [ -z "$lbort" ] && echolog "  - 丢弃1个明显无效的节点" && continue
 					[ "$backup" = "1" ] && bbackup="backup"
 
-				[ "$lport" == "${haproxy_port}" ] || {
-				lport=${haproxy_port}
-				echolog "  - 入口 0.0.0.0:${lport}..."
-				cat <<-EOF >> $HAPROXY_FILE
-					listen $lport
-					    mode tcp
-					    bind 0.0.0.0:$lport
-				EOF
-				}
-				cat <<-EOF >> $HAPROXY_FILE
-					    server bip:$bport $bip:$bport weight $lbweight check inter 1500 rise 1 fall 3 $bbackup
-				EOF
+					[ "$lport" == "${haproxy_port}" ] || {
+						lport=${haproxy_port}
+						echolog "  - 入口 0.0.0.0:${lport}..."
+						cat <<-EOF >> $HAPROXY_FILE
+							listen $lport
+							    mode tcp
+							    bind 0.0.0.0:$lport
+						EOF
+					}
+					
+					cat <<-EOF >> $HAPROXY_FILE
+						    server $bip:$bport $bip:$bport weight $lbweight check inter 1500 rise 1 fall 3 $bbackup
+					EOF
 
 					if [ "$export" != "0" ]; then
 						unset msg
@@ -895,6 +897,7 @@ start_haproxy() {
 			local auth=""
 			[ -n "$console_user" -a -n "console_password" ] && auth="stats auth $console_user:$console_password"
 			cat <<-EOF >> $HAPROXY_FILE
+			
 				listen console
 				    bind 0.0.0.0:$console_port
 				    mode http                   
