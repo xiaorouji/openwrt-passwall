@@ -7,3 +7,4 @@ config global
 	list open_basedir '/'
 	option https '0'
 	option enable '0'
+	option ipv6 '1'

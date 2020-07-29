@@ -59,6 +59,9 @@ end
 o = s:taboption("global", Flag, "enable", translate("Enable"))
 o.rmempty = false
 
+o = s:taboption("global", Flag, "ipv6", translate("Listen IPv6"))
+o.rmempty = false
+
 o = s:taboption("global", Value, "port", translate("Nginx Port"))
 o.datatype = "port"
 o.default = 8081
