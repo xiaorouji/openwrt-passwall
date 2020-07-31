@@ -26,7 +26,7 @@ function index()
 		entry({"admin", "services", appname, "haproxy"}, cbi("passwall/haproxy"), _("Load Balancing"), 94).leaf = true
 	end
 	entry({"admin", "services", appname, "node_subscribe"}, cbi("passwall/node_subscribe"), _("Node Subscribe"), 95).dependent = true
-	entry({"admin", "services", appname, "rule"}, cbi("passwall/rule"), _("Rule"), 96).leaf = true
+	entry({"admin", "services", appname, "rule"}, cbi("passwall/rule"), _("Rule Manage"), 96).leaf = true
 	entry({"admin", "services", appname, "app_update"}, cbi("passwall/app_update"), _("App Update"), 97).leaf = true
 	entry({"admin", "services", appname, "node_config"}, cbi("passwall/node_config")).leaf = true
 	entry({"admin", "services", appname, "shunt_rules"}, cbi("passwall/shunt_rules")).leaf = true
@@ -133,7 +133,7 @@ end
 function status()
 	-- local dns_mode = ucic:get(appname, "@global[0]", "dns_mode")
 	local e = {}
-	e.dns_mode_status = luci.sys.call("netstat -apn | grep ':7913 ' | grep 'LISTEN' >/dev/null") == 0
+	e.dns_mode_status = luci.sys.call("netstat -apn | grep ':7913 ' >/dev/null") == 0
 	e.haproxy_status = luci.sys.call(string.format("ps -w | grep -v grep | grep '%s/bin/' | grep haproxy >/dev/null", appname)) == 0
 	local tcp_node_num = ucic:get(appname, "@global_other[0]", "tcp_node_num") or 1
 	for i = 1, tcp_node_num, 1 do

@@ -19,6 +19,7 @@ config_t_get() {
 }
 
 gen_nginx_config() {
+	ipv6=$(config_t_get global ipv6 0)
 	port=$(config_t_get global port)
 	[ "$(config_t_get global https 0)" == "1" ] && {
 		port="$port ssl"
@@ -34,6 +35,8 @@ gen_nginx_config() {
 	    -e "s#|upload_max_filesize|#$upload_max_filesize#g" \
 	    -e "s#|temp_path|#$TEMP_PATH/temp#g" \
 	    /etc/$CONFIG/nginx.conf.template > $1
+		
+	[ "$ipv6" = "0" ] && sed -i '/listen \[::\]:/d' $1
 }
 
 gen_php_config() {
