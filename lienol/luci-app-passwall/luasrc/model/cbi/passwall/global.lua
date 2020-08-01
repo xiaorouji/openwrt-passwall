@@ -7,10 +7,12 @@ local appname = "passwall"
 
 local function is_installed(e) return ipkg.installed(e) end
 
+local function get_customed_path(e)
+    return api.uci_get_type("global_app", e .. "_file")
+end
+
 local function is_finded(e)
-    return
-        sys.exec("find /usr/*bin -iname " .. e .. " -type f") ~= "" and true or
-            false
+    return luci.sys.exec('type -t -p "%s/%s" "%s"' % {get_customed_path(e), e, e}) ~= "" and true or false
 end
 
 local nodes_table = {}

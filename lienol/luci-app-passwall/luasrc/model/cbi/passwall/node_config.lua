@@ -10,7 +10,7 @@ local function get_customed_path(e)
 end
 
 local function is_finded(e)
-    return luci.sys.exec("find /usr/*bin %s -iname %s -type f" % {get_customed_path(e), e}) ~= "" and true or false
+    return luci.sys.exec('type -t -p "%s/%s" "%s"' % {get_customed_path(e), e, e}) ~= "" and true or false
 end
 
 local function is_installed(e) return ipkg.installed(e) end
@@ -97,7 +97,7 @@ end
 if is_installed("brook") or is_finded("brook") then
     type:value("Brook", translate("Brook"))
 end
-if is_installed("trojan") or is_finded("trojan") then
+if is_installed("trojan") or is_finded("trojan") or is_finded("trojan-go")  then
     type:value("Trojan", translate("Trojan-Plus"))
 end
 if is_installed("trojan-go") or is_finded("trojan-go") then
