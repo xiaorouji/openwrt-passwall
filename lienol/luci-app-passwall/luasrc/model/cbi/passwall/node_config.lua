@@ -10,7 +10,7 @@ local function get_customed_path(e)
 end
 
 local function is_finded(e)
-    return luci.sys.exec('type -t -p "%s/%s" "%s"' % {get_customed_path(e), e, e}) ~= "" and true or false
+    return luci.sys.exec('type -t -p "%s/%s" -p "/usr/bin/v2ray/%s" "%s"' % {get_customed_path(e), e, e, e}) ~= "" and true or false
 end
 
 local function is_installed(e) return ipkg.installed(e) end
