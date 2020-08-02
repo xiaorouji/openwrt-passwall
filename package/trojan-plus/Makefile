@@ -6,7 +6,7 @@
 #
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=trojan
+PKG_NAME:=trojan-plus
 PKG_VERSION:=10.0.1
 PKG_RELEASE:=1
 
@@ -51,7 +51,7 @@ CMAKE_OPTIONS += \
 	-DBoost_DEBUG=ON \
 	-DBoost_NO_BOOST_CMAKE=ON
 
-define Package/trojan
+define Package/$(PKG_NAME)
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=An unidentifiable mechanism that helps you bypass GFW. It's compatible with original trojan with experimental features.
@@ -60,9 +60,9 @@ define Package/trojan
 		+boost +boost-system +boost-program_options
 endef
 
-define Package/trojan/install
+define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/trojan $(1)/usr/sbin/trojan
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/trojan $(1)/usr/sbin/$(PKG_NAME)
 endef
 
-$(eval $(call BuildPackage,trojan))
+$(eval $(call BuildPackage,$(PKG_NAME)))
