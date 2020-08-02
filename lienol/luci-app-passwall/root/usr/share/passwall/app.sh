@@ -767,7 +767,7 @@ add_dnsmasq() {
 		[ "${IS_DEFAULT_DNS}" = "1" ] && [ -n "${gfwlist}" ] && echolog "  - 不强制设置默认DNS(上级分配)！" && return
 		fi
 		cat <<-EOF > "/var/dnsmasq.d/dnsmasq-${CONFIG}.conf"
-			$(echo "${servers}" | sed 's/,/-n/g' | gen_dnsmasq_items)
+			$(echo "${servers}" | sed 's/,/\n/g' | gen_dnsmasq_items)
 			all-servers
 			no-poll
 			no-resolv
