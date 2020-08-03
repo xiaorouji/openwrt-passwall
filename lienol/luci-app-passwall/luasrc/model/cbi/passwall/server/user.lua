@@ -3,12 +3,11 @@ local ipkg = require("luci.model.ipkg")
 local uci = require"luci.model.uci".cursor()
 local api = require "luci.model.cbi.passwall.api.api"
 
-local function get_customed_path(e)
-    return api.uci_get_type("global_app", e .. "_file")
-end
-
 local function is_finded(e)
-    return luci.sys.exec('type -t -p "%s/%s" -p "/usr/bin/v2ray/%s" "%s"' % {get_customed_path(e), e, e, e}) ~= "" and true or false
+    local function get_customed_path(e)
+        return api.uci_get_type("global_app", e .. "_file")
+    end
+    return luci.sys.exec("find /usr/*bin %s -iname %s -type f" % {get_customed_path(e), e}) ~= "" and true or false
 end
 
 local function is_installed(e) return ipkg.installed(e) end

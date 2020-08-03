@@ -3,12 +3,12 @@ local api = require "luci.model.cbi.passwall.api.api"
 local dsp = require "luci.dispatcher"
 local ipkg = require "luci.model.ipkg"
 
-local function get_customed_path(e)
-    return api.uci_get_type("global_app", e .. "_file")
-end
-
 local function is_finded(e)
-    return luci.sys.exec('type -t -p "%s/%s" -p "/usr/bin/v2ray/%s" "%s"' % {get_customed_path(e), e, e, e}) ~= "" and true or false
+	local result=luci.sys.exec("find /usr/*bin -iname "..e.." -type f")
+	if result~="" then
+		return true
+	end
+	return false
 end
 
 local tcp_node_num = api.uci_get_type("global_other", "tcp_node_num", 1)
