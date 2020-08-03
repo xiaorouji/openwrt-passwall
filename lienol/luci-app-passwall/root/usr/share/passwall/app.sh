@@ -826,123 +826,120 @@ del_dnsmasq() {
 }
 
 start_haproxy() {
-	local haproxy_bin HAPROXY_PATH HAPROXY_FILE item lport sorted_items
-	[ "$(config_t_get global_haproxy balancing_enable 0)" == "1" ] && {
-		echolog "HAPROXY 负载均衡..."
-		haproxy_bin="$(first_type haproxy)"
-		[ -f "$haproxy_bin" ] && {
-			HAPROXY_PATH=$TMP_PATH/haproxy
-			mkdir -p $HAPROXY_PATH
-			HAPROXY_FILE=$HAPROXY_PATH/config.cfg
-			cat <<-EOF > $HAPROXY_FILE
-				global
-				    log         127.0.0.1 local2
-				    chroot      /usr/bin
-				    maxconn     60000
-				    stats socket  $HAPROXY_PATH/haproxy.sock
-				    user        root
-				    daemon
-					
-				defaults
-				    mode                    tcp
-				    log                     global
-				    option                  tcplog
-				    option                  dontlognull
-				    option http-server-close
-				    #option forwardfor       except 127.0.0.0/8
-				    option                  redispatch
-				    retries                 2
-				    timeout http-request    10s
-				    timeout queue           1m
-				    timeout connect         10s
-				    timeout client          1m
-				    timeout server          1m
-				    timeout http-keep-alive 10s
-				    timeout check           10s
-				    maxconn                 3000
-					
+	local haproxy_bin HAPROXY_PATH HAPROXY_FILE item items lport sort_items
+
+	[ "$(config_t_get global_haproxy balancing_enable 0)" != "1" ] && return
+	echolog "HAPROXY 负载均衡..."
+
+	HAPROXY_PATH=${TMP_PATH}/haproxy
+	mkdir -p "${HAPROXY_PATH}"
+	HAPROXY_FILE=${HAPROXY_PATH}/config.cfg
+	cat <<-EOF > "${HAPROXY_FILE}"
+		global
+		    log         127.0.0.1 local2
+		    chroot      /usr/bin
+		    maxconn     60000
+		    stats socket  ${HAPROXY_PATH}/haproxy.sock
+		    user        root
+		    daemon
+
+		defaults
+		    mode                    tcp
+		    log                     global
+		    option                  tcplog
+		    option                  dontlognull
+		    option http-server-close
+		    #option forwardfor       except 127.0.0.0/8
+		    option                  redispatch
+		    retries                 2
+		    timeout http-request    10s
+		    timeout queue           1m
+		    timeout connect         10s
+		    timeout client          1m
+		    timeout server          1m
+		    timeout http-keep-alive 10s
+		    timeout check           10s
+		    maxconn                 3000
+
+	EOF
+			
+	items=$(get_enabled_anonymous_secs "@haproxy_config")
+	for item in $items; do
+		lport=$(config_n_get ${item} haproxy_port 0)
+		[ "${lport}" = "0" ] && echolog "  - 丢弃1个明显无效的节点" && continue
+		sort_items="${sort_items}${IFS}${lport} ${item}"
+	done
+
+	items=$(echo "${sort_items}" | sort -n | cut -d' ' -sf 2)
+
+	unset lport
+	local haproxy_port lbss lbort lbweight export backup
+	local msg bip bport bline bbackup failcount interface
+	for item in ${items}; do
+		unset haproxy_port lbort bbackup
+
+		eval $(uci -q show "${CONFIG}.${item}" | cut -d'.' -sf 3- | grep -v '^$')
+		get_ip_port_from "$lbss" bip bport
+
+		[ "$lbort" = "default" ] && lbort=$bport || bport=$lbort
+		[ -z "$haproxy_port" ] || [ -z "$bip" ] || [ -z "$lbort" ] && echolog "  - 丢弃1个明显无效的节点" && continue
+		[ "$backup" = "1" ] && bbackup="backup"
+
+		[ "$lport" = "${haproxy_port}" ] || {
+			item="hasvalid"
+			lport=${haproxy_port}
+			echolog "  + 入口 0.0.0.0:${lport}..."
+			cat <<-EOF >> "${HAPROXY_FILE}"
+				listen $lport
+				    mode tcp
+				    bind 0.0.0.0:$lport
 			EOF
-			
-			items=$(get_enabled_anonymous_secs "@haproxy_config")
-			for item in $items; do
-				lport=$(config_n_get ${item} haproxy_port 0)
-				[ "${lport}" == "0" ] && echolog "  - 丢弃1个明显无效的节点" && continue
-				sorted_items="${sorted_items}${IFS}${lport} ${item}"
-			done
-
-			items=$(echo "${sorted_items}" | sort -n | cut -d' ' -sf 2)
-			
-			unset lport
-			[ -n "$items" ] && {
-				local haproxy_port lbss lbort lbweight export backup
-				local msg bip bport bline bbackup failcount interface
-				for item in ${items}; do
-					unset haproxy_port lbort bbackup
-
-					eval $(uci -q show $CONFIG.${item} | cut -d'.' -sf 3- | grep -v '^$')
-					get_ip_port_from "$lbss" bip bport
-					
-					[ "$lbort" == "default" ] && lbort=$bport || bport=$lbort
-					[ -z "$haproxy_port" ] || [ -z "$bip" ] || [ -z "$lbort" ] && echolog "  - 丢弃1个明显无效的节点" && continue
-					[ "$backup" = "1" ] && bbackup="backup"
-
-					[ "$lport" == "${haproxy_port}" ] || {
-						lport=${haproxy_port}
-						echolog "  - 入口 0.0.0.0:${lport}..."
-						cat <<-EOF >> $HAPROXY_FILE
-							listen $lport
-							    mode tcp
-							    bind 0.0.0.0:$lport
-						EOF
-					}
-					
-					cat <<-EOF >> $HAPROXY_FILE
-						    server $bip:$bport $bip:$bport weight $lbweight check inter 1500 rise 1 fall 3 $bbackup
-					EOF
-
-					if [ "$export" != "0" ]; then
-						unset msg
-						failcount=0
-						while [ "$failcount" -lt "3" ]; do
-							ubus list network.interface.${export} >/dev/null 2>&1
-							if [ $? -ne 0 ]; then
-								echolog "  - 找不到出口接口：$export，1分钟后再重试(${failcount}/3)，${bip}"
-								let "failcount++"
-								[ "$failcount" -ge 3 ] && exit 0
-								sleep 1m
-							else
-								route add -host ${bip} dev ${export}
-								msg="[$?] 从 ${export} 接口路由，"
-								echo "$bip" >>/tmp/balancing_ip
-								break
-							fi
-						done
-					fi
-					echolog "  - ${msg}出口节点：${bip}:${bport}，权重：${lbweight}"
-				done
-			}
-			
-			# 控制台配置
-			local console_port=$(config_t_get global_haproxy console_port)
-			local console_user=$(config_t_get global_haproxy console_user)
-			local console_password=$(config_t_get global_haproxy console_password)
-			local auth=""
-			[ -n "$console_user" -a -n "console_password" ] && auth="stats auth $console_user:$console_password"
-			cat <<-EOF >> $HAPROXY_FILE
-			
-				listen console
-				    bind 0.0.0.0:$console_port
-				    mode http                   
-				    stats refresh 30s
-				    stats uri /
-				    stats admin if TRUE
-				    $auth
-			EOF
-			
-			ln_start_bin "$haproxy_bin" haproxy "-f $HAPROXY_FILE"
-			echolog "  - 控制台端口：${console_port}/，${auth:-公开}"
 		}
-	}
+
+		cat <<-EOF >> "${HAPROXY_FILE}"
+			    server $bip:$bport $bip:$bport weight $lbweight check inter 1500 rise 1 fall 3 $bbackup
+		EOF
+
+		if [ "$export" != "0" ]; then
+			unset msg
+			failcount=0
+			while [ "$failcount" -lt "3" ]; do
+				ubus list network.interface.${export} >/dev/null 2>&1
+				if [ $? -ne 0 ]; then
+					let "failcount++"
+					echolog "  - 找不到出口接口：$export，1分钟后再重试(${failcount}/3)，${bip}"
+					[ "$failcount" -ge 3 ] && exit 0
+					sleep 1m
+				else
+					route add -host ${bip} dev ${export}
+					msg="[$?] 从 ${export} 接口路由，"
+					echo "$bip" >>/tmp/balancing_ip
+					break
+				fi
+			done
+		fi
+		echolog "  | - ${msg}出口节点：${bip}:${bport}，权重：${lbweight}"
+	done
+
+	# 控制台配置
+	local console_port=$(config_t_get global_haproxy console_port)
+	local console_user=$(config_t_get global_haproxy console_user)
+	local console_password=$(config_t_get global_haproxy console_password)
+	local auth=""
+	[ -n "$console_user" ] && [ -n "$console_password" ] && auth="stats auth $console_user:$console_password"
+	cat <<-EOF >> "${HAPROXY_FILE}"
+		listen console
+		    bind 0.0.0.0:$console_port
+		    mode http
+		    stats refresh 30s
+		    stats uri /
+		    stats admin if TRUE
+		    $auth
+	EOF
+
+	[ "${item}" != "hasvalid" ] && echolog "  - 没有发现任何有效节点信息..." && return 0
+	ln_start_bin "$(first_type haproxy)" haproxy "-f ${HAPROXY_FILE}"
+	echolog "  * 控制台端口：${console_port}/，${auth:-公开}"
 }
 
 kill_all() {
