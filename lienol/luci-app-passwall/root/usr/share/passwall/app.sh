@@ -685,11 +685,11 @@ start_dns() {
 			echolog "DNS：ChinaDNS-NG，国内DNS：$china_ng_chn，可信DNS：$up_trust_chinadns_ng_dns，$china_ng_gfw"
 			echolog "  - 如非直连地址，请确保UDP节点已打开并且支持UDP转发。"
 		fi
+	;;
 	*)
 		TUN_DNS="$(echo ${DNS_MODE} | sed 's/:/#/g')"
 		DNS_MODE="other_dns"
 		echolog "可信DNS：指定DNS服务器(支持UDP查询)解析域名：${TUN_DNS}"
-	;;
 	;;
 	esac
 }
