@@ -17,6 +17,8 @@ DNSMASQ_PATH=/etc/dnsmasq.d
 RESOLVFILE=/tmp/resolv.conf.d/resolv.conf.auto
 DNS_PORT=7913
 TUN_DNS="127.0.0.1#${DNS_PORT}"
+IS_DEFAULT_DNS=
+LOCAL_DNS=
 NO_PROXY=
 LUA_API_PATH=/usr/lib/lua/luci/model/cbi/$CONFIG/api
 API_GEN_SS=$LUA_API_PATH/gen_shadowsocks.lua
@@ -280,7 +282,7 @@ load_config() {
 	}
 	
 	DNS_MODE=$(config_t_get global dns_mode pdnsd)
-	DNS_FORWARD=$(config_t_get global dns_forward 8.8.4.4:53)
+	DNS_FORWARD=$(config_t_get global dns_forward 8.8.4.4:53 | sed 's/:/#/g')
 	DNS_CACHE=$(config_t_get global dns_cache 1)
 	use_tcp_node_resolve_dns=0
 	use_udp_node_resolve_dns=0
@@ -290,24 +292,24 @@ load_config() {
 	else
 		process=$(config_t_get global_forwarding process)
 	fi
-	UP_CHINA_DNS=$(config_t_get global up_china_dns dnsbyisp)
-	[ "$UP_CHINA_DNS" == "default" ] && IS_DEFAULT_CHINA_DNS=1
-	[ ! -f "$RESOLVFILE" -o ! -s "$RESOLVFILE" ] && RESOLVFILE=/tmp/resolv.conf.auto
-	if [ "$UP_CHINA_DNS" == "dnsbyisp" -o "$UP_CHINA_DNS" == "default" ]; then
-		UP_CHINA_DNS1=$(cat $RESOLVFILE 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | grep -v 0.0.0.0 | grep -v 127.0.0.1 | sed -n '1P')
-		DEFAULT_DNS1="$UP_CHINA_DNS1"
-		[ -z "$UP_CHINA_DNS1" ] && UP_CHINA_DNS1="119.29.29.29"
-		UP_CHINA_DNS="$UP_CHINA_DNS1"
-		UP_CHINA_DNS2=$(cat $RESOLVFILE 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | grep -v 0.0.0.0 | grep -v 127.0.0.1 | sed -n '2P')
-		[ -n "$UP_CHINA_DNS1" -a -n "$UP_CHINA_DNS2" ] && UP_CHINA_DNS="$UP_CHINA_DNS1,$UP_CHINA_DNS2"
+	LOCAL_DNS=$(config_t_get global up_china_dns dnsbyisp)
+	[ "$LOCAL_DNS" = "default" ] && IS_DEFAULT_DNS=1
+	[ -f "${RESOLVFILE}" ] && [ -s "${RESOLVFILE}" ] || RESOLVFILE=/tmp/resolv.conf.auto
+	if [ "$IS_DEFAULT_DNS" = "1" ]; then
+		LOCAL_DNS1=$(cat $RESOLVFILE 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | grep -v 0.0.0.0 | grep -v 127.0.0.1 | sed -n '1P')
+		DEFAULT_DNS1="$LOCAL_DNS1"
+		[ -z "$LOCAL_DNS1" ] && LOCAL_DNS1="119.29.29.29"
+		LOCAL_DNS="$LOCAL_DNS1"
+		LOCAL_DNS2=$(cat $RESOLVFILE 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | grep -v 0.0.0.0 | grep -v 127.0.0.1 | sed -n '2P')
+		[ -n "$LOCAL_DNS1" -a -n "$LOCAL_DNS2" ] && LOCAL_DNS="$LOCAL_DNS1,$LOCAL_DNS2"
 	else
-		UP_CHINA_DNS1=$(get_first_dns UP_CHINA_DNS 53)
-		if [ -n "$UP_CHINA_DNS1" ]; then
-			UP_CHINA_DNS2=$(get_last_dns UP_CHINA_DNS 53)
-			[ -n "$UP_CHINA_DNS2" ] && UP_CHINA_DNS="${UP_CHINA_DNS1},${UP_CHINA_DNS2}"
+		LOCAL_DNS1=$(get_first_dns LOCAL_DNS 53)
+		if [ -n "$LOCAL_DNS1" ]; then
+			LOCAL_DNS2=$(get_last_dns LOCAL_DNS 53)
+			[ -n "$LOCAL_DNS2" ] && LOCAL_DNS="${LOCAL_DNS1},${LOCAL_DNS2}"
 		else
-			UP_CHINA_DNS1="119.29.29.29"
-			UP_CHINA_DNS=$UP_CHINA_DNS1
+			LOCAL_DNS1="119.29.29.29"
+			LOCAL_DNS=$LOCAL_DNS1
 		fi
 	fi
 	PROXY_IPV6=$(config_t_get global_forwarding proxy_ipv6 0)
@@ -642,7 +644,7 @@ start_dns() {
 		fi
 	;;
 	chinadns-ng)
-		local china_ng_chn=$(echo $UP_CHINA_DNS | sed 's/:/#/g')
+		local china_ng_chn=$(echo $LOCAL_DNS | sed 's/:/#/g')
 		local china_ng_gfw=$(echo $DNS_FORWARD | sed 's/:/#/g')
 		other_port=$(expr $DNS_PORT + 1)
 		[ -f "$RULES_PATH/gfwlist.conf" ] && cat $RULES_PATH/gfwlist.conf | sort | uniq | sed -e '/127.0.0.1/d' | sed 's/ipset=\/.//g' | sed 's/\/gfwlist//g' > $TMP_PATH/gfwlist.txt
@@ -706,11 +708,11 @@ add_dnsmasq() {
 	}
 	
 	[ "$DNS_MODE" != "nonuse" ] && {
-		[ "${chinadns_mode}" = "0" ] && fwd_dns="${UP_CHINA_DNS}"
+		[ "${chinadns_mode}" = "0" ] && fwd_dns="${LOCAL_DNS}"
 		cat "${RULES_PATH}/direct_host" | sort -u | gen_dnsmasq_items "whitelist" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/direct_host.conf"
 		echolog "  - [$?]域名白名单(whitelist)：${fwd_dns:-默认}"
 
-		fwd_dns="${UP_CHINA_DNS}"
+		fwd_dns="${LOCAL_DNS}"
 		hosts_foreach "servers" host_from_url | grep -v "google.c" | grep '[a-zA-Z]$' | sort -u | gen_dnsmasq_items "vpsiplist" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/vpsiplist_host.conf"
 		echolog "  - [$?]节点列表中的域名(vpsiplist)：${fwd_dns:-默认}"
 
@@ -734,9 +736,9 @@ add_dnsmasq() {
 		}
 	}
 	
-	if [ -z "${IS_DEFAULT_CHINA_DNS}" ] || [ "${IS_DEFAULT_CHINA_DNS}" = 0 ]; then
+	if [ "${IS_DEFAULT_CHINA_DNS}" != "1" ]; then
 		servers="${TUN_DNS}"
-		[ "$DNS_MODE" != "chinadns-ng" ] && servers="${UP_CHINA_DNS1},${UP_CHINA_DNS2}"
+		[ "$DNS_MODE" != "chinadns-ng" ] && servers="${LOCAL_DNS}"
 		cat <<-EOF > "/var/dnsmasq.d/dnsmasq-${CONFIG}.conf"
 			$(echo "${servers}" | sed 's/,/\n/g' | gen_dnsmasq_items)
 			all-servers
@@ -749,7 +751,7 @@ add_dnsmasq() {
 			local tmp=$(get_host_ip ipv4 www.baidu.com 1)
 			[ -z "$tmp" ] && {
 				cat <<-EOF > /var/dnsmasq.d/dnsmasq-$CONFIG.conf
-					server=$UP_CHINA_DNS1
+					server=$LOCAL_DNS1
 					no-poll
 					no-resolv
 				EOF
@@ -792,10 +794,10 @@ gen_pdnsd_config() {
 		}
 		
 	EOF
+		echolog "  - [$?]监听：127.0.0.1:${1}"
 
 	append_pdnsd_updns() {
 		[ -z "${2}" ] && echolog "  - 略过错误 : ${1}" && return 0
-		echolog "  - 上游DNS：${2}:${3}"
 		cat >> $pdnsd_dir/pdnsd.conf <<-EOF
 			server {
 				label = "node-${2}_${3}";
@@ -810,6 +812,7 @@ gen_pdnsd_config() {
 				caching = $_cache;
 			}
 		EOF
+		echolog "  - [$?]上游DNS：${2}:${3}"
 	}
 	hosts_foreach DNS_FORWARD append_pdnsd_updns 53
 
@@ -943,7 +946,7 @@ start_haproxy() {
 }
 
 kill_all() {
-	kill -9 $(pidof $@) >/dev/null 2>&1 &
+	kill -9 $(pidof "$@") >/dev/null 2>&1 &
 }
 
 force_stop() {
