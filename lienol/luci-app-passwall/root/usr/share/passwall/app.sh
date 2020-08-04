@@ -19,7 +19,7 @@ DNS_PORT=7913
 TUN_DNS="127.0.0.1#${DNS_PORT}"
 IS_DEFAULT_DNS=
 LOCAL_DNS=
-DEFAULT_DNS1=
+DEFAULT_DNS=
 NO_PROXY=
 LUA_API_PATH=/usr/lib/lua/luci/model/cbi/$CONFIG/api
 API_GEN_SS=$LUA_API_PATH/gen_shadowsocks.lua
@@ -295,12 +295,11 @@ load_config() {
 	fi
 	LOCAL_DNS=$(config_t_get global up_china_dns dnsbyisp | sed 's/:/#/g')
 	[ -f "${RESOLVFILE}" ] && [ -s "${RESOLVFILE}" ] || RESOLVFILE=/tmp/resolv.conf.auto
-	DEFAULT_DNS1=$(cat $RESOLVFILE 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | grep -v 0.0.0.0 | grep -v 127.0.0.1 | sed -n '1P')
+	DEFAULT_DNS
+=$(cat "${RESOLVFILE}" 2>/dev/null | sed -n 's/^nameserver[ \t]*\([^ ]*\)$/\1/p' | grep -v "0.0.0.0" | grep -v "127.0.0.1" | grep -v "^::$" | sed 's/\n/,/g')
 	if [ "${LOCAL_DNS}" = "default" ]; then
 		IS_DEFAULT_DNS=1
-		local_dns1="${DEFAULT_DNS1:-119.29.29.29}"
-		local_dns2=$(cat $RESOLVFILE 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | grep -v 0.0.0.0 | grep -v 127.0.0.1 | sed -n '2P')
-		LOCAL_DNS="${local_dns1}${local_dns2:+,${local_dns2}}"
+		LOCAL_DNS="${DEFAULT_DNS:-119.29.29.29}"
 	fi
 	PROXY_IPV6=$(config_t_get global_forwarding proxy_ipv6 0)
 	mkdir -p /var/etc $TMP_PATH $TMP_BIN_PATH $TMP_ID_PATH $TMP_PORT_PATH
@@ -737,7 +736,7 @@ add_dnsmasq() {
 		EOF
 		echolog "  - 默认DNS：${servers}"
 	else
-		[ -z "${DEFAULT_DNS1}" ] && {
+		[ -z "${DEFAULT_DNS}" ] && {
 			local tmp=$(get_host_ip ipv4 www.baidu.com 1)
 			[ -z "$tmp" ] && {
 				cat <<-EOF > /var/dnsmasq.d/dnsmasq-$CONFIG.conf
