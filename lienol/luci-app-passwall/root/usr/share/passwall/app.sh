@@ -19,6 +19,7 @@ DNS_PORT=7913
 TUN_DNS="127.0.0.1#${DNS_PORT}"
 IS_DEFAULT_DNS=
 LOCAL_DNS=
+DEFAULT_DNS1=
 NO_PROXY=
 LUA_API_PATH=/usr/lib/lua/luci/model/cbi/$CONFIG/api
 API_GEN_SS=$LUA_API_PATH/gen_shadowsocks.lua
@@ -222,7 +223,7 @@ ln_start_bin() {
 		}
 		[ -x "${file_func}" ] || echolog "  - $(readlink ${file_func}) 没有执行权限，无法启动：${file_func} $@"
 	fi
-	echo ${file_func} $@ >&2
+	echo "${file_func} $@" >&2
 	[ -n "${file_func}" ] || echolog "  - 找不到 ${ln_name}，无法启动..."
 	${file_func:-echolog "  - ${ln_name}"} $@ >/dev/null 2>&1 &
 }
@@ -292,25 +293,14 @@ load_config() {
 	else
 		process=$(config_t_get global_forwarding process)
 	fi
-	LOCAL_DNS=$(config_t_get global up_china_dns dnsbyisp)
-	[ "$LOCAL_DNS" = "default" ] && IS_DEFAULT_DNS=1
+	LOCAL_DNS=$(config_t_get global up_china_dns dnsbyisp | sed 's/:/#/g')
 	[ -f "${RESOLVFILE}" ] && [ -s "${RESOLVFILE}" ] || RESOLVFILE=/tmp/resolv.conf.auto
-	if [ "$IS_DEFAULT_DNS" = "1" ]; then
-		LOCAL_DNS1=$(cat $RESOLVFILE 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | grep -v 0.0.0.0 | grep -v 127.0.0.1 | sed -n '1P')
-		DEFAULT_DNS1="$LOCAL_DNS1"
-		[ -z "$LOCAL_DNS1" ] && LOCAL_DNS1="119.29.29.29"
-		LOCAL_DNS="$LOCAL_DNS1"
-		LOCAL_DNS2=$(cat $RESOLVFILE 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | grep -v 0.0.0.0 | grep -v 127.0.0.1 | sed -n '2P')
-		[ -n "$LOCAL_DNS1" -a -n "$LOCAL_DNS2" ] && LOCAL_DNS="$LOCAL_DNS1,$LOCAL_DNS2"
-	else
-		LOCAL_DNS1=$(get_first_dns LOCAL_DNS 53)
-		if [ -n "$LOCAL_DNS1" ]; then
-			LOCAL_DNS2=$(get_last_dns LOCAL_DNS 53)
-			[ -n "$LOCAL_DNS2" ] && LOCAL_DNS="${LOCAL_DNS1},${LOCAL_DNS2}"
-		else
-			LOCAL_DNS1="119.29.29.29"
-			LOCAL_DNS=$LOCAL_DNS1
-		fi
+	DEFAULT_DNS1=$(cat $RESOLVFILE 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | grep -v 0.0.0.0 | grep -v 127.0.0.1 | sed -n '1P')
+	if [ "${LOCAL_DNS}" = "default" ]; then
+		IS_DEFAULT_DNS=1
+		local_dns1="${DEFAULT_DNS1:-119.29.29.29}"
+		local_dns2=$(cat $RESOLVFILE 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | grep -v 0.0.0.0 | grep -v 127.0.0.1 | sed -n '2P')
+		LOCAL_DNS="${local_dns1}${local_dns2:+,${local_dns2}}"
 	fi
 	PROXY_IPV6=$(config_t_get global_forwarding proxy_ipv6 0)
 	mkdir -p /var/etc $TMP_PATH $TMP_BIN_PATH $TMP_ID_PATH $TMP_PORT_PATH
@@ -644,8 +634,8 @@ start_dns() {
 		fi
 	;;
 	chinadns-ng)
-		local china_ng_chn=$(echo $LOCAL_DNS | sed 's/:/#/g')
-		local china_ng_gfw=$(echo $DNS_FORWARD | sed 's/:/#/g')
+		local china_ng_chn=${LOCAL_DNS}
+		local china_ng_gfw=${DNS_FORWARD}
 		other_port=$(expr $DNS_PORT + 1)
 		[ -f "$RULES_PATH/gfwlist.conf" ] && cat $RULES_PATH/gfwlist.conf | sort | uniq | sed -e '/127.0.0.1/d' | sed 's/ipset=\/.//g' | sed 's/\/gfwlist//g' > $TMP_PATH/gfwlist.txt
 		[ -f "$TMP_PATH/gfwlist.txt" ] && {
@@ -702,7 +692,7 @@ add_dnsmasq() {
 	mkdir -p $TMP_DNSMASQ_PATH $DNSMASQ_PATH /var/dnsmasq.d
 	local adblock=$(config_t_get global_rules adblock 0)
 	local chinadns_mode=0
-	[ "$DNS_MODE" == "chinadns-ng" ] && [ "$IS_DEFAULT_CHINA_DNS" != 1 ] && chinadns_mode=1
+	[ "$DNS_MODE" == "chinadns-ng" ] && [ "$IS_DEFAULT_DNS" != 1 ] && chinadns_mode=1
 	[ "$adblock" == "1" ] && {
 		[ -f "$RULES_PATH/adblock.conf" -a -s "$RULES_PATH/adblock.conf" ] && ln -s $RULES_PATH/adblock.conf $TMP_DNSMASQ_PATH/adblock.conf
 	}
@@ -736,7 +726,7 @@ add_dnsmasq() {
 		}
 	}
 	
-	if [ "${IS_DEFAULT_CHINA_DNS}" != "1" ]; then
+	if [ "${IS_DEFAULT_DNS}" != "1" ]; then
 		servers="${TUN_DNS}"
 		[ "$DNS_MODE" != "chinadns-ng" ] && servers="${LOCAL_DNS}"
 		cat <<-EOF > "/var/dnsmasq.d/dnsmasq-${CONFIG}.conf"
@@ -747,11 +737,11 @@ add_dnsmasq() {
 		EOF
 		echolog "  - 默认DNS：${servers}"
 	else
-		[ -z "$DEFAULT_DNS1" ] && {
+		[ -z "${DEFAULT_DNS1}" ] && {
 			local tmp=$(get_host_ip ipv4 www.baidu.com 1)
 			[ -z "$tmp" ] && {
 				cat <<-EOF > /var/dnsmasq.d/dnsmasq-$CONFIG.conf
-					server=$LOCAL_DNS1
+					server=$(get_first_dns LOCAL_DNS 53)
 					no-poll
 					no-resolv
 				EOF
@@ -826,20 +816,20 @@ del_dnsmasq() {
 }
 
 start_haproxy() {
-	local haproxy_bin HAPROXY_PATH HAPROXY_FILE item items lport sort_items
+	local haproxy_path haproxy_file item items lport sort_items
 
 	[ "$(config_t_get global_haproxy balancing_enable 0)" != "1" ] && return
 	echolog "HAPROXY 负载均衡..."
 
-	HAPROXY_PATH=${TMP_PATH}/haproxy
-	mkdir -p "${HAPROXY_PATH}"
-	HAPROXY_FILE=${HAPROXY_PATH}/config.cfg
-	cat <<-EOF > "${HAPROXY_FILE}"
+	haproxy_path=${TMP_PATH}/haproxy
+	mkdir -p "${haproxy_path}"
+	haproxy_file=${haproxy_path}/config.cfg
+	cat <<-EOF > "${haproxy_file}"
 		global
 		    log         127.0.0.1 local2
 		    chroot      /usr/bin
 		    maxconn     60000
-		    stats socket  ${HAPROXY_PATH}/haproxy.sock
+		    stats socket  ${haproxy_path}/haproxy.sock
 		    user        root
 		    daemon
 
@@ -889,14 +879,14 @@ start_haproxy() {
 			item="hasvalid"
 			lport=${haproxy_port}
 			echolog "  + 入口 0.0.0.0:${lport}..."
-			cat <<-EOF >> "${HAPROXY_FILE}"
+			cat <<-EOF >> "${haproxy_file}"
 				listen $lport
 				    mode tcp
 				    bind 0.0.0.0:$lport
 			EOF
 		}
 
-		cat <<-EOF >> "${HAPROXY_FILE}"
+		cat <<-EOF >> "${haproxy_file}"
 			    server $bip:$bport $bip:$bport weight $lbweight check inter 1500 rise 1 fall 3 $bbackup
 		EOF
 
@@ -927,7 +917,7 @@ start_haproxy() {
 	local console_password=$(config_t_get global_haproxy console_password)
 	local auth=""
 	[ -n "$console_user" ] && [ -n "$console_password" ] && auth="stats auth $console_user:$console_password"
-	cat <<-EOF >> "${HAPROXY_FILE}"
+	cat <<-EOF >> "${haproxy_file}"
 		listen console
 		    bind 0.0.0.0:$console_port
 		    mode http
@@ -938,7 +928,7 @@ start_haproxy() {
 	EOF
 
 	[ "${item}" != "hasvalid" ] && echolog "  - 没有发现任何有效节点信息..." && return 0
-	ln_start_bin "$(first_type haproxy)" haproxy "-f ${HAPROXY_FILE}"
+	ln_start_bin "$(first_type haproxy)" haproxy "-f ${haproxy_file}"
 	echolog "  * 控制台端口：${console_port}/，${auth:-公开}"
 }
 
