@@ -311,7 +311,7 @@ run_socks() {
 	elif [ "$type" == "v2ray" ]; then
 		lua $API_GEN_V2RAY $node nil nil $local_port > $config_file
 		ln_start_bin $(config_t_get global_app v2ray_file $(find_bin v2ray))/v2ray v2ray "-config=$config_file"
-	elif [ "$type" == "trojan" ]; then
+	elif [ "$type" == "trojan-plus" ]; then
 		lua $API_GEN_TROJAN $node client $bind $local_port > $config_file
 		ln_start_bin $(find_bin trojan-plus) trojan-plus "-c $config_file"
 	elif [ "$type" == "trojan-go" ]; then
@@ -364,7 +364,7 @@ run_redir() {
 		elif [ "$type" == "v2ray" ]; then
 			lua $API_GEN_V2RAY $node udp $local_port nil > $config_file
 			ln_start_bin $(config_t_get global_app v2ray_file $(find_bin v2ray))/v2ray v2ray "-config=$config_file"
-		elif [ "$type" == "trojan" ]; then
+		elif [ "$type" == "trojan-plus" ]; then
 			lua $API_GEN_TROJAN $node nat "0.0.0.0" $local_port >$config_file
 			ln_start_bin $(find_bin trojan-plus) trojan-plus "-c $config_file"
 		elif [ "$type" == "trojan-go" ]; then
@@ -398,7 +398,7 @@ run_redir() {
 			[ "$6" == 1 ] && [ "$UDP_NODE1" == "tcp" ] && extra_param="tcp,udp"
 			lua $API_GEN_V2RAY $node $extra_param $local_port nil > $config_file
 			ln_start_bin $(config_t_get global_app v2ray_file $(find_bin v2ray))/v2ray v2ray "-config=$config_file"
-		elif [ "$type" == "trojan" ]; then
+		elif [ "$type" == "trojan-plus" ]; then
 			lua $API_GEN_TROJAN $node nat "0.0.0.0" $local_port > $config_file
 			for k in $(seq 1 $process); do
 				ln_start_bin $(find_bin trojan-plus) trojan-plus "-c $config_file"
