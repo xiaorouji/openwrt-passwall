@@ -162,7 +162,7 @@ gen_dnsmasq_items() {
 			if(setdns) for(i in dns) if(length(dns[i])==0) delete dns[i];
 			fail=1;
 		}
-		! /^$/ {
+		! /^$/&&!/^#/ {
 			fail=0
 			if(! (setdns || setlist)) {printf("server=%s\n", $0) >>outf; next;}
 			if(setdns) for(i in dns) printf("server=/.%s/%s\n", $0, dns[i]) >>outf;
@@ -295,8 +295,7 @@ load_config() {
 	fi
 	LOCAL_DNS=$(config_t_get global up_china_dns dnsbyisp | sed 's/:/#/g')
 	[ -f "${RESOLVFILE}" ] && [ -s "${RESOLVFILE}" ] || RESOLVFILE=/tmp/resolv.conf.auto
-	DEFAULT_DNS
-=$(cat "${RESOLVFILE}" 2>/dev/null | sed -n 's/^nameserver[ \t]*\([^ ]*\)$/\1/p' | grep -v "0.0.0.0" | grep -v "127.0.0.1" | grep -v "^::$" | sed 's/\n/,/g')
+	DEFAULT_DNS=$(cat "${RESOLVFILE}" 2>/dev/null | sed -n 's/^nameserver[ \t]*\([^ ]*\)$/\1/p' | grep -v "0.0.0.0" | grep -v "127.0.0.1" | grep -v "^::$" | sed 's/\n/,/g')
 	if [ "${LOCAL_DNS}" = "default" ]; then
 		IS_DEFAULT_DNS=1
 		LOCAL_DNS="${DEFAULT_DNS:-119.29.29.29}"
@@ -867,7 +866,7 @@ start_haproxy() {
 	for item in ${items}; do
 		unset haproxy_port lbort bbackup
 
-		eval $(uci -q show "${CONFIG}.${item}" | cut -d'.' -sf 3- | grep -v '^$')
+		eval $(uci -q show "${CONFIG}.${item}" | cut -d'.' -sf 3-)
 		get_ip_port_from "$lbss" bip bport
 
 		[ "$lbort" = "default" ] && lbort=$bport || bport=$lbort
@@ -927,7 +926,7 @@ start_haproxy() {
 	EOF
 
 	[ "${item}" != "hasvalid" ] && echolog "  - 没有发现任何有效节点信息..." && return 0
-	ln_start_bin "$(first_type haproxy)" haproxy "-f ${haproxy_file}"
+	ln_start_bin "$(first_type haproxy)" haproxy -f "${haproxy_file}"
 	echolog "  * 控制台端口：${console_port}/，${auth:-公开}"
 }
 
@@ -956,8 +955,8 @@ boot() {
 start() {
 	load_config
 	start_socks
+	start_haproxy
 	[ "$NO_PROXY" == 1 ] || {
-		start_haproxy
 		start_redir TCP tcp
 		start_redir UDP udp
 		start_dns
