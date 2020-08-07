@@ -1,19 +1,7 @@
 local d = require "luci.dispatcher"
-local ipkg = require("luci.model.ipkg")
 local uci = require"luci.model.uci".cursor()
 local api = require "luci.model.cbi.passwall.api.api"
-
 local appname = "passwall"
-
-local function get_customed_path(e)
-    return api.uci_get_type("global_app", e .. "_file")
-end
-
-local function is_finded(e)
-    return luci.sys.exec("find /usr/*bin %s -iname %s -type f" % {get_customed_path(e), e}) ~= "" and true or false
-end
-
-local function is_installed(e) return ipkg.installed(e) end
 
 local ss_encrypt_method_list = {
     "rc4-md5", "aes-128-cfb", "aes-192-cfb", "aes-256-cfb", "aes-128-ctr",
@@ -82,25 +70,25 @@ remarks.default = translate("Remarks")
 remarks.rmempty = false
 
 type = s:option(ListValue, "type", translate("Type"))
-if is_installed("ipt2socks") or is_finded("ipt2socks") then
+if api.is_installed("ipt2socks") or api.is_finded("ipt2socks") then
     type:value("Socks", translate("Socks"))
 end
-if is_finded("ss-redir") then
+if api.is_finded("ss-redir") then
     type:value("SS", translate("Shadowsocks"))
 end
-if is_finded("ssr-redir") then
+if api.is_finded("ssr-redir") then
     type:value("SSR", translate("ShadowsocksR"))
 end
-if is_installed("v2ray") or is_finded("v2ray") then
+if api.is_installed("v2ray") or api.is_finded("v2ray") then
     type:value("V2ray", translate("V2ray"))
 end
-if is_installed("brook") or is_finded("brook") then
+if api.is_installed("brook") or api.is_finded("brook") then
     type:value("Brook", translate("Brook"))
 end
-if is_installed("trojan-plus") or is_finded("trojan-plus") then
+if api.is_installed("trojan-plus") or api.is_finded("trojan-plus") or api.is_installed("trojan") or api.is_finded("trojan") then
     type:value("Trojan-Plus", translate("Trojan-Plus"))
 end
-if is_installed("trojan-go") or is_finded("trojan-go") then
+if api.is_installed("trojan-go") or api.is_finded("trojan-go") then
     type:value("Trojan-Go", translate("Trojan-Go"))
 end
 
@@ -265,8 +253,8 @@ tcp_fast_open:depends("type", "Trojan-Go")
 
 ss_plugin = s:option(ListValue, "ss_plugin", translate("plugin"))
 ss_plugin:value("none", translate("none"))
-if is_finded("v2ray-plugin") then ss_plugin:value("v2ray-plugin") end
-if is_finded("obfs-local") then ss_plugin:value("obfs-local") end
+if api.is_finded("v2ray-plugin") then ss_plugin:value("v2ray-plugin") end
+if api.is_finded("obfs-local") then ss_plugin:value("obfs-local") end
 ss_plugin:depends("type", "SS")
 
 ss_plugin_opts = s:option(Value, "ss_plugin_opts", translate("opts"))
