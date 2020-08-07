@@ -72,7 +72,7 @@ local status_show_ip111 = api.uci_get_type("global_other", "status_show_ip111", 
 			</div>
 		</div>
 		
-		<% if api.is_installed("kcptun-client") or api.is_finded("kcptun-client") then %>
+		<% if api.is_finded("kcptun-client") then %>
 			<div class="cbi-value">
 				<label class="cbi-value-title">Kcptun
 					<%:Status%>
@@ -83,7 +83,7 @@ local status_show_ip111 = api.uci_get_type("global_other", "status_show_ip111", 
 			</div>
 		<% end %>
 		
-		<% if api.is_installed("haproxy") or api.is_finded("haproxy") then %>
+		<% if api.is_finded("haproxy") then %>
 		<div class="cbi-value">
 			<label class="cbi-value-title">
 				<%:Load Balancing%>

@@ -124,7 +124,7 @@ o:reset_values()
 if api.is_finded("chinadns-ng") then
     o:value("chinadns-ng", "ChinaDNS-NG")
 end
-if api.is_installed("pdnsd") or api.is_installed("pdnsd-alt") or api.is_finded("pdnsd") then
+if api.is_finded("pdnsd") then
     o:value("pdnsd", "pdnsd")
 end
 if api.is_finded("dns2socks") then
@@ -137,7 +137,7 @@ o = s:taboption("DNS", ListValue, "up_trust_chinadns_ng_dns",
              translate("Upstream trust DNS Server for ChinaDNS-NG") .. "(UDP)")
 -- o.description = translate("You can use other resolving DNS services as trusted DNS, Example: dns2socks, dns-forwarder... 127.0.0.1#5353<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53.")
 o.default = "pdnsd"
-if api.is_installed("pdnsd") or api.is_installed("pdnsd-alt") or api.is_finded("pdnsd") then
+if api.is_finded("pdnsd") then
     o:value("pdnsd", "pdnsd + " .. translate("Use TCP Node Resolve DNS"))
 end
 if api.is_finded("dns2socks") then
@@ -147,7 +147,7 @@ o:value("udp", translate("Use UDP Node Resolve DNS"))
 o:depends("dns_mode", "chinadns-ng")
 
 ---- Use TCP Node Resolve DNS
---[[ if api.is_installed("pdnsd") or api.is_installed("pdnsd-alt") or api.is_finded("pdnsd") then
+--[[ if api.is_finded("pdnsd") then
     o = s:taboption("DNS", Flag, "use_tcp_node_resolve_dns", translate("Use TCP Node Resolve DNS"))
     o.description = translate("If checked, DNS is resolved using the TCP node.")
     o.default = 1

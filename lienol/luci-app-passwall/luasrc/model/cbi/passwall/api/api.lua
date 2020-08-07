@@ -2,7 +2,6 @@ module("luci.model.cbi.passwall.api.api", package.seeall)
 local fs = require "nixio.fs"
 local sys = require "luci.sys"
 local uci = require"luci.model.uci".cursor()
-local ipkg = require("luci.model.ipkg")
 local util = require "luci.util"
 local i18n = require "luci.i18n"
 
@@ -51,8 +50,6 @@ end
 function is_finded(e)
     return luci.sys.exec('type -t -p "%s/%s" -p "/usr/bin/v2ray/%s" "%s"' % {get_customed_path(e), e, e, e}) ~= "" and true or false
 end
-
-function is_installed(e) return ipkg.installed(e) end
 
 function get_v2ray_path()
     local path = uci_get_type("global_app", "v2ray_file")

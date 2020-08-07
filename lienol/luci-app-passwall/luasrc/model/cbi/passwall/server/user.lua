@@ -63,16 +63,16 @@ type = s:option(ListValue, "type", translate("Type"))
 if api.is_finded("ssr-server") then
     type:value("SSR", translate("ShadowsocksR"))
 end
-if api.is_installed("v2ray") or api.is_finded("v2ray") then
+if api.is_finded("v2ray") then
     type:value("V2ray", translate("V2ray"))
 end
-if api.is_installed("brook") or api.is_finded("brook") then
+if api.is_finded("brook") then
     type:value("Brook", translate("Brook"))
 end
-if api.is_installed("trojan-plus") or api.is_finded("trojan-plus") or api.is_installed("trojan") or api.is_finded("trojan") then
+if api.is_finded("trojan-plus") or api.is_finded("trojan") then
     type:value("Trojan-Plus", translate("Trojan-Plus"))
 end
-if api.is_installed("trojan-go") or api.is_finded("trojan-go") then
+if api.is_finded("trojan-go") then
     type:value("Trojan-Go", translate("Trojan-Go"))
 end
 
