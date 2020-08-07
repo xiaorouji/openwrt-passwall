@@ -168,7 +168,7 @@ gen_dnsmasq_items() {
 			if(setdns) for(i in dns) printf("server=/.%s/%s\n", $0, dns[i]) >>outf;
 			if(setlist) printf("ipset=/.%s/%s\n", $0, ipsetlist) >>outf;
 		}
-   END {fflush(outf); close(outf); exit(fail);}
+		END {fflush(outf); close(outf); exit(fail);}
 	'
 }
 
@@ -221,7 +221,7 @@ ln_start_bin() {
 			ln -s "${file_func}" "${TMP_BIN_PATH}/${ln_name}"
 			file_func="${TMP_BIN_PATH}/${ln_name}"
 		}
-		[ -x "${file_func}" ] || echolog "  - $(readlink ${file_func}) 没有执行权限，无法启动：${file_func} $@"
+		[ -x "${file_func}" ] || echolog "  - $(readlink ${file_func}) 没有执行权限，无法启动：${file_func} $*"
 	fi
 	echo "${file_func} $@" >&2
 	[ -n "${file_func}" ] || echolog "  - 找不到 ${ln_name}，无法启动..."
@@ -873,7 +873,7 @@ start_haproxy() {
 
 	unset lport
 	local haproxy_port lbss lbort lbweight export backup
-	local msg bip bport bline bbackup failcount interface
+	local msg bip bport hasvalid bbackup failcount interface
 	for item in ${items}; do
 		unset haproxy_port lbort bbackup
 
@@ -885,7 +885,7 @@ start_haproxy() {
 		[ "$backup" = "1" ] && bbackup="backup"
 
 		[ "$lport" = "${haproxy_port}" ] || {
-			item="hasvalid"
+			hasvalid="1"
 			lport=${haproxy_port}
 			echolog "  + 入口 0.0.0.0:${lport}..."
 			cat <<-EOF >> "${haproxy_file}"
@@ -936,7 +936,7 @@ start_haproxy() {
 		    $auth
 	EOF
 
-	[ "${item}" == "hasvalid" ] && echolog "  - 没有发现任何有效节点信息..." && return 0
+	[ "${hasvalid}" != "1" ] && echolog "  - 没有发现任何有效节点信息..." && return 0
 	ln_start_bin "$(first_type haproxy)" haproxy -f "${haproxy_file}"
 	echolog "  * 控制台端口：${console_port}/，${auth:-公开}"
 }
@@ -1010,7 +1010,7 @@ node_switch)
 	node_switch $2 $3 $4 $5
 	;;
 stop)
-	[ -n "$2" -a "$2" == "force" ] && force_stop
+	[ "$2" = "force" ] && force_stop
 	stop
 	;;
 start)

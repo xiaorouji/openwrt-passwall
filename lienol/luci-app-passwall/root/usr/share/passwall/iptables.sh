@@ -115,7 +115,7 @@ load_acl() {
 		local TCP_NODE UDP_NODE TCP_NODE_TYPE UDP_NODE_TYPE ipt_tmp is_tproxy tcp_port udp_port msg msg2
 		for item in $items; do
 			unset ip mac tcp_port udp_port is_tproxy msg
-			eval $(uci -q show $CONFIG.${item} | cut -d'.' -sf 3- | grep -v '^$')
+			eval $(uci -q show "${CONFIG}.${item}" | cut -d'.' -sf 3-)
 			[ -z "${ip}${mac}" ] && continue
 			tcp_proxy_mode=${tcp_proxy_mode:-default}
 			udp_proxy_mode=${udp_proxy_mode:-default}
