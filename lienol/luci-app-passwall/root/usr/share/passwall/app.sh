@@ -617,83 +617,94 @@ stop_crontab() {
 }
 
 start_dns() {
-	DNS2SOCKS_SOCKS_SERVER=$(echo $(config_t_get global socks_server 127.0.0.1:9050) | sed "s/#/:/g")
-	DNS2SOCKS_FORWARD=$(get_first_dns DNS_FORWARD 53 | sed 's/#/:/g')
+	local dns2socks_socks_server dns2socks_forward dns2sock_cache pdnsd_port pdnsd_forward other_port up_trust_pdnsd_dns msg
+	local chnlist returnhome china_ng_chn china_ng_gfw chnlist_param gfwlist_param extra_mode up_trust_chinadns_ng_dns
+	dns2socks_socks_server=$(echo $(config_t_get global socks_server 127.0.0.1:9050) | sed "s/#/:/g")
+	dns2socks_forward=$(get_first_dns DNS_FORWARD 53 | sed 's/#/:/g')
+	dns2socks_listen="127.0.0.1:${DNS_PORT}"
+	[ "$DNS_CACHE" == "0" ] && dns2sock_cache="/d"
+	pdnsd_port=${DNS_PORT}
+	pdnsd_forward=${DNS_FORWARD}
+	china_ng_chn="${LOCAL_DNS}"
+	other_port=$(expr $DNS_PORT + 1)
+	china_ng_gfw="127.0.0.1#${other_port}"
+	returnhome=$(echo "${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}${UDP_PROXY_MODE}${LOCALHOST_UDP_PROXY_MODE}" | grep "returnhome")
+	sed -n 's/^ipset=\/\.\?\([^/]*\).*$/\1/p' "${RULES_PATH}/gfwlist.conf" | sort -u > "${TMP_PATH}/gfwlist.txt"
+	echolog "过滤服务配置：准备接管域名解析[$?]..."
 	case "$DNS_MODE" in
 	nonuse)
-		echolog "DNS：不使用，将会直接使用上级DNS！"
+		echolog "  - 被禁用，开启广告过滤可以按本插件内置的广告域名表进行过滤..."
+		TUN_DNS=""
 	;;
 	dns2socks)
-		[ "$DNS_CACHE" == "0" ] && local _cache="/d"
-		ln_start_bin "$(first_type dns2socks)" dns2socks "$DNS2SOCKS_SOCKS_SERVER" "$DNS2SOCKS_FORWARD" "127.0.0.1:$DNS_PORT" "$_cache"
-		echolog "DNS：dns2socks，${DNS2SOCKS_FORWARD-D46.182.19.48:53}"
+		echolog "  - 域名解析 dns2socks..."
 	;;
 	pdnsd)
-		if [ -z "$TCP_NODE1" -o "$TCP_NODE1" == "nil" ]; then
-			echolog "DNS：pdnsd 模式需要启用TCP节点！"
-			force_stop
-		else
-			gen_pdnsd_config $DNS_PORT
-			ln_start_bin "$(first_type pdnsd)" pdnsd --daemon -c "$pdnsd_dir/pdnsd.conf" -d
-			echolog "DNS：pdnsd + 使用TCP节点解析DNS"
+		up_trust_pdnsd_dns=$(config_t_get global up_trust_pdnsd_dns "nil")
+		if [ "$up_trust_pdnsd_dns" = "dns2socks" ]; then
+			pdnsd_forward=${china_ng_gfw}
+			dns2socks_listen=${pdnsd_forward}
+			echolog "  - 域名解析：pdnsd + dns2socks..."
+		elif [ "${up_trust_pdnsd_dns}" = "nil" ]; then
+			echolog "  - 域名解析：pdnsd + 使用TCP节点解析域名..."
 		fi
 	;;
 	chinadns-ng)
-		local china_ng_chn=${LOCAL_DNS}
-		local china_ng_gfw=${DNS_FORWARD}
-		other_port=$(expr $DNS_PORT + 1)
-		[ -f "$RULES_PATH/gfwlist.conf" ] && cat $RULES_PATH/gfwlist.conf | sort | uniq | sed -e '/127.0.0.1/d' | sed 's/ipset=\/.//g' | sed 's/\/gfwlist//g' > $TMP_PATH/gfwlist.txt
-		[ -f "$TMP_PATH/gfwlist.txt" ] && {
-			[ -f "$RULES_PATH/proxy_host" -a -s "$RULES_PATH/proxy_host" ] && cat $RULES_PATH/proxy_host >> $TMP_PATH/gfwlist.txt
-			local gfwlist_param="$TMP_PATH/gfwlist.txt"
-		}
-		[ -f "$RULES_PATH/chnlist" ] && cp -a $RULES_PATH/chnlist $TMP_PATH/chnlist
-		[ -f "$TMP_PATH/chnlist" ] && {
-			[ -f "$RULES_PATH/direct_host" -a -s "$RULES_PATH/direct_host" ] && cat $RULES_PATH/direct_host >> $TMP_PATH/chnlist
-			local chnlist_param="$TMP_PATH/chnlist"
-		}
-		
-		local fair_mode=$(config_t_get global fair_mode 1)
-		if [ "$fair_mode" == "1" ]; then
-			fair_mode="-f"
-		else
-			fair_mode=""
-		fi
-		
+		TUN_DNS="${DNS_FORWARD}"
 		up_trust_chinadns_ng_dns=$(config_t_get global up_trust_chinadns_ng_dns "pdnsd")
-		if [ "$up_trust_chinadns_ng_dns" == "pdnsd" ]; then
-			if [ -z "$TCP_NODE1" -o "$TCP_NODE1" == "nil" ]; then
-				echolog "DNS：ChinaDNS-NG + pdnsd 模式需要启用TCP节点！"
-				force_stop
-			else
-				gen_pdnsd_config $other_port
-				ln_start_bin "$(first_type pdnsd)" pdnsd --daemon -c "$pdnsd_dir/pdnsd.conf" -d
-				ln_start_bin "$(first_type chinadns-ng)" chinadns-ng -l "$DNS_PORT" -c "$china_ng_chn" -t "127.0.0.1#$other_port" ${gfwlist_param:+-g "${gfwlist_param}"} ${chnlist_param:+-m "${chnlist_param}" -M} "$fair_mode"
-				echolog "DNS：ChinaDNS-NG + pdnsd，$china_ng_gfw，国内DNS：$china_ng_chn"
-			fi
-		elif [ "$up_trust_chinadns_ng_dns" == "dns2socks" ]; then
-			[ "$DNS_CACHE" == "0" ] && local _cache="/d"
-			ln_start_bin "$(first_type dns2socks)" dns2socks "$DNS2SOCKS_SOCKS_SERVER" "$DNS2SOCKS_FORWARD" "127.0.0.1:$other_port" "$_cache"
-			ln_start_bin "$(first_type chinadns-ng)" chinadns-ng -l "$DNS_PORT" -c "$china_ng_chn" -t "127.0.0.1#$other_port" ${gfwlist_param:+-g "${gfwlist_param}"} ${chnlist_param:+-m "${chnlist_param}" -M} "$fair_mode"
-			echolog "DNS：ChinaDNS-NG + dns2socks，${DNS2SOCKS_FORWARD:-D46.182.19.48:53}，国内DNS：$china_ng_chn"
-		elif [ "$up_trust_chinadns_ng_dns" == "udp" ]; then
+		if [ "$up_trust_chinadns_ng_dns" = "pdnsd" ]; then
+			pdnsd_port=${other_port}
+			msg="pdnsd"
+			TUN_DNS="127.0.0.1#${DNS_PORT}"
+			echolog "  | - (chinadns-ng) 中国白名单模式下，列表外的域名可能会被本地DNS解析(可切换到Pdnsd + TCP节点模式)..."
+		elif [ "$up_trust_chinadns_ng_dns" = "dns2socks" ]; then
+			dns2socks_listen=${china_ng_gfw}
+			TUN_DNS="${dns2socks_listen}"
+			msg="dns2socks"
+		elif [ "$up_trust_chinadns_ng_dns" = "udp" ]; then
 			use_udp_node_resolve_dns=1
-			ln_start_bin "$(first_type chinadns-ng)" chinadns-ng -l "$DNS_PORT" -c "$china_ng_chn" -t "$china_ng_gfw" ${gfwlist_param:+-g "${gfwlist_param}"} ${chnlist_param:+-m "${chnlist_param}" -M} "$fair_mode"
-			echolog "DNS：ChinaDNS-NG，国内DNS：$china_ng_chn，可信DNS：$up_trust_chinadns_ng_dns，$china_ng_gfw"
-			echolog "  - 如非直连地址，请确保UDP节点已打开并且支持UDP转发。"
+			china_ng_gfw=${DNS_FORWARD}
+			[ -z "${returnhome}" ] || china_ng_chn="${china_ng_gfw}"
+			msg="udp"
 		fi
+		cat "${RULES_PATH}/proxy_host" >> "${TMP_PATH}/gfwlist.txt"
+			echolog "  | - [$?](chinadns-ng) 代理域名表合并到防火墙域名表"
+		gfwlist_param="${TMP_PATH}/gfwlist.txt"
+		cp -a "${RULES_PATH}/chnlist" "${TMP_PATH}/chnlist"
+		if [ -z "${returnhome}" ]; then
+			cat "${RULES_PATH}/direct_host" >> "${TMP_PATH}/chnlist"
+			echolog "  | - [$?](chinadns-ng) 域名白名单合并到中国域名表"
+		else
+			echolog "  | - (chinadns-ng) 白名单不与中国域名表合并"
+			china_ng_chn=${china_ng_gfw}
+			cat "${RULES_PATH}/proxy_host" >> "${TMP_PATH}/chnlist"
+			echolog "  | - [$?](chinadns-ng) 忽略防火墙域名表，代理域名表合并到中国域名表"
+		fi
+		chnlist_param="${TMP_PATH}/chnlist"
+		[ "$(config_t_get global fair_mode 1)" = "1" ] && extra_mode="-f"
+		ln_start_bin "$(first_type chinadns-ng)" chinadns-ng -l "${DNS_PORT}" ${china_ng_chn:+-c "${china_ng_chn}"} ${chnlist_param:+-m "${chnlist_param}" -M} ${china_ng_gfw:+-t "${china_ng_gfw}"} ${gfwlist_param:+-g "${gfwlist_param}"} "$extra_mode"
+		echolog "  + 过滤服务：ChinaDNS-NG(:${DNS_PORT}${extra_mode})：中国域名列表：${china_ng_chn:-D114.114.114.114}，防火域名列表：${china_ng_gfw:-D8.8.8.8} ${msg}"
 	;;
 	*)
 		TUN_DNS="$(echo ${DNS_MODE} | sed 's/:/#/g')"
 		DNS_MODE="other_dns"
-		echolog "可信DNS：指定DNS服务器(支持UDP查询)解析域名：${TUN_DNS}"
+		echolog "  - 域名解析：指定DNS服务器(支持UDP查询)解析域名：${TUN_DNS}"
 	;;
 	esac
+	if [ -n "$(echo ${DNS_MODE}${up_trust_chinadns_ng_dns} | grep pdnsd)" ]; then
+		gen_pdnsd_config "${pdnsd_port}" "${pdnsd_forward}"
+		ln_start_bin "$(first_type pdnsd)" pdnsd --daemon -c "${TMP_PATH}/pdnsd/pdnsd.conf" -d
+	fi
+	if [ -n "$(echo ${DNS_MODE}${up_trust_chinadns_ng_dns}${up_trust_pdnsd_dns} | grep dns2socks)" ]; then
+		dns2socks_listen=$(echo "${dns2socks_listen}" | sed 's/#/:/g')
+		ln_start_bin "$(first_type dns2socks)" dns2socks "$dns2socks_socks_server" "$dns2socks_forward" "$dns2socks_listen" "$dns2sock_cache"
+		echolog "  - dns2sock(${dns2socks_listen}${dns2sock_cache})，${dns2socks_socks_server:-127.0.0.1:9050} -> ${dns2socks_forward-D46.182.19.48:53}"
+	fi
+	[ "$use_udp_node_resolve_dns" = "1" ] && echolog "  * 要求代理DNS请求，如上游 DNS 非直连地址，确保UDP节点打开，并且已经正确转发"
 }
 
 add_dnsmasq() {
 	local fwd_dns
-	echolog "准备 dnsmasq 配置文件..."
 	mkdir -p $TMP_DNSMASQ_PATH $DNSMASQ_PATH /var/dnsmasq.d
 	local adblock=$(config_t_get global_rules adblock 0)
 	local chinadns_mode=0
@@ -761,21 +772,23 @@ add_dnsmasq() {
 }
 
 gen_pdnsd_config() {
-	pdnsd_dir=$TMP_PATH/pdnsd
-	mkdir -p $pdnsd_dir
-	touch $pdnsd_dir/pdnsd.cache
-	chown -R root.nogroup $pdnsd_dir
+	local listen_port=${1}
+	local up_dns=${2}
+	local pdnsd_dir=${TMP_PATH}/pdnsd
 	local perm_cache=2048
 	local _cache="on"
-	[ "$DNS_CACHE" == "0" ] && _cache="off" && perm_cache=0
-	echolog "准备 pdnsd 配置文件..."
-	cat > $pdnsd_dir/pdnsd.conf <<-EOF
+
+	mkdir -p "${pdnsd_dir}"
+	touch "${pdnsd_dir}/pdnsd.cache"
+	chown -R root.nogroup "${pdnsd_dir}"
+	[ "${DNS_CACHE}" = "0" ] && _cache="off" && perm_cache=0
+	cat > "${pdnsd_dir}/pdnsd.conf" <<-EOF
 		global {
 			perm_cache = $perm_cache;
 			cache_dir = "$pdnsd_dir";
 			run_as = "root";
 			server_ip = 127.0.0.1;
-			server_port = $1;
+			server_port = ${listen_port};
 			status_ctl = on;
 			query_method = tcp_only;
 			min_ttl = 1h;
@@ -789,10 +802,10 @@ gen_pdnsd_config() {
 		}
 		
 	EOF
-		echolog "  - [$?]监听：127.0.0.1:${1}"
+		echolog "  + [$?]Pdnsd (127.0.0.1:${listen_port})..."
 
 	append_pdnsd_updns() {
-		[ -z "${2}" ] && echolog "  - 略过错误 : ${1}" && return 0
+		[ -z "${2}" ] && echolog "  | - 略过错误 : ${1}" && return 0
 		cat >> $pdnsd_dir/pdnsd.conf <<-EOF
 			server {
 				label = "node-${2}_${3}";
@@ -807,9 +820,10 @@ gen_pdnsd_config() {
 				caching = $_cache;
 			}
 		EOF
-		echolog "  - [$?]上游DNS：${2}:${3}"
+		echolog "  | - [$?]上游DNS：${2}:${3}"
 	}
-	hosts_foreach DNS_FORWARD append_pdnsd_updns 53
+	hosts_foreach up_dns append_pdnsd_updns 53
+	echolog "  * [$?]请确认上游DNS支持TCP查询，如非直连地址，确保TCP节点打开，并且已经正确转发"
 
 	use_tcp_node_resolve_dns=1
 }
