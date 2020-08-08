@@ -86,6 +86,9 @@ if api.is_finded("brook") then
     type:value("Brook", translate("Brook"))
 end
 if api.is_finded("trojan-plus") or api.is_finded("trojan") then
+    type:value("Trojan", translate("Trojan"))
+end
+if api.is_finded("trojan-plus") then
     type:value("Trojan-Plus", translate("Trojan-Plus"))
 end
 if api.is_finded("trojan-go") then
@@ -154,6 +157,7 @@ address:depends({ type = "V2ray", protocol = "http" })
 address:depends({ type = "V2ray", protocol = "socks" })
 address:depends({ type = "V2ray", protocol = "shadowsocks" })
 address:depends("type", "Brook")
+address:depends("type", "Trojan")
 address:depends("type", "Trojan-Plus")
 address:depends("type", "Trojan-Go")
 
@@ -168,6 +172,7 @@ use_ipv6:depends({ type = "V2ray", protocol = "http" })
 use_ipv6:depends({ type = "V2ray", protocol = "socks" })
 use_ipv6:depends({ type = "V2ray", protocol = "shadowsocks" })
 use_ipv6:depends("type", "Brook")
+use_ipv6:depends("type", "Trojan")
 use_ipv6:depends("type", "Trojan-Plus")
 use_ipv6:depends("type", "Trojan-Go")
 --]]
@@ -183,6 +188,7 @@ port:depends({ type = "V2ray", protocol = "http" })
 port:depends({ type = "V2ray", protocol = "socks" })
 port:depends({ type = "V2ray", protocol = "shadowsocks" })
 port:depends("type", "Brook")
+port:depends("type", "Trojan")
 port:depends("type", "Trojan-Plus")
 port:depends("type", "Trojan-Go")
 
@@ -197,6 +203,7 @@ password:depends("type", "Socks")
 password:depends("type", "SS")
 password:depends("type", "SSR")
 password:depends("type", "Brook")
+password:depends("type", "Trojan")
 password:depends("type", "Trojan-Plus")
 password:depends("type", "Trojan-Go")
 password:depends("protocol", "http")
@@ -248,6 +255,7 @@ tcp_fast_open:value("false")
 tcp_fast_open:value("true")
 tcp_fast_open:depends("type", "SS")
 tcp_fast_open:depends("type", "SSR")
+tcp_fast_open:depends("type", "Trojan")
 tcp_fast_open:depends("type", "Trojan-Plus")
 tcp_fast_open:depends("type", "Trojan-Go")
 
@@ -298,10 +306,11 @@ stream_security.default = "tls"
 stream_security:depends("protocol", "vmess")
 stream_security:depends("protocol", "socks")
 stream_security:depends("protocol", "shadowsocks")
+stream_security:depends("type", "Trojan")
 stream_security:depends("type", "Trojan-Plus")
 stream_security:depends("type", "Trojan-Go")
 stream_security.validate = function(self, value)
-    if value == "none" and type:formvalue(arg[1]) == "Trojan" then
+    if value == "none" and (type:formvalue(arg[1]) == "Trojan" or type:formvalue(arg[1]) == "Trojan-Plus") then
         return nil, translate("'none' not supported for original Trojan.")
     end
     return value
