@@ -291,7 +291,7 @@ load_config() {
 	fi
 	LOCAL_DNS=$(config_t_get global up_china_dns dnsbyisp | sed 's/:/#/g')
 	[ -f "${RESOLVFILE}" ] && [ -s "${RESOLVFILE}" ] || RESOLVFILE=/tmp/resolv.conf.auto
-	DEFAULT_DNS=$(cat "${RESOLVFILE}" 2>/dev/null | sed -n 's/^nameserver[ \t]*\([^ ]*\)$/\1/p' | grep -v "0.0.0.0" | grep -v "127.0.0.1" | grep -v "^::$" | sed 's/\n/,/g')
+	DEFAULT_DNS=$(cat "${RESOLVFILE}" 2>/dev/null | sed -n 's/^nameserver[ \t]*\([^ ]*\)$/\1/p' | grep -v "0.0.0.0" | grep -v "127.0.0.1" | grep -v "^::$" | tr '\n' ',')
 	if [ "${LOCAL_DNS}" = "default" ]; then
 		IS_DEFAULT_DNS=1
 		LOCAL_DNS="${DEFAULT_DNS:-119.29.29.29}"
@@ -418,7 +418,7 @@ run_redir() {
 			eval port=\$TCP_REDIR_PORT$6
 			local extra_param="-T"
 			[ "$6" == 1 ] && [ "$UDP_NODE1" == "tcp" ] && extra_param=""
-			ln_start_bin "$(first_type ipt2socks)" "ipt2socks_tcp_$6" -l "$port" -b 0.0.0.0 -s "$node_address" -p "$node_port" -R "$extra_param"
+			ln_start_bin "$(first_type ipt2socks)" "ipt2socks_tcp_$6" -l "$port" -b 0.0.0.0 -s "$node_address" -p "$node_port" -R $extra_param
 		elif [ "$type" == "v2ray" ]; then
 			local extra_param="tcp"
 			[ "$6" == 1 ] && [ "$UDP_NODE1" == "tcp" ] && extra_param="tcp,udp"
@@ -464,7 +464,7 @@ run_redir() {
 					[ "$6" == 1 ] && [ "$UDP_NODE1" == "tcp" ] && extra_param="-u"
 				fi
 				for k in $(seq 1 $process); do
-					ln_start_bin "$(first_type ${type}-redir)" "${type}-redir" -c "$config_file" "$extra_param"
+					ln_start_bin "$(first_type ${type}-redir)" "${type}-redir" -c "$config_file" $extra_param
 				done
 			elif [ "$type" == "brook" ]; then
 				local server_ip=$server_host
@@ -682,7 +682,7 @@ start_dns() {
 		fi
 		chnlist_param="${TMP_PATH}/chnlist"
 		[ "$(config_t_get global fair_mode 1)" = "1" ] && extra_mode="-f"
-		ln_start_bin "$(first_type chinadns-ng)" chinadns-ng -l "${DNS_PORT}" ${china_ng_chn:+-c "${china_ng_chn}"} ${chnlist_param:+-m "${chnlist_param}" -M} ${china_ng_gfw:+-t "${china_ng_gfw}"} ${gfwlist_param:+-g "${gfwlist_param}"} "$extra_mode"
+		ln_start_bin "$(first_type chinadns-ng)" chinadns-ng -l "${DNS_PORT}" ${china_ng_chn:+-c "${china_ng_chn}"} ${chnlist_param:+-m "${chnlist_param}" -M} ${china_ng_gfw:+-t "${china_ng_gfw}"} ${gfwlist_param:+-g "${gfwlist_param}"} $extra_mode
 		echolog "  + 过滤服务：ChinaDNS-NG(:${DNS_PORT}${extra_mode})：中国域名列表：${china_ng_chn:-D114.114.114.114}，防火域名列表：${china_ng_gfw:-D8.8.8.8} ${msg}"
 	;;
 	*)
@@ -697,7 +697,7 @@ start_dns() {
 	fi
 	if [ -n "$(echo ${DNS_MODE}${up_trust_chinadns_ng_dns}${up_trust_pdnsd_dns} | grep dns2socks)" ]; then
 		dns2socks_listen=$(echo "${dns2socks_listen}" | sed 's/#/:/g')
-		ln_start_bin "$(first_type dns2socks)" dns2socks "$dns2socks_socks_server" "$dns2socks_forward" "$dns2socks_listen" "$dns2sock_cache"
+		ln_start_bin "$(first_type dns2socks)" dns2socks "$dns2socks_socks_server" "$dns2socks_forward" "$dns2socks_listen" $dns2sock_cache
 		echolog "  - dns2sock(${dns2socks_listen}${dns2sock_cache})，${dns2socks_socks_server:-127.0.0.1:9050} -> ${dns2socks_forward-D46.182.19.48:53}"
 	fi
 	[ "$use_udp_node_resolve_dns" = "1" ] && echolog "  * 要求代理DNS请求，如上游 DNS 非直连地址，确保UDP节点打开，并且已经正确转发"
