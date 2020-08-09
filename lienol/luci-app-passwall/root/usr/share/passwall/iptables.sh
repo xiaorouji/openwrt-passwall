@@ -82,13 +82,13 @@ get_action_chain_name() {
 		echo "全局代理"
 		;;
 	gfwlist)
-		echo "GFW名单"
+		echo "防火墙列表"
 		;;
 	chnroute)
-		echo "大陆白名单"
+		echo "中国列表以外"
 		;;
 	returnhome)
-		echo "回国模式"
+		echo "中国列表"
 		;;
 	esac
 }
