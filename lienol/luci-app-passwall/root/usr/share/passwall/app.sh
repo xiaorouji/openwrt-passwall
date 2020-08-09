@@ -292,8 +292,8 @@ load_config() {
 	LOCAL_DNS=$(config_t_get global up_china_dns dnsbyisp | sed 's/:/#/g')
 	[ -f "${RESOLVFILE}" ] && [ -s "${RESOLVFILE}" ] || RESOLVFILE=/tmp/resolv.conf.auto
 	DEFAULT_DNS=$(sed -n 's/^nameserver[ \t]*\([^ ]*\)$/\1/p' "${RESOLVFILE}" | grep -v "0.0.0.0" | grep -v "127.0.0.1" | grep -v "^::$" | tr '\n' ',')
-	if [ "${LOCAL_DNS}" = "default" ]; then
-		IS_DEFAULT_DNS=1
+	if [ "${LOCAL_DNS}" = "default" ] || [ "${LOCAL_DNS}" = "dnsbyisp" ]; then
+		[ "${LOCAL_DNS}" = "default" ] && IS_DEFAULT_DNS=1
 		LOCAL_DNS="${DEFAULT_DNS:-119.29.29.29}"
 	fi
 	PROXY_IPV6=$(config_t_get global_forwarding proxy_ipv6 0)
