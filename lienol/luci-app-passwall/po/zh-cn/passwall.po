@@ -178,6 +178,9 @@ msgstr "国内DNS服务器"
 msgid "If you want to work with other DNS acceleration services, use the default.<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53."
 msgstr "如果你想和其他DNS加速服务一起工作，请使用默认。<br />最多使用2个DNS服务器，英文逗号分隔，如果没有填#和后面的端口，则使用53端口。"
 
+msgid "Upstream trust DNS Server for Pdnsd"
+msgstr "Pdnsd可信DNS"
+
 msgid "Upstream trust DNS Server for ChinaDNS-NG"
 msgstr "ChinaDNS-NG可信DNS"
 

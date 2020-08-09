@@ -133,12 +133,11 @@ end
 o:value("nonuse", translate("No patterns are used"))
 
 o = s:taboption("DNS", ListValue, "up_trust_pdnsd_dns",
-             translate("Upstream trust DNS Server for Pdnsd") .. "(TCP)")
+             translate("Upstream trust DNS Server for Pdnsd"))
 -- o.description = translate("You can use other resolving DNS services as trusted DNS, Example: dns2socks, dns-forwarder... 127.0.0.1#5353<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53.")
 o.default = ""
-if api.is_finded("pdnsd") then
-    o:value("", "pdnsd + " .. translate("Use TCP Node Resolve DNS"))
-end
+o:value("", "pdnsd + " .. translate("Use TCP Node Resolve DNS"))
+o:value("udp", translate("Use UDP Node Resolve DNS"))
 if api.is_finded("dns2socks") then
     o:value("dns2socks", "dns2socks")
 end
