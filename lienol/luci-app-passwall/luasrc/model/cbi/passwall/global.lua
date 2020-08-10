@@ -57,7 +57,7 @@ else
     m:append(Template(appname .. "/global/status2"))
 end
 
-s = m:section(TypedSection, "global", translate("Main Settings"))
+s = m:section(TypedSection, "global")
 s.anonymous = true
 s.addremove = false
 
@@ -100,6 +100,20 @@ end
 
 s:tab("DNS", translate("DNS"))
 
+o = s:taboption("DNS", Value, "up_china_dns", translate("Resolver For Local/WhiteList Domains") .. "(UDP)")
+o.description = translate("Forced to local filter mode on 'Not China List' mode<br />IP:Port mode acceptable, multi value split with english comma.")
+o.default = "default"
+o:value("default", translate("Default"))
+o:value("223.5.5.5", "223.5.5.5 (" .. translate("Ali") .. "DNS)")
+o:value("223.6.6.6", "223.6.6.6 (" .. translate("Ali") .. "DNS)")
+o:value("114.114.114.114", "114.114.114.114 (114DNS)")
+o:value("114.114.115.115", "114.114.115.115 (114DNS)")
+o:value("119.29.29.29", "119.29.29.29 (DNSPOD DNS)")
+o:value("182.254.116.116", "182.254.116.116 (DNSPOD DNS)")
+o:value("1.2.4.8", "1.2.4.8 (CNNIC DNS)")
+o:value("210.2.4.8", "210.2.4.8 (CNNIC DNS)")
+o:value("180.76.76.76", "180.76.76.76 (" .. translate("Baidu") .. "DNS)")
+
 ---- DNS Forward Mode
 o = s:taboption("DNS", Value, "dns_mode", translate("Filter Mode"))
 o.rmempty = false
@@ -115,22 +129,7 @@ if api.is_finded("dns2socks") then
 end
 o:value("nonuse", translate("No Filter"))
 
-o = s:taboption("DNS", Value, "up_china_dns", translate("Resolver For Local/WhiteList Domains") .. "(UDP)")
-o.description = translate("Forced to local filter mode on 'Not China List' mode<br />IP:Port mode acceptable, multi value split with english comma.")
-o.default = "default"
-o:value("default", translate("Default"))
-o:value("223.5.5.5", "223.5.5.5 (" .. translate("Ali") .. "DNS)")
-o:value("223.6.6.6", "223.6.6.6 (" .. translate("Ali") .. "DNS)")
-o:value("114.114.114.114", "114.114.114.114 (114DNS)")
-o:value("114.114.115.115", "114.114.115.115 (114DNS)")
-o:value("119.29.29.29", "119.29.29.29 (DNSPOD DNS)")
-o:value("182.254.116.116", "182.254.116.116 (DNSPOD DNS)")
-o:value("1.2.4.8", "1.2.4.8 (CNNIC DNS)")
-o:value("210.2.4.8", "210.2.4.8 (CNNIC DNS)")
-o:value("180.76.76.76", "180.76.76.76 (" .. translate("Baidu") .. "DNS)")
-
-o = s:taboption("DNS", ListValue, "up_trust_pdnsd_dns",
-             translate("Resolver For The List Proxied"))
+o = s:taboption("DNS", ListValue, "up_trust_pdnsd_dns", translate("Resolver For The List Proxied"))
 -- o.description = translate("You can use other resolving DNS services as trusted DNS, Example: dns2socks, dns-forwarder... 127.0.0.1#5353<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53.")
 o.default = ""
 if api.is_finded("pdnsd") then
@@ -186,8 +185,7 @@ o:depends({dns_mode = "pdnsd"})
 s:tab("Proxy", translate("Mode"))
 
 ---- TCP Default Proxy Mode
-o = s:taboption("Proxy", ListValue, "tcp_proxy_mode",
-             "TCP" .. translate("Default") .. translate("Proxy Mode"))
+o = s:taboption("Proxy", ListValue, "tcp_proxy_mode", "TCP" .. translate("Default") .. translate("Proxy Mode"))
 -- o.description = translate("If not available, try clearing the cache.")
 o.default = "chnroute"
 o.rmempty = false
@@ -198,8 +196,7 @@ o:value("chnroute", translate("Not China List"))
 o:value("returnhome", translate("China List"))
 
 ---- UDP Default Proxy Mode
-o = s:taboption("Proxy", ListValue, "udp_proxy_mode",
-             "UDP" .. translate("Default") .. translate("Proxy Mode"))
+o = s:taboption("Proxy", ListValue, "udp_proxy_mode", "UDP" .. translate("Default") .. translate("Proxy Mode"))
 o.default = "chnroute"
 o.rmempty = false
 o:value("disable", translate("No Proxy"))
@@ -209,8 +206,7 @@ o:value("chnroute", translate("Game Mode") .. "（" .. translate("Not China List
 o:value("returnhome", translate("China List"))
 
 ---- Localhost TCP Proxy Mode
-o = s:taboption("Proxy", ListValue, "localhost_tcp_proxy_mode",
-             translate("Router Localhost") .. "TCP" .. translate("Proxy Mode"))
+o = s:taboption("Proxy", ListValue, "localhost_tcp_proxy_mode", translate("Router Localhost") .. "TCP" .. translate("Proxy Mode"))
 -- o.description = translate("The server client can also use this rule to scientifically surf the Internet.")
 o:value("default", translate("Default"))
 o:value("gfwlist", translate("GFW List"))
@@ -220,8 +216,7 @@ o.default = "default"
 o.rmempty = false
 
 ---- Localhost UDP Proxy Mode
-o = s:taboption("Proxy", ListValue, "localhost_udp_proxy_mode",
-             translate("Router Localhost") .. "UDP" .. translate("Proxy Mode"))
+o = s:taboption("Proxy", ListValue, "localhost_udp_proxy_mode", translate("Router Localhost") .. "UDP" .. translate("Proxy Mode"))
 o:value("disable", translate("No Proxy"))
 o:value("default", translate("Default"))
 o:value("gfwlist", translate("GFW List"))
@@ -260,7 +255,7 @@ o.datatype = "port"
 o.rmempty = false
 
 ---- Tips
-m:append(Template(appname .. "/global/tips"))
+--m:append(Template(appname .. "/global/tips"))
 
 m:append(Template(appname .. "/global/footer"))
 

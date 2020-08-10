@@ -341,7 +341,7 @@ run_socks() {
 		lua $API_GEN_TROJAN $node client $bind $local_port > $config_file
 		ln_start_bin "$(first_type $(config_t_get global_app trojan_go_file notset) trojan-go)" trojan-go -config "$config_file"
 	elif [ "$type" == "brook" ]; then
-		local protocol=$(config_n_get $node brook_protocol client)
+		local protocol=$(config_n_get $node protocol client)
 		local brook_tls=$(config_n_get $node brook_tls 0)
 		[ "$protocol" == "wsclient" ] && {
 			[ "$brook_tls" == "1" ] && server_host="wss://${server_host}" || server_host="ws://${server_host}" 
@@ -397,7 +397,7 @@ run_redir() {
 			lua $API_GEN_TROJAN $node nat "0.0.0.0" $local_port >$config_file
 			ln_start_bin "$(first_type $(config_t_get global_app trojan_go_file notset) trojan-go)" trojan-go -config "$config_file"
 		elif [ "$type" == "brook" ]; then
-			local protocol=$(config_n_get $node brook_protocol client)
+			local protocol=$(config_n_get $node protocol client)
 			if [ "$protocol" == "wsclient" ]; then
 				echolog "Brook的WebSocket不支持UDP转发！"
 			else
@@ -468,7 +468,7 @@ run_redir() {
 				done
 			elif [ "$type" == "brook" ]; then
 				local server_ip=$server_host
-				local protocol=$(config_n_get $node brook_protocol client)
+				local protocol=$(config_n_get $node protocol client)
 				local brook_tls=$(config_n_get $node brook_tls 0)
 				if [ "$protocol" == "wsclient" ]; then
 					[ "$brook_tls" == "1" ] && server_ip="wss://${server_ip}" || server_ip="ws://${server_ip}" 
