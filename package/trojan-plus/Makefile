@@ -6,14 +6,14 @@
 #
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=trojan
-PKG_VERSION:=1.16.0
+PKG_NAME:=trojan-plus
+PKG_VERSION:=10.0.1
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/trojan-gfw/trojan.git
+PKG_SOURCE_URL:=https://github.com/peter-tank/trojan-plus.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=8606b7110fe79f8ab02d60c897f87ffb0a9b23f0
+PKG_SOURCE_VERSION:=2a15d2c886cb23f4d5a8ff975fa3c87819046390
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 
 CMAKE_INSTALL:=1
@@ -21,7 +21,7 @@ PKG_BUILD_PARALLEL:=0
 PKG_BUILD_DEPENDS:=openssl
 
 PKG_LICENSE:=GPL-3.0
-PKG_MAINTAINER:=GreaterFire
+PKG_MAINTAINER:=Trojan-Plus-Group
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -51,18 +51,18 @@ CMAKE_OPTIONS += \
 	-DBoost_DEBUG=ON \
 	-DBoost_NO_BOOST_CMAKE=ON
 
-define Package/trojan
+define Package/$(PKG_NAME)
 	SECTION:=net
 	CATEGORY:=Network
-	TITLE:=An unidentifiable mechanism that helps you bypass GFW
-	URL:=https://github.com/trojan-gfw/trojan
+	TITLE:=An unidentifiable mechanism that helps you bypass GFW. It's compatible with original trojan with experimental features.
+	URL:=https://github.com/Trojan-Plus-Group/trojan-plus
 	DEPENDS:=+libpthread +libstdcpp +libopenssl \
-		+boost +boost-system +boost-program_options +boost-date_time
+		+boost +boost-system +boost-program_options
 endef
 
-define Package/trojan/install
+define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/trojan $(1)/usr/sbin/trojan
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/trojan $(1)/usr/sbin/$(PKG_NAME)
 endef
 
-$(eval $(call BuildPackage,trojan))
+$(eval $(call BuildPackage,$(PKG_NAME)))
