@@ -50,8 +50,8 @@ uci:foreach(appname, "socks", function(s)
 end)
 
 m = Map(appname)
-local status_use_big_icon = m:get("@global_other[0]", "status_use_big_icon") or 1
-if status_use_big_icon and tonumber(status_use_big_icon) == 1 then
+local status = m:get("@global_other[0]", "status") or ""
+if status:find("big_icon") then
     m:append(Template(appname .. "/global/status"))
 else
     m:append(Template(appname .. "/global/status2"))
