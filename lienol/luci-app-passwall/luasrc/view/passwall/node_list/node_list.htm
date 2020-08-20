@@ -5,7 +5,7 @@
 	
 	local tcp_node_num = api.uci_get_type("global_other", "tcp_node_num", 1)
 	local udp_node_num = api.uci_get_type("global_other", "udp_node_num", 1)
-	local compact_display_nodes = api.uci_get_type("global_other", "compact_display_nodes", 1)
+	local nodes_display = api.uci_get_type("global_other", "nodes_display", "")
 -%>
 
 <style>
@@ -197,7 +197,7 @@ table td, .table .td {
 	}
 	
 	function get_address_full(id) {
-		<% if compact_display_nodes and tonumber(compact_display_nodes) == 1 then %>
+		<% if nodes_display:find("compact_display_nodes") then %>
 			var remarks = document.getElementById("cbid.passwall." + id + ".remarks").value;
 			var result = remarks.match("\\（(.+?)\\）");
 			if (result != null) {
