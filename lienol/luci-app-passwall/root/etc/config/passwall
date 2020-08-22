@@ -40,7 +40,7 @@ config global_rules
 	option auto_update '0'
 	option chnlist_update '1'
 	option chnroute_update '1'
-	option chnroute6_update '1'
+	option chnroute6_update '0'
 	option gfwlist_update '1'
 	option gfwlist_version '2020-08-20'
 	option chnroute_version '2020-08-20'
