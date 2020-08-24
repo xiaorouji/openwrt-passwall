@@ -798,16 +798,15 @@ add_dnsmasq() {
 		echo "conf-dir=${TMP_DNSMASQ_PATH}" > "${DNSMASQ_PATH}/dnsmasq-${CONFIG}.conf"
 
 		[ "${filtered_dns}" = "1" ] && [ -z "${returnhome}" ] && servers="${TUN_DNS}"
-		if [ "${DNS_MODE}" = "chinadns-ng" ]; then
-			#[ -z "${global}${chnlist}" ] && servers="127.0.0.1#${DNS_PORT}" && msg="chinadns-ng"
-			#直接交给Chinadns-ng处理
-			servers="${TUN_DNS}" && msg="chinadns-ng"
-		fi
 		[ -n "${chnlist}" ] && msg="中国列表以外"
 		[ -n "${returnhome}" ] && msg="中国列表"
 		[ -n "${global}" ] && msg="全局"
 		if [ "${DNS_MODE}" = "other_dns" ]; then
 			msg="指定DNS"
+		elif [ "${DNS_MODE}" = "chinadns-ng" ]; then
+			#[ -z "${global}${chnlist}" ] && servers="127.0.0.1#${DNS_PORT}" && msg="chinadns-ng"
+			#直接交给Chinadns-ng处理
+			servers="${TUN_DNS}" && msg="chinadns-ng"
 		else
 			[ "${IS_DEFAULT_DNS}" = "1" ] && [ "${filtered_dns}" != "1" ] && {
 				echolog "  - 不强制设置默认DNS(上级分配)！"
