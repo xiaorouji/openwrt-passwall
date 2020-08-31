@@ -101,7 +101,7 @@ end
 s:tab("DNS", translate("DNS"))
 
 o = s:taboption("DNS", Value, "up_china_dns", translate("Resolver For Local/WhiteList Domains") .. "(UDP)")
-o.description = translate("IP:Port mode acceptable, multi value split with english comma.")
+o.description = translate("IP:Port mode acceptable, multi value split with english comma.") .. "<br />" .. translate("When the selection is not the default, this DNS is forced to be set to dnsmasq upstream DNS.")
 o.default = "default"
 o:value("default", translate("Default"))
 o:value("223.5.5.5", "223.5.5.5 (" .. translate("Ali") .. "DNS)")
@@ -116,6 +116,7 @@ o:value("180.76.76.76", "180.76.76.76 (" .. translate("Baidu") .. "DNS)")
 
 ---- DNS Forward Mode
 o = s:taboption("DNS", Value, "dns_mode", translate("Filter Mode"))
+o.description = translate("When the selection is chinadns-ng, forced to be set to dnsmasq upstream DNS.")
 o.rmempty = false
 o:reset_values()
 if api.is_finded("chinadns-ng") then
@@ -182,10 +183,8 @@ o:depends({dns_mode = "chinadns-ng", up_trust_chinadns_ng_dns = "dns2socks"})
 o:depends({dns_mode = "dns2socks"})
 o:depends({dns_mode = "pdnsd"})
 
-o = s:taboption("DNS", ListValue, "dns_default", translate("Dnsmasq default dns"), translate("When the accessed domain name does not exist in the rule list, the default DNS used."))
-o.default = "china"
-o:value("china", translate("China"))
-o:value("remote", translate("Remote"))
+o = s:taboption("DNS", Flag, "use_chnlist", translate("Use ChinaList"), translate("Only useful in non-gfwlist mode.") .. "<br />" .. translate("When used, the domestic DNS will be used only when the chnlist rule is hit, and the domain name that misses the rule will be resolved by remote DNS."))
+o.default = "0"
 
 o = s:taboption("DNS", Button, "clear_ipset", translate("Clear IPSET"), translate("Try this feature if the rule modification does not take effect."))
 o.inputstyle = "remove"
