@@ -128,6 +128,9 @@ end
 if api.is_finded("dns2socks") then
     o:value("dns2socks", "dns2socks")
 end
+if api.is_finded("https-dns-proxy") then
+    o:value("https-dns-proxy", "https-dns-proxy(DoH)")
+end
 o:value("nonuse", translate("No Filter"))
 
 o = s:taboption("DNS", ListValue, "up_trust_pdnsd_dns", translate("Resolver For The List Proxied"))
@@ -153,6 +156,11 @@ if api.is_finded("dns2socks") then
 end
 o:depends("dns_mode", "chinadns-ng")
 
+o = s:taboption("DNS", ListValue, "up_trust_doh_dns", translate("Resolver For The List Proxied"))
+o:value("tcp", translate("Access Filtered DNS By ") .. translate("TCP Node"))
+o:value("socks", translate("Access Filtered DNS By ") .. translate("Socks Node"))
+o:depends("dns_mode", "https-dns-proxy")
+
 ---- Upstream trust DNS Mode for ChinaDNS-NG
 o = s:taboption("DNS", Value, "socks_server", translate("Socks Server"), translate("Make sure socks service is available on this address if 'dns2socks' selected."))
 o.default = ""
@@ -160,10 +168,25 @@ for k, v in pairs(socks_table) do o:value(v.id, v.remarks) end
 o:depends({dns_mode = "dns2socks"})
 o:depends({dns_mode = "chinadns-ng", up_trust_chinadns_ng_dns = "dns2socks"})
 o:depends({dns_mode = "pdnsd", up_trust_pdnsd_dns = "dns2socks"})
+o:depends({dns_mode = "https-dns-proxy", up_trust_doh_dns = "socks"})
 
 o = s:taboption("DNS", Flag, "fair_mode", translate("ChinaDNS-NG Fair Mode"))
 o.default = "1"
 o:depends({dns_mode = "chinadns-ng"})
+
+---- DoH URL
+o = s:taboption("DNS", Value, "doh_url", translate("DoH request address"))
+o.default = "https://dns.google/dns-query"
+o:depends({dns_mode = "https-dns-proxy"})
+
+---- DoH Bootstrap
+o = s:taboption("DNS", Value, "doh_bootstrap", translate("DoH bootstrap DNS"), translate("The Bootstrap DNS server is used to resolve the IP address of the DoH resolver you specify as the upstream."))
+o.default = "8.8.4.4"
+o:value("8.8.4.4", "8.8.4.4 (Google DNS)")
+o:value("8.8.8.8", "8.8.8.8 (Google DNS)")
+o:value("208.67.222.222", "208.67.222.222 (Open DNS)")
+o:value("208.67.220.220", "208.67.220.220 (Open DNS)")
+o:depends({dns_mode = "https-dns-proxy"})
 
 ---- DNS Forward
 o = s:taboption("DNS", Value, "dns_forward", translate("Filtered DNS(For Proxied Domains)"), translate("IP:Port mode acceptable, the 1st for 'dns2socks' if split with english comma."))

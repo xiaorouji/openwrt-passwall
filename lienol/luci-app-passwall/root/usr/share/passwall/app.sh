@@ -644,10 +644,28 @@ start_dns() {
 	dns2socks)
 		echolog "  - 域名解析 dns2socks..."
 	;;
+	https-dns-proxy)
+		doh_url=$(config_t_get global doh_url "https://dns.google/dns-query")
+		doh_bootstrap=$(config_t_get global doh_bootstrap "8.8.4.4")
+		
+		up_trust_doh_dns=$(config_t_get global up_trust_doh_dns "tcp")
+		if [ "$up_trust_doh_dns" = "socks" ]; then
+			socks_server=$(echo $(config_t_get global socks_server 127.0.0.1:9050) | sed "s/#/:/g")
+			use_tcp_node_resolve_dns=0
+			ln_start_bin "$(first_type https-dns-proxy)" https-dns-proxy -a 127.0.0.1 -p "${DNS_PORT}" -b "${doh_bootstrap}" -r "${doh_url}" -4 -t socks5h://${socks_server}
+			msg="dns2socks"
+		elif [ "${up_trust_doh_dns}" = "tcp" ]; then
+			use_tcp_node_resolve_dns=1
+			DNS_FORWARD=${doh_bootstrap}:443
+			ln_start_bin "$(first_type https-dns-proxy)" https-dns-proxy -a 127.0.0.1 -p "${DNS_PORT}" -b "${doh_bootstrap}" -r "${doh_url}" -4
+			msg="TCP节点"
+		fi
+		echolog "  - 域名解析 https-dns-proxy(DOH)..."
+	;;
 	pdnsd)
 		up_trust_pdnsd_dns=$(config_t_get global up_trust_pdnsd_dns "nil")
 		if [ "$up_trust_pdnsd_dns" = "dns2socks" ]; then
-			[ -n "${returnhome}" ] && pdnsd_forward=${china_ng_chn} ||  pdnsd_forward=${china_ng_gfw}
+			[ -n "${returnhome}" ] && pdnsd_forward=${china_ng_chn} || pdnsd_forward=${china_ng_gfw}
 			dns2socks_listen=${pdnsd_forward}
 			msg="dns2socks"
 		elif [ "$up_trust_pdnsd_dns" = "udp" ]; then
