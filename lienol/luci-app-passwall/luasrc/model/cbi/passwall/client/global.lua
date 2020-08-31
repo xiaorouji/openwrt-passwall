@@ -104,6 +104,9 @@ o = s:taboption("DNS", Value, "up_china_dns", translate("Resolver For Local/Whit
 o.description = translate("IP:Port mode acceptable, multi value split with english comma.") .. "<br />" .. translate("When the selection is not the default, this DNS is forced to be set to dnsmasq upstream DNS.")
 o.default = "default"
 o:value("default", translate("Default"))
+if api.is_finded("https-dns-proxy") then
+    o:value("https-dns-proxy", "https-dns-proxy(DoH)")
+end
 o:value("223.5.5.5", "223.5.5.5 (" .. translate("Ali") .. "DNS)")
 o:value("223.6.6.6", "223.6.6.6 (" .. translate("Ali") .. "DNS)")
 o:value("114.114.114.114", "114.114.114.114 (114DNS)")
@@ -113,6 +116,16 @@ o:value("182.254.116.116", "182.254.116.116 (DNSPOD DNS)")
 o:value("1.2.4.8", "1.2.4.8 (CNNIC DNS)")
 o:value("210.2.4.8", "210.2.4.8 (CNNIC DNS)")
 o:value("180.76.76.76", "180.76.76.76 (" .. translate("Baidu") .. "DNS)")
+
+---- DoH URL
+o = s:taboption("DNS", Value, "up_china_dns_doh_url", translate("DoH request address"))
+o.default = "https://dns.alidns.com/dns-query"
+o:depends("up_china_dns", "https-dns-proxy")
+
+---- DoH Bootstrap
+o = s:taboption("DNS", Value, "up_china_dns_doh_bootstrap", translate("DoH bootstrap DNS"), translate("The Bootstrap DNS server is used to resolve the IP address of the DoH resolver you specify as the upstream."))
+o.default = "223.5.5.5,223.6.6.6"
+o:depends("up_china_dns", "https-dns-proxy")
 
 ---- DNS Forward Mode
 o = s:taboption("DNS", Value, "dns_mode", translate("Filter Mode"))
@@ -154,21 +167,26 @@ o:value("udp", translate("Access Filtered DNS By ") .. translate("UDP Node"))
 if api.is_finded("dns2socks") then
     o:value("dns2socks", "dns2socks")
 end
+if api.is_finded("https-dns-proxy") then
+    o:value("https-dns-proxy", "https-dns-proxy(DoH)")
+end
 o:depends("dns_mode", "chinadns-ng")
 
 o = s:taboption("DNS", ListValue, "up_trust_doh_dns", translate("Resolver For The List Proxied"))
 o:value("tcp", translate("Access Filtered DNS By ") .. translate("TCP Node"))
 o:value("socks", translate("Access Filtered DNS By ") .. translate("Socks Node"))
 o:depends("dns_mode", "https-dns-proxy")
+o:depends({dns_mode = "chinadns-ng", up_trust_chinadns_ng_dns = "https-dns-proxy"})
 
 ---- Upstream trust DNS Mode for ChinaDNS-NG
 o = s:taboption("DNS", Value, "socks_server", translate("Socks Server"), translate("Make sure socks service is available on this address if 'dns2socks' selected."))
 o.default = ""
 for k, v in pairs(socks_table) do o:value(v.id, v.remarks) end
+o:depends({dns_mode = "pdnsd", up_trust_pdnsd_dns = "dns2socks"})
 o:depends({dns_mode = "dns2socks"})
 o:depends({dns_mode = "chinadns-ng", up_trust_chinadns_ng_dns = "dns2socks"})
-o:depends({dns_mode = "pdnsd", up_trust_pdnsd_dns = "dns2socks"})
 o:depends({dns_mode = "https-dns-proxy", up_trust_doh_dns = "socks"})
+o:depends({dns_mode = "chinadns-ng", up_trust_chinadns_ng_dns = "https-dns-proxy", up_trust_doh_dns = "socks"})
 
 o = s:taboption("DNS", Flag, "fair_mode", translate("ChinaDNS-NG Fair Mode"))
 o.default = "1"
@@ -178,6 +196,7 @@ o:depends({dns_mode = "chinadns-ng"})
 o = s:taboption("DNS", Value, "doh_url", translate("DoH request address"))
 o.default = "https://dns.google/dns-query"
 o:depends({dns_mode = "https-dns-proxy"})
+o:depends({dns_mode = "chinadns-ng", up_trust_chinadns_ng_dns = "https-dns-proxy"})
 
 ---- DoH Bootstrap
 o = s:taboption("DNS", Value, "doh_bootstrap", translate("DoH bootstrap DNS"), translate("The Bootstrap DNS server is used to resolve the IP address of the DoH resolver you specify as the upstream."))
@@ -187,6 +206,7 @@ o:value("8.8.8.8", "8.8.8.8 (Google DNS)")
 o:value("208.67.222.222", "208.67.222.222 (Open DNS)")
 o:value("208.67.220.220", "208.67.220.220 (Open DNS)")
 o:depends({dns_mode = "https-dns-proxy"})
+o:depends({dns_mode = "chinadns-ng", up_trust_chinadns_ng_dns = "https-dns-proxy"})
 
 ---- DNS Forward
 o = s:taboption("DNS", Value, "dns_forward", translate("Filtered DNS(For Proxied Domains)"), translate("IP:Port mode acceptable, the 1st for 'dns2socks' if split with english comma."))
@@ -195,9 +215,11 @@ o:value("8.8.4.4", "8.8.4.4 (Google DNS)")
 o:value("8.8.8.8", "8.8.8.8 (Google DNS)")
 o:value("208.67.222.222", "208.67.222.222 (Open DNS)")
 o:value("208.67.220.220", "208.67.220.220 (Open DNS)")
-o:depends({dns_mode = "chinadns-ng"})
 o:depends({dns_mode = "dns2socks"})
 o:depends({dns_mode = "pdnsd"})
+o:depends({dns_mode = "chinadns-ng", up_trust_chinadns_ng_dns = "pdnsd"})
+o:depends({dns_mode = "chinadns-ng", up_trust_chinadns_ng_dns = "udp"})
+o:depends({dns_mode = "chinadns-ng", up_trust_chinadns_ng_dns = "dns2socks"})
 
 o = s:taboption("DNS", Flag, "dns_cache", translate("Cache Resolved"))
 o.default = "1"
