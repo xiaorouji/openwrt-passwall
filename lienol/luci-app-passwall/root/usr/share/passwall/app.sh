@@ -28,6 +28,7 @@ LUA_API_PATH=/usr/lib/lua/luci/model/cbi/$CONFIG/api
 API_GEN_SS=$LUA_API_PATH/gen_shadowsocks.lua
 API_GEN_V2RAY=$LUA_API_PATH/gen_v2ray.lua
 API_GEN_TROJAN=$LUA_API_PATH/gen_trojan.lua
+API_GEN_NAIVE=$LUA_API_PATH/gen_naiveproxy.lua
 echolog() {
 	local d="$(date "+%Y-%m-%d %H:%M:%S")"
 	echo -e "$d: $*" >>$LOG_FILE
@@ -342,6 +343,9 @@ run_socks() {
 	elif [ "$type" == "trojan-go" ]; then
 		lua $API_GEN_TROJAN $node client $bind $local_port > $config_file
 		ln_start_bin "$(first_type $(config_t_get global_app trojan_go_file notset) trojan-go)" trojan-go -config "$config_file"
+	elif [ "$type" == "naiveproxy" ]; then
+		lua $API_GEN_NAIVE $node socks $bind $local_port > $config_file
+		ln_start_bin "$(first_type naive)" naive "$config_file"
 	elif [ "$type" == "brook" ]; then
 		local protocol=$(config_n_get $node protocol client)
 		local brook_tls=$(config_n_get $node brook_tls 0)
@@ -398,6 +402,8 @@ run_redir() {
 		elif [ "$type" == "trojan-go" ]; then
 			lua $API_GEN_TROJAN $node nat "0.0.0.0" $local_port >$config_file
 			ln_start_bin "$(first_type $(config_t_get global_app trojan_go_file notset) trojan-go)" trojan-go -config "$config_file"
+		elif [ "$type" == "naiveproxy" ]; then
+			echolog "Naiveproxy不支持UDP转发！"
 		elif [ "$type" == "brook" ]; then
 			local protocol=$(config_n_get $node protocol client)
 			if [ "$protocol" == "wsclient" ]; then
@@ -439,6 +445,9 @@ run_redir() {
 		elif [ "$type" == "trojan-go" ]; then
 			lua $API_GEN_TROJAN $node nat "0.0.0.0" $local_port > $config_file
 			ln_start_bin "$(first_type $(config_t_get global_app trojan_go_file notset) trojan-go)" trojan-go -config "$config_file"
+		elif [ "$type" == "naiveproxy" ]; then
+			lua $API_GEN_NAIVE $node redir "0.0.0.0" $local_port > $config_file
+			ln_start_bin "$(first_type naive)" naive "$config_file"
 		else
 			local kcptun_use=$(config_n_get $node use_kcp 0)
 			if [ "$kcptun_use" == "1" ]; then
