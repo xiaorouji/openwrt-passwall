@@ -88,8 +88,9 @@ for i = 1, udp_node_num, 1 do
         o = s:taboption("Main", ListValue, "udp_node" .. i, translate("UDP Node"))
         o.description = translate("For proxy game network, DNS hijack etc.") .. translate(" The selected server will not use Kcptun.")
         o:value("nil", translate("Close"))
-        o:value("tcp", translate("Same as the tcp node"))
-        o:value("tcp_", translate("Same as the tcp node") .. "（" .. translate("New process") .. "）")
+        o:value("tcp_", translate("Same as the tcp node"))
+        --o:value("tcp", translate("Same as the tcp node"))
+        --o:value("tcp_", translate("Same as the tcp node") .. "（" .. translate("New process") .. "）")
     else
         o = s:taboption("Main", ListValue, "udp_node" .. i,
                      translate("UDP Node") .. " " .. i)
