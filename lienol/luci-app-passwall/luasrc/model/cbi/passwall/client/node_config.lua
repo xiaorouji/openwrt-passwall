@@ -145,7 +145,7 @@ for k, v in pairs(nodes_table) do default_node:value(v.id, v.remarks) end
 default_node:depends("protocol", "_shunt")
 
 -- Brook协议
-brook_protocol = s:option(ListValue, "brook_protocol", translate("Brook Protocol"))
+brook_protocol = s:option(ListValue, "brook_protocol", translate("Protocol"))
 brook_protocol:value("client", translate("Brook"))
 brook_protocol:value("wsclient", translate("WebSocket"))
 brook_protocol:depends("type", "Brook")
@@ -160,7 +160,7 @@ brook_tls = s:option(Flag, "brook_tls", translate("Use TLS"))
 brook_tls:depends("brook_protocol", "wsclient")
 
 -- Naiveproxy协议
-naiveproxy_protocol = s:option(ListValue, "naiveproxy_protocol", translate("Naiveproxy Protocol"))
+naiveproxy_protocol = s:option(ListValue, "naiveproxy_protocol", translate("Protocol"))
 naiveproxy_protocol:value("https", translate("HTTPS"))
 naiveproxy_protocol:value("quic", translate("QUIC"))
 naiveproxy_protocol:depends("type", "Naiveproxy")
@@ -424,7 +424,7 @@ trojan_transport:value("original", "Original")
 trojan_transport:value("ws", "WebSocket")
 trojan_transport:value("h2", "HTTP/2")
 trojan_transport:value("h2+ws", "HTTP/2 & WebSocket")
-trojan_transport.default = "ws"
+trojan_transport.default = "original"
 trojan_transport:depends("type", "Trojan-Go")
 
 trojan_plugin = s:option(ListValue, "plugin_type", translate("Plugin Type"))
