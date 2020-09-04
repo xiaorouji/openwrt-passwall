@@ -163,6 +163,9 @@ msgstr "当选择的不是默认，则将此DNS强制设置为dnsmasq上游DNS�
 msgid "When custom, Please follow the format strictly:"
 msgstr "当自定义时，请严格遵循以下格式："
 
+msgid "Use ChinaDNS-NG"
+msgstr "使用ChinaDNS-NG"
+
 msgid "When checked, forced to be set to dnsmasq upstream DNS."
 msgstr "当勾选，则将强制设置为dnsmasq上游DNS。"
 
