@@ -65,6 +65,7 @@ treat_warnings_as_errors=false
 
 fieldtrial_testing_like_official_build=true
 
+enable_base_tracing=false
 enable_nacl=false
 enable_print_preview=false
 enable_remoting=false
@@ -78,7 +79,6 @@ use_system_libdrm=false
 use_gnome_keyring=false
 use_libpci=false
 use_pangocairo=false
-use_aura=false
 use_glib=false
 use_pulseaudio=false
 use_udev=false
