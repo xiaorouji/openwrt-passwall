@@ -185,7 +185,7 @@ msgid "Resolver For The List Proxied"
 msgstr "解析被代理的域名列表"
 
 msgid "Requery DNS By %s"
-msgstr "通过%S请求DNS"
+msgstr "通过%s请求DNS"
 
 msgid "Forward To Socks Server"
 msgstr "转发至 Socks 服务器"
