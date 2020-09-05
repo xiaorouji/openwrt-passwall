@@ -85,7 +85,7 @@ do
 		}
 	end)
 
-	local tcp_main1 = ucic2:get(application, "@auto_switch[0]", "tcp_main1")
+	local tcp_main1 = ucic2:get(application, "@auto_switch[0]", "tcp_main1") or "nil"
 	CONFIG[#CONFIG + 1] = {
 		log = false,
 		remarks = "自动切换TCP_1主节点",
