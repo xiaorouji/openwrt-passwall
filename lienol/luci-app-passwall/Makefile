@@ -7,8 +7,8 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
 PKG_VERSION:=3.9
-PKG_RELEASE:=54
-PKG_DATE:=20200905
+PKG_RELEASE:=55
+PKG_DATE:=20200907
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
@@ -84,6 +84,7 @@ define Package/$(PKG_NAME)
   DEPENDS:=+libmbedtls +iptables-mod-tproxy +ip +ipset +coreutils +coreutils-base64 +coreutils-nohup +luci-lib-jsonc \
   +curl +ca-certificates +resolveip +unzip +dnsmasq-full +tcping +libuci-lua \
   +ipt2socks \
+  +ssocks \
   +pdnsd-alt \
   +PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks:shadowsocks-libev-ss-redir \
   +PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks:shadowsocks-libev-ss-local \

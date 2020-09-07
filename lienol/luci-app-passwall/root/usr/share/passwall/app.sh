@@ -331,7 +331,11 @@ run_socks() {
 	echolog "  - 节点：$remarks，${server_host}:${port}"
 
 	if [ "$type" == "socks" ]; then
-		echolog "  - 不能使用 Socks 类型的代理节点"
+		local _username=$(config_n_get $node username)
+		local _password=$(config_n_get $node password)
+		[ -n "$_username" ] && [ -n "$_password" ] && local _auth="--uname $_username --passwd $_password"
+		ln_start_bin "$(first_type ssocks)" ssocks_SOCKS_$5 --listen $local_port --socks $server_host:$port $_auth
+		unset _username _password _auth
 	elif [ "$type" == "v2ray" ]; then
 		lua $API_GEN_V2RAY $node nil nil $local_port > $config_file
 		ln_start_bin "$(first_type $(config_t_get global_app v2ray_file notset)/v2ray v2ray)" v2ray -config="$config_file"
@@ -353,7 +357,7 @@ run_socks() {
 		[ "$protocol" == "wsclient" ] && {
 			[ "$brook_tls" == "1" ] && server_host="wss://${server_host}" || server_host="ws://${server_host}" 
 		}
-		ln_start_bin "$(first_type $(config_t_get global_app brook_file notset) brook)" "brook_socks_$5" "$protocol" --socks5 "$bind:$local_port" -s "$server_host:$port" -p "$(config_n_get $node password)"
+		ln_start_bin "$(first_type $(config_t_get global_app brook_file notset) brook)" "brook_SOCKS_$5" "$protocol" --socks5 "$bind:$local_port" -s "$server_host:$port" -p "$(config_n_get $node password)"
 	elif [ "$type" == "ssr" ] || [ "$type" == "ss" ]; then
 		lua $API_GEN_SS $node $local_port > $config_file
 		ln_start_bin "$(first_type ${type}-local)" "${type}-local" -c "$config_file" -b "$bind" -u
