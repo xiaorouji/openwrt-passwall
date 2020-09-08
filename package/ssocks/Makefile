@@ -24,6 +24,7 @@ define Package/$(PKG_NAME)
   CATEGORY:=Network
   TITLE:=sSocks Relay
   URL:=https://github.com/tostercx/ssocks
+  DEPENDS:=+libopenssl
 endef
 
 define Package/$(PKG_NAME)/description
