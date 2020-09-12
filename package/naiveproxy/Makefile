@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=naiveproxy
-PKG_VERSION:=85.0.4183.83-1
+PKG_VERSION:=85.0.4183.83-3
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/klzgrad/naiveproxy/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=5fa9b2f26212f2414dc0ebc021f64c566585e26c20ec17955cef53ce3bc314da
+PKG_HASH:=66a8f275a9aa0fa04649062fb141a10add9bd76855f32ee65e6ee60a7fc4649c
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_LICENSE:=BSD 3-Clause
@@ -80,6 +80,9 @@ define Package/naiveproxy/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/out/Release/naive $(1)/usr/bin/naive
 	$(INSTALL_DIR) $(1)/etc/chromium/policies/managed
 	$(INSTALL_CONF) $(CURDIR)/files/proxy.json $(1)/etc/chromium/policies/managed/proxy.json
+	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/init.d
+	$(INSTALL_CONF) $(CURDIR)/files/naiveproxy.config $(1)/etc/config/naiveproxy
+	$(INSTALL_BIN) $(CURDIR)/files/naiveproxy.init $(1)/etc/init.d/naiveproxy
 endef
 
 $(eval $(call BuildPackage,naiveproxy))
