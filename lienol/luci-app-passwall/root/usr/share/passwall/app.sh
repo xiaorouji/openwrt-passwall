@@ -781,6 +781,7 @@ start_dns() {
 	if [ -n "$(echo ${DNS_MODE} | grep 'https-dns-proxy')" ]; then
 		up_trust_doh=$(config_t_get global up_trust_doh "https://dns.google/dns-query,8.8.8.8,8.8.4.4")
 		_doh_url=$(echo $up_trust_doh | awk -F ',' '{print $1}')
+		_doh_port=$(echo $_doh_url | sed "s/:\/\///g" | awk -F ':' '{print $2}'| awk -F '/' '{print $1}')
 		_doh_bootstrap=$(echo $up_trust_doh | cut -d ',' -sf 2-)
 		
 		up_trust_doh_dns=$(config_t_get global up_trust_doh_dns "tcp")
@@ -791,13 +792,13 @@ start_dns() {
 			DNS_FORWARD=""
 			_doh_bootstrap_dns=$(echo $_doh_bootstrap | sed "s/,/ /g")
 			for _dns in $_doh_bootstrap_dns; do
-				_dns=$(echo $_dns | awk -F ':' '{print $1}'):443
+				_dns=$(echo $_dns | awk -F ':' '{print $1}'):${_doh_port:-443}
 				[ -n "$DNS_FORWARD" ] && DNS_FORWARD=${DNS_FORWARD},${_dns} || DNS_FORWARD=${_dns}
 			done
 			ln_start_bin "$(first_type https-dns-proxy)" https-dns-proxy -a 127.0.0.1 -p "${dns_listen_port}" -b "${_doh_bootstrap}" -r "${_doh_url}" -4
 			unset _dns _doh_bootstrap_dns
 		fi
-		unset _doh_url _doh_bootstrap
+		unset _doh_url _doh_port _doh_bootstrap
 	fi
 	if [ -n "$(echo ${DNS_MODE}${up_trust_pdnsd_dns} | grep dns2socks)" ]; then
 		local dns2socks_socks_server=$(echo $(config_t_get global socks_server 127.0.0.1:9050) | sed "s/#/:/g")
