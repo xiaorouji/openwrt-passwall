@@ -130,8 +130,8 @@ load_acl() {
 			udp_redir_ports=${udp_redir_ports:-default}
 			[ "$tcp_proxy_mode" = "default" ] && tcp_proxy_mode=$TCP_PROXY_MODE
 			[ "$udp_proxy_mode" = "default" ] && udp_proxy_mode=$UDP_PROXY_MODE
-			[ "$TCP_NODE_NUM" == "1" ] && tcp_node=1
-			[ "$UDP_NODE_NUM" == "1" ] && udp_node=1
+			[ "$tcp_node" -gt "$TCP_NODE_NUM" ] && tcp_node=1
+			[ "$udp_node" -gt "$UDP_NODE_NUM" ] && udp_node=1
 			[ "$tcp_no_redir_ports" = "default" ] && tcp_no_redir_ports=$TCP_NO_REDIR_PORTS
 			[ "$udp_no_redir_ports" = "default" ] && udp_no_redir_ports=$UDP_NO_REDIR_PORTS
 			[ "$tcp_redir_ports" = "default" ] && tcp_redir_ports=$TCP_REDIR_PORTS
