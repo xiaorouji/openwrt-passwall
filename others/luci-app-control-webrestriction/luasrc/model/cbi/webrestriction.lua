@@ -15,7 +15,7 @@ t.rmempty = false
 t = e:option(ListValue, "limit_type", translate("限制模式"))
 t.default = "blacklist"
 t:value("whitelist", translate("白名单"))
-t:value("blacklist", translate("Blacklist"))
+t:value("blacklist", translate("黑名单"))
 t.rmempty = false
 e = a:section(TypedSection, "macbind", translate("名单设置"), translate(
                   "如果是黑名单模式，列表中的客户端将被禁止连接到互联网；白名单模式表示仅有列表中的客户端可以连接到互联网。"))
