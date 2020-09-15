@@ -716,11 +716,15 @@ start_dns() {
 				cat "${RULES_PATH}/direct_host" >> "${TMP_PATH}/chnlist"
 				echolog "  | - [$?](chinadns-ng) 域名白名单合并到中国域名表"
 				cat "${RULES_PATH}/proxy_host" >> "${TMP_PATH}/gfwlist.txt"
+				[ -f "${RULES_PATH}/proxy_host2" ] && cat "${RULES_PATH}/proxy_host2" >> "${TMP_PATH}/gfwlist.txt"
+				[ -f "${RULES_PATH}/proxy_host3" ] && cat "${RULES_PATH}/proxy_host3" >> "${TMP_PATH}/gfwlist.txt"
 				echolog "  | - [$?](chinadns-ng) 代理域名表合并到防火墙域名表"
 				gfwlist_param="${TMP_PATH}/gfwlist.txt"
 			else
 				echolog "  | - (chinadns-ng) 白名单不与中国域名表合并"
 				cat "${RULES_PATH}/proxy_host" >> "${TMP_PATH}/chnlist"
+				[ -f "${RULES_PATH}/proxy_host2" ] && cat "${RULES_PATH}/proxy_host2" >> "${TMP_PATH}/chnlist"
+				[ -f "${RULES_PATH}/proxy_host3" ] && cat "${RULES_PATH}/proxy_host3" >> "${TMP_PATH}/chnlist"
 				echolog "  | - [$?](chinadns-ng) 忽略防火墙域名表，代理域名表合并到中国域名表"
 			fi
 			chnlist_param="${TMP_PATH}/chnlist"
@@ -836,7 +840,7 @@ add_dnsmasq() {
 		#始终用国内DNS解析节点域名
 		fwd_dns="${LOCAL_DNS}"
 		servers=$(uci show "${CONFIG}" | grep ".address=" | cut -d "'" -f 2)
-		hosts_foreach "servers" host_from_url | grep -v "google.c" | grep '[a-zA-Z]$' | sort -u | gen_dnsmasq_items "vpsiplist" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/vpsiplist_host.conf"
+		hosts_foreach "servers" host_from_url | grep -v "google.c" | grep '[a-zA-Z]$' | sort -u | gen_dnsmasq_items "vpsiplist" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/01-vpsiplist_host.conf"
 		echolog "  - [$?]节点列表中的域名(vpsiplist)：${fwd_dns:-默认}"
 
 		#始终用国内DNS解析直连（白名单）列表		
@@ -845,7 +849,7 @@ add_dnsmasq() {
 		[ "$CHINADNS_NG" = "1" ] && unset fwd_dns
 		#如果没使用chnlist直接使用默认DNS
 		[ "${USE_CHNLIST}" = "0" ] && unset fwd_dns
-		sort -u "${RULES_PATH}/direct_host" | gen_dnsmasq_items "whitelist" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/direct_host.conf"
+		sort -u "${RULES_PATH}/direct_host" | gen_dnsmasq_items "whitelist" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/00-direct_host.conf"
 		echolog "  - [$?]域名白名单(whitelist)：${fwd_dns:-默认}"
 
 		#当勾选使用chnlist，仅当使用大陆白名单或回国模式
@@ -868,7 +872,9 @@ add_dnsmasq() {
 		[ "$CHINADNS_NG" = "1" ] && unset fwd_dns
 		#如果使用chnlist直接使用默认DNS
 		[ "${USE_CHNLIST}" = "1" ] && unset fwd_dns
-		sort -u "${RULES_PATH}/proxy_host" | gen_dnsmasq_items "blacklist" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/proxy_host.conf"
+		sort -u "${RULES_PATH}/proxy_host" | gen_dnsmasq_items "blacklist" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/12-proxy_host.conf"
+		[ "2" -le "$TCP_NODE_NUM" ] && sort -u "${RULES_PATH}/proxy_host2" | gen_dnsmasq_items "blacklist2" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/11-proxy_host2.conf"
+		[ "3" -le "$TCP_NODE_NUM" ] && sort -u "${RULES_PATH}/proxy_host3" | gen_dnsmasq_items "blacklist3" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/10-proxy_host3.conf"
 		echolog "  - [$?]代理域名表(blacklist)：${fwd_dns:-默认}"
 
 		#如果没有使用回国模式
