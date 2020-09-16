@@ -743,7 +743,7 @@ start_dns() {
 		TUN_DNS=""
 	;;
 	dns2socks)
-		echolog "  - 域名解析 dns2socks..."
+		echolog "  - 域名解析：dns2socks..."
 	;;
 	https-dns-proxy)
 		up_trust_doh_dns=$(config_t_get global up_trust_doh_dns "tcp")
@@ -768,13 +768,14 @@ start_dns() {
 	;;
 	udp)
 		use_udp_node_resolve_dns=1
-		msg="直接使用UDP节点请求DNS"
+		TUN_DNS=${DNS_FORWARD}
+		echolog "  - 域名解析：直接使用UDP节点请求DNS（$TUN_DNS）"
 	;;
 	custom)
 		[ "$CHINADNS_NG" != "1" ] && {
 			custom_dns=$(config_t_get global custom_dns)
 			TUN_DNS="$(echo ${custom_dns} | sed 's/:/#/g')"
-			echolog "  - 域名解析 直接使用UDP协议自定义DNS（$TUN_DNS）解析..."
+			echolog "  - 域名解析：直接使用UDP协议自定义DNS（$TUN_DNS）解析..."
 		}
 	;;
 	esac
@@ -812,8 +813,8 @@ start_dns() {
 		echolog "  - dns2sock(127.0.0.1:${dns_listen_port}${dns2sock_cache})，${dns2socks_socks_server:-127.0.0.1:9050} -> ${dns2socks_forward-D46.182.19.48:53}"
 		#[ "$CHINADNS_NG" = "1" ] && [ -n "${global}${chnlist}" ] && [ -z "${returnhome}" ] && TUN_DNS=$(echo "${dns_listen_port}" | sed 's/:/#/g')
 	fi
-	[ "${use_udp_node_resolve_dns}" = "1" ] && echolog "  * 要求代理 DNS 请求，如上游 DNS 非直连地址，确保 UDP 代理打开，并且已经正确转发"
-	[ "${use_tcp_node_resolve_dns}" = "1" ] && echolog "  * 请确认上游 DNS 支持 TCP 查询，如非直连地址，确保 TCP 代理打开，并且已经正确转发"
+	[ "${use_udp_node_resolve_dns}" = "1" ] && echolog "  * 要求代理 DNS 请求，如上游 DNS 非直连地址，确保 UDP 代理打开，并且已经正确转发！"
+	[ "${use_tcp_node_resolve_dns}" = "1" ] && echolog "  * 请确认上游 DNS 支持 TCP 查询，如非直连地址，确保 TCP 代理打开，并且已经正确转发！"
 }
 
 add_dnsmasq() {
