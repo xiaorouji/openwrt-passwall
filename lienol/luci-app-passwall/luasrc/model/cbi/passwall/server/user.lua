@@ -141,7 +141,7 @@ password = s:option(Value, "password", translate("Password"))
 password.password = true
 password.validate = function(self, value, t)
     if value then
-        if not username:formvalue(t) or username:formvalue(t) == "" then
+        if (protocol:formvalue(t) == "http" or protocol:formvalue(t) == "socks" or type:formvalue(t) == "Socks") and (not username:formvalue(t) or username:formvalue(t) == "") then
             return nil, translate("Username and Password must be used together!")
         end
     end
