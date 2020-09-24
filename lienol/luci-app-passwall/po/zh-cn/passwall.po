@@ -211,6 +211,9 @@ msgstr "ChinaDNS-NG 公平模式"
 msgid "Filtered DNS(For Proxied Domains)"
 msgstr "域名过滤服务(用于被代理的域名)"
 
+msgid "Format must be:"
+msgstr "格式必须为："
+
 msgid "DoH request address"
 msgstr "DoH 请求地址"
 
