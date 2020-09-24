@@ -69,7 +69,7 @@ remarks.default = translate("Remarks")
 remarks.rmempty = false
 
 type = s:option(ListValue, "type", translate("Type"))
-if api.is_finded("ssocksd") then
+if api.is_finded("microsocks") then
     type:value("Socks", translate("Socks"))
 end
 if api.is_finded("ss-server") then
