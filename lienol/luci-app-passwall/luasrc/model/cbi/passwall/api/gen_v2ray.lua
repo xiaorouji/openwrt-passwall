@@ -62,7 +62,6 @@ local function gen_outbound(node, tag)
                     allowInsecure = (node.tls_allowInsecure == "1") and true or false
                 } or nil,
                 tlsSettings = (node.stream_security == "tls") and {
-                    disableSessionResumption = node.sessionTicket ~= "1" and true or false,
                     serverName = node.tls_serverName,
                     allowInsecure = (node.tls_allowInsecure == "1") and true or false
                 } or nil,

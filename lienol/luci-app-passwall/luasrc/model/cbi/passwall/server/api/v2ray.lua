@@ -205,7 +205,6 @@ function gen_config(user)
                     security = user.stream_security,
                     xtlsSettings = (user.stream_security == 'xtls') and {
                         --alpn = {"http/1.1"},
-                        allowInsecure = false,
                         disableSystemRoot = false,
                         certificates = {
                             {
@@ -215,7 +214,6 @@ function gen_config(user)
                         }
                     } or nil,
                     tlsSettings = (user.stream_security == 'tls') and {
-                        allowInsecure = false,
                         disableSystemRoot = false,
                         certificates = {
                             {

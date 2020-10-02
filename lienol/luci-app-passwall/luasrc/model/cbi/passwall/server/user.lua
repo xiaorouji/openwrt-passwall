@@ -300,7 +300,9 @@ flow:depends("stream_security", "xtls")
 
 tls_sessionTicket = s:option(Flag, "tls_sessionTicket", translate("Session Ticket"))
 tls_sessionTicket.default = "0"
-tls_sessionTicket:depends("stream_security", "tls")
+tls_sessionTicket:depends({ type = "Trojan", stream_security = "tls" })
+tls_sessionTicket:depends({ type = "Trojan-Plus", stream_security = "tls" })
+tls_sessionTicket:depends({ type = "Trojan-Go", stream_security = "tls" })
 
 tls_serverName = s:option(Value, "tls_serverName", translate("Domain"))
 tls_serverName:depends("stream_security", "tls")
