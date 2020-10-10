@@ -155,8 +155,7 @@ if node then
         table.insert(inbounds, {
             listen = "0.0.0.0",
             port = tonumber(socks_proxy_port),
-            protocol = "socks",
-            settings = {auth = "noauth", udp = true, ip = "127.0.0.1"}
+            protocol = "socks"
         })
         network = "tcp,udp"
     end
@@ -165,8 +164,7 @@ if node then
         table.insert(inbounds, {
             port = tonumber(redir_port),
             protocol = "dokodemo-door",
-            settings = {network = proto, followRedirect = true},
-            sniffing = {enabled = true, destOverride = {"http", "tls"}}
+            settings = {network = proto, followRedirect = true}
         })
         if proto == "tcp" and node.tcp_socks == "1" then
             table.insert(inbounds, {
