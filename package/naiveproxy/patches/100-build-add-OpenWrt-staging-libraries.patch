@@ -18,7 +18,7 @@ index 9ccb89f27..de9e5501d 100644
 +    sysroot_flags += [ "-I" + getenv("OP_STAGING_DIR") + "/usr/include" ]
 +    sysroot_flags += [ "-I" + getenv("OP_STAGING_DIR") + "/usr/include/nss" ]
 +    sysroot_flags += [ "-I" + getenv("OP_STAGING_DIR") + "/usr/include/nspr" ]
-     if (is_linux) {
+     if (is_linux || is_chromeos) {
        # This is here so that all files get recompiled after a sysroot roll and
        # when turning the sysroot on or off. (defines are passed via the command
 @@ -57,6 +60,7 @@ config("runtime_library") {
