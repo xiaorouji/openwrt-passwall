@@ -15,8 +15,6 @@ So, let's drop it in global build file.
  src/BUILD.gn | 1 -
  1 file changed, 1 deletion(-)
 
-diff --git a/src/BUILD.gn b/src/BUILD.gn
-index 97494c0a0..daddf5213 100644
 --- a/src/BUILD.gn
 +++ b/src/BUILD.gn
 @@ -751,7 +751,6 @@ group("gn_all") {
@@ -27,6 +25,3 @@ index 97494c0a0..daddf5213 100644
      }
      if ((is_linux || is_chromeos) && current_toolchain == host_toolchain) {
        deps += [ "//v8:v8_shell" ]
--- 
-2.17.1
-
