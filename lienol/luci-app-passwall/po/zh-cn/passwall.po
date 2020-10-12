@@ -118,6 +118,12 @@ msgstr "Socks配置"
 msgid "Socks Node"
 msgstr "Socks节点"
 
+msgid "Listen Port"
+msgstr "监听端口"
+
+msgid "0 is not use"
+msgstr "0为不使用"
+
 msgid "Same as the tcp node"
 msgstr "与TCP节点相同"
 
