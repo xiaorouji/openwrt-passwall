@@ -212,7 +212,7 @@ table td, .table .td {
 		catch(err){}
 		//判断是否含有汉字
 		var reg = new RegExp("[\\u4E00-\\u9FFF]+","g");
-		if ((address != null && address != "") && (port != null && port != "") && reg.test(address) == false && (address.indexOf(".") != -1 && address.charAt(address.address - 1) != ".")) {
+		if ((address != null && address != "") && (port != null && port != "") && reg.test(address) == false) {
 			return { address: address, port: port };
 		} else {
 			return null;

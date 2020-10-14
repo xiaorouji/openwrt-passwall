@@ -603,7 +603,7 @@ start_socks() {
 
 clean_log() {
 	logsnum=$(cat $LOG_FILE 2>/dev/null | wc -l)
-	[ "$logsnum" -gt 300 ] && {
+	[ "$logsnum" -gt 1000 ] && {
 		echo "" > $LOG_FILE
 		echolog "日志文件过长，清空处理！"
 	}

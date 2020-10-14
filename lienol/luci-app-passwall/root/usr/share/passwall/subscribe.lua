@@ -8,7 +8,7 @@ require 'luci.model.uci'
 require 'luci.util'
 require 'luci.jsonc'
 require 'luci.sys'
-local _api = require "luci.model.cbi.passwall.api.api"
+local api = require "luci.model.cbi.passwall.api.api"
 
 -- these global functions are accessed all the time by the event handler
 -- so caching them is worth the effort
@@ -315,7 +315,7 @@ local function base64Decode(text)
 end
 -- 处理数据
 local function processData(szType, content, add_mode)
-	log(content, add_mode)
+	--log(content, add_mode)
 	local result = {
 		timeout = 60,
 		add_mode = add_mode,
@@ -679,11 +679,11 @@ local function select_node(nodes, config)
 				end
 			end
 		end
-		-- 第二优先级 IP + 端口
+		-- 第二优先级 类型 + IP + 端口
 		if not server then
 			for id, node in pairs(nodes) do
-				if node.address and node.port then
-					if node.address .. ':' .. node.port == config.currentNode.address .. ':' .. config.currentNode.port then
+				if node.type and node.address and node.port then
+					if node.type == config.currentNode.type and (node.address .. ':' .. node.port == config.currentNode.address .. ':' .. config.currentNode.port) then
 						if config.log == nil or config.log == true then
 							log('选择【' .. config.remarks .. '】第二匹配节点：' .. node.remarks)
 						end
@@ -693,11 +693,11 @@ local function select_node(nodes, config)
 				end
 			end
 		end
-		-- 第三优先级 IP
+		-- 第三优先级 IP + 端口
 		if not server then
 			for id, node in pairs(nodes) do
-				if node.address then
-					if node.address == config.currentNode.address then
+				if node.address and node.port then
+					if node.address .. ':' .. node.port == config.currentNode.address .. ':' .. config.currentNode.port then
 						if config.log == nil or config.log == true then
 							log('选择【' .. config.remarks .. '】第三匹配节点：' .. node.remarks)
 						end
@@ -707,13 +707,27 @@ local function select_node(nodes, config)
 				end
 			end
 		end
-		-- 第四优先级备注
+		-- 第四优先级 IP
+		if not server then
+			for id, node in pairs(nodes) do
+				if node.address then
+					if node.address == config.currentNode.address then
+						if config.log == nil or config.log == true then
+							log('选择【' .. config.remarks .. '】第四匹配节点：' .. node.remarks)
+						end
+						server = id
+						break
+					end
+				end
+			end
+		end
+		-- 第五优先级备注
 		if not server then
 			for id, node in pairs(nodes) do
 				if node.remarks then
 					if node.remarks == config.currentNode.remarks then
 						if config.log == nil or config.log == true then
-							log('选择【' .. config.remarks .. '】第四匹配节点：' .. node.remarks)
+							log('选择【' .. config.remarks .. '】第五匹配节点：' .. node.remarks)
 						end
 						server = id
 						break
@@ -751,7 +765,7 @@ local function update_node(manual)
 	end)
 	for _, v in ipairs(nodeResult) do
 		for _, vv in ipairs(v) do
-			local uuid = _api.gen_uuid()
+			local uuid = api.gen_uuid()
 			local cfgid = ucic2:section(application, uciType, uuid)
 			cfgid = uuid
 			for kkk, vvv in pairs(vv) do
@@ -858,7 +872,7 @@ local function parse_link(raw, remark, manual)
 						not result.address:find("%.") or -- 虽然没有.也算域，不过应该没有人会这样干吧
 						result.address:sub(#result.address) == "." -- 结尾是.
 					then
-						log('丢弃无效节点: ' .. result.type .. ' 节点, ' .. result.remarks)
+						log('丢弃过滤节点: ' .. result.type .. ' 节点, ' .. result.remarks)
 					else
 						tinsert(all_nodes, result)
 					end
