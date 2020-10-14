@@ -9,7 +9,7 @@ PKG_NAME:=luci-app-v2ray-server
 LUCI_TITLE:=LuCI support for V2ray Server
 LUCI_DEPENDS:=+unzip +v2ray 
 LUCI_PKGARCH:=all
-PKG_VERSION:=12
+PKG_VERSION:=13
 
 include $(TOPDIR)/feeds/luci/luci.mk
 

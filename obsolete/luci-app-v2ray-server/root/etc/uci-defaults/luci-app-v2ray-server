@@ -6,6 +6,7 @@ uci -q batch <<-EOF >/dev/null
 	set firewall.v2ray_server.type=script
 	set firewall.v2ray_server.path=/var/etc/v2ray_server.include
 	set firewall.v2ray_server.reload=1
+	commit firewall
 EOF
 
 uci -q batch <<-EOF >/dev/null

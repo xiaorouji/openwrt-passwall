@@ -136,6 +136,36 @@ msgstr "客户端文件不适合当前设备。"
 msgid "Can't move new file to path: %s"
 msgstr "无法移动新文件到：%s"
 
+msgid "Update..."
+msgstr "更新中"
+
+msgid "It is the latest version"
+msgstr "已是最新版本"
+
+msgid "Update successful"
+msgstr "更新成功"
+
+msgid "Click to update"
+msgstr "点击更新"
+
+msgid "Updating..."
+msgstr "更新中"
+
+msgid "Unexpected error"
+msgstr "意外错误"
+
+msgid "Updating, are you sure to close?"
+msgstr "正在更新，你确认要关闭吗？"
+
+msgid "Downloading..."
+msgstr "下载中"
+
+msgid "Unpacking..."
+msgstr "解压中"
+
+msgid "Moving..."
+msgstr "移动中"
+
 msgid "Enabled"
 msgstr "启用"
 
