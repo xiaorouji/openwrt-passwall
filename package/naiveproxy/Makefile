@@ -75,9 +75,6 @@ define Build/Compile
 )
 endef
 
-define Package/naiveproxy/conffiles
-endef
-
 define Package/naiveproxy/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/out/Release/naive $(1)/usr/bin/naive
