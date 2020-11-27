@@ -6,6 +6,7 @@ local http = require "luci.http"
 local util = require "luci.util"
 local kcptun = require "luci.model.cbi.passwall.api.kcptun"
 local brook = require "luci.model.cbi.passwall.api.brook"
+local xray = require "luci.model.cbi.passwall.api.xray"
 local v2ray = require "luci.model.cbi.passwall.api.v2ray"
 local trojan_go = require "luci.model.cbi.passwall.api.trojan_go"
 
@@ -65,6 +66,8 @@ function index()
 	entry({"admin", "services", appname, "kcptun_update"}, call("kcptun_update")).leaf = true
 	entry({"admin", "services", appname, "brook_check"}, call("brook_check")).leaf = true
 	entry({"admin", "services", appname, "brook_update"}, call("brook_update")).leaf = true
+	entry({"admin", "services", appname, "xray_check"}, call("xray_check")).leaf = true
+	entry({"admin", "services", appname, "xray_update"}, call("xray_update")).leaf = true
 	entry({"admin", "services", appname, "v2ray_check"}, call("v2ray_check")).leaf = true
 	entry({"admin", "services", appname, "v2ray_update"}, call("v2ray_update")).leaf = true
 	entry({"admin", "services", appname, "trojan_go_check"}, call("trojan_go_check")).leaf = true
@@ -285,11 +288,11 @@ function check_port()
 	ucic:foreach(appname, "nodes", function(s)
 		local ret = ""
 		local tcp_socket
-		if (s.use_kcp and s.use_kcp == "1" and s.kcp_port) or
-			(s.v2ray_transport and s.v2ray_transport == "mkcp" and s.port) then
+		if (s.use_kcp and s.use_kcp == "1" and s.kcp_port) or (s.transport and s.transport == "mkcp" and s.port) then
 		else
 			local type = s.type
-			if type and type ~= "V2ray_balancing" and type ~= "V2ray_shunt" and
+			local protocol = s.protocol
+			if type and (protocol and protocol ~= "_balancing" and protocol ~= "_shunt") and
 				s.address and s.port and s.remarks then
 				node_name = "%s：[%s] %s:%s" % {s.type, s.remarks, s.address, s.port}
 				tcp_socket = nixio.socket("inet", "stream")
@@ -361,6 +364,25 @@ function brook_update()
 		json = brook.to_move(http.formvalue("file"))
 	else
 		json = brook.to_download(http.formvalue("url"))
+	end
+
+	http_write_json(json)
+end
+
+function xray_check()
+	local json = xray.to_check("")
+	http_write_json(json)
+end
+
+function xray_update()
+	local json = nil
+	local task = http.formvalue("task")
+	if task == "extract" then
+		json = xray.to_extract(http.formvalue("file"), http.formvalue("subfix"))
+	elseif task == "move" then
+		json = xray.to_move(http.formvalue("file"))
+	else
+		json = xray.to_download(http.formvalue("url"))
 	end
 
 	http_write_json(json)

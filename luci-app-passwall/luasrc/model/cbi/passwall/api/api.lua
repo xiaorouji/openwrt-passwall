@@ -19,7 +19,7 @@ function get_valid_nodes()
     local nodes = {}
     uci:foreach(appname, "nodes", function(e)
         if e.type and e.remarks then
-            if e.type == "V2ray" and (e.protocol == "_balancing" or e.protocol == "_shunt") then
+            if e.protocol and (e.protocol == "_balancing" or e.protocol == "_shunt") then
                 e.remarks_name = "%s：[%s] " % {i18n.translatef(e.type .. e.protocol), e.remarks}
                 e.node_type = "special"
                 nodes[#nodes + 1] = e
@@ -79,7 +79,21 @@ function get_customed_path(e)
 end
 
 function is_finded(e)
-    return luci.sys.exec('type -t -p "%s/%s" -p "/usr/bin/v2ray/%s" "%s"' % {get_customed_path(e), e, e, e}) ~= "" and true or false
+    return luci.sys.exec('type -t -p "%s/%s" -p "/usr/bin/xray/%s" -p "/usr/bin/v2ray/%s" "%s"' % {get_customed_path(e), e, e, e, e}) ~= "" and true or false
+end
+
+function get_xray_path()
+    local path = uci_get_type("global_app", "xray_file")
+    return path .. "/xray"
+end
+
+function get_xray_version(file)
+    if file == nil then file = get_xray_path() end
+    chmod_755(file)
+    if fs.access(file) then
+        return sys.exec("echo -n $(%s -version | awk '{print $2}' | sed -n 1P)" % file)
+    end
+    return ""
 end
 
 function get_v2ray_path()

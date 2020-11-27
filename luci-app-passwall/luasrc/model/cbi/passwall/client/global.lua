@@ -86,7 +86,7 @@ for i = 1, tcp_node_num, 1 do
                 local e = uci:get_all(appname, now_node)
                 if e then
                     local remarks = ""
-                    if e.type == "V2ray" and (e.protocol == "_balancing" or e.protocol == "_shunt") then
+                    if e.protocol and (e.protocol == "_balancing" or e.protocol == "_shunt") then
                         remarks = "%s：[%s] " % {translatef(e.type .. e.protocol), e.remarks}
                     else
                         if e.use_kcp and e.use_kcp == "1" then
@@ -334,7 +334,7 @@ o.default = 9050
 o.datatype = "port"
 o.rmempty = false
 
-if api.is_finded("v2ray") then
+if api.is_finded("xray") or api.is_finded("v2ray") then
     o = s:option(Value, "http_port", "HTTP" .. translate("Listen Port") .. " " .. translate("0 is not use"))
     o.default = 0
     o.datatype = "port"

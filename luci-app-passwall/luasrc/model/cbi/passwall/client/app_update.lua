@@ -9,10 +9,16 @@ s = m:section(TypedSection, "global_app", translate("App Update"),
                   translate("Please confirm that your firmware supports FPU.") ..
                   "</font>")
 s.anonymous = true
+s:append(Template(appname .. "/app_update/xray_version"))
 s:append(Template(appname .. "/app_update/v2ray_version"))
 s:append(Template(appname .. "/app_update/trojan_go_version"))
 s:append(Template(appname .. "/app_update/kcptun_version"))
 s:append(Template(appname .. "/app_update/brook_version"))
+
+---- Xray Path
+o = s:option(Value, "xray_file", translate("Xray Path"), translatef("if you want to run from memory, change the path, such as %s, Then save the application and update it manually.", "/tmp/xray/"))
+o.default = "/usr/bin/xray/"
+o.rmempty = false
 
 ---- V2ray Path
 o = s:option(Value, "v2ray_file", translate("V2ray Path"), translatef("if you want to run from memory, change the path, such as %s, Then save the application and update it manually.", "/tmp/v2ray/"))

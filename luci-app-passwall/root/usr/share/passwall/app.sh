@@ -26,6 +26,8 @@ use_tcp_node_resolve_dns=0
 use_udp_node_resolve_dns=0
 LUA_API_PATH=/usr/lib/lua/luci/model/cbi/$CONFIG/api
 API_GEN_SS=$LUA_API_PATH/gen_shadowsocks.lua
+API_GEN_XRAY=$LUA_API_PATH/gen_xray.lua
+API_GEN_XRAY_PROTO=$LUA_API_PATH/gen_xray_proto.lua
 API_GEN_V2RAY=$LUA_API_PATH/gen_v2ray.lua
 API_GEN_V2RAY_PROTO=$LUA_API_PATH/gen_v2ray_proto.lua
 API_GEN_TROJAN=$LUA_API_PATH/gen_trojan.lua
@@ -209,7 +211,7 @@ get_new_port() {
 
 first_type() {
 	local path_name=${1}
-	type -t -p "/bin/${path_name}" -p "${TMP_BIN_PATH}/${path_name}" -p "${path_name}" -p "/usr/bin/v2ray/{path_name}" "$@" | head -n1
+	type -t -p "/bin/${path_name}" -p "${TMP_BIN_PATH}/${path_name}" -p "${path_name}" -p "/usr/bin/xray/{path_name}" -p "/usr/bin/v2ray/{path_name}" "$@" | head -n1
 }
 
 ln_start_bin() {
@@ -333,7 +335,7 @@ run_socks() {
 		msg="某种原因，此 Socks 服务的相关配置已失联，启动中止！"
 	fi
 	
-	if [ "$type" == "v2ray" ] && ([ -n "$(config_n_get $node balancing_node)" ] || [ "$(config_n_get $node default_node)" != "nil" ]); then
+	if [ "$type" == "xray" -o "$type" == "v2ray" ] && ([ -n "$(config_n_get $node balancing_node)" ] || [ "$(config_n_get $node default_node)" != "nil" ]); then
 		unset msg
 	fi
 
@@ -349,6 +351,10 @@ run_socks() {
 		_password=$(config_n_get $node password)
 		[ -n "$_username" ] && [ -n "$_password" ] && local _auth="--uname $_username --passwd $_password"
 		ln_start_bin "$(first_type ssocks)" ssocks_SOCKS_$id --listen $socks_port --socks $server_host:$port $_auth
+	;;
+	xray)
+		lua $API_GEN_XRAY $node nil nil $socks_port > $config_file
+		ln_start_bin "$(first_type $(config_t_get global_app xray_file notset)/xray xray)" xray -config="$config_file"
 	;;
 	v2ray)
 		lua $API_GEN_V2RAY $node nil nil $socks_port > $config_file
@@ -423,6 +429,10 @@ run_redir() {
 			eval port=\$UDP_REDIR_PORT$6
 			ln_start_bin "$(first_type ipt2socks)" "ipt2socks_udp_$6" -U -l "$port" -b 0.0.0.0 -s "$node_address" -p "$node_port" -R
 		;;
+		xray)
+			lua $API_GEN_XRAY $node udp $local_port nil > $config_file
+			ln_start_bin "$(first_type $(config_t_get global_app xray_file notset)/xray xray)" xray -config="$config_file"
+		;;
 		v2ray)
 			lua $API_GEN_V2RAY $node udp $local_port nil > $config_file
 			ln_start_bin "$(first_type $(config_t_get global_app v2ray_file notset)/v2ray v2ray)" v2ray -config="$config_file"
@@ -479,6 +489,12 @@ run_redir() {
 			_socks_port=$(config_n_get $node port)
 			_socks_username=$(config_n_get $node username)
 			_socks_password=$(config_n_get $node password)
+		;;
+		xray)
+			local extra_param="tcp"
+			[ "$6" == 1 ] && [ "$UDP_NODE1" == "tcp" ] && extra_param="tcp,udp"
+			lua $API_GEN_XRAY $node $extra_param $local_port nil > $config_file
+			ln_start_bin "$(first_type $(config_t_get global_app xray_file notset)/xray xray)" xray -config="$config_file"
 		;;
 		v2ray)
 			local extra_param="tcp"
