@@ -1,0 +1,33 @@
+<script type="text/javascript">
+	//<![CDATA[
+	var _status = document.getElementsByClassName('_status');
+	for (var i = 0; i < _status.length; i++) {
+		var id = _status[i].getAttribute("socks_id");
+		XHR.get('<%=url([[admin]], [[services]], [[passwall]], [[socks_status]])%>', {
+				index: i,
+				id: id
+			},
+			function(x, result) {
+				var index = result.index;
+				var div = '';
+				var div1 = '<font style="font-weight:bold;" color="green">✓</font>&nbsp';
+				var div2 = '<font style="font-weight:bold;" color="red">X</font>&nbsp';
+				
+				if (result.socks_status) {
+					div += div1;
+				} else {
+					div += div2;
+				}
+				if (result.use_http) {
+					if (result.http_status) {
+						div += div1;
+					} else {
+						div += div2;
+					}
+				}
+				_status[index].innerHTML = div;
+			}
+		);
+	}
+	//]]>
+</script>
