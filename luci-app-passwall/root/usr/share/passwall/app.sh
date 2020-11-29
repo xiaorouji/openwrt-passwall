@@ -1134,7 +1134,7 @@ start_haproxy() {
 			unset msg
 			failcount=0
 			while [ "$failcount" -lt "3" ]; do
-				ubus list network.interface.${export} >/dev/null 2>&1
+				ip route show dev ${export} >/dev/null 2>&1
 				if [ $? -ne 0 ]; then
 					let "failcount++"
 					echolog "  - 找不到出口接口：$export，1分钟后再重试(${failcount}/3)，${bip}"
