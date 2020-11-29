@@ -84,11 +84,20 @@ end
 
 function get_xray_path()
     local path = uci_get_type("global_app", "xray_file")
-    return path .. "/xray"
+    return path
+end
+
+function get_xray_file_path()
+    local path = get_xray_path()
+    if path ~= "" then
+        path = path .. "/xray"
+        return path:gsub("//", "/")
+    end
+    return ""
 end
 
 function get_xray_version(file)
-    if file == nil then file = get_xray_path() end
+    if file == nil then file = get_xray_file_path() end
     chmod_755(file)
     if fs.access(file) then
         return sys.exec("echo -n $(%s -version | awk '{print $2}' | sed -n 1P)" % file)
@@ -98,11 +107,20 @@ end
 
 function get_v2ray_path()
     local path = uci_get_type("global_app", "v2ray_file")
-    return path .. "/v2ray"
+    return path
+end
+
+function get_v2ray_file_path()
+    local path = get_v2ray_path()
+    if path ~= "" then
+        path = path .. "/v2ray"
+        return path:gsub("//", "/")
+    end
+    return ""
 end
 
 function get_v2ray_version(file)
-    if file == nil then file = get_v2ray_path() end
+    if file == nil then file = get_v2ray_file_path() end
     chmod_755(file)
     if fs.access(file) then
         return sys.exec("echo -n $(%s -version | awk '{print $2}' | sed -n 1P)" % file)
@@ -150,6 +168,22 @@ function get_brook_version(file)
         return sys.exec("echo -n $(%s -v | awk '{print $3}')" % file)
     end
     return ""
+end
+
+function get_free_space(dir)
+    if dir == nil then dir = "/" end
+    if sys.call("df -k " .. dir .. " >/dev/null") == 0 then
+        return tonumber(sys.exec("echo -n $(df -k " .. dir .. " | awk 'NR>1' | awk '{print $4}')"))
+    end
+    return 0
+end
+
+function get_file_space(file)
+    if file == nil then return 0 end
+    if fs.access(file) then
+        return tonumber(sys.exec("echo -n $(du -k " .. file .. " | awk '{print $1}')"))
+    end
+    return 0
 end
 
 function _unpack(t, i)

@@ -745,6 +745,9 @@ msgstr "如果你希望从内存中运行，请更改路径，例如%s，然后�
 msgid "Make sure there is enough space to install %s"
 msgstr "确保有足够的空间安装%s"
 
+msgid "Xray Path"
+msgstr "Xray 路径"
+
 msgid "V2ray Path"
 msgstr "V2ray 路径"
 
@@ -1068,6 +1071,9 @@ msgstr "日志"
 
 msgid "UDP Forward"
 msgstr "UDP转发"
+
+msgid "You did not fill in the %s path. Please save and apply then update manually."
+msgstr "您没有填写 %s 路径。请保存应用后再手动更新。"
 
 msgid "Can't determine ARCH, or ARCH not supported."
 msgstr "无法确认ARCH架构，或是不支持。"
