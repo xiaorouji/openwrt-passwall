@@ -613,6 +613,12 @@ msgstr "主节点"
 msgid "List of backup nodes"
 msgstr "备用节点的列表"
 
+msgid "Restore Switch"
+msgstr "恢复切换"
+
+msgid "When detects main node is available, switch back to the main node."
+msgstr "当检测到主节点可用时，切换回主节点。"
+
 msgid "Configure this node with 127.0.0.1: this port"
 msgstr "使用127.0.0.1和此端口配置节点"
 
