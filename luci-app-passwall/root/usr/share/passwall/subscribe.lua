@@ -385,11 +385,11 @@ local function processData(szType, content, add_mode)
 		end
 		if not info.security then result.security = "auto" end
 		if info.tls == "tls" or info.tls == "1" then
-			result.stream_security = "tls"
+			result.tls = "1"
 			result.tls_serverName = info.host
 			result.tls_allowInsecure = allowInsecure_default and "1" or "0"
 		else
-			result.stream_security = "none"
+			result.tls = "0"
 		end
 	elseif szType == "ss" then
 		local idx_sp = 0
@@ -506,7 +506,7 @@ local function processData(szType, content, add_mode)
 				result.type = "Trojan-Go"
 				result.fingerprint = "firefox"
 			end
-			result.stream_security = 'tls'
+			result.tls = '1'
 			result.tls_serverName = peer and peer or sni
 			result.tls_allowInsecure = allowInsecure and "1" or "0"
 		end
@@ -567,7 +567,7 @@ local function processData(szType, content, add_mode)
 			end
 			result.port = port
 			result.fingerprint = "firefox"
-			result.stream_security = 'tls'
+			result.tls = '1'
 			result.tls_serverName = peer and peer or sni
 			result.tls_allowInsecure = allowInsecure and "1" or "0"
 		end
