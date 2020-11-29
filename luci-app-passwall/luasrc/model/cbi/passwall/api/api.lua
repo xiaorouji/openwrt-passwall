@@ -100,7 +100,18 @@ function get_xray_version(file)
     if file == nil then file = get_xray_file_path() end
     chmod_755(file)
     if fs.access(file) then
-        return sys.exec("echo -n $(%s -version | awk '{print $2}' | sed -n 1P)" % file)
+        if file == get_xray_file_path() then
+            local md5 = sys.exec("echo -n $(md5sum " .. file .. " | awk '{print $1}')")
+            if fs.access("/tmp/psw_" .. md5) then
+                return sys.exec("cat /tmp/psw_" .. md5)
+            else
+                local version = sys.exec("echo -n $(%s -version | awk '{print $2}' | sed -n 1P)" % file)
+                sys.call("echo '" .. version .. "' > " .. "/tmp/psw_" .. md5)
+                return version
+            end
+        else
+            return sys.exec("echo -n $(%s -version | awk '{print $2}' | sed -n 1P)" % file)
+        end
     end
     return ""
 end
@@ -123,7 +134,18 @@ function get_v2ray_version(file)
     if file == nil then file = get_v2ray_file_path() end
     chmod_755(file)
     if fs.access(file) then
-        return sys.exec("echo -n $(%s -version | awk '{print $2}' | sed -n 1P)" % file)
+        if file == get_v2ray_file_path() then
+            local md5 = sys.exec("echo -n $(md5sum " .. file .. " | awk '{print $1}')")
+            if fs.access("/tmp/psw_" .. md5) then
+                return sys.exec("cat /tmp/psw_" .. md5)
+            else
+                local version = sys.exec("echo -n $(%s -version | awk '{print $2}' | sed -n 1P)" % file)
+                sys.call("echo '" .. version .. "' > " .. "/tmp/psw_" .. md5)
+                return version
+            end
+        else
+            return sys.exec("echo -n $(%s -version | awk '{print $2}' | sed -n 1P)" % file)
+        end
     end
     return ""
 end
@@ -137,7 +159,18 @@ function get_trojan_go_version(file)
     if file == nil then file = get_trojan_go_path() end
     chmod_755(file)
     if fs.access(file) then
-        return sys.exec("echo -n $(%s -version | awk '{print $2}' | sed -n 1P)" % file)
+        if file == get_trojan_go_path() then
+            local md5 = sys.exec("echo -n $(md5sum " .. file .. " | awk '{print $1}')")
+            if fs.access("/tmp/psw_" .. md5) then
+                return sys.exec("cat /tmp/psw_" .. md5)
+            else
+                local version = sys.exec("echo -n $(%s -version | awk '{print $2}' | sed -n 1P)" % file)
+                sys.call("echo '" .. version .. "' > " .. "/tmp/psw_" .. md5)
+                return version
+            end
+        else
+            return sys.exec("echo -n $(%s -version | awk '{print $2}' | sed -n 1P)" % file)
+        end
     end
     return ""
 end
@@ -151,7 +184,18 @@ function get_kcptun_version(file)
     if file == nil then file = get_kcptun_path() end
     chmod_755(file)
     if fs.access(file) then
-        return sys.exec("echo -n $(%s -v | awk '{print $3}')" % file)
+        if file == get_kcptun_path() then
+            local md5 = sys.exec("echo -n $(md5sum " .. file .. " | awk '{print $1}')")
+            if fs.access("/tmp/psw_" .. md5) then
+                return sys.exec("cat /tmp/psw_" .. md5)
+            else
+                local version = sys.exec("echo -n $(%s -v | awk '{print $3}')" % file)
+                sys.call("echo '" .. version .. "' > " .. "/tmp/psw_" .. md5)
+                return version
+            end
+        else
+            return sys.exec("echo -n $(%s -v | awk '{print $3}')" % file)
+        end
     end
     return ""
 end
@@ -165,7 +209,18 @@ function get_brook_version(file)
     if file == nil then file = get_brook_path() end
     chmod_755(file)
     if fs.access(file) then
-        return sys.exec("echo -n $(%s -v | awk '{print $3}')" % file)
+        if file == get_brook_path() then
+            local md5 = sys.exec("echo -n $(md5sum " .. file .. " | awk '{print $1}')")
+            if fs.access("/tmp/psw_" .. md5) then
+                return sys.exec("cat /tmp/psw_" .. md5)
+            else
+                local version = sys.exec("echo -n $(%s -v | awk '{print $3}')" % file)
+                sys.call("echo '" .. version .. "' > " .. "/tmp/psw_" .. md5)
+                return version
+            end
+        else
+            return sys.exec("echo -n $(%s -v | awk '{print $3}')" % file)
+        end
     end
     return ""
 end
