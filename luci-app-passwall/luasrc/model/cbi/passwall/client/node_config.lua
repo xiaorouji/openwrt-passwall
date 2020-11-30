@@ -640,7 +640,7 @@ ss_aead_pwd:depends("ss_aead", "1")
 -- [[ Mux ]]--
 mux = s:option(Flag, "mux", translate("Mux"))
 mux:depends({ type = "Xray", protocol = "vmess" })
-mux:depends({ type = "Xray", protocol = "vless" })
+mux:depends({ type = "Xray", protocol = "vless", xtls = false })
 mux:depends({ type = "Xray", protocol = "http" })
 mux:depends({ type = "Xray", protocol = "socks" })
 mux:depends({ type = "Xray", protocol = "shadowsocks" })

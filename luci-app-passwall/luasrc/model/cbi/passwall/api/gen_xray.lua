@@ -72,10 +72,10 @@ function gen_outbound(node, tag, relay_port)
         result = {
             tag = tag,
             protocol = node.protocol,
-            mux = {
+            mux = (node.stream_security ~= "xtls") and {
                 enabled = (node.mux == "1") and true or false,
                 concurrency = (node.mux_concurrency) and tonumber(node.mux_concurrency) or 8
-            },
+            } or nil,
             -- 底层传输配置
             streamSettings = (node.protocol == "vmess" or node.protocol == "vless" or node.protocol == "socks" or node.protocol == "shadowsocks" or node.protocol == "trojan") and {
                 network = node.transport,
