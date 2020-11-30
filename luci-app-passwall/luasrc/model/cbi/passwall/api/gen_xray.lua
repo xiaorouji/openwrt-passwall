@@ -56,17 +56,17 @@ function gen_outbound(node, tag, relay_port)
                 node.address = "127.0.0.1"
             end
             node.stream_security = "none"
-        end
-
-        if node.tls and node.tls == "1" then
-            node.stream_security = "tls"
-            if node.xtls and node.xtls == "1" then
-                node.stream_security = "xtls"
+        else
+            if node.tls and node.tls == "1" then
+                node.stream_security = "tls"
+                if node.xtls and node.xtls == "1" then
+                    node.stream_security = "xtls"
+                end
             end
-        end
-
-        if node.transport == "mkcp" or node.transport == "quic" then
-            node.stream_security = "none"
+    
+            if node.transport == "mkcp" or node.transport == "quic" then
+                node.stream_security = "none"
+            end
         end
 
         result = {
