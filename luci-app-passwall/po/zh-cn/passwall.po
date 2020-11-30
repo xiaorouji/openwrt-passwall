@@ -112,6 +112,9 @@ msgstr "TCP节点"
 msgid "UDP Node"
 msgstr "UDP节点"
 
+msgid "Edit Current Node"
+msgstr "编辑当前节点"
+
 msgid "Socks Config"
 msgstr "Socks配置"
 
