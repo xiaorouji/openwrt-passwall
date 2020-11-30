@@ -391,11 +391,17 @@ msgstr "类型"
 msgid "Balancing"
 msgstr "负载均衡"
 
+msgid "Xray_balancing"
+msgstr "Xray 负载均衡"
+
 msgid "V2ray_balancing"
 msgstr "V2ray 负载均衡"
 
 msgid "Shunt"
 msgstr "分流"
+
+msgid "Xray_shunt"
+msgstr "Xray 分流"
 
 msgid "V2ray_shunt"
 msgstr "V2ray 分流"
