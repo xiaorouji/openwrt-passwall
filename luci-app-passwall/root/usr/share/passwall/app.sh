@@ -625,9 +625,16 @@ clean_log() {
 	}
 }
 
-start_crontab() {
+clean_crontab() {
 	touch /etc/crontabs/root
-	sed -i "/$CONFIG/d" /etc/crontabs/root >/dev/null 2>&1 &
+	#sed -i "/${CONFIG}/d" /etc/crontabs/root >/dev/null 2>&1 &
+	sed -i "/$(echo "/etc/init.d/${CONFIG}" | sed 's#\/#\\\/#g')/d" /etc/crontabs/root >/dev/null 2>&1 &
+	sed -i "/$(echo "lua ${APP_PATH}/rule_update.lua log" | sed 's#\/#\\\/#g')/d" /etc/crontabs/root >/dev/null 2>&1 &
+	sed -i "/$(echo "lua ${APP_PATH}/subscribe.lua start log" | sed 's#\/#\\\/#g')/d" /etc/crontabs/root >/dev/null 2>&1 &
+}
+
+start_crontab() {
+	clean_crontab
 	auto_on=$(config_t_get global_delay auto_on 0)
 	if [ "$auto_on" = "1" ]; then
 		time_off=$(config_t_get global_delay time_off)
@@ -682,8 +689,7 @@ start_crontab() {
 }
 
 stop_crontab() {
-	touch /etc/crontabs/root
-	sed -i "/$CONFIG/d" /etc/crontabs/root >/dev/null 2>&1 &
+	clean_crontab
 	ps | grep "$APP_PATH/test.sh" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 	/etc/init.d/cron restart
 	#echolog "清除定时执行命令。"
