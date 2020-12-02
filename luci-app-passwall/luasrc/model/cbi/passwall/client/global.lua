@@ -77,15 +77,11 @@ o.rmempty = false
 local tcp_node_num = tonumber(m:get("@global_other[0]", "tcp_node_num") or 1)
 for i = 1, tcp_node_num, 1 do
     o = s:taboption("Main", ListValue, "tcp_node" .. i, translate("TCP Node") .. " " .. i)
-    local current_node = m:get("@global[0]", o.option) or "nil"
-    if current_node ~= "nil" then
-        o.description = o.description .. '<a href="node_config/' .. current_node .. '">' .. translate("Edit Current Node") .. '</a>'
-    end
     if i == 1 then
         o.title = translate("TCP Node")
         o.description = translate("For proxy specific list.") .. o.description
         if tonumber(m:get("@auto_switch[0]", "enable") or 0) == 1 then
-            current_node = luci.sys.exec(string.format("[ -f '/var/etc/%s/id/TCP_%s' ] && echo -n $(cat /var/etc/%s/id/TCP_%s)", appname, i, appname, i))
+            local current_node = luci.sys.exec(string.format("[ -f '/var/etc/%s/id/TCP_%s' ] && echo -n $(cat /var/etc/%s/id/TCP_%s)", appname, i, appname, i))
             if current_node and current_node ~= "" and current_node ~= "nil" then
                 local e = uci:get_all(appname, current_node)
                 if e then
@@ -113,10 +109,6 @@ local udp_node_num = tonumber(m:get("@global_other[0]", "udp_node_num") or 1)
 for i = 1, udp_node_num, 1 do
     o = s:taboption("Main", ListValue, "udp_node" .. i, translate("UDP Node") .. " " .. i)
     o:value("nil", translate("Close"))
-    local current_node = m:get("@global[0]", o.option) or "nil"
-    if current_node ~= "nil" then
-        o.description = o.description .. '<a href="node_config/' .. current_node .. '">' .. translate("Edit Current Node") .. '</a>'
-    end
     if i == 1 then
         o.title = translate("UDP Node")
         o.description = translate("For proxy game network, DNS hijack etc.") .. o.description .. "<br />" .. translate("The selected server will not use Kcptun.")
