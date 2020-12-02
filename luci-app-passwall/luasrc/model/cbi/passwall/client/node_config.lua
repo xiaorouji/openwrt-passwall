@@ -132,7 +132,7 @@ balancing_node:depends("protocol", "_balancing")
 
 -- 分流
 uci:foreach(appname, "shunt_rules", function(e)
-    o = s:option(ListValue, e[".name"], translate(e.remarks))
+    o = s:option(ListValue, e[".name"], '<a href="../shunt_rules/' .. e[".name"] .. '">' .. translate(e.remarks) .. "</a>")
     o:value("nil", translate("Close"))
     for k, v in pairs(nodes_table) do o:value(v.id, v.remarks) end
     o:depends("protocol", "_shunt")
@@ -141,6 +141,13 @@ uci:foreach(appname, "shunt_rules", function(e)
     o.default = 0
     o:depends("protocol", "_shunt")
 end)
+
+shunt_tips = s:option(DummyValue, "shunt_tips", " ")
+shunt_tips.rawhtml = true
+shunt_tips.cfgvalue = function(t, n)
+    return string.format('<a style="color: red" href="../rule">%s</a>', translate("No shunt rules? Click me to go to add."))
+end
+shunt_tips:depends("protocol", "_shunt")
 
 default_node = s:option(ListValue, "default_node", translate("Default") .. " " .. translate("Node"))
 default_node:value("nil", translate("Close"))
