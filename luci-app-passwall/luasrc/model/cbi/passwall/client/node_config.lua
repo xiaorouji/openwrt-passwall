@@ -81,6 +81,7 @@ if api.is_finded("ssr-redir") then
 end
 if api.is_finded("xray") then
     type:value("Xray", translate("Xray"))
+    type.description = translate("Xray is currently directly compatible with V2ray and used.")
 end
 if api.is_finded("v2ray") then
     type:value("V2ray", translate("V2ray"))

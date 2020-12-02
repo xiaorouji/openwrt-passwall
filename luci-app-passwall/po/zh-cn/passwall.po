@@ -895,6 +895,9 @@ msgstr "插件"
 msgid "opts"
 msgstr "插件选项"
 
+msgid "Xray is currently directly compatible with V2ray and used."
+msgstr "Xray 目前可直接兼容 V2ray 并使用。"
+
 msgid "Protocol"
 msgstr "协议名称"
 
