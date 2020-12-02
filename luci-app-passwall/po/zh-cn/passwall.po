@@ -514,6 +514,9 @@ msgstr "应用"
 msgid "Use"
 msgstr "使用"
 
+msgid "Copy"
+msgstr "复制"
+
 msgid "Delay Settings"
 msgstr "定时配置"
 

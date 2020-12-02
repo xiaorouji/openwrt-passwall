@@ -4,6 +4,7 @@ local appname = "passwall"
 local ucic = luci.model.uci.cursor()
 local http = require "luci.http"
 local util = require "luci.util"
+local api = require "luci.model.cbi.passwall.api.api"
 local kcptun = require "luci.model.cbi.passwall.api.kcptun"
 local brook = require "luci.model.cbi.passwall.api.brook"
 local xray = require "luci.model.cbi.passwall.api.xray"
@@ -242,10 +243,22 @@ function set_node()
 end
 
 function copy_node()
-	local e = {}
 	local section = luci.http.formvalue("section")
-	luci.http.prepare_content("application/json")
-	luci.http.write_json(e)
+	local uuid = api.gen_uuid()
+	ucic:section(appname, "nodes", uuid)
+	for k, v in pairs(ucic:get_all(appname, section)) do
+		local filter = k:find("%.")
+		if filter and filter == 1 then
+		else
+			xpcall(function()
+				ucic:set(appname, uuid, k, v)
+			end,
+			function(e)
+			end)
+		end
+	end
+	ucic:commit(appname)
+	luci.http.redirect(luci.dispatcher.build_url("admin", "services", appname, "node_config", uuid))
 end
 
 function clear_all_nodes()
