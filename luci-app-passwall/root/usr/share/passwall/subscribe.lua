@@ -135,7 +135,7 @@ do
 	end
 
 	ucic2:foreach(application, uciType, function(node)
-		if node.type == 'V2ray' and node.protocol == '_shunt' then
+		if node.protocol and node.protocol == '_shunt' then
 			local node_id = node[".name"]
 			ucic2:foreach(application, "shunt_rules", function(e)
 				local _node_id = node[e[".name"]] or nil
@@ -146,7 +146,7 @@ do
 				CONFIG[#CONFIG + 1] = {
 					log = false,
 					currentNode = _node,
-					remarks = "V2ray分流" .. e.remarks .. "节点",
+					remarks = "分流" .. e.remarks .. "节点",
 					set = function(server)
 						ucic2:set(application, node_id, e[".name"], server)
 					end
@@ -161,12 +161,12 @@ do
 			CONFIG[#CONFIG + 1] = {
 				log = false,
 				currentNode = default_node,
-				remarks = "V2ray分流默认节点",
+				remarks = "分流默认节点",
 				set = function(server)
 					ucic2:set(application, node_id, "default_node", server)
 				end
 			}
-		elseif node.type == 'V2ray' and node.protocol == '_balancing' then
+		elseif node.protocol and node.protocol == '_balancing' then
 			local node_id = node[".name"]
 			local nodes = {}
 			local new_nodes = {}
@@ -184,7 +184,7 @@ do
 						remarks = node,
 						set = function(server)
 							for kk, vv in pairs(CONFIG) do
-								if (vv.remarks == "V2ray负载均衡节点列表" .. node_id) then
+								if (vv.remarks == "负载均衡节点列表" .. node_id) then
 									table.insert(vv.new_nodes, server)
 								end
 							end
@@ -193,13 +193,13 @@ do
 				end
 			end
 			CONFIG[#CONFIG + 1] = {
-				remarks = "V2ray负载均衡节点列表" .. node_id,
+				remarks = "负载均衡节点列表" .. node_id,
 				nodes = nodes,
 				new_nodes = new_nodes,
 				set = function()
 					for kk, vv in pairs(CONFIG) do
-						if (vv.remarks == "V2ray负载均衡节点列表" .. node_id) then
-							log("刷新V2ray负载均衡节点列表")
+						if (vv.remarks == "负载均衡节点列表" .. node_id) then
+							log("刷新负载均衡节点列表")
 							ucic2:foreach(application, uciType, function(node2)
 								if node2[".name"] == node[".name"] then
 									local index = node2[".index"]
@@ -344,6 +344,9 @@ local function processData(szType, content, add_mode)
 	elseif szType == 'vmess' then
 		local info = jsonParse(content)
 		result.type = 'V2ray'
+		if api.is_finded("xray") then
+			result.type = 'Xray'
+		end
 		result.address = info.add
 		result.port = info.port
 		result.protocol = 'vmess'
@@ -647,21 +650,21 @@ end
 local function select_node(nodes, config)
 	local server
 	if config.currentNode then
-		-- 特别优先级 V2ray分流 + 备注
-		if config.currentNode.type == 'V2ray' and config.currentNode.protocol == '_shunt' then
+		-- 特别优先级 分流 + 备注
+		if config.currentNode.protocol and config.currentNode.protocol == '_shunt' then
 			for id, node in pairs(nodes) do
 				if node.remarks == config.currentNode.remarks then
-					log('选择【' .. config.remarks .. '】V2ray分流匹配节点：' .. node.remarks)
+					log('选择【' .. config.remarks .. '】分流匹配节点：' .. node.remarks)
 					server = id
 					break
 				end
 			end
 		end
-		-- 特别优先级 V2ray负载均衡 + 备注
-		if config.currentNode.type == 'V2ray' and config.currentNode.protocol == '_balancing' then
+		-- 特别优先级 负载均衡 + 备注
+		if config.currentNode.protocol and config.currentNode.protocol == '_balancing' then
 			for id, node in pairs(nodes) do
 				if node.remarks == config.currentNode.remarks then
-					log('选择【' .. config.remarks .. '】V2ray负载均衡匹配节点：' .. node.remarks)
+					log('选择【' .. config.remarks .. '】负载均衡匹配节点：' .. node.remarks)
 					server = id
 					break
 				end
