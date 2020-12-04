@@ -315,6 +315,8 @@ flow:value("xtls-rprx-origin")
 flow:value("xtls-rprx-origin-udp443")
 flow:value("xtls-rprx-direct")
 flow:value("xtls-rprx-direct-udp443")
+flow:value("xtls-rprx-splice")
+flow:value("xtls-rprx-splice-udp443")
 flow:depends("xtls", "1")
 
 -- [[ TLS部分 ]] --
