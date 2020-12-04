@@ -265,7 +265,10 @@ if node then
             end
         end
 
-        routing = {domainStrategy = "IPOnDemand", rules = rules}
+        routing = {
+            domainStrategy = node.domainStrategy or "AsIs",
+            rules = rules
+        }
 
     elseif node.protocol == "_balancing" then
         if node.balancing_node then
@@ -277,7 +280,7 @@ if node then
                 if outbound then table.insert(outbounds, outbound) end
             end
             routing = {
-                domainStrategy = "IPOnDemand",
+                domainStrategy = node.domainStrategy or "AsIs",
                 balancers = {{tag = "balancer", selector = nodes}},
                 rules = {
                     {type = "field", network = "tcp,udp", balancerTag = "balancer"}

@@ -418,6 +418,18 @@ msgstr "使用默认节点代理转发。"
 msgid "No shunt rules? Click me to go to add."
 msgstr "没有分流规则？点我前往去添加。"
 
+msgid "Domain Strategy"
+msgstr "域名解析策略"
+
+msgid "'AsIs': Only use domain for routing. Default value."
+msgstr "AsIs：只使用域名进行路由选择。默认值。"
+
+msgid "'IPIfNonMatch': When no rule matches current domain, resolves it into IP addresses (A or AAAA records) and try all rules again."
+msgstr "IPIfNonMatch：当域名没有匹配任何规则时，将域名解析成 IP（A 记录或 AAAA 记录）再次进行匹配。"
+
+msgid "'IPOnDemand': As long as there is a IP-based rule, resolves the domain into IP immediately."
+msgstr "IPOnDemand：当匹配时碰到任何基于 IP 的规则，将域名立即解析为 IP 进行匹配。"
+
 msgid "Load balancing node list"
 msgstr "负载均衡节点列表"
 
