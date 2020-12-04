@@ -211,7 +211,7 @@ get_new_port() {
 
 first_type() {
 	local path_name=${1}
-	type -t -p "/bin/${path_name}" -p "${TMP_BIN_PATH}/${path_name}" -p "${path_name}" -p "/usr/bin/xray/{path_name}" -p "/usr/bin/v2ray/{path_name}" "$@" | head -n1
+	type -t -p "/bin/${path_name}" -p "${TMP_BIN_PATH}/${path_name}" -p "${path_name}" "$@" | head -n1
 }
 
 ln_start_bin() {

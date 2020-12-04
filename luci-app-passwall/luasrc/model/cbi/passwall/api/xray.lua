@@ -111,16 +111,17 @@ function to_extract(file, subfix)
             error = i18n.translatef("You did not fill in the %s path. Please save and apply then update manually.", "Xray")
         }
     end
+
+    if not file or file == "" or not fs.access(file) then
+        return {code = 1, error = i18n.translate("File path required.")}
+    end
+
     if sys.exec("echo -n $(opkg list-installed | grep -c unzip)") ~= "1" then
         api.exec("/bin/rm", {"-f", file})
         return {
             code = 1,
             error = i18n.translate("Not installed unzip, Can't unzip!")
         }
-    end
-
-    if not file or file == "" or not fs.access(file) then
-        return {code = 1, error = i18n.translate("File path required.")}
     end
 
     sys.call("/bin/rm -rf /tmp/xray_extract.*")
@@ -150,17 +151,13 @@ function to_move(file)
         return {code = 1, error = i18n.translate("Client file is required.")}
     end
 
-    sys.call("mkdir -p " .. app_path)
-
     if not arch or arch == "" then arch = api.auto_get_arch() end
     local file_tree, sub_version = api.get_file_info(arch)
-    if sub_version == "7" then is_armv7 = true end
+    local t = ""
+    sys.call("/etc/init.d/passwall stop")
     local result = nil
-    if is_armv7 and is_armv7 == true then
-        result = api.exec("/bin/mv", { "-f", file .. "/xray_armv7", app_path }, nil, api.command_timeout) == 0
-    else
-        result = api.exec("/bin/mv", { "-f", file .. "/xray", app_path }, nil, api.command_timeout) == 0
-    end
+    if sub_version and sub_version == "7" then t = "_armv7" end
+    result = api.exec("/bin/mv", { "-f", file .. "/xray" .. t, app_path }, nil, api.command_timeout) == 0
     sys.call("/bin/rm -rf /tmp/xray_extract.*")
     if not result or not fs.access(app_path) then
         return {
@@ -168,8 +165,9 @@ function to_move(file)
             error = i18n.translatef("Can't move new file to path: %s", app_path)
         }
     end
-
-    api.exec("/bin/chmod", {"-R", "755", app_path})
+    
+    api.chmod_755(app_path)
+    sys.call("/etc/init.d/passwall restart >/dev/null 2>&1 &")
 
     return {code = 0}
 end

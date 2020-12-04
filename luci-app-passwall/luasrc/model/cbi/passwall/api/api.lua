@@ -79,7 +79,7 @@ function get_customed_path(e)
 end
 
 function is_finded(e)
-    return luci.sys.exec('type -t -p "%s/%s" -p "/usr/bin/xray/%s" -p "/usr/bin/v2ray/%s" "%s"' % {get_customed_path(e), e, e, e, e}) ~= "" and true or false
+    return luci.sys.exec('type -t -p "%s/%s" "%s"' % {get_customed_path(e), e, e}) ~= "" and true or false
 end
 
 function get_xray_path()
@@ -87,20 +87,11 @@ function get_xray_path()
     return path
 end
 
-function get_xray_file_path()
-    local path = get_xray_path()
-    if path ~= "" then
-        path = path .. "/xray"
-        return path:gsub("//", "/")
-    end
-    return ""
-end
-
 function get_xray_version(file)
-    if file == nil then file = get_xray_file_path() end
+    if file == nil then file = get_xray_path() end
     chmod_755(file)
     if fs.access(file) then
-        if file == get_xray_file_path() then
+        if file == get_xray_path() then
             local md5 = sys.exec("echo -n $(md5sum " .. file .. " | awk '{print $1}')")
             if fs.access("/tmp/psw_" .. md5) then
                 return sys.exec("cat /tmp/psw_" .. md5)
@@ -121,20 +112,11 @@ function get_v2ray_path()
     return path
 end
 
-function get_v2ray_file_path()
-    local path = get_v2ray_path()
-    if path ~= "" then
-        path = path .. "/v2ray"
-        return path:gsub("//", "/")
-    end
-    return ""
-end
-
 function get_v2ray_version(file)
-    if file == nil then file = get_v2ray_file_path() end
+    if file == nil then file = get_v2ray_path() end
     chmod_755(file)
     if fs.access(file) then
-        if file == get_v2ray_file_path() then
+        if file == get_v2ray_path() then
             local md5 = sys.exec("echo -n $(md5sum " .. file .. " | awk '{print $1}')")
             if fs.access("/tmp/psw_" .. md5) then
                 return sys.exec("cat /tmp/psw_" .. md5)
