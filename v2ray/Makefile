@@ -9,13 +9,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=v2ray
-PKG_VERSION:=4.32.1
+PKG_VERSION:=4.33.0
 PKG_RELEASE:=1
 PKG_BUILD_DIR:=$(BUILD_DIR)/v2ray-core-$(PKG_VERSION)
 
 PKG_SOURCE:=v2ray-core-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/v2fly/v2ray-core/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=f5553ffd04ff226573e8132d9beaa63f4d8f4882eba047225b33620848bc6917
+PKG_HASH:=ce456df0a798e1ed76ec014cb619e89c508bfb812c689260067575ee94e18c76
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -61,8 +61,8 @@ PKG_USE_MIPS16:=0
 GO_PKG:=v2ray.com/core
 GO_PKG_LDFLAGS:=-s -w
 GO_PKG_LDFLAGS_X:= \
-	v2ray.com/core.version=$(PKG_VERSION) \
-	v2ray.com/core.codename=OpenWrt
+	$(GO_PKG).version=$(PKG_VERSION) \
+	$(GO_PKG).codename=OpenWrt
 
 include $(INCLUDE_DIR)/package.mk
 include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
@@ -97,142 +97,142 @@ V2RAY_SED_ARGS:=
 
 ifeq ($(CONFIG_V2RAY_JSON_INTERNAL),y)
 V2RAY_SED_ARGS += \
-	s,_ "v2ray.com/core/main/json",// &,; \
-	s,// \(_ "v2ray.com/core/main/jsonem"\),\1,;
+	s,_ "$(GO_PKG)/main/json",// &,; \
+	s,// \(_ "$(GO_PKG)/main/jsonem"\),\1,;
 else ifeq ($(CONFIG_V2RAY_JSON_NONE),y)
 V2RAY_SED_ARGS += \
-	s,_ "v2ray.com/core/main/json",// &,;
+	s,_ "$(GO_PKG)/main/json",// &,;
 endif
 
 ifeq ($(CONFIG_V2RAY_CUSTOM_FEATURES),y)
 
 ifeq ($(CONFIG_V2RAY_WITHOUT_DNS),y)
 V2RAY_SED_ARGS += \
-	s,_ "v2ray.com/core/app/dns",// &,;
+	s,_ "$(GO_PKG)/app/dns",// &,;
 endif
 
 ifeq ($(CONFIG_V2RAY_WITHOUT_LOG),y)
 V2RAY_SED_ARGS += \
-	s,_ "v2ray.com/core/app/log",// &,; \
-	s,_ "v2ray.com/core/app/log/command",// &,;
+	s,_ "$(GO_PKG)/app/log",// &,; \
+	s,_ "$(GO_PKG)/app/log/command",// &,;
 endif
 
 ifeq ($(CONFIG_V2RAY_WITHOUT_TLS),y)
 V2RAY_SED_ARGS += \
-	s,_ "v2ray.com/core/transport/internet/tls",// &,;
+	s,_ "$(GO_PKG)/transport/internet/tls",// &,;
 endif
 
 ifeq ($(CONFIG_V2RAY_WITHOUT_UDP),y)
 V2RAY_SED_ARGS += \
-	s,_ "v2ray.com/core/transport/internet/udp",// &,;
+	s,_ "$(GO_PKG)/transport/internet/udp",// &,;
 endif
 
 ifeq ($(CONFIG_V2RAY_WITHOUT_POLICY),y)
 V2RAY_SED_ARGS += \
-	s,_ "v2ray.com/core/app/policy",// &,;
+	s,_ "$(GO_PKG)/app/policy",// &,;
 endif
 
 ifeq ($(CONFIG_V2RAY_WITHOUT_REVERSE),y)
 V2RAY_SED_ARGS += \
-	s,_ "v2ray.com/core/app/reverse",// &,;
+	s,_ "$(GO_PKG)/app/reverse",// &,;
 endif
 
 ifeq ($(CONFIG_V2RAY_WITHOUT_ROUTING),y)
 V2RAY_SED_ARGS += \
-	s,_ "v2ray.com/core/app/router",// &,;
+	s,_ "$(GO_PKG)/app/router",// &,;
 endif
 
 ifeq ($(CONFIG_V2RAY_WITHOUT_STATISTICS),y)
 V2RAY_SED_ARGS += \
-	s,_ "v2ray.com/core/app/stats",// &,; \
-	s,_ "v2ray.com/core/app/stats/command",// &,;
+	s,_ "$(GO_PKG)/app/stats",// &,; \
+	s,_ "$(GO_PKG)/app/stats/command",// &,;
 endif
 
 ifeq ($(CONFIG_V2RAY_WITHOUT_BLACKHOLE_PROTO),y)
 V2RAY_SED_ARGS += \
-	s,_ "v2ray.com/core/proxy/blackhole",// &,;
+	s,_ "$(GO_PKG)/proxy/blackhole",// &,;
 endif
 
 ifeq ($(CONFIG_V2RAY_WITHOUT_DNS_PROXY),y)
 V2RAY_SED_ARGS += \
-	s,_ "v2ray.com/core/proxy/dns",// &,;
+	s,_ "$(GO_PKG)/proxy/dns",// &,;
 endif
 
 ifeq ($(CONFIG_V2RAY_WITHOUT_DOKODEMO_PROTO),y)
 V2RAY_SED_ARGS += \
-	s,_ "v2ray.com/core/proxy/dokodemo",// &,;
+	s,_ "$(GO_PKG)/proxy/dokodemo",// &,;
 endif
 
 ifeq ($(CONFIG_V2RAY_WITHOUT_FREEDOM_PROTO),y)
 V2RAY_SED_ARGS += \
-	s,_ "v2ray.com/core/proxy/freedom",// &,;
+	s,_ "$(GO_PKG)/proxy/freedom",// &,;
 endif
 
 ifeq ($(CONFIG_V2RAY_WITHOUT_MTPROTO_PROXY),y)
 V2RAY_SED_ARGS += \
-	s,_ "v2ray.com/core/proxy/mtproto",// &,;
+	s,_ "$(GO_PKG)/proxy/mtproto",// &,;
 endif
 
 ifeq ($(CONFIG_V2RAY_WITHOUT_HTTP_PROTO),y)
 V2RAY_SED_ARGS += \
-	s,_ "v2ray.com/core/proxy/http",// &,;
+	s,_ "$(GO_PKG)/proxy/http",// &,;
 endif
 
 ifeq ($(CONFIG_V2RAY_WITHOUT_SHADOWSOCKS_PROTO),y)
 V2RAY_SED_ARGS += \
-	s,_ "v2ray.com/core/proxy/shadowsocks",// &,;
+	s,_ "$(GO_PKG)/proxy/shadowsocks",// &,;
 endif
 
 ifeq ($(CONFIG_V2RAY_WITHOUT_SOCKS_PROTO),y)
 V2RAY_SED_ARGS += \
-	s,_ "v2ray.com/core/proxy/socks",// &,;
+	s,_ "$(GO_PKG)/proxy/socks",// &,;
 endif
 
 ifeq ($(CONFIG_V2RAY_WITHOUT_VMESS_PROTO),y)
 V2RAY_SED_ARGS += \
-	s,_ "v2ray.com/core/proxy/vmess/inbound",// &,; \
-	s,_ "v2ray.com/core/proxy/vmess/outbound",// &,;
+	s,_ "$(GO_PKG)/proxy/vmess/inbound",// &,; \
+	s,_ "$(GO_PKG)/proxy/vmess/outbound",// &,;
 endif
 
 ifeq ($(CONFIG_V2RAY_WITHOUT_TCP_TRANS),y)
 V2RAY_SED_ARGS += \
-	s,_ "v2ray.com/core/transport/internet/tcp",// &,;
+	s,_ "$(GO_PKG)/transport/internet/tcp",// &,;
 endif
 
 ifeq ($(CONFIG_V2RAY_WITHOUT_MKCP_TRANS),y)
 V2RAY_SED_ARGS += \
-	s,_ "v2ray.com/core/transport/internet/kcp",// &,;
+	s,_ "$(GO_PKG)/transport/internet/kcp",// &,;
 endif
 
 ifeq ($(CONFIG_V2RAY_WITHOUT_WEBSOCKET_TRANS),y)
 V2RAY_SED_ARGS += \
-	s,_ "v2ray.com/core/transport/internet/websocket",// &,;
+	s,_ "$(GO_PKG)/transport/internet/websocket",// &,;
 endif
 
 ifeq ($(CONFIG_V2RAY_WITHOUT_HTTP2_TRANS),y)
 V2RAY_SED_ARGS += \
-	s,_ "v2ray.com/core/transport/internet/http",// &,; \
-	s,_ "v2ray.com/core/transport/internet/headers/http",// &,;
+	s,_ "$(GO_PKG)/transport/internet/http",// &,; \
+	s,_ "$(GO_PKG)/transport/internet/headers/http",// &,;
 endif
 
 ifeq ($(CONFIG_V2RAY_WITHOUT_DOMAIN_SOCKET_TRANS),y)
 V2RAY_SED_ARGS += \
-	s,_ "v2ray.com/core/transport/internet/domainsocket",// &,;
+	s,_ "$(GO_PKG)/transport/internet/domainsocket",// &,;
 endif
 
 ifeq ($(CONFIG_V2RAY_WITHOUT_QUIC_TRANS),y)
 V2RAY_SED_ARGS += \
-	s,_ "v2ray.com/core/transport/internet/quic",// &,;
+	s,_ "$(GO_PKG)/transport/internet/quic",// &,;
 endif
 
 ifeq ($(CONFIG_V2RAY_WITHOUT_MKCP_TRANS)$(CONFIG_V2RAY_WITHOUT_QUIC_TRANS),yy)
 V2RAY_SED_ARGS += \
-	s,_ "v2ray.com/core/transport/internet/headers/noop",// &,; \
-	s,_ "v2ray.com/core/transport/internet/headers/srtp",// &,; \
-	s,_ "v2ray.com/core/transport/internet/headers/tls",// &,; \
-	s,_ "v2ray.com/core/transport/internet/headers/utp",// &,; \
-	s,_ "v2ray.com/core/transport/internet/headers/wechat",// &,; \
-	s,_ "v2ray.com/core/transport/internet/headers/wireguard",// &,;
+	s,_ "$(GO_PKG)/transport/internet/headers/noop",// &,; \
+	s,_ "$(GO_PKG)/transport/internet/headers/srtp",// &,; \
+	s,_ "$(GO_PKG)/transport/internet/headers/tls",// &,; \
+	s,_ "$(GO_PKG)/transport/internet/headers/utp",// &,; \
+	s,_ "$(GO_PKG)/transport/internet/headers/wechat",// &,; \
+	s,_ "$(GO_PKG)/transport/internet/headers/wireguard",// &,;
 endif
 
 endif # custom features
@@ -276,7 +276,7 @@ endif
 endef
 
 define Build/Compile
-	$(eval GO_PKG_BUILD_PKG:=v2ray.com/core/main)
+	$(eval GO_PKG_BUILD_PKG:=$(GO_PKG)/main)
 	$(call GoPackage/Build/Compile)
 	mv -f $(GO_PKG_BUILD_BIN_DIR)/main $(GO_PKG_BUILD_BIN_DIR)/v2ray
 
@@ -285,7 +285,7 @@ ifeq ($(CONFIG_V2RAY_COMPRESS_UPX),y)
 endif
 
 ifneq ($(CONFIG_V2RAY_EXCLUDE_V2CTL),y)
-	$(eval GO_PKG_BUILD_PKG:=v2ray.com/core/infra/control/main)
+	$(eval GO_PKG_BUILD_PKG:=$(GO_PKG)/infra/control/main)
 	$(call GoPackage/Build/Compile)
 	mv -f $(GO_PKG_BUILD_BIN_DIR)/main $(GO_PKG_BUILD_BIN_DIR)/v2ctl
 
