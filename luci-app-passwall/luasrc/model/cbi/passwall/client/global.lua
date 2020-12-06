@@ -1,4 +1,4 @@
-local o = require "luci.dispatcher"
+local d = require "luci.dispatcher"
 local uci = require"luci.model.uci".cursor()
 local api = require "luci.model.cbi.passwall.api.api"
 local appname = "passwall"
@@ -95,7 +95,8 @@ for i = 1, tcp_node_num, 1 do
                             remarks = "%s：[%s] %s:%s" % {e.type, e.remarks, e.address, e.port}
                         end
                     end
-                    o.description = translate("For proxy specific list.") .. "<br />" .. translatef("Current node: %s", '<a href="node_config/' .. current_node .. '">' .. remarks .. '</a>')
+                    local url = d.build_url("admin", "services", appname, "node_config", current_node)
+                    o.description = translate("For proxy specific list.") .. "<br />" .. translatef("Current node: %s", string.format('<a href="%s">%s</a>', url, remarks))
                 end
             end
         end
