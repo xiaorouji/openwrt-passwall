@@ -59,10 +59,6 @@ define Package/$(PKG_NAME)/config
 menu "Xray Configuration"
 	depends on PACKAGE_xray
 
-config XRAY_COMPATIBILITY_MODE
-	bool "V2ray_Compatibility_mode"
-	default n
-
 config XRAY_COMPRESS_GOPROXY
 	bool "Compiling with GOPROXY proxy"
 	default n
@@ -74,6 +70,10 @@ config XRAY_EXCLUDE_ASSETS
 config XRAY_COMPRESS_UPX
 	bool "Compress executable files with UPX"
 	default y
+
+config XRAY_COMPATIBILITY_MODE
+	bool "V2ray Compatibility mode(v2ray soft connection Xray)"
+	default n
 endmenu
 endef
 
@@ -125,7 +125,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/xray $(1)/usr/bin
 ifeq ($(CONFIG_XRAY_COMPATIBILITY_MODE),y)
-	$(LN) /usr/bin/xray $(1)/usr/bin/v2ray
+	$(LN) xray $(1)/usr/bin/v2ray
 endif
 ifneq ($(CONFIG_XRAY_EXCLUDE_ASSETS),y)
 	$(INSTALL_DIR) $(1)/usr/share/xray
