@@ -125,7 +125,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/xray $(1)/usr/bin
 ifeq ($(CONFIG_XRAY_COMPATIBILITY_MODE),y)
-	$(LN) /usr/bin/xray $(1)/usr/bin/v2ray
+	$(LN) $(1)/usr/bin/xray $(1)/usr/bin/v2ray
 endif
 ifneq ($(CONFIG_XRAY_EXCLUDE_ASSETS),y)
 	$(INSTALL_DIR) $(1)/usr/share/xray
