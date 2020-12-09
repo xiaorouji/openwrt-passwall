@@ -29,8 +29,6 @@ LUA_API_PATH=/usr/lib/lua/luci/model/cbi/$CONFIG/api
 API_GEN_SS=$LUA_API_PATH/gen_shadowsocks.lua
 API_GEN_XRAY=$LUA_API_PATH/gen_xray.lua
 API_GEN_XRAY_PROTO=$LUA_API_PATH/gen_xray_proto.lua
-API_GEN_V2RAY=$LUA_API_PATH/gen_v2ray.lua
-API_GEN_V2RAY_PROTO=$LUA_API_PATH/gen_v2ray_proto.lua
 API_GEN_TROJAN=$LUA_API_PATH/gen_trojan.lua
 API_GEN_NAIVE=$LUA_API_PATH/gen_naiveproxy.lua
 echolog() {
@@ -250,8 +248,9 @@ first_type() {
 ln_start_bin() {
 	local file_func=${1}
 	local ln_name=${2}
+	local output=${3}
 
-	shift 2;
+	shift 3;
 	if [  "${file_func%%/*}" != "${file_func}" ]; then
 		[ ! -L "${file_func}" ] && {
 			ln -s "${file_func}" "${TMP_BIN_PATH}/${ln_name}" >/dev/null 2>&1
@@ -261,26 +260,32 @@ ln_start_bin() {
 	fi
 	#echo "${file_func} $*" >&2
 	[ -n "${file_func}" ] || echolog "  - 找不到 ${ln_name}，无法启动..."
-	${file_func:-echolog "  - ${ln_name}"} "$@" >/dev/null 2>&1 &
+	${file_func:-echolog "  - ${ln_name}"} "$@" >${output} 2>&1 &
 }
 
 ENABLED=$(config_t_get global enabled 0)
 
+TCP_REDIR_PORT1=$(config_t_get global_forwarding tcp_redir_port 1041)
 TCP_NODE_NUM=$(config_t_get global_other tcp_node_num 1)
 for i in $(seq 1 $TCP_NODE_NUM); do
 	eval TCP_NODE$i=$(config_t_get global tcp_node$i nil)
+	[ $i -gt 1 ] && {
+		_k=$(expr $i - 1)
+		eval p=\$TCP_REDIR_PORT${_k}
+		eval TCP_REDIR_PORT$i=$(expr $p + 1)
+	}
 done
-TCP_REDIR_PORT1=$(config_t_get global_forwarding tcp_redir_port 1041)
-TCP_REDIR_PORT2=$(expr $TCP_REDIR_PORT1 + 1)
-TCP_REDIR_PORT3=$(expr $TCP_REDIR_PORT2 + 1)
 
+UDP_REDIR_PORT1=$(config_t_get global_forwarding udp_redir_port 1051)
 UDP_NODE_NUM=$(config_t_get global_other udp_node_num 1)
 for i in $(seq 1 $UDP_NODE_NUM); do
 	eval UDP_NODE$i=$(config_t_get global udp_node$i nil)
+	[ $i -gt 1 ] && {
+		_k=$(expr $i - 1)
+		eval p=\$UDP_REDIR_PORT${_k}
+		eval UDP_REDIR_PORT$i=$(expr $p + 1)
+	}
 done
-UDP_REDIR_PORT1=$(config_t_get global_forwarding udp_redir_port 1051)
-UDP_REDIR_PORT2=$(expr $UDP_REDIR_PORT1 + 1)
-UDP_REDIR_PORT3=$(expr $UDP_REDIR_PORT2 + 1)
 
 [ "$UDP_NODE1" == "tcp_" ] && UDP_NODE1=$TCP_NODE1
 [ "$UDP_NODE1" == "tcp" ] && UDP_REDIR_PORT1=$TCP_REDIR_PORT1
@@ -301,17 +306,6 @@ LOCALHOST_UDP_PROXY_MODE=$(config_t_get global localhost_udp_proxy_mode default)
 [ "$LOCALHOST_UDP_PROXY_MODE" == "default" ] && LOCALHOST_UDP_PROXY_MODE=$UDP_PROXY_MODE
 
 load_config() {
-	local auto_switch_list=$(config_t_get auto_switch tcp_node1 nil)
-	[ -n "$auto_switch_list" -a "$auto_switch_list" != "nil" ] && {
-		for tmp in $auto_switch_list; do
-			tmp_id=$(config_n_get $tmp address nil)
-			[ "$tmp_id" == "nil" ] && {
-				uci -q del_list $CONFIG.@auto_switch[0].tcp_node1=$tmp
-				uci commit $CONFIG
-			}
-		done
-	}
-	
 	[ "$ENABLED" != 1 ] && NO_PROXY=1
 	[ "$TCP_NODE1" == "nil" -a "$UDP_NODE1" == "nil" ] && {
 		echolog "没有选择节点！"
@@ -350,6 +344,7 @@ run_socks() {
 	local http_config_file=$6
 	local id=$7
 	local relay_port=$8
+	local log_file="/dev/null"
 	local type=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
 	local remarks=$(config_n_get $node remarks)
 	local server_host=$(config_n_get $node address)
@@ -383,27 +378,27 @@ run_socks() {
 		_username=$(config_n_get $node username)
 		_password=$(config_n_get $node password)
 		[ -n "$_username" ] && [ -n "$_password" ] && local _auth="--uname $_username --passwd $_password"
-		ln_start_bin "$(first_type ssocks)" ssocks_SOCKS_$id --listen $socks_port --socks $server_host:$port $_auth
+		ln_start_bin "$(first_type ssocks)" ssocks_SOCKS_$id $log_file --listen $socks_port --socks $server_host:$port $_auth
 	;;
 	xray)
-		lua $API_GEN_XRAY $node nil nil $socks_port > $config_file
-		ln_start_bin "$(first_type $(config_t_get global_app xray_file notset)/xray xray)" xray -config="$config_file"
+		lua $API_GEN_XRAY -node $node -socks_proxy_port $socks_port > $config_file
+		ln_start_bin "$(first_type $(config_t_get global_app xray_file notset)/xray xray)" xray $log_file -config="$config_file"
 	;;
 	v2ray)
-		lua $API_GEN_V2RAY $node nil nil $socks_port > $config_file
-		ln_start_bin "$(first_type $(config_t_get global_app v2ray_file notset)/v2ray v2ray)" v2ray -config="$config_file"
+		lua $API_GEN_XRAY -node $node -socks_proxy_port $socks_port > $config_file
+		ln_start_bin "$(first_type $(config_t_get global_app v2ray_file notset)/v2ray v2ray)" v2ray $log_file -config="$config_file"
 	;;
 	trojan-go)
-		lua $API_GEN_TROJAN $node client $bind $socks_port $server_host $port > $config_file
-		ln_start_bin "$(first_type $(config_t_get global_app trojan_go_file notset) trojan-go)" trojan-go -config "$config_file"
+		lua $API_GEN_TROJAN -node $node -run_type client -local_addr $bind -local_port $socks_port -server_host $server_host -server_port $port > $config_file
+		ln_start_bin "$(first_type $(config_t_get global_app trojan_go_file notset) trojan-go)" trojan-go $log_file -config "$config_file"
 	;;
 	trojan*)
-		lua $API_GEN_TROJAN $node client $bind $socks_port $server_host $port > $config_file
-		ln_start_bin "$(first_type ${type})" "${type}" -c "$config_file"
+		lua $API_GEN_TROJAN -node $node -run_type client -local_addr $bind -local_port $socks_port -server_host $server_host -server_port $port > $config_file
+		ln_start_bin "$(first_type ${type})" "${type}" $log_file -c "$config_file"
 	;;
 	naiveproxy)
-		lua $API_GEN_NAIVE $node socks $bind $socks_port $server_host $port > $config_file
-		ln_start_bin "$(first_type naive)" naive "$config_file"
+		lua $API_GEN_NAIVE -node $node -run_type socks -local_addr $bind -local_port $socks_port -server_host $server_host -server_port $port > $config_file
+		ln_start_bin "$(first_type naive)" naive $log_file "$config_file"
 	;;
 	brook)
 		local protocol=$(config_n_get $node protocol client)
@@ -411,18 +406,19 @@ run_socks() {
 		[ "$protocol" == "wsclient" ] && {
 			[ "$brook_tls" == "1" ] && server_host="wss://${server_host}" || server_host="ws://${server_host}" 
 		}
-		ln_start_bin "$(first_type $(config_t_get global_app brook_file notset) brook)" "brook_SOCKS_$id" "$protocol" --socks5 "$bind:$socks_port" -s "$server_host:$port" -p "$(config_n_get $node password)"
+		ln_start_bin "$(first_type $(config_t_get global_app brook_file notset) brook)" "brook_SOCKS_$id" $log_file "$protocol" --socks5 "$bind:$socks_port" -s "$server_host:$port" -p "$(config_n_get $node password)"
 	;;
 	ss|ssr)
-		lua $API_GEN_SS $node "0.0.0.0" $socks_port $server_host $port > $config_file
-		ln_start_bin "$(first_type ${type}-local)" "${type}-local" -c "$config_file" -b "$bind" -u
+		lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $socks_port -server_host $server_host -server_port $port > $config_file
+		ln_start_bin "$(first_type ${type}-local)" "${type}-local" $log_file -c "$config_file" -b "$bind" -u
 	;;
 	esac
 	
 	# socks to http
 	[ "$http_port" != "0" ] && [ "$http_config_file" != "nil" ] && {
-		lua $API_GEN_V2RAY_PROTO http "0.0.0.0" $http_port socks "127.0.0.1" $socks_port $_username $_password > $http_config_file
-		ln_start_bin "$(first_type $(config_t_get global_app v2ray_file notset)/v2ray v2ray)" v2ray -config="$http_config_file"
+		lua $API_GEN_XRAY_PROTO -local_proto http -local_address "0.0.0.0" -local_port $http_port -server_proto socks -server_address "127.0.0.1" -server_port $socks_port -server_username $_username -server_password $_password > $http_config_file
+		echo lua $API_GEN_XRAY_PROTO -local_proto http -local_address "0.0.0.0" -local_port $http_port -server_proto socks -server_address "127.0.0.1" -server_port $socks_port -server_username $_username -server_password $_password
+		ln_start_bin "$(first_type $(config_t_get global_app xray_file notset)/xray xray)" xray $log_file -config="$http_config_file"
 	}
 	unset _username _password _auth
 }
@@ -432,8 +428,14 @@ run_redir() {
 	local bind=$2
 	local local_port=$3
 	local config_file=$4
-	local redir_type=$5
+	local REDIR_TYPE=$5
+	local index=$6
+	local log_file=$7
+	[ -z "$log_file" ] && log_file="/dev/null"
+	local redir_type=$(echo $REDIR_TYPE | tr 'A-Z' 'a-z')
 	local type=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
+	local close_log=$(config_t_get global close_log_${redir_type}_${index} 1)
+	[ "$close_log" = "1" ] && log_file="/dev/null"
 	local remarks=$(config_n_get $node remarks)
 	local server_host=$(config_n_get $node address)
 	local port=$(config_n_get $node port)
@@ -447,11 +449,11 @@ run_redir() {
 			return 1
 		}
 		[ "$server_host" == "127.0.0.1" ] && process=1
-		[ "$bind" != "127.0.0.1" ] && echolog "${redir_type}_${6}节点：$remarks，节点：${server_host}:${port}，监听端口：$local_port"
+		[ "$bind" != "127.0.0.1" ] && echolog "${REDIR_TYPE}_${index}节点：$remarks，节点：${server_host}:${port}，监听端口：$local_port"
 	}
-	eval ${redir_type}_NODE${6}_PORT=$port
+	eval ${REDIR_TYPE}_NODE${index}_PORT=$port
 	
-	case "$redir_type" in
+	case "$REDIR_TYPE" in
 	UDP)
 		case "$type" in
 		socks)
@@ -459,24 +461,28 @@ run_redir() {
 			local node_port=$(config_n_get $node port)
 			local server_username=$(config_n_get $node username)
 			local server_password=$(config_n_get $node password)
-			eval port=\$UDP_REDIR_PORT$6
-			ln_start_bin "$(first_type ipt2socks)" "ipt2socks_udp_$6" -U -l "$port" -b 0.0.0.0 -s "$node_address" -p "$node_port" -R
+			eval port=\$UDP_REDIR_PORT${index}
+			ln_start_bin "$(first_type ipt2socks)" "ipt2socks_udp_${index}" $log_file -U -l "$port" -b 0.0.0.0 -s "$node_address" -p "$node_port" -R
 		;;
 		xray)
-			lua $API_GEN_XRAY $node udp $local_port nil > $config_file
-			ln_start_bin "$(first_type $(config_t_get global_app xray_file notset)/xray xray)" xray -config="$config_file"
+			local loglevel=$(config_t_get global loglevel "warning")
+			lua $API_GEN_XRAY -node $node -proto udp -redir_port $local_port -loglevel $loglevel > $config_file
+			ln_start_bin "$(first_type $(config_t_get global_app xray_file notset)/xray xray)" xray $log_file -config="$config_file"
 		;;
 		v2ray)
-			lua $API_GEN_V2RAY $node udp $local_port nil > $config_file
-			ln_start_bin "$(first_type $(config_t_get global_app v2ray_file notset)/v2ray v2ray)" v2ray -config="$config_file"
+			local loglevel=$(config_t_get global loglevel "warning")
+			lua $API_GEN_XRAY -node $node -proto udp -redir_port $local_port -loglevel $loglevel > $config_file
+			ln_start_bin "$(first_type $(config_t_get global_app v2ray_file notset)/v2ray v2ray)" v2ray $log_file -config="$config_file"
 		;;
 		trojan-go)
-			lua $API_GEN_TROJAN $node nat "0.0.0.0" $local_port >$config_file
-			ln_start_bin "$(first_type $(config_t_get global_app trojan_go_file notset) trojan-go)" trojan-go -config "$config_file"
+			local loglevel=$(config_t_get global trojan_loglevel "2")
+			lua $API_GEN_TROJAN -node $node -run_type nat -local_addr "0.0.0.0" -local_port $local_port -loglevel $loglevel > $config_file
+			ln_start_bin "$(first_type $(config_t_get global_app trojan_go_file notset) trojan-go)" trojan-go $log_file -config "$config_file"
 		;;
 		trojan*)
-			lua $API_GEN_TROJAN $node nat "0.0.0.0" $local_port >$config_file
-			ln_start_bin "$(first_type ${type})" "${type}" -c "$config_file"
+			local loglevel=$(config_t_get global trojan_loglevel "2")
+			lua $API_GEN_TROJAN -node $node -run_type nat -local_addr "0.0.0.0" -local_port $local_port -loglevel $loglevel > $config_file
+			ln_start_bin "$(first_type ${type})" "${type}" $log_file -c "$config_file"
 		;;
 		naiveproxy)
 			echolog "Naiveproxy不支持UDP转发！"
@@ -486,12 +492,12 @@ run_redir() {
 			if [ "$protocol" == "wsclient" ]; then
 				echolog "Brook的WebSocket不支持UDP转发！"
 			else
-				ln_start_bin "$(first_type $(config_t_get global_app brook_file notset) brook)" "brook_udp_$6" tproxy -l ":$local_port" -s "$server_host:$port" -p "$(config_n_get $node password)"
+				ln_start_bin "$(first_type $(config_t_get global_app brook_file notset) brook)" "brook_udp_${index}" $log_file tproxy -l ":$local_port" -s "$server_host:$port" -p "$(config_n_get $node password)"
 			fi
 		;;
 		ss|ssr)
-			lua $API_GEN_SS $node "0.0.0.0" $local_port > $config_file
-			ln_start_bin "$(first_type ${type}-redir)" "${type}-redir" -c "$config_file" -U
+			lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port > $config_file
+			ln_start_bin "$(first_type ${type}-redir)" "${type}-redir" $log_file -c "$config_file" -U
 		;;
 		esac
 	;;
@@ -511,7 +517,7 @@ run_redir() {
 				[ -n "$kcptun_server_host" ] && run_kcptun_ip=$(get_host_ip $network_type $kcptun_server_host)
 				KCPTUN_REDIR_PORT=$(get_new_port $KCPTUN_REDIR_PORT tcp)
 				kcptun_params="-l 0.0.0.0:$KCPTUN_REDIR_PORT -r $run_kcptun_ip:$kcptun_port $kcptun_config"
-				ln_start_bin "$(first_type $(config_t_get global_app kcptun_client_file notset) kcptun-client)" "kcptun_tcp_$6" $kcptun_params
+				ln_start_bin "$(first_type $(config_t_get global_app kcptun_client_file notset) kcptun-client)" "kcptun_tcp_${index}" $log_file $kcptun_params
 			fi
 		fi
 		local _socks_flag _socks_address _socks_port _socks_username _socks_password
@@ -524,30 +530,34 @@ run_redir() {
 			_socks_password=$(config_n_get $node password)
 		;;
 		xray)
+			local loglevel=$(config_t_get global loglevel "warning")
 			local extra_param="tcp"
-			[ "$6" == 1 ] && [ "$UDP_NODE1" == "tcp" ] && extra_param="tcp,udp"
-			lua $API_GEN_XRAY $node $extra_param $local_port nil > $config_file
-			ln_start_bin "$(first_type $(config_t_get global_app xray_file notset)/xray xray)" xray -config="$config_file"
+			[ "${index}" == 1 ] && [ "$UDP_NODE1" == "tcp" ] && extra_param="tcp,udp"
+			lua $API_GEN_XRAY -node $node -proto $extra_param -redir_port $local_port -loglevel $loglevel > $config_file
+			ln_start_bin "$(first_type $(config_t_get global_app xray_file notset)/xray xray)" xray $log_file -config="$config_file"
 		;;
 		v2ray)
+			local loglevel=$(config_t_get global loglevel "warning")
 			local extra_param="tcp"
-			[ "$6" == 1 ] && [ "$UDP_NODE1" == "tcp" ] && extra_param="tcp,udp"
-			lua $API_GEN_V2RAY $node $extra_param $local_port nil > $config_file
-			ln_start_bin "$(first_type $(config_t_get global_app v2ray_file notset)/v2ray v2ray)" v2ray -config="$config_file"
+			[ "${index}" == 1 ] && [ "$UDP_NODE1" == "tcp" ] && extra_param="tcp,udp"
+			lua $API_GEN_XRAY -node $node -proto $extra_param -redir_port $local_port -loglevel $loglevel > $config_file
+			ln_start_bin "$(first_type $(config_t_get global_app v2ray_file notset)/v2ray v2ray)" v2ray $log_file -config="$config_file"
 		;;
 		trojan-go)
-			lua $API_GEN_TROJAN $node nat "0.0.0.0" $local_port > $config_file
-			ln_start_bin "$(first_type $(config_t_get global_app trojan_go_file notset) trojan-go)" trojan-go -config "$config_file"
+			local loglevel=$(config_t_get global trojan_loglevel "2")
+			lua $API_GEN_TROJAN -node $node -run_type nat -local_addr "0.0.0.0" -local_port $local_port -loglevel $loglevel > $config_file
+			ln_start_bin "$(first_type $(config_t_get global_app trojan_go_file notset) trojan-go)" trojan-go $log_file -config "$config_file"
 		;;
 		trojan*)
-			lua $API_GEN_TROJAN $node nat "0.0.0.0" $local_port > $config_file
+			local loglevel=$(config_t_get global trojan_loglevel "2")
+			lua $API_GEN_TROJAN -node $node -run_type nat -local_addr "0.0.0.0" -local_port $local_port -loglevel $loglevel > $config_file
 			for k in $(seq 1 $process); do
-				ln_start_bin "$(first_type ${type})" "${type}" -c "$config_file"
+				ln_start_bin "$(first_type ${type})" "${type}" $log_file -c "$config_file"
 			done
 		;;
 		naiveproxy)
-			lua $API_GEN_NAIVE $node redir "0.0.0.0" $local_port > $config_file
-			ln_start_bin "$(first_type naive)" naive "$config_file"
+			lua $API_GEN_NAIVE -node $node -run_type redir -local_addr "0.0.0.0" -local_port $local_port > $config_file
+			ln_start_bin "$(first_type naive)" naive $log_file "$config_file"
 		;;
 		brook)
 			local server_ip=$server_host
@@ -556,38 +566,38 @@ run_redir() {
 			if [ "$protocol" == "wsclient" ]; then
 				[ "$brook_tls" == "1" ] && server_ip="wss://${server_ip}" || server_ip="ws://${server_ip}" 
 				socks_port=$(get_new_port 2081 tcp)
-				ln_start_bin "$(first_type $(config_t_get global_app brook_file notset) brook)" "brook_tcp_$6" wsclient --socks5 "127.0.0.1:$socks_port" -s "$server_ip:$port" -p "$(config_n_get $node password)"
+				ln_start_bin "$(first_type $(config_t_get global_app brook_file notset) brook)" "brook_tcp_${index}" $log_file wsclient --socks5 "127.0.0.1:$socks_port" -s "$server_ip:$port" -p "$(config_n_get $node password)"
 				_socks_flag=1
 				_socks_address="127.0.0.1"
 				_socks_port=$socks_port
 				echolog "Brook的WebSocket不支持透明代理，将使用ipt2socks转换透明代理！"
-				[ "$6" == 1 ] && [ "$UDP_NODE1" == "tcp" ] && echolog "Brook的WebSocket不支持UDP转发！"
+				[ "${index}" == 1 ] && [ "$UDP_NODE1" == "tcp" ] && echolog "Brook的WebSocket不支持UDP转发！"
 			else
 				[ "$kcptun_use" == "1" ] && {
 					server_ip=127.0.0.1
 					port=$KCPTUN_REDIR_PORT
 				}
-				ln_start_bin "$(first_type $(config_t_get global_app brook_file notset) brook)" "brook_tcp_$6" tproxy -l ":$local_port" -s "$server_ip:$port" -p "$(config_n_get $node password)"
+				ln_start_bin "$(first_type $(config_t_get global_app brook_file notset) brook)" "brook_tcp_${index}" $log_file tproxy -l ":$local_port" -s "$server_ip:$port" -p "$(config_n_get $node password)"
 			fi
 		;;
 		ss|ssr)
 			if [ "$kcptun_use" == "1" ]; then
-				lua $API_GEN_SS $node "0.0.0.0" $local_port "127.0.0.1" $KCPTUN_REDIR_PORT > $config_file
+				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $socks_port -server_host "127.0.0.1" -server_port $KCPTUN_REDIR_PORT > $config_file
 				process=1
-				[ "$6" == 1 ] && [ "$UDP_NODE1" == "tcp" ] && echolog "Kcptun不支持UDP转发！"
+				[ "${index}" == 1 ] && [ "$UDP_NODE1" == "tcp" ] && echolog "Kcptun不支持UDP转发！"
 			else
-				lua $API_GEN_SS $node "0.0.0.0" $local_port > $config_file
-				[ "$6" == 1 ] && [ "$UDP_NODE1" == "tcp" ] && extra_param="-u"
+				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port > $config_file
+				[ "${index}" == 1 ] && [ "$UDP_NODE1" == "tcp" ] && extra_param="-u"
 			fi
 			for k in $(seq 1 $process); do
-				ln_start_bin "$(first_type ${type}-redir)" "${type}-redir" -c "$config_file" $extra_param
+				ln_start_bin "$(first_type ${type}-redir)" "${type}-redir" $log_file -c "$config_file" $extra_param
 			done
 		;;
 		esac
 		if [ -n "$_socks_flag" ]; then
 			local extra_param="-T"
-			[ "$6" == 1 ] && [ "$UDP_NODE1" == "tcp" ] && extra_param=""
-			ln_start_bin "$(first_type ipt2socks)" "ipt2socks_tcp_$6" -l "$local_port" -b 0.0.0.0 -s "$_socks_address" -p "$_socks_port" -R $extra_param
+			[ "${index}" == 1 ] && [ "$UDP_NODE1" == "tcp" ] && extra_param=""
+			ln_start_bin "$(first_type ipt2socks)" "ipt2socks_tcp_${index}" $log_file -l "$local_port" -b 0.0.0.0 -s "$_socks_address" -p "$_socks_port" -R $extra_param
 		fi
 		unset _socks_flag _socks_address _socks_port _socks_username _socks_password
 	;;
@@ -601,9 +611,10 @@ node_switch() {
 	[ -n "$1" -a -n "$2" -a -n "$3" -a -n "$4" ] && {
 		ps -w | grep -E "$TMP_PATH" | grep -i "${1}_${i}" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 		local config_file=$TMP_PATH/${1}_${i}.json
+		local log_file=$TMP_PATH/${1}_${i}.log
 		eval current_port=\$${1}_REDIR_PORT${i}
 		local port=$(cat $TMP_PORT_PATH/${1}_${i})
-		run_redir $node "0.0.0.0" $port $config_file $1 $i
+		run_redir $node "0.0.0.0" $port $config_file $1 $i $log_file
 		echo $node > $TMP_ID_PATH/${1}_${i}
 		#local node_net=$(echo $1 | tr 'A-Z' 'a-z')
 		#uci set $CONFIG.@global[0].${node_net}_node${i}=$node
@@ -619,10 +630,11 @@ start_redir() {
 		[ "$node" != "nil" ] && {
 			TYPE=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
 			local config_file=$TMP_PATH/${1}_${i}.json
+			local log_file=$TMP_PATH/${1}_${i}.log
 			eval current_port=\$${1}_REDIR_PORT$i
 			local port=$(echo $(get_new_port $current_port $2))
 			eval ${1}_REDIR${i}=$port
-			run_redir $node "0.0.0.0" $port $config_file $1 $i
+			run_redir $node "0.0.0.0" $port $config_file $1 $i $log_file
 			#eval ip=\$${1}_NODE${i}_IP
 			echo $node > $TMP_ID_PATH/${1}_${i}
 			echo $port > $TMP_PORT_PATH/${1}_${i}
@@ -644,6 +656,7 @@ start_socks() {
 		[ "$node" == "nil" ] && continue
 		local port=$(config_n_get $id port)
 		local config_file=$TMP_PATH/SOCKS_${id}.json
+		local log_file=$TMP_PATH/SOCKS_${id}.log
 		local http_port=$(config_n_get $id http_port 0)
 		local http_config_file=$TMP_PATH/SOCKS2HTTP_${id}.json
 		run_socks $node "0.0.0.0" $port $config_file $http_port $http_config_file $id
@@ -1169,6 +1182,8 @@ start_haproxy() {
 			    server $bip:$bport $bip:$bport weight $lbweight check inter 1500 rise 1 fall 3 $bbackup
 		EOF
 
+		#暂时不开启此功能，以后抽时间改成后台执行，防止卡luci。
+:<<!
 		if [ "$export" != "0" ]; then
 			unset msg
 			failcount=0
@@ -1188,6 +1203,7 @@ start_haproxy() {
 			done
 		fi
 		echolog "  | - ${msg}出口节点：${bip}:${bport}，权重：${lbweight}"
+!
 	done
 
 	# 控制台配置

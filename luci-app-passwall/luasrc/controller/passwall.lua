@@ -52,6 +52,7 @@ function index()
 	entry({"admin", "services", appname, "link_clear_temp"}, call("link_clear_temp")).leaf = true
 	entry({"admin", "services", appname, "link_add_node"}, call("link_add_node")).leaf = true
 	entry({"admin", "services", appname, "get_now_use_node"}, call("get_now_use_node")).leaf = true
+	entry({"admin", "services", appname, "get_redir_log"}, call("get_redir_log")).leaf = true
 	entry({"admin", "services", appname, "get_log"}, call("get_log")).leaf = true
 	entry({"admin", "services", appname, "clear_log"}, call("clear_log")).leaf = true
 	entry({"admin", "services", appname, "status"}, call("status")).leaf = true
@@ -151,6 +152,20 @@ function get_now_use_node()
 	end
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
+end
+
+function get_redir_log()
+	local e = {}
+	local proto = luci.http.formvalue("proto")
+	local index = luci.http.formvalue("index")
+	local filename = proto .. "_" .. index
+	if nixio.fs.access("/var/etc/passwall/" .. filename .. ".log") then
+		e.code = 200
+	else
+		e.code = 400
+	end
+	e.data = luci.sys.exec("cat /var/etc/passwall/" .. filename .. ".log")
+	http_write_json(e)
 end
 
 function get_log()
