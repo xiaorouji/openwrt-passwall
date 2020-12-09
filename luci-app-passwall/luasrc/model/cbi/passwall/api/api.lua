@@ -15,6 +15,32 @@ command_timeout = 300
 LEDE_BOARD = nil
 DISTRIB_TARGET = nil
 
+function is_exist(table, value)
+    for index, k in ipairs(table) do
+        if k == value then
+            return true
+        end
+    end
+    return false
+end
+
+function get_args(arg, myarg)
+    local var = {}
+    for i, arg_k in pairs(arg) do
+        if i > 0 then
+            if is_exist(myarg, arg_k) == true then
+                local v = arg[i + 1]
+                if v then
+                    if is_exist(myarg, v) == false then
+                        var[arg_k] = v
+                    end
+                end
+            end
+        end
+    end
+    return var
+end
+
 function get_valid_nodes()
     local nodes = {}
     uci:foreach(appname, "nodes", function(e)
