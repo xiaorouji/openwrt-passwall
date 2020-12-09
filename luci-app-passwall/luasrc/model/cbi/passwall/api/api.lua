@@ -42,6 +42,22 @@ function get_valid_nodes()
     return nodes
 end
 
+function get_full_node_remarks(n)
+    local remarks = ""
+    if n then
+        if n.protocol and (n.protocol == "_balancing" or n.protocol == "_shunt") then
+            remarks = "%s：[%s] " % {i18n.translatef(n.type .. n.protocol), n.remarks}
+        else
+            if n.use_kcp and n.use_kcp == "1" then
+                remarks = "%s+%s：[%s] %s" % {n.type, "Kcptun", n.remarks, n.address}
+            else
+                remarks = "%s：[%s] %s:%s" % {n.type, n.remarks, n.address, n.port}
+            end
+        end
+    end
+    return remarks
+end
+
 function gen_uuid(format)
     local uuid = sys.exec("echo -n $(cat /proc/sys/kernel/random/uuid)")
     if format == nil then
