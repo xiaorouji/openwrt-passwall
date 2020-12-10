@@ -13,6 +13,10 @@ config global
 	option localhost_tcp_proxy_mode 'gfwlist'
 	option localhost_udp_proxy_mode 'gfwlist'
 	option socks_server '0.0.0.0:1080'
+	option close_log_tcp_1 '1'
+	option close_log_udp_1 '1'
+	option loglevel 'warning'
+	option trojan_loglevel '2'
 
 config global_haproxy
 	option balancing_enable '0'

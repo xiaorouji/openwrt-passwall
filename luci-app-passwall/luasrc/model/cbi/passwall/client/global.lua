@@ -305,6 +305,30 @@ o:value("disable", translate("No Proxy"))
 o.default = "default"
 o.rmempty = false
 
+s:tab("log", translate("Log"))
+for i = 1, tcp_node_num, 1 do
+    o = s:taboption("log", Flag, "close_log_tcp_" .. i , translate("Close") .. translate("Log") .. " " .. translate("TCP Node") .. " " .. i)
+    o.rmempty = false
+end
+for i = 1, udp_node_num, 1 do
+    o = s:taboption("log", Flag, "close_log_udp_" .. i, translate("Close") .. translate("Log") .. " " .. translate("UDP Node") .. " " .. i)
+    o.rmempty = false
+end
+loglevel = s:taboption("log", ListValue, "loglevel", "X/V2ray" .. translate("Log Level"))
+loglevel.default = "warning"
+loglevel:value("debug")
+loglevel:value("info")
+loglevel:value("warning")
+loglevel:value("error")
+
+trojan_loglevel = s:taboption("log", ListValue, "trojan_loglevel", "Trojan" ..  translate("Log Level"))
+trojan_loglevel.default = "2"
+trojan_loglevel:value("0", "all")
+trojan_loglevel:value("1", "info")
+trojan_loglevel:value("2", "warn")
+trojan_loglevel:value("3", "error")
+trojan_loglevel:value("4", "fatal")
+
 s:tab("tips", translate("Tips"))
 
 o = s:taboption("tips", DummyValue, "")
