@@ -15,15 +15,10 @@ local myarg = {
 local var = api.get_args(arg, myarg)
 
 local node_section = var["-node"]
-if not node_section then
-    print("-node 不能为空")
-    return
-end
 local proto = var["-proto"]
 local redir_port = var["-redir_port"]
 local socks_proxy_port = var["-socks_proxy_port"]
 local loglevel = var["-loglevel"] or "warning"
-local node = ucursor:get_all(appname, node_section)
 local network = proto
 local new_port
 
@@ -171,7 +166,8 @@ function gen_outbound(node, tag, relay_port)
     return result
 end
 
-if node then
+if node_section then
+    local node = ucursor:get_all(appname, node_section)
     if socks_proxy_port then
         table.insert(inbounds, {
             listen = "0.0.0.0",
