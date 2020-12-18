@@ -224,7 +224,7 @@ function connect_status()
 	local code = tonumber(luci.sys.exec("echo -n '" .. result .. "' | awk -F ':' '{print $1}'") or "0")
 	if code ~= 0 then
 		local use_time = luci.sys.exec("echo -n '" .. result .. "' | awk -F ':' '{print $2}'")
-		e.use_time = string.format("%.2f", use_time * 1000)
+		e.use_time = string.format("%.2f", use_time / 1000)
 		e.ping_type = "curl"
 	end
 	luci.http.prepare_content("application/json")
