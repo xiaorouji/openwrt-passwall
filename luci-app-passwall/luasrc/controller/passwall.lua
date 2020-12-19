@@ -4,6 +4,7 @@ local appname = "passwall"
 local ucic = luci.model.uci.cursor()
 local http = require "luci.http"
 local util = require "luci.util"
+local i18n = require "luci.i18n"
 local api = require "luci.model.cbi.passwall.api.api"
 local kcptun = require "luci.model.cbi.passwall.api.kcptun"
 local brook = require "luci.model.cbi.passwall.api.brook"
@@ -155,17 +156,17 @@ function get_now_use_node()
 end
 
 function get_redir_log()
-	local e = {}
 	local proto = luci.http.formvalue("proto")
+	proto = proto:upper()
 	local index = luci.http.formvalue("index")
 	local filename = proto .. "_" .. index
 	if nixio.fs.access("/var/etc/passwall/" .. filename .. ".log") then
-		e.code = 200
+		local content = luci.sys.exec("cat /var/etc/passwall/" .. filename .. ".log")
+		content = content:gsub("\n", "<br />")
+		luci.http.write(content)
 	else
-		e.code = 400
+		luci.http.write(string.format("<script>alert('%s');window.close();</script>", i18n.translate("Not enabled log")))
 	end
-	e.data = luci.sys.exec("cat /var/etc/passwall/" .. filename .. ".log")
-	http_write_json(e)
 end
 
 function get_log()
