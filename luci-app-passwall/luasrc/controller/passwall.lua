@@ -315,18 +315,14 @@ function check_port()
 	local node_name = ""
 
 	local retstring = "<br />"
-	-- retstring = retstring .. "<font color='red'>暂时不支持UDP检测</font><br />"
-
-	retstring = retstring .. "<font color='green'>检测端口可用性</font><br />"
+	retstring = retstring .. "<font color='green'>检测端口连通性，不支持UDP检测</font><br />"
 	ucic:foreach(appname, "nodes", function(s)
 		local ret = ""
 		local tcp_socket
 		if (s.use_kcp and s.use_kcp == "1" and s.kcp_port) or (s.transport and s.transport == "mkcp" and s.port) then
 		else
 			local type = s.type
-			local protocol = s.protocol
-			if type and (protocol and protocol ~= "_balancing" and protocol ~= "_shunt") and
-				s.address and s.port and s.remarks then
+			if type and s.address and s.port and s.remarks then
 				node_name = "%s：[%s] %s:%s" % {s.type, s.remarks, s.address, s.port}
 				tcp_socket = nixio.socket("inet", "stream")
 				tcp_socket:setopt("socket", "rcvtimeo", 3)
