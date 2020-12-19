@@ -71,11 +71,11 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_ChinaDNS_NG
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_https_dns_proxy
 	bool "Include Https DNS Proxy(DoH)"
-	default y
+	default n
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_dns2socks
 	bool "Include dns2socks"
-	default n
+	default y
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_v2ray-plugin
 	bool "Include v2ray-plugin (Shadowsocks plugin)"
