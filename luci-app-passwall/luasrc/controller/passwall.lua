@@ -44,6 +44,7 @@ function index()
 
 	--[[ API ]]
 	entry({"admin", "services", appname, "server_user_status"}, call("server_user_status")).leaf = true
+	entry({"admin", "services", appname, "server_user_log"}, call("server_user_log")).leaf = true
 	entry({"admin", "services", appname, "server_get_log"}, call("server_get_log")).leaf = true
 	entry({"admin", "services", appname, "server_clear_log"}, call("server_clear_log")).leaf = true
 	entry({"admin", "services", appname, "link_append_temp"}, call("link_append_temp")).leaf = true
@@ -335,6 +336,18 @@ function server_user_status()
 	local e = {}
 	e.index = luci.http.formvalue("index")
 	e.status = luci.sys.call(string.format("ps -w | grep -v 'grep' | grep '%s/bin/' | grep -i '%s' >/dev/null", appname .. "_server", luci.http.formvalue("id"))) == 0
+	http_write_json(e)
+end
+
+function server_user_log()
+	local e = {}
+	local id = luci.http.formvalue("id")
+	if nixio.fs.access("/var/etc/passwall_server/" .. id .. ".log") then
+		e.code = 200
+	else
+		e.code = 400
+	end
+	e.data = luci.sys.exec("cat /var/etc/passwall_server/" .. id .. ".log")
 	http_write_json(e)
 end
 
