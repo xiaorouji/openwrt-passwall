@@ -330,7 +330,7 @@ tls_allowInsecure:depends({ type = "Trojan-Go", tls = "1" })
 tls_serverName = s:option(Value, "tls_serverName", translate("Domain"))
 tls_serverName:depends("tls", "1")
 
-tls_certificateFile = s:option(Value, "tls_certificateFile", translate("Public key absolute path"), translate("as:") .. "/etc/ssl/fullchain.pem")
+tls_certificateFile = s:option(FileUpload, "tls_certificateFile", translate("Public key absolute path"), translate("as:") .. "/etc/ssl/fullchain.pem")
 tls_certificateFile.validate = function(self, value, t)
     if value and value ~= "" then
         if not nixio.fs.access(value) then
@@ -341,9 +341,10 @@ tls_certificateFile.validate = function(self, value, t)
     end
     return nil
 end
+tls_certificateFile.default = "/etc/config/ssl/" .. arg[1] .. ".pem"
 tls_certificateFile:depends("tls", "1")
 
-tls_keyFile = s:option(Value, "tls_keyFile", translate("Private key absolute path"), translate("as:") .. "/etc/ssl/private.key")
+tls_keyFile = s:option(FileUpload, "tls_keyFile", translate("Private key absolute path"), translate("as:") .. "/etc/ssl/private.key")
 tls_keyFile.validate = function(self, value, t)
     if value and value ~= "" then
         if not nixio.fs.access(value) then
@@ -354,6 +355,7 @@ tls_keyFile.validate = function(self, value, t)
     end
     return nil
 end
+tls_keyFile.default = "/etc/config/ssl/" .. arg[1] .. ".key"
 tls_keyFile:depends("tls", "1")
 
 tls_sessionTicket = s:option(Flag, "tls_sessionTicket", translate("Session Ticket"))
