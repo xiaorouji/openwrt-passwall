@@ -58,6 +58,7 @@ function gen_config(user)
             local clients = {}
             for i = 1, #user.uuid do
                 clients[i] = {
+                    flow = (user.xtls and user.xtls == "1") and user.flow or nil,
                     password = user.uuid[i],
                     level = tonumber(user.level)
                 }
