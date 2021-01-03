@@ -511,12 +511,14 @@ quic_guise = s:option(ListValue, "quic_guise", translate("Camouflage Type"))
 for a, t in ipairs(header_type_list) do quic_guise:value(t) end
 quic_guise:depends("transport", "quic")
 
--- [[ VLESS Fallback部分 ]]--
---[[
+-- [[ Fallback部分 ]]--
 fallback = s:option(Flag, "fallback", translate("Fallback"))
-fallback:depends({ type = "Xray", protocol = "vless", transport = "tcp", tls = "1" })
-fallback:depends({ type = "V2ray", protocol = "vless", transport = "tcp", tls = "1" })
+fallback:depends({ type = "Xray", protocol = "vless", transport = "tcp" })
+fallback:depends({ type = "Xray", protocol = "trojan", transport = "tcp" })
+fallback:depends({ type = "V2ray", protocol = "vless", transport = "tcp" })
+fallback:depends({ type = "V2ray", protocol = "trojan", transport = "tcp" })
 
+--[[
 fallback_alpn = s:option(Value, "fallback_alpn", "Fallback alpn")
 fallback_alpn:depends("fallback", "1")
 
@@ -530,6 +532,9 @@ fallback_xver = s:option(Value, "fallback_xver", "Fallback xver")
 fallback_xver.default = 0
 fallback_xver:depends("fallback", "1")
 ]]--
+
+fallback_list = s:option(DynamicList, "fallback_list", "Fallback", translate("dest,path"))
+fallback_list:depends("fallback", "1")
 
 ss_aead = s:option(Flag, "ss_aead", translate("Shadowsocks2"))
 ss_aead:depends("type", "Trojan-Go")
