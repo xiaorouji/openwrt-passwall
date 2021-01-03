@@ -81,7 +81,6 @@ function gen_config(user)
     if user.fallback and user.fallback == "1" then
         local fallbacks = {}
         for i = 1, #user.fallback_list do
-            local fallback = {}
             local fallbackStr = user.fallback_list[i]
             if fallbackStr then
                 local tmp = {}
@@ -89,8 +88,7 @@ function gen_config(user)
                     table.insert(tmp, w)
                 end)
                 local dest = tmp[1] or ""
-                local path = tmp[2] or "/"
-                local xver = tmp[3] and tonumber(tmp[3]) or 1
+                local path = tmp[2]
                 if dest:find("%.") then
                 else
                     dest = tonumber(dest)
@@ -98,7 +96,7 @@ function gen_config(user)
                 fallbacks[i] = {
                     path = path,
                     dest = dest,
-                    xver = xver
+                    xver = 1
                 }
             end
         end
@@ -138,7 +136,7 @@ function gen_config(user)
                     network = user.transport,
                     security = "none",
                     xtlsSettings = (user.tls and user.tls == "1" and user.xtls and user.xtls == "1") and {
-                        --alpn = {"http/1.1"},
+                        alpn = {"http/1.1"},
                         disableSystemRoot = false,
                         certificates = {
                             {
@@ -148,6 +146,7 @@ function gen_config(user)
                         }
                     } or nil,
                     tlsSettings = (user.tls and user.tls == "1") and {
+                        alpn = {"http/1.1"},
                         disableSystemRoot = false,
                         certificates = {
                             {
@@ -179,7 +178,7 @@ function gen_config(user)
                         header = {type = user.mkcp_guise}
                     } or nil,
                     wsSettings = (user.transport == "ws") and {
-                        acceptProxyProtocol = false,
+                        acceptProxyProtocol = true,
                         headers = (user.ws_host) and {Host = user.ws_host} or nil,
                         path = user.ws_path
                     } or nil,
