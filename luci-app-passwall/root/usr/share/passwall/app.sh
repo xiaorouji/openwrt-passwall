@@ -225,7 +225,7 @@ check_port_exists() {
 get_new_port() {
 	port=$1
 	[ "$port" == "auto" ] && port=2082
-	protocol=$2
+	protocol=$(echo $2 | tr 'A-Z' 'a-z')
 	result=$(check_port_exists $port $protocol)
 	if [ "$result" != 0 ]; then
 		temp=
@@ -603,14 +603,13 @@ node_switch() {
 }
 
 start_redir() {
-	eval num=\$${1}_NODE_NUM
 	eval node=\$${1}_NODE
 	[ "$node" != "nil" ] && {
 		TYPE=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
 		local config_file=$TMP_PATH/${1}.json
 		local log_file=$TMP_PATH/${1}.log
 		eval current_port=\$${1}_REDIR_PORT
-		local port=$(echo $(get_new_port $current_port $2))
+		local port=$(echo $(get_new_port $current_port $1))
 		eval ${1}_REDIR=$port
 		run_redir $node "0.0.0.0" $port $config_file $1 $log_file
 		#eval ip=\$${1}_NODE_IP
@@ -1237,8 +1236,8 @@ start() {
 	start_socks
 	start_haproxy
 	[ "$NO_PROXY" == 1 ] || {
-		start_redir TCP tcp
-		start_redir UDP udp
+		start_redir TCP
+		start_redir UDP
 		start_dns
 		add_dnsmasq
 		source $APP_PATH/iptables.sh start
