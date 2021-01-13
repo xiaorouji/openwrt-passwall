@@ -264,6 +264,7 @@ ln_start_bin() {
 }
 
 ENABLED=$(config_t_get global enabled 0)
+SOCKS_ENABLED=$(config_t_get global socks_enabled 0)
 
 TCP_REDIR_PORT=1041
 TCP_NODE=$(config_t_get global tcp_node nil)
@@ -1233,8 +1234,10 @@ start() {
 	#加锁防止并发开启服务
 	set_lock
 	load_config
-	start_socks
 	start_haproxy
+	[ "$SOCKS_ENABLED" = "1" ] && {
+		start_socks
+	}
 	[ "$NO_PROXY" == 1 ] || {
 		start_redir TCP
 		start_redir UDP
