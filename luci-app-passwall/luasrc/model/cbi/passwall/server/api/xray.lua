@@ -14,9 +14,9 @@ function gen_config(user)
             for i = 1, #user.uuid do
                 clients[i] = {
                     id = user.uuid[i],
-                    flow = (user.xtls and user.xtls == "1") and user.flow or nil,
-                    level = tonumber(user.level),
-                    alterId = tonumber(user.alter_id)
+                    flow = ("1" == user.xtls) and user.flow or nil,
+                    level = user.level and tonumber(user.level) or nil,
+                    alterId = user.alter_id and tonumber(user.alter_id) or nil
                 }
             end
             settings = {
@@ -26,8 +26,8 @@ function gen_config(user)
         end
     elseif user.protocol == "socks" then
         settings = {
-            auth = (user.auth and user.auth == "1") and "password" or "noauth",
-            accounts = (user.auth and user.auth == "1") and {
+            auth = ("1" == user.auth) and "password" or "noauth",
+            accounts = ("1" == user.auth) and {
                 {
                     user = user.username,
                     pass = user.password
@@ -37,7 +37,7 @@ function gen_config(user)
     elseif user.protocol == "http" then
         settings = {
             allowTransparent = false,
-            accounts = (user.auth and user.auth == "1") and {
+            accounts = ("1" == user.auth) and {
                 {
                     user = user.username,
                     pass = user.password
@@ -50,7 +50,7 @@ function gen_config(user)
         settings = {
             method = user.method,
             password = user.password,
-            level = tonumber(user.level) or 1,
+            level = user.level and tonumber(user.level) or nil,
             network = user.ss_network or "TCP,UDP"
         }
     elseif user.protocol == "trojan" then
@@ -58,8 +58,9 @@ function gen_config(user)
             local clients = {}
             for i = 1, #user.uuid do
                 clients[i] = {
+                    flow = ("1" == user.xtls) and user.flow or nil,
                     password = user.uuid[i],
-                    level = tonumber(user.level)
+                    level = user.level and tonumber(user.level) or nil,
                 }
             end
             settings = {
@@ -70,11 +71,36 @@ function gen_config(user)
         settings = {
             users = {
                 {
-                    level = tonumber(user.level) or 1,
+                    level = user.level and tonumber(user.level) or nil,
                     secret = (user.password == nil) and "" or user.password
                 }
             }
         }
+    end
+
+    if user.fallback and user.fallback == "1" then
+        local fallbacks = {}
+        for i = 1, #user.fallback_list do
+            local fallbackStr = user.fallback_list[i]
+            if fallbackStr then
+                local tmp = {}
+                string.gsub(fallbackStr, '[^' .. "," .. ']+', function(w)
+                    table.insert(tmp, w)
+                end)
+                local dest = tmp[1] or ""
+                local path = tmp[2]
+                if dest:find("%.") then
+                else
+                    dest = tonumber(dest)
+                end
+                fallbacks[i] = {
+                    path = path,
+                    dest = dest,
+                    xver = 1
+                }
+            end
+        end
+        settings.fallbacks = fallbacks
     end
 
     routing = {
@@ -97,7 +123,7 @@ function gen_config(user)
     local config = {
         log = {
             -- error = "/var/etc/passwall_server/log/" .. user[".name"] .. ".log",
-            loglevel = (user.log and user.log == "1") and user.loglevel or "none"
+            loglevel = ("1" == user.log) and user.loglevel or "none"
         },
         -- 传入连接
         inbounds = {
@@ -109,8 +135,11 @@ function gen_config(user)
                 streamSettings = {
                     network = user.transport,
                     security = "none",
-                    xtlsSettings = (user.tls and user.tls == "1" and user.xtls and user.xtls == "1") and {
-                        --alpn = {"http/1.1"},
+                    xtlsSettings = ("1" == user.tls and "1" == user.xtls) and {
+                        alpn = {
+                            "h2",
+                            "http/1.1"
+                        },
                         disableSystemRoot = false,
                         certificates = {
                             {
@@ -119,7 +148,11 @@ function gen_config(user)
                             }
                         }
                     } or nil,
-                    tlsSettings = (user.tls and user.tls == "1") and {
+                    tlsSettings = ("1" == user.tls) and {
+                        alpn = {
+                            "h2",
+                            "http/1.1"
+                        },
                         disableSystemRoot = false,
                         certificates = {
                             {
@@ -129,6 +162,7 @@ function gen_config(user)
                         }
                     } or nil,
                     tcpSettings = (user.transport == "tcp") and {
+                        acceptProxyProtocol = (user.acceptProxyProtocol and user.acceptProxyProtocol == "1") and true or false,
                         header = {
                             type = user.tcp_guise,
                             request = (user.tcp_guise == "http") and {
@@ -151,7 +185,7 @@ function gen_config(user)
                         header = {type = user.mkcp_guise}
                     } or nil,
                     wsSettings = (user.transport == "ws") and {
-                        acceptProxyProtocol = false,
+                        acceptProxyProtocol = (user.acceptProxyProtocol and user.acceptProxyProtocol == "1") and true or false,
                         headers = (user.ws_host) and {Host = user.ws_host} or nil,
                         path = user.ws_path
                     } or nil,
@@ -174,7 +208,7 @@ function gen_config(user)
         routing = routing
     }
 
-    if user.tls and user.tls == "1" then
+    if "1" == user.tls then
         config.inbounds[1].streamSettings.security = "tls"
         if user.xtls and user.xtls == "1" then
             config.inbounds[1].streamSettings.security = "xtls"

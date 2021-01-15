@@ -155,6 +155,7 @@ function gen_outbound(node, tag, relay_port)
                         address = node.address,
                         port = tonumber(node.port),
                         method = node.method or nil,
+                        flow = node.flow or nil,
                         password = node.password or "",
                         users = (node.username and node.password) and
                             {{user = node.username, pass = node.password}} or nil
@@ -173,7 +174,7 @@ if node_section then
             listen = "0.0.0.0",
             port = tonumber(socks_proxy_port),
             protocol = "socks",
-            settings = {auth = "noauth", udp = true, ip = "127.0.0.1"}
+            settings = {auth = "noauth", udp = true}
         })
         network = "tcp,udp"
     end

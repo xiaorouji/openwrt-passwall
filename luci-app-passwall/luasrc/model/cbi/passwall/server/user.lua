@@ -258,12 +258,10 @@ uuid:depends("type", "Trojan-Go")
 uuid:depends("type", "Trojan-Plus")
 
 alter_id = s:option(Value, "alter_id", translate("Alter ID"))
-alter_id.default = 16
 alter_id:depends({ type = "Xray", protocol = "vmess" })
 alter_id:depends({ type = "V2ray", protocol = "vmess" })
 
 level = s:option(Value, "level", translate("User Level"))
-level.default = 1
 level:depends({ type = "Xray", protocol = "vmess" })
 level:depends({ type = "Xray", protocol = "vless" })
 level:depends({ type = "Xray", protocol = "shadowsocks" })
@@ -297,6 +295,7 @@ tls:depends({ type = "Xray", protocol = "vmess" })
 tls:depends({ type = "Xray", protocol = "vless" })
 tls:depends({ type = "Xray", protocol = "socks" })
 tls:depends({ type = "Xray", protocol = "shadowsocks" })
+tls:depends({ type = "Xray", protocol = "trojan" })
 tls:depends({ type = "V2ray", protocol = "vmess" })
 tls:depends({ type = "V2ray", protocol = "vless" })
 tls:depends({ type = "V2ray", protocol = "socks" })
@@ -308,15 +307,14 @@ tls:depends("type", "Trojan-Go")
 xtls = s:option(Flag, "xtls", translate("XTLS"))
 xtls.default = 0
 xtls:depends({ type = "Xray", protocol = "vless", tls = "1" })
+xtls:depends({ type = "Xray", protocol = "trojan", tls = "1" })
 
 flow = s:option(Value, "flow", translate("flow"))
-flow.default = "xtls-rprx-origin"
+flow.default = "xtls-rprx-direct"
 flow:value("xtls-rprx-origin")
 flow:value("xtls-rprx-origin-udp443")
 flow:value("xtls-rprx-direct")
 flow:value("xtls-rprx-direct-udp443")
-flow:value("xtls-rprx-splice")
-flow:value("xtls-rprx-splice-udp443")
 flow:depends("xtls", "1")
 
 -- [[ TLS部分 ]] --
@@ -330,7 +328,7 @@ tls_allowInsecure:depends({ type = "Trojan-Go", tls = "1" })
 tls_serverName = s:option(Value, "tls_serverName", translate("Domain"))
 tls_serverName:depends("tls", "1")
 
-tls_certificateFile = s:option(Value, "tls_certificateFile", translate("Public key absolute path"), translate("as:") .. "/etc/ssl/fullchain.pem")
+tls_certificateFile = s:option(FileUpload, "tls_certificateFile", translate("Public key absolute path"), translate("as:") .. "/etc/ssl/fullchain.pem")
 tls_certificateFile.validate = function(self, value, t)
     if value and value ~= "" then
         if not nixio.fs.access(value) then
@@ -341,9 +339,10 @@ tls_certificateFile.validate = function(self, value, t)
     end
     return nil
 end
+tls_certificateFile.default = "/etc/config/ssl/" .. arg[1] .. ".pem"
 tls_certificateFile:depends("tls", "1")
 
-tls_keyFile = s:option(Value, "tls_keyFile", translate("Private key absolute path"), translate("as:") .. "/etc/ssl/private.key")
+tls_keyFile = s:option(FileUpload, "tls_keyFile", translate("Private key absolute path"), translate("as:") .. "/etc/ssl/private.key")
 tls_keyFile.validate = function(self, value, t)
     if value and value ~= "" then
         if not nixio.fs.access(value) then
@@ -354,6 +353,7 @@ tls_keyFile.validate = function(self, value, t)
     end
     return nil
 end
+tls_keyFile.default = "/etc/config/ssl/" .. arg[1] .. ".key"
 tls_keyFile:depends("tls", "1")
 
 tls_sessionTicket = s:option(Flag, "tls_sessionTicket", translate("Session Ticket"))
@@ -509,12 +509,20 @@ quic_guise = s:option(ListValue, "quic_guise", translate("Camouflage Type"))
 for a, t in ipairs(header_type_list) do quic_guise:value(t) end
 quic_guise:depends("transport", "quic")
 
--- [[ VLESS Fallback部分 ]]--
---[[
-fallback = s:option(Flag, "fallback", translate("Fallback"))
-fallback:depends({ type = "Xray", protocol = "vless", transport = "tcp", tls = "1" })
-fallback:depends({ type = "V2ray", protocol = "vless", transport = "tcp", tls = "1" })
+acceptProxyProtocol = s:option(Flag, "acceptProxyProtocol", translate("acceptProxyProtocol"), translate("Whether to receive PROXY protocol, when this node want to be fallback or forwarded by proxy, it must be enable, otherwise it cannot be used."))
+acceptProxyProtocol:depends({ type = "Xray", transport = "tcp" })
+acceptProxyProtocol:depends({ type = "Xray", transport = "ws" })
+acceptProxyProtocol:depends({ type = "V2ray", transport = "tcp" })
+acceptProxyProtocol:depends({ type = "V2ray", transport = "ws" })
 
+-- [[ Fallback部分 ]]--
+fallback = s:option(Flag, "fallback", translate("Fallback"))
+fallback:depends({ type = "Xray", protocol = "vless", transport = "tcp" })
+fallback:depends({ type = "Xray", protocol = "trojan", transport = "tcp" })
+fallback:depends({ type = "V2ray", protocol = "vless", transport = "tcp" })
+fallback:depends({ type = "V2ray", protocol = "trojan", transport = "tcp" })
+
+--[[
 fallback_alpn = s:option(Value, "fallback_alpn", "Fallback alpn")
 fallback_alpn:depends("fallback", "1")
 
@@ -528,6 +536,9 @@ fallback_xver = s:option(Value, "fallback_xver", "Fallback xver")
 fallback_xver.default = 0
 fallback_xver:depends("fallback", "1")
 ]]--
+
+fallback_list = s:option(DynamicList, "fallback_list", "Fallback", translate("dest,path"))
+fallback_list:depends("fallback", "1")
 
 ss_aead = s:option(Flag, "ss_aead", translate("Shadowsocks2"))
 ss_aead:depends("type", "Trojan-Go")
@@ -566,7 +577,7 @@ remote_port.datatype = "port"
 remote_port.default = "80"
 remote_port:depends("remote_enable", 1)
 
-bind_local = s:option(Flag, "bind_local", translate("Bind Local"), translate("When selected, it can only be accessed locally,It is recommended to turn on when using reverse proxies."))
+bind_local = s:option(Flag, "bind_local", translate("Bind Local"), translate("When selected, it can only be accessed locally, It is recommended to turn on when using reverse proxies or be fallback."))
 bind_local.default = "0"
 bind_local:depends("type", "Xray")
 bind_local:depends("type", "V2ray")
