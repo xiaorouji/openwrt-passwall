@@ -135,9 +135,11 @@ o = s:taboption("DNS", Value, "up_china_dns", translate("Resolver For Local/Whit
 o.description = translate("IP:Port mode acceptable, multi value split with english comma.") .. "<br />" .. translate("When the selection is not the default, this DNS is forced to be set to dnsmasq upstream DNS.")
 o.default = "default"
 o:value("default", translate("Default"))
-if api.is_finded("https-dns-proxy") then
-    o:value("https-dns-proxy", "https-dns-proxy(DoH)")
+--[[
+if api.is_finded("xray") then
+    o:value("xray_doh", "Xray DNS(DoH)")
 end
+]]--
 o:value("223.5.5.5", "223.5.5.5 (" .. translate("Ali") .. "DNS)")
 o:value("223.6.6.6", "223.6.6.6 (" .. translate("Ali") .. "DNS)")
 o:value("114.114.114.114", "114.114.114.114 (114DNS)")
@@ -150,11 +152,11 @@ o:value("180.76.76.76", "180.76.76.76 (" .. translate("Baidu") .. "DNS)")
 
 ---- DoH
 o = s:taboption("DNS", Value, "up_china_dns_doh", translate("DoH request address"))
-o:value("https://dns.alidns.com/dns-query,223.5.5.5,223.6.6.6", "AliDNS")
-o:value("https://doh.pub/dns-query,119.29.29.29,119.28.28.28", "DNSPod")
-o.default = "https://dns.alidns.com/dns-query,223.5.5.5,223.6.6.6"
+o:value("https://dns.alidns.com/dns-query,223.5.5.5", "AliDNS")
+o:value("https://doh.pub/dns-query,119.29.29.29", "DNSPod")
+o.default = "https://dns.alidns.com/dns-query,223.5.5.5"
 o.validate = doh_validate
-o:depends("up_china_dns", "https-dns-proxy")
+o:depends("up_china_dns", "xray_doh")
 
 ---- DNS Forward Mode
 o = s:taboption("DNS", ListValue, "dns_mode", translate("Filter Mode"))
@@ -166,9 +168,11 @@ end
 if api.is_finded("dns2socks") then
     o:value("dns2socks", "dns2socks")
 end
-if api.is_finded("https-dns-proxy") then
-    o:value("https-dns-proxy", "https-dns-proxy(DoH)")
+--[[
+if api.is_finded("xray") then
+    o:value("xray_doh", "Xray DNS(DoH)")
 end
+]]--
 o:value("udp", translatef("Requery DNS By %s", translate("UDP Node")))
 o:value("nonuse", translate("No Filter"))
 o:value("custom", translate("Custom DNS"))
@@ -195,7 +199,7 @@ o:depends("dns_mode", "pdnsd")
 o = s:taboption("DNS", ListValue, "up_trust_doh_dns", translate("Resolver For The List Proxied"))
 o:value("tcp", translatef("Requery DNS By %s", translate("TCP Node")))
 o:value("socks", translatef("Requery DNS By %s", translate("Socks Node")))
-o:depends("dns_mode", "https-dns-proxy")
+o:depends("dns_mode", "xray_doh")
 
 o = s:taboption("DNS", Value, "socks_server", translate("Socks Server"), translate("Make sure socks service is available on this address."))
 for k, v in pairs(socks_table) do o:value(v.id, v.remarks) end
@@ -206,21 +210,21 @@ o.validate = function(self, value, t)
     return value
 end
 o:depends({dns_mode = "dns2socks"})
-o:depends({dns_mode = "https-dns-proxy", up_trust_doh_dns = "socks"})
+o:depends({dns_mode = "xray_doh", up_trust_doh_dns = "socks"})
 
 ---- DoH
 o = s:taboption("DNS", Value, "up_trust_doh", translate("DoH request address"))
-o:value("https://dns.adguard.com/dns-query,176.103.130.130,176.103.130.131", "AdGuard")
-o:value("https://cloudflare-dns.com/dns-query,1.1.1.1,1.0.0.1", "Cloudflare")
-o:value("https://security.cloudflare-dns.com/dns-query,1.1.1.2,1.0.0.2", "Cloudflare-Security")
-o:value("https://doh.opendns.com/dns-query,208.67.222.222,208.67.220.220", "OpenDNS")
-o:value("https://dns.google/dns-query,8.8.8.8,8.8.4.4", "Google")
+o:value("https://dns.adguard.com/dns-query,176.103.130.130", "AdGuard")
+o:value("https://cloudflare-dns.com/dns-query,1.1.1.1", "Cloudflare")
+o:value("https://security.cloudflare-dns.com/dns-query,1.1.1.2", "Cloudflare-Security")
+o:value("https://doh.opendns.com/dns-query,208.67.222.222", "OpenDNS")
+o:value("https://dns.google/dns-query,8.8.8.8", "Google")
 o:value("https://doh.libredns.gr/dns-query,116.202.176.26", "LibreDNS")
 o:value("https://doh.libredns.gr/ads,116.202.176.26", "LibreDNS (No Ads)")
-o:value("https://dns.quad9.net/dns-query,9.9.9.9,149.112.112.112", "Quad9-Recommended")
-o.default = "https://dns.google/dns-query,8.8.8.8,8.8.4.4"
+o:value("https://dns.quad9.net/dns-query,9.9.9.9", "Quad9-Recommended")
+o.default = "https://dns.google/dns-query,8.8.8.8"
 o.validate = doh_validate
-o:depends({dns_mode = "https-dns-proxy"})
+o:depends({dns_mode = "xray_doh"})
 
 ---- DNS Forward
 o = s:taboption("DNS", Value, "dns_forward", translate("Filtered DNS(For Proxied Domains)"), translate("IP:Port mode acceptable, the 1st for 'dns2socks' if split with english comma."))

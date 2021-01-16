@@ -362,13 +362,13 @@ run_socks() {
 		[ -n "$_username" ] && [ -n "$_password" ] && local _auth="--uname $_username --passwd $_password"
 		ln_start_bin "$(first_type ssocks)" ssocks_SOCKS_$id $log_file --listen $socks_port --socks $server_host:$port $_auth
 	;;
-	xray)
-		lua $API_GEN_XRAY -node $node -socks_proxy_port $socks_port > $config_file
+	xray|v2ray)
+		[ "$http_port" != "0" ] && {
+			local extra_param="-http_proxy_port $http_port"
+			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
+		}
+		lua $API_GEN_XRAY -node $node -socks_proxy_port $socks_port $extra_param > $config_file
 		ln_start_bin "$(first_type $(config_t_get global_app xray_file) xray)" xray $log_file -config="$config_file"
-	;;
-	v2ray)
-		lua $API_GEN_XRAY -node $node -socks_proxy_port $socks_port > $config_file
-		ln_start_bin "$(first_type $(config_t_get global_app v2ray_file) v2ray)" v2ray $log_file -config="$config_file"
 	;;
 	trojan-go)
 		lua $API_GEN_TROJAN -node $node -run_type client -local_addr $bind -local_port $socks_port -server_host $server_host -server_port $port > $config_file
@@ -397,7 +397,7 @@ run_socks() {
 	esac
 	
 	# socks to http
-	[ "$http_port" != "0" ] && [ "$http_config_file" != "nil" ] && {
+	[ "$type" != "xray" -a "$type" != "v2ray" ] && [ "$http_port" != "0" ] && [ "$http_config_file" != "nil" ] && {
 		lua $API_GEN_XRAY_PROTO -local_proto http -local_address "0.0.0.0" -local_port $http_port -server_proto socks -server_address "127.0.0.1" -server_port $socks_port -server_username $_username -server_password $_password > $http_config_file
 		echo lua $API_GEN_XRAY_PROTO -local_proto http -local_address "0.0.0.0" -local_port $http_port -server_proto socks -server_address "127.0.0.1" -server_port $socks_port -server_username $_username -server_password $_password
 		ln_start_bin "$(first_type $(config_t_get global_app xray_file) xray)" xray $log_file -config="$http_config_file"
@@ -445,15 +445,10 @@ run_redir() {
 			eval port=\$UDP_REDIR_PORT
 			ln_start_bin "$(first_type ipt2socks)" "ipt2socks_udp" $log_file -U -l "$port" -b 0.0.0.0 -s "$node_address" -p "$node_port" -R
 		;;
-		xray)
+		xray|v2ray)
 			local loglevel=$(config_t_get global loglevel "warning")
 			lua $API_GEN_XRAY -node $node -proto udp -redir_port $local_port -loglevel $loglevel > $config_file
 			ln_start_bin "$(first_type $(config_t_get global_app xray_file) xray)" xray $log_file -config="$config_file"
-		;;
-		v2ray)
-			local loglevel=$(config_t_get global loglevel "warning")
-			lua $API_GEN_XRAY -node $node -proto udp -redir_port $local_port -loglevel $loglevel > $config_file
-			ln_start_bin "$(first_type $(config_t_get global_app v2ray_file) v2ray)" v2ray $log_file -config="$config_file"
 		;;
 		trojan-go)
 			local loglevel=$(config_t_get global trojan_loglevel "2")
@@ -634,7 +629,7 @@ start_socks() {
 		local config_file=$TMP_PATH/SOCKS_${id}.json
 		local log_file=$TMP_PATH/SOCKS_${id}.log
 		local http_port=$(config_n_get $id http_port 0)
-		local http_config_file=$TMP_PATH/SOCKS2HTTP_${id}.json
+		local http_config_file=$TMP_PATH/HTTP2SOCKS_${id}.json
 		run_socks $node "0.0.0.0" $port $config_file $http_port $http_config_file $id
 	done
 }
@@ -718,11 +713,15 @@ stop_crontab() {
 }
 
 start_dns() {
-	if [ "${LOCAL_DNS}" = "https-dns-proxy" ]; then
-		_doh=$(config_t_get global up_china_dns_doh "https://dns.alidns.com/dns-query,223.5.5.5,223.6.6.6,2400:3200::1,2400:3200:baba::1")
+	if [ "${LOCAL_DNS}" = "xray_doh" ]; then
+		_doh=$(config_t_get global up_china_dns_doh "https://dns.alidns.com/dns-query,223.5.5.5")
 		_doh_url=$(echo $_doh | awk -F ',' '{print $1}')
+		_doh_host_port=$(echo $_doh_url | sed "s/https:\/\///g" | awk -F '/' '{print $1}')
+		_doh_host=$(echo $_doh_host_port | awk -F ':' '{print $1}')
+		_doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
 		_doh_bootstrap=$(echo $_doh | cut -d ',' -sf 2-)
-		ln_start_bin "$(first_type https-dns-proxy)" https-dns-proxy "/dev/null" -a 127.0.0.1 -p "${LOCAL_DOH_PORT}" -b "${_doh_bootstrap}" -r "${_doh_url}" -4
+		lua $API_GEN_XRAY -dns_listen_port "${LOCAL_DOH_PORT}" -dns_server "${_doh_bootstrap}" -doh_url "${_doh_url}" -doh_host "${_doh_host}" > $TMP_PATH/DNS1.json
+		ln_start_bin "$(first_type $(config_t_get global_app xray_file) xray)" xray $TMP_PATH/DNS1.log -config="$TMP_PATH/DNS1.json"
 		LOCAL_DNS="127.0.0.1#${LOCAL_DOH_PORT}"
 		unset _doh _doh_url _doh_bootstrap
 	fi
@@ -752,8 +751,8 @@ start_dns() {
 		elif [ "$DNS_MODE" = "dns2socks" ]; then
 			#[ -n "${global}${chnlist}" ] && TUN_DNS=${china_ng_gfw}
 			msg="dns2socks"
-		elif [ "$DNS_MODE" = "https-dns-proxy" ]; then
-			msg="https-dns-proxy(DoH)"
+		elif [ "$DNS_MODE" = "xray_doh" ]; then
+			msg="Xray DNS(DoH)"
 		elif [ "$DNS_MODE" = "udp" ]; then
 			use_udp_node_resolve_dns=1
 			if [ -z "${returnhome}" ]; then
@@ -803,7 +802,7 @@ start_dns() {
 	dns2socks)
 		echolog "  - 域名解析：dns2socks..."
 	;;
-	https-dns-proxy)
+	xray_doh)
 		up_trust_doh_dns=$(config_t_get global up_trust_doh_dns "tcp")
 		if [ "$up_trust_doh_dns" = "socks" ]; then
 			use_tcp_node_resolve_dns=0
@@ -812,7 +811,7 @@ start_dns() {
 			use_tcp_node_resolve_dns=1
 			msg="TCP节点"
 		fi
-		echolog "  - 域名解析 https-dns-proxy(DOH)..."
+		echolog "  - 域名解析 Xray DNS(DOH)..."
 	;;
 	pdnsd)
 		up_trust_pdnsd_dns=$(config_t_get global up_trust_pdnsd_dns "nil")
@@ -841,16 +840,21 @@ start_dns() {
 		gen_pdnsd_config "${dns_listen_port}" "${pdnsd_forward}"
 		ln_start_bin "$(first_type pdnsd)" pdnsd "/dev/null" --daemon -c "${TMP_PATH}/pdnsd/pdnsd.conf" -d
 	fi
-	if [ -n "$(echo ${DNS_MODE} | grep 'https-dns-proxy')" ]; then
-		up_trust_doh=$(config_t_get global up_trust_doh "https://dns.google/dns-query,8.8.8.8,8.8.4.4")
+	if [ -n "$(echo ${DNS_MODE} | grep 'xray_doh')" ]; then
+		up_trust_doh=$(config_t_get global up_trust_doh "https://dns.google/dns-query,8.8.4.4")
 		_doh_url=$(echo $up_trust_doh | awk -F ',' '{print $1}')
-		_doh_port=$(echo $_doh_url | sed "s/:\/\///g" | awk -F ':' '{print $2}'| awk -F '/' '{print $1}')
+		_doh_host_port=$(echo $_doh_url | sed "s/https:\/\///g" | awk -F '/' '{print $1}')
+		_doh_host=$(echo $_doh_host_port | awk -F ':' '{print $1}')
+		_doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
 		_doh_bootstrap=$(echo $up_trust_doh | cut -d ',' -sf 2-)
 		
 		up_trust_doh_dns=$(config_t_get global up_trust_doh_dns "tcp")
 		if [ "$up_trust_doh_dns" = "socks" ]; then
 			socks_server=$(echo $(config_t_get global socks_server 127.0.0.1:9050) | sed "s/#/:/g")
-			ln_start_bin "$(first_type https-dns-proxy)" https-dns-proxy "/dev/null" -a 127.0.0.1 -p "${dns_listen_port}" -b "${_doh_bootstrap}" -r "${_doh_url}" -4 -t socks5h://${socks_server}
+			socks_address=$(echo $socks_server | awk -F ':' '{print $1}')
+			socks_port=$(echo $socks_server | awk -F ':' '{print $2}')
+			lua $API_GEN_XRAY -dns_listen_port "${dns_listen_port}" -dns_server "${_doh_bootstrap}" -doh_url "${_doh_url}" -doh_host "${_doh_host}" -doh_socks_address "${socks_address}" -doh_socks_port "${socks_port}" > $TMP_PATH/DNS.json
+			ln_start_bin "$(first_type $(config_t_get global_app xray_file) xray)" xray $TMP_PATH/DNS.log -config="$TMP_PATH/DNS.json"
 		elif [ "${up_trust_doh_dns}" = "tcp" ]; then
 			DNS_FORWARD=""
 			_doh_bootstrap_dns=$(echo $_doh_bootstrap | sed "s/,/ /g")
@@ -858,7 +862,8 @@ start_dns() {
 				_dns=$(echo $_dns | awk -F ':' '{print $1}'):${_doh_port:-443}
 				[ -n "$DNS_FORWARD" ] && DNS_FORWARD=${DNS_FORWARD},${_dns} || DNS_FORWARD=${_dns}
 			done
-			ln_start_bin "$(first_type https-dns-proxy)" https-dns-proxy "/dev/null" -a 127.0.0.1 -p "${dns_listen_port}" -b "${_doh_bootstrap}" -r "${_doh_url}" -4
+			lua $API_GEN_XRAY -dns_listen_port "${dns_listen_port}" -dns_server "${_doh_bootstrap}" -doh_url "${_doh_url}" -doh_host "${_doh_host}" > $TMP_PATH/DNS.json
+			ln_start_bin "$(first_type $(config_t_get global_app xray_file) xray)" xray $TMP_PATH/DNS.log -config="$TMP_PATH/DNS.json"
 			unset _dns _doh_bootstrap_dns
 		fi
 		unset _doh_url _doh_port _doh_bootstrap
