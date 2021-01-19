@@ -772,18 +772,24 @@ start_dns() {
 			msg="自定义DNS"
 		fi
 		
+		chnlist_param="${TMP_PATH}/chnlist"
 		if [ -n "${returnhome}" ]; then
 			echolog "  | - (chinadns-ng) 白名单不与中国域名表合并"
-			[ -f "${RULES_PATH}/proxy_host" ] && cat "${RULES_PATH}/proxy_host" >> "${TMP_PATH}/chnlist"
-			echolog "  | - [$?](chinadns-ng) 忽略防火墙域名表，代理域名表合并到中国域名表"
+			[ -f "${RULES_PATH}/proxy_host" ] && {
+				cat "${RULES_PATH}/proxy_host" >> "${chnlist_param}"
+				echolog "  | - [$?](chinadns-ng) 忽略防火墙域名表，代理域名表合并到中国域名表"
+			}
 		else
-			cat "${RULES_PATH}/direct_host" >> "${TMP_PATH}/chnlist"
-			echolog "  | - [$?](chinadns-ng) 域名白名单合并到中国域名表"
-			[ -f "${RULES_PATH}/proxy_host" ] && cat "${RULES_PATH}/proxy_host" >> "${TMP_PATH}/gfwlist.txt"
-			echolog "  | - [$?](chinadns-ng) 代理域名表合并到防火墙域名表"
-			gfwlist_param="${TMP_PATH}/gfwlist.txt"
+			[ -f "${RULES_PATH}/direct_host" ] && {
+				cat "${RULES_PATH}/direct_host" >> "${chnlist_param}"
+				echolog "  | - [$?](chinadns-ng) 域名白名单合并到中国域名表"
+			}
+			[ -f "${RULES_PATH}/proxy_host" ] && {
+				gfwlist_param="${TMP_PATH}/gfwlist.txt"
+				cat "${RULES_PATH}/proxy_host" >> "${gfwlist_param}"
+				echolog "  | - [$?](chinadns-ng) 代理域名表合并到防火墙域名表"
+			}
 		fi
-		chnlist_param="${TMP_PATH}/chnlist"
 		chnlist_param=${chnlist_param:+-m "${chnlist_param}" -M}
 		
 		[ "$(config_t_get global fair_mode 1)" = "1" ] && extra_mode="-f"
