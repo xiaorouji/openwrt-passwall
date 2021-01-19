@@ -131,7 +131,7 @@ if api.is_finded("chinadns-ng") then
     o:depends("chinadns_ng", "1")
 end
 
-o = s:taboption("DNS", Value, "up_china_dns", translate("Resolver For Local/WhiteList Domains") .. "(UDP)")
+o = s:taboption("DNS", Value, "up_china_dns", translate("Local DNS") .. "(UDP)")
 o.description = translate("IP:Port mode acceptable, multi value split with english comma.") .. "<br />" .. translate("When the selection is not the default, this DNS is forced to be set to dnsmasq upstream DNS.")
 o.default = "default"
 o:value("default", translate("Default"))
@@ -163,7 +163,7 @@ o = s:taboption("DNS", ListValue, "dns_mode", translate("Filter Mode"))
 o.rmempty = false
 o:reset_values()
 if api.is_finded("pdnsd") then
-    o:value("pdnsd", "pdnsd")
+    o:value("pdnsd", "pdnsd " .. translatef("Requery DNS By %s", translate("TCP Node")))
 end
 if api.is_finded("dns2socks") then
     o:value("dns2socks", "dns2socks")
@@ -188,13 +188,6 @@ o.validate = function(self, value, t)
     return value
 end
 o:depends({dns_mode = "custom"})
-
-o = s:taboption("DNS", ListValue, "up_trust_pdnsd_dns", translate("Resolver For The List Proxied"))
--- o.description = translate("You can use other resolving DNS services as trusted DNS, Example: dns2socks, dns-forwarder... 127.0.0.1#5353<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53.")
-o.default = "tcp"
-o:value("tcp", translatef("Requery DNS By %s", translate("TCP Node")))
-o:value("udp", translatef("Requery DNS By %s", translate("UDP Node")))
-o:depends("dns_mode", "pdnsd")
 
 o = s:taboption("DNS", ListValue, "up_trust_doh_dns", translate("Resolver For The List Proxied"))
 o:value("tcp", translatef("Requery DNS By %s", translate("TCP Node")))
@@ -227,10 +220,11 @@ o.validate = doh_validate
 o:depends({dns_mode = "xray_doh"})
 
 ---- DNS Forward
-o = s:taboption("DNS", Value, "dns_forward", translate("Filtered DNS(For Proxied Domains)"), translate("IP:Port mode acceptable, the 1st for 'dns2socks' if split with english comma."))
-o.default = "8.8.4.4"
-o:value("8.8.4.4", "8.8.4.4 (Google DNS)")
+o = s:taboption("DNS", Value, "dns_forward", translate("Remote DNS"))
+--o.description = translate("IP:Port mode acceptable, multi value split with english comma.") .. " " .. translate("If you use dns2socks, only the first one is valid.")
+o.default = "8.8.8.8"
 o:value("8.8.8.8", "8.8.8.8 (Google DNS)")
+o:value("8.8.4.4", "8.8.4.4 (Google DNS)")
 o:value("208.67.222.222", "208.67.222.222 (Open DNS)")
 o:value("208.67.220.220", "208.67.220.220 (Open DNS)")
 o:depends({dns_mode = "dns2socks"})
@@ -243,9 +237,6 @@ o.default = "1"
 o:depends({dns_mode = "dns2socks"})
 o:depends({dns_mode = "pdnsd"})
 ]]--
-
-o = s:taboption("DNS", Flag, "use_chnlist", translate("Use ChinaList"), translate("Only useful in non-gfwlist mode.") .. "<br />" .. translate("When used, the domestic DNS will be used only when the chnlist rule is hit, and the domain name that misses the rule will be resolved by remote DNS."))
-o.default = "0"
 
 o = s:taboption("DNS", Button, "clear_ipset", translate("Clear IPSET"), translate("Try this feature if the rule modification does not take effect."))
 o.inputstyle = "remove"
