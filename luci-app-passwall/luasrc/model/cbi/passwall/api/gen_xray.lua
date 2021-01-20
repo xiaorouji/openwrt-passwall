@@ -327,37 +327,23 @@ if node_section then
 end
 
 if dns_server then
+    local rules = {}
+
     dns = {
+        tag = "dns-in1",
         servers = {
             dns_server
         }
     }
     if doh_url and doh_host then
-        local dohl = doh_url:gsub("https:", "https+local:")
         dns.hosts = {
             [doh_host] = dns_server
         }
         dns.servers = {
-            dohl
+            doh_url
         }
     end
-    if doh_socks_address and doh_socks_port then
-        table.insert(outbounds, {
-            protocol = "socks",
-            streamSettings = {
-                network = "tcp",
-                security = "none"
-            },
-            settings = {
-                servers = {
-                    {
-                        address = doh_socks_address,
-                        port = tonumber(doh_socks_port)
-                    }
-                }
-            }
-        })
-    end
+
     if dns_listen_port then
         table.insert(inbounds, {
             listen = "127.0.0.1",
@@ -375,13 +361,60 @@ if dns_server then
             tag = "dns-out"
         })
     end
+
+    table.insert(rules, {
+        type = "field",
+        inboundTag = {
+            "dns-in"
+        },
+        outboundTag = "dns-out"
+    })
+
+    if doh_socks_address and doh_socks_port then
+        table.insert(outbounds, {
+            tag = "out",
+            protocol = "socks",
+            streamSettings = {
+                network = "tcp",
+                security = "none"
+            },
+            settings = {
+                servers = {
+                    {
+                        address = doh_socks_address,
+                        port = tonumber(doh_socks_port)
+                    }
+                }
+            }
+        })
+        table.insert(rules, {
+            type = "field",
+            inboundTag = {
+                "dns-in1"
+            },
+            outboundTag = "out"
+        })
+    else
+        table.insert(rules, {
+            type = "field",
+            inboundTag = {
+                "dns-in1"
+            },
+            outboundTag = "direct"
+        })
+    end
+    
+    routing = {
+        domainStrategy = "IPOnDemand",
+        rules = rules
+    }
 end
 
 if inbounds or outbounds then
     table.insert(outbounds, {
         protocol = "freedom",
         tag = "direct",
-        settings = {keep = ""}
+        settings = {domainStrategy = "UseIPv4"}
     })
 
     local xray = {

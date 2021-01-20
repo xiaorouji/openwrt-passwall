@@ -135,11 +135,9 @@ o = s:taboption("DNS", Value, "up_china_dns", translate("Local DNS") .. "(UDP)")
 o.description = translate("IP:Port mode acceptable, multi value split with english comma.") .. "<br />" .. translate("When the selection is not the default, this DNS is forced to be set to dnsmasq upstream DNS.")
 o.default = "default"
 o:value("default", translate("Default"))
---[[
 if api.is_finded("xray") then
     o:value("xray_doh", "Xray DNS(DoH)")
 end
-]]--
 o:value("223.5.5.5", "223.5.5.5 (" .. translate("Ali") .. "DNS)")
 o:value("223.6.6.6", "223.6.6.6 (" .. translate("Ali") .. "DNS)")
 o:value("114.114.114.114", "114.114.114.114 (114DNS)")
@@ -168,11 +166,9 @@ end
 if api.is_finded("dns2socks") then
     o:value("dns2socks", "dns2socks")
 end
---[[
 if api.is_finded("xray") then
     o:value("xray_doh", "Xray DNS(DoH)")
 end
-]]--
 o:value("udp", translatef("Requery DNS By %s", translate("UDP Node")))
 o:value("nonuse", translate("No Filter"))
 o:value("custom", translate("Custom DNS"))
