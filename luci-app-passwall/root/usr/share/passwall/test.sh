@@ -83,12 +83,12 @@ test_auto_switch() {
 				[ -n "$node_address" ] && [ -n "$node_port" ] && local curlx="socks5h://$node_address:$node_port"
 			else
 				local tmp_port=$(/usr/share/passwall/app.sh get_new_port 61080 tcp)
-				/usr/share/passwall/app.sh run_socks "$main_node" "127.0.0.1" "$tmp_port" "/var/etc/passwall/auto_switch.json" "10"
+				/usr/share/passwall/app.sh run_socks "auto_switch" "$main_node" "127.0.0.1" "$tmp_port" "/var/etc/passwall/auto_switch.json"
 				local curlx="socks5h://127.0.0.1:$tmp_port"
 			fi
 			sleep 10s
 			proxy_status=$(test_url "https://www.google.com/generate_204" 3 3 "-x $curlx")
-			ps -w | grep -v "grep" | grep "/var/etc/passwall/auto_switch.json" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+			top -bn1 | grep -v "grep" | grep "/var/etc/passwall/auto_switch.json" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
 			if [ "$proxy_status" -eq 200 ]; then
 				#主节点正常，切换到主节点
 				echolog "自动切换检测：${type}主节点正常，切换到主节点！"
