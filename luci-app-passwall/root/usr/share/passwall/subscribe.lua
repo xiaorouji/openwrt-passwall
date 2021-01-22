@@ -354,10 +354,7 @@ local function processData(szType, content, add_mode)
 		result.remarks = base64Decode(params.remarks)
 	elseif szType == 'vmess' then
 		local info = jsonParse(content)
-		result.type = 'V2ray'
-		if api.is_finded("xray") then
-			result.type = 'Xray'
-		end
+		result.type = 'Xray'
 		result.address = info.add
 		result.port = info.port
 		result.protocol = 'vmess'
