@@ -314,6 +314,8 @@ local api = require "luci.model.cbi.passwall.api.api"
 			if (ploc > 0) {
 				url0 = sstr.substr(0, ploc);
 				param = sstr.substr(ploc + 2);
+			} else {
+				var url0 = sstr;
 			}
 			console.log(param);
 			var ssm = url0.match(/^(.+):([^:]+):([^:]*):([^:]+):([^:]*):([^:]+)/);
