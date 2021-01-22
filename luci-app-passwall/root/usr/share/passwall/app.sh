@@ -805,6 +805,11 @@ start_dns() {
 		TUN_DNS=""
 	;;
 	dns2socks)
+		local dns2socks_socks_server=$(echo $(config_t_get global socks_server 127.0.0.1:9050) | sed "s/#/:/g")
+		local dns2socks_forward=$(get_first_dns DNS_FORWARD 53 | sed 's/#/:/g')
+		[ "$DNS_CACHE" == "0" ] && local dns2sock_cache="/d"
+		ln_start_bin "$(first_type dns2socks)" dns2socks "/dev/null" "$dns2socks_socks_server" "$dns2socks_forward" "127.0.0.1:$dns_listen_port" $dns2sock_cache
+		echolog "  - dns2sock(127.0.0.1:${dns_listen_port}${dns2sock_cache})，${dns2socks_socks_server:-127.0.0.1:9050} -> ${dns2socks_forward-D8.8.8.8:53}"
 		echolog "  - 域名解析：dns2socks..."
 	;;
 	xray_doh)
@@ -816,29 +821,6 @@ start_dns() {
 			use_tcp_node_resolve_dns=1
 			msg="TCP节点"
 		fi
-		echolog "  - 域名解析 Xray DNS(DOH)..."
-	;;
-	pdnsd)
-		echolog "  - 域名解析：pdnsd + 使用(TCP节点)解析域名..."
-	;;
-	udp)
-		use_udp_node_resolve_dns=1
-		TUN_DNS=${DNS_FORWARD}
-		echolog "  - 域名解析：直接使用UDP节点请求DNS（$TUN_DNS）"
-	;;
-	custom)
-		[ "$CHINADNS_NG" != "1" ] && {
-			custom_dns=$(config_t_get global custom_dns)
-			TUN_DNS="$(echo ${custom_dns} | sed 's/:/#/g')"
-			echolog "  - 域名解析：直接使用UDP协议自定义DNS（$TUN_DNS）解析..."
-		}
-	;;
-	esac
-	if [ -n "$(echo ${DNS_MODE} | grep pdnsd)" ]; then
-		gen_pdnsd_config "${dns_listen_port}" "${pdnsd_forward}"
-		ln_start_bin "$(first_type pdnsd)" pdnsd "/dev/null" --daemon -c "${TMP_PATH}/pdnsd/pdnsd.conf" -d
-	fi
-	if [ -n "$(echo ${DNS_MODE} | grep 'xray_doh')" ]; then
 		up_trust_doh=$(config_t_get global up_trust_doh "https://dns.google/dns-query,8.8.4.4")
 		_doh_url=$(echo $up_trust_doh | awk -F ',' '{print $1}')
 		_doh_host_port=$(echo $_doh_url | sed "s/https:\/\///g" | awk -F '/' '{print $1}')
@@ -865,7 +847,27 @@ start_dns() {
 			unset _dns _doh_bootstrap_dns
 		fi
 		unset _doh_url _doh_port _doh_bootstrap
-	fi
+		echolog "  - 域名解析 Xray DNS(DOH)..."
+	;;
+	pdnsd)
+		gen_pdnsd_config "${dns_listen_port}" "${pdnsd_forward}"
+		ln_start_bin "$(first_type pdnsd)" pdnsd "/dev/null" --daemon -c "${TMP_PATH}/pdnsd/pdnsd.conf" -d
+		echolog "  - 域名解析：pdnsd + 使用(TCP节点)解析域名..."
+	;;
+	udp)
+		use_udp_node_resolve_dns=1
+		TUN_DNS=${DNS_FORWARD}
+		echolog "  - 域名解析：直接使用UDP节点请求DNS（$TUN_DNS）"
+	;;
+	custom)
+		[ "$CHINADNS_NG" != "1" ] && {
+			custom_dns=$(config_t_get global custom_dns)
+			TUN_DNS="$(echo ${custom_dns} | sed 's/:/#/g')"
+			echolog "  - 域名解析：直接使用UDP协议自定义DNS（$TUN_DNS）解析..."
+		}
+	;;
+	esac
+	
 	[ "${use_udp_node_resolve_dns}" = "1" ] && echolog "  * 要求代理 DNS 请求，如上游 DNS 非直连地址，确保 UDP 代理打开，并且已经正确转发！"
 	[ "${use_tcp_node_resolve_dns}" = "1" ] && echolog "  * 请确认上游 DNS 支持 TCP 查询，如非直连地址，确保 TCP 代理打开，并且已经正确转发！"
 }
