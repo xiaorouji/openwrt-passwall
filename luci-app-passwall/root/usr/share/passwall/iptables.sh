@@ -35,7 +35,8 @@ dst() {
 }
 
 comment() {
-	echo "-m comment --comment '$1'"
+	local name=$(echo $1 | sed 's/ /_/g')
+	echo "-m comment --comment '$name'"
 }
 
 RULE_LAST_INDEX() {
