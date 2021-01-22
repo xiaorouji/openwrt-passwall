@@ -163,6 +163,20 @@ do
 					ucic2:set(application, node_id, "default_node", server)
 				end
 			}
+
+			local main_node_id = node.main_node
+			local main_node
+			if main_node_id then
+				main_node = ucic2:get_all(application, main_node_id)
+			end
+			CONFIG[#CONFIG + 1] = {
+				log = false,
+				currentNode = main_node,
+				remarks = "分流默认前置代理节点",
+				set = function(server)
+					ucic2:set(application, node_id, "main_node", server)
+				end
+			}
 		elseif node.protocol and node.protocol == '_balancing' then
 			local node_id = node[".name"]
 			local nodes = {}

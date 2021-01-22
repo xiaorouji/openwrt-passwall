@@ -155,6 +155,14 @@ default_node:value("nil", translate("Close"))
 for k, v in pairs(nodes_table) do default_node:value(v.id, v.remarks) end
 default_node:depends("protocol", "_shunt")
 
+default_proxy = s:option(Flag, "default_proxy", translate("Default") .. translate("Node") .. translate("Preproxy"), translate("Use the under node for the transit."))
+default_proxy.default = 0
+default_proxy:depends("protocol", "_shunt")
+
+o = s:option(ListValue, "main_node", " ")
+for k, v in pairs(nodes_table) do o:value(v.id, v.remarks) end
+o:depends("default_proxy", "1")
+
 domainStrategy = s:option(ListValue, "domainStrategy", translate("Domain Strategy"))
 domainStrategy:value("AsIs")
 domainStrategy:value("IPIfNonMatch")

@@ -311,14 +311,21 @@ filter_node() {
 	elif [ "$proxy_protocol" == "_shunt" ]; then
 		#echolog "  - 按请求目的地址分流（${proxy_type}）..."
 		local default_node=$(config_n_get $proxy_node default_node nil)
-		filter_rules $default_node $stream
+		local default_proxy=$(config_n_get $proxy_node default_proxy 0)
+		if [ "$default_proxy" == 1 ]; then
+			local main_node=$(config_n_get $proxy_node main_node nil)
+			filter_rules $main_node $stream
+		else
+			filter_rules $default_node $stream
+		fi
 :<<!
 		local default_node_address=$(get_host_ip ipv4 $(config_n_get $default_node address) 1)
 		local default_node_port=$(config_n_get $default_node port)
 		
 		local shunt_ids=$(uci show $CONFIG | grep "=shunt_rules" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}')
 		for shunt_id in $shunt_ids; do
-			local shunt_proxy=$(config_n_get $proxy_node "${shunt_id}_proxy" 0)
+			#local shunt_proxy=$(config_n_get $proxy_node "${shunt_id}_proxy" 0)
+			local shunt_proxy=0
 			local shunt_node=$(config_n_get $proxy_node "${shunt_id}" nil)
 			[ "$shunt_node" != "nil" ] && {
 				[ "$shunt_proxy" == 1 ] && {
