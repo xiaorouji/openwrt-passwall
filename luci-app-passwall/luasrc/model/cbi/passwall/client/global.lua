@@ -344,7 +344,7 @@ o.default = 9050
 o.datatype = "port"
 o.rmempty = false
 
-if api.is_finded("xray") or api.is_finded("v2ray") then
+if api.is_finded("xray") then
     o = s:option(Value, "http_port", "HTTP" .. translate("Listen Port") .. " " .. translate("0 is not use"))
     o.default = 0
     o.datatype = "port"
