@@ -317,13 +317,13 @@ load_config() {
 }
 
 run_socks() {
-	local node=$1
-	local bind=$2
-	local socks_port=$3
-	local config_file=$4
-	local http_port=$5
-	local http_config_file=$6
-	local id=$7
+	local flag=$1
+	local node=$2
+	local bind=$3
+	local socks_port=$4
+	local config_file=$5
+	local http_port=$6
+	local http_config_file=$7
 	local relay_port=$8
 	local log_file="/dev/null"
 	local type=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
@@ -355,12 +355,7 @@ run_socks() {
 	[ "$bind" != "127.0.0.1" ] && echolog "  - 启动 ${bind}:${socks_port}  - 节点：$remarks${tmp}"
 
 	case "$type" in
-	socks)
-		_username=$(config_n_get $node username)
-		_password=$(config_n_get $node password)
-		[ -n "$_username" ] && [ -n "$_password" ] && local _auth="--uname $_username --passwd $_password"
-		ln_start_bin "$(first_type ssocks)" ssocks_SOCKS_$id $log_file --listen $socks_port --socks $server_host:$port $_auth
-	;;
+	socks|\
 	xray)
 		[ "$http_port" != "0" ] && {
 			local extra_param="-http_proxy_port $http_port"
@@ -387,7 +382,7 @@ run_socks() {
 		[ "$protocol" == "wsclient" ] && {
 			[ "$brook_tls" == "1" ] && server_host="wss://${server_host}" || server_host="ws://${server_host}" 
 		}
-		ln_start_bin "$(first_type $(config_t_get global_app brook_file) brook)" "brook_SOCKS_$id" $log_file "$protocol" --socks5 "$bind:$socks_port" -s "$server_host:$port" -p "$(config_n_get $node password)"
+		ln_start_bin "$(first_type $(config_t_get global_app brook_file) brook)" "brook_SOCKS_${flag}" $log_file "$protocol" --socks5 "$bind:$socks_port" -s "$server_host:$port" -p "$(config_n_get $node password)"
 	;;
 	ss|ssr)
 		lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $socks_port -server_host $server_host -server_port $port > $config_file
@@ -396,12 +391,11 @@ run_socks() {
 	esac
 	
 	# socks to http
-	[ "$type" != "xray" ] && [ "$http_port" != "0" ] && [ "$http_config_file" != "nil" ] && {
+	[ "$type" != "xray" ] && [ "$type" != "socks" ] && [ "$http_port" != "0" ] && [ "$http_config_file" != "nil" ] && {
 		lua $API_GEN_XRAY_PROTO -local_proto http -local_address "0.0.0.0" -local_port $http_port -server_proto socks -server_address "127.0.0.1" -server_port $socks_port -server_username $_username -server_password $_password > $http_config_file
 		echo lua $API_GEN_XRAY_PROTO -local_proto http -local_address "0.0.0.0" -local_port $http_port -server_proto socks -server_address "127.0.0.1" -server_port $socks_port -server_username $_username -server_password $_password
 		ln_start_bin "$(first_type $(config_t_get global_app xray_file) xray)" xray $log_file -config="$http_config_file"
 	}
-	unset _username _password _auth
 }
 
 run_redir() {
@@ -506,9 +500,18 @@ run_redir() {
 		;;
 		xray)
 			local loglevel=$(config_t_get global loglevel "warning")
-			local extra_param="tcp"
-			[ "$UDP_NODE" == "tcp" ] && extra_param="tcp,udp"
-			lua $API_GEN_XRAY -node $node -proto $extra_param -redir_port $local_port -loglevel $loglevel > $config_file
+			local proto="-proto tcp"
+			[ "$UDP_NODE" == "tcp" ] && proto="-proto tcp,udp"
+			local extra_param="${proto}"
+			[ "$(config_t_get global tcp_node_socks 0)" = "1" ] && {
+				local socks_param="-socks_proxy_port $(config_t_get global tcp_node_socks_port 1080)"
+				extra_param="${extra_param} ${socks_param}"
+			}
+			[ "$(config_t_get global tcp_node_http 0)" = "1" ] && {
+				local http_param="-http_proxy_port $(config_t_get global tcp_node_http_port 1180)"
+				extra_param="${extra_param} ${http_param}"
+			}
+			lua $API_GEN_XRAY -node $node -redir_port $local_port -loglevel $loglevel $extra_param > $config_file
 			ln_start_bin "$(first_type $(config_t_get global_app xray_file) xray)" xray $log_file -config="$config_file"
 		;;
 		trojan-go)
@@ -607,22 +610,32 @@ start_redir() {
 }
 
 start_socks() {
+	[ "$(config_n_get $TCP_NODE type nil)" != "xray" ] && {
+		[ "$(config_t_get global tcp_node_socks 0)" = "1" ] && {
+			local port=$(config_t_get global tcp_node_socks_port 1080)
+			local config_file=$TMP_PATH/SOCKS_TCP.json
+			local log_file=$TMP_PATH/SOCKS_TCP.log
+		}
+		local http_port=0
+		local http_config_file=$TMP_PATH/HTTP2SOCKS_TCP.json
+		[ "$(config_t_get global tcp_node_http 0)" = "1" ] && {
+			http_port=$(config_t_get global tcp_node_http_port 1180)
+		}
+		run_socks TCP $TCP_NODE "0.0.0.0" $port $config_file $http_port $http_config_file
+	}
 	local ids=$(uci show $CONFIG | grep "=socks" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}')
 	echolog "分析 Socks 服务的节点配置..."
 	for id in $ids; do
 		local enabled=$(config_n_get $id enabled 0)
 		[ "$enabled" == "0" ] && continue
 		local node=$(config_n_get $id node nil)
-		if [ "$(echo $node | grep ^tcp)" ]; then
-			eval node=\$TCP_NODE
-		fi
 		[ "$node" == "nil" ] && continue
 		local port=$(config_n_get $id port)
 		local config_file=$TMP_PATH/SOCKS_${id}.json
 		local log_file=$TMP_PATH/SOCKS_${id}.log
 		local http_port=$(config_n_get $id http_port 0)
 		local http_config_file=$TMP_PATH/HTTP2SOCKS_${id}.json
-		run_socks $node "0.0.0.0" $port $config_file $http_port $http_config_file $id
+		run_socks $id $node "0.0.0.0" $port $config_file $http_port $http_config_file
 	done
 }
 
