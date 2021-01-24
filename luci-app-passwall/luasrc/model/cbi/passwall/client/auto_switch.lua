@@ -22,12 +22,7 @@ o.rmempty = false
 
 ---- Testing Time
 o = s:option(Value, "testing_time", translate("How often is a diagnosis made"), translate("Units:minutes"))
-o.default = "3"
-
-o = s:option(ListValue, "tcp_main", "TCP " .. translate("Main node"))
-for k, v in pairs(nodes_table) do
-     o:value(v.id, v.remarks)
-end
+o.default = "1"
     
 o = s:option(DynamicList, "tcp_node", "TCP " .. translate("List of backup nodes"))
 for k, v in pairs(nodes_table) do
