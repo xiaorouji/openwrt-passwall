@@ -1,6 +1,5 @@
-local uci = require"luci.model.uci".cursor()
 local api = require "luci.model.cbi.passwall.api.api"
-local appname = "passwall"
+local appname = api.appname
 
 local nodes_table = {}
 for k, e in ipairs(api.get_valid_nodes()) do
