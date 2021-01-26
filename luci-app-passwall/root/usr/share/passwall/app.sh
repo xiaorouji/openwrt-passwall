@@ -1101,10 +1101,9 @@ start_haproxy() {
 	cat <<-EOF > "${haproxy_file}"
 		global
 		    log         127.0.0.1 local2
-		    chroot      /usr/bin
+		    chroot      ${haproxy_path}
 		    maxconn     60000
 		    stats socket  ${haproxy_path}/haproxy.sock
-		    user        root
 		    daemon
 
 		defaults
@@ -1195,6 +1194,7 @@ start_haproxy() {
 	local auth=""
 	[ -n "$console_user" ] && [ -n "$console_password" ] && auth="stats auth $console_user:$console_password"
 	cat <<-EOF >> "${haproxy_file}"
+	
 		listen console
 		    bind 0.0.0.0:$console_port
 		    mode http
@@ -1204,7 +1204,7 @@ start_haproxy() {
 		    $auth
 	EOF
 
-	[ "${hasvalid}" != "1" ] && echolog "  - 没有发现任何有效节点信息..." && return 0
+	[ "${hasvalid}" != "1" ] && echolog "  - 没有发现任何有效节点信息，不启动。" && return 0
 	ln_start_bin "$(first_type haproxy)" haproxy "/dev/null" -f "${haproxy_file}"
 	echolog "  * 控制台端口：${console_port}/，${auth:-公开}"
 }
