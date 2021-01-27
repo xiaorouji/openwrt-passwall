@@ -370,8 +370,12 @@ end
 for k, v in pairs(nodes_table) do
     tcp_node:value(v.id, v.remarks)
     tcp_node_socks:depends("tcp_node", v.id)
-    if has_xray then
-        tcp_node_http:depends("tcp_node", v.id)
+    if v.type == "Xray" then
+        if has_xray then
+            tcp_node_http:depends("tcp_node", v.id)
+        end
+    else
+        tcp_node_http:depends("tcp_node_socks", true)
     end
     udp_node:value(v.id, v.remarks)
     if v.type == "Socks" then

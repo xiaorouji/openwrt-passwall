@@ -578,13 +578,13 @@ run_redir() {
 				local port=$(config_t_get global tcp_node_socks_port 1080)
 				local config_file=$TMP_PATH/SOCKS_TCP.json
 				local log_file=$TMP_PATH/SOCKS_TCP.log
+				local http_port=0
+				local http_config_file=$TMP_PATH/HTTP2SOCKS_TCP.json
+				[ "$(config_t_get global tcp_node_http 0)" = "1" ] && {
+					http_port=$(config_t_get global tcp_node_http_port 1180)
+				}
+				run_socks TCP $TCP_NODE "0.0.0.0" $port $config_file $http_port $http_config_file
 			}
-			local http_port=0
-			local http_config_file=$TMP_PATH/HTTP2SOCKS_TCP.json
-			[ "$(config_t_get global tcp_node_http 0)" = "1" ] && {
-				http_port=$(config_t_get global tcp_node_http_port 1180)
-			}
-			run_socks TCP $TCP_NODE "0.0.0.0" $port $config_file $http_port $http_config_file
 		}
 	;;
 	esac
