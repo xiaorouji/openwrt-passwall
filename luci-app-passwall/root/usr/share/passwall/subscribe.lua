@@ -99,7 +99,7 @@ do
 				remarks = node,
 				set = function(server)
 					for kk, vv in pairs(CONFIG) do
-						if (vv.remarks == "自动切换TCP_1节点列表") then
+						if (vv.remarks == "自动切换TCP节点列表") then
 							table.insert(vv.new_nodes, server)
 						end
 					end
@@ -112,7 +112,7 @@ do
 			new_nodes = new_nodes,
 			set = function()
 				for kk, vv in pairs(CONFIG) do
-					if (vv.remarks == "自动切换TCP_1节点列表") then
+					if (vv.remarks == "自动切换TCP节点列表") then
 						log("刷新自动切换列表")
 						ucic2:set_list(application, "@auto_switch[0]", "tcp_node", vv.new_nodes)
 					end
