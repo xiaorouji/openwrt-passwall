@@ -9,6 +9,7 @@ require 'luci.util'
 require 'luci.jsonc'
 require 'luci.sys'
 local api = require "luci.model.cbi.passwall.api.api"
+local has_xray = api.is_finded("xray")
 
 -- these global functions are accessed all the time by the event handler
 -- so caching them is worth the effort
@@ -436,6 +437,10 @@ local function processData(szType, content, add_mode)
 			content = content:sub(0, idx_sp - 1)
 		end
 		result.type = "Trojan-Plus"
+		if has_xray then
+			result.type = 'Xray'
+			result.protocol = 'trojan'
+		end
 		result.remarks = UrlDecode(alias)
 		if content:find("@") then
 			local Info = split(content, "@")
