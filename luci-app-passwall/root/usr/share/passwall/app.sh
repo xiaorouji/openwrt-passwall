@@ -19,7 +19,7 @@ DNSMASQ_PATH=/etc/dnsmasq.d
 LOCAL_DOH_PORT=7912
 DNS_PORT=7913
 TUN_DNS="127.0.0.1#${DNS_PORT}"
-IS_DEFAULT_DNS=
+IS_DEFAULT_DNS=0
 LOCAL_DNS=
 DEFAULT_DNS=
 NO_PROXY=
@@ -308,15 +308,13 @@ load_config() {
 	if [ "${LOCAL_DNS}" = "default" ]; then
 		DEFAULT_DNS=$(uci show dhcp | grep "@dnsmasq" | grep ".server=" | awk -F '=' '{print $2}' | sed "s/'//g" | tr ' ' ',')
 		if [ -n "${DEFAULT_DNS}" ]; then
-			uci set $CONFIG.@global[0].dnsmasq_servers="${DEFAULT_DNS}"
-			uci commit $CONFIG
+			IS_DEFAULT_DNS=1
 		else
 			RESOLVFILE=/tmp/resolv.conf.d/resolv.conf.auto
 			[ -f "${RESOLVFILE}" ] && [ -s "${RESOLVFILE}" ] || RESOLVFILE=/tmp/resolv.conf.auto
 			DEFAULT_DNS=$(echo -n $(sed -n 's/^nameserver[ \t]*\([^ ]*\)$/\1/p' "${RESOLVFILE}" | grep -v "0.0.0.0" | grep -v "127.0.0.1" | grep -v "^::$" | head -2) | tr ' ' ',')
 		fi
 		LOCAL_DNS="${DEFAULT_DNS:-119.29.29.29}"
-		IS_DEFAULT_DNS=1
 	fi
 	PROXY_IPV6=$(config_t_get global_forwarding proxy_ipv6 0)
 	mkdir -p /var/etc $TMP_PATH $TMP_BIN_PATH $TMP_ID_PATH $TMP_PORT_PATH
@@ -982,31 +980,31 @@ add_dnsmasq() {
 	if [ "${DNS_MODE}" != "nouse" ]; then
 		echo "conf-dir=${TMP_DNSMASQ_PATH}" > "/var/dnsmasq.d/dnsmasq-${CONFIG}.conf"
 		
-		[ "${IS_DEFAULT_DNS}" = "1" ] && [ "${USE_CHNLIST}" = "0" ] && {
-			echo > $TMP_PATH/default_DNS
+		if [ "${CHINADNS_NG}" = "0" ] && [ "${USE_CHNLIST}" = "0" ] && [ "${IS_DEFAULT_DNS}" = "1" ]; then
 			echolog "  - 不强制设置默认DNS"
 			return
-		}
-		msg="ISP"
-		servers="${LOCAL_DNS}"
-		
-		[ "${USE_CHNLIST}" = "1" ] && [ -z "${returnhome}" ] && [ -n "${chnlist}" ] && servers="${TUN_DNS}"
-		[ -n "${chnlist}" ] && msg="中国列表以外"
-		[ -n "${returnhome}" ] && msg="中国列表"
-		[ -n "${global}" ] && msg="全局"
-		
-		[ "$CHINADNS_NG" = "1" ] && {
+		else
+			echo "${DEFAULT_DNS}" > $TMP_PATH/default_DNS
+			msg="ISP"
+			servers="${LOCAL_DNS}"
+			[ -n "${chnlist}" ] && msg="中国列表以外"
+			[ -n "${returnhome}" ] && msg="中国列表"
+			[ -n "${global}" ] && msg="全局"
+			
+			[ "${USE_CHNLIST}" = "1" ] && [ -z "${returnhome}" ] && [ -n "${chnlist}" ] && servers="${TUN_DNS}"
 			#直接交给Chinadns-ng处理
-			servers="${TUN_DNS}" && msg="chinadns-ng"
-		}
-		
-		cat <<-EOF >> "/var/dnsmasq.d/dnsmasq-${CONFIG}.conf"
-			$(echo "${servers}" | sed 's/,/\n/g' | gen_dnsmasq_items)
-			all-servers
-			no-poll
-			no-resolv
-		EOF
-		echolog "  - [$?]以上所列以外及默认(${msg})：${servers}"
+			[ "$CHINADNS_NG" = "1" ] && {
+				servers="${TUN_DNS}" && msg="chinadns-ng"
+			}
+			
+			cat <<-EOF >> "/var/dnsmasq.d/dnsmasq-${CONFIG}.conf"
+				$(echo "${servers}" | sed 's/,/\n/g' | gen_dnsmasq_items)
+				all-servers
+				no-poll
+				no-resolv
+			EOF
+			echolog "  - [$?]以上所列以外及默认(${msg})：${servers}"
+		fi
 	fi
 }
 
@@ -1205,15 +1203,31 @@ force_stop() {
 	exit 0
 }
 
+backup_dnsmasq_servers() {
+	DNSMASQ_DNS=$(uci show dhcp | grep "@dnsmasq" | grep ".server=" | awk -F '=' '{print $2}' | sed "s/'//g" | tr ' ' ',')
+	if [ -n "${DNSMASQ_DNS}" ]; then
+		uci -q set $CONFIG.@global[0].dnsmasq_servers="${DNSMASQ_DNS}"
+		uci commit $CONFIG
+	fi
+}
+
+restore_dnsmasq_servers() {
+	OLD_SERVER=$(uci -q get $CONFIG.@global[0].dnsmasq_servers | tr "," " ")
+	for server in $OLD_SERVER; do
+		uci -q del_list dhcp.@dnsmasq[0].server=$server
+		uci add_list dhcp.@dnsmasq[0].server=$server
+	done
+	uci commit dhcp
+	uci -q delete $CONFIG.@global[0].dnsmasq_servers
+	uci commit $CONFIG
+}
+
 restart_dnsmasq() {
-	if [ ! -f "$TMP_PATH/default_DNS" ]; then
+	if [ -f "$TMP_PATH/default_DNS" ]; then
+		backup_dnsmasq_servers
 		sed -i "/list server/d" /etc/config/dhcp >/dev/null 2>&1
 		/etc/init.d/dnsmasq restart >/dev/null 2>&1
-		OLD_SERVER=$(uci -q get $CONFIG.@global[0].dnsmasq_servers | tr "," " ")
-		for server in $OLD_SERVER; do
-			uci add_list dhcp.@dnsmasq[0].server=$server
-		done
-		uci commit dhcp
+		restore_dnsmasq_servers
 	else
 		/etc/init.d/dnsmasq restart >/dev/null 2>&1
 	fi
