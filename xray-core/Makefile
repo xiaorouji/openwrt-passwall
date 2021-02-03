@@ -25,7 +25,7 @@ GO_PKG_LDFLAGS_X:= \
 	$(GO_PKG)/core.codename=OpenWrt
 
 include $(INCLUDE_DIR)/package.mk
-include ../../lang/golang/golang-package.mk
+include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
 
 define Package/xray/template
   TITLE:=A platform for building proxies to bypass network restrictions
