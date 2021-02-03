@@ -298,12 +298,6 @@ load_config() {
 	DNS_MODE=$(config_t_get global dns_mode pdnsd)
 	DNS_FORWARD=$(config_t_get global dns_forward 8.8.4.4:53 | sed 's/:/#/g')
 	DNS_CACHE=$(config_t_get global dns_cache 0)
-	process=1
-	if [ "$(config_t_get global_forwarding process 0)" = "0" ]; then
-		process=$(cat /proc/cpuinfo | grep 'processor' | wc -l)
-	else
-		process=$(config_t_get global_forwarding process)
-	fi
 	LOCAL_DNS=$(config_t_get global up_china_dns default | sed 's/:/#/g')
 	if [ "${LOCAL_DNS}" = "default" ]; then
 		DEFAULT_DNS=$(uci show dhcp | grep "@dnsmasq" | grep ".server=" | awk -F '=' '{print $2}' | sed "s/'//g" | tr ' ' ',')
@@ -427,7 +421,6 @@ run_redir() {
 			echolog "$remarks节点，非法的服务器地址，无法启动！"
 			return 1
 		}
-		[ "$server_host" == "127.0.0.1" ] && process=1
 		[ "$bind" != "127.0.0.1" ] && echolog "${REDIR_TYPE}节点：$remarks，节点：${server_host}:${port}，监听端口：$local_port"
 	}
 	eval ${REDIR_TYPE}_NODE_PORT=$port
@@ -527,9 +520,7 @@ run_redir() {
 		trojan*)
 			local loglevel=$(config_t_get global trojan_loglevel "2")
 			lua $API_GEN_TROJAN -node $node -run_type nat -local_addr "0.0.0.0" -local_port $local_port -loglevel $loglevel > $config_file
-			for k in $(seq 1 $process); do
-				ln_start_bin "$(first_type ${type})" "${type}" $log_file -c "$config_file"
-			done
+			ln_start_bin "$(first_type ${type})" "${type}" $log_file -c "$config_file"
 		;;
 		naiveproxy)
 			lua $API_GEN_NAIVE -node $node -run_type redir -local_addr "0.0.0.0" -local_port $local_port > $config_file
@@ -559,15 +550,12 @@ run_redir() {
 		ss|ssr)
 			if [ "$kcptun_use" == "1" ]; then
 				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -server_host "127.0.0.1" -server_port $KCPTUN_REDIR_PORT > $config_file
-				process=1
 				[ "$UDP_NODE" == "tcp" ] && echolog "Kcptun不支持UDP转发！"
 			else
 				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port > $config_file
 				[ "$UDP_NODE" == "tcp" ] && extra_param="-u"
 			fi
-			for k in $(seq 1 $process); do
-				ln_start_bin "$(first_type ${type}-redir)" "${type}-redir" $log_file -c "$config_file" -v $extra_param
-			done
+			ln_start_bin "$(first_type ${type}-redir)" "${type}-redir" $log_file -c "$config_file" -v $extra_param
 		;;
 		esac
 		if [ -n "$_socks_flag" ]; then
@@ -1234,15 +1222,7 @@ restart_dnsmasq() {
 }
 
 boot() {
-	[ "$ENABLED" == 1 ] && {
-		local delay=$(config_t_get global_delay start_delay 1)
-		if [ "$delay" -gt 0 ]; then
-			echolog "执行启动延时 $delay 秒后再启动!"
-			sleep $delay && start >/dev/null 2>&1 &
-		else
-			start
-		fi
-	}
+	[ "$ENABLED" == 1 ] && start
 	return 0
 }
 
