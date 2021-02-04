@@ -103,16 +103,21 @@ tcp_node:value("nil", translate("Close"))
 
 -- 分流
 if has_xray and #nodes_table > 0 then
-    uci:foreach(appname, "shunt_rules", function(e)
-        local id = e[".name"]
-        local remarks = translate(e.remarks)
-        o = s:taboption("Main", ListValue, id .. "node", string.format('* <a href="%s">%s</a>', api.url("shunt_rules", id), remarks))
-        for k, v in pairs(nodes_table) do
-            if v.node_type == "normal" then
-                o:value("nil", translate("Close"))
-                o:value(v.id, v.remarks_name)
-            end
-            if v.type == "Xray" and v.protocol == "_shunt" then
+    local normal_list = {}
+    local shunt_list = {}
+    for k, v in pairs(nodes_table) do
+        if v.node_type == "normal" then
+            normal_list[#normal_list + 1] = v
+        end
+        if v.type == "Xray" and v.protocol == "_shunt" then
+            shunt_list[#shunt_list + 1] = v
+        end
+    end
+    if #normal_list > 0 and #shunt_list > 0 then
+        uci:foreach(appname, "shunt_rules", function(e)
+            local id = e[".name"]
+            o = s:taboption("Main", ListValue, id .. "_node", string.format('* <a href="%s">%s</a>', api.url("shunt_rules", id), translate(e.remarks)))
+            for k, v in pairs(shunt_list) do
                 o:depends("tcp_node", v.id)
                 o.cfgvalue = function(self, section)
                     return m:get(v.id, id) or "nil"
@@ -121,17 +126,15 @@ if has_xray and #nodes_table > 0 then
                     m:set(v.id, id, value)
                 end
             end
-        end
-    end)
-    local id = "default_node"
-    local remarks = "* " .. translate("Default")
-    o = s:taboption("Main", ListValue, id, remarks)
-    for k, v in pairs(nodes_table) do
-        if v.node_type == "normal" then
             o:value("nil", translate("Close"))
-            o:value(v.id, v.remarks_name)
-        end
-        if v.type == "Xray" and v.protocol == "_shunt" then
+            for k, v in pairs(normal_list) do
+                o:value(v.id, v.remarks_name)
+            end
+        end)
+
+        local id = "default_node"
+        o = s:taboption("Main", ListValue, id, "* " .. translate("Default"))
+        for k, v in pairs(shunt_list) do
             o:depends("tcp_node", v.id)
             o.cfgvalue = function(self, section)
                 return m:get(v.id, id) or "nil"
@@ -140,16 +143,14 @@ if has_xray and #nodes_table > 0 then
                 m:set(v.id, id, value)
             end
         end
-    end
-    local id = "main_node"
-    local remarks = "* " .. translate("Default") .. translate("Preproxy")
-    o = s:taboption("Main", ListValue, id, remarks)
-    for k, v in pairs(nodes_table) do
-        if v.node_type == "normal" then
-            o:value("nil", translate("Close"))
+        o:value("nil", translate("Close"))
+        for k, v in pairs(normal_list) do
             o:value(v.id, v.remarks_name)
         end
-        if v.type == "Xray" and v.protocol == "_shunt" then
+        
+        local id = "main_node"
+        o = s:taboption("Main", ListValue, id, "* " .. translate("Default") .. translate("Preproxy"))
+        for k, v in pairs(shunt_list) do
             o:depends("tcp_node", v.id)
             o.cfgvalue = function(self, section)
                 return m:get(v.id, id) or "nil"
@@ -157,6 +158,10 @@ if has_xray and #nodes_table > 0 then
             o.write = function(self, section, value)
                 m:set(v.id, id, value)
             end
+        end
+        o:value("nil", translate("Close"))
+        for k, v in pairs(normal_list) do
+            o:value(v.id, v.remarks_name)
         end
     end
 end
