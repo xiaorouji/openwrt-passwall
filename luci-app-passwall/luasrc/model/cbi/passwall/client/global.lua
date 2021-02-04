@@ -11,13 +11,6 @@ for k, e in ipairs(api.get_valid_nodes()) do
 end
 
 local socks_table = {}
-if tonumber(m:get("@global[0]", "tcp_node_socks") or 0) == 1 then
-    local id = "127.0.0.1" .. ":" .. m:get("@global[0]", "tcp_node_socks_port")
-    socks_table[#socks_table + 1] = {
-        id = id,
-        remarks = id .. " - " .. translate("TCP Node")
-    }
-end
 uci:foreach(appname, "socks", function(s)
     if s.enabled == "1" and s.node then
         local id, remarks
@@ -174,18 +167,6 @@ udp_node:value("nil", translate("Close"))
 udp_node:value("tcp_", translate("Same as the tcp node"))
 --udp_node:value("tcp", translate("Same as the tcp node"))
 --udp_node:value("tcp_", translate("Same as the tcp node") .. "（" .. translate("New process") .. "）")
-
-tcp_node_socks = s:taboption("Main", Flag, "tcp_node_socks", translate("Enable") .. translate("TCP Node") .. "Socks")
-o = s:taboption("Main", Value, "tcp_node_socks_port", "Socks" .. translate("Listen Port"))
-o.default = 1080
-o.datatype = "port"
-o:depends("tcp_node_socks", true)
-
-tcp_node_http = s:taboption("Main", Flag, "tcp_node_http", translate("Enable") .. translate("TCP Node") .. "Http")
-o = s:taboption("Main", Value, "tcp_node_http_port", "HTTP" .. translate("Listen Port"))
-o.default = 1180
-o.datatype = "port"
-o:depends("tcp_node_http", true)
 
 s:tab("DNS", translate("DNS"))
 
@@ -422,14 +403,6 @@ end
 
 for k, v in pairs(nodes_table) do
     tcp_node:value(v.id, v.remarks_name)
-    tcp_node_socks:depends("tcp_node", v.id)
-    if v.type == "Xray" then
-        if has_xray then
-            tcp_node_http:depends("tcp_node", v.id)
-        end
-    else
-        tcp_node_http:depends("tcp_node_socks", true)
-    end
     udp_node:value(v.id, v.remarks_name)
     if v.type == "Socks" then
         if has_xray then
