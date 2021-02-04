@@ -102,7 +102,7 @@ end
 tcp_node:value("nil", translate("Close"))
 
 -- 分流
-if has_xray then
+if has_xray and #nodes_table > 0 then
     uci:foreach(appname, "shunt_rules", function(e)
         local id = e[".name"]
         local remarks = translate(e.remarks)
