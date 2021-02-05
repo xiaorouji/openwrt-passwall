@@ -14,9 +14,9 @@ local socks_table = {}
 uci:foreach(appname, "socks", function(s)
     if s.enabled == "1" and s.node then
         local id, remarks
-        local same, i = s.node:match("^(tcp)([1-9])$")
+        local same, i = s.node:match("^(tcp)")
         if same then
-            remarks = translatef("Same as the tcp %s node", i)
+            remarks = translatef("Same as the tcp node")
         else
             for k, n in pairs(nodes_table) do
                 if (s.node == n.id) then
