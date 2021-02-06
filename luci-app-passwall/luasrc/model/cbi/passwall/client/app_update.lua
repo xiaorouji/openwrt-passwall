@@ -1,4 +1,3 @@
-local d = require "luci.dispatcher"
 local appname = "passwall"
 
 m = Map(appname)
@@ -10,7 +9,6 @@ s = m:section(TypedSection, "global_app", translate("App Update"),
                   "</font>")
 s.anonymous = true
 s:append(Template(appname .. "/app_update/xray_version"))
-s:append(Template(appname .. "/app_update/v2ray_version"))
 s:append(Template(appname .. "/app_update/trojan_go_version"))
 s:append(Template(appname .. "/app_update/kcptun_version"))
 s:append(Template(appname .. "/app_update/brook_version"))
@@ -19,16 +17,9 @@ o = s:option(Value, "xray_file", translatef("%s App Path", "Xray"))
 o.default = "/usr/bin/xray"
 o.rmempty = false
 
-o = s:option(Value, "v2ray_file", translatef("%s App Path", "V2ray"))
-o.default = "/usr/bin/v2ray"
-o.rmempty = false
-
 o = s:option(Value, "trojan_go_file", translatef("%s App Path", "Trojan-Go"))
 o.default = "/usr/bin/trojan-go"
 o.rmempty = false
-
-o = s:option(Value, "trojan_go_latest", translatef("Trojan-Go Version API"), translate("alternate API URL for version checking"))
-o.default = "https://api.github.com/repos/peter-tank/trojan-go/releases/latest"
 
 o = s:option(Value, "kcptun_client_file", translatef("%s Client App Path", "Kcptun"))
 o.default = "/usr/bin/kcptun-client"

@@ -1,19 +1,20 @@
 -- Copyright (C) 2018-2020 L-WRT Team
+-- Copyright (C) 2021 xiaorouji
+
 module("luci.controller.passwall", package.seeall)
-local appname = "passwall"
+local api = require "luci.model.cbi.passwall.api.api"
+local appname = api.appname
 local ucic = luci.model.uci.cursor()
 local http = require "luci.http"
 local util = require "luci.util"
 local i18n = require "luci.i18n"
-local api = require "luci.model.cbi.passwall.api.api"
-local kcptun = require "luci.model.cbi.passwall.api.kcptun"
-local brook = require "luci.model.cbi.passwall.api.brook"
-local xray = require "luci.model.cbi.passwall.api.xray"
-local v2ray = require "luci.model.cbi.passwall.api.v2ray"
-local trojan_go = require "luci.model.cbi.passwall.api.trojan_go"
+local kcptun = require("luci.model.cbi." .. appname ..".api.kcptun")
+local brook = require("luci.model.cbi." .. appname ..".api.brook")
+local xray = require("luci.model.cbi." .. appname ..".api.xray")
+local trojan_go = require("luci.model.cbi." .. appname ..".api.trojan_go")
 
 function index()
-	appname = "passwall"
+	appname = require "luci.model.cbi.passwall.api.api".appname
 	entry({"admin", "services", appname}).dependent = true
 	entry({"admin", "services", appname, "reset_config"}, call("reset_config")).leaf = true
 	entry({"admin", "services", appname, "show"}, call("show_menu")).leaf = true
@@ -72,8 +73,6 @@ function index()
 	entry({"admin", "services", appname, "brook_update"}, call("brook_update")).leaf = true
 	entry({"admin", "services", appname, "xray_check"}, call("xray_check")).leaf = true
 	entry({"admin", "services", appname, "xray_update"}, call("xray_update")).leaf = true
-	entry({"admin", "services", appname, "v2ray_check"}, call("v2ray_check")).leaf = true
-	entry({"admin", "services", appname, "v2ray_update"}, call("v2ray_update")).leaf = true
 	entry({"admin", "services", appname, "trojan_go_check"}, call("trojan_go_check")).leaf = true
 	entry({"admin", "services", appname, "trojan_go_update"}, call("trojan_go_update")).leaf = true
 end
@@ -85,12 +84,12 @@ end
 
 function reset_config()
 	luci.sys.call('[ -f "/usr/share/passwall/config.default" ] && cp -f /usr/share/passwall/config.default /etc/config/passwall && /etc/init.d/passwall reload')
-	luci.http.redirect(luci.dispatcher.build_url("admin", "services", appname))
+	luci.http.redirect(api.url())
 end
 
 function show_menu()
 	luci.sys.call("touch /etc/config/passwall_show")
-	luci.http.redirect(luci.dispatcher.build_url("admin", "services", appname))
+	luci.http.redirect(api.url())
 end
 
 function hide_menu()
@@ -173,14 +172,14 @@ function status()
 	-- local dns_mode = ucic:get(appname, "@global[0]", "dns_mode")
 	local e = {}
 	e.dns_mode_status = luci.sys.call("netstat -apn | grep ':7913 ' >/dev/null") == 0
-	e.haproxy_status = luci.sys.call(string.format("ps -w | grep -v grep | grep '%s/bin/' | grep haproxy >/dev/null", appname)) == 0
-	e["kcptun_tcp_node_status"] = luci.sys.call(string.format("ps -w | grep -v grep | grep '%s/bin/kcptun' | grep -i 'tcp' >/dev/null", appname)) == 0
-	e["tcp_node_status"] = luci.sys.call(string.format("ps -w | grep -v -E 'grep|kcptun' | grep '%s/bin/' | grep -i 'TCP' >/dev/null", appname)) == 0
+	e.haproxy_status = luci.sys.call(string.format("top -bn1 | grep -v grep | grep '%s/bin/' | grep haproxy >/dev/null", appname)) == 0
+	e["kcptun_tcp_node_status"] = luci.sys.call(string.format("top -bn1 | grep -v grep | grep '%s/bin/kcptun' | grep -i 'tcp' >/dev/null", appname)) == 0
+	e["tcp_node_status"] = luci.sys.call(string.format("top -bn1 | grep -v -E 'grep|kcptun' | grep '%s/bin/' | grep -i 'TCP' >/dev/null", appname)) == 0
 
 	if (ucic:get(appname, "@global[0]", "udp_node") or "nil") == "tcp" then
 		e["udp_node_status"] = e["tcp_node_status"]
 	else
-		e["udp_node_status"] = luci.sys.call(string.format("ps -w | grep -v grep | grep '%s/bin/' | grep -i 'UDP' >/dev/null", appname)) == 0
+		e["udp_node_status"] = luci.sys.call(string.format("top -bn1 | grep -v grep | grep '%s/bin/' | grep -i 'UDP' >/dev/null", appname)) == 0
 	end
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
@@ -191,12 +190,12 @@ function socks_status()
 	local index = luci.http.formvalue("index")
 	local id = luci.http.formvalue("id")
 	e.index = index
-	e.socks_status = luci.sys.call(string.format("ps -w | grep -v grep | grep '%s/bin/' | grep 'SOCKS_%s' > /dev/null", appname, id)) == 0
+	e.socks_status = luci.sys.call(string.format("top -bn1 | grep -v grep | grep '%s/bin/' | grep '%s' | grep 'SOCKS_' > /dev/null", appname, id)) == 0
 	local use_http = ucic:get(appname, id, "http_port") or 0
 	e.use_http = 0
 	if tonumber(use_http) > 0 then
 		e.use_http = 1
-		e.http_status = luci.sys.call(string.format("ps -w | grep -v grep | grep '%s/bin/' | grep 'SOCKS2HTTP_%s' > /dev/null", appname, id)) == 0
+		e.http_status = luci.sys.call(string.format("top -bn1 | grep -v grep | grep '%s/bin/' | grep '%s' | grep -E 'HTTP_|HTTP2SOCKS' > /dev/null", appname, id)) == 0
 	end
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
@@ -244,7 +243,7 @@ function set_node()
 	ucic:set(appname, "@global[0]", protocol .. "_node", section)
 	ucic:commit(appname)
 	luci.sys.call("/etc/init.d/passwall restart > /dev/null 2>&1 &")
-	luci.http.redirect(luci.dispatcher.build_url("admin", "services", appname, "log"))
+	luci.http.redirect(api.url("log"))
 end
 
 function copy_node()
@@ -263,7 +262,7 @@ function copy_node()
 		end
 	end
 	ucic:commit(appname)
-	luci.http.redirect(luci.dispatcher.build_url("admin", "services", appname, "node_config", uuid))
+	luci.http.redirect(api.url("node_config", uuid))
 end
 
 function clear_all_nodes()
@@ -335,7 +334,7 @@ end
 function server_user_status()
 	local e = {}
 	e.index = luci.http.formvalue("index")
-	e.status = luci.sys.call(string.format("ps -w | grep -v 'grep' | grep '%s/bin/' | grep -i '%s' >/dev/null", appname .. "_server", luci.http.formvalue("id"))) == 0
+	e.status = luci.sys.call(string.format("top -bn1 | grep -v 'grep' | grep '%s/bin/' | grep -i '%s' >/dev/null", appname .. "_server", luci.http.formvalue("id"))) == 0
 	http_write_json(e)
 end
 
@@ -408,25 +407,6 @@ function xray_update()
 		json = xray.to_move(http.formvalue("file"))
 	else
 		json = xray.to_download(http.formvalue("url"))
-	end
-
-	http_write_json(json)
-end
-
-function v2ray_check()
-	local json = v2ray.to_check("")
-	http_write_json(json)
-end
-
-function v2ray_update()
-	local json = nil
-	local task = http.formvalue("task")
-	if task == "extract" then
-		json = v2ray.to_extract(http.formvalue("file"), http.formvalue("subfix"))
-	elseif task == "move" then
-		json = v2ray.to_move(http.formvalue("file"))
-	else
-		json = v2ray.to_download(http.formvalue("url"))
 	end
 
 	http_write_json(json)

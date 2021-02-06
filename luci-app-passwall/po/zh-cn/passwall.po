@@ -160,11 +160,17 @@ msgstr "自定义DNS"
 msgid "IP:Port mode ecceptable for specify other filtered name services."
 msgstr "定义接受 IP:Port 形式的输入，以指定其它域名服务的过滤服务。"
 
-msgid "Resolver For Local/WhiteList Domains"
-msgstr "解析本地和白名单域名"
+msgid "Local DNS"
+msgstr "本地DNS"
+
+msgid "Remote DNS"
+msgstr "远程DNS"
 
 msgid "IP:Port mode acceptable, multi value split with english comma."
 msgstr "接受 IP:Port 形式的输入，多个以英文逗号分隔。"
+
+msgid "If you use dns2socks, only the first one is valid."
+msgstr "如果使用dns2socks，只有第一个生效。"
 
 msgid "When the selection is not the default, this DNS is forced to be set to dnsmasq upstream DNS."
 msgstr "当选择的不是默认，则将此DNS强制设置为dnsmasq上游DNS。"
@@ -214,9 +220,6 @@ msgstr "请确保此Socks服务可用。"
 msgid "ChinaDNS-NG Fair Mode"
 msgstr "ChinaDNS-NG 公平模式"
 
-msgid "Filtered DNS(For Proxied Domains)"
-msgstr "域名过滤服务(用于被代理的域名)"
-
 msgid "Format must be:"
 msgstr "格式必须为："
 
@@ -229,8 +232,8 @@ msgstr "DoH Bootstrap DNS"
 msgid "The Bootstrap DNS server is used to resolve the IP address of the DoH resolver you specify as the upstream."
 msgstr "Bootstrap DNS 服务器用于解析您指定为上游的 DoH 解析器的 IP 地址。"
 
-msgid "IP:Port mode acceptable, the 1st for 'dns2socks' if split with english comma."
-msgstr "接受 IP:Port 形式的输入，多个以英文逗号分隔 ，'dns2socks' 模式下仅首个有效。"
+msgid "China list cannot be used together with outside China list!"
+msgstr "中国列表不能和中国列表外一起使用！"
 
 msgid "Cache Resolved"
 msgstr "缓存解析结果"
@@ -328,8 +331,8 @@ msgstr "添加节点"
 msgid "Add the node via the link"
 msgstr "通过链接添加节点"
 
-msgid "SS/SSR/V2ray/Trojan Link"
-msgstr "SS/SSR/V2ray/Trojan链接"
+msgid "SS/SSR/Vmess/Trojan Link"
+msgstr "SS/SSR/Vmess/Trojan链接"
 
 msgid "Please enter the correct link, ss:// ssr:// vmess:// trojan://"
 msgstr "请输入正确的链接，ss:// ssr:// vmess:// trojan://"
@@ -411,6 +414,9 @@ msgstr "前置代理"
 
 msgid "Use the default node for the transit."
 msgstr "使用默认节点代理转发。"
+
+msgid "Use the under node for the transit."
+msgstr "使用下面的节点代理转发。"
 
 msgid "No shunt rules? Click me to go to add."
 msgstr "没有分流规则？点我前往去添加。"
@@ -817,20 +823,14 @@ msgstr "手动订阅"
 msgid "Delete All Subscribe Node"
 msgstr "删除所有订阅节点"
 
-msgid "Filter keyword switch"
-msgstr "过滤关键字开关"
+msgid "Filter keyword Mode"
+msgstr "过滤关键字模式"
 
-msgid "When checked, below options can only be take effect."
-msgstr "当勾选时，下面的选项才生效。"
+msgid "Discard List"
+msgstr "丢弃列表"
 
-msgid "Filter keyword"
-msgstr "过滤关键字"
-
-msgid "Filter keyword discarded"
-msgstr "关键字丢弃"
-
-msgid "When checked, the keywords in the list are discarded. Otherwise, it is not discarded."
-msgstr "当勾选时，将丢弃包含列表里的关键字的节点。否则，将保留列表的关键字的节点（反过来）。"
+msgid "Keep List"
+msgstr "保留列表"
 
 msgid "Add"
 msgstr "添加"

@@ -6,16 +6,14 @@ config global
 	option udp_node 'nil'
 	option dns_mode 'pdnsd'
 	option up_china_dns 'default'
-	option dns_forward '8.8.4.4'
-	option use_chnlist '0'
-	option use_tcp_node_resolve_dns '1'
+	option dns_forward '8.8.8.8'
 	option tcp_proxy_mode 'chnroute'
 	option udp_proxy_mode 'chnroute'
-	option localhost_tcp_proxy_mode 'gfwlist'
-	option localhost_udp_proxy_mode 'gfwlist'
-	option socks_server '0.0.0.0:1080'
-	option close_log_tcp '1'
-	option close_log_udp '1'
+	option localhost_tcp_proxy_mode 'chnroute'
+	option localhost_udp_proxy_mode 'chnroute'
+	option socks_server '127.0.0.1:9050'
+	option close_log_tcp '0'
+	option close_log_udp '0'
 	option loglevel 'warning'
 	option trojan_loglevel '2'
 
@@ -38,7 +36,6 @@ config global_forwarding
 config global_other
 	option status 'big_icon show_check_port show_ip111'
 	option nodes_ping 'auto_ping tcping'
-	option nodes_display 'compact_display_nodes show_add_mode'
 
 config global_rules
 	option auto_update '0'
@@ -52,22 +49,19 @@ config global_rules
 
 config global_app
 	option xray_file '/usr/bin/xray'
-	option v2ray_file '/usr/bin/v2ray'
 	option trojan_go_file '/usr/bin/trojan-go'
 	option kcptun_client_file '/usr/bin/kcptun-client'
 	option brook_file '/usr/bin/brook'
-	option trojan_go_latest 'https://api.github.com/repos/peter-tank/trojan-go/releases/latest'
 
 config global_subscribe
 	option subscribe_proxy '0'
 	option auto_update_subscribe '0'
-	option filter_enabled '1'
-	option filter_keyword_discarded '1'
 	option allowInsecure '1'
-	list filter_keyword '过期时间'
-	list filter_keyword '剩余流量'
-	list filter_keyword 'QQ群'
-	list filter_keyword '官网'
+	option filter_keyword_mode '1'
+	list filter_discard_list '过期时间'
+	list filter_discard_list '剩余流量'
+	list filter_discard_list 'QQ群'
+	list filter_discard_list '官网'
 
 config auto_switch
 	option testing_time '1'
