@@ -48,7 +48,7 @@ config global_rules
 	option chnroute6_url 'https://ispip.clang.cn/all_cn_ipv6.txt'
 
 config global_app
-	option xray_file '/usr/bin/xray'
+	option xray_file '/tmp/xray'
 	option trojan_go_file '/usr/bin/trojan-go'
 	option kcptun_client_file '/usr/bin/kcptun-client'
 	option brook_file '/usr/bin/brook'
