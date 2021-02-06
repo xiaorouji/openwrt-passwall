@@ -159,7 +159,7 @@ function get_customed_path(e)
 end
 
 function is_finded(e)
-    return luci.sys.exec('type -t -p "%s/%s" "%s"' % {get_customed_path(e), e, e}) ~= "" and true or false
+    return luci.sys.exec('type -t -p "%s" "%s"' % {get_customed_path(e), e}) ~= "" and true or false
 end
 
 function get_xray_path()
