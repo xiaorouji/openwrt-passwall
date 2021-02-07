@@ -40,34 +40,45 @@ local auto_switch = api.uci_get_type("auto_switch", "enable", 0)
 		var node = global.getElementsByClassName("cbi-section-node")[0];
 		var node_id = node.getAttribute("id");
 		global_id = node_id;
-		
-		for (var i = 0; i <= 1; i++) {
-			var proto = "udp";
-			if (i == 0) {
-				proto = "tcp";
+		var reg1 = new RegExp("(?<=" + node_id + "-).*?(?=(_node))")
+		for (var i = 0; i < node.childNodes.length; i++) {
+			if (node.childNodes[i].childNodes && node.childNodes[i].childNodes.length > 0) {
+				for (var k = 0; k < node.childNodes[i].childNodes.length; k++) {
+					var dom = node.childNodes[i].childNodes[k];
+					if (dom.id) {
+						var s = dom.id.match(reg1);
+						if (s) {
+							dom_id = dom.id.split("cbi-").join("cbid-").split("-").join(".");
+							var node_select = document.getElementById(dom_id);
+							var node_select_value = node_select.value;
+							if (node_select_value && node_select_value != "nil") {
+								var v = document.getElementById(dom_id + "-" + node_select_value);
+								node_select.title = v.text;
+								
+								var new_html = "";
+								
+								var new_a = document.createElement("a");
+								new_a.innerHTML = "<%:Edit%>";
+								new_a.href = "#";
+								new_a.setAttribute("onclick", "location.href='" + '<%=api.url("node_config")%>' + "/" + node_select_value + "'");
+								new_html = new_a.outerHTML;
+								
+								if (s[0] == "tcp" || s[0] == "udp") {
+									var log_a = document.createElement("a");
+									log_a.innerHTML = "<%:Log%>";
+									log_a.href = "#";
+									log_a.setAttribute("onclick", "window.open('" + '<%=api.url("get_redir_log")%>' + "?proto=" + s[0] + "', '_blank')");
+									new_html += "&nbsp&nbsp" + log_a.outerHTML;
+								}
+								
+								node_select.outerHTML = node_select.outerHTML + "&nbsp&nbsp" + new_html;
+								//node_select.parentNode.insertBefore(new_a, node_select.nextSibling);
+							}
+						}
+					}
+				}
 			}
-			var dom_id = node_id + "-" + proto + "_node";
-			dom_id = dom_id.replace("cbi-", "cbid-").replace(new RegExp("-", 'g'), ".");
-			var node_select = document.getElementById(dom_id);
-			var node_select_value = node_select.value;
-			if (node_select_value && node_select_value != "nil") {
-				var v = document.getElementById(dom_id + "-" + node_select_value);
-				node_select.title = v.text;
-				
-				var new_a = document.createElement("a");
-				new_a.innerHTML = "<%:Edit%>";
-				new_a.href = "#";
-				new_a.setAttribute("onclick", "location.href='" + '<%=api.url("node_config")%>' + "/" + node_select_value + "'");
-				
-				var log_a = document.createElement("a");
-				log_a.innerHTML = "<%:Log%>";
-				log_a.href = "#";
-				log_a.setAttribute("onclick", "window.open('" + '<%=api.url("get_redir_log")%>' + "?proto=" + proto + "', '_blank')");
-				
-				node_select.outerHTML = node_select.outerHTML + "&nbsp&nbsp" + new_a.outerHTML + "&nbsp&nbsp" + log_a.outerHTML;
-				//node_select.parentNode.insertBefore(new_a, node_select.nextSibling);
-			}
-		}
+        }
 	}
 	
 	var socks = document.getElementById("cbi-passwall-socks");
@@ -80,6 +91,7 @@ local auto_switch = api.uci_get_type("auto_switch", "enable", 0)
 		for (var i = 0; i < rows.length; i++) {
 			var row = rows[i];
 			var id = row.id;
+			if (!id) continue;
 			var dom_id = id + "-node";
 			var node = document.getElementById(dom_id);
 			var dom_id = dom_id.replace("cbi-", "cbid-").replace(new RegExp("-", 'g'), ".");
