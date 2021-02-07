@@ -819,7 +819,7 @@ start_dns() {
 	;;
 	esac
 	
-	[ -n "$chnlist" ] && {
+	[ -n "$chnlist" ] && [ "$DNS_MODE" != "custom" ] && {
 		[ -f "${RULES_PATH}/chnlist" ] && cp -a "${RULES_PATH}/chnlist" "${TMP_PATH}/chnlist"
 		[ -n "$(first_type chinadns-ng)" ] && {
 			echolog "发现ChinaDNS-NG，将启动。"
