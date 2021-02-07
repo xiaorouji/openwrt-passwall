@@ -132,12 +132,15 @@ uci:foreach(appname, "shunt_rules", function(e)
     o:value("nil", translate("Close"))
     o:value("_direct", translate("Direct Connection"))
     o:value("_blackhole", translate("Blackhole"))
-    for k, v in pairs(nodes_table) do o:value(v.id, v.remarks) end
     o:depends("protocol", "_shunt")
 
-    o = s:option(Flag, e[".name"] .. "_proxy", translate(e.remarks) .. translate("Preproxy"), translate("Use the default node for the transit."))
-    o.default = 0
-    o:depends("protocol", "_shunt")
+    _proxy = s:option(Flag, e[".name"] .. "_proxy", translate(e.remarks) .. translate("Preproxy"), translate("Use the default node for the transit."))
+    _proxy.default = 0
+
+    for k, v in pairs(nodes_table) do
+        o:value(v.id, v.remarks)
+        _proxy:depends(e[".name"], v.id)
+    end
 end)
 
 shunt_tips = s:option(DummyValue, "shunt_tips", " ")
