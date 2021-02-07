@@ -118,7 +118,7 @@ if has_xray and #nodes_table > 0 then
     if #normal_list > 0 and #shunt_list > 0 then
         uci:foreach(appname, "shunt_rules", function(e)
             local id = e[".name"]
-            o = s:taboption("Main", ListValue, id .. "_node", string.format('* <a href="%s">%s</a>', api.url("shunt_rules", id), translate(e.remarks)))
+            o = s:taboption("Main", ListValue, id .. "_node", string.format('* <a href="%s" target="_blank">%s</a>', api.url("shunt_rules", id), translate(e.remarks)))
             for k, v in pairs(shunt_list) do
                 o:depends("tcp_node", v.id)
                 o.cfgvalue = function(self, section)
@@ -129,6 +129,8 @@ if has_xray and #nodes_table > 0 then
                 end
             end
             o:value("nil", translate("Close"))
+            o:value("_direct", translate("Direct Connection"))
+            o:value("_blackhole", translate("Blackhole"))
             for k, v in pairs(normal_list) do
                 o:value(v.id, v.remarks_name)
             end

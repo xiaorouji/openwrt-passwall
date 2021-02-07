@@ -51,7 +51,7 @@ local auto_switch = api.uci_get_type("auto_switch", "enable", 0)
 							dom_id = dom.id.split("cbi-").join("cbid-").split("-").join(".");
 							var node_select = document.getElementById(dom_id);
 							var node_select_value = node_select.value;
-							if (node_select_value && node_select_value != "nil") {
+							if (node_select_value && node_select_value != "nil" && node_select_value.indexOf("_direct") != 0 && node_select_value.indexOf("_blackhole") != 0) {
 								var v = document.getElementById(dom_id + "-" + node_select_value);
 								node_select.title = v.text;
 								

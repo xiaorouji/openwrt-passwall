@@ -128,8 +128,10 @@ balancing_node:depends("protocol", "_balancing")
 
 -- 分流
 uci:foreach(appname, "shunt_rules", function(e)
-    o = s:option(ListValue, e[".name"], '<a href="../shunt_rules/' .. e[".name"] .. '">' .. translate(e.remarks) .. "</a>")
+    o = s:option(ListValue, e[".name"], string.format('* <a href="%s" target="_blank">%s</a>', api.url("shunt_rules", e[".name"]), translate(e.remarks)))
     o:value("nil", translate("Close"))
+    o:value("_direct", translate("Direct Connection"))
+    o:value("_blackhole", translate("Blackhole"))
     for k, v in pairs(nodes_table) do o:value(v.id, v.remarks) end
     o:depends("protocol", "_shunt")
 

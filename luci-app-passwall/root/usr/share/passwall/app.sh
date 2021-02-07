@@ -914,7 +914,9 @@ add_dnsmasq() {
 			local shunt_ids=$(uci show $CONFIG | grep "=shunt_rules" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}')
 			for shunt_id in $shunt_ids; do
 				local shunt_node_id=$(config_n_get $TCP_NODE ${shunt_id} nil)
-				[ "$shunt_node_id" = "nil" ] && continue
+				if [ "$shunt_node_id" = "nil" ] || [ "$shunt_node_id" = "_direct" ] || [ "$shunt_node_id" = "_blackhole" ]; then
+					continue
+				fi
 				local shunt_node=$(config_n_get $shunt_node_id address nil)
 				[ "$shunt_node" = "nil" ] && continue
 				config_n_get $shunt_id domain_list | grep -v 'regexp:\|geosite:\|ext:' | sed 's/domain:\|full:\|//g' | tr -s "\r\n" "\n" | sort -u | gen_dnsmasq_items "shuntlist" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/998-shunt_host.conf"
