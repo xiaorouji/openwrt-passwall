@@ -134,12 +134,14 @@ uci:foreach(appname, "shunt_rules", function(e)
     o:value("_blackhole", translate("Blackhole"))
     o:depends("protocol", "_shunt")
 
-    _proxy = s:option(Flag, e[".name"] .. "_proxy", translate(e.remarks) .. translate("Preproxy"), translate("Use the default node for the transit."))
-    _proxy.default = 0
+    if #nodes_table > 0 then
+        _proxy = s:option(Flag, e[".name"] .. "_proxy", translate(e.remarks) .. translate("Preproxy"), translate("Use the default node for the transit."))
+        _proxy.default = 0
 
-    for k, v in pairs(nodes_table) do
-        o:value(v.id, v.remarks)
-        _proxy:depends(e[".name"], v.id)
+        for k, v in pairs(nodes_table) do
+            o:value(v.id, v.remarks)
+            _proxy:depends(e[".name"], v.id)
+        end
     end
 end)
 
