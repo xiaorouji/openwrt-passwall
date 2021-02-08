@@ -1,7 +1,9 @@
 #!/bin/sh
 
 CONFIG=passwall
-RUN_BIN_PATH=/var/etc/${CONFIG}/bin
+TMP_PATH=/var/etc/$CONFIG
+TMP_BIN_PATH=$TMP_PATH/bin
+TMP_ID_PATH=$TMP_PATH/id
 
 config_n_get() {
 	local ret=$(uci -q get $CONFIG.$1.$2 2>/dev/null)
@@ -26,36 +28,40 @@ ENABLED=$(config_t_get global_delay start_daemon 0)
 sleep 1m
 while [ "$ENABLED" -eq 1 ]
 do
-	#tcp
-	TCP_NODE=$(config_t_get global tcp_node nil)
-	if [ "$TCP_NODE" != "nil" ]; then
-		#kcptun
-		use_kcp=$(config_n_get $TCP_NODE use_kcp 0)
-		if [ $use_kcp -gt 0 ]; then
-			icount=$(top -bn1 | grep -v grep | grep "$RUN_BIN_PATH/kcptun" | grep -i "tcp" | wc -l)
+	#TCP
+	[ -f "$TMP_ID_PATH/TCP" ] && {
+		TCP_NODE=$(cat $TMP_ID_PATH/TCP)
+		if [ "$TCP_NODE" != "nil" ]; then
+			#kcptun
+			use_kcp=$(config_n_get $TCP_NODE use_kcp 0)
+			if [ $use_kcp -gt 0 ]; then
+				icount=$(top -bn1 | grep -v grep | grep "$TMP_BIN_PATH/kcptun" | grep -i "tcp" | wc -l)
+				if [ $icount = 0 ]; then
+					/etc/init.d/$CONFIG restart
+					exit 0
+				fi
+			fi
+			icount=$(top -bn1 | grep -v -E 'grep|kcptun' | grep "$TMP_BIN_PATH" | grep -i "TCP" | wc -l)
 			if [ $icount = 0 ]; then
 				/etc/init.d/$CONFIG restart
 				exit 0
 			fi
 		fi
-		icount=$(top -bn1 | grep -v -E 'grep|kcptun' | grep "$RUN_BIN_PATH" | grep -i "TCP" | wc -l)
-		if [ $icount = 0 ]; then
-			/etc/init.d/$CONFIG restart
-			exit 0
-		fi
-	fi
+	}
 
 	#udp
-	UDP_NODE=$(config_t_get global udp_node nil)
-	if [ "$UDP_NODE" != "nil" ]; then
-		[ "$UDP_NODE" == "tcp" ] && continue
-		[ "$UDP_NODE" == "tcp_" ] && UDP_NODE=$TCP_NODE1
-		icount=$(top -bn1 | grep -v grep | grep "$RUN_BIN_PATH" | grep -i "UDP" | wc -l)
-		if [ $icount = 0 ]; then
-			/etc/init.d/$CONFIG restart
-			exit 0
+	[ -f "$TMP_ID_PATH/UDP" ] && {
+		UDP_NODE=$(cat $TMP_ID_PATH/UDP)
+		if [ "$UDP_NODE" != "nil" ]; then
+			[ "$UDP_NODE" == "tcp" ] && continue
+			[ "$UDP_NODE" == "tcp_" ] && UDP_NODE=$TCP_NODE
+			icount=$(top -bn1 | grep -v grep | grep "$TMP_BIN_PATH" | grep -i "UDP" | wc -l)
+			if [ $icount = 0 ]; then
+				/etc/init.d/$CONFIG restart
+				exit 0
+			fi
 		fi
-	fi
+	}
 
 	#dns
 	dns_mode=$(config_t_get global dns_mode)
@@ -67,8 +73,8 @@ do
 		fi
 	fi
 	
-	[ -f "$RUN_BIN_PATH/chinadns-ng" ] && {
-		icount=$(top -bn1 | grep -v grep | grep $RUN_BIN_PATH/chinadns-ng | wc -l)
+	[ -f "$TMP_BIN_PATH/chinadns-ng" ] && {
+		icount=$(top -bn1 | grep -v grep | grep $TMP_BIN_PATH/chinadns-ng | wc -l)
 		if [ $icount = 0 ]; then
 			/etc/init.d/$CONFIG restart
 			exit 0
@@ -78,7 +84,7 @@ do
 	#haproxy
 	use_haproxy=$(config_t_get global_haproxy balancing_enable 0)
 	if [ $use_haproxy -gt 0 ]; then
-		icount=$(top -bn1 | grep -v grep | grep "$RUN_BIN_PATH/haproxy" | wc -l)
+		icount=$(top -bn1 | grep -v grep | grep "$TMP_BIN_PATH/haproxy" | wc -l)
 		if [ $icount = 0 ]; then
 			/etc/init.d/$CONFIG restart
 			exit 0

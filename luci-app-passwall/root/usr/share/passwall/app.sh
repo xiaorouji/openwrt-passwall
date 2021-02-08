@@ -616,6 +616,15 @@ node_switch() {
 		
 		run_redir $node "0.0.0.0" $port $config_file $1 $log_file
 		echo $node > $TMP_ID_PATH/${1}
+		
+		[ "$1" = "TCP" ] && {
+			[ "$(config_t_get global udp_node nil)" = "tcp_" ] && {
+				top -bn1 | grep -E "$TMP_PATH" | grep -i "UDP" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+				UDP_NODE=$node
+				start_redir UDP
+			}
+		}
+		
 		#local node_net=$(echo $1 | tr 'A-Z' 'a-z')
 		#uci set $CONFIG.@global[0].${node_net}_node=$node
 		#uci commit $CONFIG
