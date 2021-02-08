@@ -595,6 +595,25 @@ node_switch() {
 		local log_file=$TMP_PATH/${1}.log
 		eval current_port=\$${1}_REDIR_PORT
 		local port=$(cat $TMP_PORT_PATH/${1})
+		
+		local ids=$(uci show $CONFIG | grep "=socks" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}')
+		for id in $ids; do
+			[ "$(config_n_get $id enabled 0)" == "0" ] && continue
+			[ "$(config_n_get $id node nil)" != "tcp" ] && continue
+			local socks_port=$(config_n_get $id port)
+			local http_port=$(config_n_get $id http_port 0)
+			top -bn1 | grep -E "$TMP_PATH" | grep -i "SOCKS" | grep "$id" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+			tcp_node_socks=1
+			tcp_node_socks_port=$socks_port
+			tcp_node_socks_id=$id
+			[ "$http_port" != "0" ] && {
+				tcp_node_http=1
+				tcp_node_http_port=$http_port
+				tcp_node_http_id=$id
+			}
+			break
+		done
+		
 		run_redir $node "0.0.0.0" $port $config_file $1 $log_file
 		echo $node > $TMP_ID_PATH/${1}
 		#local node_net=$(echo $1 | tr 'A-Z' 'a-z')

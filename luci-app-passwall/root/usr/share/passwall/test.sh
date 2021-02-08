@@ -145,7 +145,8 @@ start() {
 	ENABLED=$(config_t_get auto_switch enable 0)
 	[ "$ENABLED" != 1 ] && _return 1
 	delay=$(config_t_get auto_switch testing_time 1)
-	sleep ${delay}m
+	#sleep ${delay}m
+	sleep 10s
 	while [ "$ENABLED" -eq 1 ]
 	do
 		TCP_NODE=$(config_t_get auto_switch tcp_node nil)
