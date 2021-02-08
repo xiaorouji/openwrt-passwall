@@ -34,13 +34,13 @@ do
 		if [ $use_kcp -gt 0 ]; then
 			icount=$(top -bn1 | grep -v grep | grep "$RUN_BIN_PATH/kcptun" | grep -i "tcp" | wc -l)
 			if [ $icount = 0 ]; then
-				/etc/init.d/passwall restart
+				/etc/init.d/$CONFIG restart
 				exit 0
 			fi
 		fi
 		icount=$(top -bn1 | grep -v -E 'grep|kcptun' | grep "$RUN_BIN_PATH" | grep -i "TCP" | wc -l)
 		if [ $icount = 0 ]; then
-			/etc/init.d/passwall restart
+			/etc/init.d/$CONFIG restart
 			exit 0
 		fi
 	fi
@@ -52,7 +52,7 @@ do
 		[ "$UDP_NODE" == "tcp_" ] && UDP_NODE=$TCP_NODE1
 		icount=$(top -bn1 | grep -v grep | grep "$RUN_BIN_PATH" | grep -i "UDP" | wc -l)
 		if [ $icount = 0 ]; then
-			/etc/init.d/passwall restart
+			/etc/init.d/$CONFIG restart
 			exit 0
 		fi
 	fi
@@ -62,17 +62,25 @@ do
 	if [ "$dns_mode" != "nonuse" ] && [ "$dns_mode" != "custom" ]; then
 		icount=$(netstat -apn | grep 7913 | wc -l)
 		if [ $icount = 0 ]; then
-			/etc/init.d/passwall restart
+			/etc/init.d/$CONFIG restart
 			exit 0
 		fi
 	fi
+	
+	[ -f "$RUN_BIN_PATH/chinadns-ng" ] && {
+		icount=$(top -bn1 | grep -v grep | grep $RUN_BIN_PATH/chinadns-ng | wc -l)
+		if [ $icount = 0 ]; then
+			/etc/init.d/$CONFIG restart
+			exit 0
+		fi
+	}
 
 	#haproxy
 	use_haproxy=$(config_t_get global_haproxy balancing_enable 0)
 	if [ $use_haproxy -gt 0 ]; then
 		icount=$(top -bn1 | grep -v grep | grep "$RUN_BIN_PATH/haproxy" | wc -l)
 		if [ $icount = 0 ]; then
-			/etc/init.d/passwall restart
+			/etc/init.d/$CONFIG restart
 			exit 0
 		fi
 	fi
