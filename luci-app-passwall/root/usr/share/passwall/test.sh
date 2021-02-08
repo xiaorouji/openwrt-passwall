@@ -91,7 +91,7 @@ test_auto_switch() {
 				/usr/share/${CONFIG}/app.sh run_socks "auto_switch" "$main_node" "127.0.0.1" "$tmp_port" "/var/etc/${CONFIG}/test.json"
 				local curlx="socks5h://127.0.0.1:$tmp_port"
 			fi
-			sleep 10s
+			sleep 9s
 			proxy_status=$(test_url "https://www.google.com/generate_204" 3 3 "-x $curlx")
 			top -bn1 | grep -v "grep" | grep "/var/etc/${CONFIG}/test.json" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
 			rm -rf "/var/etc/${CONFIG}/test.json"
@@ -126,7 +126,7 @@ test_auto_switch() {
 			fi
 		fi
 		/usr/share/${CONFIG}/app.sh node_switch ${TYPE} ${new_node}
-		sleep 10s
+		sleep 9s
 		# 切换节点后等待10秒后再检测一次，如果还是不通继续切，直到可用为止
 		status2=$(test_proxy)
 		if [ "$status2" -eq 0 ]; then
@@ -147,7 +147,7 @@ start() {
 	[ "$ENABLED" != 1 ] && return 1
 	delay=$(config_t_get auto_switch testing_time 1)
 	#sleep ${delay}m
-	sleep 10s
+	sleep 9s
 	while [ "$ENABLED" -eq 1 ]
 	do
 		TCP_NODE=$(config_t_get auto_switch tcp_node nil)

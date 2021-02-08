@@ -25,7 +25,7 @@ ENABLED=$(config_t_get global enabled 0)
 [ "$ENABLED" != 1 ] && return 1
 ENABLED=$(config_t_get global_delay start_daemon 0)
 [ "$ENABLED" != 1 ] && return 1
-sleep 1m
+sleep 58s
 while [ "$ENABLED" -eq 1 ]
 do
 	#TCP
@@ -91,5 +91,5 @@ do
 		fi
 	fi
 	
-	sleep 1m
+	sleep 58s
 done
