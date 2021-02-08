@@ -76,8 +76,7 @@ local auto_switch = api.uci_get_type("auto_switch", "enable", 0)
 										new_html += "&nbsp&nbsp" + log_a.outerHTML;
 									}
 									
-									node_select.outerHTML = node_select.outerHTML + "&nbsp&nbsp" + new_html;
-									//node_select.parentNode.insertBefore(new_a, node_select.nextSibling);
+									node_select.insertAdjacentHTML("afterend", "&nbsp&nbsp" + new_html);
 								}
 							}
 						}
@@ -125,8 +124,7 @@ local auto_switch = api.uci_get_type("auto_switch", "enable", 0)
 					new_a.href = "#";
 					new_a.setAttribute("onclick","location.href='" + '<%=api.url("node_config")%>' + "/" + node_select_value + "'");
 					
-					node_select.outerHTML = node_select.outerHTML + "&nbsp&nbsp" + new_a.outerHTML;
-					//node_select.parentNode.insertBefore(new_a, node_select.nextSibling);
+					node_select.insertAdjacentHTML("afterend", "&nbsp&nbsp" + new_a.outerHTML);
 				}
 			}
 		}
