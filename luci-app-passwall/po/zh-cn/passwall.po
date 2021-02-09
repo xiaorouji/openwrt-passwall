@@ -748,6 +748,12 @@ msgstr "周"
 msgid "oclock"
 msgstr "点"
 
+msgid "Location of Xray asset"
+msgstr "Xray 资源文件目录"
+
+msgid "This variable specifies a directory where geoip.dat and geosite.dat files are."
+msgstr "此变量指定geoip.dat和geosite.dat文件所在的目录。"
+
 msgid "Update..."
 msgstr "更新中"
 
