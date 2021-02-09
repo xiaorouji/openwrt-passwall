@@ -958,8 +958,8 @@ add_dnsmasq() {
 			[ -n "$CHINADNS_NG" ] && fwd_dns="${china_ng_gfw}"
 			[ -n "$CHINADNS_NG" ] && unset fwd_dns
 			[ ! -f "${TMP_PATH}/gfwlist.txt" ] && sed -n 's/^ipset=\/\.\?\([^/]*\).*$/\1/p' "${RULES_PATH}/gfwlist.conf" | sort -u > "${TMP_PATH}/gfwlist.txt"
-			sort -u "${TMP_PATH}/gfwlist.txt" | gen_dnsmasq_items "gfwlist" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/999-gfwlist.conf"
-			#sort -u "${TMP_PATH}/gfwlist.txt" | gen_dnsmasq_items "gfwlist,gfwlist6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/999-gfwlist.conf"
+			#sort -u "${TMP_PATH}/gfwlist.txt" | gen_dnsmasq_items "gfwlist" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/999-gfwlist.conf"
+			sort -u "${TMP_PATH}/gfwlist.txt" | gen_dnsmasq_items "gfwlist,gfwlist6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/999-gfwlist.conf"
 			echolog "  - [$?]防火墙域名表(gfwlist)：${fwd_dns:-默认}"
 		else
 			#回国模式
