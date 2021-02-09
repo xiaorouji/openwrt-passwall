@@ -36,6 +36,7 @@ config global_forwarding
 config global_other
 	option status 'big_icon show_check_port show_ip111'
 	option nodes_ping 'auto_ping tcping'
+	option ipv6_tproxy '0'
 
 config global_rules
 	option auto_update '0'
