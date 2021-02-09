@@ -8,6 +8,12 @@ s = m:section(TypedSection, "global_delay", translate("Delay Settings"))
 s.anonymous = true
 s.addremove = false
 
+---- Delay Start
+o = s:option(Value, "start_delay", translate("Delay Start"),
+             translate("Units:seconds"))
+o.default = "1"
+o.rmempty = true
+
 ---- Open and close Daemon
 o = s:option(Flag, "start_daemon", translate("Open and close Daemon"))
 o.default = 1

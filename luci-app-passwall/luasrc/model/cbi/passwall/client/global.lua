@@ -60,8 +60,10 @@ local redir_mode_validate = function(self, value, t)
     local localhost_tcp_proxy_mode_v = localhost_tcp_proxy_mode:formvalue(t) or ""
     local localhost_udp_proxy_mode_v = localhost_udp_proxy_mode:formvalue(t) or ""
     local s = tcp_proxy_mode_v .. udp_proxy_mode_v .. localhost_tcp_proxy_mode_v .. localhost_udp_proxy_mode_v
-    if s:find("chnroute") and s:find("returnhome") then
-        return nil, translate("China list cannot be used together with outside China list!")
+    if s:find("returnhome") then
+        if s:find("chnroute") or s:find("gfwlist") then
+            return nil, translate("China list or gfwlist cannot be used together with outside China list!")
+        end
     end
     return value
 end
@@ -113,55 +115,51 @@ if has_xray and #nodes_table > 0 then
             shunt_list[#shunt_list + 1] = v
         end
     end
-    if #normal_list > 0 and #shunt_list > 0 then
+    for k, v in pairs(shunt_list) do
         uci:foreach(appname, "shunt_rules", function(e)
             local id = e[".name"]
-            o = s:taboption("Main", ListValue, id .. "_node", string.format('* <a href="%s">%s</a>', api.url("shunt_rules", id), translate(e.remarks)))
-            for k, v in pairs(shunt_list) do
-                o:depends("tcp_node", v.id)
-                o.cfgvalue = function(self, section)
-                    return m:get(v.id, id) or "nil"
-                end
-                o.write = function(self, section, value)
-                    m:set(v.id, id, value)
-                end
-            end
+            o = s:taboption("Main", ListValue, v.id .. "." .. id .. "_node", string.format('* <a href="%s" target="_blank">%s</a>', api.url("shunt_rules", id), translate(e.remarks)))
+            o:depends("tcp_node", v.id)
             o:value("nil", translate("Close"))
+            o:value("_direct", translate("Direct Connection"))
+            o:value("_blackhole", translate("Blackhole"))
             for k, v in pairs(normal_list) do
                 o:value(v.id, v.remarks_name)
+            end
+            o.cfgvalue = function(self, section)
+                return m:get(v.id, id) or "nil"
+            end
+            o.write = function(self, section, value)
+                m:set(v.id, id, value)
             end
         end)
 
         local id = "default_node"
-        o = s:taboption("Main", ListValue, id, "* " .. translate("Default"))
-        for k, v in pairs(shunt_list) do
-            o:depends("tcp_node", v.id)
-            o.cfgvalue = function(self, section)
-                return m:get(v.id, id) or "nil"
-            end
-            o.write = function(self, section, value)
-                m:set(v.id, id, value)
-            end
-        end
+        o = s:taboption("Main", ListValue, v.id .. "." .. id, "* " .. translate("Default"))
+        o:depends("tcp_node", v.id)
         o:value("nil", translate("Close"))
         for k, v in pairs(normal_list) do
             o:value(v.id, v.remarks_name)
+        end
+        o.cfgvalue = function(self, section)
+            return m:get(v.id, id) or "nil"
+        end
+        o.write = function(self, section, value)
+            m:set(v.id, id, value)
         end
         
         local id = "main_node"
-        o = s:taboption("Main", ListValue, id, "* " .. translate("Default") .. translate("Preproxy"))
-        for k, v in pairs(shunt_list) do
-            o:depends("tcp_node", v.id)
-            o.cfgvalue = function(self, section)
-                return m:get(v.id, id) or "nil"
-            end
-            o.write = function(self, section, value)
-                m:set(v.id, id, value)
-            end
-        end
+        o = s:taboption("Main", ListValue, v.id .. "." .. id, "* " .. translate("Default") .. translate("Preproxy"))
+        o:depends("tcp_node", v.id)
         o:value("nil", translate("Close"))
         for k, v in pairs(normal_list) do
             o:value(v.id, v.remarks_name)
+        end
+        o.cfgvalue = function(self, section)
+            return m:get(v.id, id) or "nil"
+        end
+        o.write = function(self, section, value)
+            m:set(v.id, id, value)
         end
     end
 end
@@ -174,24 +172,6 @@ udp_node:value("tcp_", translate("Same as the tcp node"))
 --udp_node:value("tcp_", translate("Same as the tcp node") .. "（" .. translate("New process") .. "）")
 
 s:tab("DNS", translate("DNS"))
-
-if api.is_finded("chinadns-ng") then
-    o = s:taboption("DNS", Flag, "chinadns_ng", translate("Use ChinaDNS-NG"), translate("When checked, forced to be set to dnsmasq upstream DNS."))
-    o.default = "0"
-
-    o = s:taboption("DNS", Flag, "fair_mode", translate("ChinaDNS-NG Fair Mode"))
-    o.default = "1"
-    o:depends("chinadns_ng", "1")
-end
-
-if nixio.fs.access("/usr/share/" .. appname .. "/rules/chnlist") then
-    o = s:taboption("DNS", Flag, "use_chnlist", translate("Use ChinaList"), translate("Only useful in non-gfwlist mode.") .. "<br />" .. translate("When used, the domestic DNS will be used only when the chnlist rule is hit, and the domain name that misses the rule will be resolved by remote DNS."))
-    o.default = "0"
-    o:depends("tcp_proxy_mode", "chnroute")
-    o:depends("udp_proxy_mode", "chnroute")
-    o:depends("localhost_tcp_proxy_mode", "chnroute")
-    o:depends("localhost_udp_proxy_mode", "chnroute")
-end
 
 o = s:taboption("DNS", Value, "up_china_dns", translate("Local DNS") .. "(UDP)")
 o.description = translate("IP:Port mode acceptable, multi value split with english comma.") .. "<br />" .. translate("When the selection is not the default, this DNS is forced to be set to dnsmasq upstream DNS.")
