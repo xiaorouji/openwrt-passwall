@@ -115,6 +115,14 @@ s = m:section(TypedSection, "global_other", translate("Other Settings"))
 s.anonymous = true
 s.addremove = false
 
+---- IPv6 TProxy
+o = s:option(Flag, "ipv6_tproxy", translate("IPv6 TProxy"),
+             "<font color='red'>" .. translate(
+                 "Experimental feature.Make sure that your node supports IPv6.") ..
+                 "</font>")
+o.default = 0
+o.rmempty = false
+
 o = s:option(MultiValue, "status", translate("Status info"))
 o:value("big_icon", translate("Big icon")) -- 大图标
 o:value("show_check_port", translate("Show node check")) -- 显示节点检测

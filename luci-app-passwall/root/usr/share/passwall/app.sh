@@ -306,7 +306,7 @@ load_config() {
 	DNS_CACHE=$(config_t_get global dns_cache 0)
 	LOCAL_DNS=$(config_t_get global up_china_dns default | sed 's/:/#/g')
 	if [ "${LOCAL_DNS}" = "default" ]; then
-		DEFAULT_DNS=$(uci show dhcp | grep "@dnsmasq" | grep ".server=" | awk -F '=' '{print $2}' | sed "s/'//g" | tr ' ' ',')
+		DEFAULT_DNS=$(uci show dhcp | grep "@dnsmasq" | grep "\.server=" | awk -F '=' '{print $2}' | sed "s/'//g" | tr ' ' ',')
 		if [ -z "${DEFAULT_DNS}" ]; then
 			DEFAULT_DNS=$(echo -n $(sed -n 's/^nameserver[ \t]*\([^ ]*\)$/\1/p' "${RESOLVFILE}" | grep -v "0.0.0.0" | grep -v "127.0.0.1" | grep -v "^::$" | head -2) | tr ' ' ',')
 		fi
@@ -958,8 +958,8 @@ add_dnsmasq() {
 			[ -n "$CHINADNS_NG" ] && fwd_dns="${china_ng_gfw}"
 			[ -n "$CHINADNS_NG" ] && unset fwd_dns
 			[ ! -f "${TMP_PATH}/gfwlist.txt" ] && sed -n 's/^ipset=\/\.\?\([^/]*\).*$/\1/p' "${RULES_PATH}/gfwlist.conf" | sort -u > "${TMP_PATH}/gfwlist.txt"
-			sort -u "${TMP_PATH}/gfwlist.txt" | gen_dnsmasq_items "gfwlist" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/999-gfwlist.conf"
-			#sort -u "${TMP_PATH}/gfwlist.txt" | gen_dnsmasq_items "gfwlist,gfwlist6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/999-gfwlist.conf"
+			#sort -u "${TMP_PATH}/gfwlist.txt" | gen_dnsmasq_items "gfwlist" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/999-gfwlist.conf"
+			sort -u "${TMP_PATH}/gfwlist.txt" | gen_dnsmasq_items "gfwlist,gfwlist6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/999-gfwlist.conf"
 			echolog "  - [$?]防火墙域名表(gfwlist)：${fwd_dns:-默认}"
 		else
 			#回国模式
