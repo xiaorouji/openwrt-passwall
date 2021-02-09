@@ -83,6 +83,11 @@ config nodes '696cd32c1d5149ee95fd1b3accbad6df'
 	option default_proxy '0'
 	option domainStrategy 'IPIfNonMatch'
 	
+config shunt_rules 'China'
+	option remarks 'China'
+	option domain_list 'geosite:cn'
+	option ip_list 'geoip:cn'
+	
 config shunt_rules 'Telegram'
 	option remarks 'Telegram'
 	option ip_list '149.154.160.0/20
