@@ -306,7 +306,7 @@ load_config() {
 	DNS_CACHE=$(config_t_get global dns_cache 0)
 	LOCAL_DNS=$(config_t_get global up_china_dns default | sed 's/:/#/g')
 	if [ "${LOCAL_DNS}" = "default" ]; then
-		DEFAULT_DNS=$(uci show dhcp | grep "@dnsmasq" | grep ".server=" | awk -F '=' '{print $2}' | sed "s/'//g" | tr ' ' ',')
+		DEFAULT_DNS=$(uci show dhcp | grep "@dnsmasq" | grep "\.server=" | awk -F '=' '{print $2}' | sed "s/'//g" | tr ' ' ',')
 		if [ -z "${DEFAULT_DNS}" ]; then
 			DEFAULT_DNS=$(echo -n $(sed -n 's/^nameserver[ \t]*\([^ ]*\)$/\1/p' "${RESOLVFILE}" | grep -v "0.0.0.0" | grep -v "127.0.0.1" | grep -v "^::$" | head -2) | tr ' ' ',')
 		fi
@@ -314,6 +314,7 @@ load_config() {
 		IS_DEFAULT_DNS=1
 	fi
 	PROXY_IPV6=$(config_t_get global_forwarding proxy_ipv6 0)
+	export XRAY_LOCATION_ASSET=$(config_t_get global_rules xray_location_asset "/usr/share/xray/")
 	mkdir -p /var/etc $TMP_PATH $TMP_BIN_PATH $TMP_ID_PATH $TMP_PORT_PATH $TMP_ROUTE_PATH
 	return 0
 }
@@ -958,8 +959,8 @@ add_dnsmasq() {
 			[ -n "$CHINADNS_NG" ] && fwd_dns="${china_ng_gfw}"
 			[ -n "$CHINADNS_NG" ] && unset fwd_dns
 			[ ! -f "${TMP_PATH}/gfwlist.txt" ] && sed -n 's/^ipset=\/\.\?\([^/]*\).*$/\1/p' "${RULES_PATH}/gfwlist.conf" | sort -u > "${TMP_PATH}/gfwlist.txt"
-			sort -u "${TMP_PATH}/gfwlist.txt" | gen_dnsmasq_items "gfwlist" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/999-gfwlist.conf"
-			#sort -u "${TMP_PATH}/gfwlist.txt" | gen_dnsmasq_items "gfwlist,gfwlist6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/999-gfwlist.conf"
+			#sort -u "${TMP_PATH}/gfwlist.txt" | gen_dnsmasq_items "gfwlist" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/999-gfwlist.conf"
+			sort -u "${TMP_PATH}/gfwlist.txt" | gen_dnsmasq_items "gfwlist,gfwlist6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/999-gfwlist.conf"
 			echolog "  - [$?]防火墙域名表(gfwlist)：${fwd_dns:-默认}"
 		else
 			#回国模式
@@ -1289,6 +1290,7 @@ stop() {
 	top -bn1 | grep -v "grep" | grep "sleep" | grep -E "9s|58s" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
 	top -bn1 | grep -v "grep" | grep -v "app.sh" | grep "${CONFIG}/" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
 	rm -rf $TMP_DNSMASQ_PATH $TMP_PATH
+	unset XRAY_LOCATION_ASSET
 	stop_crontab
 	del_dnsmasq
 	/etc/init.d/dnsmasq restart >/dev/null 2>&1
