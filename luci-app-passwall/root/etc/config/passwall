@@ -47,6 +47,9 @@ config global_rules
 	option gfwlist_url 'https://cdn.jsdelivr.net/gh/Loukky/gfwlist-by-loukky/gfwlist.txt'
 	option chnroute_url 'https://ispip.clang.cn/all_cn.txt'
 	option chnroute6_url 'https://ispip.clang.cn/all_cn_ipv6.txt'
+	option xray_location_asset '/usr/share/xray/'
+	option geosite_update '1'
+	option geoip_update '1'
 
 config global_app
 	option xray_file '/usr/bin/xray'
