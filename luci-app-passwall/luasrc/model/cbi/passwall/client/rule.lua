@@ -57,6 +57,7 @@ s = m:section(TypedSection, "shunt_rules", "Xray" .. translate("Shunt") .. trans
 s.template = "cbi/tblsection"
 s.anonymous = false
 s.addremove = true
+s.sortable = true
 s.extedit = api.url("shunt_rules", "%s")
 function s.create(e, t)
     TypedSection.create(e, t)

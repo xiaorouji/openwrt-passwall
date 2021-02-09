@@ -274,7 +274,9 @@ o:depends({dns_mode = "pdnsd"})
 o = s:taboption("DNS", Button, "clear_ipset", translate("Clear IPSET"), translate("Try this feature if the rule modification does not take effect."))
 o.inputstyle = "remove"
 function o.write(e, e)
-    luci.sys.call("/etc/init.d/" .. appname .. " stop && /usr/share/" .. appname .. "/iptables.sh flush_ipset && /etc/init.d/" .. appname .. " restart")
+    luci.sys.call("/etc/init.d/" .. appname .. " stop")
+    luci.sys.call("/usr/share/" .. appname .. "/iptables.sh flush_ipset")
+    luci.sys.call("/etc/init.d/" .. appname .. " restart")
 end
 
 s:tab("Proxy", translate("Mode"))

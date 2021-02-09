@@ -540,21 +540,25 @@ add_firewall_rule() {
 	$ipt_n -A PSW $(dst $IPSET_LANIPLIST) -j RETURN
 	$ipt_n -A PSW $(dst $IPSET_VPSIPLIST) -j RETURN
 	$ipt_n -A PSW $(dst $IPSET_WHITELIST) -j RETURN
+	$ipt_n -A PSW -m mark --mark 0xff -j RETURN
 
 	$ipt_n -N PSW_OUTPUT
 	$ipt_n -A PSW_OUTPUT $(dst $IPSET_LANIPLIST) -j RETURN
 	$ipt_n -A PSW_OUTPUT $(dst $IPSET_VPSIPLIST) -j RETURN
 	$ipt_n -A PSW_OUTPUT $(dst $IPSET_WHITELIST) -j RETURN
+	$ipt_n -A PSW_OUTPUT -m mark --mark 0xff -j RETURN
 
 	$ipt_m -N PSW
 	$ipt_m -A PSW $(dst $IPSET_LANIPLIST) -j RETURN
 	$ipt_m -A PSW $(dst $IPSET_VPSIPLIST) -j RETURN
 	$ipt_m -A PSW $(dst $IPSET_WHITELIST) -j RETURN
+	$ipt_m -A PSW -m mark --mark 0xff -j RETURN
 
 	$ipt_m -N PSW_OUTPUT
 	$ipt_m -A PSW_OUTPUT $(dst $IPSET_LANIPLIST) -j RETURN
 	$ipt_m -A PSW_OUTPUT $(dst $IPSET_VPSIPLIST) -j RETURN
 	$ipt_m -A PSW_OUTPUT $(dst $IPSET_WHITELIST) -j RETURN
+	$ipt_m -A PSW_OUTPUT -m mark --mark 0xff -j RETURN
 
 	ip rule add fwmark 1 lookup 100
 	ip route add local 0.0.0.0/0 dev lo table 100

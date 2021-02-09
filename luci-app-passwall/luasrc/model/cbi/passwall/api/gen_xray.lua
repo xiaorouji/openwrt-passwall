@@ -456,7 +456,14 @@ if inbounds or outbounds then
     table.insert(outbounds, {
         protocol = "freedom",
         tag = "direct",
-        settings = {domainStrategy = "UseIPv4"}
+        settings = {
+            domainStrategy = "UseIPv4"
+        },
+        streamSettings = {
+            sockopt = {
+                mark = 255
+            }
+        }
     })
     table.insert(outbounds, {
         protocol = "blackhole",
