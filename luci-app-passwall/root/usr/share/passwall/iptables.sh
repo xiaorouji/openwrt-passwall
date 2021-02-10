@@ -402,13 +402,14 @@ filter_node() {
 		done
 	elif [ "$proxy_protocol" == "_shunt" ]; then
 		#echolog "  - 按请求目的地址分流（${proxy_type}）..."
-		local default_node=$(config_n_get $proxy_node default_node nil)
-		local default_proxy=$(config_n_get $proxy_node default_proxy 0)
-		if [ "$default_proxy" == 1 ]; then
-			local main_node=$(config_n_get $proxy_node main_node nil)
+		local default_node=$(config_n_get $proxy_node default_node _direct)
+		local main_node=$(config_n_get $proxy_node main_node nil)
+		if [ "$main_node" != "nil" ]; then
 			filter_rules $main_node $stream
 		else
-			filter_rules $default_node $stream
+			if [ "$default_node" != "_direct" ] && [ "$default_node" != "_blackhole" ]; then
+				filter_rules $default_node $stream
+			fi
 		fi
 :<<!
 		local default_node_address=$(get_host_ip ipv4 $(config_n_get $default_node address) 1)
@@ -683,8 +684,9 @@ add_firewall_rule() {
 			if [ "$node" == "nil" ] || [ "$port" == "0" ]; then
 				msg="${msg} 未配置完全，略过"
 			elif [ "$(echo $node | grep ^tcp)" ]; then
-				eval "node=\${TCP_NODE}"
-				msg="${msg} 使用与 TCP 代理自动切换${num} 相同的节点，延后处理"
+				#eval "node=\${TCP_NODE}"
+				#msg="${msg} 使用与 TCP 代理自动切换${num} 相同的节点，延后处理"
+				continue
 			else
 				filter_node $node TCP > /dev/null 2>&1 &
 				filter_node $node UDP > /dev/null 2>&1 &

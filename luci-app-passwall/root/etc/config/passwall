@@ -83,6 +83,10 @@ config nodes '696cd32c1d5149ee95fd1b3accbad6df'
 	option default_proxy '0'
 	option domainStrategy 'IPIfNonMatch'
 	
+config shunt_rules 'ads'
+	option remarks '广告'
+	option domain_list 'geosite:category-ads'
+	
 config shunt_rules 'China'
 	option remarks 'China'
 	option domain_list 'geosite:cn'
