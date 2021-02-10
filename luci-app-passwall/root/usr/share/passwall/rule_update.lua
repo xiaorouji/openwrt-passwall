@@ -20,6 +20,8 @@ local geosite_update = 0
 -- match comments/title/whitelist/ip address/excluded_domain
 local comment_pattern = "^[!\\[@]+"
 local ip_pattern = "^%d+%.%d+%.%d+%.%d+"
+local ip4_ipset_pattern = "^%d+%.%d+%.%d+%.%d+[%/][%d]+$"
+local ip6_ipset_pattern = ":-[%x]+%:+[%x]-[%/][%d]+$"
 local domain_pattern = "([%w%-%_]+%.[%w%.%-%_]+)[%/%*]*"
 local excluded_domain = {"apple.com","sina.cn","sina.com.cn","baidu.com","byr.cn","jlike.com","weibo.com","zhongsou.com","youdao.com","sogou.com","so.com","soso.com","aliyun.com","taobao.com","jd.com","qq.com"}
 
@@ -31,9 +33,7 @@ local ipsetname = 'gfwlist'
 local gfwlist_url = ucic:get_first(name, 'global_rules', "gfwlist_url", "https://cdn.jsdelivr.net/gh/Loukky/gfwlist-by-loukky/gfwlist.txt")
 local chnroute_url = ucic:get_first(name, 'global_rules', "chnroute_url", "https://ispip.clang.cn/all_cn.txt")
 local chnroute6_url =  ucic:get_first(name, 'global_rules', "chnroute6_url", "https://ispip.clang.cn/all_cn_ipv6.txt")
-local chnlist_url_1 = 'https://cdn.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/accelerated-domains.china.conf'
-local chnlist_url_2 = 'https://cdn.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/apple.china.conf'
-local chnlist_url_3 = 'https://cdn.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/google.china.conf'
+local chnlist_url = ucic:get(name, "@global_rules[0]", "chnlist_url") or {"https://cdn.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/accelerated-domains.china.conf","https://cdn.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/apple.china.conf","https://cdn.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/google.china.conf"}
 local geoip_api =  "https://api.github.com/repos/v2fly/geoip/releases/latest"
 local geosite_api =  "https://api.github.com/repos/v2fly/domain-list-community/releases/latest"
 local xray_asset_location = ucic:get_first(name, 'global_rules', "xray_location_asset", "/usr/share/xray/")
@@ -91,49 +91,126 @@ local function curl(url, file)
 	end
 end
 
---获取gfwlist
+--check excluded domain
+local function check_excluded_domain(value)
+	for k,v in ipairs(excluded_domain) do
+		if value:find(v) then
+			return true
+		end
+	end
+end
+
+--fetch gfwlist
 local function fetch_gfwlist()
-	--请求gfwlist
-	local sret = curl(gfwlist_url, "/tmp/gfwlist.txt")
+	local sret = curl(gfwlist_url, "/tmp/gfwlist_dl")
 	if sret == 200 then
-		--解码gfwlist
-		local gfwlist = io.open("/tmp/gfwlist.txt", "r")
+		local domains = {}
+		local gfwlist = io.open("/tmp/gfwlist_dl", "r")
 		local decode = base64_dec(gfwlist:read("*all"))
 		gfwlist:close()
-		--写回gfwlist
-		gfwlist = io.open("/tmp/gfwlist.txt", "w")
+
+		gfwlist = io.open("/tmp/gfwlist_dl", "w")
 		gfwlist:write(decode)
 		gfwlist:close()
+
+		for line in io.lines("/tmp/gfwlist_dl") do
+			if not (string.find(line, comment_pattern) or string.find(line, ip_pattern) or check_excluded_domain(line)) then
+				local start, finish, match = string.find(line, domain_pattern)
+				if (start) then
+					domains[match] = true
+				end
+			end
+		end
+
+		local out = io.open("/tmp/gfwlist_tmp", "w")
+		for k,v in pairs(domains) do
+			out:write(string.format("server=/.%s/%s#%s\n", k,mydnsip,mydnsport))
+			out:write(string.format("ipset=/.%s/%s\n", k,ipsetname))
+		end
+		out:close()
 	end
+
+	os.remove("/tmp/gfwlist_dl")
 
 	return sret;
 end
 
---获取chnroute
+--fetch chnroute
 local function fetch_chnroute()
-	--请求chnroute
-	local sret = curl(chnroute_url, "/tmp/chnroute_tmp")
-	return sret;
-end
+	local sret = curl(chnroute_url, "/tmp/chnroute_dl")
 
---获取chnroute6
-local function fetch_chnroute6()
-	--请求chnroute6
-	local sret = curl(chnroute6_url, "/tmp/chnroute6_tmp")
-	return sret;
-end
+	if sret == 200 then
+		local out = io.open("/tmp/chnroute_tmp", "w")
 
---获取chnlist
-local function fetch_chnlist()
-	--请求chnlist
-	local sret = 0
-	local sret1 = curl(chnlist_url_1, "/tmp/chnlist_1")
-	local sret2 = curl(chnlist_url_2, "/tmp/chnlist_2")
-	local sret3 = curl(chnlist_url_3, "/tmp/chnlist_3")
+		for line in io.lines("/tmp/chnroute_dl") do
+			local start, finish, match = string.find(line, ip4_ipset_pattern)
+			if (start) then
+				out:write(string.format("%s\n", line))
+			end
+		end
 
-	if sret1 == 200 and sret2 == 200 and sret3 == 200 then
-		sret = 200
+		out:close()
 	end
+
+	os.remove("/tmp/chnroute_dl")
+
+	return sret;
+end
+
+--fetch chnroute6
+local function fetch_chnroute6()
+	local sret = curl(chnroute6_url, "/tmp/chnroute6_dl")
+
+	local out = io.open("/tmp/chnroute6_tmp", "w")
+
+	if sret == 200 then
+		for line in io.lines("/tmp/chnroute6_dl") do
+			local start, finish, match = string.find(line, ip6_ipset_pattern)
+			if (start) then
+				out:write(string.format("%s\n", line))
+			end
+		end
+
+		out:close()
+	end
+
+	os.remove("/tmp/chnroute6_dl")
+
+	return sret;
+end
+
+--fetch chnlist
+local function fetch_chnlist()
+	local domains = {}
+	local sret = 200
+	local sret_tmp = 0
+
+	for k,v in ipairs(chnlist_url) do
+		sret_tmp = curl(v, "/tmp/chnlist_dl"..k)
+		if sret_tmp == 200 then
+			for line in io.lines("/tmp/chnlist_dl"..k) do
+				local start, finish, match = string.find(line, domain_pattern)
+				if (start) then
+					domains[match] = true
+				end
+			end
+		else
+			sret = 0
+		end
+		os.remove("/tmp/chnlist_dl"..k)
+	end
+
+	if sret == 200 then
+		local out = io.open("/tmp/cdn_tmp", "w")
+		for k,v in pairs(domains) do
+			out:write(string.format("%s\n", k))
+		end
+		out:close()
+
+		luci.sys.call("cat /tmp/cdn_tmp | sort -u > /tmp/chnlist_tmp")
+		os.remove("/tmp/cdn_tmp")
+	end
+
 	return sret;
 end
 
@@ -239,74 +316,6 @@ local function fetch_geosite()
 	return 0
 end
 
---check excluded domain
-local function check_excluded_domain(value)
-	for k,v in ipairs(excluded_domain) do
-		if value:find(v) then
-			return true
-		end
-	end
-end
-
---gfwlist转码至dnsmasq格式
-local function generate_gfwlist()
-	local domains = {}
-	local out = io.open("/tmp/gfwlist_tmp", "w")
-
-	for line in io.lines("/tmp/gfwlist.txt") do
-		if not (string.find(line, comment_pattern) or string.find(line, ip_pattern) or check_excluded_domain(line)) then
-			local start, finish, match = string.find(line, domain_pattern)
-			if (start) then
-				domains[match] = true
-			end
-		end
-	end
-
-	for k,v in pairs(domains) do
-		out:write(string.format("server=/.%s/%s#%s\n", k,mydnsip,mydnsport))
-		out:write(string.format("ipset=/.%s/%s\n", k,ipsetname))
-	end
-
-	out:close()
-end
-
---处理合并chnlist列表
-local function generate_chnlist()
-	local domains = {}
-	local out = io.open("/tmp/cdn_tmp", "w")
-
-	for line in io.lines("/tmp/chnlist_1") do
-		local start, finish, match = string.find(line, domain_pattern)
-		if (start) then
-			domains[match] = true
-		end
-	end
-
-	for line in io.lines("/tmp/chnlist_2") do
-		local start, finish, match = string.find(line, domain_pattern)
-		if (start) then
-			domains[match] = true
-		end
-	end
-
-	for line in io.lines("/tmp/chnlist_3") do
-		local start, finish, match = string.find(line, domain_pattern)
-		if (start) then
-			domains[match] = true
-		end
-	end
-
-	--写入临时文件
-	for k,v in pairs(domains) do
-		out:write(string.format("%s\n", k))
-	end
-
-	out:close()
-
-	--删除重复条目并排序
-	luci.sys.call("cat /tmp/cdn_tmp | sort -u > /tmp/chnlist_tmp")
-end
-
 if arg[2] then
 	if arg[2]:find("gfwlist") then
 		gfwlist_update = 1
@@ -339,17 +348,14 @@ if gfwlist_update == 0 and chnroute_update == 0 and chnroute6_update == 0 and ch
 end
 
 log("开始更新规则...")
-local new_version = os.date("%Y-%m-%d")
 if tonumber(gfwlist_update) == 1 then
 	log("gfwlist 开始更新...")
 	local old_md5 = luci.sys.exec("echo -n $(md5sum " .. rule_path .. "/gfwlist.conf | awk '{print $1}')")
 	local status = fetch_gfwlist()
 	if status == 200 then
-		generate_gfwlist()
 		local new_md5 = luci.sys.exec("echo -n $([ -f '/tmp/gfwlist_tmp' ] && md5sum /tmp/gfwlist_tmp | awk '{print $1}')")
 		if old_md5 ~= new_md5 then
 			luci.sys.exec("mv -f /tmp/gfwlist_tmp " .. rule_path .. "/gfwlist.conf")
-			ucic:set(name, ucic:get_first(name, 'global_rules'), "gfwlist_version", new_version)
 			reboot = 1
 			log("gfwlist 更新成功...")
 		else
@@ -358,7 +364,7 @@ if tonumber(gfwlist_update) == 1 then
 	else
 		log("gfwlist 文件下载失败！")
 	end
-	os.remove("/tmp/gfwlist.txt")
+
 	os.remove("/tmp/gfwlist_tmp")
 end
 
@@ -370,7 +376,6 @@ if tonumber(chnroute_update) == 1 then
 		local new_md5 = luci.sys.exec("echo -n $([ -f '/tmp/chnroute_tmp' ] && md5sum /tmp/chnroute_tmp | awk '{print $1}')")
 		if old_md5 ~= new_md5 then
 			luci.sys.exec("mv -f /tmp/chnroute_tmp " .. rule_path .. "/chnroute")
-			ucic:set(name, ucic:get_first(name, 'global_rules'), "chnroute_version", new_version)
 			reboot = 1
 			log("chnroute 更新成功...")
 		else
@@ -390,7 +395,6 @@ if tonumber(chnroute6_update) == 1 then
 		local new_md5 = luci.sys.exec("echo -n $([ -f '/tmp/chnroute6_tmp' ] && md5sum /tmp/chnroute6_tmp | awk '{print $1}')")
 		if old_md5 ~= new_md5 then
 			luci.sys.exec("mv -f /tmp/chnroute6_tmp " .. rule_path .. "/chnroute6")
-			ucic:set(name, ucic:get_first(name, 'global_rules'), "chnroute6_version", new_version)
 			reboot = 1
 			log("chnroute6 更新成功...")
 		else
@@ -407,11 +411,9 @@ if tonumber(chnlist_update) == 1 then
 	local old_md5 = luci.sys.exec("echo -n $(md5sum " .. rule_path .. "/chnlist | awk '{print $1}')")
 	local status = fetch_chnlist()
 	if status == 200 then
-		generate_chnlist()
 		local new_md5 = luci.sys.exec("echo -n $([ -f '/tmp/chnlist_tmp' ] && md5sum /tmp/chnlist_tmp | awk '{print $1}')")
 		if old_md5 ~= new_md5 then
 			luci.sys.exec("mv -f /tmp/chnlist_tmp " .. rule_path .. "/chnlist")
-			ucic:set(name, ucic:get_first(name, 'global_rules'), "chnlist_version", new_version)
 			reboot = 1
 			log("chnlist 更新成功...")
 		else
@@ -420,10 +422,7 @@ if tonumber(chnlist_update) == 1 then
 	else
 		log("chnlist 文件下载失败！")
 	end
-	os.remove("/tmp/chnlist_1")
-	os.remove("/tmp/chnlist_2")
-	os.remove("/tmp/chnlist_3")
-	os.remove("/tmp/cdn_tmp")
+
 	os.remove("/tmp/chnlist_tmp")
 end
 
