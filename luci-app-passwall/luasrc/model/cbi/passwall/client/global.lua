@@ -120,11 +120,11 @@ if has_xray and #nodes_table > 0 then
             local id = e[".name"]
             o = s:taboption("Main", ListValue, v.id .. "." .. id .. "_node", string.format('* <a href="%s" target="_blank">%s</a>', api.url("shunt_rules", id), translate(e.remarks)))
             o:depends("tcp_node", v.id)
-            o:value("nil", translate("Close"))
+            o:value("nil", translate("Default"))
             o:value("_direct", translate("Direct Connection"))
             o:value("_blackhole", translate("Blackhole"))
-            for k, v in pairs(normal_list) do
-                o:value(v.id, v.remarks_name)
+            for k1, v1 in pairs(normal_list) do
+                o:value(v1.id, v1.remarks_name)
             end
             o.cfgvalue = function(self, section)
                 return m:get(v.id, id) or "nil"
@@ -137,9 +137,10 @@ if has_xray and #nodes_table > 0 then
         local id = "default_node"
         o = s:taboption("Main", ListValue, v.id .. "." .. id, "* " .. translate("Default"))
         o:depends("tcp_node", v.id)
-        o:value("nil", translate("Close"))
-        for k, v in pairs(normal_list) do
-            o:value(v.id, v.remarks_name)
+        o:value("_direct", translate("Direct Connection"))
+        o:value("_blackhole", translate("Blackhole"))
+        for k1, v1 in pairs(normal_list) do
+            o:value(v1.id, v1.remarks_name)
         end
         o.cfgvalue = function(self, section)
             return m:get(v.id, id) or "nil"
@@ -152,8 +153,8 @@ if has_xray and #nodes_table > 0 then
         o = s:taboption("Main", ListValue, v.id .. "." .. id, "* " .. translate("Default") .. translate("Preproxy"))
         o:depends("tcp_node", v.id)
         o:value("nil", translate("Close"))
-        for k, v in pairs(normal_list) do
-            o:value(v.id, v.remarks_name)
+        for k1, v1 in pairs(normal_list) do
+            o:value(v1.id, v1.remarks_name)
         end
         o.cfgvalue = function(self, section)
             return m:get(v.id, id) or "nil"
