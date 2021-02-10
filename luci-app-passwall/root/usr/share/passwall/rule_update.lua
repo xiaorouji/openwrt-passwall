@@ -102,9 +102,9 @@ end
 
 --fetch gfwlist
 local function fetch_gfwlist()
-	local domains = {}
 	local sret = curl(gfwlist_url, "/tmp/gfwlist_dl")
 	if sret == 200 then
+		local domains = {}
 		local gfwlist = io.open("/tmp/gfwlist_dl", "r")
 		local decode = base64_dec(gfwlist:read("*all"))
 		gfwlist:close()
@@ -183,7 +183,7 @@ end
 local function fetch_chnlist()
 	local domains = {}
 	local sret = 200
-	local sret_tmp = 200
+	local sret_tmp = 0
 
 	for k,v in ipairs(chnlist_url) do
 		sret_tmp = curl(v, "/tmp/chnlist_dl"..k)
@@ -200,14 +200,16 @@ local function fetch_chnlist()
 		os.remove("/tmp/chnlist_dl"..k)
 	end
 
-	local out = io.open("/tmp/cdn_tmp", "w")
-	for k,v in pairs(domains) do
-		out:write(string.format("%s\n", k))
-	end
-	out:close()
+	if sret == 200 then
+		local out = io.open("/tmp/cdn_tmp", "w")
+		for k,v in pairs(domains) do
+			out:write(string.format("%s\n", k))
+		end
+		out:close()
 
-	luci.sys.call("cat /tmp/cdn_tmp | sort -u > /tmp/chnlist_tmp")
-	os.remove("/tmp/cdn_tmp")
+		luci.sys.call("cat /tmp/cdn_tmp | sort -u > /tmp/chnlist_tmp")
+		os.remove("/tmp/cdn_tmp")
+	end
 
 	return sret;
 end
