@@ -294,7 +294,11 @@ load_acl() {
 
 	#  加载UDP默认代理模式
 	if [ "$UDP_PROXY_MODE" != "disable" ]; then
-		[ "$UDP_NO_REDIR_PORTS" != "disable" ] && $ipt_m -A PSW $(comment "默认") -p udp -m multiport --dport $UDP_NO_REDIR_PORTS -j RETURN
+		[ "$UDP_NO_REDIR_PORTS" != "disable" ] && {
+			$ipt_m -A PSW $(comment "默认") -p udp -m multiport --dport $UDP_NO_REDIR_PORTS -j RETURN
+			$ip6t_m -A PSW $(comment "默认") -p udp -m multiport --dport $UDP_NO_REDIR_PORTS -j RETURN
+		}
+
 		[ "$UDP_NODE" != "nil" ] && {
 			msg="UDP默认代理：使用UDP节点 [$(get_action_chain_name $UDP_PROXY_MODE)](TPROXY:${UDP_REDIR_PORT})代理"
 			[ "$UDP_NO_REDIR_PORTS" != "disable" ] && msg="${msg}除${UDP_NO_REDIR_PORTS}外的"
@@ -306,7 +310,7 @@ load_acl() {
 			if [ "$PROXY_IPV6" == "1" ]; then
 				$ip6t_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST_6) $(REDIRECT $UDP_REDIR_PORT TPROXY)
 				$ip6t_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST_6) $(REDIRECT $UDP_REDIR_PORT TPROXY)
-				$ip6t_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ip6t $UDP_PROXY_MODE/6 $UDP_REDIR_PORT TPROXY)
+				$ip6t_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ip6t $UDP_PROXY_MODE $UDP_REDIR_PORT TPROXY)
 			fi
 
 			echolog "${msg}"
@@ -348,7 +352,7 @@ filter_node() {
 			local address=$(config_n_get $node address)
 			local port=$(config_n_get $node port)
 			ipt_tmp=$ipt_n
-			ip6t_tmp=$ip6t_n
+			ip6t_tmp=$ip6t_m
 			[ "$stream" == "udp" ] && is_tproxy=1
 			[ "$type" == "brook" ] && [ "$(config_n_get $node protocol client)" == "client" ] && is_tproxy=1
 			#[ "$type" == "trojan-go" ] && is_tproxy=1
@@ -466,9 +470,15 @@ add_firewall_rule() {
 	ipset -! create $IPSET_WHITELIST_6 nethash family inet6
 
 	local shunt_ids=$(uci show $CONFIG | grep "=shunt_rules" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}')
+
 	for shunt_id in $shunt_ids; do
-		config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | sed -e "s/^/add $IPSET_SHUNTLIST &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
+		config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4]\d))|[0-1]?\d{1,2})){3}" | sed -e "s/^/add $IPSET_SHUNTLIST &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
 	done
+
+	for shunt_id in $shunt_ids; do
+		config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "([A-Fa-f0-9]{0,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "s/^/add $IPSET_SHUNTLIST_6 &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
+	done
+
 	cat $RULES_PATH/chnroute | sed -e "/^$/d" | sed -e "s/^/add $IPSET_CHN &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
 	cat $RULES_PATH/proxy_ip | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4]\d))|[0-1]?\d{1,2})){3}" | sed -e "s/^/add $IPSET_BLACKLIST &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
 	[ -f "$RULES_PATH/proxy_ip2" ] && cat $RULES_PATH/proxy_ip2 | grep -E "(\.((2(5[0-5]|[0-4]\d))|[0-1]?\d{1,2})){3}" | sed -e "/^$/d" | sed -e "s/^/add $IPSET_BLACKLIST2 &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
@@ -592,7 +602,7 @@ add_firewall_rule() {
 	$ip6t_m -A PSW_OUTPUT $(dst $IPSET_VPSIPLIST_6) -j RETURN
 	$ip6t_m -A PSW_OUTPUT $(dst $IPSET_WHITELIST_6) -j RETURN
 	$ip6t_m -A PSW_OUTPUT -m mark --mark 0xff -j RETURN
-	$ip6t_m -A OUTPUT -p tcp -j PSW_OUTPUT
+	$ip6t_m -A OUTPUT -j PSW_OUTPUT
 
 	ip -6 rule add fwmark 1 table 100
 	ip -6 route add local ::/0 dev lo table 100
@@ -722,6 +732,7 @@ add_firewall_rule() {
 		$ipt_m -A OUTPUT -p udp -j PSW_OUTPUT
 		[ "$UDP_NO_REDIR_PORTS" != "disable" ] && {
 			$ipt_m -A PSW_OUTPUT -p udp -m multiport --dport $UDP_NO_REDIR_PORTS -j RETURN
+			$ip6t_m -A PSW_OUTPUT -p udp -m multiport --dport $UDP_NO_REDIR_PORTS -j RETURN
 			echolog "  - [$?]不代理 UDP 端口：$UDP_NO_REDIR_PORTS"
 		}
 		$ipt_m -A PSW_OUTPUT -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST) $(REDIRECT 1 MARK)

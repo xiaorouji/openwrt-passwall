@@ -161,9 +161,8 @@ end
 local function fetch_chnroute6()
 	local sret = curl(chnroute6_url, "/tmp/chnroute6_dl")
 
-	local out = io.open("/tmp/chnroute6_tmp", "w")
-
 	if sret == 200 then
+		local out = io.open("/tmp/chnroute6_tmp", "w")
 		for line in io.lines("/tmp/chnroute6_dl") do
 			local start, finish, match = string.find(line, ip6_ipset_pattern)
 			if (start) then
