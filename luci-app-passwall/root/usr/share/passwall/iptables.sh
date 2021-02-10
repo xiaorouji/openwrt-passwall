@@ -402,13 +402,14 @@ filter_node() {
 		done
 	elif [ "$proxy_protocol" == "_shunt" ]; then
 		#echolog "  - 按请求目的地址分流（${proxy_type}）..."
-		local default_node=$(config_n_get $proxy_node default_node nil)
-		local default_proxy=$(config_n_get $proxy_node default_proxy 0)
-		if [ "$default_proxy" == 1 ]; then
-			local main_node=$(config_n_get $proxy_node main_node nil)
+		local default_node=$(config_n_get $proxy_node default_node _direct)
+		local main_node=$(config_n_get $proxy_node main_node nil)
+		if [ "$main_node" != "nil" ]; then
 			filter_rules $main_node $stream
 		else
-			filter_rules $default_node $stream
+			if [ "$default_node" != "_direct" ] && [ "$default_node" != "_blackhole" ]; then
+				filter_rules $default_node $stream
+			fi
 		fi
 :<<!
 		local default_node_address=$(get_host_ip ipv4 $(config_n_get $default_node address) 1)
@@ -540,21 +541,25 @@ add_firewall_rule() {
 	$ipt_n -A PSW $(dst $IPSET_LANIPLIST) -j RETURN
 	$ipt_n -A PSW $(dst $IPSET_VPSIPLIST) -j RETURN
 	$ipt_n -A PSW $(dst $IPSET_WHITELIST) -j RETURN
+	$ipt_n -A PSW -m mark --mark 0xff -j RETURN
 
 	$ipt_n -N PSW_OUTPUT
 	$ipt_n -A PSW_OUTPUT $(dst $IPSET_LANIPLIST) -j RETURN
 	$ipt_n -A PSW_OUTPUT $(dst $IPSET_VPSIPLIST) -j RETURN
 	$ipt_n -A PSW_OUTPUT $(dst $IPSET_WHITELIST) -j RETURN
+	$ipt_n -A PSW_OUTPUT -m mark --mark 0xff -j RETURN
 
 	$ipt_m -N PSW
 	$ipt_m -A PSW $(dst $IPSET_LANIPLIST) -j RETURN
 	$ipt_m -A PSW $(dst $IPSET_VPSIPLIST) -j RETURN
 	$ipt_m -A PSW $(dst $IPSET_WHITELIST) -j RETURN
+	$ipt_m -A PSW -m mark --mark 0xff -j RETURN
 
 	$ipt_m -N PSW_OUTPUT
 	$ipt_m -A PSW_OUTPUT $(dst $IPSET_LANIPLIST) -j RETURN
 	$ipt_m -A PSW_OUTPUT $(dst $IPSET_VPSIPLIST) -j RETURN
 	$ipt_m -A PSW_OUTPUT $(dst $IPSET_WHITELIST) -j RETURN
+	$ipt_m -A PSW_OUTPUT -m mark --mark 0xff -j RETURN
 
 	ip rule add fwmark 1 lookup 100
 	ip route add local 0.0.0.0/0 dev lo table 100
@@ -579,26 +584,18 @@ add_firewall_rule() {
 	$ip6t_m -A PSW $(dst $IPSET_LANIPLIST_6) -j RETURN
 	$ip6t_m -A PSW $(dst $IPSET_VPSIPLIST_6) -j RETURN
 	$ip6t_m -A PSW $(dst $IPSET_WHITELIST_6) -j RETURN
+	$ip6t_m -A PSW -m mark --mark 0xff -j RETURN
 	$ip6t_m -A PREROUTING -j PSW
 
 	$ip6t_m -N PSW_OUTPUT
 	$ip6t_m -A PSW_OUTPUT $(dst $IPSET_LANIPLIST_6) -j RETURN
 	$ip6t_m -A PSW_OUTPUT $(dst $IPSET_VPSIPLIST_6) -j RETURN
 	$ip6t_m -A PSW_OUTPUT $(dst $IPSET_WHITELIST_6) -j RETURN
+	$ip6t_m -A PSW_OUTPUT -m mark --mark 0xff -j RETURN
 	$ip6t_m -A OUTPUT -p tcp -j PSW_OUTPUT
 
 	ip -6 rule add fwmark 1 table 100
 	ip -6 route add local ::/0 dev lo table 100
-
-	[ -n "$lan_ifname" ] && {
-		lan_ipv6=$(ip address show $lan_ifname | grep -w "inet6" | awk '{print $2}') #当前LAN IPv6段
-		[ -n "$lan_ipv6" ] && {
-			for ip in $lan_ipv6; do
-				$ip6t_m -A PSW -d $ip -j RETURN
-				$ip6t_m -A PSW_OUTPUT -d $ip -j RETURN
-			done
-		}
-	}
 
 	# 加载路由器自身代理 TCP
 	if [ "$TCP_NODE" != "nil" ]; then
@@ -679,8 +676,9 @@ add_firewall_rule() {
 			if [ "$node" == "nil" ] || [ "$port" == "0" ]; then
 				msg="${msg} 未配置完全，略过"
 			elif [ "$(echo $node | grep ^tcp)" ]; then
-				eval "node=\${TCP_NODE}"
-				msg="${msg} 使用与 TCP 代理自动切换${num} 相同的节点，延后处理"
+				#eval "node=\${TCP_NODE}"
+				#msg="${msg} 使用与 TCP 代理自动切换${num} 相同的节点，延后处理"
+				continue
 			else
 				filter_node $node TCP > /dev/null 2>&1 &
 				filter_node $node UDP > /dev/null 2>&1 &
