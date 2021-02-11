@@ -222,6 +222,22 @@ if node_section then
         end
     end
 
+    local up_trust_doh = ucursor:get(appname, "@global[0]", "up_trust_doh")
+    if up_trust_doh then
+        local t = {}
+        string.gsub(up_trust_doh, '[^' .. "," .. ']+', function (w)
+            table.insert(t, w)
+        end)
+        if #t > 1 then
+            local host = sys.exec("echo -n $(echo " .. t[1] .. " | sed 's/https:\\/\\///g' | awk -F ':' '{print $1}' | awk -F '/' '{print $1}')")
+            dns = {
+                hosts = {
+                    [host] = t[2]
+                }
+            }
+        end
+    end
+
     if node.protocol == "_shunt" then
         local rules = {}
         ucursor:foreach(appname, "shunt_rules", function(e)
