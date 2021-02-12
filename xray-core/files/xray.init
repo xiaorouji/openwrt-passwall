@@ -18,11 +18,13 @@ start_service() {
 	local conffiles
 	local datadir
 	local format
+	local fullcone
 
 	config_get confdir "config" "confdir"
 	config_get conffiles "config" "conffiles"
 	config_get datadir "config" "datadir" "/usr/share/xray"
 	config_get format "config" "format" "json"
+	config_get fullcone "enabled" "fullcone" "0"
 
 	procd_open_instance "$CONF"
 	procd_set_param command "$PROG" run
@@ -34,6 +36,7 @@ start_service() {
 		done
 	}
 	procd_append_param command -format "$format"
+	[ "$fullcone" -eq "0" ] && procd_set_param env XRAY_CONE_DISABLED="true"
 	procd_set_param env XRAY_LOCATION_ASSET="$datadir"
 	procd_set_param file $conffiles
 
