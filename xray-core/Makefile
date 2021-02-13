@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xray-core
-PKG_VERSION:=1.2.4
-PKG_RELEASE:=2
+PKG_VERSION:=1.3.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/XTLS/Xray-core/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=25f6c9edec0ac1f98328943cd2bb760ac7b69107582f9d27e43559da39dc01ed
+PKG_HASH:=1125af4411655abf47913af14a22fd7e2b13371e3566cc03676207519b0fe407
 
 PKG_MAINTAINER:=Tianling Shen <cnsztl@project-openwrt.eu.org>
 PKG_LICENSE:=MPL-2.0
@@ -21,8 +21,8 @@ GO_PKG:=github.com/xtls/xray-core
 GO_PKG_BUILD_PKG:=github.com/xtls/xray-core/main
 GO_PKG_LDFLAGS:=-s -w
 GO_PKG_LDFLAGS_X:= \
-	$(GO_PKG)/core.version=$(PKG_VERSION) \
-	$(GO_PKG)/core.codename=OpenWrt
+	$(GO_PKG)/core.build=OpenWrt \
+	$(GO_PKG)/core.version=$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
@@ -80,24 +80,24 @@ define Package/xray-core/conffiles
 /etc/config/xray
 endef
 
-GEOIP_VER:=202101280019
+GEOIP_VER:=202102112209
 GEOIP_FILE:=geoip.dat.$(GEOIP_VER)
 
 define Download/geoip
-  URL:=https://github.com/v2fly/geoip/releases/download/$(GEOIP_VER)/
+  URL:=https://github.com/Loyalsoldier/v2ray-rules-dat/releases/download/$(GEOIP_VER)/
   URL_FILE:=geoip.dat
   FILE:=$(GEOIP_FILE)
-  HASH:=69bb1f820f416e4591a7b76bfabf9fde9cce6550cddcc1a99b2ccafeb2a8ebd3
+  HASH:=acce62bcb45e9cb832c02da5e2d7b5d615fc7b5f4771c6356a406e1449f5673f
 endef
 
-GEOSITE_VER:=20210130061540
-GEOSITE_FILE:=dlc.dat.$(GEOSITE_VER)
+GEOSITE_VER:=202102112209
+GEOSITE_FILE:=geosite.dat.$(GEOSITE_VER)
 
 define Download/geosite
-  URL:=https://github.com/v2fly/domain-list-community/releases/download/$(GEOSITE_VER)/
-  URL_FILE:=dlc.dat
+  URL:=https://github.com/Loyalsoldier/v2ray-rules-dat/releases/download/$(GEOSITE_VER)/
+  URL_FILE:=geosite.dat
   FILE:=$(GEOSITE_FILE)
-  HASH:=bc9748c95b0545376356174b005fccfbc21d647df46293d5197853ee06a9c0a2
+  HASH:=c4071fd268ab38d3b09ebf8dbbcb82c4ab8833ecdab991b40b57b75da47e536e
 endef
 
 define Build/Prepare
