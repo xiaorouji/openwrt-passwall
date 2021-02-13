@@ -34,8 +34,8 @@ local gfwlist_url = ucic:get_first(name, 'global_rules', "gfwlist_url", "https:/
 local chnroute_url = ucic:get_first(name, 'global_rules', "chnroute_url", "https://ispip.clang.cn/all_cn.txt")
 local chnroute6_url =  ucic:get_first(name, 'global_rules', "chnroute6_url", "https://ispip.clang.cn/all_cn_ipv6.txt")
 local chnlist_url = ucic:get(name, "@global_rules[0]", "chnlist_url") or {"https://cdn.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/accelerated-domains.china.conf","https://cdn.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/apple.china.conf","https://cdn.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/google.china.conf"}
-local geoip_api =  "https://api.github.com/repos/v2fly/geoip/releases/latest"
-local geosite_api =  "https://api.github.com/repos/v2fly/domain-list-community/releases/latest"
+local geoip_api =  "https://api.github.com/repos/Loyalsoldier/v2ray-rules-dat/releases/latest"
+local geosite_api =  "https://api.github.com/repos/Loyalsoldier/v2ray-rules-dat/releases/latest"
 local xray_asset_location = ucic:get_first(name, 'global_rules', "xray_location_asset", "/usr/share/xray/")
 
 local log = function(...)
@@ -272,27 +272,27 @@ local function fetch_geosite()
 		local json = jsonc.parse(json_str)
 		if json.tag_name and json.assets then
 			for _, v in ipairs(json.assets) do
-				if v.name and v.name == "dlc.dat.sha256sum" then
-					local sret = curl(v.browser_download_url, "/tmp/dlc.dat.sha256sum")
+				if v.name and v.name == "geosite.dat.sha256sum" then
+					local sret = curl(v.browser_download_url, "/tmp/geosite.dat.sha256sum")
 					if sret == 200 then
-						local f = io.open("/tmp/dlc.dat.sha256sum", "r")
+						local f = io.open("/tmp/geosite.dat.sha256sum", "r")
 						local content = f:read()
 						f:close()
-						f = io.open("/tmp/dlc.dat.sha256sum", "w")
-						f:write(content:gsub("dlc.dat", "/tmp/geosite.dat"), "")
+						f = io.open("/tmp/geosite.dat.sha256sum", "w")
+						f:write(content:gsub("geosite.dat", "/tmp/geosite.dat"), "")
 						f:close()
 
 						if nixio.fs.access(xray_asset_location .. "geosite.dat") then
 							luci.sys.call(string.format("cp -f %s %s", xray_asset_location .. "geosite.dat", "/tmp/geosite.dat"))
-							if luci.sys.call('sha256sum -c /tmp/dlc.dat.sha256sum > /dev/null 2>&1') == 0 then
+							if luci.sys.call('sha256sum -c /tmp/geosite.dat.sha256sum > /dev/null 2>&1') == 0 then
 								log("geosite 版本一致，无需更新。")
 								return 1
 							end
 						end
 						for _2, v2 in ipairs(json.assets) do
-							if v2.name and v2.name == "dlc.dat" then
+							if v2.name and v2.name == "geosite.dat" then
 								sret = curl(v2.browser_download_url, "/tmp/geosite.dat")
-								if luci.sys.call('sha256sum -c /tmp/dlc.dat.sha256sum > /dev/null 2>&1') == 0 then
+								if luci.sys.call('sha256sum -c /tmp/geosite.dat.sha256sum > /dev/null 2>&1') == 0 then
 									luci.sys.call(string.format("mkdir -p %s && cp -f %s %s", xray_asset_location, "/tmp/geosite.dat", xray_asset_location .. "geosite.dat"))
 									reboot = 1
 									log("geosite 更新成功。")
@@ -436,7 +436,7 @@ if tonumber(geosite_update) == 1 then
 	log("geosite 开始更新...")
 	local status = fetch_geosite()
 	os.remove("/tmp/geosite.dat")
-	os.remove("/tmp/dlc.dat.sha256sum")
+	os.remove("/tmp/geosite.dat.sha256sum")
 end
 
 ucic:set(name, ucic:get_first(name, 'global_rules'), "gfwlist_update", gfwlist_update)
