@@ -260,7 +260,6 @@ if node_section then
     if node.protocol == "_shunt" then
         local rules = {}
 
-        local outboundTag
         ucursor:foreach(appname, "shunt_rules", function(e)
             local name = e[".name"]
             local _node_id = node[name] or "nil"
@@ -325,10 +324,10 @@ if node_section then
                 end
             end
         end)
-		
-		local default_node_id = node.default_node or "_direct"
-		outboundTag = nil
-		if default_node_id == "_direct" then
+
+        local default_node_id = node.default_node or "_direct"
+        local outboundTag
+        if default_node_id == "_direct" then
             outboundTag = "direct"
         elseif default_node_id == "_blackhole" then
             outboundTag = "blackhole"
@@ -376,6 +375,7 @@ if node_section then
                 network = network
             })
         end
+
         routing = {
             domainStrategy = node.domainStrategy or "AsIs",
             rules = rules
