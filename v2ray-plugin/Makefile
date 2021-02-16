@@ -34,7 +34,7 @@ include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
 define Package/$(PKG_NAME)/config
 config $(PKG_NAME)_INCLUDE_GOPROXY
 	bool "Compiling with GOPROXY proxy"
-	default y
+	default n
 
 endef
 
