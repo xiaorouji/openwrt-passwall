@@ -644,7 +644,9 @@ add_firewall_rule() {
 		$ipt_tmp -A OUTPUT -p tcp -j PSW_OUTPUT
 		[ "$TCP_NO_REDIR_PORTS" != "disable" ] && {
 			$ipt_tmp -A PSW_OUTPUT -p tcp -m multiport --dport $TCP_NO_REDIR_PORTS -j RETURN
+			$ipt_tmp -A PSW_OUTPUT -p tcp -m multiport --sport $TCP_NO_REDIR_PORTS -j RETURN
 			$ip6t_m -A PSW_OUTPUT -p tcp -m multiport --dport $TCP_NO_REDIR_PORTS -j RETURN
+			$ip6t_m -A PSW_OUTPUT -p tcp -m multiport --sport $TCP_NO_REDIR_PORTS -j RETURN
 			echolog "  - [$?]不代理TCP 端口：$TCP_NO_REDIR_PORTS"
 		}
 		$ipt_tmp -A PSW_OUTPUT -p tcp -d 1.2.3.4 $blist_r
@@ -737,7 +739,9 @@ add_firewall_rule() {
 		$ipt_m -A OUTPUT -p udp -j PSW_OUTPUT
 		[ "$UDP_NO_REDIR_PORTS" != "disable" ] && {
 			$ipt_m -A PSW_OUTPUT -p udp -m multiport --dport $UDP_NO_REDIR_PORTS -j RETURN
+			$ipt_m -A PSW_OUTPUT -p udp -m multiport --sport $UDP_NO_REDIR_PORTS -j RETURN
 			$ip6t_m -A PSW_OUTPUT -p udp -m multiport --dport $UDP_NO_REDIR_PORTS -j RETURN
+			$ip6t_m -A PSW_OUTPUT -p udp -m multiport --sport $UDP_NO_REDIR_PORTS -j RETURN
 			echolog "  - [$?]不代理 UDP 端口：$UDP_NO_REDIR_PORTS"
 		}
 		$ipt_m -A PSW_OUTPUT -p udp -d 1.2.3.4 $(REDIRECT 1 MARK)
@@ -774,12 +778,11 @@ del_firewall_rule() {
 		$ipt_m -D OUTPUT -p tcp -j PSW_OUTPUT 2>/dev/null
 		$ipt_m -D OUTPUT -p udp -j PSW_OUTPUT 2>/dev/null
 		
-		$ip6t_n -D PREROUTING -j PSW 2>/dev/null
-		$ip6t_n -D OUTPUT -p tcp -j PSW_OUTPUT 2>/dev/null
+		#$ip6t_n -D PREROUTING -j PSW 2>/dev/null
+		#$ip6t_n -D OUTPUT -p tcp -j PSW_OUTPUT 2>/dev/null
 		
 		$ip6t_m -D PREROUTING -j PSW 2>/dev/null
-		$ip6t_m -D OUTPUT -p tcp -j PSW_OUTPUT 2>/dev/null
-		$ip6t_m -D OUTPUT -p udp -j PSW_OUTPUT 2>/dev/null
+		$ip6t_m -D OUTPUT -j PSW_OUTPUT 2>/dev/null
 		
 		ib_nat_exist=$(expr $ib_nat_exist - 1)
 	done
@@ -789,8 +792,8 @@ del_firewall_rule() {
 	$ipt_n -F PSW_OUTPUT 2>/dev/null && $ipt_n -X PSW_OUTPUT 2>/dev/null
 	$ipt_m -F PSW 2>/dev/null && $ipt_m -X PSW 2>/dev/null
 	$ipt_m -F PSW_OUTPUT 2>/dev/null && $ipt_m -X PSW_OUTPUT 2>/dev/null
-	$ip6t_n -F PSW 2>/dev/null && $ip6t_n -X PSW 2>/dev/null
-	$ip6t_n -F PSW_OUTPUT 2>/dev/null && $ip6t_n -X PSW_OUTPUT 2>/dev/null
+	#$ip6t_n -F PSW 2>/dev/null && $ip6t_n -X PSW 2>/dev/null
+	#$ip6t_n -F PSW_OUTPUT 2>/dev/null && $ip6t_n -X PSW_OUTPUT 2>/dev/null
 	$ip6t_m -F PSW 2>/dev/null && $ip6t_m -X PSW 2>/dev/null
 	$ip6t_m -F PSW_OUTPUT 2>/dev/null && $ip6t_m -X PSW_OUTPUT 2>/dev/null
 	
