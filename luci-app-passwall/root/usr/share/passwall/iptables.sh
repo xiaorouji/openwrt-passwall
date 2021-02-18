@@ -638,6 +638,7 @@ add_firewall_rule() {
 		}
 		[ "$use_tcp_node_resolve_dns" == 1 ] && hosts_foreach DNS_FORWARD _proxy_tcp_access 53
 		$ipt_tmp -A OUTPUT -p tcp -j PSW_OUTPUT
+		$ipt_tmp -I PSW_OUTPUT -p tcp -d 1.2.3.4 $blist_r
 		[ "$TCP_NO_REDIR_PORTS" != "disable" ] && {
 			$ipt_tmp -A PSW_OUTPUT -p tcp -m multiport --dport $TCP_NO_REDIR_PORTS -j RETURN
 			$ip6t_m -A PSW_OUTPUT -p tcp -m multiport --dport $TCP_NO_REDIR_PORTS -j RETURN
@@ -730,6 +731,7 @@ add_firewall_rule() {
 		}
 		[ "$use_udp_node_resolve_dns" == 1 ] && hosts_foreach DNS_FORWARD _proxy_udp_access 53
 		$ipt_m -A OUTPUT -p udp -j PSW_OUTPUT
+		$ipt_m -I PSW_OUTPUT -p udp -d 1.2.3.4 $(REDIRECT 1 MARK)
 		[ "$UDP_NO_REDIR_PORTS" != "disable" ] && {
 			$ipt_m -A PSW_OUTPUT -p udp -m multiport --dport $UDP_NO_REDIR_PORTS -j RETURN
 			$ip6t_m -A PSW_OUTPUT -p udp -m multiport --dport $UDP_NO_REDIR_PORTS -j RETURN
