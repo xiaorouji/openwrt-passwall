@@ -259,7 +259,6 @@ if node_section then
 
     if node.protocol == "_shunt" then
         local rules = {}
-        local default_rules = {}
 
         local default_node_id = node.default_node or "_direct"
         local default_outboundTag
@@ -314,7 +313,7 @@ if node_section then
                 outboundTag = "direct"
             elseif _node_id == "_blackhole" then
                 outboundTag = "blackhole"
-            elseif _node_id == "nil" then
+            elseif _node_id == "_default" then
                 outboundTag = "default"
             else
                 if _node_id ~= "nil" then
