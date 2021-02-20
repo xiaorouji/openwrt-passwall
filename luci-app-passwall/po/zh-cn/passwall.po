@@ -1105,6 +1105,12 @@ msgstr "是否接收 PROXY protocol，当该节点要被回落或被代理转发
 msgid "transit node"
 msgstr "中转到此节点"
 
+msgid "Custom Socks"
+msgstr "自定义 Socks"
+
+msgid "Custom HTTP"
+msgstr "自定义 HTTP"
+
 msgid "Bind Local"
 msgstr "本机监听"
 
