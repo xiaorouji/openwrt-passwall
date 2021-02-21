@@ -96,10 +96,6 @@ function gen_outbound(node, tag, is_proxy)
                     node.stream_security = "xtls"
                 end
             end
-    
-            if node.transport == "mkcp" or node.transport == "quic" then
-                node.stream_security = "none"
-            end
         end
 
         result = {
