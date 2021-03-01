@@ -18,6 +18,11 @@ PKG_MAINTAINER:=
 PKG_LICENSE:=MPL-2.0
 PKG_LICENSE_FILES:=LICENSE
 
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_XRAY_CORE_PROVIDE_V2RAY_CORE \
+	CONFIG_XRAY_CORE_COMPRESS_GOPROXY \
+	CONFIG_XRAY_CORE_COMPRESS_UPX \
+
 PKG_BUILD_DIR:=$(BUILD_DIR)/xray-core-$(PKG_VERSION)
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
@@ -81,6 +86,24 @@ define Package/xray-geodata/description
   This includes GEO datas used for xray-core.
 endef
 
+define Package/xray-core/config
+menu "Xray-core Configuration"
+	depends on PACKAGE_xray-core
+
+config XRAY_CORE_PROVIDE_V2RAY_CORE
+	bool "Provide V2Ray binary using XRay"
+	default y
+
+config XRAY_CORE_COMPRESS_GOPROXY
+	bool "Compiling with GOPROXY proxy"
+	default n
+
+config XRAY_CORE_COMPRESS_UPX
+	bool "Compress executable files with UPX"
+	default y
+endmenu
+endef
+
 define Package/xray-core/conffiles
 /etc/xray/
 /etc/config/xray
@@ -106,6 +129,11 @@ define Download/geosite
   HASH:=14d1d5c7e8595cf22ed6223418551def8f91fc48d52aef937be53c873a42e38c
 endef
 
+ifneq ($(CONFIG_XRAY_CORE_COMPRESS_GOPROXY),)
+	export GO111MODULE=on
+	export GOPROXY=https://goproxy.io
+endif
+
 define Build/Prepare
 	$(call Build/Prepare/Default)
 ifneq ($(CONFIG_PACKAGE_xray-geodata),)
@@ -114,11 +142,20 @@ ifneq ($(CONFIG_PACKAGE_xray-geodata),)
 endif
 endef
 
+define Build/Compile
+	$(call GoPackage/Build/Compile)
+ifneq ($(CONFIG_XRAY_CORE_COMPRESS_UPX),)
+	$(STAGING_DIR_HOST)/bin/upx --lzma --best $(GO_PKG_BUILD_BIN_DIR)/main
+endif
+endef
+
 define Package/xray-core/install
 	$(call GoPackage/Package/Install/Bin,$(PKG_INSTALL_DIR))
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/main $(1)/usr/bin/xray
+ifneq ($(CONFIG_XRAY_CORE_PROVIDE_V2RAY_CORE),)
 	$(LN) xray $(1)/usr/bin/v2ray
+endif
 
 	$(INSTALL_DIR) $(1)/etc/xray/
 	$(INSTALL_CONF) $(CURDIR)/files/config.json.example $(1)/etc/xray/
