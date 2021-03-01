@@ -9,9 +9,9 @@ IPSET_BLACKLIST="blacklist"
 IPSET_WHITELIST="whitelist"
 IPSET_BLOCKLIST="blocklist"
 
-IPSET_LANIPLIST_6="laniplist6"
-IPSET_VPSIPLIST_6="vpsiplist6"
-IPSET_SHUNTLIST_6="shuntlist6"
+IPSET_LANIPLIST6="laniplist6"
+IPSET_VPSIPLIST6="vpsiplist6"
+IPSET_SHUNTLIST6="shuntlist6"
 IPSET_GFW6="gfwlist6"
 IPSET_CHN6="chnroute6"
 IPSET_BLACKLIST6="blacklist6"
@@ -48,8 +48,8 @@ comment() {
 }
 
 destroy_ipset() {
-	ipset -F $1 >/dev/null 2>&1
-	ipset -X $1 >/dev/null 2>&1
+	#ipset -q -F $1
+	ipset -q -X $1
 }
 
 RULE_LAST_INDEX() {
@@ -217,7 +217,7 @@ load_acl() {
 					$ipt_tmp -A PSW $(comment "$remarks") -p tcp $(factor $ip "-s") $(factor $mac "-m mac --mac-source") $(factor $tcp_redir_ports "-m multiport --dport") $(get_redirect_ipt $tcp_proxy_mode $tcp_port $is_tproxy)
 
 					if [ "$PROXY_IPV6" == "1" ]; then
-						$ip6t_m -A PSW $(comment "$remarks") -p tcp $(factor $ip "-s") $(factor $mac "-m mac --mac-source") $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_SHUNTLIST_6) $(REDIRECT $tcp_port TPROXY)
+						$ip6t_m -A PSW $(comment "$remarks") -p tcp $(factor $ip "-s") $(factor $mac "-m mac --mac-source") $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) $(REDIRECT $tcp_port TPROXY)
 						$ip6t_m -A PSW $(comment "$remarks") -p tcp $(factor $ip "-s") $(factor $mac "-m mac --mac-source") $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_BLACKLIST6) $(REDIRECT $tcp_port TPROXY)
 						$ip6t_m -A PSW $(comment "$remarks") -p tcp $(factor $ip "-s") $(factor $mac "-m mac --mac-source") $(factor $tcp_redir_ports "-m multiport --dport") $(get_redirect_ip6t $tcp_proxy_mode $tcp_port TPROXY)
 					fi
@@ -244,7 +244,7 @@ load_acl() {
 					$ipt_m -A PSW $(comment "$remarks") -p udp $(factor $ip "-s") $(factor $mac "-m mac --mac-source") $(factor $udp_redir_ports "-m multiport --dport") $(get_redirect_ipt $udp_proxy_mode $udp_port TPROXY)
 
 					if [ "$PROXY_IPV6" == "1" ]; then
-						$ip6t_m -A PSW $(comment "$remarks") -p udp $(factor $ip "-s") $(factor $mac "-m mac --mac-source") $(factor $udp_redir_ports "-m multiport --dport") $(dst $IPSET_SHUNTLIST_6) $(REDIRECT $udp_port TPROXY)
+						$ip6t_m -A PSW $(comment "$remarks") -p udp $(factor $ip "-s") $(factor $mac "-m mac --mac-source") $(factor $udp_redir_ports "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) $(REDIRECT $udp_port TPROXY)
 						$ip6t_m -A PSW $(comment "$remarks") -p udp $(factor $ip "-s") $(factor $mac "-m mac --mac-source") $(factor $udp_redir_ports "-m multiport --dport") $(dst $IPSET_BLACKLIST6) $(REDIRECT $udp_port TPROXY)
 						$ip6t_m -A PSW $(comment "$remarks") -p udp $(factor $ip "-s") $(factor $mac "-m mac --mac-source") $(factor $udp_redir_ports "-m multiport --dport") $(get_redirect_ip6t $udp_proxy_mode $udp_port TPROXY)
 					fi
@@ -286,7 +286,7 @@ load_acl() {
 			$ipt_tmp -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ipt $TCP_PROXY_MODE $TCP_REDIR_PORT $is_tproxy)
 
 			if [ "$PROXY_IPV6" == "1" ]; then
-				$ip6t_m -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST_6) $(REDIRECT $TCP_REDIR_PORT TPROXY)
+				$ip6t_m -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) $(REDIRECT $TCP_REDIR_PORT TPROXY)
 				$ip6t_m -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST6) $(REDIRECT $TCP_REDIR_PORT TPROXY)
 				$ip6t_m -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ip6t $TCP_PROXY_MODE $TCP_REDIR_PORT TPROXY)
 			fi
@@ -315,7 +315,7 @@ load_acl() {
 			$ipt_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ipt $UDP_PROXY_MODE $UDP_REDIR_PORT TPROXY)
 
 			if [ "$PROXY_IPV6" == "1" ]; then
-				$ip6t_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST_6) $(REDIRECT $UDP_REDIR_PORT TPROXY)
+				$ip6t_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) $(REDIRECT $UDP_REDIR_PORT TPROXY)
 				$ip6t_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST6) $(REDIRECT $UDP_REDIR_PORT TPROXY)
 				$ip6t_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ip6t $UDP_PROXY_MODE $UDP_REDIR_PORT TPROXY)
 			fi
@@ -338,7 +338,7 @@ filter_haproxy() {
 
 filter_vpsip() {
 	uci show $CONFIG | grep ".address=" | cut -d "'" -f 2 | grep -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}" | sed -e "/^$/d" | sed -e "s/^/add $IPSET_VPSIPLIST &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
-	uci show $CONFIG | grep ".address=" | cut -d "'" -f 2 | grep -E "([[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){0,7}::[a-f0-9]{0,4}(:[a-f0-9]{1,4}){0,7}])" | sed -e "/^$/d" | sed -e "s/^/add $IPSET_VPSIPLIST_6 &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
+	uci show $CONFIG | grep ".address=" | cut -d "'" -f 2 | grep -E "([[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){0,7}::[a-f0-9]{0,4}(:[a-f0-9]{1,4}){0,7}])" | sed -e "/^$/d" | sed -e "s/^/add $IPSET_VPSIPLIST6 &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
 	echolog "加入所有节点到ipset[$IPSET_VPSIPLIST]直连完成"
 }
 
@@ -465,9 +465,9 @@ add_firewall_rule() {
 	ipset -! create $IPSET_WHITELIST nethash
 	ipset -! create $IPSET_BLOCKLIST nethash
 
-	ipset -! create $IPSET_LANIPLIST_6 nethash family inet6
-	ipset -! create $IPSET_VPSIPLIST_6 nethash family inet6
-	ipset -! create $IPSET_SHUNTLIST_6 nethash family inet6
+	ipset -! create $IPSET_LANIPLIST6 nethash family inet6
+	ipset -! create $IPSET_VPSIPLIST6 nethash family inet6
+	ipset -! create $IPSET_SHUNTLIST6 nethash family inet6
 	ipset -! create $IPSET_GFW6 nethash family inet6
 	ipset -! create $IPSET_CHN6 nethash family inet6
 	ipset -! create $IPSET_BLACKLIST6 nethash family inet6
@@ -481,7 +481,7 @@ add_firewall_rule() {
 	done
 
 	for shunt_id in $shunt_ids; do
-		config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "s/^/add $IPSET_SHUNTLIST_6 &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
+		config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "s/^/add $IPSET_SHUNTLIST6 &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
 	done
 
 	cat $RULES_PATH/chnroute | sed -e "/^$/d" | sed -e "s/^/add $IPSET_CHN &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
@@ -503,7 +503,7 @@ add_firewall_rule() {
 	}
 
 	ipset -! -R <<-EOF
-		$(gen_laniplist_6 | sed -e "s/^/add $IPSET_LANIPLIST_6 /")
+		$(gen_laniplist_6 | sed -e "s/^/add $IPSET_LANIPLIST6 /")
 	EOF
 #	[ $? -eq 0 ] || {
 #		echolog "系统不兼容IPv6，终止执行！"
@@ -524,7 +524,7 @@ add_firewall_rule() {
 		EOF
 
 		[ -n "$lan_ip6" ] && ipset -! -R <<-EOF
-			$(echo $lan_ip6 | sed -e "s/ /\n/g" | sed -e "s/^/add $IPSET_LANIPLIST_6 /")
+			$(echo $lan_ip6 | sed -e "s/ /\n/g" | sed -e "s/^/add $IPSET_LANIPLIST6 /")
 		EOF
 	}
 
@@ -596,16 +596,16 @@ add_firewall_rule() {
 	#$ip6t_n -A OUTPUT -p tcp -j PSW_OUTPUT
 
 	$ip6t_m -N PSW
-	$ip6t_m -A PSW $(dst $IPSET_LANIPLIST_6) -j RETURN
-	$ip6t_m -A PSW $(dst $IPSET_VPSIPLIST_6) -j RETURN
+	$ip6t_m -A PSW $(dst $IPSET_LANIPLIST6) -j RETURN
+	$ip6t_m -A PSW $(dst $IPSET_VPSIPLIST6) -j RETURN
 	$ip6t_m -A PSW $(dst $IPSET_WHITELIST6) -j RETURN
 	$ip6t_m -A PSW -m mark --mark 0xff -j RETURN
 	$ip6t_m -A PSW $(dst $IPSET_BLOCKLIST6) -j DROP
 	$ip6t_m -A PREROUTING -j PSW
 
 	$ip6t_m -N PSW_OUTPUT
-	$ip6t_m -A PSW_OUTPUT $(dst $IPSET_LANIPLIST_6) -j RETURN
-	$ip6t_m -A PSW_OUTPUT $(dst $IPSET_VPSIPLIST_6) -j RETURN
+	$ip6t_m -A PSW_OUTPUT $(dst $IPSET_LANIPLIST6) -j RETURN
+	$ip6t_m -A PSW_OUTPUT $(dst $IPSET_VPSIPLIST6) -j RETURN
 	$ip6t_m -A PSW_OUTPUT $(dst $IPSET_WHITELIST6) -j RETURN
 	$ip6t_m -A PSW_OUTPUT -m mark --mark 0xff -j RETURN
 	$ip6t_m -A PSW_OUTPUT $(dst $IPSET_BLOCKLIST6) -j DROP
@@ -658,7 +658,7 @@ add_firewall_rule() {
 		$ipt_tmp -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $p_r
 
 		if [ "$PROXY_IPV6" == "1" ]; then
-			$ip6t_m -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST_6) $(REDIRECT 1 MARK)
+			$ip6t_m -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) $(REDIRECT 1 MARK)
 			$ip6t_m -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST6) $(REDIRECT 1 MARK)
 			$ip6t_m -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ip6t $LOCALHOST_TCP_PROXY_MODE 1 MARK)
 		fi
@@ -753,7 +753,7 @@ add_firewall_rule() {
 		$ipt_m -A PSW_OUTPUT -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ipt $LOCALHOST_UDP_PROXY_MODE 1 MARK)
 
 		if [ "$PROXY_IPV6" == "1" ]; then
-			$ip6t_m -A PSW_OUTPUT -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST_6) $(REDIRECT 1 MARK)
+			$ip6t_m -A PSW_OUTPUT -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) $(REDIRECT 1 MARK)
 			$ip6t_m -A PSW_OUTPUT -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST6) $(REDIRECT 1 MARK)
 			$ip6t_m -A PSW_OUTPUT -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ip6t $LOCALHOST_UDP_PROXY_MODE 1 MARK)
 		fi
@@ -815,9 +815,9 @@ del_firewall_rule() {
 	destroy_ipset $IPSET_BLOCKLIST
 	destroy_ipset $IPSET_WHITELIST
 	
-	destroy_ipset $IPSET_LANIPLIST_6
-	destroy_ipset $IPSET_VPSIPLIST_6
-	#destroy_ipset $IPSET_SHUNTLIST_6
+	destroy_ipset $IPSET_LANIPLIST6
+	destroy_ipset $IPSET_VPSIPLIST6
+	#destroy_ipset $IPSET_SHUNTLIST6
 	#destroy_ipset $IPSET_GFW6
 	#destroy_ipset $IPSET_CHN6
 	#destroy_ipset $IPSET_BLACKLIST6
@@ -837,14 +837,15 @@ flush_ipset() {
 	destroy_ipset $IPSET_BLOCKLIST
 	destroy_ipset $IPSET_WHITELIST
 	
-	destroy_ipset $IPSET_LANIPLIST_6
-	destroy_ipset $IPSET_VPSIPLIST_6
-	destroy_ipset $IPSET_SHUNTLIST_6
+	destroy_ipset $IPSET_LANIPLIST6
+	destroy_ipset $IPSET_VPSIPLIST6
+	destroy_ipset $IPSET_SHUNTLIST6
 	destroy_ipset $IPSET_GFW6
 	destroy_ipset $IPSET_CHN6
 	destroy_ipset $IPSET_BLACKLIST6
 	destroy_ipset $IPSET_BLOCKLIST6
 	destroy_ipset $IPSET_WHITELIST6
+	/etc/init.d/passwall reload
 }
 
 flush_include() {
