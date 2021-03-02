@@ -41,7 +41,7 @@ define Package/xray/template
   TITLE:=A platform for building proxies to bypass network restrictions
   SECTION:=net
   CATEGORY:=Network
-  URL:=https://xray.sh
+  URL:=https://xtls.github.io
 endef
 
 define Package/xray-core
