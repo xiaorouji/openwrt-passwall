@@ -413,7 +413,7 @@ run_socks() {
 	;;
 	esac
 
-	# socks to http
+	# http to socks
 	[ "$type" != "xray" ] && [ "$type" != "socks" ] && [ "$http_port" != "0" ] && [ "$http_config_file" != "nil" ] && {
 		lua $API_GEN_XRAY_PROTO -local_proto http -local_address "0.0.0.0" -local_port $http_port -server_proto socks -server_address "127.0.0.1" -server_port $socks_port -server_username $_username -server_password $_password > $http_config_file
 		echo lua $API_GEN_XRAY_PROTO -local_proto http -local_address "0.0.0.0" -local_port $http_port -server_proto socks -server_address "127.0.0.1" -server_port $socks_port -server_username $_username -server_password $_password
@@ -883,16 +883,20 @@ start_dns() {
 				msg="自定义DNS"
 			fi
 
-			local chnlist_param="${TMP_PATH}/chnlist"
-			[ -f "${RULES_PATH}/direct_host" ] && {
-				cat "${RULES_PATH}/direct_host" >> "${chnlist_param}"
-				echolog "  | - [$?](chinadns-ng) 域名白名单合并到中国域名表"
-			}
 			sed -n 's/^ipset=\/\.\?\([^/]*\).*$/\1/p' "${RULES_PATH}/gfwlist.conf" | sort -u > "${TMP_PATH}/gfwlist.txt"
 			[ -f "${RULES_PATH}/proxy_host" ] && {
 				cat "${RULES_PATH}/proxy_host" >> "${TMP_PATH}/gfwlist.txt" && sort -u "${TMP_PATH}/gfwlist.txt" > "${TMP_PATH}/gfwlist2.txt" && mv -f "${TMP_PATH}/gfwlist2.txt" "${TMP_PATH}/gfwlist.txt"
 				local gfwlist_param="${TMP_PATH}/gfwlist.txt"
 				echolog "  | - [$?](chinadns-ng) 代理域名表合并到防火墙域名表"
+				
+				for _host in $(cat ${RULES_PATH}/proxy_host); do
+					sed -i "/$_host/d" "${TMP_PATH}/chnlist"
+				done
+			}
+			local chnlist_param="${TMP_PATH}/chnlist"
+			[ -f "${RULES_PATH}/direct_host" ] && {
+				cat "${RULES_PATH}/direct_host" >> "${chnlist_param}"
+				echolog "  | - [$?](chinadns-ng) 域名白名单合并到中国域名表"
 			}
 			chnlist_param=${chnlist_param:+-m "${chnlist_param}" -M}
 			ln_start_bin "$(first_type chinadns-ng)" chinadns-ng "${TMP_PATH}/chinadns-ng.log" -v -b 0.0.0.0 -l "${china_ng_listen_port}" ${china_ng_chn:+-c "${china_ng_chn}"} ${chnlist_param} ${china_ng_gfw:+-t "${china_ng_gfw}"} ${gfwlist_param:+-g "${gfwlist_param}"} -f
@@ -990,22 +994,20 @@ add_dnsmasq() {
 				sort -u "${TMP_PATH}/gfwlist.txt" | gen_dnsmasq_items "gfwlist,gfwlist6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/99-gfwlist.conf"
 				echolog "  - [$?]防火墙域名表(gfwlist)：${fwd_dns:-默认}"
 			fi
-
-                        # Not China List 模式
-                        if [ -n "${chnlist}" ]; then
-                            fwd_dns="${LOCAL_DNS}"
-		            [ -n "$CHINADNS_NG" ] && unset fwd_dns
-		            sort -u "${RULES_PATH}/chnlist" | gen_dnsmasq_items "chnroute,chnroute6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/10-chinalist_host.conf"
-		            echolog "  - [$?]中国域名表(chnroute)：${fwd_dns:-默认}"
-                        fi
-
+			# Not China List 模式
+			[ -n "${chnlist}" ] && {
+				fwd_dns="${LOCAL_DNS}"
+				[ -n "$CHINADNS_NG" ] && unset fwd_dns
+				sort -u "${TMP_PATH}/chnlist" | gen_dnsmasq_items "chnroute,chnroute6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/12-chinalist_host.conf"
+				echolog "  - [$?]中国域名表(chnroute)：${fwd_dns:-默认}"
+			}
 		else
 			#回国模式
 			if [ "${DNS_MODE}" = "fake_ip" ]; then
-				sort -u "${RULES_PATH}/chnlist" | gen_dnsmasq_fake_items "11.1.1.1" "${TMP_DNSMASQ_PATH}/10-chinalist_host.conf"
+				sort -u "${RULES_PATH}/chnlist" | gen_dnsmasq_fake_items "11.1.1.1" "${TMP_DNSMASQ_PATH}/99-chinalist_host.conf"
 			else
 				fwd_dns="${TUN_DNS}"
-				sort -u "${RULES_PATH}/chnlist" | gen_dnsmasq_items "chnroute,chnroute6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/10-chinalist_host.conf"
+				sort -u "${RULES_PATH}/chnlist" | gen_dnsmasq_items "chnroute,chnroute6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/99-chinalist_host.conf"
 				echolog "  - [$?]中国域名表(chnroute)：${fwd_dns:-默认}"
 			fi
 		fi
