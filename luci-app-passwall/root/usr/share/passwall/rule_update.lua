@@ -195,6 +195,7 @@ local function fetch_chnlist()
 			end
 		else
 			sret = 0
+			log("chnlist 第"..k.."条规则:"..v.."下载失败！")
 		end
 		os.remove("/tmp/chnlist_dl"..k)
 	end
@@ -450,6 +451,6 @@ luci.sys.call("uci commit " .. name)
 
 if reboot == 1 then
 	log("重启服务，应用新的规则。")
-	luci.sys.call("/usr/share/" .. name .. "/iptables.sh flush_ipset && /etc/init.d/" .. name .. " restart")
+	luci.sys.call("/usr/share/" .. name .. "/iptables.sh flush_ipset > /dev/null 2>&1 &")
 end
 log("规则更新完毕...")
