@@ -7,8 +7,8 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
 PKG_VERSION:=4
-PKG_RELEASE:=16
-PKG_DATE:=20210303
+PKG_RELEASE:=17
+PKG_DATE:=20210314
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
@@ -43,7 +43,7 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_Trojan_Plus
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_Trojan_GO
 	bool "Include Trojan_GO"
-	default y if i386||x86_64||arm||aarch64
+	default n
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_Brook
 	bool "Include Brook"
