@@ -1103,6 +1103,7 @@ gen_pdnsd_config() {
 				purge_cache = off;
 				proxy_only = on;
 				caching = $_cache;
+				reject=::/0;
 			}
 		EOF
 		echolog "  | - [$?]上游DNS：${2}:${3}"
