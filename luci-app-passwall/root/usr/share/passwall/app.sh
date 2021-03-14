@@ -491,7 +491,7 @@ run_redir() {
 		;;
 		ss|ssr)
 			lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port > $config_file
-			ss_program="$(first_type ${type}local ${type}-redir)"
+			ss_program="$(first_type ${type}local ${type}-local)"
 			[ "$(printf '%s' "$ss_program" | awk -F '/' '{print $NF}')" = "${type}local" ] && \
 				ss_extra_arg="--protocol redir -u" || ss_extra_arg="-U"
 			ln_start_bin "$ss_program" "${type}-redir" $log_file -c "$config_file" -v $ss_extra_arg
