@@ -72,7 +72,7 @@ type = s:option(ListValue, "type", translate("Type"))
 if api.is_finded("ipt2socks") then
     type:value("Socks", translate("Socks"))
 end
-if api.is_finded("ss-redir") then
+if api.is_finded("sslocal") or api.is_finded("ss-redir") then
     type:value("SS", translate("Shadowsocks"))
 end
 if api.is_finded("ssr-redir") then
