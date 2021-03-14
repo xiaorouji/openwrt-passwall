@@ -468,10 +468,6 @@ if dns_server then
                 network = "udp"
             }
         })
-        table.insert(outbounds, {
-            protocol = "dns",
-            tag = "dns-out"
-        })
     end
 
     table.insert(rules, {
@@ -482,8 +478,9 @@ if dns_server then
         outboundTag = "dns-out"
     })
 
+    local outboundTag = "direct"
     if doh_socks_address and doh_socks_port then
-        table.insert(outbounds, {
+        table.insert(outbounds, 1, {
             tag = "out",
             protocol = "socks",
             streamSettings = {
@@ -499,22 +496,15 @@ if dns_server then
                 }
             }
         })
-        table.insert(rules, {
-            type = "field",
-            inboundTag = {
-                "dns-in1"
-            },
-            outboundTag = "out"
-        })
-    else
-        table.insert(rules, {
-            type = "field",
-            inboundTag = {
-                "dns-in1"
-            },
-            outboundTag = "direct"
-        })
+        outboundTag = "out"
     end
+    table.insert(rules, {
+        type = "field",
+        inboundTag = {
+            "dns-in1"
+        },
+        outboundTag = outboundTag
+    })
     
     routing = {
         domainStrategy = "IPOnDemand",
@@ -538,6 +528,10 @@ if inbounds or outbounds then
     table.insert(outbounds, {
         protocol = "blackhole",
         tag = "blackhole"
+    })
+    table.insert(outbounds, {
+        protocol = "dns",
+        tag = "dns-out"
     })
 
     local xray = {
