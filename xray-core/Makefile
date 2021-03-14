@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xray-core
-PKG_VERSION:=1.3.1
+PKG_VERSION:=1.4.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/XTLS/Xray-core/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=5b860144c470c3f7c6b71ffdf0c3830980f1f6ce431fbe6bf10249c1f0e991a7
+PKG_HASH:=09fcfec0b6e9362d36fb358fe781431a6c2baae71a7864eaeb1379977aa22ca9
 
 #PKG_SOURCE_PROTO:=git
 #PKG_SOURCE_URL:=https://github.com/XTLS/xray-core.git
@@ -19,7 +19,6 @@ PKG_LICENSE:=MPL-2.0
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_CONFIG_DEPENDS:= \
-	CONFIG_XRAY_CORE_PROVIDE_V2RAY_CORE \
 	CONFIG_XRAY_CORE_COMPRESS_GOPROXY \
 	CONFIG_XRAY_CORE_COMPRESS_UPX \
 
@@ -90,10 +89,6 @@ define Package/xray-core/config
 menu "Xray-core Configuration"
 	depends on PACKAGE_xray-core
 
-config XRAY_CORE_PROVIDE_V2RAY_CORE
-	bool "Provide V2Ray binary using XRay"
-	default y
-
 config XRAY_CORE_COMPRESS_GOPROXY
 	bool "Compiling with GOPROXY proxy"
 	default n
@@ -109,24 +104,24 @@ define Package/xray-core/conffiles
 /etc/config/xray
 endef
 
-GEOIP_VER:=202103012212
+GEOIP_VER:=202103132209
 GEOIP_FILE:=geoip.dat.$(GEOIP_VER)
 
 define Download/geoip
   URL:=https://github.com/Loyalsoldier/v2ray-rules-dat/releases/download/$(GEOIP_VER)/
   URL_FILE:=geoip.dat
   FILE:=$(GEOIP_FILE)
-  HASH:=55921367a26422a9acd96c3aa8a3395363f1f92fec5230f46b49406d999f88f6
+  HASH:=1861198f0bed9b3c53650579066d153bd104e96773ef681a167352f52a8e14f8
 endef
 
-GEOSITE_VER:=202103012212
+GEOSITE_VER:=202103132209
 GEOSITE_FILE:=geosite.dat.$(GEOSITE_VER)
 
 define Download/geosite
   URL:=https://github.com/Loyalsoldier/v2ray-rules-dat/releases/download/$(GEOSITE_VER)/
   URL_FILE:=geosite.dat
   FILE:=$(GEOSITE_FILE)
-  HASH:=848c2455275452c32b341430a1185dcabfe7af3ff44f2226b22e3c50f034657b
+  HASH:=ed510546d39014a0715c122bbbf91777c82776ca0fd4625be0a34d757fad93b4
 endef
 
 ifneq ($(CONFIG_XRAY_CORE_COMPRESS_GOPROXY),)
@@ -153,9 +148,7 @@ define Package/xray-core/install
 	$(call GoPackage/Package/Install/Bin,$(PKG_INSTALL_DIR))
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/main $(1)/usr/bin/xray
-ifneq ($(CONFIG_XRAY_CORE_PROVIDE_V2RAY_CORE),)
 	$(LN) xray $(1)/usr/bin/v2ray
-endif
 
 	$(INSTALL_DIR) $(1)/etc/xray/
 	$(INSTALL_CONF) $(CURDIR)/files/config.json.example $(1)/etc/xray/
