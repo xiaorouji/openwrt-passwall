@@ -116,7 +116,7 @@ for k, e in ipairs(api.get_valid_nodes()) do
     if e.node_type == "normal" then
         nodes_table[#nodes_table + 1] = {
             id = e[".name"],
-            remarks = e.remarks_name
+            remarks = e["remark"]
         }
     end
 end
