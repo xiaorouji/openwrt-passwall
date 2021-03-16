@@ -25,11 +25,6 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Server
 	bool "Include Shadowsocks Server"
 	default y
 	
-config PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Rust
-	bool "Include Shadowsocks Rust (AEAD ciphers only)"
-	depends on aarch64||arm||i386||mips||mipsel||x86_64
-	default y if x86_64||aarch64
-	
 config PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR
 	bool "Include ShadowsocksR"
 	default y
@@ -98,7 +93,6 @@ define Package/$(PKG_NAME)
   +PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks:shadowsocks-libev-ss-redir \
   +PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks:shadowsocks-libev-ss-local \
   +PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Server:shadowsocks-libev-ss-server \
-  +PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Rust:shadowsocks-rust-sslocal \
   +PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR:shadowsocksr-libev-alt \
   +PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR:shadowsocksr-libev-ssr-local \
   +PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Server:shadowsocksr-libev-server \
