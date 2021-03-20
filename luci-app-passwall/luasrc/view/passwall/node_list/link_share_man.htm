@@ -709,7 +709,6 @@ local api = require "luci.model.cbi.passwall.api.api"
 			opt.set('protocol', "vless");
 			opt.get('protocol').dispatchEvent(event);
 			var m = parseNodeUrl(ssrurl);
-			console.log(m);
 			console.log(m.search);
 			var password = m.passwd;
 			if (password === "") {
@@ -727,10 +726,9 @@ local api = require "luci.model.cbi.passwall.api.api"
 				var params;
 				for (i = 0; i < queryArray.length; i++) {
 					params = queryArray[i].split('=');
-					queryParam[decodeURIComponent(params[0]).toLowerCase()] = decodeURIComponent(params[1] || '');
+					queryParam[decodeURIComponent(params[0])] = decodeURIComponent(params[1] || '');
 				}
 			}
-			console.log(queryParam);
 			
 			opt.set('encryption', queryParam.encryption);
 			if (queryParam.security) {

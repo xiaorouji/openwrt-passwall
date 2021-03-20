@@ -599,7 +599,7 @@ local function processData(szType, content, add_mode)
 			local params = {}
 			for _, v in pairs(split(query[2], '&')) do
 				local t = split(v, '=')
-				params[string.lower(t[1])] = UrlDecode(t[2])
+				params[t[1]] = UrlDecode(t[2])
 			end
 
 			if params.type == 'ws' then
