@@ -577,7 +577,7 @@ transit_node_password.password = true
 transit_node_password:depends("transit_node", "_socks")
 transit_node_password:depends("transit_node", "_http")
 
-log = s:option(Flag, "log", translate("Enable") .. translate("Log"))
+log = s:option(Flag, "log", translate("Log"))
 log.default = "1"
 log.rmempty = false
 
