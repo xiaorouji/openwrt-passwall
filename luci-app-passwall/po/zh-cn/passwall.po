@@ -292,6 +292,9 @@ msgstr "单进程"
 msgid "Proxy Mode"
 msgstr "代理模式"
 
+msgid "%s Proxy Mode"
+msgstr "%s 代理模式"
+
 msgid "If not available, try clearing the cache."
 msgstr "如果无法使用，请尝试清除缓存。"
 
@@ -754,6 +757,9 @@ msgstr "Xray 资源文件目录"
 msgid "This variable specifies a directory where geoip.dat and geosite.dat files are."
 msgstr "此变量指定geoip.dat和geosite.dat文件所在的目录。"
 
+msgid "Shunt Rule"
+msgstr "分流规则"
+
 msgid "Please note attention to the priority, the higher the order, the higher the priority."
 msgstr "请注意优先级问题，排序越上面优先级越高。"
 
@@ -1170,6 +1176,9 @@ msgstr "日志"
 
 msgid "Log"
 msgstr "日志"
+
+msgid "%s Node Log Close"
+msgstr "%s 节点日志关闭"
 
 msgid "Log Level"
 msgstr "日志等级"
