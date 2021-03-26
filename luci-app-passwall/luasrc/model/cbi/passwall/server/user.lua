@@ -330,6 +330,7 @@ transport:value("ws", "WebSocket")
 transport:value("h2", "HTTP/2")
 transport:value("ds", "DomainSocket")
 transport:value("quic", "QUIC")
+transport:value("grpc", "gRPC")
 transport:depends({ type = "Xray", protocol = "vmess" })
 transport:depends({ type = "Xray", protocol = "vless" })
 transport:depends({ type = "Xray", protocol = "socks" })
@@ -464,6 +465,10 @@ quic_key:depends("transport", "quic")
 quic_guise = s:option(ListValue, "quic_guise", translate("Camouflage Type"))
 for a, t in ipairs(header_type_list) do quic_guise:value(t) end
 quic_guise:depends("transport", "quic")
+
+-- [[ gRPC部分 ]]--
+grpc_serviceName = s:option(Value, "grpc_serviceName", "ServiceName")
+grpc_serviceName:depends("transport", "grpc")
 
 acceptProxyProtocol = s:option(Flag, "acceptProxyProtocol", translate("acceptProxyProtocol"), translate("Whether to receive PROXY protocol, when this node want to be fallback or forwarded by proxy, it must be enable, otherwise it cannot be used."))
 acceptProxyProtocol:depends({ type = "Xray", transport = "tcp" })
