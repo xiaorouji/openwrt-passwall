@@ -151,6 +151,9 @@ function gen_outbound(node, tag, is_proxy, proxy_tag)
                     security = node.quic_security,
                     key = node.quic_key,
                     header = {type = node.quic_guise}
+                } or nil,
+                grpcSettings = (node.transport == "grpc") and {
+                    serviceName = node.grpc_serviceName
                 } or nil
             } or nil,
             settings = {
