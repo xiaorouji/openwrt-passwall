@@ -444,11 +444,16 @@ tls_sessionTicket:depends({ type = "Trojan", tls = true })
 tls_sessionTicket:depends({ type = "Trojan-Plus", tls = true })
 tls_sessionTicket:depends({ type = "Trojan-Go", tls = true })
 
--- [[ Trojan TLS ]]--
-trojan_force_fp = s:option(ListValue, "fingerprint", translate("Finger Print"))
-for a, t in ipairs(force_fp) do trojan_force_fp:value(t) end
-trojan_force_fp.default = "firefox"
-trojan_force_fp:depends({ type = "Trojan-Go", tls = true })
+trojan_go_fingerprint = s:option(ListValue, "trojan_go_fingerprint", translate("Finger Print"))
+for a, t in ipairs(force_fp) do trojan_go_fingerprint:value(t) end
+trojan_go_fingerprint.default = "firefox"
+trojan_go_fingerprint:depends({ type = "Trojan-Go", tls = true })
+function trojan_go_fingerprint.cfgvalue(self, section)
+	return m:get(section, "fingerprint")
+end
+function trojan_go_fingerprint.write(self, section, value)
+	m:set(section, "fingerprint", value)
+end
 
 tls_serverName = s:option(Value, "tls_serverName", translate("Domain"))
 tls_serverName:depends("tls", true)
@@ -456,6 +461,15 @@ tls_serverName:depends("tls", true)
 tls_allowInsecure = s:option(Flag, "tls_allowInsecure", translate("allowInsecure"), translate("Whether unsafe connections are allowed. When checked, Certificate validation will be skipped."))
 tls_allowInsecure.default = "0"
 tls_allowInsecure:depends("tls", true)
+
+xray_fingerprint = s:option(ListValue, "fingerprint", translate("Finger Print"))
+xray_fingerprint:value("disable")
+xray_fingerprint:value("chrome")
+xray_fingerprint:value("firefox")
+xray_fingerprint:value("safari")
+xray_fingerprint:value("randomized")
+xray_fingerprint.default = "disable"
+xray_fingerprint:depends({ type = "Xray", tls = true, xtls = false })
 
 trojan_transport = s:option(ListValue, "trojan_transport", translate("Transport"))
 trojan_transport:value("original", "Original")

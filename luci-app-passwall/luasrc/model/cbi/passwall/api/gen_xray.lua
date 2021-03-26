@@ -113,7 +113,8 @@ function gen_outbound(node, tag, is_proxy, proxy_tag)
                 } or nil,
                 tlsSettings = (node.stream_security == "tls") and {
                     serverName = node.tls_serverName,
-                    allowInsecure = (node.tls_allowInsecure == "1") and true or false
+                    allowInsecure = (node.tls_allowInsecure == "1") and true or false,
+                    fingerprint = (node.fingerprint and node.fingerprint ~= "disable") and node.fingerprint or nil
                 } or nil,
                 tcpSettings = (node.transport == "tcp" and node.protocol ~= "socks") and {
                     header = {
