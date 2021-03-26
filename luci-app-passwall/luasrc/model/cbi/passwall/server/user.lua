@@ -289,9 +289,6 @@ tls_allowInsecure:depends({ type = "Trojan", tls = true })
 tls_allowInsecure:depends({ type = "Trojan-Plus", tls = true })
 tls_allowInsecure:depends({ type = "Trojan-Go", tls = true })
 
-tls_serverName = s:option(Value, "tls_serverName", translate("Domain"))
-tls_serverName:depends("tls", true)
-
 tls_certificateFile = s:option(FileUpload, "tls_certificateFile", translate("Public key absolute path"), translate("as:") .. "/etc/ssl/fullchain.pem")
 tls_certificateFile.validate = function(self, value, t)
     if value and value ~= "" then

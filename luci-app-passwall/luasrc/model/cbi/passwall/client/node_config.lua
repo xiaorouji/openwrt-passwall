@@ -457,11 +457,6 @@ tls_allowInsecure = s:option(Flag, "tls_allowInsecure", translate("allowInsecure
 tls_allowInsecure.default = "0"
 tls_allowInsecure:depends("tls", true)
 
--- [[ Trojan Cert ]]--
-trojan_cert_path = s:option(Value, "trojan_cert_path", translate("Trojan Cert Path"))
-trojan_cert_path.default = ""
-trojan_cert_path:depends({ tls = true, tls_allowInsecure = false })
-
 trojan_transport = s:option(ListValue, "trojan_transport", translate("Transport"))
 trojan_transport:value("original", "Original")
 trojan_transport:value("ws", "WebSocket")
