@@ -424,8 +424,8 @@ tls:depends("type", "Trojan-Go")
 
 xtls = s:option(Flag, "xtls", translate("XTLS"))
 xtls.default = 0
-xtls:depends({ type = "Xray", protocol = "vless", tls = "1" })
-xtls:depends({ type = "Xray", protocol = "trojan", tls = "1" })
+xtls:depends({ type = "Xray", protocol = "vless", tls = true })
+xtls:depends({ type = "Xray", protocol = "trojan", tls = true })
 
 flow = s:option(Value, "flow", translate("flow"))
 flow.default = "xtls-rprx-direct"
@@ -435,34 +435,32 @@ flow:value("xtls-rprx-direct")
 flow:value("xtls-rprx-direct-udp443")
 flow:value("xtls-rprx-splice")
 flow:value("xtls-rprx-splice-udp443")
-flow:depends("xtls", "1")
+flow:depends("xtls", true)
 
 -- [[ TLS部分 ]] --
 tls_sessionTicket = s:option(Flag, "tls_sessionTicket", translate("Session Ticket"))
 tls_sessionTicket.default = "0"
-tls_sessionTicket:depends({ type = "Trojan", tls = "1" })
-tls_sessionTicket:depends({ type = "Trojan-Plus", tls = "1" })
-tls_sessionTicket:depends({ type = "Trojan-Go", tls = "1" })
+tls_sessionTicket:depends({ type = "Trojan", tls = true })
+tls_sessionTicket:depends({ type = "Trojan-Plus", tls = true })
+tls_sessionTicket:depends({ type = "Trojan-Go", tls = true })
 
 -- [[ Trojan TLS ]]--
 trojan_force_fp = s:option(ListValue, "fingerprint", translate("Finger Print"))
 for a, t in ipairs(force_fp) do trojan_force_fp:value(t) end
 trojan_force_fp.default = "firefox"
-trojan_force_fp:depends({ type = "Trojan-Go", tls = "1" })
+trojan_force_fp:depends({ type = "Trojan-Go", tls = true })
 
 tls_serverName = s:option(Value, "tls_serverName", translate("Domain"))
-tls_serverName:depends("tls", "1")
-tls_serverName:depends("xtls", "1")
+tls_serverName:depends("tls", true)
 
 tls_allowInsecure = s:option(Flag, "tls_allowInsecure", translate("allowInsecure"), translate("Whether unsafe connections are allowed. When checked, Certificate validation will be skipped."))
 tls_allowInsecure.default = "0"
-tls_allowInsecure:depends("tls", "1")
-tls_allowInsecure:depends("xtls", "1")
+tls_allowInsecure:depends("tls", true)
 
 -- [[ Trojan Cert ]]--
 trojan_cert_path = s:option(Value, "trojan_cert_path", translate("Trojan Cert Path"))
 trojan_cert_path.default = ""
-trojan_cert_path:depends({ tls = "1", tls_allowInsecure = false })
+trojan_cert_path:depends({ tls = true, tls_allowInsecure = false })
 
 trojan_transport = s:option(ListValue, "trojan_transport", translate("Transport"))
 trojan_transport:value("original", "Original")
@@ -477,7 +475,7 @@ trojan_plugin:value("plaintext", "Plain Text")
 trojan_plugin:value("shadowsocks", "ShadowSocks")
 trojan_plugin:value("other", "Other")
 trojan_plugin.default = "plaintext"
-trojan_plugin:depends({ tls = "0", trojan_transport = "original" })
+trojan_plugin:depends({ tls = false, trojan_transport = "original" })
 
 trojan_plugin_cmd = s:option(Value, "plugin_cmd", translate("Plugin Binary"))
 trojan_plugin_cmd.placeholder = "eg: /usr/bin/v2ray-plugin"

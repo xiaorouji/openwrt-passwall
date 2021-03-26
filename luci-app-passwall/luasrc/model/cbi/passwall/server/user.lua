@@ -135,11 +135,11 @@ auth:depends({ type = "Xray", protocol = "socks" })
 auth:depends({ type = "Xray", protocol = "http" })
 
 username = s:option(Value, "username", translate("Username"))
-username:depends("auth", "1")
+username:depends("auth", true)
 
 password = s:option(Value, "password", translate("Password"))
 password.password = true
-password:depends("auth", "1")
+password:depends("auth", true)
 password:depends("type", "SS")
 password:depends("type", "SSR")
 password:depends("type", "Brook")
@@ -270,8 +270,8 @@ tls:depends("type", "Trojan-Go")
 
 xtls = s:option(Flag, "xtls", translate("XTLS"))
 xtls.default = 0
-xtls:depends({ type = "Xray", protocol = "vless", tls = "1" })
-xtls:depends({ type = "Xray", protocol = "trojan", tls = "1" })
+xtls:depends({ type = "Xray", protocol = "vless", tls = true })
+xtls:depends({ type = "Xray", protocol = "trojan", tls = true })
 
 flow = s:option(Value, "flow", translate("flow"))
 flow.default = "xtls-rprx-direct"
@@ -279,18 +279,18 @@ flow:value("xtls-rprx-origin")
 flow:value("xtls-rprx-origin-udp443")
 flow:value("xtls-rprx-direct")
 flow:value("xtls-rprx-direct-udp443")
-flow:depends("xtls", "1")
+flow:depends("xtls", true)
 
 -- [[ TLS部分 ]] --
 
 tls_allowInsecure = s:option(Flag, "tls_allowInsecure", translate("allowInsecure"), translate("Whether unsafe connections are allowed. When checked, Certificate validation will be skipped."))
 tls_allowInsecure.default = "0"
-tls_allowInsecure:depends({ type = "Trojan", tls = "1" })
-tls_allowInsecure:depends({ type = "Trojan-Plus", tls = "1" })
-tls_allowInsecure:depends({ type = "Trojan-Go", tls = "1" })
+tls_allowInsecure:depends({ type = "Trojan", tls = true })
+tls_allowInsecure:depends({ type = "Trojan-Plus", tls = true })
+tls_allowInsecure:depends({ type = "Trojan-Go", tls = true })
 
 tls_serverName = s:option(Value, "tls_serverName", translate("Domain"))
-tls_serverName:depends("tls", "1")
+tls_serverName:depends("tls", true)
 
 tls_certificateFile = s:option(FileUpload, "tls_certificateFile", translate("Public key absolute path"), translate("as:") .. "/etc/ssl/fullchain.pem")
 tls_certificateFile.validate = function(self, value, t)
@@ -304,7 +304,7 @@ tls_certificateFile.validate = function(self, value, t)
     return nil
 end
 tls_certificateFile.default = "/etc/config/ssl/" .. arg[1] .. ".pem"
-tls_certificateFile:depends("tls", "1")
+tls_certificateFile:depends("tls", true)
 
 tls_keyFile = s:option(FileUpload, "tls_keyFile", translate("Private key absolute path"), translate("as:") .. "/etc/ssl/private.key")
 tls_keyFile.validate = function(self, value, t)
@@ -318,13 +318,13 @@ tls_keyFile.validate = function(self, value, t)
     return nil
 end
 tls_keyFile.default = "/etc/config/ssl/" .. arg[1] .. ".key"
-tls_keyFile:depends("tls", "1")
+tls_keyFile:depends("tls", true)
 
 tls_sessionTicket = s:option(Flag, "tls_sessionTicket", translate("Session Ticket"))
 tls_sessionTicket.default = "0"
-tls_sessionTicket:depends({ type = "Trojan", tls = "1" })
-tls_sessionTicket:depends({ type = "Trojan-Plus", tls = "1" })
-tls_sessionTicket:depends({ type = "Trojan-Go", tls = "1" })
+tls_sessionTicket:depends({ type = "Trojan", tls = true })
+tls_sessionTicket:depends({ type = "Trojan-Plus", tls = true })
+tls_sessionTicket:depends({ type = "Trojan-Go", tls = true })
 
 transport = s:option(ListValue, "transport", translate("Transport"))
 transport:value("tcp", "TCP")
@@ -352,7 +352,7 @@ trojan_plugin:value("plaintext", "Plain Text")
 trojan_plugin:value("shadowsocks", "ShadowSocks")
 trojan_plugin:value("other", "Other")
 trojan_plugin.default = "plaintext"
-trojan_plugin:depends({ tls = "0", trojan_transport = "original" })
+trojan_plugin:depends({ tls = false, trojan_transport = "original" })
 
 trojan_plugin_cmd = s:option(Value, "plugin_cmd", translate("Plugin Binary"))
 trojan_plugin_cmd.placeholder = "eg: /usr/bin/v2ray-plugin"
@@ -479,21 +479,21 @@ fallback:depends({ type = "Xray", protocol = "trojan", transport = "tcp" })
 
 --[[
 fallback_alpn = s:option(Value, "fallback_alpn", "Fallback alpn")
-fallback_alpn:depends("fallback", "1")
+fallback_alpn:depends("fallback", true)
 
 fallback_path = s:option(Value, "fallback_path", "Fallback path")
-fallback_path:depends("fallback", "1")
+fallback_path:depends("fallback", true)
 
 fallback_dest = s:option(Value, "fallback_dest", "Fallback dest")
-fallback_dest:depends("fallback", "1")
+fallback_dest:depends("fallback", true)
 
 fallback_xver = s:option(Value, "fallback_xver", "Fallback xver")
 fallback_xver.default = 0
-fallback_xver:depends("fallback", "1")
+fallback_xver:depends("fallback", true)
 ]]--
 
 fallback_list = s:option(DynamicList, "fallback_list", "Fallback", translate("dest,path"))
-fallback_list:depends("fallback", "1")
+fallback_list:depends("fallback", true)
 
 ss_aead = s:option(Flag, "ss_aead", translate("Shadowsocks2"))
 ss_aead:depends("type", "Trojan-Go")
@@ -502,11 +502,11 @@ ss_aead.default = "0"
 ss_aead_method = s:option(ListValue, "ss_aead_method", translate("Encrypt Method"))
 for _, v in ipairs(encrypt_methods_ss_aead) do ss_aead_method:value(v, v) end
 ss_aead_method.default = "aead_aes_128_gcm"
-ss_aead_method:depends("ss_aead", "1")
+ss_aead_method:depends("ss_aead", true)
 
 ss_aead_pwd = s:option(Value, "ss_aead_pwd", translate("Password"))
 ss_aead_pwd.password = true
-ss_aead_pwd:depends("ss_aead", "1")
+ss_aead_pwd:depends("ss_aead", true)
 
 tcp_fast_open = s:option(Flag, "tcp_fast_open", translate("TCP Fast Open"))
 tcp_fast_open.default = "0"
