@@ -6,7 +6,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/XTLS/Xray-core/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=abe2f3fb41dc31841a77bef5f38eb8eb08d1f4b2c3735f53b6745b6de58a2680
+PKG_HASH:=0dfedb6e133f431e9588a84b7a36112e058bf09ced2d10ffe603ab0db6610430
 
 #PKG_SOURCE_PROTO:=git
 #PKG_SOURCE_URL:=https://github.com/XTLS/xray-core.git
