@@ -53,28 +53,28 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_NaiveProxy
 	bool "Include NaiveProxy"
 	default n
 	
-config PACKAGE_$(PKG_NAME)_INCLUDE_kcptun
-	bool "Include kcptun"
+config PACKAGE_$(PKG_NAME)_INCLUDE_Kcptun
+	bool "Include Kcptun"
 	default n
 
-config PACKAGE_$(PKG_NAME)_INCLUDE_haproxy
-	bool "Include haproxy"
+config PACKAGE_$(PKG_NAME)_INCLUDE_Haproxy
+	bool "Include Haproxy"
 	default y
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_ChinaDNS_NG
 	bool "Include ChinaDNS-NG"
 	default n
 	
-config PACKAGE_$(PKG_NAME)_INCLUDE_dns2socks
-	bool "Include dns2socks"
+config PACKAGE_$(PKG_NAME)_INCLUDE_Dns2socks
+	bool "Include Dns2socks"
 	default y
 	
-config PACKAGE_$(PKG_NAME)_INCLUDE_v2ray-plugin
-	bool "Include v2ray-plugin (Shadowsocks plugin)"
+config PACKAGE_$(PKG_NAME)_INCLUDE_V2ray-plugin
+	bool "Include V2ray-plugin (Shadowsocks plugin)"
 	default y if i386||x86_64||arm||aarch64
 
-config PACKAGE_$(PKG_NAME)_INCLUDE_simple-obfs
-	bool "Include simple-obfs (Shadowsocks plugin)"
+config PACKAGE_$(PKG_NAME)_INCLUDE_Simple-obfs
+	bool "Include Simple-obfs (Shadowsocks plugin)"
 	default y if i386||x86_64||arm||aarch64
 
 endmenu
@@ -102,12 +102,12 @@ define Package/$(PKG_NAME)
   +PACKAGE_$(PKG_NAME)_INCLUDE_Trojan_GO:trojan-go \
   +PACKAGE_$(PKG_NAME)_INCLUDE_NaiveProxy:naiveproxy \
   +PACKAGE_$(PKG_NAME)_INCLUDE_Brook:brook \
-  +PACKAGE_$(PKG_NAME)_INCLUDE_kcptun:kcptun-client \
-  +PACKAGE_$(PKG_NAME)_INCLUDE_haproxy:haproxy \
+  +PACKAGE_$(PKG_NAME)_INCLUDE_Kcptun:kcptun-client \
+  +PACKAGE_$(PKG_NAME)_INCLUDE_Haproxy:haproxy \
   +PACKAGE_$(PKG_NAME)_INCLUDE_ChinaDNS_NG:chinadns-ng \
-  +PACKAGE_$(PKG_NAME)_INCLUDE_dns2socks:dns2socks \
-  +PACKAGE_$(PKG_NAME)_INCLUDE_v2ray-plugin:v2ray-plugin \
-  +PACKAGE_$(PKG_NAME)_INCLUDE_simple-obfs:simple-obfs
+  +PACKAGE_$(PKG_NAME)_INCLUDE_Dns2socks:dns2socks \
+  +PACKAGE_$(PKG_NAME)_INCLUDE_V2ray-plugin:v2ray-plugin \
+  +PACKAGE_$(PKG_NAME)_INCLUDE_Simple-obfs:simple-obfs
 endef
 
 define Build/Prepare
