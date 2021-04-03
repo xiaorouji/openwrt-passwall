@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=brook
-PKG_VERSION:=20210214
+PKG_VERSION:=20210401
 PKG_RELEASE:=1
 
 ifeq ($(ARCH),i386)
