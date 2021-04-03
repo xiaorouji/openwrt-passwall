@@ -17,12 +17,14 @@ start_service() {
 	local confdir
 	local conffiles
 	local datadir
+	local dialer
 	local format
 	local fullcone
 
 	config_get confdir "config" "confdir"
 	config_get conffiles "config" "conffiles"
 	config_get datadir "config" "datadir" "/usr/share/xray"
+	config_get dialer "config" "dialer"
 	config_get format "config" "format" "json"
 	config_get fullcone "enabled" "fullcone" "0"
 
@@ -35,7 +37,8 @@ start_service() {
 			procd_append_param command -config "$i"
 		done
 	}
-	procd_append_param command -format "$format"
+	[ -n "$format" ] && procd_append_param command -format "$format"
+	[ -n "$dialer" ] && procd_set_param env XRAY_BROWSER_DIALER="$dialer"
 	[ "$fullcone" -eq "0" ] && procd_set_param env XRAY_CONE_DISABLED="true"
 	procd_set_param env XRAY_LOCATION_ASSET="$datadir"
 	procd_set_param file $conffiles
