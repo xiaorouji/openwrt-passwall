@@ -358,8 +358,16 @@ o.rmempty = false
 socks_node = s:option(ListValue, "node", translate("Socks Node"))
 socks_node:value("tcp", translate("Same as the tcp node"))
 
+local n = 0
+uci:foreach(appname, "socks", function(s)
+    if s[".name"] == section then
+        return false
+    end
+    n = n + 1
+end)
+
 o = s:option(Value, "port", "Socks " .. translate("Listen Port"))
-o.default = 9050
+o.default = n + 1080
 o.datatype = "port"
 o.rmempty = false
 
