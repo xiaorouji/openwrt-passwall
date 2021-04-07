@@ -956,7 +956,7 @@ add_dnsmasq() {
 		#始终用国内DNS解析直连（白名单）列表
 		[ -f "${RULES_PATH}/direct_host" ] && {
 			fwd_dns="${LOCAL_DNS}"
-			[ -n "$CHINADNS_NG" ] && unset fwd_dns
+			#[ -n "$CHINADNS_NG" ] && unset fwd_dns
 			sort -u "${RULES_PATH}/direct_host" | gen_dnsmasq_items "whitelist,whitelist6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/11-direct_host.conf"
 			echolog "  - [$?]域名白名单(whitelist)：${fwd_dns:-默认}"
 		}
@@ -988,8 +988,8 @@ add_dnsmasq() {
 				sort -u "${RULES_PATH}/proxy_host" | gen_dnsmasq_fake_items "11.1.1.1" "${TMP_DNSMASQ_PATH}/97-proxy_host.conf"
 			else
 				fwd_dns="${TUN_DNS}"
-				[ -n "$CHINADNS_NG" ] && fwd_dns="${china_ng_gfw}"
-				[ -n "$CHINADNS_NG" ] && unset fwd_dns
+				#[ -n "$CHINADNS_NG" ] && fwd_dns="${china_ng_gfw}"
+				#[ -n "$CHINADNS_NG" ] && unset fwd_dns
 				sort -u "${RULES_PATH}/proxy_host" | gen_dnsmasq_items "blacklist,blacklist6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/97-proxy_host.conf"
 				echolog "  - [$?]代理域名表(blacklist)：${fwd_dns:-默认}"
 			fi
