@@ -8,30 +8,29 @@ require 'luci.model.uci'
 require 'luci.util'
 require 'luci.jsonc'
 require 'luci.sys'
-local datatypes = require "luci.cbi.datatypes"
-local api = require "luci.model.cbi.passwall.api.api"
+local appname = 'passwall'
+local api = require ("luci.model.cbi." .. appname .. ".api.api")
 local has_xray = api.is_finded("xray")
+local datatypes = require "luci.cbi.datatypes"
 
 -- these global functions are accessed all the time by the event handler
 -- so caching them is worth the effort
-local luci = luci
 local tinsert = table.insert
 local ssub, slen, schar, sbyte, sformat, sgsub = string.sub, string.len, string.char, string.byte, string.format, string.gsub
 local jsonParse, jsonStringify = luci.jsonc.parse, luci.jsonc.stringify
 local b64decode = nixio.bin.b64decode
+local ucic = luci.model.uci.cursor()
+local allowInsecure_default = ucic:get_bool(appname, "@global_subscribe[0]", "allowInsecure")
+ucic:revert(appname)
+
 local nodeResult = {} -- update result
-local application = 'passwall'
-local uciType = 'nodes'
-local ucic2 = luci.model.uci.cursor()
 local arg2 = arg[2]
-local allowInsecure_default = ucic2:get_bool(application, "@global_subscribe[0]", "allowInsecure")
-ucic2:revert(application)
 
 local log = function(...)
 	if arg2 then
 		local result = os.date("%Y-%m-%d %H:%M:%S: ") .. table.concat({...}, " ")
 		if arg2 == "log" then
-			local f, err = io.open("/var/log/passwall.log", "a")
+			local f, err = io.open("/var/log/" .. appname .. ".log", "a")
 			if f and err == nil then
 				f:write(result .. "\n")
 				f:close()
@@ -50,14 +49,14 @@ do
 		local szType = "@global[0]"
 		local option = protocol .. "_node"
 		
-		local node_id = ucic2:get(application, szType, option)
+		local node_id = ucic:get(appname, szType, option)
 		CONFIG[#CONFIG + 1] = {
 			log = true,
 			remarks = name .. "节点",
 			currentNodeId = node_id,
-			currentNode = node_id and ucic2:get_all(application, node_id) or nil,
+			currentNode = node_id and ucic:get_all(appname, node_id) or nil,
 			set = function(o, server)
-				ucic2:set(application, szType, option, server)
+				ucic:set(appname, szType, option, server)
 				o.newNodeId = server
 			end
 		}
@@ -66,7 +65,7 @@ do
 	import_config("udp")
 
 	local i = 0
-	ucic2:foreach(application, "socks", function(t)
+	ucic:foreach(appname, "socks", function(t)
 		i = i + 1
 		local node_id = t.node
 		CONFIG[#CONFIG + 1] = {
@@ -74,15 +73,15 @@ do
 			id = t[".name"],
 			remarks = "Socks节点列表[" .. i .. "]",
 			currentNodeId = node_id,
-			currentNode = node_id and ucic2:get_all(application, node_id) or nil,
+			currentNode = node_id and ucic:get_all(appname, node_id) or nil,
 			set = function(o, server)
-				ucic2:set(application, t[".name"], "node", server)
+				ucic:set(appname, t[".name"], "node", server)
 				o.newNodeId = server
 			end
 		}
 	end)
 
-	local tcp_node_table = ucic2:get(application, "@auto_switch[0]", "tcp_node")
+	local tcp_node_table = ucic:get(appname, "@auto_switch[0]", "tcp_node")
 	if tcp_node_table then
 		local nodes = {}
 		local new_nodes = {}
@@ -91,7 +90,7 @@ do
 				log = true,
 				remarks = "TCP备用节点的列表[" .. k .. "]",
 				currentNodeId = node,
-				currentNode = node and ucic2:get_all(application, node) or nil,
+				currentNode = node and ucic:get_all(appname, node) or nil,
 				set = function(o, server)
 					for kk, vv in pairs(CONFIG) do
 						if (vv.remarks == "TCP备用节点的列表") then
@@ -109,25 +108,25 @@ do
 				for kk, vv in pairs(CONFIG) do
 					if (vv.remarks == "TCP备用节点的列表") then
 						--log("刷新自动切换的TCP备用节点的列表")
-						ucic2:set_list(application, "@auto_switch[0]", "tcp_node", vv.new_nodes)
+						ucic:set_list(appname, "@auto_switch[0]", "tcp_node", vv.new_nodes)
 					end
 				end
 			end
 		}
 	end
 
-	ucic2:foreach(application, uciType, function(node)
+	ucic:foreach(appname, "nodes", function(node)
 		if node.protocol and node.protocol == '_shunt' then
 			local node_id = node[".name"]
-			ucic2:foreach(application, "shunt_rules", function(e)
+			ucic:foreach(appname, "shunt_rules", function(e)
 				local _node_id = node[e[".name"]] or nil
 				CONFIG[#CONFIG + 1] = {
 					log = false,
 					currentNodeId = _node_id,
-					currentNode = _node_id and ucic2:get_all(application, _node_id) or nil,
+					currentNode = _node_id and ucic:get_all(appname, _node_id) or nil,
 					remarks = "分流" .. e.remarks .. "节点",
 					set = function(o, server)
-						ucic2:set(application, node_id, e[".name"], server)
+						ucic:set(appname, node_id, e[".name"], server)
 						o.newNodeId = server
 					end
 				}
@@ -137,10 +136,10 @@ do
 			CONFIG[#CONFIG + 1] = {
 				log = true,
 				currentNodeId = default_node_id,
-				currentNode = default_node_id and ucic2:get_all(application, default_node_id) or nil,
+				currentNode = default_node_id and ucic:get_all(appname, default_node_id) or nil,
 				remarks = "分流默认节点",
 				set = function(o, server)
-					ucic2:set(application, node_id, "default_node", server)
+					ucic:set(appname, node_id, "default_node", server)
 					o.newNodeId = server
 				end
 			}
@@ -149,10 +148,10 @@ do
 			CONFIG[#CONFIG + 1] = {
 				log = true,
 				currentNodeId = main_node_id,
-				currentNode = main_node_id and ucic2:get_all(application, main_node_id) or nil,
+				currentNode = main_node_id and ucic:get_all(appname, main_node_id) or nil,
 				remarks = "分流默认前置代理节点",
 				set = function(o, server)
-					ucic2:set(application, node_id, "main_node", server)
+					ucic:set(appname, node_id, "main_node", server)
 					o.newNodeId = server
 				end
 			}
@@ -165,7 +164,7 @@ do
 					nodes[#nodes + 1] = {
 						log = false,
 						node = node,
-						currentNode = node and ucic2:get_all(application, node) or nil,
+						currentNode = node and ucic:get_all(appname, node) or nil,
 						remarks = node,
 						set = function(o, server)
 							for kk, vv in pairs(CONFIG) do
@@ -185,10 +184,10 @@ do
 					for kk, vv in pairs(CONFIG) do
 						if (vv.remarks == "负载均衡节点列表" .. node_id) then
 							--log("刷新负载均衡节点列表")
-							ucic2:foreach(application, uciType, function(node2)
+							ucic:foreach(appname, "nodes", function(node2)
 								if node2[".name"] == node[".name"] then
 									local index = node2[".index"]
-									ucic2:set_list(application, "@nodes[" .. index .. "]", "balancing_node", vv.new_nodes)
+									ucic:set_list(appname, "@nodes[" .. index .. "]", "balancing_node", vv.new_nodes)
 								end
 							end)
 						end
@@ -214,9 +213,9 @@ do
 end
 
 -- 判断是否过滤节点关键字
-local filter_keyword_mode = ucic2:get(application, "@global_subscribe[0]", "filter_keyword_mode") or "0"
-local filter_keyword_discard_list = ucic2:get(application, "@global_subscribe[0]", "filter_discard_list") or {}
-local filter_keyword_keep_list = ucic2:get(application, "@global_subscribe[0]", "filter_keep_list") or {}
+local filter_keyword_mode = ucic:get(appname, "@global_subscribe[0]", "filter_keyword_mode") or "0"
+local filter_keyword_discard_list = ucic:get(appname, "@global_subscribe[0]", "filter_discard_list") or {}
+local filter_keyword_keep_list = ucic:get(appname, "@global_subscribe[0]", "filter_keep_list") or {}
 local function is_filter_keyword(value)
 	if filter_keyword_mode == "1" then
 		for k,v in ipairs(filter_keyword_discard_list) do
@@ -684,17 +683,17 @@ local function truncate_nodes()
 			if config.currentNode.is_sub and config.currentNode.is_sub == "1" then
 				config.set(config, "nil")
 				if config.id then
-					ucic2:delete(application, config.id)
+					ucic:delete(appname, config.id)
 				end
 			end
 		end
 	end
-	ucic2:foreach(application, uciType, function(node)
+	ucic:foreach(appname, "nodes", function(node)
 		if (node.is_sub or node.hashkey) and node.add_mode ~= '导入' then
-			ucic2:delete(application, node['.name'])
+			ucic:delete(appname, node['.name'])
 		end
 	end)
-	ucic2:commit(application)
+	ucic:commit(appname)
 
 	log('在线订阅节点已全部删除')
 end
@@ -801,7 +800,7 @@ local function select_node(nodes, config)
 	end
 	-- 还不行 随便找一个
 	if not server then
-		server = ucic2:get_all(application, '@' .. uciType .. '[0]')
+		server = ucic:get_all(appname, '@' .. "nodes" .. '[0]')
 		if server then
 			if config.log == nil or config.log == true then
 				log('【' .. config.remarks .. '】' .. '无法找到最匹配的节点，当前已更换为：' .. server.remarks)
@@ -820,28 +819,26 @@ local function update_node(manual)
 		return
 	end
 	-- delete all for subscribe nodes
-	ucic2:foreach(application, uciType, function(node)
+	ucic:foreach(appname, "nodes", function(node)
 		-- 如果是手动导入的节点就不参与删除
 		if manual == 0 and (node.is_sub or node.hashkey) and node.add_mode ~= '导入' then
-			ucic2:delete(application, node['.name'])
+			ucic:delete(appname, node['.name'])
 		end
 	end)
 	for _, v in ipairs(nodeResult) do
 		for _, vv in ipairs(v) do
-			local uuid = api.gen_uuid()
-			local cfgid = ucic2:section(application, uciType, uuid)
-			cfgid = uuid
+			local cfgid = ucic:section(appname, "nodes", api.gen_uuid())
 			for kkk, vvv in pairs(vv) do
-				ucic2:set(application, cfgid, kkk, vvv)
+				ucic:set(appname, cfgid, kkk, vvv)
 			end
 		end
 	end
-	ucic2:commit(application)
+	ucic:commit(appname)
 
 	if next(CONFIG) then
 		local nodes = {}
-		local ucic3 = luci.model.uci.cursor()
-		ucic3:foreach(application, uciType, function(node)
+		local ucic2 = luci.model.uci.cursor()
+		ucic2:foreach(appname, "nodes", function(node)
 			nodes[#nodes + 1] = node
 		end)
 
@@ -872,9 +869,9 @@ local function update_node(manual)
 		end
 		]]--
 
-		ucic2:commit(application)
+		ucic:commit(appname)
 	end
-	luci.sys.call("/etc/init.d/" .. application .. " restart > /dev/null 2>&1 &")
+	luci.sys.call("/etc/init.d/" .. appname .. " restart > /dev/null 2>&1 &")
 end
 
 local function parse_link(raw, remark, manual)
@@ -956,7 +953,7 @@ end
 local execute = function()
 	-- exec
 	do
-		ucic2:foreach(application, "subscribe_list", function(obj)
+		ucic:foreach(appname, "subscribe_list", function(obj)
 			local enabled = obj.enabled or nil
 			if enabled and enabled == "1" then
 				local remark = obj.remark
@@ -973,7 +970,7 @@ end
 
 if arg[1] then
 	if arg[1] == "start" then
-		local count = luci.sys.exec("echo -n $(uci show " .. application .. " | grep @subscribe_list | grep -c \"enabled='1'\")")
+		local count = luci.sys.exec("echo -n $(uci show " .. appname .. " | grep @subscribe_list | grep -c \"enabled='1'\")")
 		if count and tonumber(count) > 0 then
 			log('开始订阅...')
 			xpcall(execute, function(e)
