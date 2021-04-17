@@ -50,6 +50,10 @@ test_proxy() {
 			result=1
 		else
 			result=2
+			ping -c 3 -W 1 223.5.5.5 > /dev/null 2>&1
+			[ $? -eq 0 ] && {
+				result=1
+			}
 		fi
 	fi
 	echo $result
