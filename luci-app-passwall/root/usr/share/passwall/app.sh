@@ -343,7 +343,7 @@ load_config() {
 	if [ "${LOCAL_DNS}" = "default" ]; then
 		DEFAULT_DNS=$(uci show dhcp | grep "@dnsmasq" | grep "\.server=" | awk -F '=' '{print $2}' | sed "s/'//g" | tr ' ' ',')
 		if [ -z "${DEFAULT_DNS}" ]; then
-			DEFAULT_DNS=$(echo -n $(sed -n 's/^nameserver[ \t]*\([^ ]*\)$/\1/p' "${RESOLVFILE}" | grep -v "0.0.0.0" | grep -v "127.0.0.1" | grep -v "^::$" | head -2) | tr ' ' ',')
+			DEFAULT_DNS=$(echo -n $(sed -n 's/^nameserver[ \t]*\([^ ]*\)$/\1/p' "${RESOLVFILE}" | grep -v -E "0.0.0.0|127.0.0.1|::" | head -2) | tr ' ' ',')
 		fi
 		LOCAL_DNS="${DEFAULT_DNS:-119.29.29.29}"
 		IS_DEFAULT_DNS=1
