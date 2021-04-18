@@ -98,6 +98,7 @@ protocol:value("socks", "Socks")
 protocol:value("shadowsocks", "Shadowsocks")
 protocol:value("trojan", "Trojan")
 protocol:value("mtproto", "MTProto")
+protocol:value("dokodemo-door", "dokodemo-door")
 protocol:depends("type", "Xray")
 
 -- Brook协议
@@ -115,7 +116,7 @@ end
 brook_tls = s:option(Flag, "brook_tls", translate("Use TLS"))
 brook_tls:depends("brook_protocol", "wsserver")
 
-port = s:option(Value, "port", translate("Port"))
+port = s:option(Value, "port", translate("Listen Port"))
 port.datatype = "port"
 port.rmempty = false
 
@@ -154,6 +155,19 @@ end
 function mtproto_password.write(self, section, value)
 	m:set(section, "password", value)
 end
+
+d_protocol = s:option(ListValue, "d_protocol", translate("Destination protocol"))
+d_protocol:value("tcp", "TCP")
+d_protocol:value("udp", "UDP")
+d_protocol:value("tcp,udp", "TCP,UDP")
+d_protocol:depends({ type = "Xray", protocol = "dokodemo-door" })
+
+d_address = s:option(Value, "d_address", translate("Destination address"))
+d_address:depends({ type = "Xray", protocol = "dokodemo-door" })
+
+d_port = s:option(Value, "d_port", translate("Destination port"))
+d_port.datatype = "port"
+d_port:depends({ type = "Xray", protocol = "dokodemo-door" })
 
 decryption = s:option(Value, "decryption", translate("Encrypt Method"))
 decryption.default = "none"
@@ -540,8 +554,12 @@ bind_local:depends("type", "Xray")
 
 accept_lan = s:option(Flag, "accept_lan", translate("Accept LAN Access"), translate("When selected, it can accessed lan , this will not be safe!"))
 accept_lan.default = "0"
-accept_lan.rmempty = false
-accept_lan:depends("type", "Xray")
+accept_lan:depends({ type = "Xray", protocol = "vmess" })
+accept_lan:depends({ type = "Xray", protocol = "vless" })
+accept_lan:depends({ type = "Xray", protocol = "http" })
+accept_lan:depends({ type = "Xray", protocol = "socks" })
+accept_lan:depends({ type = "Xray", protocol = "shadowsocks" })
+accept_lan:depends({ type = "Xray", protocol = "trojan" })
 
 local nodes_table = {}
 for k, e in ipairs(api.get_valid_nodes()) do
