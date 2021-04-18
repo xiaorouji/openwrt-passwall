@@ -72,6 +72,12 @@ function gen_config(user)
                 }
             }
         }
+    elseif user.protocol == "dokodemo-door" then
+        settings = {
+            network = user.d_protocol,
+            address = user.d_address,
+            port = tonumber(user.d_port)
+        }
     end
 
     if user.fallback and user.fallback == "1" then
