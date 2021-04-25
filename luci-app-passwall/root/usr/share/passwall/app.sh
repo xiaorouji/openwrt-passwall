@@ -11,7 +11,6 @@ TMP_BIN_PATH=$TMP_PATH/bin
 TMP_ID_PATH=$TMP_PATH/id
 TMP_PORT_PATH=$TMP_PATH/port
 TMP_ROUTE_PATH=$TMP_PATH/route
-LOCK_FILE=/var/lock/$CONFIG.lock
 LOG_FILE=/var/log/$CONFIG.log
 APP_PATH=/usr/share/$CONFIG
 RULES_PATH=/usr/share/${CONFIG}/rules
@@ -45,38 +44,6 @@ config_t_get() {
 	local index=${4:-0}
 	local ret=$(uci -q get "${CONFIG}.@${1}[${index}].${2}" 2>/dev/null)
 	echo "${ret:=${3}}"
-}
-
-set_lock(){
-	exec 1000>"$LOCK_FILE"
-	flock -x 1000
-}
-
-trap 'rm -f "$LOCK_FILE"; exit $?' INT TERM EXIT
-
-unlock() {
-    failcount=1
-    while [ "$failcount" -le 10 ]; do
-		if [ -f "$LOCK_FILE" ]; then
-			let "failcount++"
-			sleep 1s
-			[ "$failcount" -ge 10 ] && unset_lock
-		else
-			break
-		fi
-	done
-}
-
-unset_lock(){
-	flock -u 1000
-	rm -rf "$LOCK_FILE"
-}
-
-_exit()
-{
-    local rc=$1
-    unset_lock
-    exit ${rc}
 }
 
 get_enabled_anonymous_secs() {
@@ -1118,8 +1085,6 @@ boot() {
 }
 
 start() {
-	#加锁防止并发开启服务
-	set_lock
 	load_config
 	start_haproxy
 	[ "$SOCKS_ENABLED" = "1" ] && {
@@ -1135,12 +1100,9 @@ start() {
 	}
 	start_crontab
 	echolog "运行完成！\n"
-	unset_lock
 }
 
 stop() {
-	unlock
-	set_lock
 	clean_log
 	source $APP_PATH/iptables.sh stop
 	delete_ip2route
@@ -1153,7 +1115,6 @@ stop() {
 	source $APP_PATH/helper_${DNS_N}.sh del
 	source $APP_PATH/helper_${DNS_N}.sh restart
 	echolog "清空并关闭相关程序和缓存完成。"
-	unset_lock
 }
 
 arg1=$1
