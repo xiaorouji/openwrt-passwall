@@ -20,8 +20,8 @@ Subject: [PATCH] Remove concurrency limit
  #include "base/bind.h"
 @@ -39,7 +38,7 @@ NaiveProxy::NaiveProxy(std::unique_ptr<ServerSocket> listen_socket,
        protocol_(protocol),
-	   listen_user_(listen_user),
-	   listen_pass_(listen_pass),
+       listen_user_(listen_user),
+       listen_pass_(listen_pass),
 -      concurrency_(std::min(4, std::max(1, concurrency))),
 +      concurrency_(concurrency),
        resolver_(resolver),
@@ -33,11 +33,6 @@ Subject: [PATCH] Remove concurrency limit
  
    if (!cmdline.concurrency.empty()) {
      if (!base::StringToInt(cmdline.concurrency, &params->concurrency) ||
--        params->concurrency < 1 || params->concurrency > 4) {
-+        params->concurrency < 1) {
-       std::cerr << "Invalid concurrency" << std::endl;
-       return false;
-     }
 -        params->concurrency < 1 || params->concurrency > 4) {
 +        params->concurrency < 1) {
        std::cerr << "Invalid concurrency" << std::endl;
