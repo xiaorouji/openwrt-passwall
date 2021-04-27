@@ -145,6 +145,9 @@ test_auto_switch() {
 }
 
 start() {
+	if [ "$(pgrep -f $CONFIG/test.sh | wc -l)" -gt 2 ]; then
+		exit 1
+	fi
 	ENABLED=$(config_t_get global enabled 0)
 	[ "$ENABLED" != 1 ] && return 1
 	ENABLED=$(config_t_get auto_switch enable 0)

@@ -3,19 +3,44 @@
 START=99
 STOP=15
 
+APP_FILE=/usr/share/passwall/app.sh
+LOCK_FILE=/var/lock/passwall.lock
+
+lock() {
+	if [ -s ${LOCK_FILE} ]; then
+		SPID=$(cat ${LOCK_FILE})
+		if [ -e /proc/${SPID}/status ]; then
+			#echo "脚本已经在运行，不重复运行，退出."
+			exit 1
+		fi
+		cat /dev/null > ${LOCK_FILE}
+	fi
+	echo $$ > ${LOCK_FILE}
+}
+
+unlock() {
+	cat /dev/null > ${LOCK_FILE}
+}
+
 boot() {
-	/usr/share/passwall/app.sh boot
+	$APP_FILE boot
 }
 
 start() {
-	/usr/share/passwall/app.sh start
+	lock
+	$APP_FILE start
+	unlock
 }
 
 stop() {
-	/usr/share/passwall/app.sh stop
+	lock
+	$APP_FILE stop
+	unlock
 }
 
 restart() {
-	stop
-	start
+	lock
+	$APP_FILE stop
+	$APP_FILE start
+	unlock
 }
