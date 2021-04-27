@@ -348,11 +348,8 @@ run_socks() {
 		ln_start_bin "$(first_type $(config_t_get global_app brook_file) brook)" "brook_SOCKS_${flag}" $log_file "$protocol" --socks5 "$bind:$socks_port" -s "$server_host:$port" -p "$(config_n_get $node password)"
 	;;
 	ss|ssr)
-		ss_program="$(first_type ${type}local ${type}-local)"
-		ss_extra_arg="-u"
-		[ "$(printf '%s' "$ss_program" | awk -F '/' '{print $NF}')" = "${type}local" ] && unset ss_extra_arg
 		lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $socks_port -server_host $server_host -server_port $port -protocol socks -mode tcp_and_udp > $config_file
-		ln_start_bin "$ss_program" "${type}-local" $log_file -c "$config_file" -v $ss_extra_arg
+		ln_start_bin "$(first_type ${type}local ${type}-local)" "${type}-local" $log_file -c "$config_file" -v
 	;;
 	esac
 
@@ -429,12 +426,13 @@ run_redir() {
 				ln_start_bin "$(first_type $(config_t_get global_app brook_file) brook)" "brook_udp" $log_file tproxy -l ":$local_port" -s "$server_host:$port" -p "$(config_n_get $node password)"
 			fi
 		;;
-		ss|ssr)
-			ss_program="$(first_type ${type}local ${type}-redir)"
-			ss_extra_arg="-U"
-			[ "$(printf '%s' "$ss_program" | awk -F '/' '{print $NF}')" = "${type}local" ] && unset ss_extra_arg
+		ssr)
+			lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port > $config_file
+			ln_start_bin "$(first_type ssr-redir)" "ssr-redir" $log_file -c "$config_file" -v -U
+		;;
+		ss)
 			lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -protocol redir -mode udp_only > $config_file
-			ln_start_bin "$ss_program" "${type}-redir" $log_file -c "$config_file" -v $ss_extra_arg
+			ln_start_bin "$(first_type sslocal ss-redir)" "ss-redir" $log_file -c "$config_file" -v
 		;;
 		esac
 	;;
@@ -481,8 +479,8 @@ run_redir() {
 				config_file=$(echo $config_file | sed "s/TCP/TCP_HTTP_$tcp_node_http_id/g")
 			}
 			[ "$TCP_UDP" = "1" ] && {
-				proto="-proto tcp,udp"
 				config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
+				proto="-proto tcp,udp"
 				UDP_REDIR_PORT=$TCP_REDIR_PORT
 				UDP_NODE="nil"
 			}
@@ -534,24 +532,34 @@ run_redir() {
 				ln_start_bin "$(first_type $(config_t_get global_app brook_file) brook)" "brook_tcp" $log_file tproxy -l ":$local_port" -s "$server_ip:$port" -p "$(config_n_get $node password)"
 			fi
 		;;
-		ss|ssr)
-			ss_program="$(first_type ${type}local ${type}-redir)"
+		ssr)
+			if [ "$kcptun_use" == "1" ]; then
+				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -server_host "127.0.0.1" -server_port $KCPTUN_REDIR_PORT > $config_file
+			else
+				[ "$TCP_UDP" = "1" ] && {
+					config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
+					UDP_REDIR_PORT=$TCP_REDIR_PORT
+					UDP_NODE="nil"
+					extra_param="-u"
+				}
+				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port > $config_file
+			fi
+			ln_start_bin "$(first_type ssr-redir)" "ssr-redir" $log_file -c "$config_file" -v $extra_param
+		;;
+		ss)
 			lua_mode_arg="-mode tcp_only"
 			if [ "$kcptun_use" == "1" ]; then
 				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -server_host "127.0.0.1" -server_port $KCPTUN_REDIR_PORT -protocol redir $lua_mode_arg > $config_file
 			else
 				[ "$TCP_UDP" = "1" ] && {
+					config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
 					UDP_REDIR_PORT=$TCP_REDIR_PORT
 					UDP_NODE="nil"
-					ss_extra_arg="$ss_extra_arg -u"
-					[ "$(printf '%s' "$ss_program" | awk -F '/' '{print $NF}')" = "${type}local" ] && {
-						unset ss_extra_arg
-						lua_mode_arg="-mode tcp_and_udp"
-					}
+					lua_mode_arg="-mode tcp_and_udp"
 				}
 				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -protocol redir $lua_mode_arg > $config_file
 			fi
-			ln_start_bin "$ss_program" "${type}-redir" $log_file -c "$config_file" -v $ss_extra_arg
+			ln_start_bin "$(first_type sslocal ss-redir)" "ss-redir" $log_file -c "$config_file" -v
 		;;
 		esac
 		if [ -n "$_socks_flag" ]; then
