@@ -1,6 +1,6 @@
 // Config file of Xray. This file follows standard JSON format, with comments support.
 // Uncomment entries below to satisfy your needs. Also read our manual for more detail at
-// https://www.v2fly.org/en_US/config/overview.html and https://xray.sh/en/config/
+// https://xtls.github.io/en/config/
 {
   "log": {
     // By default, Xray writes access log to stdout.
