@@ -5,7 +5,7 @@ local util = require "luci.util"
 local i18n = require "luci.i18n"
 local api = require "luci.model.cbi.passwall.api.api"
 
-local kcptun_api = "https://api.github.com/repos/xtaci/kcptun/releases/latest"
+local kcptun_api = "https://api.github.com/repos/xtaci/kcptun/releases?per_page=1"
 
 function to_check(arch)
     local app_path = api.get_kcptun_path() or ""
@@ -27,6 +27,10 @@ function to_check(arch)
     end
 
     local json = api.get_api_json(kcptun_api)
+
+    if #json > 0 then
+        json = json[1]
+    end
 
     if json.tag_name == nil then
         return {
