@@ -5,7 +5,7 @@ local util = require "luci.util"
 local i18n = require "luci.i18n"
 local api = require "luci.model.cbi.passwall.api.api"
 
-local xray_api = "https://api.github.com/repos/XTLS/Xray-core/releases/latest"
+local xray_api = "https://api.github.com/repos/XTLS/Xray-core/releases?per_page=1"
 local is_armv7 = false
 
 function to_check(arch)
@@ -19,7 +19,6 @@ function to_check(arch)
     if not arch or arch == "" then arch = api.auto_get_arch() end
 
     local file_tree, sub_version = api.get_file_info(arch)
-    if sub_version == "7" then is_armv7 = true end
 
     if file_tree == "" then
         return {
@@ -32,8 +31,13 @@ function to_check(arch)
     if file_tree == "386" then file_tree = "32" end
     if file_tree == "mipsle" then file_tree = "mips32le" end
     if file_tree == "mips" then file_tree = "mips32" end
+    if file_tree == "arm" then file_tree = "arm32" end
 
     local json = api.get_api_json(xray_api)
+
+    if #json > 0 then
+        json = json[1]
+    end
 
     if json.tag_name == nil then
         return {
@@ -43,14 +47,14 @@ function to_check(arch)
     end
 
     local now_version = api.get_xray_version()
-    local remote_version = json.tag_name:match("[^v]+")
-    local needs_update = api.compare_versions(now_version, "<", remote_version)
+    local remote_version = json.tag_name
+    local needs_update = api.compare_versions(now_version:match("[^v]+"), "<", remote_version:match("[^v]+"))
     local html_url, download_url
 
     if needs_update then
         html_url = json.html_url
         for _, v in ipairs(json.assets) do
-            if v.name and v.name:match("linux%-" .. file_tree) then
+            if v.name and v.name:match("linux%-" .. file_tree .. (sub_version ~= "" and ".+" .. sub_version or "")) then
                 download_url = v.browser_download_url
                 break
             end
@@ -153,13 +157,9 @@ function to_move(file)
         return {code = 1, error = i18n.translate("Client file is required.")}
     end
 
-    if not arch or arch == "" then arch = api.auto_get_arch() end
-    local file_tree, sub_version = api.get_file_info(arch)
-    local t = ""
     sys.call("/etc/init.d/passwall stop")
     local result = nil
-    if sub_version and sub_version == "7" then t = "_armv7" end
-    result = api.exec("/bin/mv", { "-f", file .. "/xray" .. t, app_path }, nil, api.command_timeout) == 0
+    result = api.exec("/bin/mv", { "-f", file .. "/xray", app_path }, nil, api.command_timeout) == 0
     sys.call("/bin/rm -rf /tmp/xray_extract.*")
     if not result or not fs.access(app_path) then
         return {

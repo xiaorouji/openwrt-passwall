@@ -5,7 +5,7 @@ local util = require "luci.util"
 local i18n = require "luci.i18n"
 local api = require "luci.model.cbi.passwall.api.api"
 
-local trojan_go_api = "https://api.github.com/repos/peter-tank/trojan-go/releases/latest"
+local trojan_go_api = "https://api.github.com/repos/p4gefau1t/trojan-go/releases?per_page=1"
 
 function to_check(arch)
     local app_path = api.get_trojan_go_path() or ""
@@ -36,7 +36,11 @@ function to_check(arch)
 
     local json = api.get_api_json(trojan_go_api)
 
-    if json == nil or json.tag_name == nil then
+    if #json > 0 then
+        json = json[1]
+    end
+
+    if json.tag_name == nil then
         return {
             code = 1,
             error = i18n.translate("Get remote version info failed.")
@@ -44,8 +48,8 @@ function to_check(arch)
     end
 
     local now_version = api.get_trojan_go_version()
-    local remote_version = json.tag_name:match("[^v]+")
-    local needs_update = api.compare_versions(now_version, "<", remote_version)
+    local remote_version = json.tag_name
+    local needs_update = api.compare_versions(now_version:match("[^v]+"), "<", remote_version:match("[^v]+"))
     local html_url, download_url
 
     if needs_update then

@@ -5,7 +5,7 @@ local util = require "luci.util"
 local i18n = require "luci.i18n"
 local api = require "luci.model.cbi.passwall.api.api"
 
-local brook_api = "https://api.github.com/repos/txthinking/brook/releases/latest"
+local brook_api = "https://api.github.com/repos/txthinking/brook/releases?per_page=1"
 
 function to_check(arch)
     local app_path = api.get_brook_path() or ""
@@ -26,9 +26,11 @@ function to_check(arch)
         }
     end
 
-    file_tree = "_linux_" .. file_tree
-
     local json = api.get_api_json(brook_api)
+
+    if #json > 0 then
+        json = json[1]
+    end
 
     if json.tag_name == nil then
         return {
@@ -38,14 +40,14 @@ function to_check(arch)
     end
 
     local now_version = api.get_brook_version()
-    local remote_version = json.tag_name:match("[^v]+")
-    local needs_update = api.compare_versions(now_version, "<", remote_version)
+    local remote_version = json.tag_name
+    local needs_update = api.compare_versions(now_version:match("[^v]+"), "<", remote_version:match("[^v]+"))
     local html_url, download_url
 
     if needs_update then
         html_url = json.html_url
         for _, v in ipairs(json.assets) do
-            if v.name and v.name:match(file_tree .. sub_version) then
+            if v.name and v.name:match("linux_" .. file_tree .. sub_version) then
                 download_url = v.browser_download_url
                 break
             end
