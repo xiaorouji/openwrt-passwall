@@ -262,6 +262,18 @@ msgstr "可以使用负载均衡实现故障切换功能。"
 msgid "Restore the default configuration method. Input example in the address bar:"
 msgstr "恢复默认配置方法，地址栏输入例："
 
+msgid "Hide menu method, input example in the address bar:"
+msgstr "隐藏菜单方法，地址栏输入例："
+
+msgid "After the hidden to the display, input example in the address bar:"
+msgstr "当你隐藏后想再次显示，地址栏输入例："
+
+msgid "Are you sure to reset?"
+msgstr "你确定要恢复吗？"
+
+msgid "Are you sure to hide?"
+msgstr "你确定要隐藏吗？"
+
 msgid "DNS Export Of Multi WAN"
 msgstr "国内DNS指定解析出口"
 
@@ -532,6 +544,12 @@ msgstr "简洁显示节点"
 msgid "Show server address and port"
 msgstr "显示服务器地址和端口"
 
+msgid "Node num"
+msgstr "节点数量"
+
+msgid "Self add"
+msgstr "自添"
+
 msgid "Apply"
 msgstr "应用"
 
@@ -609,6 +627,12 @@ msgstr "默认"
 
 msgid "Close"
 msgstr "关闭"
+
+msgid "Hijacking ICMP (PING)"
+msgstr "劫持ICMP (PING)"
+
+msgid "TCP Proxy Way"
+msgstr "TCP代理方式"
 
 msgid "Proxy Settings"
 msgstr "代理配置"
@@ -1101,12 +1125,6 @@ msgstr "显示节点检测"
 
 msgid "Show Show IP111"
 msgstr "显示IP111"
-
-msgid "Hide menu method, input example in the address bar:"
-msgstr "隐藏菜单方法，地址栏输入例："
-
-msgid "After the hidden to the display, input example in the address bar:"
-msgstr "当你隐藏后想再次显示，地址栏输入例："
 
 msgid "The MTProto protocol must be 32 characters and can only contain characters from 0 to 9 and a to f."
 msgstr "MTProto 协议必须为 32 个字符，仅可包含 0 到 9 和 a 到 f 之间的字符。"

@@ -239,14 +239,23 @@ local status = api.uci_get_type("global_other", "status", "")
 		btn.value = '<%:Check...%>';
 		XHR.get('<%=api.url("check_port")%>', null,
 			function(x, rv) {
-				var s = document.getElementById('_node_status');
-				if (s) {
-					s.innerHTML = rv.ret;
+				if (x && x.status == 200) {
+					var str = '<br />';
+					for (var i = 0; i < rv.length; i++) {
+						var obj = rv[i];
+						if (obj.flag) {
+							str += '<font color="green">' + obj.remark + '   OK.</font>';
+						} else {
+							str += '<font color="red">' + obj.remark + '   Error.</font>';
+						}
+						str += '<br />';
+					}
+					document.getElementById('_node_status').innerHTML = str;
 					var clear_btn = document.getElementById('clear_check_port_btn');
 					clear_btn.style.display = "inline-block";
+					btn.disabled = false;
+					btn.value = '<%:Check%>';
 				}
-				btn.disabled = false;
-				btn.value = '<%:Check%>';
 			}
 		);
 		return false;

@@ -52,8 +52,7 @@ do
 	[ -f "$TMP_ID_PATH/UDP" ] && {
 		UDP_NODE=$(cat $TMP_ID_PATH/UDP)
 		if [ "$UDP_NODE" != "nil" ]; then
-			[ "$UDP_NODE" == "tcp" ] && continue
-			[ "$UDP_NODE" == "tcp_" ] && UDP_NODE=$TCP_NODE
+			[ "$UDP_NODE" == "tcp" ] && UDP_NODE=$TCP_NODE
 			if ! pgrep -af "$TMP_BIN_PATH.*(udp|UDP)" > /dev/null 2>&1; then
 				/etc/init.d/$CONFIG restart
 				exit 0

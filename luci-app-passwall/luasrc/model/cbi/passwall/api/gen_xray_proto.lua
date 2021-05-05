@@ -4,12 +4,7 @@ local inbounds = {}
 local outbounds = {}
 local routing = nil
 
-local myarg = {
-    "-local_proto", "-local_address", "-local_port", "-server_proto", "-server_address", "-server_port", "-server_username", "-server_password"
-}
-
-local var = api.get_args(arg, myarg)
-
+local var = api.get_args(arg)
 local local_proto = var["-local_proto"]
 local local_address = var["-local_address"]
 local local_port = var["-local_port"]
