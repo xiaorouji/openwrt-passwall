@@ -21,17 +21,17 @@ function index()
 	entry({"admin", "services", appname, "hide"}, call("hide_menu")).leaf = true
 	if not nixio.fs.access("/etc/config/passwall") then return end
 	if nixio.fs.access("/etc/config/passwall_show") then
-		entry({"admin", "services", appname}, alias("admin", "services", appname, "settings"), _("Pass Wall"), 1).dependent = true
+		entry({"admin", "services", appname}, alias("admin", "services", appname, "settings"), _("Pass Wall"), -1).dependent = true
 	end
 	--[[ Client ]]
 	entry({"admin", "services", appname, "settings"}, cbi(appname .. "/client/global"), _("Basic Settings"), 1).dependent = true
 	entry({"admin", "services", appname, "node_list"}, cbi(appname .. "/client/node_list"), _("Node List"), 2).dependent = true
-	entry({"admin", "services", appname, "auto_switch"}, cbi(appname .. "/client/auto_switch"), _("Auto Switch"), 3).leaf = true
+	entry({"admin", "services", appname, "node_subscribe"}, cbi(appname .. "/client/node_subscribe"), _("Node Subscribe"), 3).dependent = true
+	entry({"admin", "services", appname, "auto_switch"}, cbi(appname .. "/client/auto_switch"), _("Auto Switch"), 4).leaf = true
 	entry({"admin", "services", appname, "other"}, cbi(appname .. "/client/other", {autoapply = true}), _("Other Settings"), 92).leaf = true
 	if nixio.fs.access("/usr/sbin/haproxy") then
 		entry({"admin", "services", appname, "haproxy"}, cbi(appname .. "/client/haproxy"), _("Load Balancing"), 93).leaf = true
 	end
-	entry({"admin", "services", appname, "node_subscribe"}, cbi(appname .. "/client/node_subscribe"), _("Node Subscribe"), 94).dependent = true
 	entry({"admin", "services", appname, "app_update"}, cbi(appname .. "/client/app_update"), _("App Update"), 95).leaf = true
 	entry({"admin", "services", appname, "rule"}, cbi(appname .. "/client/rule"), _("Rule Manage"), 96).leaf = true
 	entry({"admin", "services", appname, "rule_list"}, cbi(appname .. "/client/rule_list"), _("Rule List Manage"), 97).leaf = true
@@ -267,34 +267,36 @@ function delete_select_nodes()
 end
 
 function check_port()
-	local node_name = ""
-
-	local retstring = "<br />"
-	retstring = retstring .. "<font color='green'>检测端口连通性，不支持UDP检测</font><br />"
+	function socket_connect(type, address, port)
+		local socket = nixio.socket(type, "stream")
+		socket:setopt("socket", "rcvtimeo", 3)
+		socket:setopt("socket", "sndtimeo", 3)
+		local ret = socket:connect(address, port)
+		if socket then socket:close() end
+		if tostring(ret) == "true" then
+			return true
+		end
+		return false
+	end
+	local result = {}
 	ucic:foreach(appname, "nodes", function(s)
-		local ret = ""
-		local tcp_socket
 		if (s.use_kcp and s.use_kcp == "1" and s.kcp_port) or (s.transport and s.transport == "mkcp" and s.port) then
 		else
 			local type = s.type
 			if type and s.address and s.port and s.remarks then
-				node_name = "%s：[%s] %s:%s" % {s.type, s.remarks, s.address, s.port}
-				tcp_socket = nixio.socket(api.get_ip_type(s.address) == "6" and "inet6" or "inet", "stream")
-				tcp_socket:setopt("socket", "rcvtimeo", 3)
-				tcp_socket:setopt("socket", "sndtimeo", 3)
-				ret = tcp_socket:connect(s.address, s.port)
-				if tostring(ret) == "true" then
-					retstring = retstring .. "<font color='green'>" .. node_name .. "   OK.</font><br />"
-				else
-					retstring = retstring .. "<font color='red'>" .. node_name .. "   Error.</font><br />"
+				local ip_type = api.get_ip_type(s.address)
+				local o = {}
+				o.remark = "%s：[%s] %s:%s" % {s.type, s.remarks, ip_type == "6" and '[' .. s.address .. ']' or s.address, s.port}
+				o.flag = socket_connect(ip_type == "6" and "inet6" or "inet", s.address, s.port)
+				if not o.flag and ip_type == "" then
+					o.flag = socket_connect("inet6", s.address, s.port)
 				end
-				ret = ""
+				result[#result + 1] = o
 			end
 		end
-		if tcp_socket then tcp_socket:close() end
 	end)
 	luci.http.prepare_content("application/json")
-	luci.http.write_json({ret = retstring})
+	luci.http.write_json(result)
 end
 
 function update_rules()

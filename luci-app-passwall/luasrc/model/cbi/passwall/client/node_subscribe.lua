@@ -77,6 +77,19 @@ o = s:option(Value, "remark", translate("Subscribe Remark"))
 o.width = "auto"
 o.rmempty = false
 
+o = s:option(DummyValue, "_node_count")
+o.rawhtml = true
+o.cfgvalue = function(t, n)
+    local remark = m:get(n, "remark") or ""
+    local num = 0
+    m.uci:foreach(appname, "nodes", function(s)
+        if s["add_from"] ~= "" and s["add_from"] == remark then
+            num = num + 1
+        end
+    end)
+    return string.format("<span title='%s' style='color:red'>%s</span>", remark .. " " .. translate("Node num") .. ": " .. num, num)
+end
+
 o = s:option(Value, "url", translate("Subscribe URL"))
 o.width = "auto"
 o.rmempty = false

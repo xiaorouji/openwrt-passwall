@@ -37,21 +37,40 @@ function is_exist(table, value)
     return false
 end
 
-function get_args(arg, myarg)
+function repeat_exist(table, value)
+    local count = 0
+    for index, k in ipairs(table) do
+        if k == value then
+            count = count + 1
+        end
+    end
+    if count > 1 then
+        return true
+    end
+    return false
+end
+
+function get_args(arg)
     local var = {}
     for i, arg_k in pairs(arg) do
         if i > 0 then
-            if is_exist(myarg, arg_k) == true then
-                local v = arg[i + 1]
-                if v then
-                    if is_exist(myarg, v) == false then
-                        var[arg_k] = v
-                    end
+            local v = arg[i + 1]
+            if v then
+                if repeat_exist(arg, v) == false then
+                    var[arg_k] = v
                 end
             end
         end
     end
     return var
+end
+
+function strToTable(str)
+    if str == nil or type(str) ~= "string" then
+        return {}
+    end
+    
+    return loadstring("return " .. str)()
 end
 
 function is_normal_node(e)

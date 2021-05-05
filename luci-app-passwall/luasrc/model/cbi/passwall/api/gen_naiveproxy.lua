@@ -2,12 +2,7 @@ local api = require "luci.model.cbi.passwall.api.api"
 local ucursor = require "luci.model.uci".cursor()
 local jsonc = require "luci.jsonc"
 
-local myarg = {
-    "-node", "-run_type", "-local_addr", "-local_port", "-server_host", "-server_port"
-}
-
-local var = api.get_args(arg, myarg)
-
+local var = api.get_args(arg)
 local node_section = var["-node"]
 if not node_section then
     print("-node 不能为空")

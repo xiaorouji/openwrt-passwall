@@ -161,6 +161,20 @@ add() {
 			done
 			[ "${DNS_MODE}" != "fake_ip" ] && echolog "  - [$?]Xray分流规则(shuntlist)：${fwd_dns:-默认}"
 		}
+		
+		count_hosts_str=
+		[ -f "${RULES_PATH}/direct_host" ] && direct_hosts_str="$(echo -n $(cat ${RULES_PATH}/direct_host) | sed "s/ /|/g")"
+		[ -f "${RULES_PATH}/proxy_host" ] && proxy_hosts_str="$(echo -n $(cat ${RULES_PATH}/proxy_host) | sed "s/ /|/g")"
+		[ -n "$direct_hosts_str" ] && {
+			tmp="${direct_hosts_str}"
+			[ -n "$count_hosts_str" ] && tmp="${count_hosts_str}|${direct_hosts_str}"
+			count_hosts_str="$tmp"
+		}
+		[ -n "$proxy_hosts_str" ] && {
+			tmp="${proxy_hosts_str}"
+			[ -n "$count_hosts_str" ] && tmp="${count_hosts_str}|${proxy_hosts_str}"
+			count_hosts_str="$tmp"
+		}
 
 		#如果没有使用回国模式
 		if [ -z "${returnhome}" ]; then

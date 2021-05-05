@@ -20,7 +20,7 @@ TUN_DNS="127.0.0.1#${DNS_PORT}"
 IS_DEFAULT_DNS=0
 LOCAL_DNS=
 DEFAULT_DNS=
-NO_PROXY=
+NO_PROXY=0
 PROXY_IPV6=0
 use_tcp_node_resolve_dns=0
 use_udp_node_resolve_dns=0
@@ -219,55 +219,45 @@ ln_start_bin() {
 	${file_func:-echolog "  - ${ln_name}"} "$@" >${output} 2>&1 &
 }
 
+lua_api() {
+	local func=${1}
+	[ -z "${func}" ] && {
+		echo "nil"
+		return
+	}
+	echo $(lua -e "local api = require 'luci.model.cbi.passwall.api.api' print(api.${func})")
+}
+
+# 必用变量
 ENABLED=$(config_t_get global enabled 0)
 SOCKS_ENABLED=$(config_t_get global socks_enabled 0)
-
 TCP_REDIR_PORT=1041
 TCP_NODE=$(config_t_get global tcp_node nil)
-
 UDP_REDIR_PORT=1051
 UDP_NODE=$(config_t_get global udp_node nil)
-
+TCP_UDP=0
 [ "$UDP_NODE" == "tcp" ] && {
 	UDP_NODE=$TCP_NODE
 	TCP_UDP=1
 }
-
-TCP_REDIR_PORTS=$(config_t_get global_forwarding tcp_redir_ports '80,443')
-UDP_REDIR_PORTS=$(config_t_get global_forwarding udp_redir_ports '1:65535')
-TCP_NO_REDIR_PORTS=$(config_t_get global_forwarding tcp_no_redir_ports 'disable')
-UDP_NO_REDIR_PORTS=$(config_t_get global_forwarding udp_no_redir_ports 'disable')
+[ "$ENABLED" != 1 ] && NO_PROXY=1
+[ "$TCP_NODE" == "nil" -a "$UDP_NODE" == "nil" ] && NO_PROXY=1
+tcp_proxy_way=$(config_t_get global_forwarding tcp_proxy_way default)
 KCPTUN_REDIR_PORT=$(config_t_get global_forwarding kcptun_port 12948)
-TCP_PROXY_MODE=$(config_t_get global tcp_proxy_mode chnroute)
-UDP_PROXY_MODE=$(config_t_get global udp_proxy_mode chnroute)
-LOCALHOST_TCP_PROXY_MODE=$(config_t_get global localhost_tcp_proxy_mode default)
-LOCALHOST_UDP_PROXY_MODE=$(config_t_get global localhost_udp_proxy_mode default)
-[ "$LOCALHOST_TCP_PROXY_MODE" == "default" ] && LOCALHOST_TCP_PROXY_MODE=$TCP_PROXY_MODE
-[ "$LOCALHOST_UDP_PROXY_MODE" == "default" ] && LOCALHOST_UDP_PROXY_MODE=$UDP_PROXY_MODE
 RESOLVFILE=/tmp/resolv.conf.d/resolv.conf.auto
 [ -f "${RESOLVFILE}" ] && [ -s "${RESOLVFILE}" ] || RESOLVFILE=/tmp/resolv.conf.auto
 
 load_config() {
-	[ "$ENABLED" != 1 ] && NO_PROXY=1
-	[ "$TCP_NODE" == "nil" -a "$UDP_NODE" == "nil" ] && {
-		echolog "没有选择节点！"
-		NO_PROXY=1
-	}
-	
-	count_hosts_str=
-	[ -f "${RULES_PATH}/direct_host" ] && direct_hosts_str="$(echo -n $(cat ${RULES_PATH}/direct_host) | sed "s/ /|/g")"
-	[ -f "${RULES_PATH}/proxy_host" ] && proxy_hosts_str="$(echo -n $(cat ${RULES_PATH}/proxy_host) | sed "s/ /|/g")"
-	[ -n "$direct_hosts_str" ] && {
-		tmp="${direct_hosts_str}"
-		[ -n "$count_hosts_str" ] && tmp="${count_hosts_str}|${direct_hosts_str}"
-		count_hosts_str="$tmp"
-	}
-	[ -n "$proxy_hosts_str" ] && {
-		tmp="${proxy_hosts_str}"
-		[ -n "$count_hosts_str" ] && tmp="${count_hosts_str}|${proxy_hosts_str}"
-		count_hosts_str="$tmp"
-	}
-
+	TCP_REDIR_PORTS=$(config_t_get global_forwarding tcp_redir_ports '80,443')
+	UDP_REDIR_PORTS=$(config_t_get global_forwarding udp_redir_ports '1:65535')
+	TCP_NO_REDIR_PORTS=$(config_t_get global_forwarding tcp_no_redir_ports 'disable')
+	UDP_NO_REDIR_PORTS=$(config_t_get global_forwarding udp_no_redir_ports 'disable')
+	TCP_PROXY_MODE=$(config_t_get global tcp_proxy_mode chnroute)
+	UDP_PROXY_MODE=$(config_t_get global udp_proxy_mode chnroute)
+	LOCALHOST_TCP_PROXY_MODE=$(config_t_get global localhost_tcp_proxy_mode default)
+	LOCALHOST_UDP_PROXY_MODE=$(config_t_get global localhost_udp_proxy_mode default)
+	[ "$LOCALHOST_TCP_PROXY_MODE" == "default" ] && LOCALHOST_TCP_PROXY_MODE=$TCP_PROXY_MODE
+	[ "$LOCALHOST_UDP_PROXY_MODE" == "default" ] && LOCALHOST_UDP_PROXY_MODE=$UDP_PROXY_MODE
 	global=$(echo "${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}${UDP_PROXY_MODE}${LOCALHOST_UDP_PROXY_MODE}" | grep "global")
 	returnhome=$(echo "${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}${UDP_PROXY_MODE}${LOCALHOST_UDP_PROXY_MODE}" | grep "returnhome")
 	chnlist=$(echo "${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}${UDP_PROXY_MODE}${LOCALHOST_UDP_PROXY_MODE}" | grep "chnroute")
@@ -283,17 +273,6 @@ load_config() {
 		fi
 		LOCAL_DNS="${DEFAULT_DNS:-119.29.29.29}"
 		IS_DEFAULT_DNS=1
-	fi
-	
-	local ipv6_tproxy=$(config_t_get global_other ipv6_tproxy 0)
-	if [ $ipv6_tproxy == "1" ]; then
-		local NODE_TYPE=$(echo $(config_n_get $TCP_NODE type) | tr 'A-Z' 'a-z')
-		if [ $NODE_TYPE == "xray" ]; then
-			PROXY_IPV6=1
-			echolog "节点类型:$NODE_TYPE，开启实验性IPv6透明代理(TProxy)..."
-		else
-			echolog "节点类型:$NODE_TYPE，暂不支持IPv6透明代理(TProxy)..."
-		fi
 	fi
 	
 	export XRAY_LOCATION_ASSET=$(config_t_get global_rules xray_location_asset "/usr/share/xray/")
@@ -433,7 +412,7 @@ run_redir() {
 			local server_username=$(config_n_get $node username)
 			local server_password=$(config_n_get $node password)
 			eval port=\$UDP_REDIR_PORT
-			ln_start_bin "$(first_type ipt2socks)" "ipt2socks_udp" $log_file -U -l "$port" -b 0.0.0.0 -s "$node_address" -p "$node_port" -R -v
+			ln_start_bin "$(first_type ipt2socks)" "ipt2socks_udp" $log_file -U -l "$port" -b 0.0.0.0 -s "$node_address" -p "$node_port" -v
 		;;
 		xray)
 			local loglevel=$(config_t_get global loglevel "warning")
@@ -474,6 +453,15 @@ run_redir() {
 		esac
 	;;
 	TCP)
+		local ipv6_tproxy=$(config_t_get global_other ipv6_tproxy 0)
+		if [ $ipv6_tproxy == "1" ]; then
+			if [ $type == "xray" ]; then
+				PROXY_IPV6=1
+				echolog "节点类型:$type，开启实验性IPv6透明代理(TProxy)..."
+			else
+				echolog "节点类型:$type，暂不支持IPv6透明代理(TProxy)..."
+			fi
+		fi
 		local kcptun_use=$(config_n_get $node use_kcp 0)
 		if [ "$kcptun_use" == "1" ]; then
 			local kcptun_server_host=$(config_n_get $node kcp_server)
@@ -536,13 +524,14 @@ run_redir() {
 			ln_start_bin "$(first_type $(config_t_get global_app trojan_go_file) trojan-go)" trojan-go $log_file -config "$config_file"
 		;;
 		trojan*)
+			[ "$tcp_proxy_way" = "tproxy" ] && lua_tproxy_arg="-use_tproxy true"
 			[ "$TCP_UDP" = "1" ] && {
 				config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
 				UDP_REDIR_PORT=$TCP_REDIR_PORT
 				UDP_NODE="nil"
 			}
 			local loglevel=$(config_t_get global trojan_loglevel "2")
-			lua $API_GEN_TROJAN -node $node -run_type nat -local_addr "0.0.0.0" -local_port $local_port -loglevel $loglevel > $config_file
+			lua $API_GEN_TROJAN -node $node -run_type nat -local_addr "0.0.0.0" -local_port $local_port -loglevel $loglevel $lua_tproxy_arg > $config_file
 			ln_start_bin "$(first_type ${type})" "${type}" $log_file -c "$config_file"
 		;;
 		naiveproxy)
@@ -567,8 +556,9 @@ run_redir() {
 			ln_start_bin "$(first_type $(config_t_get global_app brook_file) brook)" "brook_tcp" $log_file tproxy -l ":$local_port" -s "${server_ip}:${port}${ws_path}" -p "$(config_n_get $node password)" --doNotRunScripts
 		;;
 		ssr)
+			[ "$tcp_proxy_way" = "tproxy" ] && lua_tproxy_arg="-tcp_tproxy true"
 			if [ "$kcptun_use" == "1" ]; then
-				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -server_host "127.0.0.1" -server_port $KCPTUN_REDIR_PORT > $config_file
+				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -server_host "127.0.0.1" -server_port $KCPTUN_REDIR_PORT $lua_tproxy_arg > $config_file
 			else
 				[ "$TCP_UDP" = "1" ] && {
 					config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
@@ -576,16 +566,17 @@ run_redir() {
 					UDP_NODE="nil"
 					extra_param="-u"
 				}
-				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port > $config_file
+				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port $lua_tproxy_arg > $config_file
 			fi
 			ln_start_bin "$(first_type ssr-redir)" "ssr-redir" $log_file -c "$config_file" -v $extra_param
 		;;
 		ss)
 			local bin="ss-redir"
+			[ "$tcp_proxy_way" = "tproxy" ] && lua_tproxy_arg="-tcp_tproxy true"
 			[ "$(config_n_get $node ss_rust 0)" = "1" ] && bin="sslocal"
 			lua_mode_arg="-mode tcp_only"
 			if [ "$kcptun_use" == "1" ]; then
-				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -server_host "127.0.0.1" -server_port $KCPTUN_REDIR_PORT -protocol redir $lua_mode_arg > $config_file
+				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -server_host "127.0.0.1" -server_port $KCPTUN_REDIR_PORT -protocol redir $lua_mode_arg $lua_tproxy_arg > $config_file
 			else
 				[ "$TCP_UDP" = "1" ] && {
 					config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
@@ -593,7 +584,7 @@ run_redir() {
 					UDP_NODE="nil"
 					lua_mode_arg="-mode tcp_and_udp"
 				}
-				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -protocol redir $lua_mode_arg > $config_file
+				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -protocol redir $lua_mode_arg $lua_tproxy_arg > $config_file
 			fi
 			ln_start_bin "$(first_type $bin ss-redir)" "$bin" $log_file -c "$config_file" -v
 		;;
@@ -601,9 +592,11 @@ run_redir() {
 		if [ -n "$_socks_flag" ]; then
 			local extra_param="-T"
 			[ "$TCP_UDP" = "1" ] && extra_param=""
-			ln_start_bin "$(first_type ipt2socks)" "ipt2socks_tcp" $log_file -l "$local_port" -b 0.0.0.0 -s "$_socks_address" -p "$_socks_port" -R -v $extra_param
+			local _socks_tproxy="-R"
+			[ "$tcp_proxy_way" = "tproxy" ] && _socks_tproxy=""
+			ln_start_bin "$(first_type ipt2socks)" "ipt2socks_tcp" $log_file -l "$local_port" -b 0.0.0.0 -s "$_socks_address" -p "$_socks_port" $_socks_tproxy -v $extra_param
 		fi
-		unset _socks_flag _socks_address _socks_port _socks_username _socks_password
+		unset _socks_flag _socks_address _socks_port _socks_username _socks_password _socks_tproxy
 
 		[ "$type" != "xray" ] && {
 			[ "$tcp_node_socks" = "1" ] && {
@@ -673,7 +666,7 @@ node_switch() {
 
 start_redir() {
 	eval node=\$${1}_NODE
-	[ "$node" != "nil" ] && {
+	if [ "$node" != "nil" ]; then
 		TYPE=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
 		local config_file=$TMP_PATH/${1}.json
 		local log_file=$TMP_PATH/${1}.log
@@ -684,7 +677,10 @@ start_redir() {
 		#eval ip=\$${1}_NODE_IP
 		echo $node > $TMP_ID_PATH/${1}
 		echo $port > $TMP_PORT_PATH/${1}
-	}
+	else
+		[ "$1" = "UDP" ] && [ "$TCP_UDP" = "1" ] && return
+		echolog "${1}节点没有选择或为空，不代理${1}。"
+	fi
 }
 
 start_socks() {
@@ -733,6 +729,10 @@ clean_crontab() {
 
 start_crontab() {
 	clean_crontab
+	[ "$ENABLED" != 1 ] && {
+		/etc/init.d/cron restart
+		return
+	}
 	auto_on=$(config_t_get global_delay auto_on 0)
 	if [ "$auto_on" = "1" ]; then
 		time_off=$(config_t_get global_delay time_off)
@@ -751,11 +751,6 @@ start_crontab() {
 			echolog "配置定时任务：每天 $time_restart 点重启服务。"
 		}
 	fi
-	[ "$NO_PROXY" == 1 ] && {
-		echolog "运行于非代理模式，仅允许服务启停的定时任务。"
-		/etc/init.d/cron restart
-		return
-	}
 
 	autoupdate=$(config_t_get global_rules auto_update)
 	weekupdate=$(config_t_get global_rules week_update)
@@ -777,11 +772,15 @@ start_crontab() {
 		echolog "配置定时任务：自动更新节点订阅。"
 	fi
 
-	start_daemon=$(config_t_get global_delay start_daemon 0)
-	[ "$start_daemon" = "1" ] && $APP_PATH/monitor.sh > /dev/null 2>&1 &
+	if [ "$NO_PROXY" == 0 ]; then
+		start_daemon=$(config_t_get global_delay start_daemon 0)
+		[ "$start_daemon" = "1" ] && $APP_PATH/monitor.sh > /dev/null 2>&1 &
 
-	AUTO_SWITCH_ENABLE=$(config_t_get auto_switch enable 0)
-	[ "$AUTO_SWITCH_ENABLE" = "1" ] && $APP_PATH/test.sh > /dev/null 2>&1 &
+		AUTO_SWITCH_ENABLE=$(config_t_get auto_switch enable 0)
+		[ "$AUTO_SWITCH_ENABLE" = "1" ] && $APP_PATH/test.sh > /dev/null 2>&1 &
+	else
+		echolog "运行于非代理模式，仅允许服务启停的定时任务。"
+	fi
 
 	/etc/init.d/cron restart
 }
