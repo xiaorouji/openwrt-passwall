@@ -92,7 +92,7 @@ local brook_version = api.get_brook_version()
 					if(ckeckDetailElm) {
 						var urlNode = '';
 						if(json.version) {
-							urlNode = '<em style="color:red;">最新版本号：' + json.version + '</em>';
+							urlNode = '<em style="color:red;">' + json.version + '</em>';
 							if(json.url && json.url.html) {
 								urlNode = '<a href="' + json.url.html + '" target="_blank">' + urlNode + '</a>';
 							}
@@ -149,7 +149,7 @@ local brook_version = api.get_brook_version()
 	</label>
 	<div class="cbi-value-field">
 		<div class="cbi-value-description">
-			<span>【 <%=brook_version%> 】</span>
+			<span>【 <%=brook_version ~= "" and brook_version or translate("Null") %> 】</span>
 			<input class="cbi-button cbi-input-apply" type="button" id="_brook-check_btn" onclick="onBtnClick_brook(this);" value="<%:Manually update%>" />
 			<span id="_brook-check_btn-detail"></span>
 		</div>

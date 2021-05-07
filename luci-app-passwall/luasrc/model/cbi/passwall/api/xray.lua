@@ -47,8 +47,8 @@ function to_check(arch)
     end
 
     local now_version = api.get_xray_version()
-    local remote_version = json.tag_name:match("[^v]+")
-    local needs_update = api.compare_versions(now_version, "<", remote_version)
+    local remote_version = json.tag_name
+    local needs_update = api.compare_versions(now_version:match("[^v]+"), "<", remote_version:match("[^v]+"))
     local html_url, download_url
 
     if needs_update then

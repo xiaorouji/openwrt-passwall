@@ -364,8 +364,8 @@ function compare_versions(ver1, comp, ver2)
     if (max < n2) then max = n2 end
 
     for i = 1, max, 1 do
-        local s1 = av1[i] or ""
-        local s2 = av2[i] or ""
+        local s1 = tonumber(av1[i] or 0) or 0
+        local s2 = tonumber(av2[i] or 0) or 0
 
         if comp == "~=" and (s1 ~= s2) then return true end
         if (comp == "<" or comp == "<=") and (s1 < s2) then return true end
@@ -379,10 +379,10 @@ end
 function auto_get_arch()
     local arch = nixio.uname().machine or ""
     if fs.access("/usr/lib/os-release") then
-        LEDE_BOARD = sys.exec("echo -n `grep 'LEDE_BOARD' /usr/lib/os-release | awk -F '[\\042\\047]' '{print $2}'`")
+        LEDE_BOARD = sys.exec("echo -n $(grep 'LEDE_BOARD' /usr/lib/os-release | awk -F '[\\042\\047]' '{print $2}')")
     end
     if fs.access("/etc/openwrt_release") then
-        DISTRIB_TARGET = sys.exec("echo -n `grep 'DISTRIB_TARGET' /etc/openwrt_release | awk -F '[\\042\\047]' '{print $2}'`")
+        DISTRIB_TARGET = sys.exec("echo -n $(grep 'DISTRIB_TARGET' /etc/openwrt_release | awk -F '[\\042\\047]' '{print $2}')")
     end
 
     if arch == "mips" then
