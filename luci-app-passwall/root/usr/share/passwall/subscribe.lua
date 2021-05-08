@@ -332,6 +332,7 @@ local function processData(szType, content, add_mode)
 		result.remarks = info.ps
 		-- result.mux = 1
 		-- result.mux_concurrency = 8
+		info.net = string.lower(info.net)
 		if info.net == 'ws' then
 			result.ws_host = info.host
 			result.ws_path = info.path
@@ -362,6 +363,9 @@ local function processData(szType, content, add_mode)
 			result.quic_guise = info.type
 			result.quic_key = info.key
 			result.quic_security = info.securty
+		end
+		if info.net == 'grpc' then
+			result.grpc_serviceName = info.path
 		end
 		result.transport = info.net
 		if not info.security then result.security = "auto" end
@@ -601,6 +605,7 @@ local function processData(szType, content, add_mode)
 				params[t[1]] = UrlDecode(t[2])
 			end
 
+			params.type = string.lower(params.type)
 			if params.type == 'ws' then
 				result.ws_host = params.host
 				result.ws_path = params.path
@@ -628,6 +633,10 @@ local function processData(szType, content, add_mode)
 				result.quic_guise = params.headerType or "none"
 				result.quic_key = params.key
 				result.quic_security = params.quicSecurity or "none"
+			end
+			if params.type == 'grpc' then
+				if params.path then result.grpc_serviceName = params.path end
+				if params.serviceName then result.grpc_serviceName = params.serviceName end
 			end
 			result.transport = params.type
 			
