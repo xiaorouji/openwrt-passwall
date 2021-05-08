@@ -431,8 +431,10 @@ run_redir() {
 			ln_start_bin "$(first_type ssr-redir)" "ssr-redir" $log_file -c "$config_file" -v -U
 		;;
 		ss)
+			local bin="ss-redir"
+			[ "$(config_n_get $node ss_rust 0)" = "1" ] && bin="sslocal"
 			lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -protocol redir -mode udp_only > $config_file
-			ln_start_bin "$(first_type sslocal ss-redir)" "ss-redir" $log_file -c "$config_file" -v
+			ln_start_bin "$(first_type $bin ss-redir)" "ss-redir" $log_file -c "$config_file" -v
 		;;
 		esac
 	;;
@@ -547,6 +549,8 @@ run_redir() {
 			ln_start_bin "$(first_type ssr-redir)" "ssr-redir" $log_file -c "$config_file" -v $extra_param
 		;;
 		ss)
+			local bin="ss-redir"
+			[ "$(config_n_get $node ss_rust 0)" = "1" ] && bin="sslocal"
 			lua_mode_arg="-mode tcp_only"
 			if [ "$kcptun_use" == "1" ]; then
 				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -server_host "127.0.0.1" -server_port $KCPTUN_REDIR_PORT -protocol redir $lua_mode_arg > $config_file
@@ -559,7 +563,7 @@ run_redir() {
 				}
 				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -protocol redir $lua_mode_arg > $config_file
 			fi
-			ln_start_bin "$(first_type sslocal ss-redir)" "ss-redir" $log_file -c "$config_file" -v
+			ln_start_bin "$(first_type $bin ss-redir)" "ss-redir" $log_file -c "$config_file" -v
 		;;
 		esac
 		if [ -n "$_socks_flag" ]; then
