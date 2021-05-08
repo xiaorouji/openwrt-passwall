@@ -4,11 +4,14 @@ local appname = api.appname
 
 local ss_encrypt_method_list = {
     "rc4-md5", "aes-128-cfb", "aes-192-cfb", "aes-256-cfb", "aes-128-ctr",
-    "aes-192-ctr", "aes-256-ctr", "bf-cfb", "camellia-128-cfb",
-    "camellia-192-cfb", "camellia-256-cfb", "salsa20", "chacha20",
-    "chacha20-ietf", -- aead
+    "aes-192-ctr", "aes-256-ctr", "bf-cfb", "salsa20", "chacha20", "chacha20-ietf",
     "aes-128-gcm", "aes-192-gcm", "aes-256-gcm", "chacha20-ietf-poly1305",
     "xchacha20-ietf-poly1305"
+}
+
+local ss_rust_encrypt_method_list = {
+    "plain", "none",
+    "aes-128-gcm", "aes-256-gcm", "chacha20-ietf-poly1305"
 }
 
 local ssr_encrypt_method_list = {
@@ -80,7 +83,6 @@ if api.is_finded("ssr-redir") then
 end
 if api.is_finded("xray") then
     type:value("Xray", translate("Xray"))
-    type.description = translate("Xray is currently directly compatible with V2ray and used.")
 end
 if api.is_finded("brook") then
     type:value("Brook", translate("Brook"))
@@ -99,6 +101,18 @@ end
 if api.is_finded("naive") then
     type:value("Naiveproxy", translate("NaiveProxy"))
 end
+
+if api.is_finded("sslocal") then
+    ss_rust = s:option(Flag, "ss_rust", translate("Use") .. " Shadowsocks Rust")
+    ss_rust:depends("type", "SS")
+end
+
+xray_tips = s:option(DummyValue, "xray_tips", " ")
+xray_tips.rawhtml = true
+xray_tips.cfgvalue = function(t, n)
+    return string.format('<a style="color: red">%s</a>', translate("Xray is currently directly compatible with V2ray and used."))
+end
+xray_tips:depends("type", "Xray")
 
 protocol = s:option(ListValue, "protocol", translate("Protocol"))
 protocol:value("vmess", translate("Vmess"))
@@ -280,9 +294,9 @@ password:depends({ type = "Xray", protocol = "socks" })
 password:depends({ type = "Xray", protocol = "shadowsocks" })
 password:depends({ type = "Xray", protocol = "trojan" })
 
-ss_encrypt_method = s:option(ListValue, "ss_encrypt_method", translate("Encrypt Method"))
+ss_encrypt_method = s:option(Value, "ss_encrypt_method", translate("Encrypt Method"))
 for a, t in ipairs(ss_encrypt_method_list) do ss_encrypt_method:value(t) end
-ss_encrypt_method:depends("type", "SS")
+ss_encrypt_method:depends({ type = "SS", ss_rust = false })
 function ss_encrypt_method.cfgvalue(self, section)
 	return m:get(section, "method")
 end
@@ -290,7 +304,17 @@ function ss_encrypt_method.write(self, section, value)
 	m:set(section, "method", value)
 end
 
-ssr_encrypt_method = s:option(ListValue, "ssr_encrypt_method", translate("Encrypt Method"))
+ss_rust_encrypt_method = s:option(Value, "ss_rust_encrypt_method", translate("Encrypt Method"))
+for a, t in ipairs(ss_rust_encrypt_method_list) do ss_rust_encrypt_method:value(t) end
+ss_rust_encrypt_method:depends({ type = "SS", ss_rust = true })
+function ss_rust_encrypt_method.cfgvalue(self, section)
+	return m:get(section, "method")
+end
+function ss_rust_encrypt_method.write(self, section, value)
+	m:set(section, "method", value)
+end
+
+ssr_encrypt_method = s:option(Value, "ssr_encrypt_method", translate("Encrypt Method"))
 for a, t in ipairs(ssr_encrypt_method_list) do ssr_encrypt_method:value(t) end
 ssr_encrypt_method:depends("type", "SSR")
 function ssr_encrypt_method.cfgvalue(self, section)
@@ -308,7 +332,7 @@ encryption = s:option(Value, "encryption", translate("Encrypt Method"))
 encryption.default = "none"
 encryption:depends({ type = "Xray", protocol = "vless" })
 
-v_ss_encrypt_method = s:option(ListValue, "v_ss_encrypt_method", translate("Encrypt Method"))
+v_ss_encrypt_method = s:option(Value, "v_ss_encrypt_method", translate("Encrypt Method"))
 for a, t in ipairs(v_ss_encrypt_method_list) do v_ss_encrypt_method:value(t) end
 v_ss_encrypt_method:depends("protocol", "shadowsocks")
 function v_ss_encrypt_method.cfgvalue(self, section)
@@ -318,7 +342,7 @@ function v_ss_encrypt_method.write(self, section, value)
 	m:set(section, "method", value)
 end
 
-ssr_protocol = s:option(ListValue, "ssr_protocol", translate("Protocol"))
+ssr_protocol = s:option(Value, "ssr_protocol", translate("Protocol"))
 for a, t in ipairs(ssr_protocol_list) do ssr_protocol:value(t) end
 ssr_protocol:depends("type", "SSR")
 function ssr_protocol.cfgvalue(self, section)
@@ -331,7 +355,7 @@ end
 protocol_param = s:option(Value, "protocol_param", translate("Protocol_param"))
 protocol_param:depends("type", "SSR")
 
-obfs = s:option(ListValue, "obfs", translate("Obfs"))
+obfs = s:option(Value, "obfs", translate("Obfs"))
 for a, t in ipairs(ssr_obfs_list) do obfs:value(t) end
 obfs:depends("type", "SSR")
 
@@ -355,6 +379,7 @@ tcp_fast_open:depends("type", "Trojan-Go")
 
 ss_plugin = s:option(ListValue, "ss_plugin", translate("plugin"))
 ss_plugin:value("none", translate("none"))
+if api.is_finded("xray-plugin") then ss_plugin:value("xray-plugin") end
 if api.is_finded("v2ray-plugin") then ss_plugin:value("v2ray-plugin") end
 if api.is_finded("obfs-local") then ss_plugin:value("obfs-local") end
 ss_plugin:depends("type", "SS")
@@ -366,6 +391,7 @@ function ss_plugin.write(self, section, value)
 end
 
 ss_plugin_opts = s:option(Value, "ss_plugin_opts", translate("opts"))
+ss_plugin_opts:depends("ss_plugin", "xray-plugin")
 ss_plugin_opts:depends("ss_plugin", "v2ray-plugin")
 ss_plugin_opts:depends("ss_plugin", "obfs-local")
 function ss_plugin_opts.cfgvalue(self, section)
@@ -375,7 +401,7 @@ function ss_plugin_opts.write(self, section, value)
 	m:set(section, "plugin_opts", value)
 end
 
-use_kcp = s:option(Flag, "use_kcp", translate("Use Kcptun"),
+use_kcp = s:option(Flag, "use_kcp", translate("Use") .. "Kcptun",
                    "<span style='color:red'>" .. translate("Please confirm whether the Kcptun is installed. If not, please go to Rule Update download installation.") .. "</span>")
 use_kcp.default = 0
 use_kcp:depends("type", "SS")

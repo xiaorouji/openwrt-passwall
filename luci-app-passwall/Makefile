@@ -7,8 +7,8 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
 PKG_VERSION:=4
-PKG_RELEASE:=21
-PKG_DATE:=20210425
+PKG_RELEASE:=22
+PKG_DATE:=20210505
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
@@ -17,33 +17,33 @@ include $(INCLUDE_DIR)/package.mk
 define Package/$(PKG_NAME)/config
 menu "Configuration"
 	
-config PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks
-	bool "Include Shadowsocks"
+config PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Libev_Client
+	bool "Include Shadowsocks Libev Client"
 	default y
 	select PACKAGE_shadowsocks-libev-ss-redir
 	select PACKAGE_shadowsocks-libev-ss-local
 	
-config PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Server
-	bool "Include Shadowsocks Server"
+config PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Libev_Server
+	bool "Include Shadowsocks Libev Server"
 	default y
 	select PACKAGE_shadowsocks-libev-ss-server
 	
-config PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Rust
-	bool "Include Shadowsocks Rust (AEAD ciphers only)"
+config PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Rust_Client
+	bool "Include Shadowsocks Rust Client"
 	depends on aarch64||arm||i386||mips||mipsel||x86_64
 	default n
 	select PACKAGE_shadowsocks-rust-sslocal
 	
-config PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR
-	bool "Include ShadowsocksR"
+config PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Libev_Client
+	bool "Include ShadowsocksR Libev Client"
 	default y
-	select PACKAGE_shadowsocksr-libev-alt
 	select PACKAGE_shadowsocksr-libev-ssr-local
+	select PACKAGE_shadowsocksr-libev-ssr-redir
 
-config PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Server
-	bool "Include ShadowsocksR Server"
+config PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Libev_Server
+	bool "Include ShadowsocksR Libev Server"
 	default y
-	select PACKAGE_shadowsocksr-libev-server
+	select PACKAGE_shadowsocksr-libev-ssr-server
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_Xray
 	bool "Include Xray"

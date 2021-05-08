@@ -38,7 +38,7 @@ end
 
 s.sortable = true
 -- 简洁模式
-o = s:option(DummyValue, "add_mode", "")
+o = s:option(DummyValue, "add_from", "")
 o.cfgvalue = function(t, n)
     local v = Value.cfgvalue(t, n)
     if v and v ~= '' then

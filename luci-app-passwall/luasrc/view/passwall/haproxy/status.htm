@@ -18,7 +18,7 @@ local console_port = api.uci_get_type("global_haproxy", "console_port", "")
 		});
 		
 	function openwebui(){
-		var url = window.location.host + ":<%=console_port%>";
+		var url = window.location.hostname + ":<%=console_port%>";
 		window.open('http://' + url, 'target', '');
 	}
 //]]></script>

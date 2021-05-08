@@ -201,6 +201,8 @@ local api = require "luci.model.cbi.passwall.api.api"
 				info.type = opt.get("quic_guise").value;
 				info.key = opt.get("quic_key").value;
 				info.securty = opt.get("quic_security").value;
+			} else if (v_transport === "grpc") {
+				info.path = opt.get("grpc_serviceName").value;
 			}
 			if (info.path && info.path != "") {
 				info.path = encodeURI(info.path);
@@ -242,6 +244,10 @@ local api = require "luci.model.cbi.passwall.api.api"
 				params += opt.query("headerType", "quic_guise");
 				params += opt.query("key", "quic_key");
 				params += opt.query("quicSecurity", "quic_security");
+			} else if (v_transport === "grpc") {
+				//不知道是用path还是serviceName，这里先这样吧
+				params += opt.query("path", "grpc_serviceName");
+				params += opt.query("serviceName", "grpc_serviceName");
 			}
 			params += "&type=" + v_transport;
 			
@@ -675,6 +681,7 @@ local api = require "luci.model.cbi.passwall.api.api"
 				}
 				opt.set('tls_serverName', tls_serverName);
 			}
+			ssm.net = ssm.net.toLowerCase();
 			if (ssm.net === "kcp" || ssm.net === "mkcp")
 				ssm.net = "mkcp"
 			opt.set('transport', ssm.net);
@@ -698,6 +705,8 @@ local api = require "luci.model.cbi.passwall.api.api"
 			} else if (ssm.net === "kcp" || ssm.net === "mkcp") {
 				opt.set('mkcp_guise', ssm.type);
 				opt.get('mkcp_guise').dispatchEvent(event);
+			} else if (ssm.net === "grpc") {
+				opt.set('grpc_serviceName', ssm.path);
 			}
 		} else if (ssu[0] === "vless") {
 			opt.set('type', "Xray");
@@ -746,6 +755,7 @@ local api = require "luci.model.cbi.passwall.api.api"
 				}
 			}
 			
+			queryParam.type = queryParam.type.toLowerCase();
 			if (queryParam.type === "kcp" || queryParam.type === "mkcp")
 				queryParam.type = "mkcp"
 			opt.set('transport', queryParam.type);
@@ -771,6 +781,12 @@ local api = require "luci.model.cbi.passwall.api.api"
 			} else if (queryParam.type === "kcp" || queryParam.type === "mkcp") {
 				opt.set('mkcp_guise', queryParam.headerType || "none");
 				opt.get('mkcp_guise').dispatchEvent(event);
+			} else if (queryParam.type === "grpc") {
+				opt.set('grpc_serviceName', (queryParam.serviceName || queryParam.path) || "");
+			}
+			
+			if (m.hash) {
+				opt.set('remarks', decodeURI(m.hash.substr(1)));
 			}
 		} else {
 			s.innerHTML = "<font color='red'><%:Invalid Share URL Format%></font>: " + ssu[0];
