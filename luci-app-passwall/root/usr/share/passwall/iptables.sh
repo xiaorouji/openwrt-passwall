@@ -556,7 +556,7 @@ add_firewall_rule() {
 	$ipt_n -w -A PSW $(dst $IPSET_VPSIPLIST) -j RETURN
 	$ipt_n -w -A PSW $(dst $IPSET_WHITELIST) -j RETURN
 	$ipt_n -w -A PSW -m mark --mark 0xff -j RETURN
-	PR_INDEX=$(RULE_LAST_INDEX "$ipt_n" PREROUTING prerouting_rule)
+	PR_INDEX=$(RULE_LAST_INDEX "$ipt_n" PREROUTING prerouting_rule 1)
 	PR_INDEX=$((PR_INDEX + 1))
 	$ipt_n -w -I PREROUTING $PR_INDEX -p tcp -j PSW
 	unset PR_INDEX
