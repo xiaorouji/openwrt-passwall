@@ -356,6 +356,9 @@ end
 function compare_versions(ver1, comp, ver2)
     local table = table
 
+    if not ver1 then ver1 = "" end
+    if not ver2 then ver2 = "" end
+
     local av1 = util.split(ver1, "[%.%-]", nil, true)
     local av2 = util.split(ver2, "[%.%-]", nil, true)
 
