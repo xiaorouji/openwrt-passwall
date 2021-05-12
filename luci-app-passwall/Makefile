@@ -116,7 +116,7 @@ define Package/$(PKG_NAME)
   PKGARCH:=all
   DEPENDS:=+libmbedtls +iptables-mod-tproxy +ip +ipset +coreutils +coreutils-base64 +coreutils-nohup +luci-lib-jsonc \
   +curl +ca-certificates +resolveip +unzip +dnsmasq-full +tcping +libuci-lua \
-  +ipt2socks +microsocks +shadowsocksr-libev-ssr-check
+  +ipt2socks +microsocks
 endef
 
 define Build/Prepare
