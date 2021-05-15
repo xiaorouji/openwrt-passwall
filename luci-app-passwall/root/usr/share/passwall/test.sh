@@ -28,7 +28,7 @@ test_url() {
 	local timeout=2
 	[ -n "$3" ] && timeout=$3
 	local extra_params=$4
-	status=$(/usr/bin/curl -I -o /dev/null -skL $extra_params --connect-timeout $timeout --retry $try -w %{http_code} "$url")
+	status=$(/usr/bin/curl -I -o /dev/null -skL $extra_params --connect-timeout $timeout --retry $try --retry-all-errors -w %{http_code} "$url")
 	case "$status" in
 		204|\
 		200)
