@@ -18,7 +18,7 @@ Subject: [PATCH] Remove concurrency limit
  #include <utility>
  
  #include "base/bind.h"
-@@ -39,7 +38,7 @@ NaiveProxy::NaiveProxy(std::unique_ptr<ServerSocket> listen_socket,
+@@ -39,7 +38,7 @@ NaiveProxy::NaiveProxy(std::unique_ptr<S
        protocol_(protocol),
        listen_user_(listen_user),
        listen_pass_(listen_pass),
