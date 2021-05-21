@@ -1,6 +1,7 @@
 #!/bin/bash
-# Project ImmortalWrt
-# Use it under GPLv3.
+# SPDX-License-Identifier: GPL-3.0-only
+#
+# Copyright (C) 2021 ImmortalWrt.org
 # --------------------------------------------------------
 # Init build dependencies for naiveproxy
 
@@ -41,26 +42,14 @@ use_allocator_shim=false
 fatal_linker_warnings=false
 treat_warnings_as_errors=false
 
-fieldtrial_testing_like_official_build=true
-
 enable_base_tracing=false
-enable_nacl=false
-enable_print_preview=false
-enable_remoting=false
-use_alsa=false
-use_cups=false
-use_dbus=false
+use_udev=false
+use_aura=false
+use_ozone=false
+use_x11=false
 use_gio=false
 use_platform_icu_alternatives=true
-use_gtk=false
-use_system_libdrm=false
-use_gnome_keyring=false
-use_libpci=false
-use_pangocairo=false
 use_glib=false
-use_pulseaudio=false
-use_udev=false
-use_x11=false
 
 disable_file_support=true
 enable_websockets=false
@@ -69,23 +58,19 @@ use_kerberos=false
 enable_mdns=false
 enable_reporting=false
 include_transport_security_state_preload_list=false
-rtc_use_pipewire=false
 
-use_xkbcommon=false
-use_system_libdrm=false
-use_ozone=true
-ozone_auto_platforms=false
-ozone_platform=\"headless\"
-ozone_platform_headless=true
-
-current_os=\"linux\"
-current_cpu=\"${naive_arch}\"
-sysroot=\"${toolchain_dir}\"
-custom_toolchain=\"//build/toolchain/linux:clang_${naive_arch}_openwrt\""
+target_os=\"openwrt\"
+target_cpu=\"${naive_arch}\"
+target_sysroot=\"${toolchain_dir}\""
 # ldso_path=\"${ldso_path}\""
 [ "${target_arch}" == "arm" ] && {
 	naive_flags="${naive_flags} arm_version=0 arm_cpu=\"${cpu_type}\""
-	[ -n "${cpu_subtype}" ] && { echo "${cpu_subtype}" | grep -q "neon" && neon_flag="arm_use_neon=true" || neon_flag="arm_use_neon=false"; naive_flags="${naive_flags} arm_fpu=\"${cpu_subtype}\" arm_float_abi=\"hard\" ${neon_flag}"; } || naive_flags="${naive_flags} arm_float_abi=\"soft\" arm_use_neon=false"
+	if [ -n "${cpu_subtype}" ]; then
+		echo "${cpu_subtype}" | grep -q "neon" && neon_flag="arm_use_neon=true" || neon_flag="arm_use_neon=false"
+		naive_flags="${naive_flags} arm_fpu=\"${cpu_subtype}\" arm_float_abi=\"hard\" ${neon_flag}"
+	else
+		naive_flags="${naive_flags} arm_float_abi=\"soft\" arm_use_neon=false"
+	fi
 }
 [[ "mips mips64 mipsel mips64el" =~ (^|[[:space:]])"${target_arch}"($|[[:space:]]) ]] && {
 	naive_flags="${naive_flags} use_gold=false is_cfi=false use_cfi_icall=false use_thin_lto=false mips_arch_variant=\"r2\""
