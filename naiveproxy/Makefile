@@ -1,25 +1,22 @@
+# SPDX-License-Identifier: GPL-3.0-only
 #
-# Copyright (C) 2021 ImmortalWrt
-# <https://immortalwrt.org>
-#
-# This is free software, licensed under the GNU General Public License v3.
-# See /LICENSE for more information.
-#
+# Copyright (C) 2021 ImmortalWrt.org
+
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=naiveproxy
-PKG_VERSION:=90.0.4430.85-6
-PKG_RELEASE:=1
+PKG_VERSION:=90.0.4430.85-10
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/klzgrad/naiveproxy/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=cc216c958a996e0d45db26d3a4ebf3faa93494c98bd24475ed3a2b63687311dd
+PKG_HASH:=d4e3d6d5a3205fff910e5fcbe64e9aeaa92f66078615ca4a525144a487eeef15
 
 PKG_LICENSE:=BSD 3-Clause
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=CN_SZTL <cnsztl@immortalwrt.org>
+PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 
-PKG_BUILD_DEPENDS:=ncurses/host ninja/host python3/host
+PKG_BUILD_DEPENDS:=ninja/host python3/host
 PKG_USE_MIPS16:=0
 PKG_BUILD_PARALLEL:=1
 
@@ -41,25 +38,25 @@ define Package/naiveproxy/config
 endef
 
 define Package/naiveproxy
-	SECTION:=net
-	CATEGORY:=Network
-	SUBMENU:=Web Servers/Proxies
-	URL:=https://github.com/klzgrad/naiveproxy
-	TITLE:=Make a fortune quietly
-	DEPENDS:=+libatomic +libnss
+  SECTION:=net
+  CATEGORY:=Network
+  SUBMENU:=Web Servers/Proxies
+  URL:=https://github.com/klzgrad/naiveproxy
+  TITLE:=Make a fortune quietly
+  DEPENDS:=+libatomic
 endef
 
 define Package/naiveproxy/description
-	NaïveProxy uses Chrome's network stack to camouflage traffic with strong
-	censorship resistance and low detectability. Reusing Chrome's stack also
-	ensures best practices in performance and security.
+  NaïveProxy uses Chrome's network stack to camouflage traffic with strong
+  censorship resistance and low detectability. Reusing Chrome's stack also
+  ensures best practices in performance and security.
 endef
 
 ifneq ($(CONFIG_CCACHE),)
 	export CCACHE_SLOPPINESS=time_macros
 	export CCACHE_BASEDIR=$(PKG_BUILD_DIR)/src
 	export CCACHE_CPP2=yes
-	export naive_ccache_flags=cc_wrapper="ccache"
+	export naive_ccache_flags=cc_wrapper="$(CCACHE)"
 endif
 
 AFDO_VER:=90.0.4430.53_rc-r1-merged
@@ -119,7 +116,6 @@ define Build/Compile
 ( \
 	cd "$(PKG_BUILD_DIR)/src" ; \
 	. ../init_env.sh "$(ARCH)" "$(BOARD)" $(CPU_TYPE) $(CPU_SUBTYPE) "$(TOOLCHAIN_DIR)" ; \
-	export naive_flags="$$$${naive_flags} pgo_data_path=\"$(PKG_BUILD_DIR)/src/chrome/build/pgo_profiles/$(PGO_FILE)\"" ; \
 	export naive_flags="$$$${naive_flags} $$$${naive_ccache_flags}" ; \
 	export OP_STAGING_DIR="$(STAGING_DIR)" ; \
 	mkdir -p "out" ; \
