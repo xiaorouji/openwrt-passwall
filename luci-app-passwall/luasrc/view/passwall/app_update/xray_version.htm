@@ -166,7 +166,7 @@ local xray_version = api.get_xray_version()
 	<div class="cbi-value-field">
 		<div class="cbi-value-description">
 			<span>【 <%=xray_version ~= "" and xray_version or translate("Null") %> 】</span>
-			<input class="cbi-button cbi-input-apply" type="button" id="_xray-check_btn" onclick="onBtnClick_xray(this);" value="<%:Manually update%>" />
+			<input class="btn cbi-button cbi-button-apply" type="button" id="_xray-check_btn" onclick="onBtnClick_xray(this);" value="<%:Manually update%>" />
 			<span id="_xray-check_btn-detail"></span>
 		</div>
 	</div>
