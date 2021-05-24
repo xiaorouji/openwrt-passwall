@@ -166,7 +166,7 @@ local kcptun_version = api.get_kcptun_version()
 	<div class="cbi-value-field">
 		<div class="cbi-value-description">
 			<span>【 <%=kcptun_version ~= "" and kcptun_version or translate("Null") %> 】</span>
-			<input class="cbi-button cbi-input-apply" type="button" id="_kcptun-check_btn" onclick="onBtnClick_kcptun(this);" value="<%:Manually update%>" />
+			<input class="btn cbi-button cbi-button-apply" type="button" id="_kcptun-check_btn" onclick="onBtnClick_kcptun(this);" value="<%:Manually update%>" />
 			<span id="_kcptun-check_btn-detail"></span>
 		</div>
 	</div>
