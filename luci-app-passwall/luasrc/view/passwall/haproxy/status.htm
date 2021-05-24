@@ -11,7 +11,7 @@ local console_port = api.uci_get_type("global_haproxy", "console_port", "")
 				var _status = document.getElementById('_status');
 				if (_status) {
 					if (json.haproxy_status) {
-						_status.innerHTML = '<input type="button" class="cbi-button cbi-input-apply" value="<%:Enter interface%>" onclick="openwebui()" />';
+						_status.innerHTML = '<input type="button" class="btn cbi-button cbi-button-apply" value="<%:Enter interface%>" onclick="openwebui()" />';
 					}
 				}
 			}

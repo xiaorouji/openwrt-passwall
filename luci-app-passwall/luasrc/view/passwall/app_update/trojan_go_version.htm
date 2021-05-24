@@ -166,7 +166,7 @@ local trojan_go_version = api.get_trojan_go_version()
 	<div class="cbi-value-field">
 		<div class="cbi-value-description">
 			<span>【 <%=trojan_go_version ~= "" and trojan_go_version or translate("Null") %> 】</span>
-			<input class="cbi-button cbi-input-apply" type="button" id="_trojan-check_btn" onclick="onBtnClick_trojan(this);" value="<%:Manually update%>" />
+			<input class="btn cbi-button cbi-button-apply" type="button" id="_trojan-check_btn" onclick="onBtnClick_trojan(this);" value="<%:Manually update%>" />
 			<span id="_trojan-check_btn-detail"></span>
 		</div>
 	</div>

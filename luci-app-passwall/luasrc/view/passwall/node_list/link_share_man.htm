@@ -797,7 +797,7 @@ local api = require "luci.model.cbi.passwall.api.api"
 	}
 
 //]]></script>
-<input type="button" class="cbi-button cbi-button-apply" value='<%:From Share URL%>' onclick="return fromUrl(this, '<%=self.option%>', '<%=self.value%>')" />
-<input type="button" class="cbi-button cbi-button-apply" value='<%:Build Share URL%>' onclick="return buildUrl(this, '<%=self.option%>', '<%=self.value%>')" />
+<input type="button" class="btn cbi-button cbi-button-apply" value='<%:From Share URL%>' onclick="return fromUrl(this, '<%=self.option%>', '<%=self.value%>')" />
+<input type="button" class="btn cbi-button cbi-button-apply" value='<%:Build Share URL%>' onclick="return buildUrl(this, '<%=self.option%>', '<%=self.value%>')" />
 <span id="<%=self.option%>-status"></span>
 <%+cbi/valuefooter%>

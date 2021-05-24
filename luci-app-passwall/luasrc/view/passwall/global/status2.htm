@@ -102,7 +102,7 @@ local status = api.uci_get_type("global_other", "status", "")
 				<%:Baidu Connection%>
 			</label>
 			<div class="cbi-value-field">
-				<input type="button" class="cbi-button cbi-input-apply" value="<%:Check%>" onclick="return check_connect(this, 'baidu', 'www.baidu.com')" />
+				<input type="button" class="btn cbi-button cbi-button-apply" value="<%:Check%>" onclick="return check_connect(this, 'baidu', 'www.baidu.com')" />
 				<font id="_baidu_status"></font>
 			</div>
 		</div>
@@ -111,7 +111,7 @@ local status = api.uci_get_type("global_other", "status", "")
 				<%:Google Connection%>
 			</label>
 			<div class="cbi-value-field">
-				<input type="button" class="cbi-button cbi-input-apply" value="<%:Check%>" onclick="return check_connect(this, 'google', 'www.google.com/generate_204')" />
+				<input type="button" class="btn cbi-button cbi-button-apply" value="<%:Check%>" onclick="return check_connect(this, 'google', 'www.google.com/generate_204')" />
 				<font id="_google_status"></font>
 			</div>
 		</div>
@@ -120,7 +120,7 @@ local status = api.uci_get_type("global_other", "status", "")
 				<%:GitHub Connection%>
 			</label>
 			<div class="cbi-value-field">
-				<input type="button" class="cbi-button cbi-input-apply" value="<%:Check%>" onclick="return check_connect(this, 'github', 'https://github.com')" />
+				<input type="button" class="btn cbi-button cbi-button-apply" value="<%:Check%>" onclick="return check_connect(this, 'github', 'https://github.com')" />
 				<font id="_github_status"></font>
 			</div>
 		</div>
@@ -130,9 +130,9 @@ local status = api.uci_get_type("global_other", "status", "")
 				<%:Node Check%>
 			</label>
 			<div class="cbi-value-field">
-				<input type="button" class="cbi-button cbi-input-apply" value="<%:Check%>" onclick="return check_port(this)" />
+				<input type="button" class="btn cbi-button cbi-button-apply" value="<%:Check%>" onclick="return check_port(this)" />
 				<font id="_node_status"></font>
-				<input id="clear_check_port_btn" type="button" class="cbi-button cbi-button-remove" style="display:none" value="<%:Clear%>" onclick="return clear_check_port(this)" />
+				<input id="clear_check_port_btn" type="button" class="btn cbi-button cbi-button-remove" style="display:none" value="<%:Clear%>" onclick="return clear_check_port(this)" />
 			</div>
 		</div>
 		<% end %>
@@ -140,7 +140,7 @@ local status = api.uci_get_type("global_other", "status", "")
 		<div class="cbi-value">
 			<label class="cbi-value-title"></label>
 			<div class="cbi-value-field">
-				<input type="button" class="cbi-button cbi-input-reload" value="IP111.cn" onclick="javascript:window.open('http://www.ip111.cn/','target');" />
+				<input type="button" class="btn cbi-button cbi-button-reload" value="IP111.cn" onclick="javascript:window.open('http://www.ip111.cn/','target');" />
 			</div>
 		</div>
 		<% end %>

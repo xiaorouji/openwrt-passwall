@@ -150,7 +150,7 @@ local brook_version = api.get_brook_version()
 	<div class="cbi-value-field">
 		<div class="cbi-value-description">
 			<span>【 <%=brook_version ~= "" and brook_version or translate("Null") %> 】</span>
-			<input class="cbi-button cbi-input-apply" type="button" id="_brook-check_btn" onclick="onBtnClick_brook(this);" value="<%:Manually update%>" />
+			<input class="btn cbi-button cbi-button-apply" type="button" id="_brook-check_btn" onclick="onBtnClick_brook(this);" value="<%:Manually update%>" />
 			<span id="_brook-check_btn-detail"></span>
 		</div>
 	</div>
