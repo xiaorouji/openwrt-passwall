@@ -54,6 +54,17 @@ function get_args(arg, myarg)
     return var
 end
 
+function is_normal_node(e)
+    if e and e.type and e.protocol and (e.protocol == "_balancing" or e.protocol == "_shunt") then
+        return false
+    end
+    return true
+end
+
+function is_special_node(e)
+    return is_normal_node(e) == false
+end
+
 function get_valid_nodes()
     local nodes_ping = uci_get_type("global_other", "nodes_ping") or ""
     local nodes = {}
