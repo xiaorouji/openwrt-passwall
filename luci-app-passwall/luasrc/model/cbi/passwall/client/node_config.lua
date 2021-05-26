@@ -42,9 +42,6 @@ local security_list = {"none", "auto", "aes-128-gcm", "chacha20-poly1305"}
 local header_type_list = {
     "none", "srtp", "utp", "wechat-video", "dtls", "wireguard"
 }
-local force_fp = {
-    "disable", "firefox", "chrome", "ios"
-}
 local encrypt_methods_ss_aead = {
 	"dummy",
 	"aead_chacha20_poly1305",
@@ -471,8 +468,11 @@ tls_sessionTicket:depends({ type = "Trojan-Plus", tls = true })
 tls_sessionTicket:depends({ type = "Trojan-Go", tls = true })
 
 trojan_go_fingerprint = s:option(ListValue, "trojan_go_fingerprint", translate("Finger Print"))
-for a, t in ipairs(force_fp) do trojan_go_fingerprint:value(t) end
-trojan_go_fingerprint.default = "firefox"
+trojan_go_fingerprint:value("disable", translate("Disable"))
+trojan_go_fingerprint:value("firefox")
+trojan_go_fingerprint:value("chrome")
+trojan_go_fingerprint:value("ios")
+trojan_go_fingerprint.default = "disable"
 trojan_go_fingerprint:depends({ type = "Trojan-Go", tls = true })
 function trojan_go_fingerprint.cfgvalue(self, section)
 	return m:get(section, "fingerprint")
@@ -489,7 +489,7 @@ tls_allowInsecure.default = "0"
 tls_allowInsecure:depends("tls", true)
 
 xray_fingerprint = s:option(ListValue, "fingerprint", translate("Finger Print"))
-xray_fingerprint:value("disable")
+xray_fingerprint:value("disable", translate("Disable"))
 xray_fingerprint:value("chrome")
 xray_fingerprint:value("firefox")
 xray_fingerprint:value("safari")
