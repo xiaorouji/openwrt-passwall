@@ -347,9 +347,15 @@ run_socks() {
 		}
 		ln_start_bin "$(first_type $(config_t_get global_app brook_file) brook)" "brook_SOCKS_${flag}" $log_file "$protocol" --socks5 "$bind:$socks_port" -s "$server_host:$port" -p "$(config_n_get $node password)"
 	;;
-	ss|ssr)
+	ssr)
+		lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $socks_port -server_host $server_host -server_port $port > $config_file
+		ln_start_bin "$(first_type ssr-local)" "ssr-local" $log_file -c "$config_file" -v
+	;;
+	ss)
+		local bin="ss-local"
+		[ "$(config_n_get $node ss_rust 0)" = "1" ] && bin="sslocal"
 		lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $socks_port -server_host $server_host -server_port $port -protocol socks -mode tcp_and_udp > $config_file
-		ln_start_bin "$(first_type ${type}local ${type}-local)" "${type}-local" $log_file -c "$config_file" -v
+		ln_start_bin "$(first_type $bin ss-local)" "$bin" $log_file -c "$config_file" -v
 	;;
 	esac
 
@@ -434,7 +440,7 @@ run_redir() {
 			local bin="ss-redir"
 			[ "$(config_n_get $node ss_rust 0)" = "1" ] && bin="sslocal"
 			lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -protocol redir -mode udp_only > $config_file
-			ln_start_bin "$(first_type $bin ss-redir)" "ss-redir" $log_file -c "$config_file" -v
+			ln_start_bin "$(first_type $bin ss-redir)" "$bin" $log_file -c "$config_file" -v
 		;;
 		esac
 	;;
@@ -563,7 +569,7 @@ run_redir() {
 				}
 				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -protocol redir $lua_mode_arg > $config_file
 			fi
-			ln_start_bin "$(first_type $bin ss-redir)" "ss-redir" $log_file -c "$config_file" -v
+			ln_start_bin "$(first_type $bin ss-redir)" "$bin" $log_file -c "$config_file" -v
 		;;
 		esac
 		if [ -n "$_socks_flag" ]; then
@@ -595,34 +601,37 @@ node_switch() {
 	[ -n "$1" -a -n "$2" ] && {
 		local node=$2
 		top -bn1 | grep -E "$TMP_PATH" | grep -i "${1}" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+		rm -rf $TMP_PATH/${1}*
 		local config_file=$TMP_PATH/${1}.json
 		local log_file=$TMP_PATH/${1}.log
 		eval current_port=\$${1}_REDIR_PORT
 		local port=$(cat $TMP_PORT_PATH/${1})
 
-		local ids=$(uci show $CONFIG | grep "=socks" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}')
-		for id in $ids; do
-			[ "$(config_n_get $id enabled 0)" == "0" ] && continue
-			[ "$(config_n_get $id node nil)" != "tcp" ] && continue
-			local socks_port=$(config_n_get $id port)
-			local http_port=$(config_n_get $id http_port 0)
-			top -bn1 | grep -E "$TMP_PATH" | grep -i "SOCKS" | grep "$id" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
-			tcp_node_socks=1
-			tcp_node_socks_port=$socks_port
-			tcp_node_socks_id=$id
-			[ "$http_port" != "0" ] && {
-				tcp_node_http=1
-				tcp_node_http_port=$http_port
-				tcp_node_http_id=$id
-			}
-			break
-		done
+		[ "$SOCKS_ENABLED" = "1" ] && {
+			local ids=$(uci show $CONFIG | grep "=socks" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}')
+			for id in $ids; do
+				[ "$(config_n_get $id enabled 0)" == "0" ] && continue
+				[ "$(config_n_get $id node nil)" != "tcp" ] && continue
+				local socks_port=$(config_n_get $id port)
+				local http_port=$(config_n_get $id http_port 0)
+				top -bn1 | grep -E "$TMP_PATH" | grep -i "SOCKS" | grep "$id" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+				tcp_node_socks=1
+				tcp_node_socks_port=$socks_port
+				tcp_node_socks_id=$id
+				[ "$http_port" != "0" ] && {
+					tcp_node_http=1
+					tcp_node_http_port=$http_port
+					tcp_node_http_id=$id
+				}
+				break
+			done
+		}
 
 		run_redir $node "0.0.0.0" $port $config_file $1 $log_file
 		echo $node > $TMP_ID_PATH/${1}
 
 		[ "$1" = "TCP" ] && {
-			[ "$(config_t_get global udp_node nil)" = "tcp" ] && {
+			[ "$(config_t_get global udp_node nil)" = "tcp" ] && [ "$UDP_REDIR_PORT" != "$TCP_REDIR_PORT" ] && {
 				top -bn1 | grep -E "$TMP_PATH" | grep -i "UDP" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
 				UDP_NODE=$node
 				start_redir UDP
@@ -880,7 +889,9 @@ start_dns() {
 				echolog "  | - [$?](chinadns-ng) 域名白名单合并到中国域名表"
 			}
 			chnlist_param=${chnlist_param:+-m "${chnlist_param}" -M}
-			ln_start_bin "$(first_type chinadns-ng)" chinadns-ng "${TMP_PATH}/chinadns-ng.log" -v -b 0.0.0.0 -l "${china_ng_listen_port}" ${china_ng_chn:+-c "${china_ng_chn}"} ${chnlist_param} ${china_ng_gfw:+-t "${china_ng_gfw}"} ${gfwlist_param:+-g "${gfwlist_param}"} -f
+			local log_path="${TMP_PATH}/chinadns-ng.log"
+			log_path="/dev/null"
+			ln_start_bin "$(first_type chinadns-ng)" chinadns-ng "$log_path" -v -b 0.0.0.0 -l "${china_ng_listen_port}" ${china_ng_chn:+-c "${china_ng_chn}"} ${chnlist_param} ${china_ng_gfw:+-t "${china_ng_gfw}"} ${gfwlist_param:+-g "${gfwlist_param}"} -f
 			echolog "  + 过滤服务：ChinaDNS-NG(:${china_ng_listen_port}) + ${msg}：国内DNS：${china_ng_chn:-D114.114.114.114}，可信DNS：${china_ng_gfw:-D8.8.8.8}"
 			#[ -n "${global}${chnlist}" ] && [ -z "${returnhome}" ] && TUN_DNS="${china_ng_gfw}"
 		}
