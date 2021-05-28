@@ -187,7 +187,7 @@ endef
 
 define Package/v2ray-extra/install
 	$(INSTALL_DIR) $(1)/usr/share/v2ray/
-	$(CP) $(PKG_BUILD_DIR)/release/extra/browserforwarder/* $(1)/usr/share/v2ray/
+	$(CP) $(PKG_BUILD_DIR)/release/extra/* $(1)/usr/share/v2ray/
 endef
 
 define Package/v2ray-geodata/install
