@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=naiveproxy
-PKG_VERSION:=90.0.4430.85-10
-PKG_RELEASE:=2
+PKG_VERSION:=91.0.4472.77-1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/klzgrad/naiveproxy/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=d4e3d6d5a3205fff910e5fcbe64e9aeaa92f66078615ca4a525144a487eeef15
+PKG_HASH:=01c660efd162859a2cabdf336cf889c191449fbd63883fc5a7b1be1348005fe1
 
 PKG_LICENSE:=BSD 3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -59,42 +59,32 @@ ifneq ($(CONFIG_CCACHE),)
 	export naive_ccache_flags=cc_wrapper="$(CCACHE)"
 endif
 
-AFDO_VER:=90.0.4430.53_rc-r1-merged
-AFDO_FILE:=chromeos-chrome-amd64-$(AFDO_VER).afdo.bz2
-define Download/AFDO_PROF
-	URL:=https://storage.googleapis.com.cnpmjs.org/chromeos-prebuilt/afdo-job/llvm \
-	     https://storage.googleapis.com/chromeos-prebuilt/afdo-job/llvm
-	URL_FILE:=$(AFDO_FILE)
-	FILE:=$(AFDO_FILE)
-	HASH:=5cfc5e371459687a320b92e255995d377837843a1fabba6a01d432e932b5b761
-endef
-
-CLANG_VER:=llvmorg-13-init-1559-g01b87444-3
+CLANG_VER:=llvmorg-13-init-6429-g0e92cbd6-2
 CLANG_FILE:=clang-$(CLANG_VER).tgz
 define Download/CLANG
 	URL:=https://commondatastorage.googleapis.com/chromium-browser-clang/Linux_x64
 	URL_FILE:=$(CLANG_FILE)
 	FILE:=$(CLANG_FILE)
-	HASH:=676448e180fb060d3983f24476a2136eac83c6011c600117686035634a2bbe26
+	HASH:=3355d81f43412c1664babdafc2051b9154aaca8d86077829107cc4eae28b018c
 endef
 
-GN_VER:=dfcbc6fed0a8352696f92d67ccad54048ad182b3
+GN_VER:=dba01723a441c358d843a575cb7720d54ddcdf92
 GN_FILE:=gn-git_revision-$(GN_VER).zip
 define Download/GN_TOOL
 	URL:=https://chrome-infra-packages.appspot.com/dl/gn/gn/linux-amd64/+
 	URL_FILE:=git_revision:$(GN_VER)
 	FILE:=$(GN_FILE)
-	HASH:=a150f403e2fa3f4464148ce5ec0735c8c6058577ef3fadffcdcf7aadba6ee8e1
+	HASH:=bc2d2bc6a8aa1930f796cf4a247ae026858fd8e0623e4fd010eff16c322d298a
 endef
 
-PGO_VER:=4430-1618483786-646ea3f0575412a6f8d1607da5c9f7b4f0e5e58d
+PGO_VER:=4472-1621756476-ebad7a91210ae5a7ae94aabb1dd5a349fcc91380
 PGO_FILE:=chrome-linux-$(PGO_VER).profdata
 define Download/PGO_PROF
 	URL:=https://storage.googleapis.com.cnpmjs.org/chromium-optimization-profiles/pgo_profiles \
 	     https://storage.googleapis.com/chromium-optimization-profiles/pgo_profiles
 	URL_FILE:=$(PGO_FILE)
 	FILE:=$(PGO_FILE)
-	HASH:=d781d7e72687d1897eb837ee4e404367b3fdd2e65c6f0f3b2e74a20dc001ef0e
+	HASH:=0550e44d41cbdafcd4fd02a4a40515da167dc2033437ddfc7ed5ff264fe8129f
 endef
 
 define Build/Prepare
@@ -102,7 +92,6 @@ define Build/Prepare
 
 	( \
 		cd $(PKG_BUILD_DIR)/src ; \
-		bzip2 -cd > "chrome/android/profiles/afdo.prof" < "$(DL_DIR)/$(AFDO_FILE)" ; \
 		mkdir -p "chrome/build/pgo_profiles" ; \
 		$(CP) "$(DL_DIR)/$(PGO_FILE)" "chrome/build/pgo_profiles" ; \
 		mkdir -p "third_party/llvm-build/Release+Asserts" ; \
@@ -117,19 +106,24 @@ define Build/Compile
 	cd "$(PKG_BUILD_DIR)/src" ; \
 	. ../init_env.sh "$(ARCH)" "$(BOARD)" $(CPU_TYPE) $(CPU_SUBTYPE) "$(TOOLCHAIN_DIR)" ; \
 	export naive_flags="$$$${naive_flags} $$$${naive_ccache_flags}" ; \
-	export OP_STAGING_DIR="$(STAGING_DIR)" ; \
 	mkdir -p "out" ; \
 	./gn/out/gn gen "out/Release" --args="$$$${naive_flags}" --script-executable="$(STAGING_DIR_HOSTPKG)/bin/python3" ; \
 	$(STAGING_DIR_HOSTPKG)/bin/ninja -C "out/Release" naive ; \
 )
 endef
 
+define Package/naiveproxy/conffiles
+/etc/config/naiveproxy
+endef
+
 define Package/naiveproxy/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/out/Release/naive $(1)/usr/bin/naive
+	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/init.d
+	$(INSTALL_CONF) $(CURDIR)/files/naiveproxy.config $(1)/etc/config/naiveproxy
+	$(INSTALL_BIN) $(CURDIR)/files/naiveproxy.init $(1)/etc/init.d/naiveproxy
 endef
 
-$(eval $(call Download,AFDO_PROF))
 $(eval $(call Download,CLANG))
 $(eval $(call Download,GN_TOOL))
 $(eval $(call Download,PGO_PROF))
