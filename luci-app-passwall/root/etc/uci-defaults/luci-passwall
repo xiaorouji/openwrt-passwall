@@ -27,5 +27,8 @@ uci -q batch <<-EOF >/dev/null
 	commit uhttpd
 EOF
 
-rm -rf /tmp/luci-*cache
+touch /etc/config/passwall_show >/dev/null 2>&1
+rm -f /tmp/luci-indexcache
+rm -rf /tmp/luci-modulecache/
+killall -HUP rpcd 2>/dev/null
 exit 0

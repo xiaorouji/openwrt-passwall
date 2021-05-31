@@ -147,16 +147,6 @@ define Package/luci-app-passwall/conffiles
 endef
 
 define Package/luci-app-passwall/postinst
-#!/bin/sh
-
-if [ -z "$${IPKG_INSTROOT}" ]; then
-	(. /etc/uci-defaults/luci-passwall && rm -f /etc/uci-defaults/luci-passwall)
-	touch /etc/config/passwall_show >/dev/null 2>&1
-	rm -f /tmp/luci-indexcache
-	rm -rf /tmp/luci-modulecache/
-	killall -HUP rpcd 2>/dev/null
-fi
-exit 0
 endef
 
 include $(TOPDIR)/feeds/luci/luci.mk
