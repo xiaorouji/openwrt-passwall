@@ -341,11 +341,18 @@ run_socks() {
 	;;
 	brook)
 		local protocol=$(config_n_get $node protocol client)
-		local brook_tls=$(config_n_get $node brook_tls 0)
+		local prefix=""
 		[ "$protocol" == "wsclient" ] && {
-			[ "$brook_tls" == "1" ] && server_host="wss://${server_host}" || server_host="ws://${server_host}"
+			prefix="ws://"
+			local brook_tls=$(config_n_get $node brook_tls 0)
+			[ "$brook_tls" == "1" ] && {
+				prefix="wss://"
+				protocol="wssclient"
+			}
+			local ws_path=$(config_n_get $node ws_path "/ws")
 		}
-		ln_start_bin "$(first_type $(config_t_get global_app brook_file) brook)" "brook_SOCKS_${flag}" $log_file "$protocol" --socks5 "$bind:$socks_port" -s "$server_host:$port" -p "$(config_n_get $node password)"
+		server_host=${prefix}${server_host}
+		ln_start_bin "$(first_type $(config_t_get global_app brook_file) brook)" "brook_SOCKS_${flag}" $log_file "$protocol" --socks5 "$bind:$socks_port" -s "${server_host}:${port}${ws_path}" -p "$(config_n_get $node password)"
 	;;
 	ssr)
 		lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $socks_port -server_host $server_host -server_port $port > $config_file
@@ -429,7 +436,7 @@ run_redir() {
 			if [ "$protocol" == "wsclient" ]; then
 				echolog "Brook的WebSocket不支持UDP转发！"
 			else
-				ln_start_bin "$(first_type $(config_t_get global_app brook_file) brook)" "brook_udp" $log_file tproxy -l ":$local_port" -s "$server_host:$port" -p "$(config_n_get $node password)"
+				ln_start_bin "$(first_type $(config_t_get global_app brook_file) brook)" "brook_udp" $log_file tproxy -l ":$local_port" -s "$server_host:$port" -p "$(config_n_get $node password)" --doNotRunScripts
 			fi
 		;;
 		ssr)
@@ -523,22 +530,19 @@ run_redir() {
 		brook)
 			local server_ip=$server_host
 			local protocol=$(config_n_get $node protocol client)
-			local brook_tls=$(config_n_get $node brook_tls 0)
-			if [ "$protocol" == "wsclient" ]; then
-				[ "$brook_tls" == "1" ] && server_ip="wss://${server_ip}" || server_ip="ws://${server_ip}"
-				socks_port=$(get_new_port 2081 tcp)
-				ln_start_bin "$(first_type $(config_t_get global_app brook_file) brook)" "brook_tcp" $log_file wsclient --socks5 "127.0.0.1:$socks_port" -s "$server_ip:$port" -p "$(config_n_get $node password)"
-				_socks_flag=1
-				_socks_address="127.0.0.1"
-				_socks_port=$socks_port
-				echolog "Brook的WebSocket不支持透明代理，将使用ipt2socks转换透明代理！"
-			else
-				[ "$kcptun_use" == "1" ] && {
-					server_ip=127.0.0.1
-					port=$KCPTUN_REDIR_PORT
-				}
-				ln_start_bin "$(first_type $(config_t_get global_app brook_file) brook)" "brook_tcp" $log_file tproxy -l ":$local_port" -s "$server_ip:$port" -p "$(config_n_get $node password)"
-			fi
+			local prefix=""
+			[ "$protocol" == "wsclient" ] && {
+				prefix="ws://"
+				local brook_tls=$(config_n_get $node brook_tls 0)
+				[ "$brook_tls" == "1" ] && prefix="wss://"
+				local ws_path=$(config_n_get $node ws_path "/ws")
+			}
+			[ "$kcptun_use" == "1" ] && {
+				server_ip=127.0.0.1
+				port=$KCPTUN_REDIR_PORT
+			}
+			server_ip=${prefix}${server_ip}
+			ln_start_bin "$(first_type $(config_t_get global_app brook_file) brook)" "brook_tcp" $log_file tproxy -l ":$local_port" -s "${server_ip}:${port}${ws_path}" -p "$(config_n_get $node password)" --doNotRunScripts
 		;;
 		ssr)
 			if [ "$kcptun_use" == "1" ]; then
@@ -589,7 +593,7 @@ run_redir() {
 				[ "$tcp_node_http" = "1" ] && {
 					http_port=$tcp_node_http_port
 				}
-				run_socks TCP $node "0.0.0.0" $port $config_file $http_port $http_config_file
+				run_socks $tcp_node_socks_id $node "0.0.0.0" $port $config_file $http_port $http_config_file
 			}
 		}
 	;;

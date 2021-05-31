@@ -403,7 +403,6 @@ use_kcp = s:option(Flag, "use_kcp", translate("Use") .. "Kcptun",
 use_kcp.default = 0
 use_kcp:depends("type", "SS")
 use_kcp:depends("type", "SSR")
-use_kcp:depends("type", "Brook")
 
 kcp_server = s:option(Value, "kcp_server", translate("Kcptun Server"))
 kcp_server.placeholder = translate("Default:Current Server")
@@ -613,6 +612,7 @@ ws_path:depends("transport", "ws")
 ws_path:depends("ss_transport", "ws")
 ws_path:depends("trojan_transport", "h2+ws")
 ws_path:depends("trojan_transport", "ws")
+ws_path:depends({ type = "Brook", brook_protocol = "wsclient" })
 
 -- [[ HTTP/2部分 ]]--
 h2_host = s:option(Value, "h2_host", translate("HTTP/2 Host"))
