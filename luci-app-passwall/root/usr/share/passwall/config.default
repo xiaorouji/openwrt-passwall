@@ -65,17 +65,17 @@ config global_subscribe
 	option auto_update_subscribe '0'
 	option allowInsecure '1'
 	option filter_keyword_mode '1'
-	list filter_discard_list '¹ıÆÚÊ±¼ä'
-	list filter_discard_list 'Ê£ÓàÁ÷Á¿'
-	list filter_discard_list 'QQÈº'
-	list filter_discard_list '¹ÙÍø'
+	list filter_discard_list 'è¿‡æœŸæ—¶é—´'
+	list filter_discard_list 'å‰©ä½™æµé‡'
+	list filter_discard_list 'QQç¾¤'
+	list filter_discard_list 'å®˜ç½‘'
 
 config auto_switch
 	option testing_time '1'
 	option enable '0'
 	
 config nodes '696cd32c1d5149ee95fd1b3accbad6df'
-	option remarks '·ÖÁ÷×Ü½Úµã'
+	option remarks 'åˆ†æµæ€»èŠ‚ç‚¹'
 	option type 'Xray'
 	option protocol '_shunt'
 	option youtube 'nil'
@@ -87,7 +87,7 @@ config nodes '696cd32c1d5149ee95fd1b3accbad6df'
 	option domainStrategy 'IPIfNonMatch'
 	
 config shunt_rules 'ads'
-	option remarks '¹ã¸æ'
+	option remarks 'å¹¿å‘Š'
 	option domain_list 'geosite:category-ads'
 	
 config shunt_rules 'China'
@@ -113,7 +113,7 @@ ytimg.com
 gvt2.com'
 
 config shunt_rules 'netflix'
-	option remarks 'ÄÎ·É'
+	option remarks 'å¥ˆé£'
 	option domain_list 'fast.com
 netflix
 netflix.com
