@@ -1,4 +1,6 @@
-# Copyright (C) 2020 xiaorouji
+#
+# Copyright (C) 2021 ImmortalWrt
+# <https://immortalwrt.org>
 #
 # This is free software, licensed under the GNU General Public License v3.
 #
@@ -9,71 +11,64 @@ PKG_NAME:=brook
 PKG_VERSION:=20210601
 PKG_RELEASE:=1
 
-ifeq ($(ARCH),i386)
-	PKG_ARCH:=386
-endif
-ifeq ($(ARCH),x86_64)
-	PKG_ARCH:=amd64
-endif
-ifeq ($(ARCH),mipsel)
-	PKG_ARCH:=mipsle
-endif
-ifeq ($(ARCH),mips)
-	PKG_ARCH:=mips
-endif
-ifeq ($(ARCH),arm)
-	PKG_ARCH:=arm7
-endif
-ifeq ($(BOARD),bcm53xx)
-	PKG_ARCH:=arm6
-endif
-ifeq ($(BOARD),kirkwood)
-	PKG_ARCH:=arm5
-endif
-ifeq ($(ARCH),arm64)
-	PKG_ARCH:=arm64
-endif
-ifeq ($(ARCH),aarch64)
-	PKG_ARCH:=arm64
-endif
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/txthinking/brook/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=434168ca525f3e53685ba483e214825831f31aab6437f6d52067fca5746d3cc9
 
-PKG_FILE:=$(PKG_NAME)_$(PKG_VERSION)_$(PKG_ARCH)
-PKG_URL:=https://github.com/txthinking/brook/releases/download/v$(PKG_VERSION)/$(PKG_NAME)_linux_$(PKG_ARCH)
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)/$(PKG_VERSION)
-PKG_HASH:=skip
+PKG_MAINTAINER:=CN_SZTL <cnsztl@immortalwrt.org>
+PKG_LICENSE:=GPL-3.0
+PKG_LICENSE_FILES:=LICENSE
+
+PKG_BUILD_DEPENDS:=golang/host
+PKG_BUILD_PARALLEL:=1
+PKG_USE_MIPS16:=0
+
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_BROOK_COMPRESS_GOPROXY \
+	CONFIG_BROOK_COMPRESS_UPX
+
+GO_PKG:=github.com/txthinking/brook
+GO_PKG_BUILD_PKG:=github.com/txthinking/brook/cli/brook
+GO_PKG_LDFLAGS:=-s -w
 
 include $(INCLUDE_DIR)/package.mk
+include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
 
-define Package/$(PKG_NAME)
+define Package/brook
 	SECTION:=net
 	CATEGORY:=Network
-	TITLE:=Brook is a cross-platform proxy software
-	DEPENDS:=
+	SUBMENU:=Web Servers/Proxies
+	TITLE:=A cross-platform proxy software
+	DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle
 	URL:=https://github.com/txthinking/brook
 endef
 
-define Package/$(PKG_NAME)/description
-  Brook is a cross-platform proxy software
+define Package/brook/description
+	Brook is a cross-platform strong encryption and not detectable proxy.
+	Zero-Configuration.
 endef
 
-define Build/Prepare
-	if [ ! -f $(DL_DIR)/$(PKG_FILE) ] ; then \
-		curl -f --connect-timeout 20 --retry 5 --location --insecure $(PKG_URL) -o $(DL_DIR)/$(PKG_FILE); \
-	fi
-	rm -r $(PKG_BUILD_DIR)
-	mkdir -p $(PKG_BUILD_DIR)
-	cp -f $(DL_DIR)/$(PKG_FILE) $(PKG_BUILD_DIR)/$(PKG_NAME)
+define Package/brook/config
+	config BROOK_COMPRESS_GOPROXY
+		bool "Compiling with GOPROXY proxy"
+		default n
+
+	config BROOK_COMPRESS_UPX
+		bool "Compress executable files with UPX"
+		default y
 endef
 
-define Build/Configure
-endef
+ifeq ($(CONFIG_BROOK_COMPRESS_GOPROXY),y)
+	export GO111MODULE=on
+	export GOPROXY=https://goproxy.baidu.com
+endif
 
 define Build/Compile
+	$(call GoPackage/Build/Compile)
+ifeq ($(CONFIG_BROOK_COMPRESS_UPX),y)
+	$(STAGING_DIR_HOST)/bin/upx --lzma --best $(GO_PKG_BUILD_BIN_DIR)/brook
+endif
 endef
 
-define Package/$(PKG_NAME)/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(PKG_NAME) $(1)/usr/bin/brook
-endef
-
-$(eval $(call BuildPackage,$(PKG_NAME)))
+$(eval $(call GoBinPackage,brook))
+$(eval $(call BuildPackage,brook))
