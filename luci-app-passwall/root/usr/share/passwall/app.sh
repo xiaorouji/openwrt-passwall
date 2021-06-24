@@ -133,6 +133,16 @@ hosts_foreach() {
 	done
 }
 
+check_host() {
+	local f=${1}
+	a=$(echo $f | grep "\/")
+	[ -n "$a" ] && return 1
+	# 判断是否包含汉字~
+	local tmp=$(echo -n $f | awk '{print gensub(/[!-~]/,"","g",$0)}')
+	[ -n "$tmp" ] && return 1
+	return 0
+}
+
 get_first_dns() {
 	local __hosts_val=${1}; shift 1
 	__first() {
@@ -297,25 +307,28 @@ run_socks() {
 		server_host="127.0.0.1"
 		port=$relay_port
 	}
-	local msg tmp
+	local error_msg tmp
 
 	if [ -n "$server_host" ] && [ -n "$port" ]; then
-		server_host=$(host_from_url "$server_host")
-		[ -n "$(echo -n $server_host | awk '{print gensub(/[!-~]/,"","g",$0)}')" ] && msg="$remarks，非法的代理服务器地址，无法启动 ！"
-		tmp="（${server_host}:${port}）"
+		check_host $server_host
+		[ $? != 0 ] && {
+			echolog "  - Socks节点：[$remarks]${server_host} 是非法的服务器地址，无法启动！"
+			return 1
+		}
+		tmp="${server_host}:${port}"
 	else
-		msg="某种原因，此 Socks 服务的相关配置已失联，启动中止！"
+		error_msg="某种原因，此 Socks 服务的相关配置已失联，启动中止！"
 	fi
 
 	if [ "$type" == "xray" ] && ([ -n "$(config_n_get $node balancing_node)" ] || [ "$(config_n_get $node default_node)" != "_direct" -a "$(config_n_get $node default_node)" != "_blackhole" ]); then
-		unset msg
+		unset error_msg
 	fi
 
-	[ -n "${msg}" ] && {
-		[ "$bind" != "127.0.0.1" ] && echolog "  - 启动中止 ${bind}:${socks_port} ${msg}"
+	[ -n "${error_msg}" ] && {
+		[ "$bind" != "127.0.0.1" ] && echolog "  - Socks节点：[$remarks]${tmp}，启动中止 ${bind}:${socks_port} ${error_msg}"
 		return 1
 	}
-	[ "$bind" != "127.0.0.1" ] && echolog "  - 启动 ${bind}:${socks_port}  - 节点：$remarks${tmp}"
+	[ "$bind" != "127.0.0.1" ] && echolog "  - Socks节点：[$remarks]${tmp}，启动 ${bind}:${socks_port}"
 
 	case "$type" in
 	socks|\
@@ -389,16 +402,13 @@ run_redir() {
 	local remarks=$(config_n_get $node remarks)
 	local server_host=$(config_n_get $node address)
 	local port=$(config_n_get $node port)
-	[ -n "$server_host" -a -n "$port" ] && {
-		# 判断节点服务器地址是否URL并去掉~
-		local server_host=$(host_from_url "$server_host")
-		# 判断节点服务器地址是否包含汉字~
-		local tmp=$(echo -n $server_host | awk '{print gensub(/[!-~]/,"","g",$0)}')
-		[ -n "$tmp" ] && {
-			echolog "$remarks节点，非法的服务器地址，无法启动！"
+	[ -n "$server_host" ] && [ -n "$port" ] && {
+		check_host $server_host
+		[ $? != 0 ] && {
+			echolog "${REDIR_TYPE}节点：[$remarks]${server_host} 是非法的服务器地址，无法启动！"
 			return 1
 		}
-		[ "$bind" != "127.0.0.1" ] && echolog "${REDIR_TYPE}节点：$remarks，节点：${server_host}:${port}，监听端口：$local_port"
+		[ "$bind" != "127.0.0.1" ] && echolog "${REDIR_TYPE}节点：[$remarks]${server_host}:${port}，监听端口：$local_port"
 	}
 	eval ${REDIR_TYPE}_NODE_PORT=$port
 
