@@ -18,8 +18,6 @@ IPSET_BLACKLIST6="blacklist6"
 IPSET_WHITELIST6="whitelist6"
 IPSET_BLOCKLIST6="blocklist6"
 
-PROXY_IPV6=0
-
 FORCE_INDEX=2
 
 ipt_n="iptables -t nat"
@@ -593,18 +591,6 @@ add_firewall_rule() {
 
 	ip rule add fwmark 1 lookup 100
 	ip route add local 0.0.0.0/0 dev lo table 100
-
-	local NODE_TYPE=$(echo $(config_n_get $TCP_NODE type) | tr 'A-Z' 'a-z')
-	local ipv6_tproxy=$(config_t_get global_other ipv6_tproxy 0)
-
-	if [ $ipv6_tproxy == "1" ]; then
-		if [ $NODE_TYPE == "xray" ]; then
-			PROXY_IPV6=1
-			echolog "节点类型:$NODE_TYPE，开启实验性IPv6透明代理(TProxy)..."
-		else
-			echolog "节点类型:$NODE_TYPE，暂不支持IPv6透明代理(TProxy)..."
-		fi
-	fi
 	
 	# 据说能提升性能？
 	$ip6t_m -w -N PSW_DIVERT
