@@ -279,7 +279,7 @@ function check_port()
 			local type = s.type
 			if type and s.address and s.port and s.remarks then
 				node_name = "%s：[%s] %s:%s" % {s.type, s.remarks, s.address, s.port}
-				tcp_socket = nixio.socket("inet", "stream")
+				tcp_socket = nixio.socket(api.get_ip_type(s.address) == "6" and "inet6" or "inet", "stream")
 				tcp_socket:setopt("socket", "rcvtimeo", 3)
 				tcp_socket:setopt("socket", "sndtimeo", 3)
 				ret = tcp_socket:connect(s.address, s.port)

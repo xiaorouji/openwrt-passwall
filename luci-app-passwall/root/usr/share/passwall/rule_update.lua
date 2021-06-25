@@ -25,7 +25,7 @@ local ip6_ipset_pattern = ":-[%x]+%:+[%x]-[%/][%d]+$"
 local domain_pattern = "([%w%-%_]+%.[%w%.%-%_]+)[%/%*]*"
 local excluded_domain = {"apple.com","sina.cn","sina.com.cn","baidu.com","byr.cn","jlike.com","weibo.com","zhongsou.com","youdao.com","sogou.com","so.com","soso.com","aliyun.com","taobao.com","jd.com","qq.com"}
 
-local gfwlist_url = ucic:get_first(name, 'global_rules', "gfwlist_url", "https://cdn.jsdelivr.net/gh/Loukky/gfwlist-by-loukky/gfwlist.txt")
+local gfwlist_url = ucic:get_first(name, 'global_rules', "gfwlist_url", "https://cdn.jsdelivr.net/gh/YW5vbnltb3Vz/domain-list-community@release/gfwlist.txt")
 local chnroute_url = ucic:get_first(name, 'global_rules', "chnroute_url", "https://ispip.clang.cn/all_cn.txt")
 local chnroute6_url =  ucic:get_first(name, 'global_rules', "chnroute6_url", "https://ispip.clang.cn/all_cn_ipv6.txt")
 local chnlist_url = ucic:get(name, "@global_rules[0]", "chnlist_url") or {"https://cdn.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/accelerated-domains.china.conf","https://cdn.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/apple.china.conf","https://cdn.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/google.china.conf"}

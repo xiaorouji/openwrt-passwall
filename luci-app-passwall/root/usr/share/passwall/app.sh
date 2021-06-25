@@ -21,6 +21,7 @@ IS_DEFAULT_DNS=0
 LOCAL_DNS=
 DEFAULT_DNS=
 NO_PROXY=
+PROXY_IPV6=0
 use_tcp_node_resolve_dns=0
 use_udp_node_resolve_dns=0
 LUA_API_PATH=/usr/lib/lua/luci/model/cbi/$CONFIG/api
@@ -57,11 +58,11 @@ get_host_ip() {
 	local isip=""
 	local ip=$host
 	if [ "$1" == "ipv6" ]; then
-		isip=$(echo $host | grep -E "([[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){0,7}::[a-f0-9]{0,4}(:[a-f0-9]{1,4}){0,7}])")
+		isip=$(echo $host | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
 		if [ -n "$isip" ]; then
 			isip=$(echo $host | cut -d '[' -f2 | cut -d ']' -f1)
 		else
-			isip=$(echo $host | grep -E "([a-f0-9]{1,4}(:[a-f0-9]{1,4}){7}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){0,7}::[a-f0-9]{0,4}(:[a-f0-9]{1,4}){0,7})")
+			isip=$(echo $host | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
 		fi
 	else
 		isip=$(echo $host | grep -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}")
@@ -131,6 +132,16 @@ hosts_foreach() {
 		__ret=$?
 		[ ${__ret} -ge ${ERROR_NO_CATCH:-1} ] && return ${__ret}
 	done
+}
+
+check_host() {
+	local f=${1}
+	a=$(echo $f | grep "\/")
+	[ -n "$a" ] && return 1
+	# 判断是否包含汉字~
+	local tmp=$(echo -n $f | awk '{print gensub(/[!-~]/,"","g",$0)}')
+	[ -n "$tmp" ] && return 1
+	return 0
 }
 
 get_first_dns() {
@@ -273,7 +284,18 @@ load_config() {
 		LOCAL_DNS="${DEFAULT_DNS:-119.29.29.29}"
 		IS_DEFAULT_DNS=1
 	fi
-	PROXY_IPV6=$(config_t_get global_forwarding proxy_ipv6 0)
+	
+	local ipv6_tproxy=$(config_t_get global_other ipv6_tproxy 0)
+	if [ $ipv6_tproxy == "1" ]; then
+		local NODE_TYPE=$(echo $(config_n_get $TCP_NODE type) | tr 'A-Z' 'a-z')
+		if [ $NODE_TYPE == "xray" ]; then
+			PROXY_IPV6=1
+			echolog "节点类型:$NODE_TYPE，开启实验性IPv6透明代理(TProxy)..."
+		else
+			echolog "节点类型:$NODE_TYPE，暂不支持IPv6透明代理(TProxy)..."
+		fi
+	fi
+	
 	export XRAY_LOCATION_ASSET=$(config_t_get global_rules xray_location_asset "/usr/share/xray/")
 	mkdir -p /var/etc $TMP_PATH $TMP_BIN_PATH $TMP_ID_PATH $TMP_PORT_PATH $TMP_ROUTE_PATH
 	return 0
@@ -297,25 +319,28 @@ run_socks() {
 		server_host="127.0.0.1"
 		port=$relay_port
 	}
-	local msg tmp
+	local error_msg tmp
 
 	if [ -n "$server_host" ] && [ -n "$port" ]; then
-		server_host=$(host_from_url "$server_host")
-		[ -n "$(echo -n $server_host | awk '{print gensub(/[!-~]/,"","g",$0)}')" ] && msg="$remarks，非法的代理服务器地址，无法启动 ！"
-		tmp="（${server_host}:${port}）"
+		check_host $server_host
+		[ $? != 0 ] && {
+			echolog "  - Socks节点：[$remarks]${server_host} 是非法的服务器地址，无法启动！"
+			return 1
+		}
+		tmp="${server_host}:${port}"
 	else
-		msg="某种原因，此 Socks 服务的相关配置已失联，启动中止！"
+		error_msg="某种原因，此 Socks 服务的相关配置已失联，启动中止！"
 	fi
 
 	if [ "$type" == "xray" ] && ([ -n "$(config_n_get $node balancing_node)" ] || [ "$(config_n_get $node default_node)" != "_direct" -a "$(config_n_get $node default_node)" != "_blackhole" ]); then
-		unset msg
+		unset error_msg
 	fi
 
-	[ -n "${msg}" ] && {
-		[ "$bind" != "127.0.0.1" ] && echolog "  - 启动中止 ${bind}:${socks_port} ${msg}"
+	[ -n "${error_msg}" ] && {
+		[ "$bind" != "127.0.0.1" ] && echolog "  - Socks节点：[$remarks]${tmp}，启动中止 ${bind}:${socks_port} ${error_msg}"
 		return 1
 	}
-	[ "$bind" != "127.0.0.1" ] && echolog "  - 启动 ${bind}:${socks_port}  - 节点：$remarks${tmp}"
+	[ "$bind" != "127.0.0.1" ] && echolog "  - Socks节点：[$remarks]${tmp}，启动 ${bind}:${socks_port}"
 
 	case "$type" in
 	socks|\
@@ -389,16 +414,13 @@ run_redir() {
 	local remarks=$(config_n_get $node remarks)
 	local server_host=$(config_n_get $node address)
 	local port=$(config_n_get $node port)
-	[ -n "$server_host" -a -n "$port" ] && {
-		# 判断节点服务器地址是否URL并去掉~
-		local server_host=$(host_from_url "$server_host")
-		# 判断节点服务器地址是否包含汉字~
-		local tmp=$(echo -n $server_host | awk '{print gensub(/[!-~]/,"","g",$0)}')
-		[ -n "$tmp" ] && {
-			echolog "$remarks节点，非法的服务器地址，无法启动！"
+	[ -n "$server_host" ] && [ -n "$port" ] && {
+		check_host $server_host
+		[ $? != 0 ] && {
+			echolog "${REDIR_TYPE}节点：[$remarks]${server_host} 是非法的服务器地址，无法启动！"
 			return 1
 		}
-		[ "$bind" != "127.0.0.1" ] && echolog "${REDIR_TYPE}节点：$remarks，节点：${server_host}:${port}，监听端口：$local_port"
+		[ "$bind" != "127.0.0.1" ] && echolog "${REDIR_TYPE}节点：[$remarks]${server_host}:${port}，监听端口：$local_port"
 	}
 	eval ${REDIR_TYPE}_NODE_PORT=$port
 
@@ -912,6 +934,7 @@ gen_pdnsd_config() {
 	local perm_cache=2048
 	local _cache="on"
 	local query_method="tcp_only"
+	local reject_ipv6_dns=
 
 	mkdir -p "${pdnsd_dir}"
 	touch "${pdnsd_dir}/pdnsd.cache"
@@ -920,6 +943,14 @@ gen_pdnsd_config() {
 		query_method="udp_only"
 	else
 		use_tcp_node_resolve_dns=1
+	fi
+	if [ $PROXY_IPV6 == "0" ]; then
+		reject_ipv6_dns=$(cat <<- 'EOF'
+
+				reject = ::/0;
+				reject_policy = negate;
+		EOF
+		)
 	fi
 	[ "${DNS_CACHE}" = "0" ] && _cache="off" && perm_cache=0
 	cat > "${pdnsd_dir}/pdnsd.conf" <<-EOF
@@ -957,9 +988,7 @@ gen_pdnsd_config() {
 				uptest = none;
 				purge_cache = off;
 				proxy_only = on;
-				caching = $_cache;
-				reject = ::/0;
-				reject_policy = negate;
+				caching = $_cache;${reject_ipv6_dns}
 			}
 		EOF
 		echolog "  | - [$?]上游DNS：${2}:${3}"

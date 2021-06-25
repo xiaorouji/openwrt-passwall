@@ -65,6 +65,22 @@ function is_special_node(e)
     return is_normal_node(e) == false
 end
 
+function is_ip(ip)
+    return datatypes.ipaddr(ip)
+end
+
+function get_ip_type(ip)
+    if is_ip(ip) then
+        if datatypes.ip6addr(ip) then
+            return "6"
+        end
+        if datatypes.ip4addr(ip) then
+            return "4"
+        end
+    end
+    return ""
+end
+
 function get_valid_nodes()
     local nodes_ping = uci_get_type("global_other", "nodes_ping") or ""
     local nodes = {}

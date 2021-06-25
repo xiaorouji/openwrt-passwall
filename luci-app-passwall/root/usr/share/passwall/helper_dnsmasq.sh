@@ -86,10 +86,6 @@ add() {
 	local fwd_dns items item servers msg
 
 	mkdir -p "${TMP_DNSMASQ_PATH}" "${DNSMASQ_PATH}" "/var/dnsmasq.d"
-	[ "$(config_t_get global_rules adblock 0)" = "1" ] && {
-		ln -s "${RULES_PATH}/adblock.conf" "${TMP_DNSMASQ_PATH}/adblock.conf"
-		echolog "  - [$?]广告域名表中域名解析请求直接应答为 '0.0.0.0'"
-	}
 
 	if [ "${DNS_MODE}" = "nonuse" ]; then
 		echolog "  - 不对域名进行分流解析"
