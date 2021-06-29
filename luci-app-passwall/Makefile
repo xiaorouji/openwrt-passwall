@@ -112,20 +112,20 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Libev_Server
 	bool "Include ShadowsocksR Libev Server"
 	default n
 
-config PACKAGE_$(PKG_NAME)_INCLUDE_Simple-obfs
-	bool "Include Simple-obfs (Shadowsocks plugin)"
+config PACKAGE_$(PKG_NAME)_INCLUDE_Simple_Obfs
+	bool "Include Simple-Obfs (Shadowsocks Plugin)"
 	default y
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_Trojan_GO
-	bool "Include Trojan Go"
+	bool "Include Trojan-GO"
 	default n
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_Trojan_Plus
-	bool "Include Trojan_Plus"
+	bool "Include Trojan-Plus"
 	default y
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_V2ray_Plugin
-	bool "Include V2ray-plugin (Shadowsocks plugin)"
+	bool "Include V2ray-Plugin (Shadowsocks Plugin)"
 	default y if aarch64||arm||i386||x86_64
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_Xray
