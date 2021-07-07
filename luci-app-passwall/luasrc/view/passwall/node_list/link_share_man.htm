@@ -271,7 +271,7 @@ local api = require "luci.model.cbi.passwall.api.api"
 			}
 			url += params;
 		} else if ((v_type === "Xray" && opt.get("protocol").value === "trojan") || v_type === "Trojan" || v_type === "Trojan-Plus" || v_type === "Trojan-Go") {
-			if (v_type === "Xray" && opt.get("protocol").value === "trojan") {
+			if ((v_type === "Xray" && opt.get("protocol").value === "trojan") || v_type === "Trojan-Plus") {
 				v_type = "trojan";
 			}
 			var v_password = opt.get(!opt.client && v_type === "Trojan-Go"  ? "passwords" : "password");
@@ -506,7 +506,7 @@ local api = require "luci.model.cbi.passwall.api.api"
 					opt.set('remarks', decodeURI(param));
 				}
 			}
-		} else if (ssu[0] === "trojan") {
+		} else if (ssu[0] === "trojan" || ssu[0] === "trojan-plus") {
 			var stype = "Trojan-Plus";
 			var m = parseNodeUrl(ssrurl);
 			console.log(m.search);
@@ -545,30 +545,37 @@ local api = require "luci.model.cbi.passwall.api.api"
 				opt.set('tls_serverName', queryParam.peer || queryParam.sni || '');
 				opt.set('tls_allowInsecure', queryParam.allowinsecure === '1');
 			}
-			var tran = 'original';
-			var ws = queryParam.type.indexOf('ws') !== -1;
-			var h2 = queryParam.type.indexOf('h2') !== -1;
-			if (ws && h2) {
-				tran = 'h2+ws'
-			} else {
-				if (ws) tran = 'ws';
-				if (h2) tran = 'h2';
-			}
-			opt.set('trojan_transport', 'tran');
-			opt.get('trojan_transport').dispatchEvent(event);
-			if (ws) {
-				opt.set('ws_host', queryParam.wshost || '');
-				opt.set('ws_path', queryParam.wspath || '/');
-			}
-			if (h2) {
-				opt.set('h2_host', queryParam.h2host || '');
-				opt.set('h2_path', queryParam.h2path || '/');
-			}
-			var ss = queryParam.ss === '1';
-			opt.set('ss_aead', ss);
-			if (ss) {
-				opt.set('ss_aead_method', queryParam.ssmethod.toLowerCase() || '');
-				opt.set('ss_aead_pwd', queryParam.sspasswd || '');
+			
+			if (stype === "Trojan-Go") {
+				var tran = 'original';
+				var ws = null;
+				var h2 = null;
+				if (queryParam.type) {
+					ws = queryParam.type.indexOf('ws') !== -1;
+					h2 = queryParam.type.indexOf('h2') !== -1;
+				}
+				if (ws && h2) {
+					tran = 'h2+ws'
+				} else {
+					if (ws) tran = 'ws';
+					if (h2) tran = 'h2';
+				}
+				opt.set('trojan_transport', 'tran');
+				opt.get('trojan_transport').dispatchEvent(event);
+				if (ws) {
+					opt.set('ws_host', queryParam.wshost || '');
+					opt.set('ws_path', queryParam.wspath || '/');
+				}
+				if (h2) {
+					opt.set('h2_host', queryParam.h2host || '');
+					opt.set('h2_path', queryParam.h2path || '/');
+				}
+				var ss = queryParam.ss === '1';
+				opt.set('ss_aead', ss);
+				if (ss) {
+					opt.set('ss_aead_method', queryParam.ssmethod.toLowerCase() || '');
+					opt.set('ss_aead_pwd', queryParam.sspasswd || '');
+				}
 			}
 			opt.set('mux', queryParam.mux === '1');
 			if (m.hash) {
@@ -619,8 +626,12 @@ local api = require "luci.model.cbi.passwall.api.api"
 			}
 			var tran = 'original';
 			var or = queryParam.type === undefined || queryParam.type === 'original';
-			var ws = queryParam.type.indexOf('ws') !== -1;
-			var h2 = queryParam.type.indexOf('h2') !== -1;
+			var ws = null;
+			var h2 = null;
+			if (queryParam.type) {
+				ws = queryParam.type.indexOf('ws') !== -1;
+				h2 = queryParam.type.indexOf('h2') !== -1;
+			}
 			if (ws && h2) {
 				tran = 'h2+ws'
 			} else {

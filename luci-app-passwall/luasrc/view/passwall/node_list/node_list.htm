@@ -38,6 +38,9 @@ table td, .table .td {
 
 <script type="text/javascript">
 	//<![CDATA[
+	var node_list = {};
+	var node_count = 0;
+	
 	var ajax = {
 		post: function(url, data, fn_success, timeout, fn_timeout) {
 			var xhr = new XMLHttpRequest();
@@ -392,10 +395,40 @@ table td, .table .td {
 			//添加"复制"按钮
 			new_div += '<input class="btn cbi-button cbi-button-add" type="button" value="<%:Copy%>" onclick="copy_node(\'' + id + '\')"/>&nbsp;&nbsp;';
 			td.innerHTML = new_div + td.innerHTML;
+			
+			var obj = {};
+			obj.id = id;
+			obj.type = document.getElementById("cbid.passwall." + id + ".type").value;
+			var address_dom = document.getElementById("cbid.passwall." + id + ".address");
+			var port_dom = document.getElementById("cbid.passwall." + id + ".port");
+			if (address_dom && port_dom) {
+				obj.address = address_dom.value;
+				obj.port = port_dom.value;
+			}
+			
+			node_count++;
+			var add_from = document.getElementById("cbid.passwall." + id + ".add_from").value;
+			if (node_list[add_from])
+				node_list[add_from].push(obj);
+			else
+				node_list[add_from] = [];
+			
 		}
 		catch(err) {
 			console.error(err);
 		}
+	}
+	
+	if (true) {
+		var str = "";
+		for (var add_from in node_list) {
+			var num = node_list[add_from].length + 1;
+			if (add_from == "") {
+				add_from = "<%:Self add%>";
+			}
+			str += add_from + " " + "<%:Node num%>: <a style='color: red'>" + num + "</a>&nbsp&nbsp&nbsp";
+		}
+		document.getElementById("div_node_count").innerHTML = "<div style='margin-top:5px'>" + str + "</div>";
 	}
 	
 	//]]>

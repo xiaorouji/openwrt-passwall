@@ -256,6 +256,7 @@ o = s:taboption("DNS", Button, "clear_ipset", translate("Clear IPSET"), translat
 o.inputstyle = "remove"
 function o.write(e, e)
     luci.sys.call("/usr/share/" .. appname .. "/iptables.sh flush_ipset > /dev/null 2>&1 &")
+    luci.http.redirect(api.url("log"))
 end
 
 s:tab("Proxy", translate("Mode"))

@@ -3,8 +3,9 @@
 START=99
 STOP=15
 
-APP_FILE=/usr/share/passwall/app.sh
-LOCK_FILE=/var/lock/passwall.lock
+CONFIG=passwall
+APP_FILE=/usr/share/${CONFIG}/app.sh
+LOCK_FILE=/var/lock/${CONFIG}.lock
 
 lock() {
 	if [ -s ${LOCK_FILE} ]; then
@@ -43,4 +44,24 @@ restart() {
 	$APP_FILE stop
 	$APP_FILE start
 	unlock
+}
+
+disable() {
+	rm -f "$IPKG_INSTROOT"/etc/rc.d/S??zzz_${CONFIG}
+	rm -f "$IPKG_INSTROOT"/etc/rc.d/K??zzz_${CONFIG}
+}
+
+enable() {
+	err=1
+	[ "$START" ] && \
+		ln -sf "../init.d/${CONFIG}" "$IPKG_INSTROOT/etc/rc.d/S${START}zzz_${CONFIG}" && \
+		err=0
+	[ "$STOP" ] && \
+		ln -sf "../init.d/${CONFIG}" "$IPKG_INSTROOT/etc/rc.d/K${STOP}zzz_${CONFIG}" && \
+		err=0
+	return $err
+}
+
+enabled() {
+	[ -x "$IPKG_INSTROOT/etc/rc.d/S${START}zzz_${CONFIG}" ]
 }

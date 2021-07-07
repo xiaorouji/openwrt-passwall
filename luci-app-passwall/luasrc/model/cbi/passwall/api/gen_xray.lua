@@ -1,12 +1,7 @@
 module("luci.model.cbi.passwall.api.gen_xray", package.seeall)
 local api = require "luci.model.cbi.passwall.api.api"
 
-local myarg = {
-    "-node", "-proto", "-redir_port", "-socks_proxy_port", "-http_proxy_port", "-dns_listen_port", "-dns_server", "-doh_url", "-doh_host", "-doh_socks_address", "-doh_socks_port", "-loglevel"
-}
-
-local var = api.get_args(arg, myarg)
-
+local var = api.get_args(arg)
 local node_section = var["-node"]
 local proto = var["-proto"]
 local redir_port = var["-redir_port"]

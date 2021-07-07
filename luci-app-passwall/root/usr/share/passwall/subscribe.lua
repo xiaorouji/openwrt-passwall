@@ -53,7 +53,6 @@ do
 		CONFIG[#CONFIG + 1] = {
 			log = true,
 			remarks = name .. "节点",
-			currentNodeId = node_id,
 			currentNode = node_id and ucic:get_all(appname, node_id) or nil,
 			set = function(o, server)
 				ucic:set(appname, szType, option, server)
@@ -72,7 +71,6 @@ do
 			log = true,
 			id = t[".name"],
 			remarks = "Socks节点列表[" .. i .. "]",
-			currentNodeId = node_id,
 			currentNode = node_id and ucic:get_all(appname, node_id) or nil,
 			set = function(o, server)
 				ucic:set(appname, t[".name"], "node", server)
@@ -85,20 +83,27 @@ do
 	if tcp_node_table then
 		local nodes = {}
 		local new_nodes = {}
-		for k,node in ipairs(tcp_node_table) do
-			nodes[#nodes + 1] = {
-				log = true,
-				remarks = "TCP备用节点的列表[" .. k .. "]",
-				currentNodeId = node,
-				currentNode = node and ucic:get_all(appname, node) or nil,
-				set = function(o, server)
-					for kk, vv in pairs(CONFIG) do
-						if (vv.remarks == "TCP备用节点的列表") then
-							table.insert(vv.new_nodes, server)
-						end
+		for k,node_id in ipairs(tcp_node_table) do
+			if node_id then
+				local currentNode = ucic:get_all(appname, node_id) or nil
+				if currentNode then
+					if currentNode.protocol and (currentNode.protocol == "_balancing" or currentNode.protocol == "_shunt") then
+						currentNode = nil
 					end
+					nodes[#nodes + 1] = {
+						log = true,
+						remarks = "TCP备用节点的列表[" .. k .. "]",
+						currentNode = currentNode,
+						set = function(o, server)
+							for kk, vv in pairs(CONFIG) do
+								if (vv.remarks == "TCP备用节点的列表") then
+									table.insert(vv.new_nodes, server)
+								end
+							end
+						end
+					}
 				end
-			}
+			end
 		end
 		CONFIG[#CONFIG + 1] = {
 			remarks = "TCP备用节点的列表",
@@ -118,11 +123,24 @@ do
 	ucic:foreach(appname, "nodes", function(node)
 		if node.protocol and node.protocol == '_shunt' then
 			local node_id = node[".name"]
+
+			local rules = {}
 			ucic:foreach(appname, "shunt_rules", function(e)
+				table.insert(rules, e)
+			end)
+			table.insert(rules, {
+				[".name"] = "default_node",
+				remarks = "默认"
+			})
+			table.insert(rules, {
+				[".name"] = "main_node",
+				remarks = "默认前置"
+			})
+
+			for k, e in pairs(rules) do
 				local _node_id = node[e[".name"]] or nil
 				CONFIG[#CONFIG + 1] = {
 					log = false,
-					currentNodeId = _node_id,
 					currentNode = _node_id and ucic:get_all(appname, _node_id) or nil,
 					remarks = "分流" .. e.remarks .. "节点",
 					set = function(o, server)
@@ -130,31 +148,7 @@ do
 						o.newNodeId = server
 					end
 				}
-			end)
-
-			local default_node_id = node.default_node
-			CONFIG[#CONFIG + 1] = {
-				log = true,
-				currentNodeId = default_node_id,
-				currentNode = default_node_id and ucic:get_all(appname, default_node_id) or nil,
-				remarks = "分流默认节点",
-				set = function(o, server)
-					ucic:set(appname, node_id, "default_node", server)
-					o.newNodeId = server
-				end
-			}
-
-			local main_node_id = node.main_node
-			CONFIG[#CONFIG + 1] = {
-				log = true,
-				currentNodeId = main_node_id,
-				currentNode = main_node_id and ucic:get_all(appname, main_node_id) or nil,
-				remarks = "分流默认前置代理节点",
-				set = function(o, server)
-					ucic:set(appname, node_id, "main_node", server)
-					o.newNodeId = server
-				end
-			}
+			end
 		elseif node.protocol and node.protocol == '_balancing' then
 			local node_id = node[".name"]
 			local nodes = {}
@@ -294,12 +288,12 @@ local function base64Decode(text)
 	end
 end
 -- 处理数据
-local function processData(szType, content, add_mode)
-	--log(content, add_mode)
+local function processData(szType, content, add_mode, add_from)
+	--log(content, add_mode, add_from)
 	local result = {
 		timeout = 60,
-		add_mode = add_mode,
-		is_sub = add_mode == '导入' and 0 or 1
+		add_mode = add_mode, --0为手动配置,1为导入,2为订阅
+		add_from = add_from
 	}
 	if szType == 'ssr' then
 		local dat = split(content, "/%?")
@@ -674,7 +668,7 @@ end
 -- curl
 local function curl(url)
 	local ua = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.122 Safari/537.36"
-	local stdout = luci.sys.exec('curl -sL --user-agent "' .. ua .. '" -k --retry 3 --connect-timeout 3 "' .. url .. '"')
+	local stdout = luci.sys.exec(string.format('curl -skL --user-agent "%s" -k --retry 3 --connect-timeout 3 --retry-all-errors "%s"', ua, url))
 	return trim(stdout)
 end
 
@@ -682,14 +676,14 @@ local function truncate_nodes()
 	for _, config in pairs(CONFIG) do
 		if config.nodes and type(config.nodes) == "table" then
 			for kk, vv in pairs(config.nodes) do
-				if vv.currentNode.is_sub and vv.currentNode.is_sub == "1" then
+				if vv.currentNode.add_mode == "2" then
 				else
-					vv.set(vv, vv.currentNodeId)
+					vv.set(vv, vv.currentNode[".name"])
 				end
 			end
 			config.set(config)
 		else
-			if config.currentNode.is_sub and config.currentNode.is_sub == "1" then
+			if config.currentNode.add_mode == "2" then
 				config.set(config, "nil")
 				if config.id then
 					ucic:delete(appname, config.id)
@@ -698,7 +692,7 @@ local function truncate_nodes()
 		end
 	end
 	ucic:foreach(appname, "nodes", function(node)
-		if (node.is_sub or node.hashkey) and node.add_mode ~= '导入' then
+		if node.add_mode == "2" then
 			ucic:delete(appname, node['.name'])
 		end
 	end)
@@ -830,7 +824,7 @@ local function update_node(manual)
 	-- delete all for subscribe nodes
 	ucic:foreach(appname, "nodes", function(node)
 		-- 如果是手动导入的节点就不参与删除
-		if manual == 0 and (node.is_sub or node.hashkey) and node.add_mode ~= '导入' then
+		if manual == 0 and node.add_mode == "2" then
 			ucic:delete(appname, node['.name'])
 		end
 	end)
@@ -883,16 +877,14 @@ local function update_node(manual)
 	luci.sys.call("/etc/init.d/" .. appname .. " restart > /dev/null 2>&1 &")
 end
 
-local function parse_link(raw, remark, manual)
+local function parse_link(raw, add_mode, add_from)
 	if raw and #raw > 0 then
-		local add_mode
 		local nodes, szType
 		local all_nodes = {}
 		tinsert(nodeResult, all_nodes)
 		-- SSD 似乎是这种格式 ssd:// 开头的
 		if raw:find('ssd://') then
 			szType = 'ssd'
-			add_mode = remark
 			local nEnd = select(2, raw:find('ssd://'))
 			nodes = base64Decode(raw:sub(nEnd + 1, #raw))
 			nodes = jsonParse(nodes)
@@ -910,12 +902,10 @@ local function parse_link(raw, remark, manual)
 			nodes = servers
 		else
 			-- ssd 外的格式
-			if manual then
+			if add_mode == "1" then
 				nodes = split(raw:gsub(" ", "\n"), "\n")
-				add_mode = '导入'
 			else
 				nodes = split(base64Decode(raw):gsub(" ", "\n"), "\n")
-				add_mode = remark
 			end
 		end
 
@@ -923,15 +913,15 @@ local function parse_link(raw, remark, manual)
 			if v then
 				local result
 				if szType == 'ssd' then
-					result = processData(szType, v, add_mode)
+					result = processData(szType, v, add_mode, add_from)
 				elseif not szType then
 					local node = trim(v)
 					local dat = split(node, "://")
 					if dat and dat[1] and dat[2] then
 						if dat[1] == 'ss' or dat[1] == 'trojan' or dat[1] == 'trojan-go' then
-							result = processData(dat[1], dat[2], add_mode)
+							result = processData(dat[1], dat[2], add_mode, add_from)
 						else
-							result = processData(dat[1], base64Decode(dat[2]), add_mode)
+							result = processData(dat[1], base64Decode(dat[2]), add_mode, add_from)
 						end
 					end
 				else
@@ -939,7 +929,7 @@ local function parse_link(raw, remark, manual)
 				end
 				-- log(result)
 				if result then
-					if (not manual and is_filter_keyword(result.remarks)) or
+					if (add_mode == "2" and is_filter_keyword(result.remarks)) or
 						not result.address or
 						result.remarks == "NULL" or
 						(not datatypes.hostname(result.address) and not (datatypes.ipmask4(result.address) or datatypes.ipmask6(result.address)))
@@ -953,8 +943,8 @@ local function parse_link(raw, remark, manual)
 		end
 		log('成功解析节点数量: ' .. #all_nodes)
 	else
-		if not manual then
-			log('获取到的节点内容为空...')
+		if add_mode == "2" then
+			log('获取到的节点内容为空，可能是订阅地址失效，或是网络问题，请稍后重试。')
 		end
 	end
 end
@@ -969,7 +959,7 @@ local execute = function()
 				local url = obj.url
 				log('正在订阅: ' .. url)
 				local raw = curl(url)
-				parse_link(raw, remark)
+				parse_link(raw, "2", remark)
 			end
 		end)
 		-- diff
@@ -997,7 +987,7 @@ if arg[1] then
 		f:close()
 		local nodes = split(content:gsub(" ", "\n"), "\n")
 		for _, raw in ipairs(nodes) do
-			parse_link(raw, nil, 1)
+			parse_link(raw, "1", "导入")
 		end
 		update_node(1)
 		luci.sys.call("rm -f /tmp/links.conf")
