@@ -28,7 +28,9 @@ test_url() {
 	local timeout=2
 	[ -n "$3" ] && timeout=$3
 	local extra_params=$4
-	status=$(/usr/bin/curl -I -o /dev/null -skL $extra_params --connect-timeout $timeout --retry $try --retry-all-errors -w %{http_code} "$url")
+	curl --help all | grep "\-\-retry-all-errors" > /dev/null
+	[ $? == 0 ] && extra_params="--retry-all-errors ${extra_params}"
+	status=$(/usr/bin/curl -I -o /dev/null -skL $extra_params --connect-timeout ${timeout} --retry ${try} -w %{http_code} "$url")
 	case "$status" in
 		204|\
 		200)
@@ -39,13 +41,12 @@ test_url() {
 }
 
 test_proxy() {
-	local try=3
 	result=0
-	status=$(test_url "https://www.google.com/generate_204" $try)
+	status=$(test_url "https://www.google.com/generate_204" ${retry_num} ${connect_timeout})
 	if [ "$status" = "200" ]; then
 		result=0
 	else
-		status2=$(test_url "https://www.baidu.com" $try)
+		status2=$(test_url "https://www.baidu.com" ${retry_num} ${connect_timeout})
 		if [ "$status2" = "200" ]; then
 			result=1
 		else
@@ -96,7 +97,7 @@ test_auto_switch() {
 				local curlx="socks5h://127.0.0.1:$tmp_port"
 			fi
 			sleep 9s
-			proxy_status=$(test_url "https://www.google.com/generate_204" 3 3 "-x $curlx")
+			proxy_status=$(test_url "https://www.google.com/generate_204" ${retry_num} ${connect_timeout} "-x $curlx")
 			top -bn1 | grep -v "grep" | grep "/var/etc/${CONFIG}/test.json" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
 			rm -rf "/var/etc/${CONFIG}/test.json"
 			if [ "$proxy_status" -eq 200 ]; then
@@ -155,20 +156,23 @@ start() {
 	delay=$(config_t_get auto_switch testing_time 1)
 	#sleep ${delay}m
 	sleep 9s
+	connect_timeout=$(config_t_get auto_switch connect_timeout 3)
+	retry_num=$(config_t_get auto_switch retry_num 3)
 	while [ "$ENABLED" -eq 1 ]
 	do
 		TCP_NODE=$(config_t_get auto_switch tcp_node nil)
 		[ -n "$TCP_NODE" -a "$TCP_NODE" != "nil" ] && {
 			test_auto_switch TCP "$TCP_NODE"
 		}
-		delay=$(config_t_get auto_switch testing_time 1)
 		sleep ${delay}m
 	done
 }
 
-case $1 in
+arg1=$1
+shift
+case $arg1 in
 test_url)
-	test_url $2
+	test_url $@
 	;;
 *)
 	start

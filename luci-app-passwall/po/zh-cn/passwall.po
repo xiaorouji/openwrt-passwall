@@ -505,8 +505,8 @@ msgstr "证书路径"
 msgid "Finger Print"
 msgstr "指纹伪造"
 
-msgid "Shadowsocks2"
-msgstr "二次加密"
+msgid "Shadowsocks secondary encryption"
+msgstr "Shadowsocks 二次加密"
 
 msgid "Encrypt Method"
 msgstr "加密"
@@ -661,8 +661,14 @@ msgstr "自动切换"
 msgid "When there is no server, an automatic reconnect scheme is used"
 msgstr "当没有服务器时，则使用自动重连方案"
 
-msgid "How often is a diagnosis made"
-msgstr "检测时间"
+msgid "How often to test"
+msgstr "多久检测一次"
+
+msgid "Timeout seconds"
+msgstr "超时秒数"
+
+msgid "Timeout retry num"
+msgstr "超时重试次数"
 
 msgid "Automatic switching cannot be used when this option is checked"
 msgstr "当勾选此选项时，不能使用自动切换"
@@ -678,6 +684,15 @@ msgstr "恢复切换"
 
 msgid "When detects main node is available, switch back to the main node."
 msgstr "当检测到主节点可用时，切换回主节点。"
+
+msgid "Add nodes to the standby node list by keywords"
+msgstr "通过关键字添加节点到备用节点列表"
+
+msgid "Delete nodes in the standby node list by keywords"
+msgstr "通过关键字删除备用节点列表的节点"
+
+msgid "Please enter the node keyword, pay attention to distinguish between spaces, uppercase and lowercase."
+msgstr "请输入节点关键字，注意区分空格、大写和小写。"
 
 msgid "Configure this node with 127.0.0.1: this port"
 msgstr "使用127.0.0.1和此端口配置节点"
@@ -1074,15 +1089,6 @@ msgstr "<br />none：默认值，不进行伪装，发送的数据是没有特�
 
 msgid "A legal file path. This file must not exist before running."
 msgstr "一个合法的文件路径。在运行之前，这个文件必须不存在。"
-
-msgid "TCP Open Socks"
-msgstr "开启Socks"
-
-msgid "When using this TCP node, whether to open the socks proxy at the same time"
-msgstr "使用此TCP节点时，是否同时打开socks代理"
-
-msgid "Do not conflict with other ports"
-msgstr "端口不能冲突"
 
 msgid "Auth"
 msgstr "身份认证"

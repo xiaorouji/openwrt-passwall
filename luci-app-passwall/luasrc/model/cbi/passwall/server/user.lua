@@ -297,12 +297,6 @@ flow:depends("xtls", true)
 
 -- [[ TLS部分 ]] --
 
-tls_allowInsecure = s:option(Flag, "tls_allowInsecure", translate("allowInsecure"), translate("Whether unsafe connections are allowed. When checked, Certificate validation will be skipped."))
-tls_allowInsecure.default = "0"
-tls_allowInsecure:depends({ type = "Trojan", tls = true })
-tls_allowInsecure:depends({ type = "Trojan-Plus", tls = true })
-tls_allowInsecure:depends({ type = "Trojan-Go", tls = true })
-
 tls_certificateFile = s:option(FileUpload, "tls_certificateFile", translate("Public key absolute path"), translate("as:") .. "/etc/ssl/fullchain.pem")
 tls_certificateFile.validate = function(self, value, t)
     if value and value ~= "" then
@@ -356,7 +350,7 @@ trojan_transport:value("original", "Original")
 trojan_transport:value("ws", "WebSocket")
 trojan_transport:value("h2", "HTTP/2")
 trojan_transport:value("h2+ws", "HTTP/2 & WebSocket")
-trojan_transport.default = "ws"
+trojan_transport.default = "original"
 trojan_transport:depends("type", "Trojan-Go")
 
 trojan_plugin = s:option(ListValue, "plugin_type", translate("Plugin Type"))
@@ -511,7 +505,7 @@ fallback_xver:depends("fallback", true)
 fallback_list = s:option(DynamicList, "fallback_list", "Fallback", translate("dest,path"))
 fallback_list:depends("fallback", true)
 
-ss_aead = s:option(Flag, "ss_aead", translate("Shadowsocks2"))
+ss_aead = s:option(Flag, "ss_aead", translate("Shadowsocks secondary encryption"))
 ss_aead:depends("type", "Trojan-Go")
 ss_aead.default = "0"
 

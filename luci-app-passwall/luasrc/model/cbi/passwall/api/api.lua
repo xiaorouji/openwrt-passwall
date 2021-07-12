@@ -1,10 +1,10 @@
 module("luci.model.cbi.passwall.api.api", package.seeall)
-local fs = require "nixio.fs"
-local sys = require "luci.sys"
-local uci = require"luci.model.uci".cursor()
-local util = require "luci.util"
-local datatypes = require "luci.cbi.datatypes"
-local i18n = require "luci.i18n"
+fs = require "nixio.fs"
+sys = require "luci.sys"
+uci = require"luci.model.uci".cursor()
+util = require "luci.util"
+datatypes = require "luci.cbi.datatypes"
+i18n = require "luci.i18n"
 
 appname = "passwall"
 curl = "/usr/bin/curl"
@@ -95,6 +95,22 @@ function get_ip_type(ip)
         end
         if datatypes.ip4addr(ip) then
             return "4"
+        end
+    end
+    return ""
+end
+
+function is_mac(mac)
+    return datatypes.macaddr(mac)
+end
+
+function ip_or_mac(e)
+    if e then
+        if get_ip_type(e) == "4" then
+            return "ip"
+        end
+        if is_mac(e) then
+            return "mac"
         end
     end
     return ""

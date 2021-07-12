@@ -92,10 +92,16 @@ get_ip_port_from() {
 	local __host=${1}; shift 1
 	local __ipv=${1}; shift 1
 	local __portv=${1}; shift 1
+	local __ucipriority=${1}; shift 1
 
 	local val1 val2
-	val2=$(echo $__host | sed -n 's/^.*[:#]\([0-9]*\)$/\1/p')
-	val1="${__host%%${val2:+[:#]${val2}*}}"
+	if [ -n "${__ucipriority}" ]; then
+		val2=$(config_n_get ${__host} port $(echo $__host | sed -n 's/^.*[:#]\([0-9]*\)$/\1/p'))
+		val1=$(config_n_get ${__host} address "${__host%%${val2:+[:#]${val2}*}}")
+	else
+		val2=$(echo $__host | sed -n 's/^.*[:#]\([0-9]*\)$/\1/p')
+		val1="${__host%%${val2:+[:#]${val2}*}}"
+	fi
 	eval "${__ipv}=\"$val1\"; ${__portv}=\"$val2\""
 }
 
@@ -1080,16 +1086,15 @@ start_haproxy() {
 	items=$(echo "${sort_items}" | sort -n | cut -d ' ' -sf 2)
 
 	unset lport
-	local haproxy_port lbss lbort lbweight export backup
+	local haproxy_port lbss lbweight export backup
 	local msg bip bport hasvalid bbackup failcount interface
 	for item in ${items}; do
-		unset haproxy_port lbort bbackup
+		unset haproxy_port bbackup
 
 		eval $(uci -q show "${CONFIG}.${item}" | cut -d '.' -sf 3-)
-		get_ip_port_from "$lbss" bip bport
+		get_ip_port_from "$lbss" bip bport 1
 
-		[ "$lbort" = "default" ] && lbort=$bport || bport=$lbort
-		[ -z "$haproxy_port" ] || [ -z "$bip" ] || [ -z "$lbort" ] && echolog "  - 丢弃1个明显无效的节点" && continue
+		[ -z "$haproxy_port" ] || [ -z "$bip" ] && echolog "  - 丢弃1个明显无效的节点" && continue
 		[ "$backup" = "1" ] && bbackup="backup"
 
 		[ "$lport" = "${haproxy_port}" ] || {
@@ -1110,6 +1115,8 @@ start_haproxy() {
 		if [ "$export" != "0" ]; then
 			add_ip2route ${bip} ${export} > /dev/null 2>&1 &
 		fi
+		
+		haproxy_items="${haproxy_items}${IFS}${bip}:${bport}"
 		echolog "  | - 出口节点：${bip}:${bport}，权重：${lbweight}"
 	done
 

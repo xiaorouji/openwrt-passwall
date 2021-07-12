@@ -62,23 +62,30 @@ o.rmempty = false
 
 ---- Node Address
 o = s:option(Value, "lbss", translate("Node Address"))
-for k, v in pairs(nodes_table) do o:value(v.obj.address .. ":" .. v.obj.port, v.remarks) end
+for k, v in pairs(nodes_table) do o:value(v.id, v.remarks) end
 o.rmempty = false
-
----- Node Port
-o = s:option(Value, "lbort", translate("Node Port"))
-o:value("default", translate("Default"))
-o.default = "default"
-o.rmempty = false
+o.validate = function(self, value)
+    if not value then return nil end
+    local t = m:get(value) or nil
+    if t and t[".type"] == "nodes" then
+        return value
+    end
+    if api.datatypes.hostport(value) then
+        return value
+    end
+    return nil, value
+end
 
 ---- Haproxy Port
 o = s:option(Value, "haproxy_port", translate("Haproxy Port"))
-o.default = "1181"
+o.datatype = "port"
+o.default = 1181
 o.rmempty = false
 
 ---- Node Weight
 o = s:option(Value, "lbweight", translate("Node Weight"))
-o.default = "5"
+o.datatype = "uinteger"
+o.default = 5
 o.rmempty = false
 
 ---- Export

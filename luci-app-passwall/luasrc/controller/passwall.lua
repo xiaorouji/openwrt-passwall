@@ -50,6 +50,8 @@ function index()
 	entry({"admin", "services", appname, "server_get_log"}, call("server_get_log")).leaf = true
 	entry({"admin", "services", appname, "server_clear_log"}, call("server_clear_log")).leaf = true
 	entry({"admin", "services", appname, "link_add_node"}, call("link_add_node")).leaf = true
+	entry({"admin", "services", appname, "autoswitch_add_node"}, call("autoswitch_add_node")).leaf = true
+	entry({"admin", "services", appname, "autoswitch_remove_node"}, call("autoswitch_remove_node")).leaf = true
 	entry({"admin", "services", appname, "get_now_use_node"}, call("get_now_use_node")).leaf = true
 	entry({"admin", "services", appname, "get_redir_log"}, call("get_redir_log")).leaf = true
 	entry({"admin", "services", appname, "get_log"}, call("get_log")).leaf = true
@@ -80,7 +82,7 @@ local function http_write_json(content)
 end
 
 function reset_config()
-	luci.sys.call('[ -f "/usr/share/passwall/config.default" ] && cp -f /usr/share/passwall/config.default /etc/config/passwall && /etc/init.d/passwall reload')
+	luci.sys.call('[ -f "/rom/etc/config/passwall" ] && cp -f /rom/etc/config/passwall /etc/config/passwall && /etc/init.d/passwall reload')
 	luci.http.redirect(api.url())
 end
 
@@ -99,6 +101,30 @@ function link_add_node()
 	local link = luci.http.formvalue("link")
 	luci.sys.call('echo \'' .. link .. '\' > ' .. lfile)
 	luci.sys.call("lua /usr/share/passwall/subscribe.lua add log")
+end
+
+function autoswitch_add_node()
+	local key = luci.http.formvalue("key")
+	if key and key ~= "" then
+		for k, e in ipairs(api.get_valid_nodes()) do
+			if e.node_type == "normal" and e["remark"]:find(key) then
+				luci.sys.call(string.format("uci -q del_list passwall.@auto_switch[0].tcp_node='%s' && uci -q add_list passwall.@auto_switch[0].tcp_node='%s'", e.id, e.id))
+			end
+		end
+	end
+	luci.http.redirect(api.url("auto_switch"))
+end
+
+function autoswitch_remove_node()
+	local key = luci.http.formvalue("key")
+	if key and key ~= "" then
+		for k, e in ipairs(ucic:get(appname, "@auto_switch[0]", "tcp_node") or {}) do
+			if e and (ucic:get(appname, e, "remarks") or ""):find(key) then
+				luci.sys.call(string.format("uci -q del_list passwall.@auto_switch[0].tcp_node='%s'", e))
+			end
+		end
+	end
+	luci.http.redirect(api.url("auto_switch"))
 end
 
 function get_now_use_node()
@@ -232,6 +258,8 @@ function copy_node()
 			end)
 		end
 	end
+	ucic:delete(appname, uuid, "add_from")
+	ucic:set(appname, uuid, "add_mode", 1)
 	ucic:commit(appname)
 	luci.http.redirect(api.url("node_config", uuid))
 end
