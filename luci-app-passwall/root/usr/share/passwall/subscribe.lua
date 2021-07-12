@@ -63,21 +63,43 @@ do
 	import_config("tcp")
 	import_config("udp")
 
-	local i = 0
-	ucic:foreach(appname, "socks", function(t)
-		i = i + 1
-		local node_id = t.node
-		CONFIG[#CONFIG + 1] = {
-			log = true,
-			id = t[".name"],
-			remarks = "Socks节点列表[" .. i .. "]",
-			currentNode = node_id and ucic:get_all(appname, node_id) or nil,
-			set = function(o, server)
-				ucic:set(appname, t[".name"], "node", server)
-				o.newNodeId = server
-			end
-		}
-	end)
+	if true then
+		local i = 0
+		local option = "node"
+		ucic:foreach(appname, "socks", function(t)
+			i = i + 1
+			local node_id = t[option]
+			CONFIG[#CONFIG + 1] = {
+				log = true,
+				id = t[".name"],
+				remarks = "Socks节点列表[" .. i .. "]",
+				currentNode = node_id and ucic:get_all(appname, node_id) or nil,
+				set = function(o, server)
+					ucic:set(appname, t[".name"], option, server)
+					o.newNodeId = server
+				end
+			}
+		end)
+	end
+
+	if true then
+		local i = 0
+		local option = "lbss"
+		ucic:foreach(appname, "haproxy_config", function(t)
+			i = i + 1
+			local node_id = t[option]
+			CONFIG[#CONFIG + 1] = {
+				log = true,
+				id = t[".name"],
+				remarks = "HAProxy负载均衡节点列表[" .. i .. "]",
+				currentNode = node_id and ucic:get_all(appname, node_id) or nil,
+				set = function(o, server)
+					ucic:set(appname, t[".name"], option, server)
+					o.newNodeId = server
+				end
+			}
+		end)
+	end
 
 	local tcp_node_table = ucic:get(appname, "@auto_switch[0]", "tcp_node")
 	if tcp_node_table then
@@ -668,7 +690,11 @@ end
 -- curl
 local function curl(url)
 	local ua = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.122 Safari/537.36"
-	local stdout = luci.sys.exec(string.format('curl -skL --user-agent "%s" -k --retry 3 --connect-timeout 3 --retry-all-errors "%s"', ua, url))
+	local a = ""
+	if luci.sys.call('curl --help all | grep "\\-\\-retry-all-errors" > /dev/null') == 0 then
+		a = "--retry-all-errors"
+	end
+	local stdout = luci.sys.exec(string.format('curl -skL --user-agent "%s" -k --retry 3 --connect-timeout 3 %s "%s"', ua, a, url))
 	return trim(stdout)
 end
 
