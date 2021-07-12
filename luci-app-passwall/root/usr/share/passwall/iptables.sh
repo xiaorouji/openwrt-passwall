@@ -166,13 +166,25 @@ gen_laniplist_6() {
 load_acl() {
 	local items=$(get_enabled_anonymous_secs "@acl_rule")
 	[ -n "$items" ] && {
-		local item enabled remarks ip mac tcp_proxy_mode udp_proxy_mod
-		local tcp_no_redir_ports udp_no_redir_ports tcp_redir_ports udp_redir_ports
-		local ipt_tmp tcp_port udp_port msg msg2
+		local item
+		local enabled remarks ip_mac tcp_proxy_mode udp_proxy_mode tcp_no_redir_ports udp_no_redir_ports tcp_redir_ports udp_redir_ports
+		local ip mac ip_or_mac tcp_port udp_port
+		local ipt_tmp msg msg2
 		echolog "访问控制："
 		for item in $items; do
-			unset ip mac tcp_port udp_port msg
+			unset enabled remarks ip_mac tcp_proxy_mode udp_proxy_mode tcp_no_redir_ports udp_no_redir_ports tcp_redir_ports udp_redir_ports
+			unset ip mac ip_or_mac tcp_port udp_port
+			unset ipt_tmp msg msg2
 			eval $(uci -q show "${CONFIG}.${item}" | cut -d'.' -sf 3-)
+			[ -z "${ip_mac}" ] && continue
+			ip_or_mac=$(lua_api "ip_or_mac(\"${ip_mac}\")")
+			if [ "${ip_or_mac}" = "ip" ]; then
+				ip=${ip_mac}
+				unset mac
+			elif [ "${ip_or_mac}" = "mac" ]; then
+				mac=${ip_mac}
+				unset ip
+			fi
 			[ -z "${ip}${mac}" ] && continue
 			tcp_proxy_mode=${tcp_proxy_mode:-default}
 			udp_proxy_mode=${udp_proxy_mode:-default}
@@ -189,10 +201,11 @@ load_acl() {
 			
 			#echolog "访问控制：${item}..."
 			[ -n "$ip" ] && msg="IP：$ip，"
-			[ -n "$mac" ] && msg="${msg:+${msg}和}MAC：$mac，"
+			[ -n "$mac" ] && msg="MAC：$mac，"
 			ipt_tmp=$ipt_n
-			[ "$tcp_proxy_mode" != "disable" ] && {
-				[ "$TCP_NODE" != "nil" ] && {
+			
+			[ "$TCP_NODE" != "nil" ] && {
+				if [ "$tcp_proxy_mode" != "disable" ]; then
 					tcp_port=$TCP_REDIR_PORT
 					msg2="${msg}使用TCP节点 [$(get_action_chain_name $tcp_proxy_mode)]"
 					if [ -n "${is_tproxy}" ]; then
@@ -224,14 +237,17 @@ load_acl() {
 						$ip6t_m -w -A PSW $(comment "$remarks") -p tcp $(factor $ip "-s") $(factor $mac "-m mac --mac-source") $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_BLACKLIST6) $(REDIRECT $tcp_port TPROXY) 2>/dev/null
 						$ip6t_m -w -A PSW $(comment "$remarks") -p tcp $(factor $ip "-s") $(factor $mac "-m mac --mac-source") $(factor $tcp_redir_ports "-m multiport --dport") $(get_redirect_ip6t $tcp_proxy_mode $tcp_port TPROXY) 2>/dev/null
 					fi
-					echolog "  - ${msg2}"
-				}
+				else
+					msg2="${msg}不代理TCP"
+				fi
+				echolog "  - ${msg2}"
 			}
+			
 			$ipt_tmp -w -A PSW $(comment "$remarks") $(factor $ip "-s") $(factor $mac "-m mac --mac-source") -p tcp -j RETURN
 			$ip6t_m -w -A PSW $(comment "$remarks") $(factor $ip "-s") $(factor $mac "-m mac --mac-source") -p tcp -j RETURN 2>/dev/null
 			
-			[ "$udp_proxy_mode" != "disable" ] && {
-				[ "$UDP_NODE" != "nil" -o "$TCP_UDP" = "1" ] && {
+			[ "$UDP_NODE" != "nil" -o "$TCP_UDP" = "1" ] && {
+				if [ "$udp_proxy_mode" != "disable" ]; then
 					msg2="${msg}使用UDP节点 [$(get_action_chain_name $udp_proxy_mode)]"
 					udp_port=$UDP_REDIR_PORT
 					msg2="${msg2}(TPROXY:${udp_port})代理"
@@ -251,12 +267,17 @@ load_acl() {
 						$ip6t_m -w -A PSW $(comment "$remarks") -p udp $(factor $ip "-s") $(factor $mac "-m mac --mac-source") $(factor $udp_redir_ports "-m multiport --dport") $(dst $IPSET_BLACKLIST6) $(REDIRECT $udp_port TPROXY) 2>/dev/null
 						$ip6t_m -w -A PSW $(comment "$remarks") -p udp $(factor $ip "-s") $(factor $mac "-m mac --mac-source") $(factor $udp_redir_ports "-m multiport --dport") $(get_redirect_ip6t $udp_proxy_mode $udp_port TPROXY) 2>/dev/null
 					fi
-					echolog "  - ${msg2}"
-				}
+				else
+					msg2="${msg}不代理UDP"
+				fi
+				echolog "  - ${msg2}"
 			}
 			$ipt_m -w -A PSW $(comment "$remarks") $(factor $ip "-s") $(factor $mac "-m mac --mac-source") -p udp -j RETURN
 			$ip6t_m -w -A PSW $(comment "$remarks") $(factor $ip "-s") $(factor $mac "-m mac --mac-source") -p udp -j RETURN 2>/dev/null
 		done
+		unset enabled remarks ip_mac tcp_proxy_mode udp_proxy_mode tcp_no_redir_ports udp_no_redir_ports tcp_redir_ports udp_redir_ports
+		unset ip mac ip_or_mac tcp_port udp_port
+		unset ipt_tmp msg msg2
 	}
 
 	#  加载TCP默认代理模式
@@ -333,9 +354,9 @@ load_acl() {
 }
 
 filter_haproxy() {
-	uci show $CONFIG | grep "@haproxy_config" | grep "lbss=" | cut -d "'" -f 2 | grep -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}" | awk -F ":" '{print $1}' | sed -e "/^$/d" | sed -e "s/^/add $IPSET_VPSIPLIST &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
-	for host in $(uci show $CONFIG | grep "@haproxy_config" | grep "lbss=" | cut -d "'" -f 2 | grep -v -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}" | awk -F ":" '{print $1}'); do
-		ipset -q add $IPSET_VPSIPLIST $(get_host_ip ipv4 $host 1)
+	for item in ${haproxy_items}; do
+		local ip=$(get_host_ip ipv4 $(echo $item | awk -F ":" '{print $1}') 1)
+		ipset -q add $IPSET_VPSIPLIST $ip
 	done
 	echolog "加入负载均衡的节点到ipset[$IPSET_VPSIPLIST]直连完成"
 }

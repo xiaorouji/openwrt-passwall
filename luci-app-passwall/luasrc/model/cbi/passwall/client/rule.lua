@@ -68,6 +68,14 @@ function s.create(e, t)
     TypedSection.create(e, t)
     luci.http.redirect(e.extedit:format(t))
 end
+function s.remove(e, t)
+    m.uci:foreach(appname, "nodes", function(s)
+        if s["protocol"] and s["protocol"] == "_shunt" then
+            m:del(s[".name"], t)
+        end
+    end)
+    TypedSection.remove(e, t)
+end
 
 o = s:option(DummyValue, "remarks", translate("Remarks"))
 

@@ -16,37 +16,14 @@ function gen_config(user)
             key_password = "",
             cipher = user.fingerprint == nil and cipher or (user.fingerprint == "disable" and cipher13 .. ":" .. cipher or ""),
             cipher_tls13 = user.fingerprint == nil and cipher13 or nil,
-            sni = nil,
-            verify = (user.tls_allowInsecure ~= "1") and true or false,
-            verify_hostname = false,
+            prefer_server_cipher = true,
             reuse_session = true,
             session_ticket = (user.tls_sessionTicket == "1") and true or false,
-            prefer_server_cipher = true,
             session_timeout = 600,
             plain_http_response = "",
             curves = "",
             dhparam = ""
         },
-        udp_timeout = 60,
-        disable_http_check = true,
-        transport_plugin = ((user.tls == nil or user.tls ~= "1") and user.trojan_transport == "original") and {
-            enabled = user.plugin_type ~= nil,
-            type = user.plugin_type or "plaintext",
-            command = user.plugin_type ~= "plaintext" and user.plugin_cmd or nil,
-            option = user.plugin_type ~= "plaintext" and user.plugin_option or nil,
-            arg = user.plugin_type ~= "plaintext" and { user.plugin_arg } or nil,
-            env = {}
-        } or nil,
-        websocket = (user.trojan_transport and user.trojan_transport:find('ws')) and {
-            enabled = true,
-            path = user.ws_path or "/",
-            host = user.ws_host or ""
-        } or nil,
-        shadowsocks = (user.ss_aead == "1") and {
-            enabled = true,
-            method = user.ss_aead_method or "aead_aes_128_gcm",
-            password = user.ss_aead_pwd or ""
-        } or nil,
         tcp = {
             prefer_ipv4 = false,
             no_delay = true,
@@ -56,5 +33,27 @@ function gen_config(user)
             fast_open_qlen = 20
         }
     }
+    if user.type == "Trojan-Go" then
+        config.udp_timeout = 60
+        config.disable_http_check = true
+        config.transport_plugin = ((user.tls == nil or user.tls ~= "1") and user.trojan_transport == "original") and {
+            enabled = user.plugin_type ~= nil,
+            type = user.plugin_type or "plaintext",
+            command = user.plugin_type ~= "plaintext" and user.plugin_cmd or nil,
+            option = user.plugin_type ~= "plaintext" and user.plugin_option or nil,
+            arg = user.plugin_type ~= "plaintext" and { user.plugin_arg } or nil,
+            env = {}
+        } or nil
+        config.websocket = (user.trojan_transport and user.trojan_transport:find('ws')) and {
+            enabled = true,
+            path = user.ws_path or "/",
+            host = user.ws_host or ""
+        } or nil
+        config.shadowsocks = (user.ss_aead == "1") and {
+            enabled = true,
+            method = user.ss_aead_method or "aead_aes_128_gcm",
+            password = user.ss_aead_pwd or ""
+        } or nil
+    end
     return config
 end

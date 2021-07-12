@@ -487,7 +487,7 @@ tls_allowInsecure = s:option(Flag, "tls_allowInsecure", translate("allowInsecure
 tls_allowInsecure.default = "0"
 tls_allowInsecure:depends("tls", true)
 
-xray_fingerprint = s:option(ListValue, "fingerprint", translate("Finger Print"))
+xray_fingerprint = s:option(ListValue, "xray_fingerprint", translate("Finger Print"))
 xray_fingerprint:value("disable", translate("Disable"))
 xray_fingerprint:value("chrome")
 xray_fingerprint:value("firefox")
@@ -495,6 +495,12 @@ xray_fingerprint:value("safari")
 xray_fingerprint:value("randomized")
 xray_fingerprint.default = "disable"
 xray_fingerprint:depends({ type = "Xray", tls = true, xtls = false })
+function xray_fingerprint.cfgvalue(self, section)
+	return m:get(section, "fingerprint")
+end
+function xray_fingerprint.write(self, section, value)
+	m:set(section, "fingerprint", value)
+end
 
 trojan_transport = s:option(ListValue, "trojan_transport", translate("Transport"))
 trojan_transport:value("original", "Original")
@@ -650,7 +656,7 @@ grpc_serviceName = s:option(Value, "grpc_serviceName", "ServiceName")
 grpc_serviceName:depends("transport", "grpc")
 
 -- [[ Trojan-Go Shadowsocks2 ]] --
-ss_aead = s:option(Flag, "ss_aead", translate("Shadowsocks2"))
+ss_aead = s:option(Flag, "ss_aead", translate("Shadowsocks secondary encryption"))
 ss_aead:depends("type", "Trojan-Go")
 ss_aead.default = "0"
 
@@ -663,41 +669,27 @@ ss_aead_pwd = s:option(Value, "ss_aead_pwd", translate("Password"))
 ss_aead_pwd.password = true
 ss_aead_pwd:depends("ss_aead", "1")
 
--- [[ Mux ]]--
-mux = s:option(Flag, "mux", translate("Mux"))
+-- [[ Trojan-Go Mux ]]--
+mux = s:option(Flag, "smux", translate("smux"))
+mux:depends("type", "Trojan-Go")
+
+-- [[ Xray Mux ]]--
+mux = s:option(Flag, "mux", translate("mux"))
 mux:depends({ type = "Xray", protocol = "vmess" })
 mux:depends({ type = "Xray", protocol = "vless", xtls = false })
 mux:depends({ type = "Xray", protocol = "http" })
 mux:depends({ type = "Xray", protocol = "socks" })
 mux:depends({ type = "Xray", protocol = "shadowsocks" })
-mux:depends("type", "Trojan-Go")
+mux:depends({ type = "Xray", protocol = "trojan" })
 
-mux_concurrency = s:option(Value, "mux_concurrency", translate("Mux Concurrency"))
+mux_concurrency = s:option(Value, "mux_concurrency", translate("mux concurrency"))
 mux_concurrency.default = 8
-mux_concurrency:depends("mux", "1")
+mux_concurrency:depends("mux", true)
+mux_concurrency:depends("smux", true)
 
--- [[ 当作为TCP节点时，是否同时开启socks代理 ]]--
---[[
-tcp_socks = s:option(Flag, "tcp_socks", translate("TCP Open Socks"), translate("When using this TCP node, whether to open the socks proxy at the same time"))
-tcp_socks.default = 0
-tcp_socks:depends("type", "Xray")
-
-tcp_socks_port = s:option(Value, "tcp_socks_port", "Socks " .. translate("Port"), translate("Do not conflict with other ports"))
-tcp_socks_port.datatype = "port"
-tcp_socks_port.default = 1080
-tcp_socks_port:depends("tcp_socks", "1")
-
-tcp_socks_auth = s:option(ListValue, "tcp_socks_auth", translate("Socks for authentication"), translate('Socks protocol authentication, support anonymous and password.'))
-tcp_socks_auth:value("noauth", translate("anonymous"))
-tcp_socks_auth:value("password", translate("User Password"))
-tcp_socks_auth:depends("tcp_socks", "1")
-
-tcp_socks_auth_username = s:option(Value, "tcp_socks_auth_username", "Socks " .. translate("Username"))
-tcp_socks_auth_username:depends("tcp_socks_auth", "password")
-
-tcp_socks_auth_password = s:option(Value, "tcp_socks_auth_password", "Socks " .. translate("Password"))
-tcp_socks_auth_password:depends("tcp_socks_auth", "password")
---]]
+smux_idle_timeout = s:option(Value, "smux_idle_timeout", translate("mux idle timeout"))
+smux_idle_timeout.default = 60
+smux_idle_timeout:depends("smux", true)
 
 protocol.validate = function(self, value)
     if value == "_shunt" or value == "_balancing" then

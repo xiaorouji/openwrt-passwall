@@ -39,11 +39,6 @@ local trojan = {
         curves = ""
     },
     udp_timeout = 60,
-    mux = (node.mux == "1") and {
-        enabled = true,
-        concurrency = tonumber(node.mux_concurrency),
-        idle_timeout = 60,
-        } or nil,
     tcp = {
         use_tproxy = (node.type == "Trojan-Plus" and var["-use_tproxy"]) and true or nil,
         no_delay = true,
@@ -76,6 +71,11 @@ if node.type == "Trojan-Go" then
         enabled = true,
         method = node.ss_aead_method or "aead_aes_128_gcm",
         password = node.ss_aead_pwd or ""
+    } or nil
+    trojan.mux = (node.smux == "1") and {
+        enabled = true,
+        concurrency = tonumber(node.mux_concurrency),
+        idle_timeout = tonumber(node.smux_idle_timeout)
     } or nil
 end
 print(json.stringify(trojan, 1))

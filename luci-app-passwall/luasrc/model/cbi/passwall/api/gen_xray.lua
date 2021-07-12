@@ -212,23 +212,6 @@ if node_section then
             settings = {network = proto, followRedirect = true},
             sniffing = {enabled = true, destOverride = {"http", "tls"}}
         })
-        if proto == "tcp" and node.tcp_socks == "1" then
-            table.insert(inbounds, {
-                listen = "0.0.0.0",
-                port = tonumber(node.tcp_socks_port),
-                protocol = "socks",
-                settings = {
-                    auth = node.tcp_socks_auth,
-                    accounts = (node.tcp_socks_auth == "password") and {
-                        {
-                            user = node.tcp_socks_auth_username,
-                            pass = node.tcp_socks_auth_password
-                        }
-                    } or nil,
-                    udp = true
-                }
-            })
-        end
     end
 
     local up_trust_doh = ucursor:get(appname, "@global[0]", "up_trust_doh")
