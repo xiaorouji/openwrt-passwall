@@ -480,23 +480,23 @@ dns_hijack() {
 
 add_firewall_rule() {
 	echolog "开始加载防火墙规则..."
-	ipset -! create $IPSET_LANIPLIST nethash
-	ipset -! create $IPSET_VPSIPLIST nethash
-	ipset -! create $IPSET_SHUNTLIST nethash
-	ipset -! create $IPSET_GFW nethash
-	ipset -! create $IPSET_CHN nethash
-	ipset -! create $IPSET_BLACKLIST nethash
-	ipset -! create $IPSET_WHITELIST nethash
-	ipset -! create $IPSET_BLOCKLIST nethash
+	ipset -! create $IPSET_LANIPLIST nethash maxelem 1048576
+	ipset -! create $IPSET_VPSIPLIST nethash maxelem 1048576
+	ipset -! create $IPSET_SHUNTLIST nethash maxelem 1048576
+	ipset -! create $IPSET_GFW nethash maxelem 1048576
+	ipset -! create $IPSET_CHN nethash maxelem 1048576
+	ipset -! create $IPSET_BLACKLIST nethash maxelem 1048576
+	ipset -! create $IPSET_WHITELIST nethash maxelem 1048576
+	ipset -! create $IPSET_BLOCKLIST nethash maxelem 1048576
 
-	ipset -! create $IPSET_LANIPLIST6 nethash family inet6
-	ipset -! create $IPSET_VPSIPLIST6 nethash family inet6
-	ipset -! create $IPSET_SHUNTLIST6 nethash family inet6
-	ipset -! create $IPSET_GFW6 nethash family inet6
-	ipset -! create $IPSET_CHN6 nethash family inet6
-	ipset -! create $IPSET_BLACKLIST6 nethash family inet6
-	ipset -! create $IPSET_WHITELIST6 nethash family inet6
-	ipset -! create $IPSET_BLOCKLIST6 nethash family inet6
+	ipset -! create $IPSET_LANIPLIST6 nethash family inet6 maxelem 1048576
+	ipset -! create $IPSET_VPSIPLIST6 nethash family inet6 maxelem 1048576
+	ipset -! create $IPSET_SHUNTLIST6 nethash family inet6 maxelem 1048576
+	ipset -! create $IPSET_GFW6 nethash family inet6 maxelem 1048576
+	ipset -! create $IPSET_CHN6 nethash family inet6 maxelem 1048576
+	ipset -! create $IPSET_BLACKLIST6 nethash family inet6 maxelem 1048576
+	ipset -! create $IPSET_WHITELIST6 nethash family inet6 maxelem 1048576
+	ipset -! create $IPSET_BLOCKLIST6 nethash family inet6 maxelem 1048576
 
 	local shunt_ids=$(uci show $CONFIG | grep "=shunt_rules" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}')
 
