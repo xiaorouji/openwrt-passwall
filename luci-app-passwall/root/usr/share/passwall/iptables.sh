@@ -377,19 +377,17 @@ filter_node() {
 		local stream=${2}
 		local _proxy=${3}
 		local _port=${4}
-		local _is_tproxy ipt_tmp ip6t_tmp msg msg2
+		local _is_tproxy ipt_tmp msg msg2
 
 		if [ -n "$node" ] && [ "$node" != "nil" ]; then
 			local type=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
 			local address=$(config_n_get $node address)
 			local port=$(config_n_get $node port)
 			ipt_tmp=$ipt_n
-			ip6t_tmp=$ip6t_m
 			_is_tproxy=${is_tproxy}
 			[ "$stream" == "udp" ] && _is_tproxy="TPROXY"
 			if [ -n "${_is_tproxy}" ]; then
 				ipt_tmp=$ipt_m
-				ip6t_tmp=$ip6t_m
 				msg="TPROXY"
 			else
 				msg="REDIRECT"
@@ -402,7 +400,7 @@ filter_node() {
 		local ADD_INDEX=$FORCE_INDEX
 		for _ipt in 4 6; do
 			[ "$_ipt" == "4" ] && _ipt=$ipt_tmp
-			[ "$_ipt" == "6" ] && _ipt=$ip6t_tmp
+			[ "$_ipt" == "6" ] && _ipt=$ip6t_m
 			$_ipt -n -L PSW_OUTPUT | grep -q "${address}:${port}"
 			if [ $? -ne 0 ]; then
 				unset dst_rule
@@ -417,7 +415,7 @@ filter_node() {
 					dst_rule=" -j RETURN"
 					msg2="直连代理"
 				}
-				$_ipt -w -w -I PSW_OUTPUT $ADD_INDEX $(comment "${address}:${port}") -p $stream -d $address --dport $port $dst_rule 2>/dev/null
+				$_ipt -w -I PSW_OUTPUT $ADD_INDEX $(comment "${address}:${port}") -p $stream -d $address --dport $port $dst_rule 2>/dev/null
 			else
 				msg2="已配置过的节点，"
 			fi
@@ -480,23 +478,23 @@ dns_hijack() {
 
 add_firewall_rule() {
 	echolog "开始加载防火墙规则..."
-	ipset -! create $IPSET_LANIPLIST nethash
-	ipset -! create $IPSET_VPSIPLIST nethash
-	ipset -! create $IPSET_SHUNTLIST nethash
-	ipset -! create $IPSET_GFW nethash
-	ipset -! create $IPSET_CHN nethash
-	ipset -! create $IPSET_BLACKLIST nethash
-	ipset -! create $IPSET_WHITELIST nethash
-	ipset -! create $IPSET_BLOCKLIST nethash
+	ipset -! create $IPSET_LANIPLIST nethash maxelem 1048576
+	ipset -! create $IPSET_VPSIPLIST nethash maxelem 1048576
+	ipset -! create $IPSET_SHUNTLIST nethash maxelem 1048576
+	ipset -! create $IPSET_GFW nethash maxelem 1048576
+	ipset -! create $IPSET_CHN nethash maxelem 1048576
+	ipset -! create $IPSET_BLACKLIST nethash maxelem 1048576
+	ipset -! create $IPSET_WHITELIST nethash maxelem 1048576
+	ipset -! create $IPSET_BLOCKLIST nethash maxelem 1048576
 
-	ipset -! create $IPSET_LANIPLIST6 nethash family inet6
-	ipset -! create $IPSET_VPSIPLIST6 nethash family inet6
-	ipset -! create $IPSET_SHUNTLIST6 nethash family inet6
-	ipset -! create $IPSET_GFW6 nethash family inet6
-	ipset -! create $IPSET_CHN6 nethash family inet6
-	ipset -! create $IPSET_BLACKLIST6 nethash family inet6
-	ipset -! create $IPSET_WHITELIST6 nethash family inet6
-	ipset -! create $IPSET_BLOCKLIST6 nethash family inet6
+	ipset -! create $IPSET_LANIPLIST6 nethash family inet6 maxelem 1048576
+	ipset -! create $IPSET_VPSIPLIST6 nethash family inet6 maxelem 1048576
+	ipset -! create $IPSET_SHUNTLIST6 nethash family inet6 maxelem 1048576
+	ipset -! create $IPSET_GFW6 nethash family inet6 maxelem 1048576
+	ipset -! create $IPSET_CHN6 nethash family inet6 maxelem 1048576
+	ipset -! create $IPSET_BLACKLIST6 nethash family inet6 maxelem 1048576
+	ipset -! create $IPSET_WHITELIST6 nethash family inet6 maxelem 1048576
+	ipset -! create $IPSET_BLOCKLIST6 nethash family inet6 maxelem 1048576
 
 	local shunt_ids=$(uci show $CONFIG | grep "=shunt_rules" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}')
 
@@ -509,9 +507,9 @@ add_firewall_rule() {
 	done
 
 	cat $RULES_PATH/chnroute | sed -e "/^$/d" | sed -e "s/^/add $IPSET_CHN &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
-	cat $RULES_PATH/proxy_ip | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4]\d))|[0-1]?\d{1,2})){3}" | sed -e "s/^/add $IPSET_BLACKLIST &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
-	cat $RULES_PATH/direct_ip | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4]\d))|[0-1]?\d{1,2})){3}" | sed -e "s/^/add $IPSET_WHITELIST &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
-	cat $RULES_PATH/block_ip | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4]\d))|[0-1]?\d{1,2})){3}" | sed -e "s/^/add $IPSET_BLOCKLIST &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
+	cat $RULES_PATH/proxy_ip | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e "s/^/add $IPSET_BLACKLIST &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
+	cat $RULES_PATH/direct_ip | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e "s/^/add $IPSET_WHITELIST &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
+	cat $RULES_PATH/block_ip | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e "s/^/add $IPSET_BLOCKLIST &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
 
 	cat $RULES_PATH/chnroute6 | sed -e "/^$/d" | sed -e "s/^/add $IPSET_CHN6 &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
 	cat $RULES_PATH/proxy_ip | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "/^$/d" | sed -e "s/^/add $IPSET_BLACKLIST6 &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
@@ -561,7 +559,7 @@ add_firewall_rule() {
 		done
 	}
 
-	local ISP_DNS6=$(cat $RESOLVFILE 2>/dev/null | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | awk -F % '{print $1}' | awk -F " " '{print $2}'| sort -u )
+	local ISP_DNS6=$(cat $RESOLVFILE 2>/dev/null | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | awk -F % '{print $1}' | awk -F " " '{print $2}'| sort -u | grep -v -Fx ::1 | grep -v -Fx ::)
 	[ -n "$ISP_DNS" ] && {
 		#echolog "处理 ISP IPv6 DNS 例外..."
 		for ispip6 in $ISP_DNS; do
