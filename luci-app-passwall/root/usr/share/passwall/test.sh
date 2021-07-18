@@ -79,7 +79,7 @@ test_node() {
 			local curlx="socks5h://127.0.0.1:${_tmp_port}"
 		fi
 		_proxy_status=$(test_url "https://www.google.com/generate_204" ${retry_num} ${connect_timeout} "-x $curlx")
-		top -bn1 | grep -v "grep" | grep -E "/var/etc/${CONFIG}/test.json|auto_switch" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+		pgrep -f "/var/etc/${CONFIG}/test\.json|auto_switch" | xargs kill -9 >/dev/null 2>&1
 		rm -rf "/var/etc/${CONFIG}/test.json"
 		if [ "${_proxy_status}" -eq 200 ]; then
 			return 0
