@@ -60,15 +60,45 @@ test_proxy() {
 	echo $result
 }
 
+test_node() {
+	local node_id=$1
+	local _type=$(echo $(config_n_get ${node_id} type nil) | tr 'A-Z' 'a-z')
+	[ "${_type}" != "nil" ] && {
+		if [ "${_type}" == "socks" ]; then
+			local _address=$(config_n_get ${node_id} address)
+			local _port=$(config_n_get ${node_id} port)
+			[ -n "${_address}" ] && [ -n "${_port}" ] && {
+				local curlx="socks5h://${_address}:${_port}"
+				local _username=$(config_n_get ${node_id} username)
+				local _password=$(config_n_get ${node_id} password)
+				[ -n "${_username}" ] && [ -n "${_password}" ] && curlx="socks5h://${_username}:${_password}@${_address}:${_port}"
+			}
+		else
+			local _tmp_port=$(/usr/share/${CONFIG}/app.sh get_new_port 61080 tcp)
+			/usr/share/${CONFIG}/app.sh run_socks "auto_switch" "${node_id}" "127.0.0.1" "${_tmp_port}" "/var/etc/${CONFIG}/test.json"
+			local curlx="socks5h://127.0.0.1:${_tmp_port}"
+		fi
+		_proxy_status=$(test_url "https://www.google.com/generate_204" ${retry_num} ${connect_timeout} "-x $curlx")
+		pgrep -f "/var/etc/${CONFIG}/test\.json|auto_switch" | xargs kill -9 >/dev/null 2>&1
+		rm -rf "/var/etc/${CONFIG}/test.json"
+		if [ "${_proxy_status}" -eq 200 ]; then
+			return 0
+		fi
+	}
+	return 1
+}
+
 test_auto_switch() {
 	local TYPE=$1
 	local b_tcp_nodes=$2
-	local now_node
-	if [ -f "/var/etc/$CONFIG/id/${TYPE}" ]; then
-		now_node=$(cat /var/etc/$CONFIG/id/${TYPE})
-	else
-		return 1
-	fi
+	local now_node=$3
+	[ -z "$now_node" ] && {
+		if [ -f "/var/etc/$CONFIG/id/${TYPE}" ]; then
+			now_node=$(cat /var/etc/$CONFIG/id/${TYPE})
+		else
+			return 1
+		fi
+	}
 
 	status=$(test_proxy)
 	if [ "$status" == 2 ]; then
@@ -76,44 +106,25 @@ test_auto_switch() {
 		return 2
 	fi
 	
+	local main_node=$(config_t_get global tcp_node nil)
 	local restore_switch=$(config_t_get auto_switch restore_switch 0)
-	if [ "$restore_switch" == "1" ]; then
-		#检测主节点是否能使用
-		local main_node=$(config_t_get global tcp_node nil)
-		if [ "$main_node" != "nil" ] && [ "$now_node" != "$main_node" ]; then
-			local node_type=$(echo $(config_n_get $main_node type) | tr 'A-Z' 'a-z')
-			if [ "$node_type" == "socks" ]; then
-				local node_address=$(config_n_get $main_node address)
-				local node_port=$(config_n_get $main_node port)
-				[ -n "$node_address" ] && [ -n "$node_port" ] && {
-					local curlx="socks5h://$node_address:$node_port"
-					local node_username=$(config_n_get $main_node username)
-					local node_password=$(config_n_get $main_node password)
-					[ -n "$node_username" ] && [ -n "$node_password" ] && curlx="socks5h://$node_username:$node_password@$node_address:$node_port"
-				}
-			else
-				local tmp_port=$(/usr/share/${CONFIG}/app.sh get_new_port 61080 tcp)
-				/usr/share/${CONFIG}/app.sh run_socks "auto_switch" "$main_node" "127.0.0.1" "$tmp_port" "/var/etc/${CONFIG}/test.json"
-				local curlx="socks5h://127.0.0.1:$tmp_port"
-			fi
-			sleep 9s
-			proxy_status=$(test_url "https://www.google.com/generate_204" ${retry_num} ${connect_timeout} "-x $curlx")
-			top -bn1 | grep -v "grep" | grep "/var/etc/${CONFIG}/test.json" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
-			rm -rf "/var/etc/${CONFIG}/test.json"
-			if [ "$proxy_status" -eq 200 ]; then
-				#主节点正常，切换到主节点
-				echolog "自动切换检测：${TYPE}主节点正常，切换到主节点！"
-				/usr/share/${CONFIG}/app.sh node_switch ${TYPE} ${main_node}
-				return 0
-			fi
-		fi
+	#检测主节点是否能使用
+	if [ "$main_node" != "nil" ] && [ "$now_node" != "$main_node" ] && [ "$restore_switch" == "1" ]; then
+		test_node ${main_node}
+		[ $? -eq 0 ] && {
+			#主节点正常，切换到主节点
+			echolog "自动切换检测：${TYPE}主节点【$(config_n_get $main_node type)：[$(config_n_get $main_node remarks)]】正常，切换到主节点！"
+			/usr/share/${CONFIG}/app.sh node_switch ${TYPE} ${main_node} 1
+			[ $? -eq 0 ] && echolog "自动切换检测：${TYPE}节点切换完毕！"
+			return 0
+		}
 	fi
 	
 	if [ "$status" == 0 ]; then
-		#echolog "自动切换检测：${TYPE}节点【$(config_n_get $now_node type) $(config_n_get $now_node remarks)】正常。"
+		#echolog "自动切换检测：${TYPE}节点【$(config_n_get $now_node type)：[$(config_n_get $now_node remarks)]】正常。"
 		return 0
 	elif [ "$status" == 1 ]; then
-		echolog "自动切换检测：${TYPE}节点异常，开始切换节点！"
+		echolog "自动切换检测：${TYPE}节点【$(config_n_get $now_node type)：[$(config_n_get $now_node remarks)]】异常，切换到下一个备用节点检测！"
 		local new_node
 		in_backup_nodes=$(echo $b_tcp_nodes | grep $now_node)
 		# 判断当前节点是否存在于备用节点列表里
@@ -130,17 +141,19 @@ test_auto_switch() {
 				new_node=$next_node
 			fi
 		fi
-		/usr/share/${CONFIG}/app.sh node_switch ${TYPE} ${new_node}
-		sleep 9s
-		# 切换节点后等待10秒后再检测一次，如果还是不通继续切，直到可用为止
-		status2=$(test_proxy)
-		if [ "$status2" -eq 0 ]; then
-			echolog "自动切换检测：${TYPE}节点切换完毕！"
+		test_node ${new_node}
+		if [ $? -eq 0 ]; then
+			[ "$restore_switch" == "0" ] && {
+				uci set $CONFIG.@global[0].tcp_node=$new_node
+				[ -z "$(echo $b_tcp_nodes | grep $main_node)" ] && uci add_list $CONFIG.@auto_switch[0].tcp_node=$main_node
+				uci commit $CONFIG
+			}
+			echolog "自动切换检测：${TYPE}节点【$(config_n_get $new_node type)：[$(config_n_get $new_node remarks)]】正常，切换到此节点！"
+			/usr/share/${CONFIG}/app.sh node_switch ${TYPE} ${new_node} 1
+			[ $? -eq 0 ] && echolog "自动切换检测：${TYPE}节点切换完毕！"
 			return 0
-		elif [ "$status2" -eq 1 ]; then
-			test_auto_switch ${TYPE} "${b_tcp_nodes}"
-		elif [ "$status2" -eq 2 ]; then
-			return 2
+		else
+			test_auto_switch ${TYPE} "${b_tcp_nodes}" ${new_node}
 		fi
 	fi
 }
@@ -155,13 +168,14 @@ start() {
 	[ "$ENABLED" != 1 ] && return 1
 	delay=$(config_t_get auto_switch testing_time 1)
 	#sleep ${delay}m
-	sleep 9s
+	#sleep 9s
 	connect_timeout=$(config_t_get auto_switch connect_timeout 3)
 	retry_num=$(config_t_get auto_switch retry_num 3)
 	while [ "$ENABLED" -eq 1 ]
 	do
 		TCP_NODE=$(config_t_get auto_switch tcp_node nil)
 		[ -n "$TCP_NODE" -a "$TCP_NODE" != "nil" ] && {
+			TCP_NODE=$(echo $TCP_NODE | tr -s ' ' '\n' | uniq | tr -s '\n' ' ')
 			test_auto_switch TCP "$TCP_NODE"
 		}
 		sleep ${delay}m

@@ -624,8 +624,9 @@ run_redir() {
 
 node_switch() {
 	[ -n "$1" -a -n "$2" ] && {
+		[ -n "$3" ] && LOG_FILE="/dev/null"
 		local node=$2
-		top -bn1 | grep -E "$TMP_PATH" | grep -i "${1}" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+		pgrep -af "$TMP_PATH" | awk -v P1="$1" 'BEGIN{IGNORECASE=1}$0~P1{print $1}' | xargs kill -9 >/dev/null 2>&1
 		rm -rf $TMP_PATH/${1}*
 		local config_file=$TMP_PATH/${1}.json
 		local log_file=$TMP_PATH/${1}.log
@@ -639,7 +640,7 @@ node_switch() {
 				[ "$(config_n_get $id node nil)" != "tcp" ] && continue
 				local socks_port=$(config_n_get $id port)
 				local http_port=$(config_n_get $id http_port 0)
-				top -bn1 | grep -E "$TMP_PATH" | grep -i "SOCKS" | grep "$id" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+				pgrep -af "${TMP_PATH}.*${id}" | awk 'BEGIN{IGNORECASE=1}/SOCKS/{print $1}' | xargs kill -9 >/dev/null 2>&1
 				tcp_node_socks=1
 				tcp_node_socks_port=$socks_port
 				tcp_node_socks_id=$id
@@ -657,7 +658,7 @@ node_switch() {
 
 		[ "$1" = "TCP" ] && {
 			[ "$(config_t_get global udp_node nil)" = "tcp" ] && [ "$UDP_REDIR_PORT" != "$TCP_REDIR_PORT" ] && {
-				top -bn1 | grep -E "$TMP_PATH" | grep -i "UDP" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+				pgrep -af "$TMP_PATH" | awk 'BEGIN{IGNORECASE=1}/UDP/{print $1}' | xargs kill -9 >/dev/null 2>&1
 				UDP_NODE=$node
 				start_redir UDP
 			}
@@ -1187,8 +1188,8 @@ stop() {
 	source $APP_PATH/iptables.sh stop
 	delete_ip2route
 	kill_all v2ray-plugin obfs-local
-	top -bn1 | grep -v "grep" | grep "sleep" | grep -E "9s|58s" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
-	top -bn1 | grep -v "grep" | grep -v "app.sh" | grep "${CONFIG}/" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+	pgrep -f "sleep.*(9s|58s)" | xargs kill -9 >/dev/null 2>&1
+	pgrep -af "${CONFIG}/" | awk '! /app\.sh|subscribe\.lua|rule_update\.lua/{print $1}' | xargs kill -9 >/dev/null 2>&1
 	rm -rf $TMP_PATH
 	unset XRAY_LOCATION_ASSET
 	stop_crontab

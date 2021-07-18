@@ -1,5 +1,6 @@
-local sys = require "luci.sys"
-local appname = "passwall"
+local api = require "luci.model.cbi.passwall.api.api"
+local appname = api.appname
+local sys = api.sys
 
 m = Map(appname)
 
