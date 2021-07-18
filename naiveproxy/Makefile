@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=naiveproxy
 PKG_VERSION:=91.0.4472.77-1
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/klzgrad/naiveproxy/tar.gz/v$(PKG_VERSION)?
@@ -17,6 +17,9 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 
 PKG_BUILD_DEPENDS:=python3/host
+ifneq ($(wildcard $(TOPDIR)/feeds/packages/devel/ninja/ninja.mk),)
+PKG_BUILD_DEPENDS+= ninja/host
+endif
 PKG_USE_MIPS16:=0
 PKG_BUILD_PARALLEL:=1
 
@@ -47,7 +50,7 @@ define Package/naiveproxy
 endef
 
 define Package/naiveproxy/description
-  NaïveProxy uses Chrome's network stack to camouflage traffic with strong
+  Na茂veProxy uses Chrome's network stack to camouflage traffic with strong
   censorship resistance and low detectability. Reusing Chrome's stack also
   ensures best practices in performance and security.
 endef
@@ -101,18 +104,23 @@ define Build/Prepare
 	)
 endef
 
+ifeq ($(NINJA),)
+NINJA = \
+	MAKEFLAGS="$(MAKE_JOBSERVER)" \
+		$(STAGING_DIR_HOSTPKG)/bin/ninja \
+		$(if $(findstring c,$(OPENWRT_VERBOSE)),-v) \
+		$(if $(MAKE_JOBSERVER),,-j1)
+endif
+
 define Build/Compile
 	( \
 		cd "$(PKG_BUILD_DIR)/src" ; \
 		. ../init_env.sh "$(ARCH)" $(CPU_TYPE) $(CPU_SUBTYPE) "$(TOOLCHAIN_DIR)" ; \
 		export naive_flags+=" $$$${naive_ccache_flags}" ; \
 		mkdir -p "out" ; \
-		./gn/out/gn gen "out/Release" --args="$$$${naive_flags}" --script-executable="$(STAGING_DIR_HOSTPKG)/bin/python3" ; \
+		./gn/out/gn gen "out/Release" --args="$$$${naive_flags}" --script-executable="$(PYTHON)" ; \
 	)
 	+$(NINJA) -C "$(PKG_BUILD_DIR)/src/out/Release" naive
-endef
-
-define Package/naiveproxy/conffiles
 endef
 
 define Package/naiveproxy/install
