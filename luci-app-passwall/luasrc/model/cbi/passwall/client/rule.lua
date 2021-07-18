@@ -23,6 +23,8 @@ o.default = "https://cdn.jsdelivr.net/gh/YW5vbnltb3Vz/domain-list-community@rele
 o = s:option(Value, "chnroute_url", translate("China IPs(chnroute) Update URL"))
 o:value("https://ispip.clang.cn/all_cn.txt", translate("Clang.CN"))
 o:value("https://ispip.clang.cn/all_cn_cidr.txt", translate("Clang.CN.CIDR"))
+o:value("https://cdn.jsdelivr.net/gh/soffchen/GeoIP2-CN@release/CN-ip-cidr.txt", translate("soffchen/GeoIP2-CN"))
+o:value("https://cdn.jsdelivr.net/gh/Hackl0us/GeoIP2-CN@release/CN-ip-cidr.txt", translate("Hackl0us/GeoIP2-CN"))
 o.default = "https://ispip.clang.cn/all_cn.txt"
 
 ----chnroute6 URL

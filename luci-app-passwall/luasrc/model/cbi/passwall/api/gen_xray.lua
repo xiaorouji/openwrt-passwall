@@ -181,6 +181,20 @@ function gen_outbound(node, tag, is_proxy, proxy_tag)
                 } or nil
             }
         }
+        local alpn = {}
+        if node.alpn then
+            string.gsub(node.alpn, '[^' .. "," .. ']+', function(w)
+                table.insert(alpn, w)
+            end)
+        end
+        if alpn and #alpn > 0 then
+            if result.streamSettings.tlsSettings then
+                result.streamSettings.tlsSettings.alpn = alpn
+            end
+            if result.streamSettings.xtlsSettings then
+                result.streamSettings.xtlsSettings.alpn = alpn
+            end
+        end
     end
     return result
 end

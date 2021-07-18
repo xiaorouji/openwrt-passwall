@@ -624,6 +624,7 @@ run_redir() {
 
 node_switch() {
 	[ -n "$1" -a -n "$2" ] && {
+		[ -n "$3" ] && LOG_FILE="/dev/null"
 		local node=$2
 		top -bn1 | grep -E "$TMP_PATH" | grep -i "${1}" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
 		rm -rf $TMP_PATH/${1}*
@@ -1188,7 +1189,7 @@ stop() {
 	delete_ip2route
 	kill_all v2ray-plugin obfs-local
 	top -bn1 | grep -v "grep" | grep "sleep" | grep -E "9s|58s" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
-	top -bn1 | grep -v "grep" | grep -v "app.sh" | grep "${CONFIG}/" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+	top -bn1 | grep -v "grep" | grep -v -E "app.sh|subscribe.lua|rule_update.lua" | grep "${CONFIG}/" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
 	rm -rf $TMP_PATH
 	unset XRAY_LOCATION_ASSET
 	stop_crontab
