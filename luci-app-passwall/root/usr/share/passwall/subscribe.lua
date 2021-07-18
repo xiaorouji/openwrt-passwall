@@ -695,6 +695,13 @@ local function curl(url)
 		a = "--retry-all-errors"
 	end
 	local stdout = luci.sys.exec(string.format('curl -skL --user-agent "%s" -k --retry 3 --connect-timeout 3 %s "%s"', ua, a, url))
+	if not stdout or #stdout <= 0 then
+		if ucic:get(appname, "@global_subscribe[0]", "subscribe_proxy") or "0" == "1" and ucic:get(appname, "@global[0]", "enabled") or "1" then
+			log('通过代理订阅失败，尝试关闭代理订阅。')
+			luci.sys.call("/etc/init.d/" .. appname .. " stop > /dev/null")
+			stdout = luci.sys.exec(string.format('curl -skL --user-agent "%s" -k --retry 3 --connect-timeout 3 %s "%s"', ua, a, url))
+		end
+	end
 	return trim(stdout)
 end
 
@@ -976,7 +983,6 @@ local function parse_link(raw, add_mode, add_from)
 end
 
 local execute = function()
-	-- exec
 	do
 		ucic:foreach(appname, "subscribe_list", function(obj)
 			local enabled = obj.enabled or nil
@@ -988,7 +994,6 @@ local execute = function()
 				parse_link(raw, "2", remark)
 			end
 		end)
-		-- diff
 		update_node(0)
 	end
 end

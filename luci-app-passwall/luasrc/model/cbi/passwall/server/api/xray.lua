@@ -152,10 +152,6 @@ function gen_config(user)
                     network = user.transport,
                     security = "none",
                     xtlsSettings = ("1" == user.tls and "1" == user.xtls) and {
-                        alpn = {
-                            "h2",
-                            "http/1.1"
-                        },
                         disableSystemRoot = false,
                         certificates = {
                             {
@@ -165,10 +161,6 @@ function gen_config(user)
                         }
                     } or nil,
                     tlsSettings = ("1" == user.tls) and {
-                        alpn = {
-                            "h2",
-                            "http/1.1"
-                        },
                         disableSystemRoot = false,
                         certificates = {
                             {
@@ -226,6 +218,21 @@ function gen_config(user)
         outbounds = outbounds,
         routing = routing
     }
+
+    local alpn = {}
+    if user.alpn then
+        string.gsub(user.alpn, '[^' .. "," .. ']+', function(w)
+            table.insert(alpn, w)
+        end)
+    end
+    if alpn and #alpn > 0 then
+        if config.streamSettings.tlsSettings then
+            config.inbounds[1].streamSettings.tlsSettings.alpn = alpn
+        end
+        if config.streamSettings.xtlsSettings then
+            config.inbounds[1].streamSettings.xtlsSettings.alpn = alpn
+        end
+    end
 
     if "1" == user.tls then
         config.inbounds[1].streamSettings.security = "tls"

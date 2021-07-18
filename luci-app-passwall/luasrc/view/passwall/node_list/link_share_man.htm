@@ -354,6 +354,10 @@ local api = require "luci.model.cbi.passwall.api.api"
 				var id = this.base + '.' + opt;
 				obj = document.getElementsByName(id)[0] || document.getElementById(id);
 				if (obj) {
+					var combobox = document.getElementById('cbi.combobox.' + id);
+					if (combobox) {
+						obj.combobox = combobox;
+					}
 					return obj;
 				} else {
 					return null;
@@ -363,13 +367,19 @@ local api = require "luci.model.cbi.passwall.api.api"
 				var obj;
 				obj = this.get(opt)
 				if (obj) {
+					var event = document.createEvent("HTMLEvents");
+					event.initEvent("change", true, true);
 					if (obj.type === 'checkbox') {
-						var event = document.createEvent("HTMLEvents");
-						event.initEvent("change", true, true);
 						obj.checked = val;
-						obj.dispatchEvent(event);
 					} else {
 						obj.value = val;
+						if (obj.combobox) {
+							obj.combobox.value = val;
+						}
+					}
+					try {
+						obj.dispatchEvent(event);
+					} catch(err) {
 					}
 				} else {
 					//alert('<%:Faltal on set option, please help in debug: %>' + opt + ' = ' + val);
@@ -431,7 +441,6 @@ local api = require "luci.model.cbi.passwall.api.api"
 				}
 			}
 			opt.set('type', "SSR");
-			opt.get('type').dispatchEvent(event);
 			opt.set('address', ssm[1]);
 			opt.set('port', ssm[2]);
 			opt.set('ssr_protocol', ssm[3]);
@@ -474,16 +483,13 @@ local api = require "luci.model.cbi.passwall.api.api"
 					password = userInfo.substr(userInfoSplitIndex + 1);
 				}
 				opt.set('type', "SS");
-				opt.get('type').dispatchEvent(event);
 				opt.set('address', server);
 				opt.set('port', port);
 				opt.set('password', password || "");
 				opt.set('ss_encrypt_method', method || "");
 				opt.set('ss_plugin', plugin || "none");
 				if (plugin && plugin != "none") {
-					opt.get('ss_plugin').dispatchEvent(event);
 					opt.set('ss_plugin_opts', pluginOpts || "");
-					opt.get('ss_plugin_opts').dispatchEvent(event);
 				}
 				if (param !== undefined) {
 					opt.set('remarks', decodeURI(param));
@@ -492,7 +498,6 @@ local api = require "luci.model.cbi.passwall.api.api"
 				var sstr = b64decsafe(url0);
 				var team = sstr.split('@');
 				opt.set('type', "SS");
-				opt.get('type').dispatchEvent(event);
 				var part1 = team[0].split(':');
 				var part2 = team[1].split(':');
 				opt.set('address', part2[0]);
@@ -500,7 +505,6 @@ local api = require "luci.model.cbi.passwall.api.api"
 				opt.set('password', part1[1]);
 				opt.set('ss_encrypt_method', part1[0]);
 				opt.set('ss_plugin', "none");
-				opt.get('ss_plugin').dispatchEvent(event);
 				//opt.set('ss_plugin_opts', "");
 				if (param !== undefined) {
 					opt.set('remarks', decodeURI(param));
@@ -530,7 +534,6 @@ local api = require "luci.model.cbi.passwall.api.api"
 				stype = "Trojan-Go";
 			}
 			opt.set('type', stype);
-			opt.get('type').dispatchEvent(event);
 			opt.set('address', m.hostname);
 			opt.set('port', m.port || "443");
 			opt.set(!opt.client && stype === "Trojan-Go" ? 'passwords' : 'password', decodeURIComponent(password));
@@ -540,7 +543,6 @@ local api = require "luci.model.cbi.passwall.api.api"
 			}
 			if (tls === false) { alert("TODO: plugin params for trojan-go."); }
 			opt.set('tls', tls);
-			opt.get('tls').dispatchEvent(event);
 			if (tls) {
 				opt.set('tls_serverName', queryParam.peer || queryParam.sni || '');
 				opt.set('tls_allowInsecure', queryParam.allowinsecure === '1');
@@ -561,7 +563,6 @@ local api = require "luci.model.cbi.passwall.api.api"
 					if (h2) tran = 'h2';
 				}
 				opt.set('trojan_transport', 'tran');
-				opt.get('trojan_transport').dispatchEvent(event);
 				if (ws) {
 					opt.set('ws_host', queryParam.wshost || '');
 					opt.set('ws_path', queryParam.wspath || '/');
@@ -600,22 +601,18 @@ local api = require "luci.model.cbi.passwall.api.api"
 				}
 			}
 			opt.set('type', 'Trojan-Go');
-			opt.get('type').dispatchEvent(event);
 			opt.set('address', m.hostname);
 			opt.set('port', m.port || "443");
 			opt.set(opt.client ? 'password' : 'passwords', decodeURIComponent(password));
 			opt.set('tls', '1');
-			opt.get('tls').dispatchEvent(event);
 			opt.set('tls_allowInsecure', '0');
 			opt.set('tls_serverName', queryParam.peer || queryParam.sni || '');
 			var plugin = queryParam.plugin !== undefined;
 			if (plugin) {
 				opt.set('trojan_transport', 'original');
-				opt.get('trojan_transport').dispatchEvent(event);
 				var plugin = JSON.parse(queryParam.plugin);
 				if (plugin) {
 					opt.set('plugin_type', plugin.type);
-					opt.get('plugin_type').dispatchEvent(event);
 					if (plugin.type !== "plaintext") {
 						opt.set('plugin_cmd', plugin.command);
 						opt.set('plugin_option', plugin.option);
@@ -639,7 +636,6 @@ local api = require "luci.model.cbi.passwall.api.api"
 				if (h2) tran = 'h2';
 			}
 			opt.set('trojan_transport', tran);
-			opt.get('trojan_transport').dispatchEvent(event);
 			if (ws) {
 				opt.set('ws_host', queryParam.host || '');
 				opt.set('ws_path', queryParam.path || '/');
@@ -668,9 +664,7 @@ local api = require "luci.model.cbi.passwall.api.api"
 			var sstr = b64DecodeUnicode(ssu[1]);
 			var ploc = sstr.indexOf("/?");
 			opt.set('type', "Xray");
-			opt.get('type').dispatchEvent(event);
 			opt.set('protocol', "vmess");
-			opt.get('protocol').dispatchEvent(event);
 			var url0, param = "";
 			if (ploc > 0) {
 				url0 = sstr.substr(0, ploc);
@@ -684,7 +678,6 @@ local api = require "luci.model.cbi.passwall.api.api"
 			opt.set('alter_id', ssm.aid);
 			opt.set('uuid', ssm.id);
 			opt.set('tls', ssm.tls === "tls");
-			opt.get('tls').dispatchEvent(event);
 			if (ssm.tls === "tls") {
 				var tls_serverName = ssm.host;
 				if (ssm.sni) {
@@ -696,10 +689,8 @@ local api = require "luci.model.cbi.passwall.api.api"
 			if (ssm.net === "kcp" || ssm.net === "mkcp")
 				ssm.net = "mkcp"
 			opt.set('transport', ssm.net);
-			opt.get('transport').dispatchEvent(event);
 			if (ssm.net === "tcp") {
 				opt.set('tcp_guise', (ssm.host && ssm.path) ? "http" : "none");
-				opt.get('tcp_guise').dispatchEvent(event);
 				if (ssm.host && ssm.path) {
 					opt.set('tcp_guise_http_host', ssm.host);
 					opt.set('tcp_guise_http_path', ssm.path);
@@ -715,15 +706,12 @@ local api = require "luci.model.cbi.passwall.api.api"
 				opt.set('quic_key', ssm.key);
 			} else if (ssm.net === "kcp" || ssm.net === "mkcp") {
 				opt.set('mkcp_guise', ssm.type);
-				opt.get('mkcp_guise').dispatchEvent(event);
 			} else if (ssm.net === "grpc") {
 				opt.set('grpc_serviceName', ssm.path);
 			}
 		} else if (ssu[0] === "vless") {
 			opt.set('type', "Xray");
-			opt.get('type').dispatchEvent(event);
 			opt.set('protocol', "vless");
-			opt.get('protocol').dispatchEvent(event);
 			var m = parseNodeUrl(ssrurl);
 			console.log(m.search);
 			var password = m.passwd;
@@ -750,10 +738,8 @@ local api = require "luci.model.cbi.passwall.api.api"
 			if (queryParam.security) {
 				if (queryParam.security == "tls" || queryParam.security == "xtls") {
 					opt.set('tls', true);
-					opt.get('tls').dispatchEvent(event);
 					if (queryParam.security == "xtls") {
 						opt.set('xtls', true);
-						opt.get('xtls').dispatchEvent(event);
 						opt.set('flow', queryParam.flow || "xtls-rprx-direct");
 					}
 					opt.set('tls_serverName', queryParam.sni || '');
@@ -762,7 +748,6 @@ local api = require "luci.model.cbi.passwall.api.api"
 					if (queryParam.allowinsecure === '0') {
 						opt.set('tls_allowInsecure', false);
 					}
-					opt.get('tls_allowInsecure').dispatchEvent(event);
 				}
 			}
 			
@@ -770,10 +755,8 @@ local api = require "luci.model.cbi.passwall.api.api"
 			if (queryParam.type === "kcp" || queryParam.type === "mkcp")
 				queryParam.type = "mkcp"
 			opt.set('transport', queryParam.type);
-			opt.get('transport').dispatchEvent(event);
 			if (queryParam.type === "tcp") {
 				opt.set('tcp_guise', queryParam.headerType || "none");
-				opt.get('tcp_guise').dispatchEvent(event);
 				if (queryParam.headerType && queryParam.headerType != "none") {
 					opt.set('tcp_guise_http_host', queryParam.host || "");
 					opt.set('tcp_guise_http_path', queryParam.path || "");
@@ -786,12 +769,10 @@ local api = require "luci.model.cbi.passwall.api.api"
 				opt.set('h2_path', queryParam.path || "");
 			} else if (queryParam.type === "quic") {
 				opt.set('quic_guise', queryParam.headerType || "none");
-				opt.get('quic_guise').dispatchEvent(event);
 				opt.set('quic_security', queryParam.quicSecurity);
 				opt.set('quic_key', queryParam.key);
 			} else if (queryParam.type === "kcp" || queryParam.type === "mkcp") {
 				opt.set('mkcp_guise', queryParam.headerType || "none");
-				opt.get('mkcp_guise').dispatchEvent(event);
 			} else if (queryParam.type === "grpc") {
 				opt.set('grpc_serviceName', (queryParam.serviceName || queryParam.path) || "");
 			}

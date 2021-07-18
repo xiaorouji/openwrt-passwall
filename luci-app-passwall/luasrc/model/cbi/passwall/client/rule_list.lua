@@ -1,6 +1,7 @@
-local fs = require "nixio.fs"
 local api = require "luci.model.cbi.passwall.api.api"
 local appname = api.appname
+local fs = api.fs
+local datatypes = api.datatypes
 local path = string.format("/usr/share/%s/rules/", appname)
 
 m = Map(appname)
