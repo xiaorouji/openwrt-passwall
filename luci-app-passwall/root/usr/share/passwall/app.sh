@@ -1188,7 +1188,7 @@ stop() {
 	delete_ip2route
 	kill_all v2ray-plugin obfs-local
 	pgrep -f "sleep.*(9s|58s)" | xargs kill -9 >/dev/null 2>&1
-	pgrep -af "${CONFIG}/" | awk '! /app.sh/{print $1}' | xargs kill -9 >/dev/null 2>&1
+	pgrep -af "${CONFIG}/" | awk '! /app\.sh/{print $1}' | xargs kill -9 >/dev/null 2>&1
 	rm -rf $TMP_PATH
 	unset XRAY_LOCATION_ASSET
 	stop_crontab
