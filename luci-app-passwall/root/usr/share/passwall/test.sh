@@ -98,7 +98,7 @@ test_auto_switch() {
 			fi
 			sleep 9s
 			proxy_status=$(test_url "https://www.google.com/generate_204" ${retry_num} ${connect_timeout} "-x $curlx")
-			top -bn1 | grep -v "grep" | grep "/var/etc/${CONFIG}/test.json" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+			pgrep -f "/var/etc/${CONFIG}/test.json" | xargs kill -9 >/dev/null 2>&1
 			rm -rf "/var/etc/${CONFIG}/test.json"
 			if [ "$proxy_status" -eq 200 ]; then
 				#主节点正常，切换到主节点
