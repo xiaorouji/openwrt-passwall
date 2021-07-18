@@ -1,7 +1,8 @@
-local uci = require"luci.model.uci".cursor()
 local api = require "luci.model.cbi.passwall.api.api"
 local appname = api.appname
+local uci = api.uci
 local has_xray = api.is_finded("xray")
+local datatypes = api.datatypes
 
 m = Map(appname)
 

@@ -1,7 +1,8 @@
-local e = require "luci.sys"
-local net = require "luci.model.network".init()
 local api = require "luci.model.cbi.passwall.api.api"
 local appname = api.appname
+local sys = api.sys
+local net = require "luci.model.network".init()
+local datatypes = api.datatypes
 
 local nodes_table = {}
 for k, e in ipairs(api.get_valid_nodes()) do
@@ -70,7 +71,7 @@ o.validate = function(self, value)
     if t and t[".type"] == "nodes" then
         return value
     end
-    if api.datatypes.hostport(value) then
+    if datatypes.hostport(value) then
         return value
     end
     return nil, value
@@ -91,7 +92,7 @@ o.rmempty = false
 ---- Export
 o = s:option(ListValue, "export", translate("Export Of Multi WAN"))
 o:value(0, translate("Auto"))
-local ifaces = e.net:devices()
+local ifaces = sys.net:devices()
 for _, iface in ipairs(ifaces) do
     if (iface:match("^br") or iface:match("^eth*") or iface:match("^pppoe*")) then
         local nets = net:get_interface(iface)

@@ -295,6 +295,13 @@ flow:value("xtls-rprx-direct")
 flow:value("xtls-rprx-direct-udp443")
 flow:depends("xtls", true)
 
+alpn = s:option(ListValue, "alpn", translate("alpn"))
+alpn.default = "h2,http/1.1"
+alpn:value("h2,http/1.1")
+alpn:value("h2")
+alpn:value("http/1.1")
+alpn:depends({ type = "Xray", tls = true })
+
 -- [[ TLS部分 ]] --
 
 tls_certificateFile = s:option(FileUpload, "tls_certificateFile", translate("Public key absolute path"), translate("as:") .. "/etc/ssl/fullchain.pem")

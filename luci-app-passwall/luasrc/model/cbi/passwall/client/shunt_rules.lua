@@ -1,5 +1,6 @@
 local api = require "luci.model.cbi.passwall.api.api"
 local appname = api.appname
+local datatypes = api.datatypes
 
 m = Map(appname, "Xray" .. translate("Shunt") .. translate("Rule"))
 m.redirect = api.url()
