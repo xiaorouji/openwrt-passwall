@@ -113,8 +113,8 @@ function brook_protocol.write(self, section, value)
 	m:set(section, "protocol", value)
 end
 
-brook_tls = s:option(Flag, "brook_tls", translate("Use TLS"))
-brook_tls:depends("brook_protocol", "wsserver")
+--brook_tls = s:option(Flag, "brook_tls", translate("Use TLS"))
+--brook_tls:depends("brook_protocol", "wsserver")
 
 port = s:option(Value, "port", translate("Listen Port"))
 port.datatype = "port"
@@ -395,6 +395,7 @@ ws_path:depends("transport", "ws")
 ws_path:depends("ss_transport", "ws")
 ws_path:depends("trojan_transport", "h2+ws")
 ws_path:depends("trojan_transport", "ws")
+ws_path:depends({ type = "Brook", brook_protocol = "wsserver" })
 
 -- [[ HTTP/2部分 ]]--
 

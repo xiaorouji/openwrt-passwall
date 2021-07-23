@@ -71,7 +71,7 @@ o.validate = function(self, value)
     if t and t[".type"] == "nodes" then
         return value
     end
-    if datatypes.hostport(value) then
+    if datatypes.hostport(value) or datatypes.ipaddrport(value) then
         return value
     end
     return nil, value
