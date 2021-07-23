@@ -322,6 +322,35 @@ local api = require "luci.model.cbi.passwall.api.api"
 				params = params.substring(1);
 			}
 			url += params;
+		} else if (v_type === "Brook") {
+			var url = "";
+			var params = "?";
+			var v_protocol = opt.get("brook_protocol");
+			var v_server = opt.get("address");
+			var v_port = opt.get("port");
+			var v_password = opt.get("password");
+			var b_protocol_value = v_protocol.value.split('client').join('server');
+			
+			var url_protocol = b_protocol_value;
+			params += opt.query("password", "password");
+			if (b_protocol_value == "wsserver") {
+				var server = '';
+				var prefix = "ws://";
+				if (opt.get("brook_tls").checked) {
+					prefix = "wss://";
+					url_protocol = 'wssserver';
+				}
+				var v_path = opt.get("ws_path");
+				var v_path_value = v_path.value || '/ws';
+				if (v_path_value.length > 1 && v_path_value.indexOf('/') < 0) {
+					v_path_value = '/' + v_path_value;
+				}
+				params += "&" + url_protocol + "=" + encodeURIComponent(prefix + v_server.value + ":" + v_port.value + v_path_value);
+			} else {
+				params += "&" + url_protocol + "=" + encodeURIComponent(v_server.value + ":" + v_port.value);
+			}
+			url += url_protocol;
+			url += params;
 		}
 		if (url) {
 			url = v_type.toLowerCase() + "://" + url;
@@ -775,6 +804,61 @@ local api = require "luci.model.cbi.passwall.api.api"
 				opt.set('mkcp_guise', queryParam.headerType || "none");
 			} else if (queryParam.type === "grpc") {
 				opt.set('grpc_serviceName', (queryParam.serviceName || queryParam.path) || "");
+			}
+			
+			if (m.hash) {
+				opt.set('remarks', decodeURI(m.hash.substr(1)));
+			}
+		} else if (ssu[0] === "brook") {
+			var stype = "Brook";
+			var m = parseNodeUrl(ssrurl);
+			console.log(m);
+			
+			var from_protocol = m.host;
+			var protocol = from_protocol.split('server').join('client');
+			
+			var queryParam = {};
+			if (m.search.length > 1) {
+				var query = m.search.split('?');
+				var queryParams = query[1];
+				var queryArray = queryParams.split('&');
+				var params;
+				for (i = 0; i < queryArray.length; i++) {
+					params = queryArray[i].split('=');
+					queryParam[decodeURIComponent(params[0])] = decodeURIComponent(params[1] || '');
+				}
+			}
+			
+			var password = queryParam.password;
+			if (password === "") {
+				s.innerHTML = "<font color='red'><%:Invalid Share URL Format%></font>";
+				return false;
+			}
+			
+			opt.set('type', stype);
+			opt.set('brook_protocol', protocol);
+			opt.set('password', password);
+			
+			if (protocol == 'wsclient' || protocol == 'wssclient') {
+				opt.set('brook_protocol', 'wsclient');
+				var wsserver = queryParam[from_protocol].split('://');
+				wsserver = wsserver[1].split('/');
+				var path = wsserver[1] && '/' + wsserver[1] || '/ws';
+				var server = wsserver[0].split(':');
+				opt.set('address', server[0]);
+				opt.set('port', server[1]);
+				opt.set('ws_path', path);
+				if (protocol == 'wssclient') {
+					opt.set('brook_tls', true);
+				}
+			} else {
+				var server = queryParam[from_protocol].split(':');
+				if (server.length < 2) {
+					s.innerHTML = "<font color='red'><%:Invalid Share URL Format%></font>";
+					return false;
+				}
+				opt.set('address', server[0]);
+				opt.set('port', server[1]);
 			}
 			
 			if (m.hash) {

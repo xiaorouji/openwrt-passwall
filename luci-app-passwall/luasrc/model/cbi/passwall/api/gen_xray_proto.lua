@@ -5,9 +5,14 @@ local outbounds = {}
 local routing = nil
 
 local var = api.get_args(arg)
-local local_proto = var["-local_proto"]
-local local_address = var["-local_address"]
-local local_port = var["-local_port"]
+local local_socks_address = var["-local_socks_address"] or "0.0.0.0"
+local local_socks_port = var["-local_socks_port"]
+local local_socks_username = var["-local_socks_username"]
+local local_socks_password = var["-local_socks_password"]
+local local_http_address = var["-local_http_address"] or "0.0.0.0"
+local local_http_port = var["-local_http_port"]
+local local_http_username = var["-local_http_username"]
+local local_http_password = var["-local_http_password"]
 local server_proto = var["-server_proto"]
 local server_address = var["-server_address"]
 local server_port = var["-server_port"]
@@ -39,20 +44,44 @@ function gen_outbound(proto, address, port, username, password)
     return result
 end
 
-if local_proto ~= "nil" and local_address ~= "nil" and local_port ~= "nil" then
+if local_socks_address and local_socks_port then
     local inbound = {
-        listen = local_address,
-        port = tonumber(local_port),
-        protocol = local_proto,
+        listen = local_socks_address,
+        port = tonumber(local_socks_port),
+        protocol = "socks",
         settings = {
-            accounts = nil
+            udp = true,
+            auth = "noauth"
         }
     }
-    if local_proto == "socks" then
-        inbound.settings.auth = "noauth"
-        inbound.settings.udp = true
-    elseif local_proto == "http" then
-        inbound.settings.allowTransparent = false
+    if local_socks_username and local_socks_password and local_socks_username ~= "" and local_socks_password ~= "" then
+        inbound.settings.auth = "password"
+        inbound.settings.accounts = {
+            {
+                user = local_socks_username,
+                pass = local_socks_password
+            }
+        }
+    end
+    table.insert(inbounds, inbound)
+end
+
+if local_http_address and local_http_port then
+    local inbound = {
+        listen = local_http_address,
+        port = tonumber(local_http_port),
+        protocol = "http",
+        settings = {
+            allowTransparent = false
+        }
+    }
+    if local_http_username and local_http_password and local_http_username ~= "" and local_http_password ~= "" then
+        inbound.settings.accounts = {
+            {
+                user = local_http_username,
+                pass = local_http_password
+            }
+        }
     end
     table.insert(inbounds, inbound)
 end

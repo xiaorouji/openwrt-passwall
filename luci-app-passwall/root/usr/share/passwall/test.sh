@@ -75,7 +75,7 @@ test_node() {
 			}
 		else
 			local _tmp_port=$(/usr/share/${CONFIG}/app.sh get_new_port 61080 tcp)
-			/usr/share/${CONFIG}/app.sh run_socks "auto_switch" "${node_id}" "127.0.0.1" "${_tmp_port}" "/var/etc/${CONFIG}/test.json"
+			/usr/share/${CONFIG}/app.sh run_socks "flag=auto_switch,node=$node_id,bind=127.0.0.1,socks_port=${_tmp_port},config_file=/var/etc/${CONFIG}/test.json"
 			local curlx="socks5h://127.0.0.1:${_tmp_port}"
 		fi
 		_proxy_status=$(test_url "https://www.google.com/generate_204" ${retry_num} ${connect_timeout} "-x $curlx")
