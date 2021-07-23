@@ -10,7 +10,6 @@ require 'luci.jsonc'
 require 'luci.sys'
 local appname = 'passwall'
 local api = require ("luci.model.cbi." .. appname .. ".api.api")
-local has_xray = api.is_finded("xray")
 local datatypes = require "luci.cbi.datatypes"
 
 -- these global functions are accessed all the time by the event handler
@@ -21,6 +20,7 @@ local jsonParse, jsonStringify = luci.jsonc.parse, luci.jsonc.stringify
 local b64decode = nixio.bin.b64decode
 local ucic = luci.model.uci.cursor()
 local allowInsecure_default = ucic:get_bool(appname, "@global_subscribe[0]", "allowInsecure")
+local trojan_xray = ucic:get(appname, "@global_subscribe[0]", "trojan_xray") or "0"
 ucic:revert(appname)
 
 local nodeResult = {} -- update result
@@ -456,7 +456,7 @@ local function processData(szType, content, add_mode, add_from)
 		end
 		result.remarks = UrlDecode(alias)
 		result.type = "Trojan-Plus"
-		if has_xray then
+		if trojan_xray == "1" then
 			result.type = 'Xray'
 			result.protocol = 'trojan'
 		end
