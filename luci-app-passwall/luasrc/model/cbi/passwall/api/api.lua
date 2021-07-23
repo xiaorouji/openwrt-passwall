@@ -40,7 +40,7 @@ end
 function repeat_exist(table, value)
     local count = 0
     for index, k in ipairs(table) do
-        if k == value then
+        if k:find("-") and k == value then
             count = count + 1
         end
     end

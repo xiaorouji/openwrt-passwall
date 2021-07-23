@@ -124,7 +124,12 @@ local function start()
             elseif type == "Brook" then
                 local brook_protocol = user.protocol
                 local brook_password = user.password
-                bin = ln_start(api.get_brook_path(), "brook_" .. id, string.format("%s -l :%s -p %s", brook_protocol, port, brook_password), log_path)
+                local brook_path = user.ws_path or "/ws"
+                local brook_path_arg = ""
+                if brook_protocol == "wsserver" and brook_path then
+                    brook_path_arg = " --path " .. brook_path
+                end
+                bin = ln_start(api.get_brook_path(), "brook_" .. id, string.format("%s -l :%s -p %s%s", brook_protocol, port, brook_password, brook_path_arg), log_path)
             end
 
             if next(config) then

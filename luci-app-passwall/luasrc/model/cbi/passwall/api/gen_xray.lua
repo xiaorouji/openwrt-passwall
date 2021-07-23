@@ -5,8 +5,14 @@ local var = api.get_args(arg)
 local node_section = var["-node"]
 local proto = var["-proto"]
 local redir_port = var["-redir_port"]
-local socks_proxy_port = var["-socks_proxy_port"]
-local http_proxy_port = var["-http_proxy_port"]
+local local_socks_address = var["-local_socks_address"] or "0.0.0.0"
+local local_socks_port = var["-local_socks_port"]
+local local_socks_username = var["-local_socks_username"]
+local local_socks_password = var["-local_socks_password"]
+local local_http_address = var["-local_http_address"] or "0.0.0.0"
+local local_http_port = var["-local_http_port"]
+local local_http_username = var["-local_http_username"]
+local local_http_password = var["-local_http_password"]
 local dns_listen_port = var["-dns_listen_port"]
 local dns_server = var["-dns_server"]
 local doh_url = var["-doh_url"]
@@ -62,15 +68,16 @@ function gen_outbound(node, tag, is_proxy, proxy_tag)
                 local relay_port = node.port
                 new_port = get_new_port()
                 node.port = new_port
-                sys.call(string.format('/usr/share/%s/app.sh run_socks "%s" "%s" "%s" "%s" "%s" "%s" "%s" "%s"> /dev/null', appname,
-                    new_port, --flag
-                    node_id, --node
-                    "127.0.0.1", --bind
-                    new_port, --socks port
-                    string.format("/var/etc/%s/v2_%s_%s_%s.json", appname, node_type, node_id, new_port), --config file
-                    "0", --http port
-                    "nil", -- http config file
-                    (is_proxy and is_proxy == "1" and relay_port) and tostring(relay_port) or "" --relay port
+                sys.call(string.format('/usr/share/%s/app.sh run_socks "%s"> /dev/null',
+                    appname,
+                    string.format("flag=%s,node=%s,bind=%s,socks_port=%s,config_file=%s,relay_port=%s",
+                        new_port, --flag
+                        node_id, --node
+                        "127.0.0.1", --bind
+                        new_port, --socks port
+                        string.format("/var/etc/%s/v2_%s_%s_%s.json", appname, node_type, node_id, new_port), --config file
+                        (is_proxy and is_proxy == "1" and relay_port) and tostring(relay_port) or "" --relay port
+                        )
                     )
                 )
                 node.protocol = "socks"
@@ -201,22 +208,41 @@ end
 
 if node_section then
     local node = ucursor:get_all(appname, node_section)
-    if socks_proxy_port then
-        table.insert(inbounds, {
-            listen = "0.0.0.0",
-            port = tonumber(socks_proxy_port),
+    if local_socks_port then
+        local inbound = {
+            listen = local_socks_address,
+            port = tonumber(local_socks_port),
             protocol = "socks",
             settings = {auth = "noauth", udp = true}
-        })
+        }
+        if local_socks_username and local_socks_password and local_socks_username ~= "" and local_socks_password ~= "" then
+            inbound.settings.auth = "password"
+            inbound.settings.accounts = {
+                {
+                    user = local_socks_username,
+                    pass = local_socks_password
+                }
+            }
+        end
+        table.insert(inbounds, inbound)
         network = "tcp,udp"
     end
-    if http_proxy_port then
-        table.insert(inbounds, {
-            listen = "0.0.0.0",
-            port = tonumber(http_proxy_port),
+    if local_http_port then
+        local inbound = {
+            listen = local_http_address,
+            port = tonumber(local_http_port),
             protocol = "http",
             settings = {allowTransparent = false}
-        })
+        }
+        if local_http_username and local_http_password and local_http_username ~= "" and local_http_password ~= "" then
+            inbound.settings.accounts = {
+                {
+                    user = local_http_username,
+                    pass = local_http_password
+                }
+            }
+        end
+        table.insert(inbounds, inbound)
     end
 
     if redir_port then
