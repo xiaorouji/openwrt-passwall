@@ -146,9 +146,6 @@ define Package/luci-app-passwall/conffiles
 /usr/share/passwall/rules/block_ip
 endef
 
-define Package/luci-app-passwall/postinst
-endef
-
 include $(TOPDIR)/feeds/luci/luci.mk
 
 # call BuildPackage - OpenWrt buildroot signature
