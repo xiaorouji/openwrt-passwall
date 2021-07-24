@@ -87,6 +87,6 @@ case "${target_arch}" in
 	;;
 "mips"|"mips64"|"mipsel"|"mips64el")
 	naive_flags+=" use_gold=false is_cfi=false use_cfi_icall=false use_thin_lto=false mips_arch_variant=\"r2\""
-	[[ "${target_arch}" =~ "mips"|"mipsel" ]] && naive_flags+=" mips_float_abi=\"soft\" mips_tune=\"${cpu_type}\""
+	[[ "${target_arch}" =~ ^"mips"$|^"mipsel"$ ]] && naive_flags+=" mips_float_abi=\"soft\" mips_tune=\"${cpu_type}\""
 	;;
 esac
