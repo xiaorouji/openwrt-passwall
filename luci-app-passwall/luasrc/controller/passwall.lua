@@ -271,29 +271,49 @@ function copy_node()
 end
 
 function clear_all_nodes()
+	ucic:set(appname, '@global[0]', "enabled", "0")
+	ucic:set(appname, '@global[0]', "tcp_node", "nil")
+	ucic:set(appname, '@global[0]', "udp_node", "nil")
+	ucic:set_list(appname, "@auto_switch[0]", "tcp_node", {})
+	ucic:foreach(appname, "socks", function(t)
+		ucic:delete(appname, t[".name"])
+	end)
+	ucic:foreach(appname, "haproxy_config", function(t)
+		ucic:delete(appname, t[".name"])
+	end)
 	ucic:foreach(appname, "nodes", function(node)
 		ucic:delete(appname, node['.name'])
 	end)
-	
-	local function clear(type)
-		local node_num = ucic:get(appname, "@global_other[0]", type .. "_node_num") or 1
-		for i = 1, node_num, 1 do
-			local node = ucic:get(appname, "@global[0]", type .. "_node" .. i)
-			if node then
-				ucic:set(appname, '@global[0]', type .. "_node" .. i, "nil")
-			end
-		end
-	end
-	clear("tcp")
-	clear("udp")
 
 	ucic:commit(appname)
-	luci.sys.call("/etc/init.d/" .. appname .. " restart")
+	luci.sys.call("/etc/init.d/" .. appname .. " stop")
 end
 
 function delete_select_nodes()
 	local ids = luci.http.formvalue("ids")
+	local auto_switch_tcp_node_list = ucic:get(appname, "@auto_switch[0]", "tcp_node") or {}
 	string.gsub(ids, '[^' .. "," .. ']+', function(w)
+		for k, v in ipairs(auto_switch_tcp_node_list) do
+			if v == w then
+				luci.sys.call(string.format("uci -q del_list passwall.@auto_switch[0].tcp_node='%s'", w))
+			end
+		end
+		if ucic:get(appname, "@global[0]", "tcp_node") or "nil" == w then
+			ucic:set(appname, '@global[0]', "tcp_node", "nil")
+		end
+		if ucic:get(appname, "@global[0]", "udp_node") or "nil" == w then
+			ucic:set(appname, '@global[0]', "udp_node", "nil")
+		end
+		ucic:foreach(appname, "socks", function(t)
+			if t["node"] == w then
+				ucic:delete(appname, t[".name"])
+			end
+		end)
+		ucic:foreach(appname, "haproxy_config", function(t)
+			if t["lbss"] == w then
+				ucic:delete(appname, t[".name"])
+			end
+		end)
 		ucic:delete(appname, w)
 	end)
 	ucic:commit(appname)
