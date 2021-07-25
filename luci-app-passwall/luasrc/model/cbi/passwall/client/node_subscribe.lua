@@ -45,6 +45,11 @@ o = s:option(Flag, "allowInsecure", translate("allowInsecure"), translate("Wheth
 o.default = "1"
 o.rmempty = false
 
+if api.is_finded("xray") and api.is_finded("trojan-plus") then
+    o = s:option(Flag, "trojan_xray", translate("Trojan Node Use Xray"))
+    o.default = "0"
+end
+
 ---- Manual subscription
 o = s:option(Button, "_update", translate("Manual subscription"))
 o.inputstyle = "apply"
@@ -71,6 +76,7 @@ s.sortable = true
 s.template = "cbi/tblsection"
 
 o = s:option(Flag, "enabled", translate("Enabled"))
+o.default = "1"
 o.rmempty = false
 
 o = s:option(Value, "remark", translate("Subscribe Remark"))

@@ -36,6 +36,11 @@ echolog() {
 	echo -e "$d: $*" >>$LOG_FILE
 }
 
+config_get_type() {
+	local ret=$(uci -q get "${CONFIG}.${1}" 2>/dev/null)
+	echo "${ret:=$2}"
+}
+
 config_n_get() {
 	local ret=$(uci -q get "${CONFIG}.${1}.${2}" 2>/dev/null)
 	echo "${ret:=$3}"
@@ -269,6 +274,7 @@ TCP_UDP=0
 }
 [ "$ENABLED" != 1 ] && NO_PROXY=1
 [ "$TCP_NODE" == "nil" -a "$UDP_NODE" == "nil" ] && NO_PROXY=1
+[ "$(config_get_type $TCP_NODE nil)" == "nil" -a "$(config_get_type $UDP_NODE nil)" == "nil" ] && NO_PROXY=1
 tcp_proxy_way=$(config_t_get global_forwarding tcp_proxy_way default)
 KCPTUN_REDIR_PORT=$(config_t_get global_forwarding kcptun_port 12948)
 RESOLVFILE=/tmp/resolv.conf.d/resolv.conf.auto
