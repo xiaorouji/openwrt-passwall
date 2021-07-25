@@ -226,10 +226,10 @@ function gen_config(user)
         end)
     end
     if alpn and #alpn > 0 then
-        if config.streamSettings.tlsSettings then
+        if config.inbounds[1].streamSettings.tlsSettings then
             config.inbounds[1].streamSettings.tlsSettings.alpn = alpn
         end
-        if config.streamSettings.xtlsSettings then
+        if config.inbounds[1].streamSettings.xtlsSettings then
             config.inbounds[1].streamSettings.xtlsSettings.alpn = alpn
         end
     end
