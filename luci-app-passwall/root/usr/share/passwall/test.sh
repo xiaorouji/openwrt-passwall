@@ -75,7 +75,7 @@ test_node() {
 			}
 		else
 			local _tmp_port=$(/usr/share/${CONFIG}/app.sh get_new_port 61080 tcp)
-			/usr/share/${CONFIG}/app.sh run_socks "flag=auto_switch,node=$node_id,bind=127.0.0.1,socks_port=${_tmp_port},config_file=/var/etc/${CONFIG}/test.json"
+			/usr/share/${CONFIG}/app.sh run_socks flag=auto_switch node=$node_id bind=127.0.0.1 socks_port=${_tmp_port} config_file=/var/etc/${CONFIG}/test.json
 			local curlx="socks5h://127.0.0.1:${_tmp_port}"
 		fi
 		_proxy_status=$(test_url "https://www.google.com/generate_204" ${retry_num} ${connect_timeout} "-x $curlx")
@@ -106,15 +106,27 @@ test_auto_switch() {
 		return 2
 	fi
 	
+	local is_shunt=0
 	local main_node=$(config_t_get global tcp_node nil)
 	local restore_switch=$(config_t_get auto_switch restore_switch 0)
+	local shunt_logic=$(config_t_get auto_switch shunt_logic 0)
+	[ "$(config_n_get $now_node protocol nil)" = "_shunt" ] && {
+		[ "$shunt_logic" == "1" ] && now_node=$(config_n_get $now_node default_node nil)
+		[ "$shunt_logic" == "2" ] && now_node=$(config_n_get $now_node main_node nil)
+	}
+	[ "$(config_n_get $main_node protocol nil)" = "_shunt" ] && {
+		is_shunt=1
+		[ "$shunt_logic" == "0" ] && is_shunt=0
+		[ "$shunt_logic" == "1" ] && main_node=$(config_n_get $main_node default_node nil)
+		[ "$shunt_logic" == "2" ] && main_node=$(config_n_get $main_node main_node nil)
+	}
 	#检测主节点是否能使用
-	if [ "$main_node" != "nil" ] && [ "$now_node" != "$main_node" ] && [ "$restore_switch" == "1" ]; then
+	if [ "$restore_switch" == "1" ] && [ "$main_node" != "nil" ] && [ "$now_node" != "$main_node" ]; then
 		test_node ${main_node}
 		[ $? -eq 0 ] && {
 			#主节点正常，切换到主节点
 			echolog "自动切换检测：${TYPE}主节点【$(config_n_get $main_node type)：[$(config_n_get $main_node remarks)]】正常，切换到主节点！"
-			/usr/share/${CONFIG}/app.sh node_switch ${TYPE} ${main_node} 1
+			/usr/share/${CONFIG}/app.sh node_switch ${TYPE} ${main_node} ${is_shunt} 1
 			[ $? -eq 0 ] && echolog "自动切换检测：${TYPE}节点切换完毕！"
 			return 0
 		}
@@ -144,12 +156,12 @@ test_auto_switch() {
 		test_node ${new_node}
 		if [ $? -eq 0 ]; then
 			[ "$restore_switch" == "0" ] && {
-				uci set $CONFIG.@global[0].tcp_node=$new_node
+				[ "$is_shunt" == "0" ] && uci set $CONFIG.@global[0].tcp_node=$new_node
 				[ -z "$(echo $b_tcp_nodes | grep $main_node)" ] && uci add_list $CONFIG.@auto_switch[0].tcp_node=$main_node
 				uci commit $CONFIG
 			}
 			echolog "自动切换检测：${TYPE}节点【$(config_n_get $new_node type)：[$(config_n_get $new_node remarks)]】正常，切换到此节点！"
-			/usr/share/${CONFIG}/app.sh node_switch ${TYPE} ${new_node} 1
+			/usr/share/${CONFIG}/app.sh node_switch ${TYPE} ${new_node} ${is_shunt} 1
 			[ $? -eq 0 ] && echolog "自动切换检测：${TYPE}节点切换完毕！"
 			return 0
 		else

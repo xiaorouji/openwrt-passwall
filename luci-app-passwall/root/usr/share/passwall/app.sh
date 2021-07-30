@@ -11,6 +11,9 @@ TMP_BIN_PATH=$TMP_PATH/bin
 TMP_ID_PATH=$TMP_PATH/id
 TMP_PORT_PATH=$TMP_PATH/port
 TMP_ROUTE_PATH=$TMP_PATH/route
+TMP_ACL_PATH=$TMP_PATH/acl
+DNSMASQ_PATH=/etc/dnsmasq.d
+TMP_DNSMASQ_PATH=/var/etc/dnsmasq-passwall.d
 LOG_FILE=/var/log/$CONFIG.log
 APP_PATH=/usr/share/$CONFIG
 RULES_PATH=/usr/share/${CONFIG}/rules
@@ -300,7 +303,7 @@ load_config() {
 	DNS_CACHE=$(config_t_get global dns_cache 0)
 	LOCAL_DNS="default"
 	if [ "${LOCAL_DNS}" = "default" ]; then
-		DEFAULT_DNS=$(uci show dhcp | grep "@dnsmasq" | grep "\.server=" | awk -F '=' '{print $2}' | sed "s/'//g" | tr ' ' ',')
+		DEFAULT_DNS=$(uci show dhcp | grep "@dnsmasq" | grep "\.server=" | awk -F '=' '{print $2}' | sed "s/'//g" | tr ' ' '\n' | grep -v "\/" | head -2 | sed ':label;N;s/\n/,/;b label')
 		if [ -z "${DEFAULT_DNS}" ]; then
 			DEFAULT_DNS=$(echo -n $(sed -n 's/^nameserver[ \t]*\([^ ]*\)$/\1/p' "${RESOLVFILE}" | grep -v -E "0.0.0.0|127.0.0.1|::" | head -2) | tr ' ' ',')
 		fi
@@ -309,8 +312,51 @@ load_config() {
 	fi
 	
 	export XRAY_LOCATION_ASSET=$(config_t_get global_rules xray_location_asset "/usr/share/xray/")
-	mkdir -p /var/etc $TMP_PATH $TMP_BIN_PATH $TMP_ID_PATH $TMP_PORT_PATH $TMP_ROUTE_PATH
+	mkdir -p /var/etc $TMP_PATH $TMP_BIN_PATH $TMP_ID_PATH $TMP_PORT_PATH $TMP_ROUTE_PATH $TMP_ACL_PATH
 	return 0
+}
+
+run_ipt2socks() {
+	local flag redir_type tcp_tproxy local_port socks_address socks_port socks_username socks_password log_file
+	local _extra_param=""
+	eval_set_val $@
+	[ -n "$log_file" ] || log_file="/dev/null"
+	[ -n "$socks_username" ] && [ -n "$socks_password" ] && _extra_param="${_extra_param} -a $socks_username -k $socks_password"
+	[ -n "$tcp_tproxy" ] || _extra_param="${_extra_param} -R"
+	case "$redir_type" in
+	UDP)
+		flag="${flag}_UDP"
+		_extra_param="${_extra_param} -U"
+	;;
+	TCP)
+		flag="${flag}_TCP"
+		_extra_param="${_extra_param} -T"
+	;;
+	esac
+	_extra_param="${_extra_param} -v"
+	ln_start_bin "$(first_type ipt2socks)" "ipt2socks_${flag}" $log_file -l $local_port -b 127.0.0.1 -s $socks_address -p $socks_port ${_extra_param}
+}
+
+run_xray() {
+	local flag node redir_type redir_port socks_address socks_port socks_username socks_password http_address http_port http_username http_password log_file config_file
+	local _extra_param=""
+	local proto="tcp,udp"
+	eval_set_val $@
+	[ -n "$log_file" ] || log_file="/dev/null"
+	[ -n "$socks_username" ] && [ -n "$socks_password" ] && _extra_param="${_extra_param} -local_socks_username $socks_username -local_socks_password $socks_password"
+	[ -n "$http_username" ] && [ -n "$http_password" ] && _extra_param="${_extra_param} -local_http_username $http_username -local_http_password $http_password"
+	case "$redir_type" in
+	UDP)
+		flag="${flag}_UDP"
+		proto="udp"
+	;;
+	TCP)
+		flag="${flag}_TCP"
+		proto="tcp"
+	;;
+	esac
+	lua $API_GEN_XRAY -node $node -proto $proto -redir_port $redir_port -local_socks_address $socks_address -local_socks_port $socks_port -local_http_address $http_address -local_http_port $http_port ${_extra_param} > $config_file
+	ln_start_bin "$(first_type $(config_t_get global_app xray_file) xray)" xray $log_file -config="$config_file"
 }
 
 run_socks() {
@@ -650,7 +696,7 @@ run_redir() {
 				[ "$tcp_node_http" = "1" ] && {
 					http_port=$tcp_node_http_port
 				}
-				run_socks "flag=$tcp_node_socks_id,node=$node,bind=0.0.0.0,socks_port=$port,config_file=$config_file,http_port=$http_port,http_config_file=$http_config_file"
+				run_socks flag=$tcp_node_socks_id node=$node bind=0.0.0.0 socks_port=$port config_file=$config_file http_port=$http_port http_config_file=$http_config_file
 			}
 		}
 	;;
@@ -660,13 +706,12 @@ run_redir() {
 
 node_switch() {
 	[ -n "$1" -a -n "$2" ] && {
-		[ -n "$3" ] && LOG_FILE="/dev/null"
+		[ -n "$4" ] && LOG_FILE="/dev/null"
 		local node=$2
-		pgrep -af "$TMP_PATH" | awk -v P1="$1" 'BEGIN{IGNORECASE=1}$0~P1{print $1}' | xargs kill -9 >/dev/null 2>&1
+		pgrep -af "$TMP_PATH" | awk -v P1="$1" 'BEGIN{IGNORECASE=1}$0~P1 && !/acl\/|acl_/{print $1}' | xargs kill -9 >/dev/null 2>&1
 		rm -rf $TMP_PATH/${1}*
 		local config_file=$TMP_PATH/${1}.json
 		local log_file=$TMP_PATH/${1}.log
-		eval current_port=\$${1}_REDIR_PORT
 		local port=$(cat $TMP_PORT_PATH/${1})
 
 		[ "$SOCKS_ENABLED" = "1" ] && {
@@ -688,13 +733,23 @@ node_switch() {
 				break
 			done
 		}
+		
+		[ "$3" != "0" ] && {
+			local tcp_node=$(config_t_get global tcp_node nil)
+			[ "$(config_n_get $tcp_node protocol nil)" = "_shunt" ] && {
+				[ "$3" == "1" ] && uci set $CONFIG.$tcp_node.default_node="$node"
+				[ "$3" == "2" ] && uci set $CONFIG.$tcp_node.main_node="$node"
+				uci commit $CONFIG
+			}
+			node=$tcp_node
+		}
 
-		run_redir "node=$node,bind=0.0.0.0,local_port=$port,config_file=$config_file,REDIR_TYPE=$1,log_file=$log_file"
+		run_redir node=$node bind=0.0.0.0 local_port=$port config_file=$config_file REDIR_TYPE=$1 log_file=$log_file
 		echo $node > $TMP_ID_PATH/${1}
 
 		[ "$1" = "TCP" ] && {
 			[ "$(config_t_get global udp_node nil)" = "tcp" ] && [ "$UDP_REDIR_PORT" != "$TCP_REDIR_PORT" ] && {
-				pgrep -af "$TMP_PATH" | awk 'BEGIN{IGNORECASE=1}/UDP/{print $1}' | xargs kill -9 >/dev/null 2>&1
+				pgrep -af "$TMP_PATH" | awk 'BEGIN{IGNORECASE=1}/UDP/ && !/acl\/|acl_/{print $1}' | xargs kill -9 >/dev/null 2>&1
 				UDP_NODE=$node
 				start_redir UDP
 			}
@@ -703,7 +758,7 @@ node_switch() {
 		#local node_net=$(echo $1 | tr 'A-Z' 'a-z')
 		#uci set $CONFIG.@global[0].${node_net}_node=$node
 		#uci commit $CONFIG
-		source $APP_PATH/helper_${DNS_N}.sh logic_restart
+		source $APP_PATH/helper_${DNS_N}.sh logic_restart no_log=1
 	}
 }
 
@@ -716,7 +771,7 @@ start_redir() {
 		eval current_port=\$${1}_REDIR_PORT
 		local port=$(echo $(get_new_port $current_port $1))
 		eval ${1}_REDIR=$port
-		run_redir "node=$node,bind=0.0.0.0,local_port=$port,config_file=$config_file,REDIR_TYPE=$1,log_file=$log_file"
+		run_redir node=$node bind=0.0.0.0 local_port=$port config_file=$config_file REDIR_TYPE=$1 log_file=$log_file
 		#eval ip=\$${1}_NODE_IP
 		echo $node > $TMP_ID_PATH/${1}
 		echo $port > $TMP_PORT_PATH/${1}
@@ -727,31 +782,33 @@ start_redir() {
 }
 
 start_socks() {
-	local ids=$(uci show $CONFIG | grep "=socks" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}')
-	echolog "分析 Socks 服务的节点配置..."
-	for id in $ids; do
-		local enabled=$(config_n_get $id enabled 0)
-		[ "$enabled" == "0" ] && continue
-		local node=$(config_n_get $id node nil)
-		[ "$node" == "nil" ] && continue
-		local port=$(config_n_get $id port)
-		local config_file=$TMP_PATH/SOCKS_${id}.json
-		local log_file=$TMP_PATH/SOCKS_${id}.log
-		local http_port=$(config_n_get $id http_port 0)
-		local http_config_file=$TMP_PATH/HTTP2SOCKS_${id}.json
-		[ "$node" == "tcp" ] && {
-			tcp_node_socks=1
-			tcp_node_socks_port=$port
-			tcp_node_socks_id=$id
-			[ "$http_port" != "0" ] && {
-				tcp_node_http=1
-				tcp_node_http_port=$http_port
-				tcp_node_http_id=$id
+	[ "$SOCKS_ENABLED" = "1" ] && {
+		local ids=$(uci show $CONFIG | grep "=socks" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}')
+		[ -n "$ids" ] && echolog "分析 Socks 服务的节点配置..."
+		for id in $ids; do
+			local enabled=$(config_n_get $id enabled 0)
+			[ "$enabled" == "0" ] && continue
+			local node=$(config_n_get $id node nil)
+			[ "$node" == "nil" ] && continue
+			local port=$(config_n_get $id port)
+			local config_file=$TMP_PATH/SOCKS_${id}.json
+			local log_file=$TMP_PATH/SOCKS_${id}.log
+			local http_port=$(config_n_get $id http_port 0)
+			local http_config_file=$TMP_PATH/HTTP2SOCKS_${id}.json
+			[ "$node" == "tcp" ] && {
+				tcp_node_socks=1
+				tcp_node_socks_port=$port
+				tcp_node_socks_id=$id
+				[ "$http_port" != "0" ] && {
+					tcp_node_http=1
+					tcp_node_http_port=$http_port
+					tcp_node_http_id=$id
+				}
+				continue
 			}
-			continue
-		}
-		run_socks "flag=$id,node=$node,bind=0.0.0.0,socks_port=$port,config_file=$config_file,http_port=$http_port,http_config_file=$http_config_file"
-	done
+			run_socks flag=$id node=$node bind=0.0.0.0 socks_port=$port config_file=$config_file http_port=$http_port http_config_file=$http_config_file
+		done
+	}
 }
 
 clean_log() {
@@ -839,12 +896,6 @@ start_dns() {
 	dns_listen_port=${DNS_PORT}
 	pdnsd_forward=${DNS_FORWARD}
 
-	china_ng_listen_port=$(expr $dns_listen_port + 1)
-	china_ng_listen="127.0.0.1#${china_ng_listen_port}"
-	china_ng_chn=$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2) | tr " " ",")
-	china_ng_gfw="127.0.0.1#${dns_listen_port}"
-	[ -n "${returnhome}" ] && china_ng_chn="${china_ng_gfw}" && china_ng_gfw="${LOCAL_DNS}"
-
 	echolog "过滤服务配置：准备接管域名解析..."
 
 	case "$DNS_MODE" in
@@ -855,11 +906,11 @@ start_dns() {
 		[ "$use_chinadns_ng" == "0" ] && return
 	;;
 	dns2socks)
-		local dns2socks_socks_server=$(echo $(config_t_get global socks_server 127.0.0.1:9050) | sed "s/#/:/g")
+		local dns2socks_socks_server=$(echo $(config_t_get global socks_server 127.0.0.1:1080) | sed "s/#/:/g")
 		local dns2socks_forward=$(get_first_dns DNS_FORWARD 53 | sed 's/#/:/g')
 		[ "$DNS_CACHE" == "0" ] && local dns2sock_cache="/d"
 		ln_start_bin "$(first_type dns2socks)" dns2socks "/dev/null" "$dns2socks_socks_server" "$dns2socks_forward" "127.0.0.1:$dns_listen_port" $dns2sock_cache
-		echolog "  - dns2sock(127.0.0.1:${dns_listen_port}${dns2sock_cache})，${dns2socks_socks_server:-127.0.0.1:9050} -> ${dns2socks_forward-D8.8.8.8:53}"
+		echolog "  - dns2sock(127.0.0.1:${dns_listen_port}${dns2sock_cache})，${dns2socks_socks_server:-127.0.0.1:1080} -> ${dns2socks_forward-D8.8.8.8:53}"
 		echolog "  - 域名解析：dns2socks..."
 	;;
 	xray_doh)
@@ -878,9 +929,8 @@ start_dns() {
 		_doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
 		_doh_bootstrap=$(echo $up_trust_doh | cut -d ',' -sf 2-)
 
-		up_trust_doh_dns=$(config_t_get global up_trust_doh_dns "tcp")
 		if [ "$up_trust_doh_dns" = "socks" ]; then
-			socks_server=$(echo $(config_t_get global socks_server 127.0.0.1:9050) | sed "s/#/:/g")
+			socks_server=$(echo $(config_t_get global socks_server 127.0.0.1:1080) | sed "s/#/:/g")
 			socks_address=$(echo $socks_server | awk -F ':' '{print $1}')
 			socks_port=$(echo $socks_server | awk -F ':' '{print $2}')
 			lua $API_GEN_XRAY -dns_listen_port "${dns_listen_port}" -dns_server "${_doh_bootstrap}" -doh_url "${_doh_url}" -doh_host "${_doh_host}" -doh_socks_address "${socks_address}" -doh_socks_port "${socks_port}" > $TMP_PATH/DNS.json
@@ -922,6 +972,11 @@ start_dns() {
 			CHINADNS_NG=1
 		}
 		[ -n "$CHINADNS_NG" ] && {
+			china_ng_listen_port=$(expr $dns_listen_port + 1)
+			china_ng_listen="127.0.0.1#${china_ng_listen_port}"
+			china_ng_chn=$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2) | tr " " ",")
+			china_ng_gfw="127.0.0.1#${dns_listen_port}"
+			[ -n "${returnhome}" ] && china_ng_chn="${china_ng_gfw}" && china_ng_gfw="${LOCAL_DNS}"
 			echolog "  | - (chinadns-ng) 只支持2~4级的域名过滤..."
 			if [ "$DNS_MODE" = "pdnsd" ]; then
 				msg="pdnsd"
@@ -1201,16 +1256,19 @@ start() {
 	ulimit -n 65535
 	load_config
 	start_haproxy
-	[ "$SOCKS_ENABLED" = "1" ] && {
-		start_socks
-	}
+	start_socks
+	
 	[ "$NO_PROXY" == 1 ] || {
-		start_redir TCP
-		start_redir UDP
-		start_dns
-		source $APP_PATH/helper_${DNS_N}.sh add
-		source $APP_PATH/iptables.sh start
-		source $APP_PATH/helper_${DNS_N}.sh logic_restart
+		if [ -z "$(command -v iptables)" ] && [ -z "$(command -v ipset)" ]; then
+			echolog "系统未安装iptables或ipset，无法透明代理！"
+		else
+			start_redir TCP
+			start_redir UDP
+			start_dns
+			source $APP_PATH/helper_${DNS_N}.sh add
+			source $APP_PATH/iptables.sh start
+			source $APP_PATH/helper_${DNS_N}.sh logic_restart
+		fi
 	}
 	start_crontab
 	echolog "运行完成！\n"
@@ -1227,7 +1285,7 @@ stop() {
 	unset XRAY_LOCATION_ASSET
 	stop_crontab
 	source $APP_PATH/helper_${DNS_N}.sh del
-	source $APP_PATH/helper_${DNS_N}.sh restart
+	source $APP_PATH/helper_${DNS_N}.sh restart no_log=1
 	echolog "清空并关闭相关程序和缓存完成。"
 }
 

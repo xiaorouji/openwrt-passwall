@@ -101,6 +101,28 @@ do
 		end)
 	end
 
+	if true then
+		local i = 0
+		local options = {"tcp", "udp"}
+		ucic:foreach(appname, "acl_rule", function(t)
+			i = i + 1
+			for index, value in ipairs(options) do
+				local option = value .. "_node"
+				local node_id = t[option]
+				CONFIG[#CONFIG + 1] = {
+					log = true,
+					id = t[".name"],
+					remarks = "访问控制列表[" .. i .. "]",
+					currentNode = node_id and ucic:get_all(appname, node_id) or nil,
+					set = function(o, server)
+						ucic:set(appname, t[".name"], option, server)
+						o.newNodeId = server
+					end
+				}
+			end
+		end)
+	end
+
 	local tcp_node_table = ucic:get(appname, "@auto_switch[0]", "tcp_node")
 	if tcp_node_table then
 		local nodes = {}
@@ -696,7 +718,7 @@ local function curl(url)
 	end
 	local stdout = luci.sys.exec(string.format('curl -skL --user-agent "%s" -k --retry 3 --connect-timeout 3 %s "%s"', ua, a, url))
 	if not stdout or #stdout <= 0 then
-		if ucic:get(appname, "@global_subscribe[0]", "subscribe_proxy") or "0" == "1" and ucic:get(appname, "@global[0]", "enabled") or "1" then
+		if ucic:get(appname, "@global_subscribe[0]", "subscribe_proxy") or "0" == "1" and ucic:get(appname, "@global[0]", "enabled") or "0" == "1" then
 			log('通过代理订阅失败，尝试关闭代理订阅。')
 			luci.sys.call("/etc/init.d/" .. appname .. " stop > /dev/null")
 			stdout = luci.sys.exec(string.format('curl -skL --user-agent "%s" -k --retry 3 --connect-timeout 3 %s "%s"', ua, a, url))

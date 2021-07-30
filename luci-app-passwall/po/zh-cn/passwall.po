@@ -328,6 +328,9 @@ msgstr "游戏模式"
 msgid "China List"
 msgstr "中国列表"
 
+msgid "Only use direct/proxy list"
+msgstr "仅使用直连/代理列表"
+
 msgid "Localhost"
 msgstr "本机"
 
@@ -684,6 +687,18 @@ msgstr "恢复切换"
 
 msgid "When detects main node is available, switch back to the main node."
 msgstr "当检测到主节点可用时，切换回主节点。"
+
+msgid "If the main node is Xray shunt"
+msgstr "如果主节点是Xray分流"
+
+msgid "Switch it"
+msgstr "切掉它"
+
+msgid "Applying to the default node"
+msgstr "应用于默认节点"
+
+msgid "Applying to the default preproxy node"
+msgstr "应用于默认前置节点"
 
 msgid "Add nodes to the standby node list by keywords"
 msgstr "通过关键字添加节点到备用节点列表"
