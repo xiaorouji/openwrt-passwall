@@ -70,7 +70,7 @@ function gen_outbound(node, tag, is_proxy, proxy_tag)
                 node.port = new_port
                 sys.call(string.format('/usr/share/%s/app.sh run_socks "%s"> /dev/null',
                     appname,
-                    string.format("flag=%s,node=%s,bind=%s,socks_port=%s,config_file=%s,relay_port=%s",
+                    string.format("flag=%s node=%s bind=%s socks_port=%s config_file=%s relay_port=%s",
                         new_port, --flag
                         node_id, --node
                         "127.0.0.1", --bind

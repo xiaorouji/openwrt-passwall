@@ -1,22 +1,22 @@
 local api = require "luci.model.cbi.passwall.api.api"
 local appname = api.appname
+local uci = api.uci
 local sys = api.sys
+local has_xray = api.is_finded("xray")
 
 m = Map(appname)
+
+local nodes_table = {}
+for k, e in ipairs(api.get_valid_nodes()) do
+    nodes_table[#nodes_table + 1] = e
+end
 
 local global_proxy_mode = (m:get("@global[0]", "tcp_proxy_mode") or "") .. (m:get("@global[0]", "udp_proxy_mode") or "")
 
 -- [[ ACLs Settings ]]--
-s = m:section(TypedSection, "acl_rule", translate("ACLs"), "<font color='red'>" .. translate("ACLs is a tools which used to designate specific IP proxy mode, IP or MAC address can be entered.") .. "</font>")
-s.template = "cbi/tblsection"
-s.sortable = true
-s.anonymous = true
-s.addremove = true
-s.extedit = api.url("acl_config", "%s")
-function s.create(e, t)
-    t = TypedSection.create(e, t)
-    luci.http.redirect(e.extedit:format(t))
-end
+s = m:section(NamedSection, arg[1], translate("ACLs"), translate("ACLs"))
+s.addremove = false
+s.dynamic = false
 
 ---- Enable
 o = s:option(Flag, "enabled", translate("Enable"))
@@ -25,32 +25,54 @@ o.rmempty = false
 
 ---- Remarks
 o = s:option(Value, "remarks", translate("Remarks"))
+o.default = arg[1]
 o.rmempty = true
+
+o = s:option(DynamicList, "ip_mac", translate("IP/MAC"))
+o.datatype = "or(ip4addr,macaddr)"
+o.cast = "string"
+o.rmempty = false
 
 local mac_t = {}
 sys.net.mac_hints(function(e, t)
-    mac_t[e] = {
+    mac_t[#mac_t + 1] = {
         ip = t,
         mac = e
     }
 end)
-
-o = s:option(DummyValue, "ip_mac", translate("IP/MAC"))
-o.rawhtml = true
-o.cfgvalue = function(t, n)
-    local e = ''
-    local v = Value.cfgvalue(t, n) or ''
-    string.gsub(v, '[^' .. " " .. ']+', function(w)
-        local a = w
-        if mac_t[w] then
-            a = a .. ' (' .. mac_t[w].ip .. ')'
+table.sort(mac_t, function(a,b)
+    if #a.ip < #b.ip then
+        return true
+    elseif #a.ip == #b.ip then
+        if a.ip < b.ip then
+            return true
+        else
+            return #a.ip < #b.ip
         end
-        if #e > 0 then
-            e = e .. "<br />"
-        end
-        e = e .. a
-    end)
-    return e
+    end
+    return false
+end)
+for _, key in pairs(mac_t) do
+    o:value(key.mac, "%s (%s)" % {key.mac, key.ip})
+end
+function o.write(self, section, value)
+    local t = {}
+    local t2 = {}
+    if type(value) == "table" then
+		local x
+		for _, x in ipairs(value) do
+			if x and #x > 0 then
+                if not t2[x] then
+                    t2[x] = x
+                    t[#t+1] = x
+                end
+			end
+		end
+	else
+		t = { value }
+	end
+    t = table.concat(t, " ")
+	return DynamicList.write(self, section, t)
 end
 
 ---- TCP Proxy Mode
@@ -83,7 +105,6 @@ else
 end
 udp_proxy_mode:value("direct/proxy", translate("Only use direct/proxy list"))
 
---[[
 ---- TCP No Redir Ports
 o = s:option(Value, "tcp_no_redir_ports", translate("TCP No Redir Ports"))
 o.default = "default"
@@ -113,6 +134,19 @@ o.default = "default"
 o:value("default", translate("Default"))
 o:value("1:65535", translate("All"))
 o:value("53", "53")
-]]--
+
+tcp_node = s:option(ListValue, "tcp_node", "<a style='color: red'>" .. translate("TCP Node") .. "</a>")
+tcp_node.default = "default"
+tcp_node:value("default", translate("Default"))
+
+udp_node = s:option(ListValue, "udp_node", "<a style='color: red'>" .. translate("UDP Node") .. "</a>")
+udp_node.default = "default"
+udp_node:value("default", translate("Default"))
+udp_node:value("tcp", translate("Same as the tcp node"))
+
+for k, v in pairs(nodes_table) do
+    tcp_node:value(v.id, v["remark"])
+    udp_node:value(v.id, v["remark"])
+end
 
 return m
