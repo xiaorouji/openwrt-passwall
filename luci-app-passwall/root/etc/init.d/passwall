@@ -20,7 +20,7 @@ lock() {
 }
 
 unlock() {
-	cat /dev/null > ${LOCK_FILE}
+	rm -rf ${LOCK_FILE}
 }
 
 boot() {
