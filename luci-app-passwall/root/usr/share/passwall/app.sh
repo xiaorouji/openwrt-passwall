@@ -739,6 +739,7 @@ node_switch() {
 			[ "$(config_n_get $tcp_node protocol nil)" = "_shunt" ] && {
 				[ "$3" == "1" ] && uci set $CONFIG.$tcp_node.default_node="$node"
 				[ "$3" == "2" ] && uci set $CONFIG.$tcp_node.main_node="$node"
+				uci commit $CONFIG
 			}
 			node=$tcp_node
 		}
