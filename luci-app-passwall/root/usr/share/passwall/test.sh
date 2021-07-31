@@ -88,16 +88,36 @@ test_node() {
 	return 1
 }
 
+flag=0
+main_node=$(config_t_get global tcp_node nil)
+
 test_auto_switch() {
+	flag=$(expr $flag + 1)
 	local TYPE=$1
 	local b_tcp_nodes=$2
 	local now_node=$3
 	[ -z "$now_node" ] && {
 		if [ -f "/var/etc/$CONFIG/id/${TYPE}" ]; then
 			now_node=$(cat /var/etc/$CONFIG/id/${TYPE})
+			if [ "$(config_n_get $now_node protocol nil)" = "_shunt" ]; then
+				if [ "$shunt_logic" == "1" ] && [ -f "/var/etc/$CONFIG/id/${TYPE}_default" ]; then
+					now_node=$(cat /var/etc/$CONFIG/id/${TYPE}_default)
+				elif [ "$shunt_logic" == "2" ] && [ -f "/var/etc/$CONFIG/id/${TYPE}_main" ]; then
+					now_node=$(cat /var/etc/$CONFIG/id/${TYPE}_main)
+				else
+					shunt_logic=0
+				fi
+			else
+				shunt_logic=0
+			fi
 		else
+			#echolog "自动切换检测：未知错误"
 			return 1
 		fi
+	}
+	
+	[ $flag -le 1 ] && {
+		main_node=$now_node
 	}
 
 	status=$(test_proxy)
@@ -106,28 +126,27 @@ test_auto_switch() {
 		return 2
 	fi
 	
-	local is_shunt=0
-	local main_node=$(config_t_get global tcp_node nil)
-	local restore_switch=$(config_t_get auto_switch restore_switch 0)
-	local shunt_logic=$(config_t_get auto_switch shunt_logic 0)
-	[ "$(config_n_get $now_node protocol nil)" = "_shunt" ] && {
-		[ "$shunt_logic" == "1" ] && now_node=$(config_n_get $now_node default_node nil)
-		[ "$shunt_logic" == "2" ] && now_node=$(config_n_get $now_node main_node nil)
-	}
-	[ "$(config_n_get $main_node protocol nil)" = "_shunt" ] && {
-		is_shunt=1
-		[ "$shunt_logic" == "0" ] && is_shunt=0
-		[ "$shunt_logic" == "1" ] && main_node=$(config_n_get $main_node default_node nil)
-		[ "$shunt_logic" == "2" ] && main_node=$(config_n_get $main_node main_node nil)
-	}
 	#检测主节点是否能使用
 	if [ "$restore_switch" == "1" ] && [ "$main_node" != "nil" ] && [ "$now_node" != "$main_node" ]; then
 		test_node ${main_node}
 		[ $? -eq 0 ] && {
 			#主节点正常，切换到主节点
 			echolog "自动切换检测：${TYPE}主节点【$(config_n_get $main_node type)：[$(config_n_get $main_node remarks)]】正常，切换到主节点！"
-			/usr/share/${CONFIG}/app.sh node_switch ${TYPE} ${main_node} ${is_shunt} 1
-			[ $? -eq 0 ] && echolog "自动切换检测：${TYPE}节点切换完毕！"
+			/usr/share/${CONFIG}/app.sh node_switch ${TYPE} ${main_node} ${shunt_logic} 1
+			[ $? -eq 0 ] && {
+				echolog "自动切换检测：${TYPE}节点切换完毕！"
+				[ "$shunt_logic" != "0" ] && {
+					local tcp_node=$(config_t_get global tcp_node nil)
+					[ "$(config_n_get $tcp_node protocol nil)" = "_shunt" ] && {
+						if [ "$shunt_logic" == "1" ]; then
+							uci set $CONFIG.$tcp_node.default_node="$main_node"
+						elif [ "$shunt_logic" == "2" ]; then
+							uci set $CONFIG.$tcp_node.main_node="$main_node"
+						fi
+						uci commit $CONFIG
+					}
+				}
+			}
 			return 0
 		}
 	fi
@@ -156,13 +175,26 @@ test_auto_switch() {
 		test_node ${new_node}
 		if [ $? -eq 0 ]; then
 			[ "$restore_switch" == "0" ] && {
-				[ "$is_shunt" == "0" ] && uci set $CONFIG.@global[0].tcp_node=$new_node
+				[ "$shunt_logic" == "0" ] && uci set $CONFIG.@global[0].tcp_node=$new_node
 				[ -z "$(echo $b_tcp_nodes | grep $main_node)" ] && uci add_list $CONFIG.@auto_switch[0].tcp_node=$main_node
 				uci commit $CONFIG
 			}
 			echolog "自动切换检测：${TYPE}节点【$(config_n_get $new_node type)：[$(config_n_get $new_node remarks)]】正常，切换到此节点！"
-			/usr/share/${CONFIG}/app.sh node_switch ${TYPE} ${new_node} ${is_shunt} 1
-			[ $? -eq 0 ] && echolog "自动切换检测：${TYPE}节点切换完毕！"
+			/usr/share/${CONFIG}/app.sh node_switch ${TYPE} ${new_node} ${shunt_logic} 1
+			[ $? -eq 0 ] && {
+				[ "$restore_switch" == "1" ] && [ "$shunt_logic" != "0" ] && {
+					local tcp_node=$(config_t_get global tcp_node nil)
+					[ "$(config_n_get $tcp_node protocol nil)" = "_shunt" ] && {
+						if [ "$shunt_logic" == "1" ]; then
+							uci set $CONFIG.$tcp_node.default_node="$main_node"
+						elif [ "$shunt_logic" == "2" ]; then
+							uci set $CONFIG.$tcp_node.main_node="$main_node"
+						fi
+						uci commit $CONFIG
+					}
+				}
+				echolog "自动切换检测：${TYPE}节点切换完毕！"
+			}
 			return 0
 		else
 			test_auto_switch ${TYPE} "${b_tcp_nodes}" ${new_node}
@@ -183,6 +215,8 @@ start() {
 	#sleep 9s
 	connect_timeout=$(config_t_get auto_switch connect_timeout 3)
 	retry_num=$(config_t_get auto_switch retry_num 3)
+	restore_switch=$(config_t_get auto_switch restore_switch 0)
+	shunt_logic=$(config_t_get auto_switch shunt_logic 0)
 	while [ "$ENABLED" -eq 1 ]
 	do
 		TCP_NODE=$(config_t_get auto_switch tcp_node nil)
