@@ -737,8 +737,11 @@ node_switch() {
 		[ "$3" != "0" ] && {
 			local tcp_node=$(config_t_get global tcp_node nil)
 			[ "$(config_n_get $tcp_node protocol nil)" = "_shunt" ] && {
-				[ "$3" == "1" ] && uci set $CONFIG.$tcp_node.default_node="$node"
-				[ "$3" == "2" ] && uci set $CONFIG.$tcp_node.main_node="$node"
+				if [ "$3" == "1" ]; then
+					uci set $CONFIG.$tcp_node.default_node="$node"
+				elif [ "$3" == "2" ]; then
+					uci set $CONFIG.$tcp_node.main_node="$node"
+				fi
 				uci commit $CONFIG
 			}
 			node=$tcp_node
@@ -746,6 +749,12 @@ node_switch() {
 
 		run_redir node=$node bind=0.0.0.0 local_port=$port config_file=$config_file REDIR_TYPE=$1 log_file=$log_file
 		echo $node > $TMP_ID_PATH/${1}
+		
+		[ "$3" != "0" ] && [ "$(config_n_get $node protocol nil)" = "_shunt" ] && {
+			echo $(config_n_get $node default_node nil) > $TMP_ID_PATH/${1}_default
+			echo $(config_n_get $node main_node nil) > $TMP_ID_PATH/${1}_main
+			uci commit $CONFIG
+		}
 
 		[ "$1" = "TCP" ] && {
 			[ "$(config_t_get global udp_node nil)" = "tcp" ] && [ "$UDP_REDIR_PORT" != "$TCP_REDIR_PORT" ] && {
@@ -773,8 +782,14 @@ start_redir() {
 		eval ${1}_REDIR=$port
 		run_redir node=$node bind=0.0.0.0 local_port=$port config_file=$config_file REDIR_TYPE=$1 log_file=$log_file
 		#eval ip=\$${1}_NODE_IP
-		echo $node > $TMP_ID_PATH/${1}
 		echo $port > $TMP_PORT_PATH/${1}
+		echo $node > $TMP_ID_PATH/${1}
+		[ "$(config_n_get $node protocol nil)" = "_shunt" ] && {
+			local default_node=$(config_n_get $node default_node nil)
+			local main_node=$(config_n_get $node main_node nil)
+			echo $default_node > $TMP_ID_PATH/${1}_default
+			echo $main_node > $TMP_ID_PATH/${1}_main
+		}
 	else
 		[ "$1" = "UDP" ] && [ "$TCP_UDP" = "1" ] && return
 		echolog "${1}节点没有选择或为空，不代理${1}。"
