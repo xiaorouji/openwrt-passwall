@@ -56,7 +56,7 @@ end
 
 o = s:option(Flag, "restore_switch", "TCP " .. translate("Restore Switch"), translate("When detects main node is available, switch back to the main node."))
 
-o = s:option(ListValue, "shunt_logic", "TCP " .. translate("If the main node is Xray shunt"))
+o = s:option(ListValue, "shunt_logic", "TCP " .. translate("If the main node is V2ray/Xray shunt"))
 o:value("0", translate("Switch it"))
 o:value("1", translate("Applying to the default node"))
 o:value("2", translate("Applying to the default preproxy node"))

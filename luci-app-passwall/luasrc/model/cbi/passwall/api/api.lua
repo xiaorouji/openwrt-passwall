@@ -4,6 +4,7 @@ sys = require "luci.sys"
 uci = require"luci.model.uci".cursor()
 util = require "luci.util"
 datatypes = require "luci.cbi.datatypes"
+jsonc = require "luci.jsonc"
 i18n = require "luci.i18n"
 
 appname = "passwall"
@@ -132,7 +133,7 @@ function get_valid_nodes()
                 if datatypes.ipaddr(address) or datatypes.hostname(address) then
                     local type2 = e.type
                     local address2 = address
-                    if type2 == "Xray" and e.protocol then
+                    if (type2 == "V2ray" or type2 == "Xray") and e.protocol then
                         local protocol = e.protocol
                         if protocol == "vmess" then
                             protocol = "VMess"
@@ -170,7 +171,7 @@ function get_full_node_remarks(n)
             remarks = "%s：[%s] " % {i18n.translatef(n.type .. n.protocol), n.remarks}
         else
             local type2 = n.type
-            if n.type == "Xray" and n.protocol then
+            if (n.type == "V2ray" or n.type == "Xray") and n.protocol then
                 local protocol = n.protocol
                 if protocol == "vmess" then
                     protocol = "VMess"
@@ -247,6 +248,31 @@ function clone(org)
     local res = {}
     copy(org, res)
     return res
+end
+
+function get_v2ray_path()
+    local path = uci_get_type("global_app", "v2ray_file")
+    return path
+end
+
+function get_v2ray_version(file)
+    if file == nil then file = get_v2ray_path() end
+    chmod_755(file)
+    if fs.access(file) then
+        if file == get_v2ray_path() then
+            local md5 = sys.exec("echo -n $(md5sum " .. file .. " | awk '{print $1}')")
+            if fs.access("/tmp/psw_" .. md5) then
+                return sys.exec("echo -n $(cat /tmp/psw_%s)" % md5)
+            else
+                local version = sys.exec("echo -n $(%s -version | awk '{print $2}' | sed -n 1P)" % file)
+                sys.call("echo '" .. version .. "' > " .. "/tmp/psw_" .. md5)
+                return version
+            end
+        else
+            return sys.exec("echo -n $(%s -version | awk '{print $2}' | sed -n 1P)" % file)
+        end
+    end
+    return ""
 end
 
 function get_xray_path()

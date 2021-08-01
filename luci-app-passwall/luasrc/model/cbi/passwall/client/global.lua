@@ -1,6 +1,7 @@
 local api = require "luci.model.cbi.passwall.api.api"
 local appname = api.appname
 local uci = api.uci
+local has_v2ray = api.is_finded("v2ray")
 local has_xray = api.is_finded("xray")
 local datatypes = api.datatypes
 
@@ -184,6 +185,10 @@ end
 if api.is_finded("dns2socks") then
     o:value("dns2socks", "dns2socks")
 end
+if has_v2ray then
+    o:value("v2ray_tcp", "V2ray DNS(TCP)")
+    o:value("v2ray_doh", "V2ray DNS(DoH)")
+end
 if has_xray then
     o:value("xray_doh", "Xray DNS(DoH)")
 end
@@ -203,9 +208,15 @@ o.validate = function(self, value, t)
 end
 o:depends({dns_mode = "custom"})
 
+o = s:taboption("DNS", ListValue, "up_trust_tcp_dns", translate("Resolver For The List Proxied"))
+o:value("tcp", translatef("Requery DNS By %s", translate("TCP Node")))
+o:value("socks", translatef("Requery DNS By %s", translate("Socks Node")))
+o:depends("dns_mode", "v2ray_tcp")
+
 o = s:taboption("DNS", ListValue, "up_trust_doh_dns", translate("Resolver For The List Proxied"))
 o:value("tcp", translatef("Requery DNS By %s", translate("TCP Node")))
 o:value("socks", translatef("Requery DNS By %s", translate("Socks Node")))
+o:depends("dns_mode", "v2ray_doh")
 o:depends("dns_mode", "xray_doh")
 
 o = s:taboption("DNS", Value, "socks_server", translate("Socks Server"), translate("Make sure socks service is available on this address."))
@@ -217,6 +228,8 @@ o.validate = function(self, value, t)
     return value
 end
 o:depends({dns_mode = "dns2socks"})
+o:depends({dns_mode = "v2ray_tcp", up_trust_tcp_dns = "socks"})
+o:depends({dns_mode = "v2ray_doh", up_trust_doh_dns = "socks"})
 o:depends({dns_mode = "xray_doh", up_trust_doh_dns = "socks"})
 
 ---- DoH
@@ -231,6 +244,7 @@ o:value("https://doh.libredns.gr/ads,116.202.176.26", "LibreDNS (No Ads)")
 o:value("https://dns.quad9.net/dns-query,9.9.9.9", "Quad9-Recommended")
 o.default = "https://dns.google/dns-query,8.8.8.8"
 o.validate = doh_validate
+o:depends({dns_mode = "v2ray_doh"})
 o:depends({dns_mode = "xray_doh"})
 
 ---- DNS Forward
@@ -244,14 +258,16 @@ o:value("208.67.220.220", "208.67.220.220 (Open DNS)")
 o:depends({dns_mode = "dns2socks"})
 o:depends({dns_mode = "pdnsd"})
 o:depends({dns_mode = "udp"})
+o:depends({dns_mode = "v2ray_tcp"})
 
---[[
 o = s:taboption("DNS", Flag, "dns_cache", translate("Cache Resolved"))
 o.default = "1"
 o:depends({dns_mode = "dns2socks"})
 o:depends({dns_mode = "pdnsd"})
+o:depends({dns_mode = "v2ray_tcp"})
+o:depends({dns_mode = "v2ray_doh"})
+o:depends({dns_mode = "xray_doh"})
 o.rmempty = false
-]]--
 
 o = s:taboption("DNS", Button, "clear_ipset", translate("Clear IPSET"), translate("Try this feature if the rule modification does not take effect."))
 o.inputstyle = "remove"
@@ -316,7 +332,7 @@ o.rmempty = false
 o = s:taboption("log", Flag, "close_log_udp", translatef("%s Node Log Close", "UDP"))
 o.rmempty = false
 
-loglevel = s:taboption("log", ListValue, "loglevel", "Xray" .. translate("Log Level"))
+loglevel = s:taboption("log", ListValue, "loglevel", "V2ray/Xray" .. translate("Log Level"))
 loglevel.default = "warning"
 loglevel:value("debug")
 loglevel:value("info")
@@ -375,7 +391,7 @@ o.default = n + 1080
 o.datatype = "port"
 o.rmempty = false
 
-if has_xray then
+if has_v2ray or has_xray then
     o = s:option(Value, "http_port", "HTTP " .. translate("Listen Port") .. " " .. translate("0 is not use"))
     o.default = 0
     o.datatype = "port"
@@ -385,7 +401,7 @@ for k, v in pairs(nodes_table) do
     tcp_node:value(v.id, v["remark"])
     udp_node:value(v.id, v["remark"])
     if v.type == "Socks" then
-        if has_xray then
+        if has_v2ray or has_xray then
             socks_node:value(v.id, v["remark"])
         end
     else

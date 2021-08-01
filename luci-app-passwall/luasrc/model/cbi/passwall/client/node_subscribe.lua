@@ -1,5 +1,22 @@
 local api = require "luci.model.cbi.passwall.api.api"
 local appname = api.appname
+local has_trojan_plus = api.is_finded("trojan-plus")
+local has_v2ray = api.is_finded("v2ray")
+local has_xray = api.is_finded("xray")
+local has_trojan_go = api.is_finded("trojan-go")
+local trojan_type = {}
+if has_trojan_plus then
+    trojan_type[#trojan_type + 1] = "trojan-plus"
+end
+if has_v2ray then
+    trojan_type[#trojan_type + 1] = "v2ray"
+end
+if has_xray then
+    trojan_type[#trojan_type + 1] = "xray"
+end
+if has_trojan_go then
+    trojan_type[#trojan_type + 1] = "trojan-go"
+end
 
 m = Map(appname)
 
@@ -45,9 +62,11 @@ o = s:option(Flag, "allowInsecure", translate("allowInsecure"), translate("Wheth
 o.default = "1"
 o.rmempty = false
 
-if api.is_finded("xray") then
-    o = s:option(Flag, "trojan_xray", translate("Trojan Node Use Xray"))
-    o.default = "0"
+if #trojan_type > 0 then
+    o = s:option(ListValue, "trojan_type", translate("Trojan Node Use Type"))
+    for key, value in pairs(trojan_type) do
+        o:value(value, translate(value:gsub("^%l",string.upper)))
+    end
 end
 
 ---- Manual subscription

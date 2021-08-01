@@ -1,20 +1,31 @@
 module("luci.model.cbi.passwall.api.kcptun", package.seeall)
-local fs = require "nixio.fs"
-local sys = require "luci.sys"
-local util = require "luci.util"
-local i18n = require "luci.i18n"
 local api = require "luci.model.cbi.passwall.api.api"
+local fs = api.fs
+local sys = api.sys
+local util = api.util
+local i18n = api.i18n
 
 local kcptun_api = "https://api.github.com/repos/xtaci/kcptun/releases?per_page=1"
+local app_path = api.get_kcptun_path() or ""
 
-function to_check(arch)
-    local app_path = api.get_kcptun_path() or ""
+function check_path()
     if app_path == "" then
         return {
             code = 1,
             error = i18n.translatef("You did not fill in the %s path. Please save and apply then update manually.", "Kcptun")
         }
     end
+    return {
+        code = 0
+    }
+end
+
+function to_check(arch)
+    local result = check_path()
+    if result.code ~= 0 then
+        return result
+    end
+
     if not arch or arch == "" then arch = api.auto_get_arch() end
 
     local file_tree, sub_version = api.get_file_info(arch)
@@ -74,13 +85,11 @@ function to_check(arch)
 end
 
 function to_download(url)
-    local app_path = api.get_kcptun_path() or ""
-    if app_path == "" then
-        return {
-            code = 1,
-            error = i18n.translatef("You did not fill in the %s path. Please save and apply then update manually.", "Kcptun")
-        }
+    local result = check_path()
+    if result.code ~= 0 then
+        return result
     end
+
     if not url or url == "" then
         return {code = 1, error = i18n.translate("Download url is required.")}
     end
@@ -89,7 +98,7 @@ function to_download(url)
 
     local tmp_file = util.trim(util.exec("mktemp -u -t kcptun_download.XXXXXX"))
 
-    local result = api.exec(api.curl, {api._unpack(api.curl_args), "-o", tmp_file, url}, nil, api.command_timeout) == 0
+    result = api.exec(api.curl, {api._unpack(api.curl_args), "-o", tmp_file, url}, nil, api.command_timeout) == 0
 
     if not result then
         api.exec("/bin/rm", {"-f", tmp_file})
@@ -103,13 +112,11 @@ function to_download(url)
 end
 
 function to_extract(file, subfix)
-    local app_path = api.get_kcptun_path() or ""
-    if app_path == "" then
-        return {
-            code = 1,
-            error = i18n.translatef("You did not fill in the %s path. Please save and apply then update manually.", "Kcptun")
-        }
+    local result = check_path()
+    if result.code ~= 0 then
+        return result
     end
+
     if not file or file == "" or not fs.access(file) then
         return {code = 1, error = i18n.translate("File path required.")}
     end
@@ -154,13 +161,11 @@ function to_extract(file, subfix)
 end
 
 function to_move(file)
-    local app_path = api.get_kcptun_path() or ""
-    if app_path == "" then
-        return {
-            code = 1,
-            error = i18n.translatef("You did not fill in the %s path. Please save and apply then update manually.", "Kcptun")
-        }
+    local result = check_path()
+    if result.code ~= 0 then
+        return result
     end
+
     if not file or file == "" or not fs.access(file) then
         sys.call("/bin/rm -rf /tmp/kcptun_extract.*")
         return {code = 1, error = i18n.translate("Client file is required.")}
@@ -175,6 +180,11 @@ function to_move(file)
         }
     end
 
+    local flag = sys.call('pgrep -af "passwall/.*kcptun" >/dev/null')
+    if flag == 0 then
+        sys.call("/etc/init.d/passwall stop")
+    end
+
     local app_path_bak
 
     if fs.access(app_path) then
@@ -182,12 +192,18 @@ function to_move(file)
         api.exec("/bin/mv", {"-f", app_path, app_path_bak})
     end
 
-    local result = api.exec("/bin/mv", {"-f", file, app_path}, nil, api.command_timeout) == 0
+    result = api.exec("/bin/mv", {"-f", file, app_path}, nil, api.command_timeout) == 0
 
     if not result or not fs.access(app_path) then
         sys.call("/bin/rm -rf /tmp/kcptun_extract.*")
+        if flag == 0 then
+            sys.call("/etc/init.d/passwall restart >/dev/null 2>&1 &")
+        end
         if app_path_bak then
             api.exec("/bin/mv", {"-f", app_path_bak, app_path})
+        end
+        if #app_path > 1 then
+            sys.call("/bin/rm -rf " .. app_path)
         end
         return {
             code = 1,
@@ -200,6 +216,10 @@ function to_move(file)
     if app_path_bak then api.exec("/bin/rm", {"-f", app_path_bak}) end
 
     sys.call("/bin/rm -rf /tmp/kcptun_extract.*")
+
+    if flag == 0 then
+        sys.call("/etc/init.d/passwall restart >/dev/null 2>&1 &")
+    end
 
     return {code = 0}
 end

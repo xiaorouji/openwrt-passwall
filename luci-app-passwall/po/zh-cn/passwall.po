@@ -688,8 +688,8 @@ msgstr "恢复切换"
 msgid "When detects main node is available, switch back to the main node."
 msgstr "当检测到主节点可用时，切换回主节点。"
 
-msgid "If the main node is Xray shunt"
-msgstr "如果主节点是Xray分流"
+msgid "If the main node is V2ray/Xray shunt"
+msgstr "如果主节点是V2ray/Xray分流"
 
 msgid "Switch it"
 msgstr "切掉它"
@@ -805,8 +805,8 @@ msgstr "周"
 msgid "oclock"
 msgstr "点"
 
-msgid "Location of Xray asset"
-msgstr "Xray 资源文件目录"
+msgid "Location of V2ray/Xray asset"
+msgstr "V2ray/Xray 资源文件目录"
 
 msgid "This variable specifies a directory where geoip.dat and geosite.dat files are."
 msgstr "此变量指定geoip.dat和geosite.dat文件所在的目录。"
@@ -1189,8 +1189,8 @@ msgstr "当勾选时，可以直接访问局域网，这将不安全！（非特
 msgid "Enable Remote"
 msgstr "启用转发"
 
-msgid "You can forward to Nginx/Caddy/V2ray WebSocket and more."
-msgstr "您可以转发到Nginx/Caddy/V2ray WebSocket等。"
+msgid "You can forward to Nginx/Caddy/V2ray/Xray WebSocket and more."
+msgstr "您可以转发到Nginx/Caddy/V2ray/Xray WebSocket等。"
 
 msgid "Remote Address"
 msgstr "远程地址"

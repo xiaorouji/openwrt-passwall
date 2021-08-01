@@ -1,5 +1,4 @@
 local api = require "luci.model.cbi.passwall.api.api"
-local appname = api.appname
 
 m = Map("passwall_server", translate("Server-Side"))
 
@@ -46,7 +45,7 @@ e = t:option(DummyValue, "type", translate("Type"))
 e.cfgvalue = function(t, n)
     local v = Value.cfgvalue(t, n)
     if v then
-        if v == "Xray" then
+        if v == "V2ray" or v == "Xray" then
             local protocol = m:get(n, "protocol")
             if protocol == "vmess" then
                 protocol = "VMess"
