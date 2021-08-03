@@ -45,7 +45,7 @@ o = s:option(Flag, "allowInsecure", translate("allowInsecure"), translate("Wheth
 o.default = "1"
 o.rmempty = false
 
-if api.is_finded("xray") and api.is_finded("trojan-plus") then
+if api.is_finded("xray") then
     o = s:option(Flag, "trojan_xray", translate("Trojan Node Use Xray"))
     o.default = "0"
 end
