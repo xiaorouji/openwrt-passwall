@@ -1,6 +1,8 @@
 <%+cbi/valueheader%>
 <%
 local api = require "luci.model.cbi.passwall.api.api"
+local has_v2ray = api.is_finded("v2ray")
+local has_xray = api.is_finded("xray")
 -%>
 <script type="text/javascript">//<![CDATA[
 	function padright(str, cnt, pad) {
@@ -173,7 +175,7 @@ local api = require "luci.model.cbi.passwall.api.api"
 				"&protoparam=" + b64encsafe(v_protocol_param.value) +
 				"&remarks=" + b64encutf8safe(v_alias.value);
 			url = b64encsafe(ssr_str);
-		} else if (v_type === "Xray" && opt.get("protocol").value === "vmess") {
+		} else if ((v_type === "V2ray" || v_type === "Xray") && opt.get("protocol").value === "vmess") {
 			v_type = "vmess";
 			var info = {};
 			info.v = "2";
@@ -216,7 +218,7 @@ local api = require "luci.model.cbi.passwall.api.api"
 				info.sni = opt.get("tls_serverName").value;
 			}
 			url = b64EncodeUnicode(JSON.stringify(info));
-		} else if (v_type === "Xray" && opt.get("protocol").value === "vless") {
+		} else if ((v_type === "V2ray" || v_type === "Xray") && opt.get("protocol").value === "vless") {
 			v_type = "vless";
 			var v_password = opt.get("uuid");
 			var v_server = opt.get("address");
@@ -270,8 +272,8 @@ local api = require "luci.model.cbi.passwall.api.api"
 				params = params.substring(1);
 			}
 			url += params;
-		} else if ((v_type === "Xray" && opt.get("protocol").value === "trojan") || v_type === "Trojan" || v_type === "Trojan-Plus" || v_type === "Trojan-Go") {
-			if ((v_type === "Xray" && opt.get("protocol").value === "trojan") || v_type === "Trojan-Plus") {
+		} else if (((v_type === "V2ray" || v_type === "Xray") && opt.get("protocol").value === "trojan") || v_type === "Trojan" || v_type === "Trojan-Plus" || v_type === "Trojan-Go") {
+			if (((v_type === "V2ray" || v_type === "Xray") && opt.get("protocol").value === "trojan") || v_type === "Trojan-Plus") {
 				v_type = "trojan";
 			}
 			var v_password = opt.get(!opt.client && v_type === "Trojan-Go"  ? "passwords" : "password");
@@ -692,7 +694,11 @@ local api = require "luci.model.cbi.passwall.api.api"
 		} else if (ssu[0] === "vmess") {
 			var sstr = b64DecodeUnicode(ssu[1]);
 			var ploc = sstr.indexOf("/?");
+			<% if has_v2ray then %>
+			opt.set('type', "V2ray");
+			<% elseif has_xray then %>
 			opt.set('type', "Xray");
+			<% end %>
 			opt.set('protocol', "vmess");
 			var url0, param = "";
 			if (ploc > 0) {
@@ -739,7 +745,11 @@ local api = require "luci.model.cbi.passwall.api.api"
 				opt.set('grpc_serviceName', ssm.path);
 			}
 		} else if (ssu[0] === "vless") {
+			<% if has_xray then %>
 			opt.set('type', "Xray");
+			<% elseif has_v2ray then %>
+			opt.set('type', "V2ray");
+			<% end %>
 			opt.set('protocol', "vless");
 			var m = parseNodeUrl(ssrurl);
 			console.log(m.search);

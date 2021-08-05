@@ -1,5 +1,5 @@
 local api = require "luci.model.cbi.passwall.api.api"
-local json = require "luci.jsonc"
+local jsonc = api.jsonc
 local inbounds = {}
 local outbounds = {}
 local routing = nil
@@ -96,7 +96,7 @@ table.insert(outbounds, {
     protocol = "freedom", tag = "direct", settings = {keep = ""}
 })
 
-local xray = {
+local config = {
     log = {
         -- error = string.format("/var/etc/passwall/%s.log", node[".name"]),
         loglevel = "warning"
@@ -108,4 +108,4 @@ local xray = {
     -- 路由
     routing = routing
 }
-print(json.stringify(xray, 1))
+print(jsonc.stringify(config, 1))

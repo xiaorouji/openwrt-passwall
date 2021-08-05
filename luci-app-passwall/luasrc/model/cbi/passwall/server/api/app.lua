@@ -1,15 +1,16 @@
 #!/usr/bin/lua
 
 local action = arg[1]
-local sys = require 'luci.sys'
-local jsonc = require "luci.jsonc"
-local ucic = require"luci.model.uci".cursor()
 local api = require "luci.model.cbi.passwall.api.api"
+local sys = api.sys
+local uci = api.uci
+local jsonc = api.jsonc
 
 local CONFIG = "passwall_server"
 local CONFIG_PATH = "/var/etc/" .. CONFIG
 local LOG_APP_FILE = "/var/log/" .. CONFIG .. ".log"
 local TMP_BIN_PATH = CONFIG_PATH .. "/bin"
+local require_dir = "luci.model.cbi.passwall.server.api."
 
 local function log(...)
 	local f, err = io.open(LOG_APP_FILE, "a")
@@ -60,7 +61,7 @@ local function gen_include()
 end
 
 local function start()
-    local enabled = tonumber(ucic:get(CONFIG, "@global[0]", "enable") or 0)
+    local enabled = tonumber(uci:get(CONFIG, "@global[0]", "enable") or 0)
     if enabled == nil or enabled == 0 then
         return
     end
@@ -70,7 +71,7 @@ local function start()
     cmd("iptables -I INPUT -j PSW-SERVER")
     cmd("ip6tables -N PSW-SERVER")
     cmd("ip6tables -I INPUT -j PSW-SERVER")
-    ucic:foreach(CONFIG, "user", function(user)
+    uci:foreach(CONFIG, "user", function(user)
         local id = user[".name"]
         local enable = user.enable
         if enable and tonumber(enable) == 1 then
@@ -101,7 +102,7 @@ local function start()
                 end
                 bin = ln_start("/usr/bin/microsocks", "microsocks_" .. id, string.format("-i :: -p %s %s", port, auth), log_path)
             elseif type == "SS" or type == "SSR" then
-                config = require("luci.model.cbi.passwall.server.api.shadowsocks").gen_config(user)
+                config = require(require_dir .. "shadowsocks").gen_config(user)
                 local udp_param = ""
                 udp_forward = tonumber(user.udp_forward) or 1
                 if udp_forward == 1 then
@@ -109,17 +110,20 @@ local function start()
                 end
                 type = type:lower()
                 bin = ln_start("/usr/bin/" .. type .. "-server", type .. "-server", "-c " .. config_file .. " " .. udp_param, log_path)
+            elseif type == "V2ray" then
+                config = require(require_dir .. "v2ray").gen_config(user)
+                bin = ln_start(api.get_v2ray_path(), "v2ray", "-config=" .. config_file, log_path)
             elseif type == "Xray" then
-                config = require("luci.model.cbi.passwall.server.api.xray").gen_config(user)
+                config = require(require_dir .. "v2ray").gen_config(user)
                 bin = ln_start(api.get_xray_path(), "xray", "-config=" .. config_file, log_path)
             elseif type == "Trojan" then
-                config = require("luci.model.cbi.passwall.server.api.trojan").gen_config(user)
+                config = require(require_dir .. "trojan").gen_config(user)
                 bin = ln_start("/usr/sbin/trojan", "trojan", "-c " .. config_file, log_path)
             elseif type == "Trojan-Plus" then
-                config = require("luci.model.cbi.passwall.server.api.trojan").gen_config(user)
+                config = require(require_dir .. "trojan").gen_config(user)
                 bin = ln_start("/usr/sbin/trojan-plus", "trojan-plus", "-c " .. config_file, log_path)
             elseif type == "Trojan-Go" then
-                config = require("luci.model.cbi.passwall.server.api.trojan").gen_config(user)
+                config = require(require_dir .. "trojan").gen_config(user)
                 bin = ln_start(api.get_trojan_go_path(), "trojan-go", "-config " .. config_file, log_path)
             elseif type == "Brook" then
                 local brook_protocol = user.protocol

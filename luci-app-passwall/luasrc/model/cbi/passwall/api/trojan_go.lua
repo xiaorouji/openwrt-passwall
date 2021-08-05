@@ -1,20 +1,31 @@
 module("luci.model.cbi.passwall.api.trojan_go", package.seeall)
-local fs = require "nixio.fs"
-local sys = require "luci.sys"
-local util = require "luci.util"
-local i18n = require "luci.i18n"
 local api = require "luci.model.cbi.passwall.api.api"
+local fs = api.fs
+local sys = api.sys
+local util = api.util
+local i18n = api.i18n
 
 local trojan_go_api = "https://api.github.com/repos/p4gefau1t/trojan-go/releases?per_page=1"
+local app_path = api.get_trojan_go_path() or ""
 
-function to_check(arch)
-    local app_path = api.get_trojan_go_path() or ""
+function check_path()
     if app_path == "" then
         return {
             code = 1,
             error = i18n.translatef("You did not fill in the %s path. Please save and apply then update manually.", "Trojan-GO")
         }
     end
+    return {
+        code = 0
+    }
+end
+
+function to_check(arch)
+    local result = check_path()
+    if result.code ~= 0 then
+        return result
+    end
+
     if not arch or arch == "" then arch = api.auto_get_arch() end
 
     local file_tree, sub_version = api.get_file_info(arch)
@@ -82,13 +93,11 @@ function to_check(arch)
 end
 
 function to_download(url)
-    local app_path = api.get_trojan_go_path() or ""
-    if app_path == "" then
-        return {
-            code = 1,
-            error = i18n.translatef("You did not fill in the %s path. Please save and apply then update manually.", "Trojan-GO")
-        }
+    local result = check_path()
+    if result.code ~= 0 then
+        return result
     end
+
     if not url or url == "" then
         return {code = 1, error = i18n.translate("Download url is required.")}
     end
@@ -97,7 +106,7 @@ function to_download(url)
 
     local tmp_file = util.trim(util.exec("mktemp -u -t trojan-go_download.XXXXXX"))
 
-    local result = api.exec(api.curl, {api._unpack(api.curl_args), "-o", tmp_file, url}, nil, api.command_timeout) == 0
+    result = api.exec(api.curl, {api._unpack(api.curl_args), "-o", tmp_file, url}, nil, api.command_timeout) == 0
 
     if not result then
         api.exec("/bin/rm", {"-f", tmp_file})
@@ -111,13 +120,11 @@ function to_download(url)
 end
 
 function to_extract(file, subfix)
-    local app_path = api.get_trojan_go_path() or ""
-    if app_path == "" then
-        return {
-            code = 1,
-            error = i18n.translatef("You did not fill in the %s path. Please save and apply then update manually.", "Trojan-GO")
-        }
+    local result = check_path()
+    if result.code ~= 0 then
+        return result
     end
+
     if sys.exec("echo -n $(opkg list-installed | grep -c unzip)") ~= "1" then
         api.exec("/bin/rm", {"-f", file})
         return {
@@ -145,16 +152,19 @@ function to_extract(file, subfix)
 end
 
 function to_move(file)
-    local app_path = api.get_trojan_go_path() or ""
-    if app_path == "" then
-        return {
-            code = 1,
-            error = i18n.translatef("You did not fill in the %s path. Please save and apply then update manually.", "Trojan-GO")
-        }
+    local result = check_path()
+    if result.code ~= 0 then
+        return result
     end
+
     if not file or file == "" then
         sys.call("/bin/rm -rf /tmp/trojan-go_extract.*")
         return {code = 1, error = i18n.translate("Client file is required.")}
+    end
+
+    local flag = sys.call('pgrep -af "passwall/.*trojan-go" >/dev/null')
+    if flag == 0 then
+        sys.call("/etc/init.d/passwall stop")
     end
 
     local app_path_bak
@@ -164,9 +174,15 @@ function to_move(file)
         api.exec("/bin/mv", {"-f", app_path, app_path_bak})
     end
 
-    local result = api.exec("/bin/mv", { "-f", file .. "/trojan-go", app_path }, nil, api.command_timeout) == 0
+    result = api.exec("/bin/mv", { "-f", file .. "/trojan-go", app_path }, nil, api.command_timeout) == 0
     sys.call("/bin/rm -rf /tmp/trojan-go_extract.*")
     if not result or not fs.access(app_path) then
+        if flag == 0 then
+            sys.call("/etc/init.d/passwall restart >/dev/null 2>&1 &")
+        end
+        if #app_path > 1 then
+            sys.call("/bin/rm -rf " .. app_path)
+        end
         return {
             code = 1,
             error = i18n.translatef("Can't move new file to path: %s", app_path)
@@ -174,6 +190,10 @@ function to_move(file)
     end
 
     api.exec("/bin/chmod", {"-R", "755", app_path})
+
+    if flag == 0 then
+        sys.call("/etc/init.d/passwall restart >/dev/null 2>&1 &")
+    end
 
     return {code = 0}
 end

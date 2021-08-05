@@ -157,7 +157,7 @@ add() {
 				[ "$shunt_node" = "nil" ] && continue
 				config_n_get $shunt_id domain_list | grep -v 'regexp:\|geosite:\|ext:' | sed 's/domain:\|full:\|//g' | tr -s "\r\n" "\n" | sort -u | gen_dnsmasq_items "shuntlist,shuntlist6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/98-shunt_host.conf"
 			done
-			echolog "  - [$?]Xray分流规则(shuntlist)：${fwd_dns:-默认}"
+			echolog "  - [$?]V2ray/Xray分流规则(shuntlist)：${fwd_dns:-默认}"
 		}
 		
 		count_hosts_str=

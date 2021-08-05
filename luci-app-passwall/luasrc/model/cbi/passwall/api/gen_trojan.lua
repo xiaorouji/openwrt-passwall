@@ -1,6 +1,6 @@
 local api = require "luci.model.cbi.passwall.api.api"
-local ucursor = require"luci.model.uci".cursor()
-local json = require "luci.jsonc"
+local uci = api.uci
+local json = api.jsonc
 
 local var = api.get_args(arg)
 local node_section = var["-node"]
@@ -14,7 +14,7 @@ local local_port = var["-local_port"]
 local server_host = var["-server_host"]
 local server_port = var["-server_port"]
 local loglevel = var["-loglevel"] or 2
-local node = ucursor:get_all("passwall", node_section)
+local node = uci:get_all("passwall", node_section)
 
 local cipher = "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES128-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA:AES128-SHA:AES256-SHA:DES-CBC3-SHA"
 local cipher13 = "TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_256_GCM_SHA384"

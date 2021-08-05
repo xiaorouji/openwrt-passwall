@@ -20,7 +20,11 @@ local jsonParse, jsonStringify = luci.jsonc.parse, luci.jsonc.stringify
 local b64decode = nixio.bin.b64decode
 local ucic = luci.model.uci.cursor()
 local allowInsecure_default = ucic:get_bool(appname, "@global_subscribe[0]", "allowInsecure")
-local trojan_xray = ucic:get(appname, "@global_subscribe[0]", "trojan_xray") or "0"
+local trojan_type = ucic:get(appname, "@global_subscribe[0]", "trojan_type") or "trojan-plus"
+local has_trojan_plus = api.is_finded("trojan-plus")
+local has_v2ray = api.is_finded("v2ray")
+local has_xray = api.is_finded("xray")
+local has_trojan_go = api.is_finded("trojan-go")
 ucic:revert(appname)
 
 local nodeResult = {} -- update result
@@ -361,7 +365,11 @@ local function processData(szType, content, add_mode, add_from)
 		result.remarks = base64Decode(params.remarks)
 	elseif szType == 'vmess' then
 		local info = jsonParse(content)
-		result.type = 'Xray'
+		if has_v2ray then
+			result.type = 'V2ray'
+		elseif has_xray then
+			result.type = 'Xray'
+		end
 		result.address = info.add
 		result.port = info.port
 		result.protocol = 'vmess'
@@ -477,10 +485,16 @@ local function processData(szType, content, add_mode, add_from)
 			content = content:sub(0, idx_sp - 1)
 		end
 		result.remarks = UrlDecode(alias)
-		result.type = "Trojan-Plus"
-		if trojan_xray == "1" then
+		if trojan_type == "trojan-plus" and has_trojan_plus then
+			result.type = "Trojan-Plus"
+		elseif trojan_type == "v2ray" and has_v2ray then
+			result.type = 'V2ray'
+			result.protocol = 'trojan'
+		elseif trojan_type == "xray" and has_xray then
 			result.type = 'Xray'
 			result.protocol = 'trojan'
+		elseif trojan_type == "trojan-go" and has_trojan_go then
+			result.type = 'Trojan-Go'
 		end
 		if content:find("@") then
 			local Info = split(content, "@")
@@ -545,7 +559,9 @@ local function processData(szType, content, add_mode, add_from)
 			content = content:sub(0, idx_sp - 1)
 		end
 		result.remarks = UrlDecode(alias)
-		result.type = "Trojan-Go"
+		if has_trojan_go then
+			result.type = "Trojan-Go"
+		end
 		if content:find("@") then
 			local Info = split(content, "@")
 			result.password = UrlDecode(Info[1])
@@ -605,7 +621,11 @@ local function processData(szType, content, add_mode, add_from)
 		result.group = content.airport
 		result.remarks = content.remarks
 	elseif szType == "vless" then
-		result.type = "Xray"
+		if has_xray then
+			result.type = 'Xray'
+		elseif has_v2ray then
+			result.type = 'V2ray'
+		end
 		result.protocol = "vless"
 		local alias = ""
 		if content:find("#") then
@@ -984,11 +1004,10 @@ local function parse_link(raw, add_mode, add_from)
 				end
 				-- log(result)
 				if result then
-					if (add_mode == "2" and is_filter_keyword(result.remarks)) or
-						not result.address or
-						result.remarks == "NULL" or
-						(not datatypes.hostname(result.address) and not (datatypes.ipmask4(result.address) or datatypes.ipmask6(result.address)))
-					then
+					if not result.type then
+						log('丢弃节点:' .. result.remarks .. ",找不到可使用二进制.")
+					elseif (add_mode == "2" and is_filter_keyword(result.remarks)) or not result.address or result.remarks == "NULL" or
+							(not datatypes.hostname(result.address) and not (datatypes.ipmask4(result.address) or datatypes.ipmask6(result.address))) then
 						log('丢弃过滤节点: ' .. result.type .. ' 节点, ' .. result.remarks)
 					else
 						tinsert(all_nodes, result)

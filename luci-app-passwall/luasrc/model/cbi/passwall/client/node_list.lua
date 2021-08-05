@@ -70,7 +70,7 @@ o.cfgvalue = function(t, n)
     local remarks = m:get(n, "remarks") or ""
     local type = m:get(n, "type") or ""
     str = str .. string.format("<input type='hidden' id='cbid.%s.%s.type' value='%s'/>", appname, n, type)
-    if type == "Xray" then
+    if type == "V2ray" or type == "Xray" then
         local protocol = m:get(n, "protocol")
         if protocol == "_balancing" then
             protocol = translate("Balancing")
