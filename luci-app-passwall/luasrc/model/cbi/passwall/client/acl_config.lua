@@ -1,7 +1,7 @@
 local api = require "luci.model.cbi.passwall.api.api"
 local appname = api.appname
-local uci = api.uci
 local sys = api.sys
+local has_v2ray = api.is_finded("v2ray")
 local has_xray = api.is_finded("xray")
 
 m = Map(appname)

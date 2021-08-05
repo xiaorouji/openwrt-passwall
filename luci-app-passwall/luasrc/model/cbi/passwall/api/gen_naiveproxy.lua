@@ -1,6 +1,6 @@
 local api = require "luci.model.cbi.passwall.api.api"
-local ucursor = require "luci.model.uci".cursor()
-local jsonc = require "luci.jsonc"
+local uci = api.uci
+local jsonc = api.jsonc
 
 local var = api.get_args(arg)
 local node_section = var["-node"]
@@ -13,7 +13,7 @@ local local_addr = var["-local_addr"]
 local local_port = var["-local_port"]
 local server_host = var["-server_host"]
 local server_port = var["-server_port"]
-local node = ucursor:get_all("passwall", node_section)
+local node = uci:get_all("passwall", node_section)
 
 local config = {
     listen = run_type .. "://" .. local_addr .. ":" .. local_port,

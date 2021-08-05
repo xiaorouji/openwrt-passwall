@@ -1,5 +1,6 @@
 #!/usr/bin/lua
 
+require 'nixio'
 require 'luci.sys'
 local luci = luci
 local ucic = luci.model.uci.cursor()
@@ -7,6 +8,7 @@ local jsonc = require "luci.jsonc"
 local i18n = require "luci.i18n"
 local name = 'passwall'
 local arg1 = arg[1]
+local b64decode = nixio.bin.b64decode
 
 local rule_path = "/usr/share/" .. name .. "/rules"
 local reboot = 0
@@ -23,15 +25,15 @@ local ip_pattern = "^%d+%.%d+%.%d+%.%d+"
 local ip4_ipset_pattern = "^%d+%.%d+%.%d+%.%d+[%/][%d]+$"
 local ip6_ipset_pattern = ":-[%x]+%:+[%x]-[%/][%d]+$"
 local domain_pattern = "([%w%-%_]+%.[%w%.%-%_]+)[%/%*]*"
-local excluded_domain = {"apple.com","sina.cn","sina.com.cn","baidu.com","byr.cn","jlike.com","weibo.com","zhongsou.com","youdao.com","sogou.com","so.com","soso.com","aliyun.com","taobao.com","jd.com","qq.com"}
+local excluded_domain = {"apple.com","sina.cn","sina.com.cn","baidu.com","byr.cn","jlike.com","weibo.com","zhongsou.com","youdao.com","sogou.com","so.com","soso.com","aliyun.com","taobao.com","jd.com","qq.com","bing.com"}
 
-local gfwlist_url = ucic:get_first(name, 'global_rules', "gfwlist_url", "https://cdn.jsdelivr.net/gh/YW5vbnltb3Vz/domain-list-community@release/gfwlist.txt")
+local gfwlist_url = ucic:get_first(name, 'global_rules', "gfwlist_url", "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/gfw.txt")
 local chnroute_url = ucic:get_first(name, 'global_rules', "chnroute_url", "https://ispip.clang.cn/all_cn.txt")
 local chnroute6_url =  ucic:get_first(name, 'global_rules', "chnroute6_url", "https://ispip.clang.cn/all_cn_ipv6.txt")
 local chnlist_url = ucic:get(name, "@global_rules[0]", "chnlist_url") or {"https://cdn.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/accelerated-domains.china.conf","https://cdn.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/apple.china.conf","https://cdn.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/google.china.conf"}
 local geoip_api =  "https://api.github.com/repos/Loyalsoldier/v2ray-rules-dat/releases/latest"
 local geosite_api =  "https://api.github.com/repos/Loyalsoldier/v2ray-rules-dat/releases/latest"
-local xray_asset_location = ucic:get_first(name, 'global_rules', "xray_location_asset", "/usr/share/xray/")
+local v2ray_asset_location = ucic:get_first(name, 'global_rules', "v2ray_location_asset", "/usr/share/xray/")
 
 local log = function(...)
     if arg1 then
@@ -49,20 +51,21 @@ local log = function(...)
 end
 
 -- base64decoding
-local function base64_dec(data)
-	local bc='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-    data = string.gsub(data, '[^'..bc..'=]', '')
-    return (data:gsub('.', function(x)
-        if (x == '=') then return '' end
-        local r,f='',(bc:find(x)-1)
-        for i=6,1,-1 do r=r..(f%2^i-f%2^(i-1)>0 and '1' or '0') end
-        return r;
-    end):gsub('%d%d%d?%d?%d?%d?%d?%d?', function(x)
-        if (#x ~= 8) then return '' end
-        local c=0
-        for i=1,8 do c=c+(x:sub(i,i)=='1' and 2^(8-i) or 0) end
-        return string.char(c)
-    end))
+local function base64Decode(text)
+	local raw = text
+	if not text then return '' end
+	text = text:gsub("%z", "")
+	text = text:gsub("%c", "")
+	text = text:gsub("_", "/")
+	text = text:gsub("-", "+")
+	local mod4 = #text % 4
+	text = text .. string.sub('====', mod4 + 1)
+	local result = b64decode(text)
+	if result then
+		return result:gsub("%z", "")
+	else
+		return raw
+	end
 end
 
 -- trim
@@ -101,7 +104,7 @@ local function fetch_gfwlist()
 	if sret == 200 then
 		local domains = {}
 		local gfwlist = io.open("/tmp/gfwlist_dl", "r")
-		local decode = base64_dec(gfwlist:read("*all"))
+		local decode = base64Decode(gfwlist:read("*all"))
 		gfwlist:close()
 
 		gfwlist = io.open("/tmp/gfwlist_dl", "w")
@@ -226,8 +229,8 @@ local function fetch_geoip()
 						f:write(content:gsub("geoip.dat", "/tmp/geoip.dat"), "")
 						f:close()
 
-						if nixio.fs.access(xray_asset_location .. "geoip.dat") then
-							luci.sys.call(string.format("cp -f %s %s", xray_asset_location .. "geoip.dat", "/tmp/geoip.dat"))
+						if nixio.fs.access(v2ray_asset_location .. "geoip.dat") then
+							luci.sys.call(string.format("cp -f %s %s", v2ray_asset_location .. "geoip.dat", "/tmp/geoip.dat"))
 							if luci.sys.call('sha256sum -c /tmp/geoip.dat.sha256sum > /dev/null 2>&1') == 0 then
 								log("geoip 版本一致，无需更新。")
 								return 1
@@ -237,7 +240,7 @@ local function fetch_geoip()
 							if v2.name and v2.name == "geoip.dat" then
 								sret = curl(v2.browser_download_url, "/tmp/geoip.dat")
 								if luci.sys.call('sha256sum -c /tmp/geoip.dat.sha256sum > /dev/null 2>&1') == 0 then
-									luci.sys.call(string.format("mkdir -p %s && cp -f %s %s", xray_asset_location, "/tmp/geoip.dat", xray_asset_location .. "geoip.dat"))
+									luci.sys.call(string.format("mkdir -p %s && cp -f %s %s", v2ray_asset_location, "/tmp/geoip.dat", v2ray_asset_location .. "geoip.dat"))
 									reboot = 1
 									log("geoip 更新成功。")
 									return 1
@@ -277,8 +280,8 @@ local function fetch_geosite()
 						f:write(content:gsub("geosite.dat", "/tmp/geosite.dat"), "")
 						f:close()
 
-						if nixio.fs.access(xray_asset_location .. "geosite.dat") then
-							luci.sys.call(string.format("cp -f %s %s", xray_asset_location .. "geosite.dat", "/tmp/geosite.dat"))
+						if nixio.fs.access(v2ray_asset_location .. "geosite.dat") then
+							luci.sys.call(string.format("cp -f %s %s", v2ray_asset_location .. "geosite.dat", "/tmp/geosite.dat"))
 							if luci.sys.call('sha256sum -c /tmp/geosite.dat.sha256sum > /dev/null 2>&1') == 0 then
 								log("geosite 版本一致，无需更新。")
 								return 1
@@ -288,7 +291,7 @@ local function fetch_geosite()
 							if v2.name and v2.name == "geosite.dat" then
 								sret = curl(v2.browser_download_url, "/tmp/geosite.dat")
 								if luci.sys.call('sha256sum -c /tmp/geosite.dat.sha256sum > /dev/null 2>&1') == 0 then
-									luci.sys.call(string.format("mkdir -p %s && cp -f %s %s", xray_asset_location, "/tmp/geosite.dat", xray_asset_location .. "geosite.dat"))
+									luci.sys.call(string.format("mkdir -p %s && cp -f %s %s", v2ray_asset_location, "/tmp/geosite.dat", v2ray_asset_location .. "geosite.dat"))
 									reboot = 1
 									log("geosite 更新成功。")
 									return 1
