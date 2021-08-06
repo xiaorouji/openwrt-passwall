@@ -508,6 +508,12 @@ msgstr "证书路径"
 msgid "Finger Print"
 msgstr "指纹伪造"
 
+msgid "Original"
+msgstr "原版"
+
+msgid "Transport Plugin"
+msgstr "传输层插件"
+
 msgid "Shadowsocks secondary encryption"
 msgstr "Shadowsocks 二次加密"
 
