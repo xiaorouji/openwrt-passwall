@@ -43,10 +43,6 @@ local header_type_list = {
     "none", "srtp", "utp", "wechat-video", "dtls", "wireguard"
 }
 local encrypt_methods_ss_aead = {
-	"dummy",
-	"aead_chacha20_poly1305",
-	"aead_aes_128_gcm",
-	"aead_aes_256_gcm",
 	"chacha20-ietf-poly1305",
 	"aes-128-gcm",
 	"aes-256-gcm",
@@ -548,14 +544,12 @@ function xray_fingerprint.write(self, section, value)
 end
 
 trojan_transport = s:option(ListValue, "trojan_transport", translate("Transport"))
-trojan_transport:value("original", "Original")
+trojan_transport:value("original", translate("Original"))
 trojan_transport:value("ws", "WebSocket")
-trojan_transport:value("h2", "HTTP/2")
-trojan_transport:value("h2+ws", "HTTP/2 & WebSocket")
 trojan_transport.default = "original"
 trojan_transport:depends("type", "Trojan-Go")
 
-trojan_plugin = s:option(ListValue, "plugin_type", translate("Plugin Type"))
+trojan_plugin = s:option(ListValue, "plugin_type", translate("Transport Plugin"))
 trojan_plugin:value("plaintext", "Plain Text")
 trojan_plugin:value("shadowsocks", "ShadowSocks")
 trojan_plugin:value("other", "Other")
@@ -661,13 +655,11 @@ mkcp_seed:depends("transport", "mkcp")
 ws_host = s:option(Value, "ws_host", translate("WebSocket Host"))
 ws_host:depends("transport", "ws")
 ws_host:depends("ss_transport", "ws")
-ws_host:depends("trojan_transport", "h2+ws")
 ws_host:depends("trojan_transport", "ws")
 
 ws_path = s:option(Value, "ws_path", translate("WebSocket Path"))
 ws_path:depends("transport", "ws")
 ws_path:depends("ss_transport", "ws")
-ws_path:depends("trojan_transport", "h2+ws")
 ws_path:depends("trojan_transport", "ws")
 ws_path:depends({ type = "Brook", brook_protocol = "wsclient" })
 
@@ -675,14 +667,10 @@ ws_path:depends({ type = "Brook", brook_protocol = "wsclient" })
 h2_host = s:option(Value, "h2_host", translate("HTTP/2 Host"))
 h2_host:depends("transport", "h2")
 h2_host:depends("ss_transport", "h2")
-h2_host:depends("trojan_transport", "h2+ws")
-h2_host:depends("trojan_transport", "h2")
 
 h2_path = s:option(Value, "h2_path", translate("HTTP/2 Path"))
 h2_path:depends("transport", "h2")
 h2_path:depends("ss_transport", "h2")
-h2_path:depends("trojan_transport", "h2+ws")
-h2_path:depends("trojan_transport", "h2")
 
 -- [[ DomainSocket部分 ]]--
 ds_path = s:option(Value, "ds_path", "Path", translate("A legal file path. This file must not exist before running."))
@@ -713,7 +701,7 @@ ss_aead.default = "0"
 
 ss_aead_method = s:option(ListValue, "ss_aead_method", translate("Encrypt Method"))
 for _, v in ipairs(encrypt_methods_ss_aead) do ss_aead_method:value(v, v) end
-ss_aead_method.default = "aead_aes_128_gcm"
+ss_aead_method.default = "aes-128-gcm"
 ss_aead_method:depends("ss_aead", "1")
 
 ss_aead_pwd = s:option(Value, "ss_aead_pwd", translate("Password"))
