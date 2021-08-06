@@ -3,11 +3,11 @@
 START=99
 
 start() {
-	/usr/lib/lua/luci/model/cbi/passwall/server/api/app.lua start
+	lua /usr/lib/lua/luci/model/cbi/passwall/server/api/app.lua start
 }
 
 stop() {
-	/usr/lib/lua/luci/model/cbi/passwall/server/api/app.lua stop
+	lua /usr/lib/lua/luci/model/cbi/passwall/server/api/app.lua stop
 }
 
 restart() {

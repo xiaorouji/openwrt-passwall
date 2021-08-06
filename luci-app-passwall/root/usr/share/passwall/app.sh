@@ -471,9 +471,17 @@ run_socks() {
 	esac
 
 	# http to socks
-	([ "$type" == "v2ray" ] || [ "$type" == "xray" ]) && [ "$type" != "socks" ] && [ "$http_port" != "0" ] && [ "$http_config_file" != "nil" ] && {
+	[ "$type" != "v2ray" ] && [ "$type" != "xray" ] && [ "$type" != "socks" ] && [ "$http_port" != "0" ] && [ "$http_config_file" != "nil" ] && {
+		local bin=$(first_type $(config_t_get global_app v2ray_file) v2ray)
+		if [ -n "$bin" ]; then
+			type="v2ray"
+		else
+			bin=$(first_type $(config_t_get global_app xray_file) xray)
+			[ -n "$bin" ] && type="xray"
+		fi
+		[ -z "$type" ] && return 1
 		lua $API_GEN_V2RAY_PROTO -local_http_port $http_port -server_proto socks -server_address "127.0.0.1" -server_port $socks_port -server_username $_username -server_password $_password > $http_config_file
-		ln_start_bin "$(first_type $(config_t_get global_app ${type}_file) ${type})" ${type} $log_file -config="$http_config_file"
+		ln_start_bin "$bin" ${type} /dev/null -config="$http_config_file"
 	}
 }
 

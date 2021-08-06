@@ -78,6 +78,7 @@ config auto_switch
 	option testing_time '1'
 	option connect_timeout '3'
 	option retry_num '3'
+	option shunt_logic '1'
 	
 config nodes '696cd32c1d5149ee95fd1b3accbad6df'
 	option remarks '分流总节点'

@@ -88,7 +88,8 @@ local function http_write_json(content)
 end
 
 function reset_config()
-	luci.sys.call('[ -f "/rom/etc/config/passwall" ] && cp -f /rom/etc/config/passwall /etc/config/passwall && /etc/init.d/passwall reload')
+	luci.sys.call('/etc/init.d/passwall stop')
+	luci.sys.call('[ -f "/usr/share/passwall/0_default_config" ] && cp -f /usr/share/passwall/0_default_config /etc/config/passwall')
 	luci.http.redirect(api.url())
 end
 
