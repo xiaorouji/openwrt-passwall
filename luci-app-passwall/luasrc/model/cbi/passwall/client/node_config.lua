@@ -188,6 +188,13 @@ domainStrategy.description = "<br /><ul><li>" .. translate("'AsIs': Only use dom
 domainStrategy:depends("protocol", "_balancing")
 domainStrategy:depends("protocol", "_shunt")
 
+domainMatcher = s:option(ListValue, "domainMatcher", translate("Domain matcher"))
+domainMatcher:value("hybrid")
+domainMatcher:value("linear")
+domainMatcher:depends("protocol", "_balancing")
+domainMatcher:depends("protocol", "_shunt")
+
+
 -- Brook协议
 brook_protocol = s:option(ListValue, "brook_protocol", translate("Protocol"))
 brook_protocol:value("client", translate("Brook"))
@@ -690,6 +697,19 @@ ws_path:depends("ss_transport", "ws")
 ws_path:depends("trojan_transport", "ws")
 ws_path:depends({ type = "Brook", brook_protocol = "wsclient" })
 
+ws_enableEarlyData = s:option(Flag, "ws_enableEarlyData", translate("Enable early data"))
+ws_enableEarlyData:depends("transport", "ws")
+
+ws_maxEarlyData = s:option(Value, "ws_maxEarlyData", translate("Early data length"))
+ws_maxEarlyData.default = "1024"
+ws_maxEarlyData:depends("ws_enableEarlyData", true)
+function ws_maxEarlyData.cfgvalue(self, section)
+	return m:get(section, "ws_maxEarlyData")
+end
+function ws_maxEarlyData.write(self, section, value)
+	m:set(section, "ws_maxEarlyData", value)
+end
+
 -- [[ HTTP/2部分 ]]--
 h2_host = s:option(Value, "h2_host", translate("HTTP/2 Host"))
 h2_host:depends("transport", "h2")
@@ -724,7 +744,7 @@ grpc_serviceName:depends("transport", "grpc")
 grpc_mode = s:option(ListValue, "grpc_mode", "gRPC " .. translate("Transfer mode"))
 grpc_mode:value("gun")
 grpc_mode:value("multi")
-grpc_mode:depends("transport", "grpc")
+grpc_mode:depends({ type = "Xray", transport = "grpc"})
 
 -- [[ Trojan-Go Shadowsocks2 ]] --
 ss_aead = s:option(Flag, "ss_aead", translate("Shadowsocks secondary encryption"))
@@ -741,11 +761,11 @@ ss_aead_pwd.password = true
 ss_aead_pwd:depends("ss_aead", "1")
 
 -- [[ Trojan-Go Mux ]]--
-mux = s:option(Flag, "smux", translate("smux"))
+mux = s:option(Flag, "smux", translate("Smux"))
 mux:depends("type", "Trojan-Go")
 
 -- [[ Mux ]]--
-mux = s:option(Flag, "mux", translate("mux"))
+mux = s:option(Flag, "mux", translate("Mux"))
 mux:depends({ type = "V2ray", protocol = "vmess" })
 mux:depends({ type = "V2ray", protocol = "vless", xtls = false })
 mux:depends({ type = "V2ray", protocol = "http" })
@@ -759,12 +779,12 @@ mux:depends({ type = "Xray", protocol = "socks" })
 mux:depends({ type = "Xray", protocol = "shadowsocks" })
 mux:depends({ type = "Xray", protocol = "trojan" })
 
-mux_concurrency = s:option(Value, "mux_concurrency", translate("mux concurrency"))
+mux_concurrency = s:option(Value, "mux_concurrency", translate("Mux concurrency"))
 mux_concurrency.default = 8
 mux_concurrency:depends("mux", true)
 mux_concurrency:depends("smux", true)
 
-smux_idle_timeout = s:option(Value, "smux_idle_timeout", translate("mux idle timeout"))
+smux_idle_timeout = s:option(Value, "smux_idle_timeout", translate("Mux idle timeout"))
 smux_idle_timeout.default = 60
 smux_idle_timeout:depends("smux", true)
 
