@@ -14,6 +14,7 @@ s:append(Template(appname .. "/app_update/xray_version"))
 s:append(Template(appname .. "/app_update/trojan_go_version"))
 s:append(Template(appname .. "/app_update/kcptun_version"))
 s:append(Template(appname .. "/app_update/brook_version"))
+s:append(Template(appname .. "/app_update/hysteria_version"))
 
 o = s:option(Value, "v2ray_file", translatef("%s App Path", "V2ray"))
 o.default = "/usr/bin/v2ray"
@@ -33,6 +34,10 @@ o.rmempty = false
 
 o = s:option(Value, "brook_file", translatef("%s App Path", "Brook"))
 o.default = "/usr/bin/brook"
+o.rmempty = false
+
+o = s:option(Value, "hysteria_file", translatef("%s App Path", "Hysteria"))
+o.default = "/usr/bin/hysteria"
 o.rmempty = false
 
 o = s:option(DummyValue, "tips", " ")

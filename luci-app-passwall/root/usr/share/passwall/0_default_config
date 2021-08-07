@@ -62,6 +62,7 @@ config global_app
 	option trojan_go_file '/usr/bin/trojan-go'
 	option kcptun_client_file '/usr/bin/kcptun-client'
 	option brook_file '/usr/bin/brook'
+	option hysteria_file '/usr/bin/hysteria'
 
 config global_subscribe
 	option subscribe_proxy '0'

@@ -520,6 +520,21 @@ msgstr "传输层插件"
 msgid "Shadowsocks secondary encryption"
 msgstr "Shadowsocks 二次加密"
 
+msgid "Obfs Password"
+msgstr "混淆密码"
+
+msgid "Auth Type"
+msgstr "认证类型"
+
+msgid "Auth Password"
+msgstr "认证密码"
+
+msgid "Max upload Mbps"
+msgstr "最大上行(Mbps)"
+
+msgid "Max download Mbps"
+msgstr "最大下行(Mbps)"
+
 msgid "Encrypt Method"
 msgstr "加密"
 
