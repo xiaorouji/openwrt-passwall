@@ -32,7 +32,7 @@ config global_forwarding
 	option tcp_redir_ports '22,25,53,143,465,587,993,995,80,443'
 	option udp_redir_ports '1:65535'
 	option accept_icmp '0'
-	option tcp_proxy_way 'default'
+	option tcp_proxy_way 'redirect'
 	option proxy_ipv6 '0'
 	
 config global_other

@@ -278,7 +278,7 @@ TCP_UDP=0
 [ "$ENABLED" != 1 ] && NO_PROXY=1
 [ "$TCP_NODE" == "nil" -a "$UDP_NODE" == "nil" ] && NO_PROXY=1
 [ "$(config_get_type $TCP_NODE nil)" == "nil" -a "$(config_get_type $UDP_NODE nil)" == "nil" ] && NO_PROXY=1
-tcp_proxy_way=$(config_t_get global_forwarding tcp_proxy_way default)
+tcp_proxy_way=$(config_t_get global_forwarding tcp_proxy_way redirect)
 KCPTUN_REDIR_PORT=$(config_t_get global_forwarding kcptun_port 12948)
 RESOLVFILE=/tmp/resolv.conf.d/resolv.conf.auto
 [ -f "${RESOLVFILE}" ] && [ -s "${RESOLVFILE}" ] || RESOLVFILE=/tmp/resolv.conf.auto
@@ -314,6 +314,8 @@ load_config() {
 	export V2RAY_LOCATION_ASSET=$(config_t_get global_rules v2ray_location_asset "/usr/share/xray/")
 	export XRAY_LOCATION_ASSET=$V2RAY_LOCATION_ASSET
 	mkdir -p /var/etc $TMP_PATH $TMP_BIN_PATH $TMP_ID_PATH $TMP_PORT_PATH $TMP_ROUTE_PATH $TMP_ACL_PATH
+	REDIRECT_LIST="socks ss ssr v2ray xray trojan-plus trojan-go naiveproxy"
+	TPROXY_LIST="socks ss ssr v2ray xray trojan-plus brook trojan-go"
 	return 0
 }
 
@@ -584,7 +586,14 @@ run_redir() {
 				ln_start_bin "$(first_type $(config_t_get global_app kcptun_client_file) kcptun-client)" "kcptun_TCP" $log_file $kcptun_params
 			fi
 		fi
-		local _socks_flag _socks_address _socks_port _socks_username _socks_password
+		
+		if [ "$tcp_proxy_way" = "redirect" ]; then
+			can_ipt=$(echo "$REDIRECT_LIST" | grep "$type")
+		elif [ "$tcp_proxy_way" = "tproxy" ]; then
+			can_ipt=$(echo "$TPROXY_LIST" | grep "$type")
+		fi
+		[ -z "$can_ipt" ] && type="socks"
+		
 		case "$type" in
 		socks)
 			_socks_flag=1
@@ -592,6 +601,16 @@ run_redir() {
 			_socks_port=$(config_n_get $node port)
 			_socks_username=$(config_n_get $node username)
 			_socks_password=$(config_n_get $node password)
+			[ -z "$can_ipt" ] && {
+				local _config_file=$config_file
+				_config_file=$(echo ${_config_file} | sed "s/TCP/SOCKS_${node}/g")
+				local _port=$(get_new_port 2080)
+				run_socks flag="TCP" node=$node bind=127.0.0.1 socks_port=${_port} config_file=${_config_file}
+				_socks_address=127.0.0.1
+				_socks_port=${_port}
+				unset _socks_username
+				unset _socks_password
+			}
 		;;
 		v2ray|\
 		xray)
