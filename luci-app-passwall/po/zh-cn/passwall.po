@@ -244,6 +244,9 @@ msgstr "Dnsmasq的默认DNS"
 msgid "When the accessed domain name does not exist in the rule list, the default DNS used."
 msgstr "当访问的域名不存在规则列表中，使用的默认DNS。"
 
+msgid "The effect is better, but will increase the memory."
+msgstr "效果更好，但会增加内存使用。"
+
 msgid "Clear IPSET"
 msgstr "清空 IPSET"
 
