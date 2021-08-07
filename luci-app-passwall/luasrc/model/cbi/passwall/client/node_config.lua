@@ -97,6 +97,9 @@ end
 if api.is_finded("naive") then
     type:value("Naiveproxy", translate("NaiveProxy"))
 end
+if api.is_finded("hysteria") then
+    type:value("Hysteria", translate("Hysteria"))
+end
 
 if api.is_finded("sslocal") then
     ss_rust = s:option(Flag, "ss_rust", translate("Use") .. " Shadowsocks Rust")
@@ -227,6 +230,7 @@ address:depends("type", "Trojan")
 address:depends("type", "Trojan-Plus")
 address:depends("type", "Trojan-Go")
 address:depends("type", "Naiveproxy")
+address:depends("type", "Hysteria")
 address:depends({ type = "V2ray", protocol = "vmess" })
 address:depends({ type = "V2ray", protocol = "vless" })
 address:depends({ type = "V2ray", protocol = "http" })
@@ -250,6 +254,7 @@ use_ipv6:depends("type", "Brook")
 use_ipv6:depends("type", "Trojan")
 use_ipv6:depends("type", "Trojan-Plus")
 use_ipv6:depends("type", "Trojan-Go")
+use_ipv6:depends("type", "Hysteria")
 use_ipv6:depends({ type = "V2ray", protocol = "vmess" })
 use_ipv6:depends({ type = "V2ray", protocol = "vless" })
 use_ipv6:depends({ type = "V2ray", protocol = "http" })
@@ -275,6 +280,7 @@ port:depends("type", "Trojan")
 port:depends("type", "Trojan-Plus")
 port:depends("type", "Trojan-Go")
 port:depends("type", "Naiveproxy")
+port:depends("type", "Hysteria")
 port:depends({ type = "V2ray", protocol = "vmess" })
 port:depends({ type = "V2ray", protocol = "vless" })
 port:depends({ type = "V2ray", protocol = "http" })
@@ -314,6 +320,20 @@ password:depends({ type = "Xray", protocol = "http" })
 password:depends({ type = "Xray", protocol = "socks" })
 password:depends({ type = "Xray", protocol = "shadowsocks" })
 password:depends({ type = "Xray", protocol = "trojan" })
+
+hysteria_obfs = s:option(Value, "hysteria_obfs", translate("Obfs Password"))
+hysteria_obfs:depends("type", "Hysteria")
+
+hysteria_auth_type = s:option(ListValue, "hysteria_auth_type", translate("Auth Type"))
+hysteria_auth_type:value("disable", translate("Disable"))
+hysteria_auth_type:value("string", translate("STRING"))
+hysteria_auth_type:value("base64", translate("BASE64"))
+hysteria_auth_type:depends("type", "Hysteria")
+
+hysteria_auth_password = s:option(Value, "hysteria_auth_password", translate("Auth Password"))
+hysteria_auth_password.password = true
+hysteria_auth_password:depends("hysteria_auth_type", "string")
+hysteria_auth_password:depends("hysteria_auth_type", "base64")
 
 ss_encrypt_method = s:option(Value, "ss_encrypt_method", translate("Encrypt Method"))
 for a, t in ipairs(ss_encrypt_method_list) do ss_encrypt_method:value(t) end
@@ -523,10 +543,12 @@ end
 
 tls_serverName = s:option(Value, "tls_serverName", translate("Domain"))
 tls_serverName:depends("tls", true)
+tls_serverName:depends("type", "Hysteria")
 
 tls_allowInsecure = s:option(Flag, "tls_allowInsecure", translate("allowInsecure"), translate("Whether unsafe connections are allowed. When checked, Certificate validation will be skipped."))
 tls_allowInsecure.default = "0"
 tls_allowInsecure:depends("tls", true)
+tls_allowInsecure:depends("type", "Hysteria")
 
 xray_fingerprint = s:option(ListValue, "xray_fingerprint", translate("Finger Print"))
 xray_fingerprint:value("disable", translate("Disable"))
@@ -735,6 +757,14 @@ mux_concurrency:depends("smux", true)
 smux_idle_timeout = s:option(Value, "smux_idle_timeout", translate("mux idle timeout"))
 smux_idle_timeout.default = 60
 smux_idle_timeout:depends("smux", true)
+
+hysteria_up_mbps = s:option(Value, "hysteria_up_mbps", translate("Max upload Mbps"))
+hysteria_up_mbps.default = "10"
+hysteria_up_mbps:depends("type", "Hysteria")
+
+hysteria_down_mbps = s:option(Value, "hysteria_down_mbps", translate("Max download Mbps"))
+hysteria_down_mbps.default = "50"
+hysteria_down_mbps:depends("type", "Hysteria")
 
 protocol.validate = function(self, value)
     if value == "_shunt" or value == "_balancing" then

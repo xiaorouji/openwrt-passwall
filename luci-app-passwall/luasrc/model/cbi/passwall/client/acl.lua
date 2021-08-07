@@ -1,6 +1,7 @@
 local api = require "luci.model.cbi.passwall.api.api"
 local appname = api.appname
 local sys = api.sys
+local has_chnlist = api.fs.access("/usr/share/passwall/rules/chnlist")
 
 m = Map(appname)
 
@@ -60,7 +61,7 @@ tcp_proxy_mode.rmempty = false
 tcp_proxy_mode:value("default", translate("Default"))
 tcp_proxy_mode:value("disable", translate("No Proxy"))
 tcp_proxy_mode:value("global", translate("Global Proxy"))
-if global_proxy_mode:find("returnhome") then
+if has_chnlist and global_proxy_mode:find("returnhome") then
     tcp_proxy_mode:value("returnhome", translate("China List"))
 else
     tcp_proxy_mode:value("gfwlist", translate("GFW List"))
@@ -75,7 +76,7 @@ udp_proxy_mode.rmempty = false
 udp_proxy_mode:value("default", translate("Default"))
 udp_proxy_mode:value("disable", translate("No Proxy"))
 udp_proxy_mode:value("global", translate("Global Proxy"))
-if global_proxy_mode:find("returnhome") then
+if has_chnlist and global_proxy_mode:find("returnhome") then
     udp_proxy_mode:value("returnhome", translate("China List"))
 else
     udp_proxy_mode:value("gfwlist", translate("GFW List"))

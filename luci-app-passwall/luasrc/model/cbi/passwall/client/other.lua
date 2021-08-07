@@ -88,8 +88,7 @@ o.default = 0
 
 if os.execute("lsmod | grep -i REDIRECT >/dev/null") == 0 and os.execute("lsmod | grep -i TPROXY >/dev/null") == 0 then
     o = s:option(ListValue, "tcp_proxy_way", translate("TCP Proxy Way"))
-    o.default = "default"
-    o:value("default", translate("Default"))
+    o.default = "redirect"
     o:value("redirect", "REDIRECT")
     o:value("tproxy", "TPROXY")
 end

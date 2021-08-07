@@ -20,8 +20,7 @@ RULES_PATH=/usr/share/${CONFIG}/rules
 DNS_N=dnsmasq
 DNS_PORT=7913
 TUN_DNS="127.0.0.1#${DNS_PORT}"
-IS_DEFAULT_DNS=0
-LOCAL_DNS=
+LOCAL_DNS=119.29.29.29
 DEFAULT_DNS=
 NO_PROXY=0
 PROXY_IPV6=0
@@ -33,6 +32,7 @@ API_GEN_V2RAY=$LUA_API_PATH/gen_v2ray.lua
 API_GEN_V2RAY_PROTO=$LUA_API_PATH/gen_v2ray_proto.lua
 API_GEN_TROJAN=$LUA_API_PATH/gen_trojan.lua
 API_GEN_NAIVE=$LUA_API_PATH/gen_naiveproxy.lua
+API_GEN_HYSTERIA=$LUA_API_PATH/gen_hysteria.lua
 
 echolog() {
 	local d="$(date "+%Y-%m-%d %H:%M:%S")"
@@ -278,7 +278,7 @@ TCP_UDP=0
 [ "$ENABLED" != 1 ] && NO_PROXY=1
 [ "$TCP_NODE" == "nil" -a "$UDP_NODE" == "nil" ] && NO_PROXY=1
 [ "$(config_get_type $TCP_NODE nil)" == "nil" -a "$(config_get_type $UDP_NODE nil)" == "nil" ] && NO_PROXY=1
-tcp_proxy_way=$(config_t_get global_forwarding tcp_proxy_way default)
+tcp_proxy_way=$(config_t_get global_forwarding tcp_proxy_way redirect)
 KCPTUN_REDIR_PORT=$(config_t_get global_forwarding kcptun_port 12948)
 RESOLVFILE=/tmp/resolv.conf.d/resolv.conf.auto
 [ -f "${RESOLVFILE}" ] && [ -s "${RESOLVFILE}" ] || RESOLVFILE=/tmp/resolv.conf.auto
@@ -301,20 +301,17 @@ load_config() {
 	DNS_MODE=$(config_t_get global dns_mode pdnsd)
 	DNS_FORWARD=$(config_t_get global dns_forward 8.8.4.4:53 | sed 's/:/#/g')
 	DNS_CACHE=$(config_t_get global dns_cache 0)
-	LOCAL_DNS="default"
-	if [ "${LOCAL_DNS}" = "default" ]; then
-		DEFAULT_DNS=$(uci show dhcp | grep "@dnsmasq" | grep "\.server=" | awk -F '=' '{print $2}' | sed "s/'//g" | tr ' ' '\n' | grep -v "\/" | head -2 | sed ':label;N;s/\n/,/;b label')
-		if [ -z "${DEFAULT_DNS}" ]; then
-			DEFAULT_DNS=$(echo -n $(sed -n 's/^nameserver[ \t]*\([^ ]*\)$/\1/p' "${RESOLVFILE}" | grep -v -E "0.0.0.0|127.0.0.1|::" | head -2) | tr ' ' ',')
-		fi
-		LOCAL_DNS="${DEFAULT_DNS:-119.29.29.29}"
-		IS_DEFAULT_DNS=1
-	fi
+	CHINADNS_NG=$(config_t_get global chinadns_ng 1)
+	
+	DEFAULT_DNS=$(uci show dhcp | grep "@dnsmasq" | grep "\.server=" | awk -F '=' '{print $2}' | sed "s/'//g" | tr ' ' '\n' | grep -v "\/" | head -2 | sed ':label;N;s/\n/,/;b label')
+	[ -z "${DEFAULT_DNS}" ] && DEFAULT_DNS=$(echo -n $(sed -n 's/^nameserver[ \t]*\([^ ]*\)$/\1/p' "${RESOLVFILE}" | grep -v -E "0.0.0.0|127.0.0.1|::" | head -2) | tr ' ' ',')
+	LOCAL_DNS="${DEFAULT_DNS:-119.29.29.29}"
 	
 	export V2RAY_LOCATION_ASSET=$(config_t_get global_rules v2ray_location_asset "/usr/share/xray/")
 	export XRAY_LOCATION_ASSET=$V2RAY_LOCATION_ASSET
 	mkdir -p /var/etc $TMP_PATH $TMP_BIN_PATH $TMP_ID_PATH $TMP_PORT_PATH $TMP_ROUTE_PATH $TMP_ACL_PATH
-	return 0
+	REDIRECT_LIST="socks ss ssr v2ray xray trojan-plus trojan-go naiveproxy"
+	TPROXY_LIST="socks ss ssr v2ray xray trojan-plus brook trojan-go hysteria"
 }
 
 run_ipt2socks() {
@@ -468,6 +465,10 @@ run_socks() {
 		lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $socks_port -server_host $server_host -server_port $port -protocol socks -mode tcp_and_udp > $config_file
 		ln_start_bin "$(first_type $bin ss-local)" "$bin" $log_file -c "$config_file" -v
 	;;
+	hysteria)
+		lua $API_GEN_HYSTERIA -node $node -local_socks_port $socks_port > $config_file
+		ln_start_bin "$(first_type $(config_t_get global_app hysteria_file))" "hysteria" $log_file -c "$config_file" client
+	;;
 	esac
 
 	# http to socks
@@ -554,6 +555,10 @@ run_redir() {
 			lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -protocol redir -mode udp_only > $config_file
 			ln_start_bin "$(first_type $bin ss-redir)" "$bin" $log_file -c "$config_file" -v
 		;;
+		hysteria)
+			lua $API_GEN_HYSTERIA -node $node -local_udp_redir_port $local_port > $config_file
+			ln_start_bin "$(first_type $(config_t_get global_app hysteria_file))" "hysteria" $log_file -c "$config_file" client
+		;;
 		esac
 	;;
 	TCP)
@@ -584,7 +589,14 @@ run_redir() {
 				ln_start_bin "$(first_type $(config_t_get global_app kcptun_client_file) kcptun-client)" "kcptun_TCP" $log_file $kcptun_params
 			fi
 		fi
-		local _socks_flag _socks_address _socks_port _socks_username _socks_password
+		
+		if [ "$tcp_proxy_way" = "redirect" ]; then
+			can_ipt=$(echo "$REDIRECT_LIST" | grep "$type")
+		elif [ "$tcp_proxy_way" = "tproxy" ]; then
+			can_ipt=$(echo "$TPROXY_LIST" | grep "$type")
+		fi
+		[ -z "$can_ipt" ] && type="socks"
+		
 		case "$type" in
 		socks)
 			_socks_flag=1
@@ -592,6 +604,16 @@ run_redir() {
 			_socks_port=$(config_n_get $node port)
 			_socks_username=$(config_n_get $node username)
 			_socks_password=$(config_n_get $node password)
+			[ -z "$can_ipt" ] && {
+				local _config_file=$config_file
+				_config_file=$(echo ${_config_file} | sed "s/TCP/SOCKS_${node}/g")
+				local _port=$(get_new_port 2080)
+				run_socks flag="TCP" node=$node bind=127.0.0.1 socks_port=${_port} config_file=${_config_file}
+				_socks_address=127.0.0.1
+				_socks_port=${_port}
+				unset _socks_username
+				unset _socks_password
+			}
 		;;
 		v2ray|\
 		xray)
@@ -692,6 +714,16 @@ run_redir() {
 				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -protocol redir $lua_mode_arg $lua_tproxy_arg > $config_file
 			fi
 			ln_start_bin "$(first_type $bin ss-redir)" "$bin" $log_file -c "$config_file" -v
+		;;
+		hysteria)
+			[ "$TCP_UDP" = "1" ] && {
+				config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
+				UDP_REDIR_PORT=$TCP_REDIR_PORT
+				UDP_NODE="nil"
+				_extra_param="-local_udp_redir_port $local_port"
+			}
+			lua $API_GEN_HYSTERIA -node $node -local_tcp_redir_port $local_port ${_extra_param} > $config_file
+			ln_start_bin "$(first_type $(config_t_get global_app hysteria_file))" "hysteria" $log_file -c "$config_file" client
 		;;
 		esac
 		if [ -n "${_socks_flag}" ]; then
@@ -931,9 +963,8 @@ stop_crontab() {
 }
 
 start_dns() {
-	local pdnsd_forward other_port msg
 	dns_listen_port=${DNS_PORT}
-	pdnsd_forward=${DNS_FORWARD}
+	TUN_DNS="127.0.0.1#${dns_listen_port}"
 
 	echolog "过滤服务配置：准备接管域名解析..."
 
@@ -949,22 +980,22 @@ start_dns() {
 		local dns2socks_forward=$(get_first_dns DNS_FORWARD 53 | sed 's/#/:/g')
 		[ "$DNS_CACHE" == "0" ] && local dns2sock_cache="/d"
 		ln_start_bin "$(first_type dns2socks)" dns2socks "/dev/null" "$dns2socks_socks_server" "$dns2socks_forward" "127.0.0.1:$dns_listen_port" $dns2sock_cache
-		echolog "  - dns2sock(127.0.0.1:${dns_listen_port}${dns2sock_cache})，${dns2socks_socks_server:-127.0.0.1:1080} -> ${dns2socks_forward-D8.8.8.8:53}"
-		echolog "  - 域名解析：dns2socks..."
+		echolog "  - 域名解析：dns2socks(127.0.0.1:${dns_listen_port})，${dns2socks_socks_server} -> ${dns2socks_forward}"
 	;;
 	v2ray_tcp)
 		local dns_forward=$(get_first_dns DNS_FORWARD 53 | sed 's/#/:/g')
+		local dns_address=$(echo $dns_forward | awk -F ':' '{print $1}')
 		local up_trust_tcp_dns=$(config_t_get global up_trust_tcp_dns "tcp")
-		[ "$DNS_CACHE" == "0" ] && local _extra_param="-dns_cache 0"
+		[ "${DNS_CACHE}" == "0" ] && local _extra_param="-dns_cache 0"
 		if [ "$up_trust_tcp_dns" = "socks" ]; then
 			use_tcp_node_resolve_dns=0
 			local socks_server=$(echo $(config_t_get global socks_server 127.0.0.1:1080) | sed "s/#/:/g")
 			local socks_address=$(echo $socks_server | awk -F ':' '{print $1}')
 			local socks_port=$(echo $socks_server | awk -F ':' '{print $2}')
-			lua $API_GEN_V2RAY -dns_listen_port "${dns_listen_port}" -dns_server "tcp://${dns_forward}" -dns_socks_address "${socks_address}" -dns_socks_port "${socks_port}" ${_extra_param} > $TMP_PATH/DNS.json
+			lua $API_GEN_V2RAY -dns_listen_port "${dns_listen_port}" -dns_server "${dns_address}" -dns_tcp_server "tcp://${dns_forward}" -dns_socks_address "${socks_address}" -dns_socks_port "${socks_port}" ${_extra_param} > $TMP_PATH/DNS.json
 		elif [ "${up_trust_tcp_dns}" = "tcp" ]; then
 			use_tcp_node_resolve_dns=1
-			lua $API_GEN_V2RAY -dns_listen_port "${dns_listen_port}" -dns_server "tcp://${dns_forward}" ${_extra_param} > $TMP_PATH/DNS.json
+			lua $API_GEN_V2RAY -dns_listen_port "${dns_listen_port}" -dns_server "${dns_address}" -dns_tcp_server "tcp://${dns_forward}" ${_extra_param} > $TMP_PATH/DNS.json
 		fi
 		ln_start_bin "$(first_type $(config_t_get global_app v2ray_file) v2ray)" v2ray $TMP_PATH/DNS.log -config="$TMP_PATH/DNS.json"
 		echolog "  - 域名解析 DNS Over TCP..."
@@ -979,7 +1010,7 @@ start_dns() {
 		_doh_host=$(echo $_doh_host_port | awk -F ':' '{print $1}')
 		_doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
 		_doh_bootstrap=$(echo $up_trust_doh | cut -d ',' -sf 2-)
-		[ "$DNS_CACHE" == "0" ] && local _extra_param="-dns_cache 0"
+		[ "${DNS_CACHE}" == "0" ] && local _extra_param="-dns_cache 0"
 		
 		if [ "$up_trust_doh_dns" = "socks" ]; then
 			use_tcp_node_resolve_dns=0
@@ -1004,7 +1035,8 @@ start_dns() {
 		echolog "  - 域名解析 DNS Over HTTPS..."
 	;;
 	pdnsd)
-		gen_pdnsd_config "${dns_listen_port}" "${pdnsd_forward}"
+		use_tcp_node_resolve_dns=1
+		gen_pdnsd_config "${dns_listen_port}" "${DNS_FORWARD}" "${DNS_CACHE}"
 		ln_start_bin "$(first_type pdnsd)" pdnsd "/dev/null" --daemon -c "${TMP_PATH}/pdnsd/pdnsd.conf" -d
 		echolog "  - 域名解析：pdnsd + 使用(TCP节点)解析域名..."
 	;;
@@ -1019,80 +1051,54 @@ start_dns() {
 		echolog "  - 域名解析：使用UDP协议自定义DNS（$TUN_DNS）解析..."
 	;;
 	esac
-
-	[ -n "$chnlist" ] && [ "$DNS_MODE" != "custom" ] && {
-		[ -n "$(first_type chinadns-ng)" ] && {
-			echolog "发现ChinaDNS-NG，将启动。"
-			CHINADNS_NG=1
-		}
-		[ -n "$CHINADNS_NG" ] && {
-			china_ng_listen_port=$(expr $dns_listen_port + 1)
-			china_ng_listen="127.0.0.1#${china_ng_listen_port}"
-			china_ng_chn=$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2) | tr " " ",")
-			china_ng_gfw="127.0.0.1#${dns_listen_port}"
-			[ -n "${returnhome}" ] && china_ng_chn="${china_ng_gfw}" && china_ng_gfw="${LOCAL_DNS}"
-			echolog "  | - (chinadns-ng) 只支持2~4级的域名过滤..."
-			if [ "$DNS_MODE" = "pdnsd" ]; then
-				msg="pdnsd"
-			elif [ "$DNS_MODE" = "dns2socks" ]; then
-				msg="dns2socks"
-			elif [ "$DNS_MODE" = "v2ray_doh" ]; then
-				msg="V2ray DNS(DoH)"
-			elif [ "$DNS_MODE" = "xray_doh" ]; then
-				msg="Xray DNS(DoH)"
-			elif [ "$DNS_MODE" = "udp" ]; then
-				use_udp_node_resolve_dns=1
-				china_ng_gfw="${DNS_FORWARD}"
-				msg="udp"
-			elif [ "$DNS_MODE" = "custom" ]; then
-				custom_dns=$(config_t_get global custom_dns)
-				china_ng_gfw="$(echo ${custom_dns} | sed 's/:/#/g')"
-				msg="自定义DNS"
-			fi
-
-			local gfwlist_param="${TMP_PATH}/chinadns_gfwlist"
-			[ -f "${RULES_PATH}/gfwlist" ] && cp -a "${RULES_PATH}/gfwlist" "${gfwlist_param}"
-			local chnlist_param="${TMP_PATH}/chinadns_chnlist"
-			[ -f "${RULES_PATH}/chnlist" ] && cp -a "${RULES_PATH}/chnlist" "${chnlist_param}"
-
-			[ -f "${RULES_PATH}/proxy_host" ] && {
-				cat "${RULES_PATH}/proxy_host" >> "${gfwlist_param}"
-				echolog "  | - [$?](chinadns-ng) 代理域名表合并到防火墙域名表"
-			}
-			[ -f "${RULES_PATH}/direct_host" ] && {
-				cat "${RULES_PATH}/direct_host" >> "${chnlist_param}"
-				echolog "  | - [$?](chinadns-ng) 域名白名单合并到中国域名表"
-			}
-			chnlist_param=${chnlist_param:+-m "${chnlist_param}" -M}
-			local log_path="${TMP_PATH}/chinadns-ng.log"
-			log_path="/dev/null"
-			ln_start_bin "$(first_type chinadns-ng)" chinadns-ng "$log_path" -v -b 0.0.0.0 -l "${china_ng_listen_port}" ${china_ng_chn:+-c "${china_ng_chn}"} ${chnlist_param} ${china_ng_gfw:+-t "${china_ng_gfw}"} ${gfwlist_param:+-g "${gfwlist_param}"} -f
-			echolog "  + 过滤服务：ChinaDNS-NG(:${china_ng_listen_port}) + ${msg}：国内DNS：${china_ng_chn:-D114.114.114.114}，可信DNS：${china_ng_gfw:-D8.8.8.8}"
-			#[ -n "${global}${chnlist}" ] && [ -z "${returnhome}" ] && TUN_DNS="${china_ng_gfw}"
-		}
-	}
-
-	[ "${use_udp_node_resolve_dns}" = "1" ] && echolog "  * 要求代理 DNS 请求，如上游 DNS 非直连地址，确保 UDP 代理打开，并且已经正确转发！"
+	
 	[ "${use_tcp_node_resolve_dns}" = "1" ] && echolog "  * 请确认上游 DNS 支持 TCP 查询，如非直连地址，确保 TCP 代理打开，并且已经正确转发！"
+	[ "${use_udp_node_resolve_dns}" = "1" ] && echolog "  * 要求代理 DNS 请求，如上游 DNS 非直连地址，确保 UDP 代理打开，并且已经正确转发！"
+	
+	[ -n "$chnlist" ] && [ "$CHINADNS_NG" = "1" ] && [ -n "$(first_type chinadns-ng)" ] && [ -s "${RULES_PATH}/chnlist" ] && {
+		china_ng_listen_port=$(expr $dns_listen_port + 1)
+		china_ng_listen="127.0.0.1#${china_ng_listen_port}"
+		china_ng_chn=$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2) | tr " " ",")
+		china_ng_gfw="${TUN_DNS}"
+		echolog "  | - (chinadns-ng) 最高支持4级域名过滤..."
+
+		local gfwlist_param="${TMP_PATH}/chinadns_gfwlist"
+		[ -s "${RULES_PATH}/gfwlist" ] && cp -a "${RULES_PATH}/gfwlist" "${gfwlist_param}"
+		local chnlist_param="${TMP_PATH}/chinadns_chnlist"
+		[ -s "${RULES_PATH}/chnlist" ] && cp -a "${RULES_PATH}/chnlist" "${chnlist_param}"
+
+		[ -s "${RULES_PATH}/proxy_host" ] && {
+			cat "${RULES_PATH}/proxy_host" >> "${gfwlist_param}"
+			echolog "  | - [$?](chinadns-ng) 代理域名表合并到防火墙域名表"
+		}
+		[ -s "${RULES_PATH}/direct_host" ] && {
+			cat "${RULES_PATH}/direct_host" >> "${chnlist_param}"
+			echolog "  | - [$?](chinadns-ng) 域名白名单合并到中国域名表"
+		}
+		chnlist_param=${chnlist_param:+-m "${chnlist_param}" -M}
+		local log_path="${TMP_PATH}/chinadns-ng.log"
+		log_path="/dev/null"
+		ln_start_bin "$(first_type chinadns-ng)" chinadns-ng "$log_path" -v -b 0.0.0.0 -l "${china_ng_listen_port}" ${china_ng_chn:+-c "${china_ng_chn}"} ${chnlist_param} ${china_ng_gfw:+-t "${china_ng_gfw}"} ${gfwlist_param:+-g "${gfwlist_param}"} -f
+		echolog "  + 过滤服务：ChinaDNS-NG(:${china_ng_listen_port})：国内DNS：${china_ng_chn}，可信DNS：${china_ng_gfw}"
+	}
+	
+	source $APP_PATH/helper_${DNS_N}.sh add DNS_MODE=$DNS_MODE TMP_DNSMASQ_PATH=$TMP_DNSMASQ_PATH DNSMASQ_CONF_FILE=/var/dnsmasq.d/dnsmasq-passwall.conf DEFAULT_DNS=$DEFAULT_DNS LOCAL_DNS=$LOCAL_DNS TUN_DNS=$TUN_DNS CHINADNS_DNS=$china_ng_listen TCP_NODE=$TCP_NODE PROXY_MODE=${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}
 }
 
 gen_pdnsd_config() {
 	local listen_port=${1}
 	local up_dns=${2}
+	local cache=${3}
 	local pdnsd_dir=${TMP_PATH}/pdnsd
 	local perm_cache=2048
 	local _cache="on"
 	local query_method="tcp_only"
 	local reject_ipv6_dns=
+	[ "${cache}" = "0" ] && _cache="off" && perm_cache=0
 
 	mkdir -p "${pdnsd_dir}"
 	touch "${pdnsd_dir}/pdnsd.cache"
 	chown -R root.nogroup "${pdnsd_dir}"
-	if [ "${use_udp_node_resolve_dns}" = "1" ]; then
-		query_method="udp_only"
-	else
-		use_tcp_node_resolve_dns=1
-	fi
 	if [ $PROXY_IPV6 == "0" ]; then
 		reject_ipv6_dns=$(cat <<- 'EOF'
 
@@ -1101,7 +1107,6 @@ gen_pdnsd_config() {
 		EOF
 		)
 	fi
-	[ "${DNS_CACHE}" = "0" ] && _cache="off" && perm_cache=0
 	cat > "${pdnsd_dir}/pdnsd.conf" <<-EOF
 		global {
 			perm_cache = $perm_cache;
@@ -1321,7 +1326,6 @@ start() {
 			start_redir TCP
 			start_redir UDP
 			start_dns
-			source $APP_PATH/helper_${DNS_N}.sh add
 			source $APP_PATH/iptables.sh start
 			source $APP_PATH/helper_${DNS_N}.sh logic_restart
 		fi

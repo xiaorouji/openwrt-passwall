@@ -375,6 +375,31 @@ function get_brook_version(file)
     return ""
 end
 
+function get_hysteria_path()
+    local path = uci_get_type("global_app", "hysteria_file")
+    return path
+end
+
+function get_hysteria_version(file)
+    if file == nil then file = get_hysteria_path() end
+    chmod_755(file)
+    if fs.access(file) then
+        if file == get_hysteria_path() then
+            local md5 = sys.exec("echo -n $(md5sum " .. file .. " | awk '{print $1}')")
+            if fs.access("/tmp/psw_" .. md5) then
+                return sys.exec("echo -n $(cat /tmp/psw_%s)" % md5)
+            else
+                local version = sys.exec("echo -n $(%s -v | awk '{print $3}')" % file)
+                sys.call("echo '" .. version .. "' > " .. "/tmp/psw_" .. md5)
+                return version
+            end
+        else
+            return sys.exec("echo -n $(%s -v | awk '{print $3}')" % file)
+        end
+    end
+    return ""
+end
+
 function get_free_space(dir)
     if dir == nil then dir = "/" end
     if sys.call("df -k " .. dir .. " >/dev/null") == 0 then

@@ -93,12 +93,21 @@ gen_dnsmasq_address_items() {
 }
 
 add() {
-	local fwd_dns items item servers msg
-
+	local fwd_dns item servers msg
+	local DNS_MODE TMP_DNSMASQ_PATH DNSMASQ_CONF_FILE DEFAULT_DNS LOCAL_DNS TUN_DNS CHINADNS_DNS TCP_NODE PROXY_MODE NO_LOGIC_LOG
+	eval_set_val $@
+	_LOG_FILE=$LOG_FILE
+	[ -n "$NO_LOGIC_LOG" ] && LOG_FILE="/dev/null"
+	global=$(echo "${PROXY_MODE}" | grep "global")
+	returnhome=$(echo "${PROXY_MODE}" | grep "returnhome")
+	chnlist=$(echo "${PROXY_MODE}" | grep "chnroute")
+	gfwlist=$(echo "${PROXY_MODE}" | grep "gfwlist")
 	mkdir -p "${TMP_DNSMASQ_PATH}" "${DNSMASQ_PATH}" "/var/dnsmasq.d"
 
 	if [ "${DNS_MODE}" = "nonuse" ]; then
 		echolog "  - 不对域名进行分流解析"
+		LOG_FILE=${_LOG_FILE}
+		return 0
 	else
 		#屏蔽列表
 		sort -u "${RULES_PATH}/block_host" | gen_dnsmasq_address_items "0.0.0.0" "${TMP_DNSMASQ_PATH}/00-block_host.conf"
@@ -110,9 +119,9 @@ add() {
 		echolog "  - [$?]节点列表中的域名(vpsiplist)：${fwd_dns:-默认}"
 
 		#始终用国内DNS解析直连（白名单）列表
-		[ -f "${RULES_PATH}/direct_host" ] && {
+		[ -s "${RULES_PATH}/direct_host" ] && {
 			fwd_dns="${LOCAL_DNS}"
-			#[ -n "$CHINADNS_NG" ] && unset fwd_dns
+			#[ -n "$CHINADNS_DNS" ] && unset fwd_dns
 			sort -u "${RULES_PATH}/direct_host" | gen_dnsmasq_items "whitelist,whitelist6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/11-direct_host.conf"
 			echolog "  - [$?]域名白名单(whitelist)：${fwd_dns:-默认}"
 		}
@@ -127,7 +136,7 @@ add() {
 		else
 			#如果开启了通过代理订阅
 			fwd_dns="${TUN_DNS}"
-			[ -n "$CHINADNS_NG" ] && fwd_dns="${china_ng_gfw}"
+			#[ -n "$CHINADNS_DNS" ] && unset fwd_dns
 			for item in $(get_enabled_anonymous_secs "@subscribe_list"); do
 				host_from_url "$(config_n_get ${item} url)" | gen_dnsmasq_items "blacklist,blacklist6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/91-subscribe.conf"
 			done
@@ -135,10 +144,9 @@ add() {
 		fi
 		
 		#始终使用远程DNS解析代理（黑名单）列表
-		[ -f "${RULES_PATH}/proxy_host" ] && {
+		[ -s "${RULES_PATH}/proxy_host" ] && {
 			fwd_dns="${TUN_DNS}"
-			#[ -n "$CHINADNS_NG" ] && fwd_dns="${china_ng_gfw}"
-			#[ -n "$CHINADNS_NG" ] && unset fwd_dns
+			#[ -n "$CHINADNS_DNS" ] && unset fwd_dns
 			sort -u "${RULES_PATH}/proxy_host" | gen_dnsmasq_items "blacklist,blacklist6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/97-proxy_host.conf"
 			echolog "  - [$?]代理域名表(blacklist)：${fwd_dns:-默认}"
 		}
@@ -161,8 +169,8 @@ add() {
 		}
 		
 		count_hosts_str=
-		[ -f "${RULES_PATH}/direct_host" ] && direct_hosts_str="$(echo -n $(cat ${RULES_PATH}/direct_host) | sed "s/ /|/g")"
-		[ -f "${RULES_PATH}/proxy_host" ] && proxy_hosts_str="$(echo -n $(cat ${RULES_PATH}/proxy_host) | sed "s/ /|/g")"
+		[ -s "${RULES_PATH}/direct_host" ] && direct_hosts_str="$(echo -n $(cat ${RULES_PATH}/direct_host) | sed "s/ /|/g")"
+		[ -s "${RULES_PATH}/proxy_host" ] && proxy_hosts_str="$(echo -n $(cat ${RULES_PATH}/proxy_host) | sed "s/ /|/g")"
 		[ -n "$direct_hosts_str" ] && {
 			tmp="${direct_hosts_str}"
 			[ -n "$count_hosts_str" ] && tmp="${count_hosts_str}|${direct_hosts_str}"
@@ -176,7 +184,8 @@ add() {
 
 		#如果没有使用回国模式
 		if [ -z "${returnhome}" ]; then
-			[ -f "${RULES_PATH}/gfwlist" ] && {
+			# GFW 模式
+			[ -s "${RULES_PATH}/gfwlist" ] && {
 				if [ -n "$count_hosts_str" ]; then
 					grep -v -E "$count_hosts_str" "${RULES_PATH}/gfwlist" > "${TMP_PATH}/gfwlist"
 				else
@@ -184,16 +193,16 @@ add() {
 				fi
 			}
 			fwd_dns="${TUN_DNS}"
-			[ -n "$CHINADNS_NG" ] && fwd_dns="${china_ng_gfw}"
-			[ -n "$CHINADNS_NG" ] && unset fwd_dns
+			[ -n "$CHINADNS_DNS" ] && unset fwd_dns
 			sort -u "${TMP_PATH}/gfwlist" | gen_dnsmasq_items "gfwlist,gfwlist6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/99-gfwlist.conf"
 			echolog "  - [$?]防火墙域名表(gfwlist)：${fwd_dns:-默认}"
 			rm -f "${TMP_PATH}/gfwlist"
+			
 			# 中国列表以外 模式
-			[ -n "${chnlist}" ] && {
+			[ -n "${CHINADNS_DNS}" ] && {
 				fwd_dns="${LOCAL_DNS}"
-				[ -n "$CHINADNS_NG" ] && unset fwd_dns
-				[ -f "${RULES_PATH}/chnlist" ] && {
+				[ -n "$CHINADNS_DNS" ] && unset fwd_dns
+				[ -s "${RULES_PATH}/chnlist" ] && {
 					if [ -n "$count_hosts_str" ]; then
 						grep -v -E "$count_hosts_str" "${RULES_PATH}/chnlist" | gen_dnsmasq_items "chnroute,chnroute6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/19-chinalist_host.conf"
 					else
@@ -204,7 +213,7 @@ add() {
 			}
 		else
 			#回国模式
-			[ -f "${RULES_PATH}/chnlist" ] && {
+			[ -s "${RULES_PATH}/chnlist" ] && {
 				if [ -n "$count_hosts_str" ]; then
 					grep -v -E "$count_hosts_str" "${RULES_PATH}/chnlist" > "${TMP_PATH}/chnlist"
 				else
@@ -212,7 +221,7 @@ add() {
 				fi
 			}
 			fwd_dns="${TUN_DNS}"
-			[ -f "${TMP_PATH}/chnlist" ] && sort -u "${TMP_PATH}/chnlist" | gen_dnsmasq_items "chnroute,chnroute6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/99-chinalist_host.conf"
+			[ -s "${TMP_PATH}/chnlist" ] && sort -u "${TMP_PATH}/chnlist" | gen_dnsmasq_items "chnroute,chnroute6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/99-chinalist_host.conf"
 			echolog "  - [$?]中国域名表(chnroute)：${fwd_dns:-默认}"
 			rm -f "${TMP_PATH}/chnlist"
 		fi
@@ -220,34 +229,19 @@ add() {
 		awk '{gsub(/ipset=\//,""); gsub(/\//," ");key=$1;value=$2;if (sum[key] != "") {sum[key]=sum[key]","value} else {sum[key]=sum[key]value}} END{for(i in sum) print "ipset=/"i"/"sum[i]}' "${TMP_DNSMASQ_PATH}/ipset.conf" > "${TMP_DNSMASQ_PATH}/ipset.conf2"
 		mv -f "${TMP_DNSMASQ_PATH}/ipset.conf2" "${TMP_DNSMASQ_PATH}/ipset.conf"
 	fi
-	if [ "${DNS_MODE}" != "nouse" ]; then
-		echo "conf-dir=${TMP_DNSMASQ_PATH}" > "/var/dnsmasq.d/dnsmasq-${CONFIG}.conf"
-
-		if [ -z "${CHINADNS_NG}" ] && [ "${IS_DEFAULT_DNS}" = "1" ]; then
-			#echolog "  - 不强制设置默认DNS"
-			return
-		else
-			echo "${DEFAULT_DNS}" > $TMP_PATH/default_DNS
-			msg="ISP"
-			servers="${LOCAL_DNS}"
-			[ -n "${chnlist}" ] && msg="中国列表以外"
-			[ -n "${returnhome}" ] && msg="中国列表"
-			[ -n "${global}" ] && msg="全局"
-
-			#默认交给Chinadns-ng处理
-			[ -n "$CHINADNS_NG" ] && {
-				servers="${china_ng_listen}" && msg="chinadns-ng"
-			}
-
-			cat <<-EOF >> "/var/dnsmasq.d/dnsmasq-${CONFIG}.conf"
-				$(echo "${servers}" | sed 's/,/\n/g' | gen_dnsmasq_items)
-				all-servers
-				no-poll
-				no-resolv
-			EOF
-			echolog "  - [$?]以上所列以外及默认(${msg})：${servers}"
-		fi
-	fi
+	
+	echo "conf-dir=${TMP_DNSMASQ_PATH}" > $DNSMASQ_CONF_FILE
+	[ -n "${CHINADNS_DNS}" ] && {
+		echo "${DEFAULT_DNS}" > $TMP_PATH/default_DNS
+		cat <<-EOF >> $DNSMASQ_CONF_FILE
+			$(echo "${CHINADNS_DNS}" | sed 's/,/\n/g' | gen_dnsmasq_items)
+			all-servers
+			no-poll
+			no-resolv
+		EOF
+		echolog "  - [$?]以上所列以外及默认(ChinaDNS-NG)：${CHINADNS_DNS}"
+	}
+	LOG_FILE=${_LOG_FILE}
 }
 
 del() {

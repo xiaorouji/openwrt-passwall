@@ -244,6 +244,9 @@ msgstr "Dnsmasq的默认DNS"
 msgid "When the accessed domain name does not exist in the rule list, the default DNS used."
 msgstr "当访问的域名不存在规则列表中，使用的默认DNS。"
 
+msgid "The effect is better, but will increase the memory."
+msgstr "效果更好，但会增加内存使用。"
+
 msgid "Clear IPSET"
 msgstr "清空 IPSET"
 
@@ -516,6 +519,21 @@ msgstr "传输层插件"
 
 msgid "Shadowsocks secondary encryption"
 msgstr "Shadowsocks 二次加密"
+
+msgid "Obfs Password"
+msgstr "混淆密码"
+
+msgid "Auth Type"
+msgstr "认证类型"
+
+msgid "Auth Password"
+msgstr "认证密码"
+
+msgid "Max upload Mbps"
+msgstr "最大上行(Mbps)"
+
+msgid "Max download Mbps"
+msgstr "最大下行(Mbps)"
 
 msgid "Encrypt Method"
 msgstr "加密"

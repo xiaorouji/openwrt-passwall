@@ -1,9 +1,10 @@
 local api = require "luci.model.cbi.passwall.api.api"
 local appname = api.appname
 local uci = api.uci
+local datatypes = api.datatypes
 local has_v2ray = api.is_finded("v2ray")
 local has_xray = api.is_finded("xray")
-local datatypes = api.datatypes
+local has_chnlist = api.fs.access("/usr/share/passwall/rules/chnlist")
 
 m = Map(appname)
 
@@ -269,6 +270,12 @@ o:depends({dns_mode = "v2ray_doh"})
 o:depends({dns_mode = "xray_doh"})
 o.rmempty = false
 
+if has_chnlist and api.is_finded("chinadns-ng") then
+    o = s:taboption("DNS", Flag, "chinadns_ng", translate("ChinaDNS-NG"), translate("The effect is better, but will increase the memory."))
+    o.default = "1"
+    o:depends({dns_mode = "nonuse", ["!reverse"] = true})
+end
+
 o = s:taboption("DNS", Button, "clear_ipset", translate("Clear IPSET"), translate("Try this feature if the rule modification does not take effect."))
 o.inputstyle = "remove"
 function o.write(e, e)
@@ -285,7 +292,9 @@ tcp_proxy_mode:value("disable", translate("No Proxy"))
 tcp_proxy_mode:value("global", translate("Global Proxy"))
 tcp_proxy_mode:value("gfwlist", translate("GFW List"))
 tcp_proxy_mode:value("chnroute", translate("Not China List"))
-tcp_proxy_mode:value("returnhome", translate("China List"))
+if has_chnlist then
+    tcp_proxy_mode:value("returnhome", translate("China List"))
+end
 tcp_proxy_mode:value("direct/proxy", translate("Only use direct/proxy list"))
 tcp_proxy_mode.default = "chnroute"
 --tcp_proxy_mode.validate = redir_mode_validate
@@ -296,7 +305,9 @@ udp_proxy_mode:value("disable", translate("No Proxy"))
 udp_proxy_mode:value("global", translate("Global Proxy"))
 udp_proxy_mode:value("gfwlist", translate("GFW List"))
 udp_proxy_mode:value("chnroute", translate("Not China List"))
-udp_proxy_mode:value("returnhome", translate("China List"))
+if has_chnlist then
+    udp_proxy_mode:value("returnhome", translate("China List"))
+end
 udp_proxy_mode:value("direct/proxy", translate("Only use direct/proxy list"))
 udp_proxy_mode.default = "chnroute"
 --udp_proxy_mode.validate = redir_mode_validate
@@ -308,7 +319,9 @@ localhost_tcp_proxy_mode:value("default", translate("Default"))
 localhost_tcp_proxy_mode:value("global", translate("Global Proxy"))
 localhost_tcp_proxy_mode:value("gfwlist", translate("GFW List"))
 localhost_tcp_proxy_mode:value("chnroute", translate("Not China List"))
-localhost_tcp_proxy_mode:value("returnhome", translate("China List"))
+if has_chnlist then
+    localhost_tcp_proxy_mode:value("returnhome", translate("China List"))
+end
 localhost_tcp_proxy_mode:value("direct/proxy", translate("Only use direct/proxy list"))
 localhost_tcp_proxy_mode.default = "default"
 --localhost_tcp_proxy_mode.validate = redir_mode_validate
@@ -319,7 +332,9 @@ localhost_udp_proxy_mode:value("default", translate("Default"))
 localhost_udp_proxy_mode:value("global", translate("Global Proxy"))
 localhost_udp_proxy_mode:value("gfwlist", translate("GFW List"))
 localhost_udp_proxy_mode:value("chnroute", translate("Not China List"))
-localhost_udp_proxy_mode:value("returnhome", translate("China List"))
+if has_chnlist then
+    localhost_udp_proxy_mode:value("returnhome", translate("China List"))
+end
 localhost_udp_proxy_mode:value("disable", translate("No Proxy"))
 localhost_udp_proxy_mode:value("direct/proxy", translate("Only use direct/proxy list"))
 localhost_udp_proxy_mode.default = "default"
