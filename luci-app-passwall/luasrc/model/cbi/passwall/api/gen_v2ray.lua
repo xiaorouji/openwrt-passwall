@@ -15,6 +15,7 @@ local local_http_username = var["-local_http_username"]
 local local_http_password = var["-local_http_password"]
 local dns_listen_port = var["-dns_listen_port"]
 local dns_server = var["-dns_server"]
+local dns_tcp_server = var["-dns_tcp_server"]
 local dns_cache = var["-dns_cache"]
 local doh_url = var["-doh_url"]
 local doh_host = var["-doh_host"]
@@ -483,6 +484,12 @@ if dns_server then
         }
     end
 
+    if dns_tcp_server then
+        dns.servers = {
+            dns_tcp_server
+        }
+    end
+
     if dns_listen_port then
         table.insert(inbounds, {
             listen = "127.0.0.1",
@@ -490,7 +497,7 @@ if dns_server then
             protocol = "dokodemo-door",
             tag = "dns-in",
             settings = {
-                address = "127.0.0.1",
+                address = dns_server,
                 port = 53,
                 network = "udp"
             }

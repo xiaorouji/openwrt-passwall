@@ -984,6 +984,7 @@ start_dns() {
 	;;
 	v2ray_tcp)
 		local dns_forward=$(get_first_dns DNS_FORWARD 53 | sed 's/#/:/g')
+		local dns_address=$(echo $dns_forward | awk -F ':' '{print $1}')
 		local up_trust_tcp_dns=$(config_t_get global up_trust_tcp_dns "tcp")
 		[ "${DNS_CACHE}" == "0" ] && local _extra_param="-dns_cache 0"
 		if [ "$up_trust_tcp_dns" = "socks" ]; then
@@ -991,10 +992,10 @@ start_dns() {
 			local socks_server=$(echo $(config_t_get global socks_server 127.0.0.1:1080) | sed "s/#/:/g")
 			local socks_address=$(echo $socks_server | awk -F ':' '{print $1}')
 			local socks_port=$(echo $socks_server | awk -F ':' '{print $2}')
-			lua $API_GEN_V2RAY -dns_listen_port "${dns_listen_port}" -dns_server "tcp://${dns_forward}" -dns_socks_address "${socks_address}" -dns_socks_port "${socks_port}" ${_extra_param} > $TMP_PATH/DNS.json
+			lua $API_GEN_V2RAY -dns_listen_port "${dns_listen_port}" -dns_server "${dns_address}" -dns_tcp_server "tcp://${dns_forward}" -dns_socks_address "${socks_address}" -dns_socks_port "${socks_port}" ${_extra_param} > $TMP_PATH/DNS.json
 		elif [ "${up_trust_tcp_dns}" = "tcp" ]; then
 			use_tcp_node_resolve_dns=1
-			lua $API_GEN_V2RAY -dns_listen_port "${dns_listen_port}" -dns_server "tcp://${dns_forward}" ${_extra_param} > $TMP_PATH/DNS.json
+			lua $API_GEN_V2RAY -dns_listen_port "${dns_listen_port}" -dns_server "${dns_address}" -dns_tcp_server "tcp://${dns_forward}" ${_extra_param} > $TMP_PATH/DNS.json
 		fi
 		ln_start_bin "$(first_type $(config_t_get global_app v2ray_file) v2ray)" v2ray $TMP_PATH/DNS.log -config="$TMP_PATH/DNS.json"
 		echolog "  - 域名解析 DNS Over TCP..."
