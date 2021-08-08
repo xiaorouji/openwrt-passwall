@@ -87,6 +87,9 @@ end
 if api.is_finded("trojan-go") then
     type:value("Trojan-Go", translate("Trojan-Go"))
 end
+if api.is_finded("hysteria") then
+    type:value("Hysteria", translate("Hysteria"))
+end
 
 protocol = s:option(ListValue, "protocol", translate("Protocol"))
 protocol:value("vmess", "Vmess")
@@ -179,6 +182,22 @@ decryption = s:option(Value, "decryption", translate("Encrypt Method"))
 decryption.default = "none"
 decryption:depends({ type = "V2ray", protocol = "vless" })
 decryption:depends({ type = "Xray", protocol = "vless" })
+
+hysteria_obfs = s:option(Value, "hysteria_obfs", translate("Obfs Password"))
+hysteria_obfs:depends("type", "Hysteria")
+
+hysteria_auth_type = s:option(ListValue, "hysteria_auth_type", translate("Auth Type"))
+hysteria_auth_type:value("disable", translate("Disable"))
+hysteria_auth_type:value("string", translate("STRING"))
+hysteria_auth_type:depends("type", "Hysteria")
+
+hysteria_auth_password = s:option(Value, "hysteria_auth_password", translate("Auth Password"))
+hysteria_auth_password.password = true
+hysteria_auth_password:depends("hysteria_auth_type", "string")
+
+hysteria_udp = s:option(Flag, "hysteria_udp", translate("UDP"))
+hysteria_udp.default = "1"
+hysteria_udp:depends("type", "Hysteria")
 
 ss_encrypt_method = s:option(ListValue, "ss_encrypt_method", translate("Encrypt Method"))
 for a, t in ipairs(ss_encrypt_method_list) do ss_encrypt_method:value(t) end
@@ -336,6 +355,7 @@ tls_certificateFile.validate = function(self, value, t)
 end
 tls_certificateFile.default = "/etc/config/ssl/" .. arg[1] .. ".pem"
 tls_certificateFile:depends("tls", true)
+tls_certificateFile:depends("type", "Hysteria")
 
 tls_keyFile = s:option(FileUpload, "tls_keyFile", translate("Private key absolute path"), translate("as:") .. "/etc/ssl/private.key")
 tls_keyFile.validate = function(self, value, t)
@@ -350,6 +370,7 @@ tls_keyFile.validate = function(self, value, t)
 end
 tls_keyFile.default = "/etc/config/ssl/" .. arg[1] .. ".key"
 tls_keyFile:depends("tls", true)
+tls_keyFile:depends("type", "Hysteria")
 
 tls_sessionTicket = s:option(Flag, "tls_sessionTicket", translate("Session Ticket"))
 tls_sessionTicket.default = "0"
