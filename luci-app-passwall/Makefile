@@ -7,8 +7,8 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
 PKG_VERSION:=4
-PKG_RELEASE:=32
-PKG_DATE:=20210805
+PKG_RELEASE:=33
+PKG_DATE:=20210810
 
 include $(INCLUDE_DIR)/package.mk
 

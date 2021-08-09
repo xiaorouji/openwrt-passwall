@@ -220,18 +220,16 @@ first_type() {
 
 eval_set_val() {
 	for i in $@; do
-		_i=$(echo $i | tr -s ',' '\n')
-		for _j in $_i; do
-			eval $_j
+		for j in $i; do
+			eval $j
 		done
 	done
 }
 
 eval_unset_val() {
 	for i in $@; do
-		_i=$(echo $i | tr -s ',' '\n')
-		for _j in $_i; do
-			eval unset $_j
+		for j in $i; do
+			eval unset j
 		done
 	done
 }
@@ -1081,7 +1079,7 @@ start_dns() {
 		ln_start_bin "$(first_type chinadns-ng)" chinadns-ng "$log_path" -v -b 0.0.0.0 -l "${china_ng_listen_port}" ${china_ng_chn:+-c "${china_ng_chn}"} ${chnlist_param} ${china_ng_gfw:+-t "${china_ng_gfw}"} ${gfwlist_param:+-g "${gfwlist_param}"} -f
 		echolog "  + 过滤服务：ChinaDNS-NG(:${china_ng_listen_port})：国内DNS：${china_ng_chn}，可信DNS：${china_ng_gfw}"
 	}
-	
+	source $APP_PATH/helper_${DNS_N}.sh stretch
 	source $APP_PATH/helper_${DNS_N}.sh add DNS_MODE=$DNS_MODE TMP_DNSMASQ_PATH=$TMP_DNSMASQ_PATH DNSMASQ_CONF_FILE=/var/dnsmasq.d/dnsmasq-passwall.conf DEFAULT_DNS=$DEFAULT_DNS LOCAL_DNS=$LOCAL_DNS TUN_DNS=$TUN_DNS CHINADNS_DNS=$china_ng_listen TCP_NODE=$TCP_NODE PROXY_MODE=${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}
 }
 
@@ -1235,7 +1233,7 @@ start_haproxy() {
 	items=$(echo "${sort_items}" | sort -n | cut -d ' ' -sf 2)
 
 	unset lport
-	local haproxy_port lbss lbweight export backup
+	local haproxy_port lbss lbweight export backup remark
 	local msg bip bport hasvalid bbackup failcount interface
 	for item in ${items}; do
 		unset haproxy_port bbackup
@@ -1245,6 +1243,7 @@ start_haproxy() {
 
 		[ -z "$haproxy_port" ] || [ -z "$bip" ] && echolog "  - 丢弃1个明显无效的节点" && continue
 		[ "$backup" = "1" ] && bbackup="backup"
+		remark=$(echo $bip | sed "s/\[//g" | sed "s/\]//g")
 
 		[ "$lport" = "${haproxy_port}" ] || {
 			hasvalid="1"
@@ -1258,7 +1257,7 @@ start_haproxy() {
 		}
 
 		cat <<-EOF >> "${haproxy_file}"
-			    server $bip:$bport $bip:$bport weight $lbweight check inter 1500 rise 1 fall 3 $bbackup
+			    server $remark:$bport $bip:$bport weight $lbweight check inter 1500 rise 1 fall 3 $bbackup
 		EOF
 
 		if [ "$export" != "0" ]; then
