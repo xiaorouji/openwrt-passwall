@@ -133,7 +133,7 @@ local function start()
                 if brook_protocol == "wsserver" and brook_path then
                     brook_path_arg = " --path " .. brook_path
                 end
-                bin = ln_start(api.get_brook_path(), "brook_" .. id, string.format("%s -l :%s -p %s%s", brook_protocol, port, brook_password, brook_path_arg), log_path)
+                bin = ln_start(api.get_brook_path(), "brook_" .. id, string.format("--debug %s -l :%s -p %s%s", brook_protocol, port, brook_password, brook_path_arg), log_path)
             elseif type == "Hysteria" then
                 config = require(require_dir .. "hysteria").gen_config(user)
                 bin = ln_start(api.get_hysteria_path(), "hysteria", "-c " .. config_file .. " server", log_path)

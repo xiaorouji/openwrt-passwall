@@ -1235,7 +1235,7 @@ start_haproxy() {
 	items=$(echo "${sort_items}" | sort -n | cut -d ' ' -sf 2)
 
 	unset lport
-	local haproxy_port lbss lbweight export backup
+	local haproxy_port lbss lbweight export backup remark
 	local msg bip bport hasvalid bbackup failcount interface
 	for item in ${items}; do
 		unset haproxy_port bbackup
@@ -1245,6 +1245,7 @@ start_haproxy() {
 
 		[ -z "$haproxy_port" ] || [ -z "$bip" ] && echolog "  - 丢弃1个明显无效的节点" && continue
 		[ "$backup" = "1" ] && bbackup="backup"
+		remark=$(echo $bip | sed "s/\[//g" | sed "s/\]//g")
 
 		[ "$lport" = "${haproxy_port}" ] || {
 			hasvalid="1"
@@ -1258,7 +1259,7 @@ start_haproxy() {
 		}
 
 		cat <<-EOF >> "${haproxy_file}"
-			    server $bip:$bport $bip:$bport weight $lbweight check inter 1500 rise 1 fall 3 $bbackup
+			    server $remark:$bport $bip:$bport weight $lbweight check inter 1500 rise 1 fall 3 $bbackup
 		EOF
 
 		if [ "$export" != "0" ]; then
