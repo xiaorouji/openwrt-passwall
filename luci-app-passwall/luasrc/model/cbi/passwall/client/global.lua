@@ -315,7 +315,7 @@ udp_proxy_mode.default = "chnroute"
 ---- Localhost TCP Proxy Mode
 localhost_tcp_proxy_mode = s:taboption("Proxy", ListValue, "localhost_tcp_proxy_mode", translate("Router Localhost") .. " TCP " .. translate("Proxy Mode"))
 -- o.description = translate("The server client can also use this rule to scientifically surf the Internet.")
-localhost_tcp_proxy_mode:value("default", translate("Default"))
+localhost_tcp_proxy_mode:value("default", translatef("Same as the %s default proxy mode", "TCP"))
 localhost_tcp_proxy_mode:value("global", translate("Global Proxy"))
 localhost_tcp_proxy_mode:value("gfwlist", translate("GFW List"))
 localhost_tcp_proxy_mode:value("chnroute", translate("Not China List"))
@@ -328,7 +328,7 @@ localhost_tcp_proxy_mode.default = "default"
 
 ---- Localhost UDP Proxy Mode
 localhost_udp_proxy_mode = s:taboption("Proxy", ListValue, "localhost_udp_proxy_mode", translate("Router Localhost") .. " UDP " .. translate("Proxy Mode"))
-localhost_udp_proxy_mode:value("default", translate("Default"))
+localhost_udp_proxy_mode:value("default", translatef("Same as the %s default proxy mode", "UDP"))
 localhost_udp_proxy_mode:value("global", translate("Global Proxy"))
 localhost_udp_proxy_mode:value("gfwlist", translate("GFW List"))
 localhost_udp_proxy_mode:value("chnroute", translate("Not China List"))

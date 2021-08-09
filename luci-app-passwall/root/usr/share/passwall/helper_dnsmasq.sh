@@ -1,5 +1,20 @@
 #!/bin/sh
 
+stretch() {
+	#zhenduiluanshezhiDNSderen
+	local dnsmasq_server=$(uci -q get dhcp.@dnsmasq[0].server)
+	local dnsmasq_noresolv=$(uci -q get dhcp.@dnsmasq[0].noresolv)
+	local _flag
+	for server in $dnsmasq_server; do
+		[ -z "$(echo $server | grep '\/')" ] && _flag=1
+	done
+	[ -z "$_flag" ] && [ "$dnsmasq_noresolv" = "1" ] && {
+		uci -q delete dhcp.@dnsmasq[0].noresolv
+		uci -q set dhcp.@dnsmasq[0].resolvfile="$RESOLVFILE"
+		uci commit dhcp
+	}
+}
+
 backup_servers() {
 	DNSMASQ_DNS=$(uci show dhcp | grep "@dnsmasq" | grep ".server=" | awk -F '=' '{print $2}' | sed "s/'//g" | tr ' ' ',')
 	if [ -n "${DNSMASQ_DNS}" ]; then
@@ -253,6 +268,9 @@ del() {
 arg1=$1
 shift
 case $arg1 in
+stretch)
+	stretch $@
+	;;
 add)
 	add $@
 	;;

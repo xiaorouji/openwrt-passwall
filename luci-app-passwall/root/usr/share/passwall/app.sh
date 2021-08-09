@@ -220,18 +220,16 @@ first_type() {
 
 eval_set_val() {
 	for i in $@; do
-		_i=$(echo $i | tr -s ',' '\n')
-		for _j in $_i; do
-			eval $_j
+		for j in $i; do
+			eval $j
 		done
 	done
 }
 
 eval_unset_val() {
 	for i in $@; do
-		_i=$(echo $i | tr -s ',' '\n')
-		for _j in $_i; do
-			eval unset $_j
+		for j in $i; do
+			eval unset j
 		done
 	done
 }
@@ -1081,7 +1079,7 @@ start_dns() {
 		ln_start_bin "$(first_type chinadns-ng)" chinadns-ng "$log_path" -v -b 0.0.0.0 -l "${china_ng_listen_port}" ${china_ng_chn:+-c "${china_ng_chn}"} ${chnlist_param} ${china_ng_gfw:+-t "${china_ng_gfw}"} ${gfwlist_param:+-g "${gfwlist_param}"} -f
 		echolog "  + 过滤服务：ChinaDNS-NG(:${china_ng_listen_port})：国内DNS：${china_ng_chn}，可信DNS：${china_ng_gfw}"
 	}
-	
+	source $APP_PATH/helper_${DNS_N}.sh stretch
 	source $APP_PATH/helper_${DNS_N}.sh add DNS_MODE=$DNS_MODE TMP_DNSMASQ_PATH=$TMP_DNSMASQ_PATH DNSMASQ_CONF_FILE=/var/dnsmasq.d/dnsmasq-passwall.conf DEFAULT_DNS=$DEFAULT_DNS LOCAL_DNS=$LOCAL_DNS TUN_DNS=$TUN_DNS CHINADNS_DNS=$china_ng_listen TCP_NODE=$TCP_NODE PROXY_MODE=${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}
 }
 
