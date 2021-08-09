@@ -14,8 +14,8 @@ function gen_config(user)
             cert = user.tls_certificateFile,
             key = user.tls_keyFile,
             key_password = "",
-            cipher = user.fingerprint == nil and cipher or (user.fingerprint == "disable" and cipher13 .. ":" .. cipher or ""),
-            cipher_tls13 = user.fingerprint == nil and cipher13 or nil,
+            cipher = cipher,
+            cipher_tls13 = cipher13,
             prefer_server_cipher = true,
             reuse_session = true,
             session_ticket = (user.tls_sessionTicket == "1") and true or false,
@@ -34,6 +34,8 @@ function gen_config(user)
         }
     }
     if user.type == "Trojan-Go" then
+        config.ssl.cipher = nil
+        config.ssl.cipher_tls13 = nil
         config.udp_timeout = 60
         config.disable_http_check = true
         config.transport_plugin = ((user.tls == nil or user.tls ~= "1") and user.trojan_transport == "original") and {
@@ -44,14 +46,14 @@ function gen_config(user)
             arg = user.plugin_type ~= "plaintext" and { user.plugin_arg } or nil,
             env = {}
         } or nil
-        config.websocket = (user.trojan_transport and user.trojan_transport:find('ws')) and {
+        config.websocket = (user.trojan_transport == 'ws') and {
             enabled = true,
             path = user.ws_path or "/",
             host = user.ws_host or ""
         } or nil
         config.shadowsocks = (user.ss_aead == "1") and {
             enabled = true,
-            method = user.ss_aead_method or "aead_aes_128_gcm",
+            method = user.ss_aead_method or "aes_128_gcm",
             password = user.ss_aead_pwd or ""
         } or nil
     end

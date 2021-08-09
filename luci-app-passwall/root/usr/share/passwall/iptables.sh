@@ -673,13 +673,11 @@ add_firewall_rule() {
 	
 	local accept_icmp=$(config_t_get global_forwarding accept_icmp 0)
 	
-	eval TCP_NODE_TYPE=$(echo $(config_n_get $TCP_NODE type) | tr 'A-Z' 'a-z')
-	[ "$TCP_NODE_TYPE" == "brook" ] && is_tproxy="TPROXY"
-	local tcp_proxy_way=$(config_t_get global_forwarding tcp_proxy_way default)
-	if [ "$tcp_proxy_way" = "tproxy" ]; then
-		is_tproxy="TPROXY"
-	elif [ "$tcp_proxy_way" = "redirect" ]; then
+	local tcp_proxy_way=$(config_t_get global_forwarding tcp_proxy_way redirect)
+	if [ "$tcp_proxy_way" = "redirect" ]; then
 		unset is_tproxy
+	elif [ "$tcp_proxy_way" = "tproxy" ]; then
+		is_tproxy="TPROXY"
 	fi
 
 	$ipt_n -N PSW

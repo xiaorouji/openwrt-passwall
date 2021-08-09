@@ -33,17 +33,41 @@ function s.create(e, t)
 end
 
 function s.remove(e, t)
+    m.uci:foreach(appname, "socks", function(s)
+        if s["node"] == t then
+            m:del(s[".name"])
+        end
+    end)
     m.uci:foreach(appname, "haproxy_config", function(s)
         if s["lbss"] and s["lbss"] == t then
             m:del(s[".name"])
         end
     end)
-    for k,node_id in ipairs(m:get("@auto_switch[0]", "tcp_node") or {}) do
-        if node_id and node_id == t then
-            sys.call(string.format("uci -q del_list %s.@auto_switch[0].tcp_node='%s'", appname, node_id))
+    m.uci:foreach(appname, "acl_rule", function(s)
+        if s["tcp_node"] and s["tcp_node"] == t then
+            m:set(s[".name"], "tcp_node", "default")
+        end
+        if s["udp_node"] and s["udp_node"] == t then
+            m:set(s[".name"], "udp_node", "default")
+        end
+    end)
+    for k, v in ipairs(m:get("@auto_switch[0]", "tcp_node") or {}) do
+        if v and v == t then
+            sys.call(string.format("uci -q del_list %s.@auto_switch[0].tcp_node='%s'", appname, v))
         end
     end
     TypedSection.remove(e, t)
+    local new_node = "nil"
+    local node0 = m:get("@nodes[0]") or nil
+    if node0 then
+        new_node = node0[".name"]
+    end
+    if (m:get("@global[0]", "tcp_node") or "nil") == t then
+        m:set('@global[0]', "tcp_node", new_node)
+    end
+    if (m:get("@global[0]", "udp_node") or "nil") == t then
+        m:set('@global[0]', "udp_node", new_node)
+    end
 end
 
 s.sortable = true

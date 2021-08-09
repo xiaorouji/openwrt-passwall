@@ -88,7 +88,8 @@ local function http_write_json(content)
 end
 
 function reset_config()
-	luci.sys.call('[ -f "/rom/etc/config/passwall" ] && cp -f /rom/etc/config/passwall /etc/config/passwall && /etc/init.d/passwall reload')
+	luci.sys.call('/etc/init.d/passwall stop')
+	luci.sys.call('[ -f "/usr/share/passwall/0_default_config" ] && cp -f /usr/share/passwall/0_default_config /etc/config/passwall')
 	luci.http.redirect(api.url())
 end
 
@@ -286,8 +287,8 @@ function clear_all_nodes()
 		ucic:delete(appname, t[".name"])
 	end)
 	ucic:foreach(appname, "acl_rule", function(t)
-		ucic:set(appname, t[".name"], "tcp_node", "nil")
-		ucic:set(appname, t[".name"], "udp_node", "nil")
+		ucic:set(appname, t[".name"], "tcp_node", "default")
+		ucic:set(appname, t[".name"], "udp_node", "default")
 	end)
 	ucic:foreach(appname, "nodes", function(node)
 		ucic:delete(appname, node['.name'])
@@ -306,10 +307,10 @@ function delete_select_nodes()
 				luci.sys.call(string.format("uci -q del_list passwall.@auto_switch[0].tcp_node='%s'", w))
 			end
 		end
-		if ucic:get(appname, "@global[0]", "tcp_node") or "nil" == w then
+		if (ucic:get(appname, "@global[0]", "tcp_node") or "nil") == w then
 			ucic:set(appname, '@global[0]', "tcp_node", "nil")
 		end
-		if ucic:get(appname, "@global[0]", "udp_node") or "nil" == w then
+		if (ucic:get(appname, "@global[0]", "udp_node") or "nil") == w then
 			ucic:set(appname, '@global[0]', "udp_node", "nil")
 		end
 		ucic:foreach(appname, "socks", function(t)
@@ -324,10 +325,10 @@ function delete_select_nodes()
 		end)
 		ucic:foreach(appname, "acl_rule", function(t)
 			if t["tcp_node"] == w then
-				ucic:set(appname, t[".name"], "tcp_node", "nil")
+				ucic:set(appname, t[".name"], "tcp_node", "default")
 			end
 			if t["udp_node"] == w then
-				ucic:set(appname, t[".name"], "udp_node", "nil")
+				ucic:set(appname, t[".name"], "udp_node", "default")
 			end
 		end)
 		ucic:delete(appname, w)

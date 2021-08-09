@@ -27,6 +27,7 @@ uci -q batch <<-EOF >/dev/null
 	commit uhttpd
 EOF
 
+[ ! -s "/etc/config/passwall" ] && cp -f /usr/share/passwall/0_default_config /etc/config/passwall
 touch /etc/config/passwall_show >/dev/null 2>&1
 rm -f /tmp/luci-indexcache
 rm -rf /tmp/luci-modulecache/

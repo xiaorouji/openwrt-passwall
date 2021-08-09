@@ -56,6 +56,14 @@ s.sortable = true
 s.anonymous = true
 s.addremove = true
 
+s.remove = function(self, section)
+    for k, v in pairs(self.children) do
+        v.rmempty = true
+        v.validate = nil
+    end
+    TypedSection.remove(self, section)
+end
+
 ---- Enable
 o = s:option(Flag, "enabled", translate("Enable"))
 o.default = 1
@@ -71,7 +79,10 @@ o.validate = function(self, value)
     if t and t[".type"] == "nodes" then
         return value
     end
-    if datatypes.hostport(value) or datatypes.ipaddrport(value) then
+    if datatypes.hostport(value) or datatypes.ip4addrport(value) then
+        return value
+    end
+    if api.is_ipv6addrport(value) then
         return value
     end
     return nil, value

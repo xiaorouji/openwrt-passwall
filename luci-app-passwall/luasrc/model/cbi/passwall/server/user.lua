@@ -37,10 +37,6 @@ local header_type_list = {
 }
 
 local encrypt_methods_ss_aead = {
-	"dummy",
-	"aead_chacha20_poly1305",
-	"aead_aes_128_gcm",
-	"aead_aes_256_gcm",
 	"chacha20-ietf-poly1305",
 	"aes-128-gcm",
 	"aes-256-gcm",
@@ -90,6 +86,9 @@ if api.is_finded("trojan-plus") then
 end
 if api.is_finded("trojan-go") then
     type:value("Trojan-Go", translate("Trojan-Go"))
+end
+if api.is_finded("hysteria") then
+    type:value("Hysteria", translate("Hysteria"))
 end
 
 protocol = s:option(ListValue, "protocol", translate("Protocol"))
@@ -183,6 +182,22 @@ decryption = s:option(Value, "decryption", translate("Encrypt Method"))
 decryption.default = "none"
 decryption:depends({ type = "V2ray", protocol = "vless" })
 decryption:depends({ type = "Xray", protocol = "vless" })
+
+hysteria_obfs = s:option(Value, "hysteria_obfs", translate("Obfs Password"))
+hysteria_obfs:depends("type", "Hysteria")
+
+hysteria_auth_type = s:option(ListValue, "hysteria_auth_type", translate("Auth Type"))
+hysteria_auth_type:value("disable", translate("Disable"))
+hysteria_auth_type:value("string", translate("STRING"))
+hysteria_auth_type:depends("type", "Hysteria")
+
+hysteria_auth_password = s:option(Value, "hysteria_auth_password", translate("Auth Password"))
+hysteria_auth_password.password = true
+hysteria_auth_password:depends("hysteria_auth_type", "string")
+
+hysteria_udp = s:option(Flag, "hysteria_udp", translate("UDP"))
+hysteria_udp.default = "1"
+hysteria_udp:depends("type", "Hysteria")
 
 ss_encrypt_method = s:option(ListValue, "ss_encrypt_method", translate("Encrypt Method"))
 for a, t in ipairs(ss_encrypt_method_list) do ss_encrypt_method:value(t) end
@@ -340,6 +355,7 @@ tls_certificateFile.validate = function(self, value, t)
 end
 tls_certificateFile.default = "/etc/config/ssl/" .. arg[1] .. ".pem"
 tls_certificateFile:depends("tls", true)
+tls_certificateFile:depends("type", "Hysteria")
 
 tls_keyFile = s:option(FileUpload, "tls_keyFile", translate("Private key absolute path"), translate("as:") .. "/etc/ssl/private.key")
 tls_keyFile.validate = function(self, value, t)
@@ -354,6 +370,7 @@ tls_keyFile.validate = function(self, value, t)
 end
 tls_keyFile.default = "/etc/config/ssl/" .. arg[1] .. ".key"
 tls_keyFile:depends("tls", true)
+tls_keyFile:depends("type", "Hysteria")
 
 tls_sessionTicket = s:option(Flag, "tls_sessionTicket", translate("Session Ticket"))
 tls_sessionTicket.default = "0"
@@ -381,14 +398,12 @@ transport:depends({ type = "Xray", protocol = "shadowsocks" })
 transport:depends({ type = "Xray", protocol = "trojan" })
 
 trojan_transport = s:option(ListValue, "trojan_transport", translate("Transport"))
-trojan_transport:value("original", "Original")
+trojan_transport:value("original", translate("Original"))
 trojan_transport:value("ws", "WebSocket")
-trojan_transport:value("h2", "HTTP/2")
-trojan_transport:value("h2+ws", "HTTP/2 & WebSocket")
 trojan_transport.default = "original"
 trojan_transport:depends("type", "Trojan-Go")
 
-trojan_plugin = s:option(ListValue, "plugin_type", translate("Plugin Type"))
+trojan_plugin = s:option(ListValue, "plugin_type", translate("Transport Plugin"))
 trojan_plugin:value("plaintext", "Plain Text")
 trojan_plugin:value("shadowsocks", "ShadowSocks")
 trojan_plugin:value("other", "Other")
@@ -415,13 +430,11 @@ trojan_plugin_arg:depends({ plugin_type = "other" })
 ws_host = s:option(Value, "ws_host", translate("WebSocket Host"))
 ws_host:depends("transport", "ws")
 ws_host:depends("ss_transport", "ws")
-ws_host:depends("trojan_transport", "h2+ws")
 ws_host:depends("trojan_transport", "ws")
 
 ws_path = s:option(Value, "ws_path", translate("WebSocket Path"))
 ws_path:depends("transport", "ws")
 ws_path:depends("ss_transport", "ws")
-ws_path:depends("trojan_transport", "h2+ws")
 ws_path:depends("trojan_transport", "ws")
 ws_path:depends({ type = "Brook", brook_protocol = "wsserver" })
 
@@ -430,13 +443,11 @@ ws_path:depends({ type = "Brook", brook_protocol = "wsserver" })
 h2_host = s:option(Value, "h2_host", translate("HTTP/2 Host"))
 h2_host:depends("transport", "h2")
 h2_host:depends("ss_transport", "h2")
-h2_host:depends("trojan_transport", "h2+ws")
 h2_host:depends("trojan_transport", "h2")
 
 h2_path = s:option(Value, "h2_path", translate("HTTP/2 Path"))
 h2_path:depends("transport", "h2")
 h2_path:depends("ss_transport", "h2")
-h2_path:depends("trojan_transport", "h2+ws")
 h2_path:depends("trojan_transport", "h2")
 
 -- [[ TCP部分 ]]--
@@ -551,7 +562,7 @@ ss_aead.default = "0"
 
 ss_aead_method = s:option(ListValue, "ss_aead_method", translate("Encrypt Method"))
 for _, v in ipairs(encrypt_methods_ss_aead) do ss_aead_method:value(v, v) end
-ss_aead_method.default = "aead_aes_128_gcm"
+ss_aead_method.default = "aes-128-gcm"
 ss_aead_method:depends("ss_aead", true)
 
 ss_aead_pwd = s:option(Value, "ss_aead_pwd", translate("Password"))
