@@ -343,6 +343,9 @@ msgstr "路由器自身"
 msgid "Danger"
 msgstr "危险"
 
+msgid "Same as the %s default proxy mode"
+msgstr "与 %s 默认代理模式相同"
+
 msgid "Operation"
 msgstr "操作"
 
