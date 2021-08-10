@@ -925,6 +925,9 @@ msgstr "手动订阅"
 msgid "Delete All Subscribe Node"
 msgstr "删除所有订阅节点"
 
+msgid "Delete the subscribed node"
+msgstr "删除已订阅的节点"
+
 msgid "Filter keyword Mode"
 msgstr "过滤关键字模式"
 
@@ -1126,6 +1129,9 @@ msgstr "允许不安全连接"
 msgid "Whether unsafe connections are allowed. When checked, Certificate validation will be skipped."
 msgstr "是否允许不安全连接。当勾选时，将跳过证书验证。"
 
+msgid "SS AEAD Node Use Type"
+msgstr "SS AEAD节点使用类型"
+
 msgid "Trojan Node Use Type"
 msgstr "Trojan节点使用类型"
 
@@ -1267,6 +1273,12 @@ msgstr "未启用日志"
 msgid "UDP Forward"
 msgstr "UDP转发"
 
+msgid "DNS Settings"
+msgstr "DNS设置"
+
+msgid "Null"
+msgstr "无"
+
 msgid "You did not fill in the %s path. Please save and apply then update manually."
 msgstr "您没有填写 %s 路径。请保存应用后再手动更新。"
 
@@ -1302,6 +1314,3 @@ msgstr "客户端文件不适合当前设备。"
 
 msgid "Can't move new file to path: %s"
 msgstr "无法移动新文件到：%s"
-
-msgid "DNS Settings"
-msgstr "DNS设置"

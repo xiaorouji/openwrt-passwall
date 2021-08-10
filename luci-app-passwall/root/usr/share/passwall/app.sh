@@ -277,8 +277,8 @@ TCP_UDP=0
 [ "$TCP_NODE" == "nil" -a "$UDP_NODE" == "nil" ] && NO_PROXY=1
 [ "$(config_get_type $TCP_NODE nil)" == "nil" -a "$(config_get_type $UDP_NODE nil)" == "nil" ] && NO_PROXY=1
 tcp_proxy_way=$(config_t_get global_forwarding tcp_proxy_way redirect)
-REDIRECT_LIST="socks ss ssr v2ray xray trojan-plus trojan-go naiveproxy"
-TPROXY_LIST="socks ss ssr v2ray xray trojan-plus brook trojan-go hysteria"
+REDIRECT_LIST="socks ss ss-rust ssr v2ray xray trojan-plus trojan-go naiveproxy"
+TPROXY_LIST="socks ss ss-rust ssr v2ray xray trojan-plus brook trojan-go hysteria"
 KCPTUN_REDIR_PORT=$(config_t_get global_forwarding kcptun_port 12948)
 RESOLVFILE=/tmp/resolv.conf.d/resolv.conf.auto
 [ -f "${RESOLVFILE}" ] && [ -s "${RESOLVFILE}" ] || RESOLVFILE=/tmp/resolv.conf.auto
@@ -330,18 +330,18 @@ run_ipt2socks() {
 	;;
 	esac
 	_extra_param="${_extra_param} -v"
-	ln_start_bin "$(first_type ipt2socks)" "ipt2socks_${flag}" $log_file -l $local_port -b 127.0.0.1 -s $socks_address -p $socks_port ${_extra_param}
+	ln_start_bin "$(first_type ipt2socks)" "ipt2socks_${flag}" $log_file -l $local_port -b 0.0.0.0 -s $socks_address -p $socks_port ${_extra_param}
 }
 
 run_v2ray() {
-	local type=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
-	if [ "$type" != "v2ray" ] || [ "$type" != "xray" ]; then
-		return 1
-	fi
 	local flag node redir_type redir_port socks_address socks_port socks_username socks_password http_address http_port http_username http_password log_file config_file
 	local _extra_param=""
 	local proto="tcp,udp"
 	eval_set_val $@
+	local type=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
+	if [ "$type" != "v2ray" ] && [ "$type" != "xray" ]; then
+		return 1
+	fi
 	[ -n "$log_file" ] || log_file="/dev/null"
 	[ -n "$socks_username" ] && [ -n "$socks_password" ] && _extra_param="${_extra_param} -local_socks_username $socks_username -local_socks_password $socks_password"
 	[ -n "$http_username" ] && [ -n "$http_password" ] && _extra_param="${_extra_param} -local_http_username $http_username -local_http_password $http_password"
@@ -458,10 +458,12 @@ run_socks() {
 		ln_start_bin "$(first_type ssr-local)" "ssr-local" $log_file -c "$config_file" -v
 	;;
 	ss)
-		local bin="ss-local"
-		[ "$(config_n_get $node ss_rust 0)" = "1" ] && bin="sslocal"
+		lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $socks_port -server_host $server_host -server_port $port -mode tcp_and_udp > $config_file
+		ln_start_bin "$(first_type ss-local)" "ss-local" $log_file -c "$config_file" -v
+	;;
+	ss-rust)
 		lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $socks_port -server_host $server_host -server_port $port -protocol socks -mode tcp_and_udp > $config_file
-		ln_start_bin "$(first_type $bin ss-local)" "$bin" $log_file -c "$config_file" -v
+		ln_start_bin "$(first_type sslocal)" "sslocal" $log_file -c "$config_file" -v
 	;;
 	hysteria)
 		lua $API_GEN_HYSTERIA -node $node -local_socks_port $socks_port > $config_file
@@ -548,10 +550,12 @@ run_redir() {
 			ln_start_bin "$(first_type ssr-redir)" "ssr-redir" $log_file -c "$config_file" -v -U
 		;;
 		ss)
-			local bin="ss-redir"
-			[ "$(config_n_get $node ss_rust 0)" = "1" ] && bin="sslocal"
+			lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -mode udp_only > $config_file
+			ln_start_bin "$(first_type ss-redir)" "ss-redir" $log_file -c "$config_file" -v
+		;;
+		ss-rust)
 			lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -protocol redir -mode udp_only > $config_file
-			ln_start_bin "$(first_type $bin ss-redir)" "$bin" $log_file -c "$config_file" -v
+			ln_start_bin "$(first_type sslocal)" "sslocal" $log_file -c "$config_file" -v
 		;;
 		hysteria)
 			lua $API_GEN_HYSTERIA -node $node -local_udp_redir_port $local_port > $config_file
@@ -696,9 +700,23 @@ run_redir() {
 			ln_start_bin "$(first_type ssr-redir)" "ssr-redir" $log_file -c "$config_file" -v ${_extra_param}
 		;;
 		ss)
-			local bin="ss-redir"
 			[ "$tcp_proxy_way" = "tproxy" ] && lua_tproxy_arg="-tcp_tproxy true"
-			[ "$(config_n_get $node ss_rust 0)" = "1" ] && bin="sslocal"
+			lua_mode_arg="-mode tcp_only"
+			if [ "$kcptun_use" == "1" ]; then
+				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -server_host "127.0.0.1" -server_port $KCPTUN_REDIR_PORT $lua_mode_arg $lua_tproxy_arg > $config_file
+			else
+				[ "$TCP_UDP" = "1" ] && {
+					config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
+					UDP_REDIR_PORT=$TCP_REDIR_PORT
+					UDP_NODE="nil"
+					lua_mode_arg="-mode tcp_and_udp"
+				}
+				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port $lua_mode_arg $lua_tproxy_arg > $config_file
+			fi
+			ln_start_bin "$(first_type ss-redir)" "ss-redir" $log_file -c "$config_file" -v
+		;;
+		ss-rust)
+			[ "$tcp_proxy_way" = "tproxy" ] && lua_tproxy_arg="-tcp_tproxy true"
 			lua_mode_arg="-mode tcp_only"
 			if [ "$kcptun_use" == "1" ]; then
 				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -server_host "127.0.0.1" -server_port $KCPTUN_REDIR_PORT -protocol redir $lua_mode_arg $lua_tproxy_arg > $config_file
@@ -711,7 +729,7 @@ run_redir() {
 				}
 				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -protocol redir $lua_mode_arg $lua_tproxy_arg > $config_file
 			fi
-			ln_start_bin "$(first_type $bin ss-redir)" "$bin" $log_file -c "$config_file" -v
+			ln_start_bin "$(first_type sslocal)" "sslocal" $log_file -c "$config_file" -v
 		;;
 		hysteria)
 			[ "$TCP_UDP" = "1" ] && {
