@@ -277,6 +277,8 @@ TCP_UDP=0
 [ "$TCP_NODE" == "nil" -a "$UDP_NODE" == "nil" ] && NO_PROXY=1
 [ "$(config_get_type $TCP_NODE nil)" == "nil" -a "$(config_get_type $UDP_NODE nil)" == "nil" ] && NO_PROXY=1
 tcp_proxy_way=$(config_t_get global_forwarding tcp_proxy_way redirect)
+REDIRECT_LIST="socks ss ssr v2ray xray trojan-plus trojan-go naiveproxy"
+TPROXY_LIST="socks ss ssr v2ray xray trojan-plus brook trojan-go hysteria"
 KCPTUN_REDIR_PORT=$(config_t_get global_forwarding kcptun_port 12948)
 RESOLVFILE=/tmp/resolv.conf.d/resolv.conf.auto
 [ -f "${RESOLVFILE}" ] && [ -s "${RESOLVFILE}" ] || RESOLVFILE=/tmp/resolv.conf.auto
@@ -308,8 +310,6 @@ load_config() {
 	export V2RAY_LOCATION_ASSET=$(config_t_get global_rules v2ray_location_asset "/usr/share/xray/")
 	export XRAY_LOCATION_ASSET=$V2RAY_LOCATION_ASSET
 	mkdir -p /var/etc $TMP_PATH $TMP_BIN_PATH $TMP_ID_PATH $TMP_PORT_PATH $TMP_ROUTE_PATH $TMP_ACL_PATH
-	REDIRECT_LIST="socks ss ssr v2ray xray trojan-plus trojan-go naiveproxy"
-	TPROXY_LIST="socks ss ssr v2ray xray trojan-plus brook trojan-go hysteria"
 }
 
 run_ipt2socks() {
