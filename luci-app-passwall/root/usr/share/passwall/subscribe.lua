@@ -20,7 +20,10 @@ local jsonParse, jsonStringify = luci.jsonc.parse, luci.jsonc.stringify
 local b64decode = nixio.bin.b64decode
 local uci = luci.model.uci.cursor()
 local allowInsecure_default = uci:get_bool(appname, "@global_subscribe[0]", "allowInsecure")
+local ss_aead_type = uci:get(appname, "@global_subscribe[0]", "ss_aead_type") or "shadowsocks-libev"
 local trojan_type = uci:get(appname, "@global_subscribe[0]", "trojan_type") or "trojan-plus"
+local has_ss = api.is_finded("ss-redir")
+local has_ss_rust = api.is_finded("sslocal")
 local has_trojan_plus = api.is_finded("trojan-plus")
 local has_v2ray = api.is_finded("v2ray")
 local has_xray = api.is_finded("xray")
@@ -30,17 +33,19 @@ uci:revert(appname)
 local nodeResult = {} -- update result
 local arg2 = arg[2]
 
+local ss_rust_encrypt_method_list = {
+    "aes-128-gcm", "aes-256-gcm", "chacha20-ietf-poly1305"
+}
+
 local log = function(...)
-	if arg2 then
-		local result = os.date("%Y-%m-%d %H:%M:%S: ") .. table.concat({...}, " ")
-		if arg2 == "log" then
-			local f, err = io.open("/var/log/" .. appname .. ".log", "a")
-			if f and err == nil then
-				f:write(result .. "\n")
-				f:close()
-			end
-		elseif arg2 == "print" then
-			print(result)
+	local result = os.date("%Y-%m-%d %H:%M:%S: ") .. table.concat({...}, " ")
+	if arg2 == "print" then
+		print(result)
+	else
+		local f, err = io.open("/var/log/" .. appname .. ".log", "a")
+		if f and err == nil then
+			f:write(result .. "\n")
+			f:close()
 		end
 	end
 end
@@ -477,6 +482,28 @@ local function processData(szType, content, add_mode, add_from)
 		end
 		result.method = method
 		result.password = password
+
+		local flag = false
+		for k, v in ipairs(ss_rust_encrypt_method_list) do
+			if method:upper() == v:upper() then
+				flag = true
+			end
+		end
+		if flag then
+			if ss_aead_type == "shadowsocks-libev" and has_ss then
+				result.type = "SS"
+			elseif ss_aead_type == "shadowsocks-rust" and has_ss_rust then
+				result.type = 'SS-Rust'
+			elseif ss_aead_type == "v2ray" and has_v2ray and not result.plugin then
+				result.type = 'V2ray'
+				result.protocol = 'shadowsocks'
+				result.transport = 'tcp'
+			elseif ss_aead_type == "xray" and has_xray and not result.plugin then
+				result.type = 'Xray'
+				result.protocol = 'shadowsocks'
+				result.transport = 'tcp'
+			end
+		end
 	elseif szType == "trojan" then
 		local alias = ""
 		if content:find("#") then
@@ -485,17 +512,7 @@ local function processData(szType, content, add_mode, add_from)
 			content = content:sub(0, idx_sp - 1)
 		end
 		result.remarks = UrlDecode(alias)
-		if trojan_type == "trojan-plus" and has_trojan_plus then
-			result.type = "Trojan-Plus"
-		elseif trojan_type == "v2ray" and has_v2ray then
-			result.type = 'V2ray'
-			result.protocol = 'trojan'
-		elseif trojan_type == "xray" and has_xray then
-			result.type = 'Xray'
-			result.protocol = 'trojan'
-		elseif trojan_type == "trojan-go" and has_trojan_go then
-			result.type = 'Trojan-Go'
-		end
+		result.type = "Trojan-Plus"
 		if content:find("@") then
 			local Info = split(content, "@")
 			result.password = UrlDecode(Info[1])
@@ -550,6 +567,17 @@ local function processData(szType, content, add_mode, add_from)
 			result.tls = '1'
 			result.tls_serverName = peer and peer or sni
 			result.tls_allowInsecure = allowInsecure and "1" or "0"
+		end
+		if trojan_type == "trojan-plus" and has_trojan_plus then
+			result.type = "Trojan-Plus"
+		elseif trojan_type == "v2ray" and has_v2ray then
+			result.type = 'V2ray'
+			result.protocol = 'trojan'
+		elseif trojan_type == "xray" and has_xray then
+			result.type = 'Xray'
+			result.protocol = 'trojan'
+		elseif trojan_type == "trojan-go" and has_trojan_go then
+			result.type = 'Trojan-Go'
 		end
 	elseif szType == "trojan-go" then
 		local alias = ""
@@ -757,7 +785,7 @@ local function curl(url, file)
 	return trim(stdout)
 end
 
-local function truncate_nodes()
+local function truncate_nodes(add_from)
 	for _, config in pairs(CONFIG) do
 		if config.nodes and type(config.nodes) == "table" then
 			for kk, vv in pairs(config.nodes) do
@@ -778,12 +806,16 @@ local function truncate_nodes()
 	end
 	uci:foreach(appname, "nodes", function(node)
 		if node.add_mode == "2" then
-			uci:delete(appname, node['.name'])
+			if add_from then
+				if node.add_from and node.add_from == add_from then
+					uci:delete(appname, node['.name'])
+				end
+			else
+				uci:delete(appname, node['.name'])
+			end
 		end
 	end)
 	uci:commit(appname)
-
-	log('在线订阅节点已全部删除')
 end
 
 local function select_node(nodes, config)
@@ -906,15 +938,24 @@ local function update_node(manual)
 		log("更新失败，没有可用的节点信息")
 		return
 	end
-	-- delete all for subscribe nodes
-	uci:foreach(appname, "nodes", function(node)
-		-- 如果是未发现新节点或手动导入的节点就不要删除了...
-		if nodeResult[node.add_from] and manual == 0 and node.add_mode == "2" then
-			uci:delete(appname, node['.name'])
-		end
-	end)
-	for k, v in pairs(nodeResult) do
-		for _, vv in ipairs(v) do
+
+	local group = ""
+	for _, v in ipairs(nodeResult) do
+		group = group .. v["remark"]
+	end
+
+	if manual == 0 and #group > 0 then
+		uci:foreach(appname, "nodes", function(node)
+			-- 如果是未发现新节点或手动导入的节点就不要删除了...
+			if (node.add_from and group:find(node.add_from)) and node.add_mode == "2" then
+				uci:delete(appname, node['.name'])
+			end
+		end)
+	end
+	for _, v in ipairs(nodeResult) do
+		local remark = v["remark"]
+		local list = v["list"]
+		for _, vv in ipairs(list) do
 			local cfgid = uci:section(appname, "nodes", api.gen_uuid())
 			for kkk, vvv in pairs(vv) do
 				uci:set(appname, cfgid, kkk, vvv)
@@ -965,7 +1006,7 @@ end
 local function parse_link(raw, add_mode, add_from)
 	if raw and #raw > 0 then
 		local nodes, szType
-		local all_nodes = {}
+		local node_list = {}
 		-- SSD 似乎是这种格式 ssd:// 开头的
 		if raw:find('ssd://') then
 			szType = 'ssd'
@@ -1019,15 +1060,18 @@ local function parse_link(raw, add_mode, add_from)
 							(not datatypes.hostname(result.address) and not (datatypes.ipmask4(result.address) or datatypes.ipmask6(result.address))) then
 						log('丢弃过滤节点: ' .. result.type .. ' 节点, ' .. result.remarks)
 					else
-						tinsert(all_nodes, result)
+						tinsert(node_list, result)
 					end
 				end
 			end
 		end
-		if #all_nodes > 0 then
-			nodeResult[add_from] = all_nodes
+		if #node_list > 0 then
+			nodeResult[#nodeResult + 1] = {
+				remark = add_from,
+				list = node_list
+			}
 		end
-		log('成功解析【' .. add_from .. '】节点数量: ' .. #all_nodes)
+		log('成功解析【' .. add_from .. '】节点数量: ' .. #node_list)
 	else
 		if add_mode == "2" then
 			log('获取到的【' .. add_from .. '】订阅内容为空，可能是订阅地址失效，或是网络问题，请请检测。')
@@ -1107,6 +1151,6 @@ if arg[1] then
 		update_node(1)
 		luci.sys.call("rm -f /tmp/links.conf")
 	elseif arg[1] == "truncate" then
-		truncate_nodes()
+		truncate_nodes(arg[2])
 	end
 end

@@ -121,7 +121,7 @@ function gen_outbound(node, tag, is_proxy, proxy_tag)
                 } or nil,
                 tcpSettings = (node.transport == "tcp" and node.protocol ~= "socks") and {
                     header = {
-                        type = node.tcp_guise,
+                        type = node.tcp_guise or "none",
                         request = (node.tcp_guise == "http") and {
                             path = node.tcp_guise_http_path or {"/"},
                             headers = {
@@ -191,7 +191,7 @@ function gen_outbound(node, tag, is_proxy, proxy_tag)
             }
         }
         local alpn = {}
-        if node.alpn then
+        if node.alpn and node.alpn ~= "default" then
             string.gsub(node.alpn, '[^' .. "," .. ']+', function(w)
                 table.insert(alpn, w)
             end)

@@ -68,11 +68,14 @@ type = s:option(ListValue, "type", translate("Type"))
 if api.is_finded("ipt2socks") then
     type:value("Socks", translate("Socks"))
 end
-if api.is_finded("sslocal") or api.is_finded("ss-redir") then
-    type:value("SS", translate("Shadowsocks"))
+if api.is_finded("ss-redir") then
+    type:value("SS", translate("Shadowsocks Libev"))
+end
+if api.is_finded("sslocal") then
+    type:value("SS-Rust", translate("Shadowsocks Rust"))
 end
 if api.is_finded("ssr-redir") then
-    type:value("SSR", translate("ShadowsocksR"))
+    type:value("SSR", translate("ShadowsocksR Libev"))
 end
 if api.is_finded("v2ray") then
     type:value("V2ray", translate("V2ray"))
@@ -99,11 +102,6 @@ if api.is_finded("naive") then
 end
 if api.is_finded("hysteria") then
     type:value("Hysteria", translate("Hysteria"))
-end
-
-if api.is_finded("sslocal") then
-    ss_rust = s:option(Flag, "ss_rust", translate("Use") .. " Shadowsocks Rust")
-    ss_rust:depends("type", "SS")
 end
 
 xray_tips = s:option(DummyValue, "xray_tips", " ")
@@ -224,6 +222,7 @@ address = s:option(Value, "address", translate("Address (Support Domain Name)"))
 address.rmempty = false
 address:depends("type", "Socks")
 address:depends("type", "SS")
+address:depends("type", "SS-Rust")
 address:depends("type", "SSR")
 address:depends("type", "Brook")
 address:depends("type", "Trojan")
@@ -249,6 +248,7 @@ use_ipv6 = s:option(Flag, "use_ipv6", translate("Use IPv6"))
 use_ipv6.default = 0
 use_ipv6:depends("type", "Socks")
 use_ipv6:depends("type", "SS")
+use_ipv6:depends("type", "SS-Rust")
 use_ipv6:depends("type", "SSR")
 use_ipv6:depends("type", "Brook")
 use_ipv6:depends("type", "Trojan")
@@ -274,6 +274,7 @@ port.datatype = "port"
 port.rmempty = false
 port:depends("type", "Socks")
 port:depends("type", "SS")
+port:depends("type", "SS-Rust")
 port:depends("type", "SSR")
 port:depends("type", "Brook")
 port:depends("type", "Trojan")
@@ -306,6 +307,7 @@ password = s:option(Value, "password", translate("Password"))
 password.password = true
 password:depends("type", "Socks")
 password:depends("type", "SS")
+password:depends("type", "SS-Rust")
 password:depends("type", "SSR")
 password:depends("type", "Brook")
 password:depends("type", "Trojan")
@@ -337,7 +339,7 @@ hysteria_auth_password:depends("hysteria_auth_type", "base64")
 
 ss_encrypt_method = s:option(Value, "ss_encrypt_method", translate("Encrypt Method"))
 for a, t in ipairs(ss_encrypt_method_list) do ss_encrypt_method:value(t) end
-ss_encrypt_method:depends({ type = "SS", ss_rust = false })
+ss_encrypt_method:depends("type", "SS")
 function ss_encrypt_method.cfgvalue(self, section)
 	return m:get(section, "method")
 end
@@ -347,7 +349,7 @@ end
 
 ss_rust_encrypt_method = s:option(Value, "ss_rust_encrypt_method", translate("Encrypt Method"))
 for a, t in ipairs(ss_rust_encrypt_method_list) do ss_rust_encrypt_method:value(t) end
-ss_rust_encrypt_method:depends({ type = "SS", ss_rust = true })
+ss_rust_encrypt_method:depends("type", "SS-Rust")
 function ss_rust_encrypt_method.cfgvalue(self, section)
 	return m:get(section, "method")
 end
@@ -409,12 +411,14 @@ timeout = s:option(Value, "timeout", translate("Connection Timeout"))
 timeout.datatype = "uinteger"
 timeout.default = 300
 timeout:depends("type", "SS")
+timeout:depends("type", "SS-Rust")
 timeout:depends("type", "SSR")
 
 tcp_fast_open = s:option(ListValue, "tcp_fast_open", translate("TCP Fast Open"), translate("Need node support required"))
 tcp_fast_open:value("false")
 tcp_fast_open:value("true")
 tcp_fast_open:depends("type", "SS")
+tcp_fast_open:depends("type", "SS-Rust")
 tcp_fast_open:depends("type", "SSR")
 tcp_fast_open:depends("type", "Trojan")
 tcp_fast_open:depends("type", "Trojan-Plus")
@@ -426,6 +430,7 @@ if api.is_finded("xray-plugin") then ss_plugin:value("xray-plugin") end
 if api.is_finded("v2ray-plugin") then ss_plugin:value("v2ray-plugin") end
 if api.is_finded("obfs-local") then ss_plugin:value("obfs-local") end
 ss_plugin:depends("type", "SS")
+ss_plugin:depends("type", "SS-Rust")
 function ss_plugin.cfgvalue(self, section)
 	return m:get(section, "plugin")
 end
@@ -448,6 +453,7 @@ use_kcp = s:option(Flag, "use_kcp", translate("Use") .. "Kcptun",
                    "<span style='color:red'>" .. translate("Please confirm whether the Kcptun is installed. If not, please go to Rule Update download installation.") .. "</span>")
 use_kcp.default = 0
 use_kcp:depends("type", "SS")
+use_kcp:depends("type", "SS-Rust")
 use_kcp:depends("type", "SSR")
 
 kcp_server = s:option(Value, "kcp_server", translate("Kcptun Server"))
@@ -513,7 +519,8 @@ flow:value("xtls-rprx-splice-udp443")
 flow:depends("xtls", true)
 
 alpn = s:option(ListValue, "alpn", translate("alpn"))
-alpn.default = "h2,http/1.1"
+alpn.default = "default"
+alpn:value("default", translate("Default"))
 alpn:value("h2,http/1.1")
 alpn:value("h2")
 alpn:value("http/1.1")
