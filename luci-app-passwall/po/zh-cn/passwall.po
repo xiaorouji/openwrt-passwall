@@ -925,6 +925,9 @@ msgstr "手动订阅"
 msgid "Delete All Subscribe Node"
 msgstr "删除所有订阅节点"
 
+msgid "Delete the subscribed node"
+msgstr "删除已订阅的节点"
+
 msgid "Filter keyword Mode"
 msgstr "过滤关键字模式"
 

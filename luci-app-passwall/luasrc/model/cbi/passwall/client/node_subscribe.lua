@@ -99,8 +99,7 @@ end
 o = s:option(Button, "_stop", translate("Delete All Subscribe Node"))
 o.inputstyle = "remove"
 function o.write(e, e)
-    luci.sys.call("lua /usr/share/" .. appname .. "/subscribe.lua truncate log > /dev/null 2>&1 &")
-    luci.http.redirect(api.url("log"))
+    luci.sys.call("lua /usr/share/" .. appname .. "/subscribe.lua truncate > /dev/null 2>&1")
 end
 
 s = m:section(TypedSection, "subscribe_list", "",
@@ -136,5 +135,12 @@ end
 o = s:option(Value, "url", translate("Subscribe URL"))
 o.width = "auto"
 o.rmempty = false
+
+o = s:option(Button, "_remove", translate("Delete the subscribed node"))
+o.inputstyle = "remove"
+function o.write(t, n)
+    local remark = m:get(n, "remark") or "" 
+    luci.sys.call("lua /usr/share/" .. appname .. "/subscribe.lua truncate " .. remark .. " > /dev/null 2>&1")
+end
 
 return m

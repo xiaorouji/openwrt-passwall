@@ -38,16 +38,14 @@ local ss_rust_encrypt_method_list = {
 }
 
 local log = function(...)
-	if arg2 then
-		local result = os.date("%Y-%m-%d %H:%M:%S: ") .. table.concat({...}, " ")
-		if arg2 == "log" then
-			local f, err = io.open("/var/log/" .. appname .. ".log", "a")
-			if f and err == nil then
-				f:write(result .. "\n")
-				f:close()
-			end
-		elseif arg2 == "print" then
-			print(result)
+	local result = os.date("%Y-%m-%d %H:%M:%S: ") .. table.concat({...}, " ")
+	if arg2 == "print" then
+		print(result)
+	else
+		local f, err = io.open("/var/log/" .. appname .. ".log", "a")
+		if f and err == nil then
+			f:write(result .. "\n")
+			f:close()
 		end
 	end
 end
@@ -787,7 +785,7 @@ local function curl(url, file)
 	return trim(stdout)
 end
 
-local function truncate_nodes()
+local function truncate_nodes(add_from)
 	for _, config in pairs(CONFIG) do
 		if config.nodes and type(config.nodes) == "table" then
 			for kk, vv in pairs(config.nodes) do
@@ -808,12 +806,16 @@ local function truncate_nodes()
 	end
 	uci:foreach(appname, "nodes", function(node)
 		if node.add_mode == "2" then
-			uci:delete(appname, node['.name'])
+			if add_from then
+				if node.add_from and node.add_from == add_from then
+					uci:delete(appname, node['.name'])
+				end
+			else
+				uci:delete(appname, node['.name'])
+			end
 		end
 	end)
 	uci:commit(appname)
-
-	log('在线订阅节点已全部删除')
 end
 
 local function select_node(nodes, config)
@@ -1149,6 +1151,6 @@ if arg[1] then
 		update_node(1)
 		luci.sys.call("rm -f /tmp/links.conf")
 	elseif arg[1] == "truncate" then
-		truncate_nodes()
+		truncate_nodes(arg[2])
 	end
 end
