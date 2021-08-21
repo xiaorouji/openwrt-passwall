@@ -330,18 +330,18 @@ run_ipt2socks() {
 	;;
 	esac
 	_extra_param="${_extra_param} -v"
-	ln_start_bin "$(first_type ipt2socks)" "ipt2socks_${flag}" $log_file -l $local_port -b 127.0.0.1 -s $socks_address -p $socks_port ${_extra_param}
+	ln_start_bin "$(first_type ipt2socks)" "ipt2socks_${flag}" $log_file -l $local_port -b 0.0.0.0 -s $socks_address -p $socks_port ${_extra_param}
 }
 
 run_v2ray() {
-	local type=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
-	if [ "$type" != "v2ray" ] || [ "$type" != "xray" ]; then
-		return 1
-	fi
 	local flag node redir_type redir_port socks_address socks_port socks_username socks_password http_address http_port http_username http_password log_file config_file
 	local _extra_param=""
 	local proto="tcp,udp"
 	eval_set_val $@
+	local type=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
+	if [ "$type" != "v2ray" ] && [ "$type" != "xray" ]; then
+		return 1
+	fi
 	[ -n "$log_file" ] || log_file="/dev/null"
 	[ -n "$socks_username" ] && [ -n "$socks_password" ] && _extra_param="${_extra_param} -local_socks_username $socks_username -local_socks_password $socks_password"
 	[ -n "$http_username" ] && [ -n "$http_password" ] && _extra_param="${_extra_param} -local_http_username $http_username -local_http_password $http_password"
