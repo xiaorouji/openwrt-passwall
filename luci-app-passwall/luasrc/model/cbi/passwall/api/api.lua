@@ -9,7 +9,7 @@ i18n = require "luci.i18n"
 
 appname = "passwall"
 curl = "/usr/bin/curl"
-curl_args = {"-skL", "--connect-timeout 3", "--retry 3", "-m 60"}
+curl_args = {"-skfL", "--connect-timeout 3", "--retry 3", "-m 60"}
 command_timeout = 300
 LEDE_BOARD = nil
 DISTRIB_TARGET = nil
