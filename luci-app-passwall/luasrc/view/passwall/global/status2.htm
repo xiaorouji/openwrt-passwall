@@ -66,17 +66,6 @@ local status = api.uci_get_type("global_other", "status", "")
 			</div>
 		</div>
 		
-		<% if api.is_finded("kcptun-client") then %>
-			<div class="cbi-value">
-				<label class="cbi-value-title">Kcptun
-					<%:Status%>
-				</label>
-				<div class="cbi-value-field" id="_kcptun_tcp_node_status">
-					<%:Collecting data...%>
-				</div>
-			</div>
-		<% end %>
-		
 		<% if api.is_finded("haproxy") then %>
 		<div class="cbi-value">
 			<label class="cbi-value-title">
@@ -124,6 +113,15 @@ local status = api.uci_get_type("global_other", "status", "")
 				<font id="_github_status"></font>
 			</div>
 		</div>
+		<div class="cbi-value">
+			<label class="cbi-value-title">
+				<%:Instagram Connection%>
+			</label>
+			<div class="cbi-value-field">
+				<input type="button" class="btn cbi-button cbi-button-apply" value="<%:Check%>" onclick="return check_connect(this, 'instagram', 'http://www.instagram.com')" />
+				<font id="_instagram_status"></font>
+			</div>
+		</div>
 		<% if status:find("show_check_port") then %>
 		<div class="cbi-value">
 			<label class="cbi-value-title">
@@ -151,9 +149,6 @@ local status = api.uci_get_type("global_other", "status", "")
 	//<![CDATA[
 	var dns_mode_status = document.getElementById('_dns_mode_status');
 	var haproxy_status = document.getElementById('_haproxy_status');
-	var kcptun_status = document.getElementById('_kcptun_status');
-	var baidu_status = document.getElementById('_baidu_status');
-	var google_status = document.getElementById('_google_status');
 	XHR.poll(3, '<%=api.url("status")%>', null,
 		function(x, json) {
 			if (x && x.status == 200) {
@@ -166,15 +161,6 @@ local status = api.uci_get_type("global_other", "status", "")
 						else
 							text += '<font color="red"><%:NOT RUNNING%> X</font>';
 						tcp_node_status.innerHTML = text;
-						
-						var kcptun_tcp_node_status = document.getElementById('_kcptun_tcp_node_status');
-						text = "";
-						if (json["kcptun_tcp_node_status"])
-							text += '<font color="green"><%:RUNNING%> ✓</font>';
-						else
-							text += '<font color="red"><%:NOT RUNNING%> X</font>';
-						if (kcptun_tcp_node_status)
-							kcptun_tcp_node_status.innerHTML = text;
 					}
 				}
 				

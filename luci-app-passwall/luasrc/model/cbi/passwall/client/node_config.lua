@@ -34,10 +34,10 @@ local ssr_obfs_list = {
 }
 
 local v_ss_encrypt_method_list = {
-    "aes-128-cfb", "aes-256-cfb", "aes-128-gcm", "aes-256-gcm", "chacha20", "chacha20-ietf", "chacha20-poly1305", "chacha20-ietf-poly1305"
+    "aes-128-gcm", "aes-256-gcm", "chacha20-poly1305"
 }
 
-local security_list = {"none", "auto", "aes-128-gcm", "chacha20-poly1305"}
+local security_list = {"none", "auto", "aes-128-gcm", "chacha20-poly1305", "zero"}
 
 local header_type_list = {
     "none", "srtp", "utp", "wechat-video", "dtls", "wireguard"
@@ -104,13 +104,6 @@ if api.is_finded("hysteria") then
     type:value("Hysteria", translate("Hysteria"))
 end
 
-xray_tips = s:option(DummyValue, "xray_tips", " ")
-xray_tips.rawhtml = true
-xray_tips.cfgvalue = function(t, n)
-    return string.format('<a style="color: red">%s</a>', translate("Xray is currently directly compatible with V2ray and used."))
-end
-xray_tips:depends("type", "Xray")
-
 protocol = s:option(ListValue, "protocol", translate("Protocol"))
 protocol:value("vmess", translate("Vmess"))
 protocol:value("vless", translate("VLESS"))
@@ -172,7 +165,7 @@ for k, v in pairs(nodes_table) do default_node:value(v.id, v.remarks) end
 default_node:depends("protocol", "_shunt")
 
 if #nodes_table > 0 then
-    o = s:option(ListValue, "main_node", translate("Default") .. " " .. translate("Node") .. translate("Preproxy"), translate("Use this node proxy to forward the default node."))
+    o = s:option(ListValue, "main_node", translate("Default") .. " " .. translate("Node") .. translate("Preproxy"), translate("When using, localhost will connect this node first and then use this node to connect the default node."))
     o:value("nil", translate("Close"))
     for k, v in pairs(nodes_table) do
         o:value(v.id, v.remarks)
@@ -374,10 +367,11 @@ security:depends({ type = "Xray", protocol = "vmess" })
 
 encryption = s:option(Value, "encryption", translate("Encrypt Method"))
 encryption.default = "none"
+encryption:value("none")
 encryption:depends({ type = "V2ray", protocol = "vless" })
 encryption:depends({ type = "Xray", protocol = "vless" })
 
-v_ss_encrypt_method = s:option(Value, "v_ss_encrypt_method", translate("Encrypt Method"))
+v_ss_encrypt_method = s:option(ListValue, "v_ss_encrypt_method", translate("Encrypt Method"))
 for a, t in ipairs(v_ss_encrypt_method_list) do v_ss_encrypt_method:value(t) end
 v_ss_encrypt_method:depends("protocol", "shadowsocks")
 function v_ss_encrypt_method.cfgvalue(self, section)
@@ -722,6 +716,11 @@ quic_guise:depends("transport", "quic")
 -- [[ gRPC部分 ]]--
 grpc_serviceName = s:option(Value, "grpc_serviceName", "ServiceName")
 grpc_serviceName:depends("transport", "grpc")
+
+grpc_mode = s:option(ListValue, "grpc_mode", "gRPC " .. translate("Transfer mode"))
+grpc_mode:value("gun")
+grpc_mode:value("multi")
+grpc_mode:depends("transport", "grpc")
 
 -- [[ Trojan-Go Shadowsocks2 ]] --
 ss_aead = s:option(Flag, "ss_aead", translate("Shadowsocks secondary encryption"))

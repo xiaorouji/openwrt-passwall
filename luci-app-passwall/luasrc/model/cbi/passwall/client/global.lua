@@ -107,14 +107,14 @@ end
 tcp_node:value("nil", translate("Close"))
 
 -- 分流
-if has_xray and #nodes_table > 0 then
+if (has_v2ray or has_xray) and #nodes_table > 0 then
     local normal_list = {}
     local shunt_list = {}
     for k, v in pairs(nodes_table) do
         if v.node_type == "normal" then
             normal_list[#normal_list + 1] = v
         end
-        if v.type == "Xray" and v.protocol == "_shunt" then
+        if v.protocol and v.protocol == "_shunt" then
             shunt_list[#shunt_list + 1] = v
         end
     end
@@ -154,7 +154,7 @@ if has_xray and #nodes_table > 0 then
         end
         
         local id = "main_node"
-        o = s:taboption("Main", ListValue, v.id .. "." .. id, "* " .. translate("Default") .. " " .. translate("Preproxy"))
+        o = s:taboption("Main", ListValue, v.id .. "." .. id, "* " .. translate("Default") .. " " .. translate("Preproxy"), translate("When using, localhost will connect this node first and then use this node to connect the default node."))
         o:depends("tcp_node", v.id)
         o:value("nil", translate("Close"))
         for k1, v1 in pairs(normal_list) do

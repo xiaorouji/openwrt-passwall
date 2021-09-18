@@ -94,6 +94,9 @@ msgstr "谷歌连接"
 msgid "GitHub Connection"
 msgstr "GitHub连接"
 
+msgid "Instagram Connection"
+msgstr "Instagram连接"
+
 msgid "Node Check"
 msgstr "节点检测"
 
@@ -448,8 +451,8 @@ msgstr "使用默认节点代理转发。"
 msgid "No shunt rules? Click me to go to add."
 msgstr "没有分流规则？点我前往去添加。"
 
-msgid "Use this node proxy to forward the default node."
-msgstr "使用此节点代理转发默认节点。"
+msgid "When using, localhost will connect this node first and then use this node to connect the default node."
+msgstr "当使用时，本机将首先连接到此节点，然后再使用此节点连接到默认节点落地。"
 
 msgid "Domain Strategy"
 msgstr "域名解析策略"
@@ -1063,12 +1066,6 @@ msgstr "插件名称"
 msgid "Plugin Arguments"
 msgstr "插件参数"
 
-msgid "Proxy IPv6"
-msgstr "代理IPv6"
-
-msgid "The IPv6 traffic can be proxyed when selected"
-msgstr "选中后可以代理IPv6流量"
-
 msgid "Use Kcptun"
 msgstr "使用Kcptun"
 
@@ -1119,6 +1116,9 @@ msgstr "是否启入传输层加密，支持的选项有 \"none\" 表示不加�
 
 msgid "Original Trojan only supported 'tls', please choose 'tls'."
 msgstr "原版Trojan只支持'tls'，请选择'tls'。"
+
+msgid "Transfer mode"
+msgstr "传输模式"
 
 msgid "Domain"
 msgstr "域名"

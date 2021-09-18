@@ -12,6 +12,7 @@ TMP_ID_PATH=$TMP_PATH/id
 TMP_PORT_PATH=$TMP_PATH/port
 TMP_ROUTE_PATH=$TMP_PATH/route
 TMP_ACL_PATH=$TMP_PATH/acl
+TMP_PATH2=/var/etc/${CONFIG}_tmp
 DNSMASQ_PATH=/etc/dnsmasq.d
 TMP_DNSMASQ_PATH=/var/etc/dnsmasq-passwall.d
 LOG_FILE=/var/log/$CONFIG.log
@@ -307,9 +308,11 @@ load_config() {
 	[ -z "${DEFAULT_DNS}" ] && DEFAULT_DNS=$(echo -n $(sed -n 's/^nameserver[ \t]*\([^ ]*\)$/\1/p' "${RESOLVFILE}" | grep -v -E "0.0.0.0|127.0.0.1|::" | head -2) | tr ' ' ',')
 	LOCAL_DNS="${DEFAULT_DNS:-119.29.29.29}"
 	
+	PROXY_IPV6=$(config_t_get global_other ipv6_tproxy 0)
+	
 	export V2RAY_LOCATION_ASSET=$(config_t_get global_rules v2ray_location_asset "/usr/share/xray/")
 	export XRAY_LOCATION_ASSET=$V2RAY_LOCATION_ASSET
-	mkdir -p /var/etc $TMP_PATH $TMP_BIN_PATH $TMP_ID_PATH $TMP_PORT_PATH $TMP_ROUTE_PATH $TMP_ACL_PATH
+	mkdir -p /var/etc $TMP_PATH $TMP_BIN_PATH $TMP_ID_PATH $TMP_PORT_PATH $TMP_ROUTE_PATH $TMP_ACL_PATH $TMP_PATH2
 }
 
 run_ipt2socks() {
@@ -603,14 +606,8 @@ run_redir() {
 		esac
 	;;
 	TCP)
-		local ipv6_tproxy=$(config_t_get global_other ipv6_tproxy 0)
-		if [ $ipv6_tproxy == "1" ]; then
-			if [ "$type" == "v2ray" ] || [ "$type" == "xray" ]; then
-				PROXY_IPV6=1
-				echolog "节点类型:$type，开启实验性IPv6透明代理(TProxy)..."
-			else
-				echolog "节点类型:$type，暂不支持IPv6透明代理(TProxy)..."
-			fi
+		if [ $PROXY_IPV6 == "1" ]; then
+			echolog "开启实验性IPv6透明代理(TProxy)，请确认您的节点及类型支持IPv6！"
 		fi
 		local kcptun_use=$(config_n_get $node use_kcp 0)
 		if [ "$kcptun_use" == "1" ]; then
