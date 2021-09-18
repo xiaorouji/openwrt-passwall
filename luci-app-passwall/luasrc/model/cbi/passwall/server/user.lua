@@ -29,7 +29,7 @@ local ssr_obfs_list = {
 }
 
 local v_ss_encrypt_method_list = {
-    "aes-128-cfb", "aes-256-cfb", "aes-128-gcm", "aes-256-gcm", "chacha20", "chacha20-ietf", "chacha20-poly1305", "chacha20-ietf-poly1305"
+    "aes-128-gcm", "aes-256-gcm", "chacha20-poly1305"
 }
 
 local header_type_list = {
