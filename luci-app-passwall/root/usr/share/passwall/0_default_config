@@ -33,7 +33,6 @@ config global_forwarding
 	option udp_redir_ports '1:65535'
 	option accept_icmp '0'
 	option tcp_proxy_way 'redirect'
-	option proxy_ipv6 '0'
 	
 config global_other
 	option status 'big_icon show_check_port show_ip111'
@@ -94,13 +93,8 @@ config nodes '696cd32c1d5149ee95fd1b3accbad6df'
 	option domainStrategy 'IPIfNonMatch'
 	
 config shunt_rules 'ads'
-	option remarks '广告'
+	option remarks 'AD'
 	option domain_list 'geosite:category-ads'
-	
-config shunt_rules 'China'
-	option remarks 'China'
-	option domain_list 'geosite:cn'
-	option ip_list 'geoip:cn'
 	
 config shunt_rules 'Telegram'
 	option remarks 'Telegram'
@@ -120,7 +114,7 @@ ytimg.com
 gvt2.com'
 
 config shunt_rules 'netflix'
-	option remarks '奈飞'
+	option remarks 'Netflix'
 	option domain_list 'fast.com
 netflix
 netflix.com
@@ -145,3 +139,8 @@ config shunt_rules 'TVB'
 	option remarks 'TVB'
 	option domain_list 'tvb.com
 mytvsuper.com'
+
+config shunt_rules 'China'
+	option remarks 'China'
+	option domain_list 'geosite:cn'
+	option ip_list 'geoip:cn'

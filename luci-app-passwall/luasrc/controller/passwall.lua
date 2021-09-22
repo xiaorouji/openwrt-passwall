@@ -61,6 +61,7 @@ function index()
 	entry({"admin", "services", appname, "get_log"}, call("get_log")).leaf = true
 	entry({"admin", "services", appname, "clear_log"}, call("clear_log")).leaf = true
 	entry({"admin", "services", appname, "status"}, call("status")).leaf = true
+	entry({"admin", "services", appname, "haproxy_status"}, call("haproxy_status")).leaf = true
 	entry({"admin", "services", appname, "socks_status"}, call("socks_status")).leaf = true
 	entry({"admin", "services", appname, "connect_status"}, call("connect_status")).leaf = true
 	entry({"admin", "services", appname, "check_port"}, call("check_port")).leaf = true
@@ -181,14 +182,19 @@ function status()
 	local e = {}
 	e.dns_mode_status = luci.sys.call("netstat -apn | grep ':7913 ' >/dev/null") == 0
 	e.haproxy_status = luci.sys.call(string.format("top -bn1 | grep -v grep | grep '%s/bin/' | grep haproxy >/dev/null", appname)) == 0
-	e["kcptun_tcp_node_status"] = luci.sys.call(string.format("top -bn1 | grep -v -E 'grep|acl/|acl_' | grep '%s/bin/kcptun' | grep -i 'tcp' >/dev/null", appname)) == 0
-	e["tcp_node_status"] = luci.sys.call(string.format("top -bn1 | grep -v -E 'grep|kcptun|acl/|acl_' | grep '%s/bin/' | grep -i 'TCP' >/dev/null", appname)) == 0
+	e["tcp_node_status"] = luci.sys.call(string.format("top -bn1 | grep -v -E 'grep|acl/|acl_' | grep '%s/bin/' | grep -i 'TCP' >/dev/null", appname)) == 0
 
 	if (ucic:get(appname, "@global[0]", "udp_node") or "nil") == "tcp" then
 		e["udp_node_status"] = e["tcp_node_status"]
 	else
 		e["udp_node_status"] = luci.sys.call(string.format("top -bn1 | grep -v -E 'grep|acl/|acl_' | grep '%s/bin/' | grep -i 'UDP' >/dev/null", appname)) == 0
 	end
+	luci.http.prepare_content("application/json")
+	luci.http.write_json(e)
+end
+
+function haproxy_status()
+	local e = luci.sys.call(string.format("top -bn1 | grep -v grep | grep '%s/bin/' | grep haproxy >/dev/null", appname)) == 0
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
 end

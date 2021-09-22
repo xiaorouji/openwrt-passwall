@@ -5,10 +5,7 @@ local datatypes = api.datatypes
 local path = string.format("/usr/share/%s/rules/", appname)
 
 m = Map(appname)
-m.apply_on_parse=true
-function m.on_apply(self)
-luci.sys.call("/etc/init.d/passwall reload > /dev/null 2>&1 &")
-end
+
 -- [[ Rule List Settings ]]--
 s = m:section(TypedSection, "global_rules")
 s.anonymous = true

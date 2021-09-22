@@ -94,13 +94,6 @@ if os.execute("lsmod | grep -i REDIRECT >/dev/null") == 0 and os.execute("lsmod 
 end
 
 --[[
----- Proxy IPv6
-o = s:option(Flag, "proxy_ipv6", translate("Proxy IPv6"),
-             translate("The IPv6 traffic can be proxyed when selected"))
-o.default = 0
---]]
-
---[[
 ---- TCP Redir Port
 o = s:option(Value, "tcp_redir_port", translate("TCP Redir Port"))
 o.datatype = "port"
