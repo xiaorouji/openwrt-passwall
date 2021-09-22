@@ -157,7 +157,8 @@ function gen_outbound(node, tag, is_proxy, proxy_tag)
                     header = {type = node.quic_guise}
                 } or nil,
                 grpcSettings = (node.transport == "grpc") and {
-                    serviceName = node.grpc_serviceName
+                    serviceName = node.grpc_serviceName,
+                    multiMode = (node.grpc_mode == "multi") and true or false
                 } or nil
             } or nil,
             settings = {
@@ -215,7 +216,8 @@ if node_section then
             listen = local_socks_address,
             port = tonumber(local_socks_port),
             protocol = "socks",
-            settings = {auth = "noauth", udp = true}
+            settings = {auth = "noauth", udp = true},
+            sniffing = {enabled = true, destOverride = {"http", "tls"}}
         }
         if local_socks_username and local_socks_password and local_socks_username ~= "" and local_socks_password ~= "" then
             inbound.settings.auth = "password"
@@ -440,6 +442,7 @@ if node_section then
 
         routing = {
             domainStrategy = node.domainStrategy or "AsIs",
+            domainMatcher = "hybrid",
             rules = rules
         }
     elseif node.protocol == "_balancing" then
@@ -453,6 +456,7 @@ if node_section then
             end
             routing = {
                 domainStrategy = node.domainStrategy or "AsIs",
+                domainMatcher = "hybrid",
                 balancers = {{tag = "balancer", selector = nodes}},
                 rules = {
                     {type = "field", network = "tcp,udp", balancerTag = "balancer"}
@@ -462,6 +466,11 @@ if node_section then
     else
         local outbound = gen_outbound(node)
         if outbound then table.insert(outbounds, outbound) end
+        routing = {
+            domainStrategy = "AsIs",
+            domainMatcher = "hybrid",
+            rules = {}
+        }
     end
 end
 
