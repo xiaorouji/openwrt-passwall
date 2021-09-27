@@ -1276,7 +1276,7 @@ start_haproxy() {
 
 	EOF
 
-	items=$(get_enabled_anonymous_secs "@haproxy_config")
+	items=$(uci show ${CONFIG} | grep "=haproxy_config" | cut -d '.' -sf 2 | cut -d '=' -sf 1)
 	for item in $items; do
 		lport=$(config_n_get ${item} haproxy_port 0)
 		[ "${lport}" = "0" ] && echolog "  - 丢弃1个明显无效的节点" && continue
@@ -1292,6 +1292,7 @@ start_haproxy() {
 		unset haproxy_port bbackup
 
 		eval $(uci -q show "${CONFIG}.${item}" | cut -d '.' -sf 3-)
+		[ "$enabled" = "1" ] || continue
 		get_ip_port_from "$lbss" bip bport 1
 
 		[ -z "$haproxy_port" ] || [ -z "$bip" ] && echolog "  - 丢弃1个明显无效的节点" && continue
