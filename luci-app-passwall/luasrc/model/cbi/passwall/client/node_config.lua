@@ -141,12 +141,15 @@ uci:foreach(appname, "shunt_rules", function(e)
     o:depends("protocol", "_shunt")
 
     if #nodes_table > 0 then
-        _proxy = s:option(Flag, e[".name"] .. "_proxy", translate(e.remarks) .. translate("Preproxy"), translate("Use the default node for the transit."))
-        _proxy.default = 0
+        _proxy_tag = s:option(ListValue, e[".name"] .. "_proxy_tag", string.format('* <a style="color:red">%s</a>', translate(e.remarks) .. " " .. translate("Preproxy")))
+        _proxy_tag:value("nil", translate("Close"))
+        _proxy_tag:value("default", translate("Default"))
+        _proxy_tag:value("main", translate("Default Preproxy"))
+        _proxy_tag.default = "nil"
 
         for k, v in pairs(nodes_table) do
             o:value(v.id, v.remarks)
-            _proxy:depends(e[".name"], v.id)
+            _proxy_tag:depends(e[".name"], v.id)
         end
     end
 end)
@@ -158,14 +161,14 @@ shunt_tips.cfgvalue = function(t, n)
 end
 shunt_tips:depends("protocol", "_shunt")
 
-default_node = s:option(ListValue, "default_node", translate("Default") .. " " .. translate("Node"))
+default_node = s:option(ListValue, "default_node", string.format('* <a style="color:red">%s</a>', translate("Default")))
 default_node:value("_direct", translate("Direct Connection"))
 default_node:value("_blackhole", translate("Blackhole"))
 for k, v in pairs(nodes_table) do default_node:value(v.id, v.remarks) end
 default_node:depends("protocol", "_shunt")
 
 if #nodes_table > 0 then
-    o = s:option(ListValue, "main_node", translate("Default") .. " " .. translate("Node") .. translate("Preproxy"), translate("When using, localhost will connect this node first and then use this node to connect the default node."))
+    o = s:option(ListValue, "main_node", string.format('* <a style="color:red">%s</a>', translate("Default Preproxy")), translate("When using, localhost will connect this node first and then use this node to connect the default node."))
     o:value("nil", translate("Close"))
     for k, v in pairs(nodes_table) do
         o:value(v.id, v.remarks)
@@ -177,6 +180,7 @@ domainStrategy = s:option(ListValue, "domainStrategy", translate("Domain Strateg
 domainStrategy:value("AsIs")
 domainStrategy:value("IPIfNonMatch")
 domainStrategy:value("IPOnDemand")
+domainStrategy.default = "IPOnDemand"
 domainStrategy.description = "<br /><ul><li>" .. translate("'AsIs': Only use domain for routing. Default value.")
 .. "</li><li>" .. translate("'IPIfNonMatch': When no rule matches current domain, resolves it into IP addresses (A or AAAA records) and try all rules again.")
 .. "</li><li>" .. translate("'IPOnDemand': As long as there is a IP-based rule, resolves the domain into IP immediately.")

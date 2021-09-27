@@ -841,24 +841,28 @@ local function select_node(nodes, config)
 				end
 			end
 		end
-		-- 第一优先级 cfgid
-		if not server then
-			for index, node in pairs(nodes) do
-				if node[".name"] == config.currentNode['.name'] then
-					if config.log == nil or config.log == true then
-						log('更新【' .. config.remarks .. '】第一匹配节点：' .. node.remarks)
-					end
-					server = node[".name"]
-					break
-				end
-			end
-		end
-		-- 第二优先级 类型 + IP + 端口
+		-- 第一优先级 类型 + IP + 端口
 		if not server then
 			for index, node in pairs(nodes) do
 				if config.currentNode.type and config.currentNode.address and config.currentNode.port then
 					if node.type and node.address and node.port then
 						if node.type == config.currentNode.type and (node.address .. ':' .. node.port == config.currentNode.address .. ':' .. config.currentNode.port) then
+							if config.log == nil or config.log == true then
+								log('更新【' .. config.remarks .. '】第一匹配节点：' .. node.remarks)
+							end
+							server = node[".name"]
+							break
+						end
+					end
+				end
+			end
+		end
+		-- 第二优先级 IP + 端口
+		if not server then
+			for index, node in pairs(nodes) do
+				if config.currentNode.address and config.currentNode.port then
+					if node.address and node.port then
+						if node.address .. ':' .. node.port == config.currentNode.address .. ':' .. config.currentNode.port then
 							if config.log == nil or config.log == true then
 								log('更新【' .. config.remarks .. '】第二匹配节点：' .. node.remarks)
 							end
@@ -869,12 +873,12 @@ local function select_node(nodes, config)
 				end
 			end
 		end
-		-- 第三优先级 IP + 端口
+		-- 第三优先级 IP
 		if not server then
 			for index, node in pairs(nodes) do
-				if config.currentNode.address and config.currentNode.port then
-					if node.address and node.port then
-						if node.address .. ':' .. node.port == config.currentNode.address .. ':' .. config.currentNode.port then
+				if config.currentNode.address then
+					if node.address then
+						if node.address == config.currentNode.address then
 							if config.log == nil or config.log == true then
 								log('更新【' .. config.remarks .. '】第三匹配节点：' .. node.remarks)
 							end
@@ -885,30 +889,14 @@ local function select_node(nodes, config)
 				end
 			end
 		end
-		-- 第四优先级 IP
-		if not server then
-			for index, node in pairs(nodes) do
-				if config.currentNode.address then
-					if node.address then
-						if node.address == config.currentNode.address then
-							if config.log == nil or config.log == true then
-								log('更新【' .. config.remarks .. '】第四匹配节点：' .. node.remarks)
-							end
-							server = node[".name"]
-							break
-						end
-					end
-				end
-			end
-		end
-		-- 第五优先级备注
+		-- 第四优先级备注
 		if not server then
 			for index, node in pairs(nodes) do
 				if config.currentNode.remarks then
 					if node.remarks then
 						if node.remarks == config.currentNode.remarks then
 							if config.log == nil or config.log == true then
-								log('更新【' .. config.remarks .. '】第五匹配节点：' .. node.remarks)
+								log('更新【' .. config.remarks .. '】第四匹配节点：' .. node.remarks)
 							end
 							server = node[".name"]
 							break
@@ -966,8 +954,7 @@ local function update_node(manual)
 
 	if next(CONFIG) then
 		local nodes = {}
-		local uci2 = luci.model.uci.cursor()
-		uci2:foreach(appname, "nodes", function(node)
+		uci:foreach(appname, "nodes", function(node)
 			nodes[#nodes + 1] = node
 		end)
 

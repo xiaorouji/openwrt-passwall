@@ -56,6 +56,10 @@ s.sortable = true
 s.anonymous = true
 s.addremove = true
 
+s.create = function(e, t)
+    TypedSection.create(e, api.gen_uuid())
+end
+
 s.remove = function(self, section)
     for k, v in pairs(self.children) do
         v.rmempty = true
