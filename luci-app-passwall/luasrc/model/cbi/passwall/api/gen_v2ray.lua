@@ -43,7 +43,13 @@ local function get_new_port()
     return new_port
 end
 
-function gen_outbound(node, tag, is_proxy, proxy_tag)
+function gen_outbound(node, tag, proxy_table)
+    local proxy = 0
+    local proxy_tag = "nil"
+    if proxy_table ~= nil and type(proxy_table) == "table" then
+        proxy = proxy_table.proxy or 0
+        proxy_tag = proxy_table.tag or "nil"
+    end
     local result = nil
     if node and node ~= "nil" then
         local node_id = node[".name"]
@@ -52,8 +58,8 @@ function gen_outbound(node, tag, is_proxy, proxy_tag)
         end
 
         if node.type == "V2ray" or node.type == "Xray" then
-            is_proxy = nil
-            if proxy_tag then
+            proxy = 0
+            if proxy_tag ~= "nil" then
                 node.proxySettings = {
                     tag = proxy_tag,
                     transportLayer = true
@@ -78,7 +84,7 @@ function gen_outbound(node, tag, is_proxy, proxy_tag)
                         "127.0.0.1", --bind
                         new_port, --socks port
                         string.format("/var/etc/%s/v2_%s_%s_%s.json", appname, node_type, node_id, new_port), --config file
-                        (is_proxy and is_proxy == "1" and relay_port) and tostring(relay_port) or "" --relay port
+                        (proxy == 1 and proxy_tag ~= "nil" and relay_port) and tostring(relay_port) or "" --relay port
                         )
                     )
                 )
@@ -98,7 +104,8 @@ function gen_outbound(node, tag, is_proxy, proxy_tag)
 
         result = {
             _flag_tag = node_id,
-            _flag_is_proxy = (is_proxy and is_proxy == "1") and "1" or "0",
+            _flag_proxy = proxy,
+            _flag_proxy_tag = proxy_tag,
             tag = tag,
             proxySettings = node.proxySettings or nil,
             protocol = node.protocol,
@@ -286,7 +293,7 @@ if node_section then
         else
             local default_node = uci:get_all(appname, default_node_id)
             local main_node_id = node.main_node or "nil"
-            local is_proxy = "0"
+            local proxy = 0
             local proxy_tag
             if main_node_id ~= "nil" then
                 local main_node = uci:get_all(appname, main_node_id)
@@ -294,7 +301,7 @@ if node_section then
                     local main_node_outbound = gen_outbound(main_node, "main")
                     if main_node_outbound then
                         table.insert(outbounds, main_node_outbound)
-                        is_proxy = "1"
+                        proxy = 1
                         proxy_tag = "main"
                         if default_node.type ~= "V2ray" and default_node.type ~= "Xray" then
                             proxy_tag = nil
@@ -321,7 +328,7 @@ if node_section then
                 end
             end
             if default_node and api.is_normal_node(default_node) then
-                local default_outbound = gen_outbound(default_node, "default", is_proxy, proxy_tag)
+                local default_outbound = gen_outbound(default_node, "default", { proxy = proxy, tag = proxy_tag })
                 if default_outbound then
                     table.insert(outbounds, default_outbound)
                     default_outboundTag = "default"
@@ -332,7 +339,7 @@ if node_section then
         uci:foreach(appname, "shunt_rules", function(e)
             local name = e[".name"]
             local _node_id = node[name] or "nil"
-            local is_proxy = node[name .. "_proxy"] or "0"
+            local proxy_tag = node[name .. "_proxy_tag"] or "nil"
             local outboundTag
             if _node_id == "_direct" then
                 outboundTag = "direct"
@@ -344,20 +351,20 @@ if node_section then
                 if _node_id ~= "nil" then
                     local _node = uci:get_all(appname, _node_id)
                     if _node and api.is_normal_node(_node) then
-                        local has_outbound
+                        local new_outbound
                         for index, value in ipairs(outbounds) do
-                            if value["_flag_tag"] == _node_id and value["_flag_is_proxy"] == is_proxy then
-                                has_outbound = api.clone(value)
+                            if value["_flag_tag"] == _node_id and value["_flag_proxy_tag"] == proxy_tag then
+                                new_outbound = api.clone(value)
                                 break
                             end
                         end
-                        if has_outbound then
-                            has_outbound["tag"] = name
-                            table.insert(outbounds, has_outbound)
+                        if new_outbound then
+                            new_outbound["tag"] = name
+                            table.insert(outbounds, new_outbound)
                             outboundTag = name
                         else
                             if _node.type ~= "V2ray" and _node.type ~= "Xray" then
-                                if is_proxy == "1" then
+                                if proxy_tag ~= "nil" then
                                     new_port = get_new_port()
                                     table.insert(inbounds, {
                                         tag = "proxy_" .. name,
@@ -374,11 +381,11 @@ if node_section then
                                     table.insert(rules, 1, {
                                         type = "field",
                                         inboundTag = {"proxy_" .. name},
-                                        outboundTag = "default"
+                                        outboundTag = proxy_tag
                                     })
                                 end
                             end
-                            local _outbound = gen_outbound(_node, name, is_proxy, (is_proxy == "1" and "default" or nil))
+                            local _outbound = gen_outbound(_node, name, { proxy = (proxy_tag ~= "nil") and 1 or 0, tag = (proxy_tag ~= "nil") and proxy_tag or nil })
                             if _outbound then
                                 table.insert(outbounds, _outbound)
                                 outboundTag = name

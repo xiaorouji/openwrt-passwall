@@ -139,7 +139,7 @@ if (has_v2ray or has_xray) and #nodes_table > 0 then
         end)
 
         local id = "default_node"
-        o = s:taboption("Main", ListValue, v.id .. "." .. id, "* " .. translate("Default"))
+        o = s:taboption("Main", ListValue, v.id .. "." .. id, string.format('* <a style="color:red">%s</a>', translate("Default")))
         o:depends("tcp_node", v.id)
         o:value("_direct", translate("Direct Connection"))
         o:value("_blackhole", translate("Blackhole"))
@@ -154,7 +154,7 @@ if (has_v2ray or has_xray) and #nodes_table > 0 then
         end
         
         local id = "main_node"
-        o = s:taboption("Main", ListValue, v.id .. "." .. id, "* " .. translate("Default") .. " " .. translate("Preproxy"), translate("When using, localhost will connect this node first and then use this node to connect the default node."))
+        o = s:taboption("Main", ListValue, v.id .. "." .. id, string.format('* <a style="color:red">%s</a>', translate("Default Preproxy")), translate("When using, localhost will connect this node first and then use this node to connect the default node."))
         o:depends("tcp_node", v.id)
         o:value("nil", translate("Close"))
         for k1, v1 in pairs(normal_list) do

@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=naiveproxy
-PKG_VERSION:=93.0.4577.63-2
+PKG_VERSION:=94.0.4606.61-1
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/klzgrad/naiveproxy/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=091fa8129f390cc90530f92b0e9c90f1e7bb131f3f9e5bcda192a782bf7af19e
+PKG_HASH:=26c00dfe14284ff19fe78e4185649a48292582adf7d6e3d2d0e994098c393097
 
 PKG_LICENSE:=BSD 3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -62,32 +62,32 @@ ifneq ($(CONFIG_CCACHE),)
   export naive_ccache_flags=cc_wrapper="$(CCACHE)"
 endif
 
-CLANG_VER:=13-init-15163-g98033fdc-1
+CLANG_VER:=14-init-1002-gb5e470aa-1
 CLANG_FILE:=clang-llvmorg-$(CLANG_VER).tgz
 define Download/CLANG
 	URL:=https://commondatastorage.googleapis.com/chromium-browser-clang/Linux_x64
 	URL_FILE:=$(CLANG_FILE)
 	FILE:=$(CLANG_FILE)
-	HASH:=cf74ea4bdd833b18ef52959f2791b11354fea20425b8dbfa4d017fc46732c665
+	HASH:=bed9118082c98d990434c02230d9eec5e3aa3158b479d4cd3317482906d4e897
 endef
 
-GN_VER:=24e2f7df92641de0351a96096fb2c490b2436bb8
+GN_VER:=69ec4fca1fa69ddadae13f9e6b7507efa0675263
 GN_FILE:=gn-git_revision-$(GN_VER).zip
 define Download/GN_TOOL
 	URL:=https://chrome-infra-packages.appspot.com/dl/gn/gn/linux-amd64/+
 	URL_FILE:=git_revision:$(GN_VER)
 	FILE:=$(GN_FILE)
-	HASH:=b1df7d28776ebf714edc98abaaa09aa8b308212eef5a23fa24de8f4107ae1cd3
+	HASH:=8bedd600ac58311f384e5113ab6a544bc72edb587ccb8f9e784c4dff208872c4
 endef
 
-PGO_VER:=4577-1629902302-97a75bab19e52f72bda9d9d33032dd998433e8c2
+PGO_VER:=4606-1632147900-2674511630c4bfe602871b9780dec43586d68327
 PGO_FILE:=chrome-linux-$(PGO_VER).profdata
 define Download/PGO_PROF
 	URL:=https://storage.googleapis.com.cnpmjs.org/chromium-optimization-profiles/pgo_profiles \
 	     https://storage.googleapis.com/chromium-optimization-profiles/pgo_profiles
 	URL_FILE:=$(PGO_FILE)
 	FILE:=$(PGO_FILE)
-	HASH:=f8874377e631b3bccc6581a79bd9f720b5d0700f7e021930d00b626cf7ab3874
+	HASH:=d729c99079a619fc0fa33b3f79a731942cad7fcefae0a683678e3c32530d1bf7
 endef
 
 define Build/Prepare

@@ -84,17 +84,23 @@ config nodes '696cd32c1d5149ee95fd1b3accbad6df'
 	option remarks '分流总节点'
 	option type 'Xray'
 	option protocol '_shunt'
-	option youtube 'nil'
-	option netflix 'nil'
-	option TVB 'nil'
+	option AD '_direct'
+	option BT '_direct'
 	option Telegram 'nil'
+	option YouTube 'nil'
+	option Netflix 'nil'
+	option TVB 'nil'
+	option China 'nil'
 	option default_node 'nil'
-	option default_proxy '0'
 	option domainStrategy 'IPIfNonMatch'
 	
-config shunt_rules 'ads'
+config shunt_rules 'AD'
 	option remarks 'AD'
 	option domain_list 'geosite:category-ads'
+
+config shunt_rules 'BT'
+	option remarks 'BT'
+	option protocol 'bittorrent'
 	
 config shunt_rules 'Telegram'
 	option remarks 'Telegram'
@@ -104,8 +110,8 @@ config shunt_rules 'Telegram'
 109.239.140.0/24
 67.198.55.0/24'
 
-config shunt_rules 'youtube'
-	option remarks 'youtube'
+config shunt_rules 'YouTube'
+	option remarks 'YouTube'
 	option domain_list 'youtube
 youtube.com
 youtu.be
@@ -113,7 +119,7 @@ googlevideo.com
 ytimg.com
 gvt2.com'
 
-config shunt_rules 'netflix'
+config shunt_rules 'Netflix'
 	option remarks 'Netflix'
 	option domain_list 'fast.com
 netflix
