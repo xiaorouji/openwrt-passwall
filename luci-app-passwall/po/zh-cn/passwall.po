@@ -1168,7 +1168,7 @@ msgstr "目前最多只能设置%s个节点，用于给访问控制使用。"
 msgid "IPv6 TProxy"
 msgstr "IPv6透明代理(TProxy)"
 
-msgid "Experimental feature.Make sure that your node supports IPv6."
+msgid "Experimental feature. Make sure that your node supports IPv6."
 msgstr "实验特性，请确保你的节点支持IPv6"
 
 msgid "Status info"
