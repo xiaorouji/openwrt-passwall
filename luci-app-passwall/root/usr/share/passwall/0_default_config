@@ -33,11 +33,11 @@ config global_forwarding
 	option udp_redir_ports '1:65535'
 	option accept_icmp '0'
 	option tcp_proxy_way 'redirect'
-	
+	option ipv6_tproxy '0'
+
 config global_other
 	option status 'big_icon show_check_port show_ip111'
 	option nodes_ping 'auto_ping tcping'
-	option ipv6_tproxy '0'
 
 config global_rules
 	option auto_update '0'
@@ -79,7 +79,7 @@ config auto_switch
 	option connect_timeout '3'
 	option retry_num '3'
 	option shunt_logic '1'
-	
+
 config nodes '696cd32c1d5149ee95fd1b3accbad6df'
 	option remarks '分流总节点'
 	option type 'Xray'
@@ -93,7 +93,7 @@ config nodes '696cd32c1d5149ee95fd1b3accbad6df'
 	option China 'nil'
 	option default_node 'nil'
 	option domainStrategy 'IPIfNonMatch'
-	
+
 config shunt_rules 'AD'
 	option remarks 'AD'
 	option domain_list 'geosite:category-ads'
@@ -101,7 +101,7 @@ config shunt_rules 'AD'
 config shunt_rules 'BT'
 	option remarks 'BT'
 	option protocol 'bittorrent'
-	
+
 config shunt_rules 'Telegram'
 	option remarks 'Telegram'
 	option ip_list '149.154.160.0/20
