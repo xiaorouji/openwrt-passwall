@@ -719,6 +719,17 @@ h2_path = s:option(Value, "h2_path", translate("HTTP/2 Path"))
 h2_path:depends("transport", "h2")
 h2_path:depends("ss_transport", "h2")
 
+h2_health_check = s:option(Flag, "h2_health_check", translate("Health check"))
+h2_health_check:depends({ type = "Xray", transport = "h2"})
+
+h2_read_idle_timeout = s:option(Value, "h2_read_idle_timeout", translate("Idle timeout"))
+h2_read_idle_timeout.default = "10"
+h2_read_idle_timeout:depends("h2_health_check", true)
+
+h2_health_check_timeout = s:option(Value, "h2_health_check_timeout", translate("Health check timeout"))
+h2_health_check_timeout.default = "15"
+h2_health_check_timeout:depends("h2_health_check", true)
+
 -- [[ DomainSocket部分 ]]--
 ds_path = s:option(Value, "ds_path", "Path", translate("A legal file path. This file must not exist before running."))
 ds_path:depends("transport", "ds")
@@ -745,6 +756,21 @@ grpc_mode = s:option(ListValue, "grpc_mode", "gRPC " .. translate("Transfer mode
 grpc_mode:value("gun")
 grpc_mode:value("multi")
 grpc_mode:depends({ type = "Xray", transport = "grpc"})
+
+grpc_health_check = s:option(Flag, "grpc_health_check", translate("Health check"))
+grpc_health_check:depends({ type = "Xray", transport = "grpc"})
+
+grpc_idle_timeout = s:option(Value, "grpc_idle_timeout", translate("Idle timeout"))
+grpc_idle_timeout.default = "10"
+grpc_idle_timeout:depends("grpc_health_check", true)
+
+grpc_health_check_timeout = s:option(Value, "grpc_health_check_timeout", translate("Health check timeout"))
+grpc_health_check_timeout.default = "20"
+grpc_health_check_timeout:depends("grpc_health_check", true)
+
+grpc_permit_without_stream = s:option(Flag, "grpc_permit_without_stream", translate("Permit without stream"))
+grpc_permit_without_stream.default = "0"
+grpc_permit_without_stream:depends("grpc_health_check", true)
 
 -- [[ Trojan-Go Shadowsocks2 ]] --
 ss_aead = s:option(Flag, "ss_aead", translate("Shadowsocks secondary encryption"))
