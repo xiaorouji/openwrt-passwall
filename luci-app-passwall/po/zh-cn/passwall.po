@@ -457,6 +457,9 @@ msgstr "当使用时，本机将首先连接到此节点，然后再使用此节
 msgid "Domain Strategy"
 msgstr "域名解析策略"
 
+msgid "Domain matcher"
+msgstr "域名匹配算法"
+
 msgid "'AsIs': Only use domain for routing. Default value."
 msgstr "AsIs：只使用域名进行路由选择。默认值。"
 
@@ -913,8 +916,8 @@ msgstr "订阅备注（机场）"
 msgid "Subscribe URL"
 msgstr "订阅网址"
 
-msgid "Please input the subscription url first, save and submit before updating. If you subscribe to update, it is recommended to delete all subscriptions and then re-subscribe."
-msgstr "请输入订阅网址保存应用后再更新，如果订阅节点更新了，建议删除所有订阅，然后重新订阅。"
+msgid "Please input the subscription url first, save and submit before manual subscription."
+msgstr "请输入订阅网址保存应用后再手动订阅。"
 
 msgid "Subscribe via proxy"
 msgstr "通过代理订阅"
@@ -931,6 +934,9 @@ msgstr "删除所有订阅节点"
 msgid "Delete the subscribed node"
 msgstr "删除已订阅的节点"
 
+msgid "This remark already exists, please change a new remark."
+msgstr "此备注已存在，请改一个新的备注。"
+
 msgid "Filter keyword Mode"
 msgstr "过滤关键字模式"
 
@@ -939,6 +945,12 @@ msgstr "丢弃列表"
 
 msgid "Keep List"
 msgstr "保留列表"
+
+msgid "Use global config"
+msgstr "使用全局配置"
+
+msgid "User-Agent"
+msgstr "用户代理(User-Agent)"
 
 msgid "Add"
 msgstr "添加"
@@ -1314,3 +1326,27 @@ msgstr "客户端文件不适合当前设备。"
 
 msgid "Can't move new file to path: %s"
 msgstr "无法移动新文件到：%s"
+
+msgid "Mux concurrency"
+msgstr "最大并发连接数"
+
+msgid "Mux idle timeout"
+msgstr "最大闲置时间"
+
+msgid "Enable early data"
+msgstr "启用前置数据"
+
+msgid "Early data length"
+msgstr "前置数据最大长度"
+
+msgid "Health check"
+msgstr "健康检查"
+
+msgid "Idle timeout"
+msgstr "闲置时间"
+
+msgid "Health check timeout"
+msgstr "检查超时时间"
+
+msgid "Permit without stream"
+msgstr "无子连接时的健康检查"

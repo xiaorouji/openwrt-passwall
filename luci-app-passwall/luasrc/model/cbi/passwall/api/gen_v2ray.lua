@@ -125,7 +125,7 @@ function gen_outbound(node, tag, proxy_table)
                 tlsSettings = (node.stream_security == "tls") and {
                     serverName = node.tls_serverName,
                     allowInsecure = (node.tls_allowInsecure == "1") and true or false,
-                    fingerprint = (node.fingerprint and node.fingerprint ~= "disable") and node.fingerprint or nil
+                    fingerprint = (node.type == "Xray" and node.fingerprint and node.fingerprint ~= "disable") and node.fingerprint or nil
                 } or nil,
                 tcpSettings = (node.transport == "tcp" and node.protocol ~= "socks") and {
                     header = {
@@ -152,11 +152,15 @@ function gen_outbound(node, tag, proxy_table)
                 wsSettings = (node.transport == "ws") and {
                     path = node.ws_path or "",
                     headers = (node.ws_host ~= nil) and
-                        {Host = node.ws_host} or nil
+                        {Host = node.ws_host} or nil,
+                    maxEarlyData = tonumber(node.ws_maxEarlyData) or nil
                 } or nil,
-                httpSettings = (node.transport == "h2") and
-                    {path = node.h2_path, host = node.h2_host} or
-                    nil,
+                httpSettings = (node.transport == "h2") and {
+                    path = node.h2_path,
+                    host = node.h2_host,
+                    read_idle_timeout = tonumber(node.h2_read_idle_timeout) or nil,
+                    health_check_timeout = tonumber(node.h2_health_check_timeout) or nil
+                } or nil,
                 dsSettings = (node.transport == "ds") and
                     {path = node.ds_path} or nil,
                 quicSettings = (node.transport == "quic") and {
@@ -166,7 +170,10 @@ function gen_outbound(node, tag, proxy_table)
                 } or nil,
                 grpcSettings = (node.transport == "grpc") and {
                     serviceName = node.grpc_serviceName,
-                    multiMode = (node.grpc_mode == "multi") and true or false
+                    multiMode = (node.grpc_mode == "multi") and true or nil,
+                    idle_timeout = tonumber(node.grpc_idle_timeout) or nil,
+                    health_check_timeout = tonumber(node.grpc_health_check_timeout) or nil,
+                    permit_without_stream = (node.grpc_permit_without_stream == "1") and true or nil
                 } or nil
             } or nil,
             settings = {
@@ -451,7 +458,7 @@ if node_section then
 
         routing = {
             domainStrategy = node.domainStrategy or "AsIs",
-            domainMatcher = "hybrid",
+            domainMatcher = node.domainMatcher or "hybrid",
             rules = rules
         }
     elseif node.protocol == "_balancing" then
@@ -465,7 +472,7 @@ if node_section then
             end
             routing = {
                 domainStrategy = node.domainStrategy or "AsIs",
-                domainMatcher = "hybrid",
+                domainMatcher = node.domainMatcher or "hybrid",
                 balancers = {{tag = "balancer", selector = nodes}},
                 rules = {
                     {type = "field", network = "tcp,udp", balancerTag = "balancer"}

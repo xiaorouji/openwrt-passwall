@@ -949,7 +949,7 @@ clean_crontab() {
 	#sed -i "/${CONFIG}/d" /etc/crontabs/root >/dev/null 2>&1
 	sed -i "/$(echo "/etc/init.d/${CONFIG}" | sed 's#\/#\\\/#g')/d" /etc/crontabs/root >/dev/null 2>&1
 	sed -i "/$(echo "lua ${APP_PATH}/rule_update.lua log" | sed 's#\/#\\\/#g')/d" /etc/crontabs/root >/dev/null 2>&1
-	sed -i "/$(echo "lua ${APP_PATH}/subscribe.lua start log" | sed 's#\/#\\\/#g')/d" /etc/crontabs/root >/dev/null 2>&1
+	sed -i "/$(echo "lua ${APP_PATH}/subscribe.lua start" | sed 's#\/#\\\/#g')/d" /etc/crontabs/root >/dev/null 2>&1
 }
 
 start_crontab() {
@@ -986,16 +986,20 @@ start_crontab() {
 		echo "$t lua $APP_PATH/rule_update.lua log > /dev/null 2>&1 &" >>/etc/crontabs/root
 		echolog "配置定时任务：自动更新规则。"
 	fi
-
-	autoupdatesubscribe=$(config_t_get global_subscribe auto_update_subscribe)
-	weekupdatesubscribe=$(config_t_get global_subscribe week_update_subscribe)
-	dayupdatesubscribe=$(config_t_get global_subscribe time_update_subscribe)
-	if [ "$autoupdatesubscribe" = "1" ]; then
-		local t="0 $dayupdatesubscribe * * $weekupdatesubscribe"
-		[ "$weekupdatesubscribe" = "7" ] && t="0 $dayupdatesubscribe * * *"
-		echo "$t lua $APP_PATH/subscribe.lua start log > /dev/null 2>&1 &" >>/etc/crontabs/root
-		echolog "配置定时任务：自动更新节点订阅。"
-	fi
+	
+	for item in $(uci show ${CONFIG} | grep "=subscribe_list" | cut -d '.' -sf 2 | cut -d '=' -sf 1); do
+		cfgid=$(uci show ${CONFIG}.$item | head -n 1 | cut -d '.' -sf 2 | cut -d '=' -sf 1)
+		remark=$(config_n_get $item remark)
+		auto_update=$(config_n_get $item auto_update)
+		week_update=$(config_n_get $item week_update)
+		time_update=$(config_n_get $item time_update)
+		if [ "$auto_update" = "1" ]; then
+			local t="0 $time_update * * $week_update"
+			[ "$week_update" = "7" ] && t="0 $time_update * * *"
+			echo "$t lua $APP_PATH/subscribe.lua start $cfgid > /dev/null 2>&1 &" >>/etc/crontabs/root
+			echolog "配置定时任务：自动更新【$remark】订阅。"
+		fi
+	done
 
 	if [ "$NO_PROXY" == 0 ]; then
 		start_daemon=$(config_t_get global_delay start_daemon 0)
