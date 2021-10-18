@@ -422,7 +422,7 @@ local function processData(szType, content, add_mode, add_from)
 		if not info.security then result.security = "auto" end
 		if info.tls == "tls" or info.tls == "1" then
 			result.tls = "1"
-			result.tls_serverName = info.sni
+			result.tls_serverName = (info.sni and info.sni ~= "") and info.sni or info.host
 			result.tls_allowInsecure = allowInsecure_default and "1" or "0"
 		else
 			result.tls = "0"
@@ -735,9 +735,7 @@ local function processData(szType, content, add_mode, add_from)
 					result.xtls = "1"
 					result.flow = params.flow or "xtls-rprx-direct"
 				end
-				if params.sni then
-					result.tls_serverName = params.sni
-				end
+				result.tls_serverName = (params.sni and params.sni ~= "") and params.sni or params.host
 			end
 
 			result.port = port
