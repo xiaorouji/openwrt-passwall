@@ -157,34 +157,42 @@ if api.is_finded("dns2socks") then
     o:value("dns2socks", "dns2socks")
 end
 if has_v2ray then
-    o:value("v2ray_doh", "V2ray DNS(DoH)")
-    o:value("v2ray_tcp", "V2ray DNS(TCP)")
+    o:value("v2ray", "V2ray")
 end
 if has_xray then
-    o:value("xray_doh", "Xray DNS(DoH)")
+    o:value("xray", "Xray")
 end
+
+o = s:option(ListValue, "v2ray_dns_mode", " ")
+o:value("tcp", "TCP")
+o:value("doh", "DoH")
+o:depends("dns_mode", "v2ray")
+o:depends("dns_mode", "xray")
 
 ---- DNS Forward
 o = s:option(Value, "dns_forward", translate("Remote DNS"))
-o.default = "8.8.8.8"
+o.default = "1.1.1.1"
+o:value("1.1.1.1", "1.1.1.1 (CloudFlare DNS)")
+o:value("1.1.1.2", "1.1.1.2 (CloudFlare DNS)")
 o:value("8.8.8.8", "8.8.8.8 (Google DNS)")
 o:value("8.8.4.4", "8.8.4.4 (Google DNS)")
 o:value("208.67.222.222", "208.67.222.222 (Open DNS)")
 o:value("208.67.220.220", "208.67.220.220 (Open DNS)")
 o:depends("dns_mode", "dns2socks")
+o:depends("v2ray_dns_mode", "tcp")
 
 if has_v2ray or has_xray then
 ---- DoH
 o = s:option(Value, "dns_doh", translate("DoH request address"))
-o:value("https://dns.adguard.com/dns-query,176.103.130.130", "AdGuard")
-o:value("https://cloudflare-dns.com/dns-query,1.1.1.1", "Cloudflare")
-o:value("https://security.cloudflare-dns.com/dns-query,1.1.1.2", "Cloudflare-Security")
+o:value("https://cloudflare-dns.com/dns-query,1.1.1.1", "CloudFlare")
+o:value("https://security.cloudflare-dns.com/dns-query,1.1.1.2", "CloudFlare-Security")
 o:value("https://doh.opendns.com/dns-query,208.67.222.222", "OpenDNS")
 o:value("https://dns.google/dns-query,8.8.8.8", "Google")
 o:value("https://doh.libredns.gr/dns-query,116.202.176.26", "LibreDNS")
 o:value("https://doh.libredns.gr/ads,116.202.176.26", "LibreDNS (No Ads)")
 o:value("https://dns.quad9.net/dns-query,9.9.9.9", "Quad9-Recommended")
-o.default = "https://dns.google/dns-query,8.8.8.8"
+o:value("https://dns.adguard.com/dns-query,176.103.130.130", "AdGuard")
+o.default = "https://cloudflare-dns.com/dns-query,1.1.1.1"
 o.validate = function(self, value, t)
     if value ~= "" then
         local flag = 0
@@ -206,8 +214,19 @@ o.validate = function(self, value, t)
     end
     return nil, translate("DoH request address") .. " " .. translate("Format must be:") .. " URL,IP"
 end
-o:depends("dns_mode", "v2ray_doh")
-o:depends("dns_mode", "xray_doh")
+o:depends("v2ray_dns_mode", "doh")
 end
+
+o = s:option(Value, "dns_client_ip", translate("EDNS Client Subnet"))
+o.datatype = "ipaddr"
+o:depends("v2ray_dns_mode", "doh")
+
+o = s:option(ListValue, "dns_query_strategy", translate("Query Strategy"))
+o.default = "UseIPv4"
+o:value("UseIPv4")
+o:value("UseIPv6")
+o:value("UseIP")
+o:depends("dns_mode", "v2ray")
+o:depends("dns_mode", "xray")
 
 return m
