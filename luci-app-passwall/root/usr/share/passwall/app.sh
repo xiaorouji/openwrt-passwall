@@ -320,6 +320,7 @@ run_ipt2socks() {
 	local _extra_param=""
 	eval_set_val $@
 	[ -n "$log_file" ] || log_file="/dev/null"
+	socks_address=$(get_host_ip "ipv4" ${socks_address})
 	[ -n "$socks_username" ] && [ -n "$socks_password" ] && _extra_param="${_extra_param} -a $socks_username -k $socks_password"
 	[ -n "$tcp_tproxy" ] || _extra_param="${_extra_param} -R"
 	case "$redir_type" in
@@ -556,6 +557,7 @@ run_redir() {
 		case "$type" in
 		socks)
 			local _socks_address=$(config_n_get $node address)
+			_socks_address=$(get_host_ip "ipv4" ${_socks_address})
 			local _socks_port=$(config_n_get $node port)
 			local _socks_username=$(config_n_get $node username)
 			local _socks_password=$(config_n_get $node password)
@@ -641,6 +643,7 @@ run_redir() {
 		socks)
 			_socks_flag=1
 			_socks_address=$(config_n_get $node address)
+			_socks_address=$(get_host_ip "ipv4" ${_socks_address})
 			_socks_port=$(config_n_get $node port)
 			_socks_username=$(config_n_get $node username)
 			_socks_password=$(config_n_get $node password)
