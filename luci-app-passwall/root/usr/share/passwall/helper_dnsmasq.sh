@@ -107,6 +107,11 @@ gen_dnsmasq_address_items() {
 	'
 }
 
+ipset_merge() {
+	awk '{gsub(/ipset=\//,""); gsub(/\//," ");key=$1;value=$2;if (sum[key] != "") {sum[key]=sum[key]","value} else {sum[key]=sum[key]value}} END{for(i in sum) print "ipset=/"i"/"sum[i]}' "${1}/ipset.conf" > "${1}/ipset.conf2"
+	mv -f "${1}/ipset.conf2" "${1}/ipset.conf"
+}
+
 add() {
 	local fwd_dns item servers msg
 	local DNS_MODE TMP_DNSMASQ_PATH DNSMASQ_CONF_FILE DEFAULT_DNS LOCAL_DNS TUN_DNS CHINADNS_DNS TCP_NODE PROXY_MODE NO_LOGIC_LOG
@@ -226,8 +231,7 @@ add() {
 			}
 		fi
 		
-		awk '{gsub(/ipset=\//,""); gsub(/\//," ");key=$1;value=$2;if (sum[key] != "") {sum[key]=sum[key]","value} else {sum[key]=sum[key]value}} END{for(i in sum) print "ipset=/"i"/"sum[i]}' "${TMP_DNSMASQ_PATH}/ipset.conf" > "${TMP_DNSMASQ_PATH}/ipset.conf2"
-		mv -f "${TMP_DNSMASQ_PATH}/ipset.conf2" "${TMP_DNSMASQ_PATH}/ipset.conf"
+		ipset_merge ${TMP_DNSMASQ_PATH} > /dev/null 2>&1 &
 	fi
 	
 	echo "conf-dir=${TMP_DNSMASQ_PATH}" > $DNSMASQ_CONF_FILE

@@ -64,7 +64,7 @@ do
 
 	#dns
 	dns_mode=$(config_t_get global dns_mode)
-	if [ "$dns_mode" == "pdnsd" ] || [ "$dns_mode" == "dns2socks" ] || [ "$dns_mode" == "v2ray_doh" ] || [ "$dns_mode" == "xray_doh" ]; then
+	if [ "$dns_mode" == "pdnsd" ] || [ "$dns_mode" == "dns2socks" ] || [ "$dns_mode" == "v2ray" ] || [ "$dns_mode" == "xray" ]; then
 		icount=$(netstat -apn | grep 7913 | wc -l)
 		if [ $icount = 0 ]; then
 			/etc/init.d/$CONFIG restart

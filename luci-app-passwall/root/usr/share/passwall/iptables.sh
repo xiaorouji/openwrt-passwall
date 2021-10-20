@@ -174,7 +174,7 @@ gen_laniplist_6() {
 }
 
 load_acl() {
-	local items=$(get_enabled_anonymous_secs "@acl_rule")
+	local items=$(uci show ${CONFIG} | grep "=acl_rule" | cut -d '.' -sf 2 | cut -d '=' -sf 1)
 	[ -n "$items" ] && {
 		local item
 		local socks_port redir_port dns_port dnsmasq_port
@@ -185,10 +185,11 @@ load_acl() {
 		dnsmasq_port=11400
 		echolog "访问控制："
 		for item in $items; do
-			local enabled sid remarks ip_mac tcp_proxy_mode udp_proxy_mode tcp_no_redir_ports udp_no_redir_ports tcp_redir_ports udp_redir_ports tcp_node udp_node dns_mode dns_forward dns_doh
+			local enabled sid remarks ip_mac tcp_proxy_mode udp_proxy_mode tcp_no_redir_ports udp_no_redir_ports tcp_redir_ports udp_redir_ports tcp_node udp_node dns_mode dns_forward v2ray_dns_mode dns_doh dns_client_ip dns_query_strategy
 			local ip mac ip_or_mac ip_mac_list tcp_port udp_port tcp_node_remark udp_node_remark config_file
 			sid=$(uci -q show "${CONFIG}.${item}" | grep "=acl_rule" | awk -F '=' '{print $1}' | awk -F '.' '{print $2}')
 			eval $(uci -q show "${CONFIG}.${item}" | cut -d'.' -sf 3-)
+			[ "$enabled" = "1" ] || continue
 			[ -z "${ip_mac}" ] && continue
 
 			for i in ${ip_mac}; do
@@ -207,8 +208,10 @@ load_acl() {
 			tcp_node=${tcp_node:-default}
 			udp_node=${udp_node:-default}
 			dns_mode=${dns_mode:-dns2socks}
-			dns_forward=${dns_forward:-8.8.8.8}
-			([ "$dns_mode" = "v2ray_doh" ] || [ "$dns_mode" = "xray_doh" ]) && dns_forward=${dns_doh:-https://dns.google/dns-query,8.8.8.8}
+			dns_forward=${dns_forward:-1.1.1.1}
+			[ "$dns_mode" = "v2ray" -o "$dns_mode" = "xray" ] && {
+				[ "$v2ray_dns_mode" = "doh" ] && dns_forward=${dns_doh:-https://cloudflare-dns.com/dns-query,1.1.1.1}
+			}
 			[ "$tcp_proxy_mode" = "default" ] && tcp_proxy_mode=$TCP_PROXY_MODE
 			[ "$udp_proxy_mode" = "default" ] && udp_proxy_mode=$UDP_PROXY_MODE
 			[ "$tcp_no_redir_ports" = "default" ] && tcp_no_redir_ports=$TCP_NO_REDIR_PORTS
@@ -229,14 +232,9 @@ load_acl() {
 								_dns_port=$dns_port
 								if [ "$dns_mode" = "dns2socks" ]; then
 									run_dns2socks flag=acl_${sid} socks_address=127.0.0.1 socks_port=$socks_port listen_address=0.0.0.0 listen_port=${_dns_port} dns=$dns_forward cache=1
-								elif ([ "$dns_mode" = "v2ray_doh" ] || [ "$dns_mode" = "xray_doh" ]); then
-									_doh_url=$(echo $dns_forward | awk -F ',' '{print $1}')
-									_doh_host_port=$(echo $_doh_url | sed "s/https:\/\///g" | awk -F '/' '{print $1}')
-									_doh_host=$(echo $_doh_host_port | awk -F ':' '{print $1}')
-									_doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
-									_doh_bootstrap=$(echo $dns_forward | cut -d ',' -sf 2-)
+								elif [ "$dns_mode" = "v2ray" -o "$dns_mode" = "xray" ]; then
 									config_file=$TMP_ACL_PATH/${tcp_node}_SOCKS_${socks_port}_DNS.json
-									run_v2ray_doh_socks flag=acl_${sid} socks_address=127.0.0.1 socks_port=$socks_port listen_address=0.0.0.0 listen_port=${_dns_port} doh_bootstrap=${_doh_bootstrap} doh_url=${_doh_url} doh_host=${_doh_host} config_file=$config_file
+									run_v2ray_dns_socks flag=acl_${sid} type=$dns_mode socks_address=127.0.0.1 socks_port=$socks_port listen_address=0.0.0.0 listen_port=${_dns_port} dns_proto=${v2ray_dns_mode} dns_tcp_server=${dns_forward} doh="${dns_forward}" dns_client_ip=${dns_client_ip} dns_query_strategy=${dns_query_strategy} config_file=$config_file
 								fi
 								eval node_${tcp_node}_$(echo -n "${dns_forward}" | md5sum | cut -d " " -f1)=${_dns_port}
 							}
@@ -424,7 +422,7 @@ load_acl() {
 				$ipt_m -A PSW $(comment "$remarks") $(factor $ip "-s") $(factor $mac "-m mac --mac-source") -p udp -j RETURN
 				$ip6t_m -A PSW $(comment "$remarks") $(factor $ip "-s") $(factor $mac "-m mac --mac-source") -p udp -j RETURN 2>/dev/null
 			done
-			unset enabled sid remarks ip_mac tcp_proxy_mode udp_proxy_mode tcp_no_redir_ports udp_no_redir_ports tcp_redir_ports udp_redir_ports tcp_node udp_node dns_mode dns_forward dns_doh
+			unset enabled sid remarks ip_mac tcp_proxy_mode udp_proxy_mode tcp_no_redir_ports udp_no_redir_ports tcp_redir_ports udp_redir_ports tcp_node udp_node dns_mode dns_forward v2ray_dns_mode dns_doh dns_client_ip dns_query_strategy
 			unset ip mac ip_or_mac ip_mac_list tcp_port udp_port tcp_node_remark udp_node_remark config_file
 			unset ipt_tmp msg msg2
 			unset redirect_dns_port

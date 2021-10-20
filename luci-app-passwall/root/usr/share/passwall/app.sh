@@ -300,9 +300,10 @@ load_config() {
 	chnlist=$(echo "${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}${UDP_PROXY_MODE}${LOCALHOST_UDP_PROXY_MODE}" | grep "chnroute")
 	gfwlist=$(echo "${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}${UDP_PROXY_MODE}${LOCALHOST_UDP_PROXY_MODE}" | grep "gfwlist")
 	DNS_MODE=$(config_t_get global dns_mode pdnsd)
-	DNS_FORWARD=$(config_t_get global dns_forward 8.8.4.4:53 | sed 's/:/#/g')
+	DNS_FORWARD=$(config_t_get global dns_forward 1.1.1.1:53 | sed 's/:/#/g')
 	DNS_CACHE=$(config_t_get global dns_cache 0)
 	CHINADNS_NG=$(config_t_get global chinadns_ng 1)
+	dns_listen_port=${DNS_PORT}
 
 	DEFAULT_DNS=$(uci show dhcp | grep "@dnsmasq" | grep "\.server=" | awk -F '=' '{print $2}' | sed "s/'//g" | tr ' ' '\n' | grep -v "\/" | head -2 | sed ':label;N;s/\n/,/;b label')
 	[ -z "${DEFAULT_DNS}" ] && DEFAULT_DNS=$(echo -n $(sed -n 's/^nameserver[ \t]*\([^ ]*\)$/\1/p' "${RESOLVFILE}" | grep -v -E "0.0.0.0|127.0.0.1|::" | head -2) | tr ' ' ',')
@@ -383,25 +384,33 @@ run_dns2socks() {
 	ln_start_bin "$(first_type dns2socks)" "dns2socks${flag}" $log_file ${_extra_param} "${socks_address}:${socks_port}" "${dns}" "${listen_address}:${listen_port}"
 }
 
-run_v2ray_doh_socks() {
-	local bin=$(first_type $(config_t_get global_app v2ray_file) v2ray)
-	if [ -n "$bin" ]; then
-		type="v2ray"
-	else
-		bin=$(first_type $(config_t_get global_app xray_file) xray)
-		[ -n "$bin" ] && type="xray"
-	fi
-	[ -z "$type" ] && return 1
-	local flag socks_address socks_port socks_username socks_password listen_address listen_port doh_bootstrap doh_url doh_host log_file config_file
+run_v2ray_dns_socks() {
+	local flag type socks_address socks_port socks_username socks_password listen_address listen_port dns_proto dns_tcp_server doh dns_client_ip dns_query_strategy log_file config_file
 	eval_set_val $@
+	[ -z "$type" ] && {
+		local bin=$(first_type $(config_t_get global_app v2ray_file) v2ray)
+		if [ -n "$bin" ]; then
+			type="v2ray"
+		else
+			bin=$(first_type $(config_t_get global_app xray_file) xray)
+			[ -n "$bin" ] && type="xray"
+		fi
+	}
+	[ -z "$type" ] && return 1
 	[ -n "$log_file" ] || log_file="/dev/null"
-	_doh_url=$(echo $doh | awk -F ',' '{print $1}')
-	_doh_host_port=$(echo $_doh_url | sed "s/https:\/\///g" | awk -F '/' '{print $1}')
-	_doh_host=$(echo $_doh_host_port | awk -F ':' '{print $1}')
-	_doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
-	_doh_bootstrap=$(echo $doh | cut -d ',' -sf 2-)
-	lua $API_GEN_V2RAY -dns_listen_port "${listen_port}" -dns_server "${doh_bootstrap}" -doh_url "${doh_url}" -doh_host "${doh_host}" -dns_socks_address "${socks_address}" -dns_socks_port "${socks_port}" > $config_file
-	ln_start_bin "$bin" $type $log_file -config="$config_file"
+	if [ "$dns_proto" = "tcp" ]; then
+		local _dns_forward=$(get_first_dns dns_tcp_server 53 | sed 's/#/:/g')
+		local _dns_address=$(echo ${_dns_forward} | awk -F ':' '{print $1}')
+		lua $API_GEN_V2RAY -dns_listen_port "${listen_port}" -dns_server "${_dns_address}" -dns_tcp_server "tcp://${_dns_forward}" -dns_query_strategy "${dns_query_strategy}" -dns_socks_address "${socks_address}" -dns_socks_port "${socks_port}" > $config_file
+	elif [ "$dns_proto" = "doh" ]; then
+		_doh_url=$(echo $doh | awk -F ',' '{print $1}')
+		_doh_host_port=$(echo $_doh_url | sed "s/https:\/\///g" | awk -F '/' '{print $1}')
+		_doh_host=$(echo $_doh_host_port | awk -F ':' '{print $1}')
+		_doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
+		_doh_bootstrap=$(echo $doh | cut -d ',' -sf 2-)
+		lua $API_GEN_V2RAY -dns_listen_port "${listen_port}" -dns_server "${_doh_bootstrap}" -doh_url "${_doh_url}" -doh_host "${_doh_host}" -dns_client_ip "${dns_client_ip}" -dns_query_strategy "${dns_query_strategy}" -dns_socks_address "${socks_address}" -dns_socks_port "${socks_port}" > $config_file
+	fi
+	ln_start_bin "$(first_type $(config_t_get global_app ${type}_file) ${type})" ${type} $log_file -config="$config_file"
 }
 
 run_socks() {
@@ -680,6 +689,42 @@ run_redir() {
 				UDP_NODE="nil"
 			}
 			_extra_param="${_extra_param} ${proto}"
+			[ "${DNS_MODE}" = "v2ray" -o "${DNS_MODE}" = "xray" ] && [ "$(config_t_get global dns_by)" = "tcp" ] && {
+				config_file=$(echo $config_file | sed "s/.json/_DNS.json/g")
+				use_tcp_node_resolve_dns=1
+				local v2ray_dns_mode=$(config_t_get global v2ray_dns_mode tcp)
+				case "$v2ray_dns_mode" in
+					tcp)
+						local dns_forward=$(get_first_dns DNS_FORWARD 53 | sed 's/#/:/g')
+						local dns_address=$(echo $dns_forward | awk -F ':' '{print $1}')
+						_extra_param="${_extra_param} -dns_listen_port ${dns_listen_port} -dns_server ${dns_address} -dns_tcp_server tcp://${dns_forward}"
+						echolog "  - 域名解析 DNS Over TCP..."
+					;;
+					doh)
+						up_trust_doh=$(config_t_get global up_trust_doh "https://cloudflare-dns.com/dns-query,1.1.1.1")
+						_doh_url=$(echo $up_trust_doh | awk -F ',' '{print $1}')
+						_doh_host_port=$(echo $_doh_url | sed "s/https:\/\///g" | awk -F '/' '{print $1}')
+						_doh_host=$(echo $_doh_host_port | awk -F ':' '{print $1}')
+						_doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
+						_doh_bootstrap=$(echo $up_trust_doh | cut -d ',' -sf 2-)
+						_dns_client_ip=$(config_t_get global dns_client_ip)
+
+						if [ "${dns_by}" = "tcp" ]; then
+							DNS_FORWARD=""
+							_doh_bootstrap_dns=$(echo $_doh_bootstrap | sed "s/,/ /g")
+							for _dns in $_doh_bootstrap_dns; do
+								_dns=$(echo $_dns | awk -F ':' '{print $1}'):${_doh_port:-443}
+								[ -n "$DNS_FORWARD" ] && DNS_FORWARD=${DNS_FORWARD},${_dns} || DNS_FORWARD=${_dns}
+							done
+							unset _dns _doh_bootstrap_dns
+						fi
+						_extra_param="${_extra_param} -dns_listen_port ${dns_listen_port} -dns_server ${_doh_bootstrap} -doh_url ${_doh_url} -doh_host ${_doh_host} -dns_client_ip ${_dns_client_ip}"
+						unset _doh_url _doh_port _doh_bootstrap
+						echolog "  - 域名解析 DNS Over HTTPS..."
+					;;
+				esac
+			}
+			echolog ${_extra_param}
 			lua $API_GEN_V2RAY -node $node -redir_port $local_port -proxy_way $tcp_proxy_way -loglevel $loglevel ${_extra_param} > $config_file
 			ln_start_bin "$(first_type $(config_t_get global_app ${type}_file) ${type})" ${type} $log_file -config="$config_file"
 		;;
@@ -1024,7 +1069,6 @@ stop_crontab() {
 }
 
 start_dns() {
-	dns_listen_port=${DNS_PORT}
 	TUN_DNS="127.0.0.1#${dns_listen_port}"
 
 	echolog "过滤服务配置：准备接管域名解析..."
@@ -1040,59 +1084,57 @@ start_dns() {
 		local dns2socks_socks_server=$(echo $(config_t_get global socks_server 127.0.0.1:1080) | sed "s/#/:/g")
 		local dns2socks_forward=$(get_first_dns DNS_FORWARD 53 | sed 's/#/:/g')
 		run_dns2socks socks=$dns2socks_socks_server listen_address=127.0.0.1 listen_port=${dns_listen_port} dns=$dns2socks_forward cache=$DNS_CACHE
-		echolog "  - 域名解析：dns2socks(127.0.0.1:${dns_listen_port})，${dns2socks_socks_server:-127.0.0.1:1080} -> ${dns2socks_forward-D8.8.8.8:53}"
+		echolog "  - 域名解析：dns2socks(127.0.0.1:${dns_listen_port})，${dns2socks_socks_server} -> ${dns2socks_forward}"
 	;;
-	v2ray_tcp)
-		local dns_forward=$(get_first_dns DNS_FORWARD 53 | sed 's/#/:/g')
-		local dns_address=$(echo $dns_forward | awk -F ':' '{print $1}')
-		local up_trust_tcp_dns=$(config_t_get global up_trust_tcp_dns "tcp")
-		[ "${DNS_CACHE}" == "0" ] && local _extra_param="-dns_cache 0"
-		if [ "$up_trust_tcp_dns" = "socks" ]; then
-			use_tcp_node_resolve_dns=0
-			local socks_server=$(echo $(config_t_get global socks_server 127.0.0.1:1080) | sed "s/#/:/g")
-			local socks_address=$(echo $socks_server | awk -F ':' '{print $1}')
-			local socks_port=$(echo $socks_server | awk -F ':' '{print $2}')
-			lua $API_GEN_V2RAY -dns_listen_port "${dns_listen_port}" -dns_server "${dns_address}" -dns_tcp_server "tcp://${dns_forward}" -dns_socks_address "${socks_address}" -dns_socks_port "${socks_port}" ${_extra_param} > $TMP_PATH/DNS.json
-		elif [ "${up_trust_tcp_dns}" = "tcp" ]; then
-			use_tcp_node_resolve_dns=1
-			lua $API_GEN_V2RAY -dns_listen_port "${dns_listen_port}" -dns_server "${dns_address}" -dns_tcp_server "tcp://${dns_forward}" ${_extra_param} > $TMP_PATH/DNS.json
-		fi
-		ln_start_bin "$(first_type $(config_t_get global_app v2ray_file) v2ray)" v2ray $TMP_PATH/DNS.log -config="$TMP_PATH/DNS.json"
-		echolog "  - 域名解析 DNS Over TCP..."
-	;;
-	v2ray_doh|\
-	xray_doh)
-		local type=$(echo $DNS_MODE | awk -F '_' '{print $1}')
-		up_trust_doh_dns=$(config_t_get global up_trust_doh_dns "tcp")
-		up_trust_doh=$(config_t_get global up_trust_doh "https://dns.google/dns-query,8.8.4.4")
-		_doh_url=$(echo $up_trust_doh | awk -F ',' '{print $1}')
-		_doh_host_port=$(echo $_doh_url | sed "s/https:\/\///g" | awk -F '/' '{print $1}')
-		_doh_host=$(echo $_doh_host_port | awk -F ':' '{print $1}')
-		_doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
-		_doh_bootstrap=$(echo $up_trust_doh | cut -d ',' -sf 2-)
-		[ "${DNS_CACHE}" == "0" ] && local _extra_param="-dns_cache 0"
+	v2ray|\
+	xray)
+		[ "${use_tcp_node_resolve_dns}" == "0" ] && {
+			[ "${DNS_CACHE}" == "0" ] && local _extra_param="-dns_cache 0"
+			local dns_query_strategy=$(config_t_get global dns_query_strategy UseIPv4)
+			_extra_param="${_extra_param} -dns_query_strategy ${dns_query_strategy}"
+			local dns_by=$(config_t_get global dns_by "tcp")
+			if [ "${dns_by}" = "tcp" ]; then
+				use_tcp_node_resolve_dns=1
+			elif [ "${dns_by}" = "socks" ]; then
+				use_tcp_node_resolve_dns=0
+				local socks_server=$(echo $(config_t_get global socks_server 127.0.0.1:1080) | sed "s/#/:/g")
+				local socks_address=$(echo $socks_server | awk -F ':' '{print $1}')
+				local socks_port=$(echo $socks_server | awk -F ':' '{print $2}')
+				_extra_param="${_extra_param} -dns_socks_address ${socks_address} -dns_socks_port ${socks_port}"
+			fi
+			local v2ray_dns_mode=$(config_t_get global v2ray_dns_mode tcp)
+			case "$v2ray_dns_mode" in
+				tcp)
+					local dns_forward=$(get_first_dns DNS_FORWARD 53 | sed 's/#/:/g')
+					local dns_address=$(echo $dns_forward | awk -F ':' '{print $1}')
+					lua $API_GEN_V2RAY -dns_listen_port "${dns_listen_port}" -dns_server "${dns_address}" -dns_tcp_server "tcp://${dns_forward}" ${_extra_param} > $TMP_PATH/DNS.json
+					echolog "  - 域名解析 DNS Over TCP..."
+				;;
+				doh)
+					up_trust_doh=$(config_t_get global up_trust_doh "https://cloudflare-dns.com/dns-query,1.1.1.1")
+					_doh_url=$(echo $up_trust_doh | awk -F ',' '{print $1}')
+					_doh_host_port=$(echo $_doh_url | sed "s/https:\/\///g" | awk -F '/' '{print $1}')
+					_doh_host=$(echo $_doh_host_port | awk -F ':' '{print $1}')
+					_doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
+					_doh_bootstrap=$(echo $up_trust_doh | cut -d ',' -sf 2-)
+					_dns_client_ip=$(config_t_get global dns_client_ip)
 
-		if [ "$up_trust_doh_dns" = "socks" ]; then
-			use_tcp_node_resolve_dns=0
-			socks_server=$(echo $(config_t_get global socks_server 127.0.0.1:1080) | sed "s/#/:/g")
-			socks_address=$(echo $socks_server | awk -F ':' '{print $1}')
-			socks_port=$(echo $socks_server | awk -F ':' '{print $2}')
-			lua $API_GEN_V2RAY -dns_listen_port "${dns_listen_port}" -dns_server "${_doh_bootstrap}" -doh_url "${_doh_url}" -doh_host "${_doh_host}" -dns_socks_address "${socks_address}" -dns_socks_port "${socks_port}" ${_extra_param} > $TMP_PATH/DNS.json
-			ln_start_bin "$(first_type $(config_t_get global_app ${type}_file) ${type})" ${type} $TMP_PATH/DNS.log -config="$TMP_PATH/DNS.json"
-		elif [ "${up_trust_doh_dns}" = "tcp" ]; then
-			use_tcp_node_resolve_dns=1
-			DNS_FORWARD=""
-			_doh_bootstrap_dns=$(echo $_doh_bootstrap | sed "s/,/ /g")
-			for _dns in $_doh_bootstrap_dns; do
-				_dns=$(echo $_dns | awk -F ':' '{print $1}'):${_doh_port:-443}
-				[ -n "$DNS_FORWARD" ] && DNS_FORWARD=${DNS_FORWARD},${_dns} || DNS_FORWARD=${_dns}
-			done
-			lua $API_GEN_V2RAY -dns_listen_port "${dns_listen_port}" -dns_server "${_doh_bootstrap}" -doh_url "${_doh_url}" -doh_host "${_doh_host}" ${_extra_param} > $TMP_PATH/DNS.json
-			ln_start_bin "$(first_type $(config_t_get global_app ${type}_file) ${type})" ${type} $TMP_PATH/DNS.log -config="$TMP_PATH/DNS.json"
-			unset _dns _doh_bootstrap_dns
-		fi
-		unset _doh_url _doh_port _doh_bootstrap
-		echolog "  - 域名解析 DNS Over HTTPS..."
+					if [ "${dns_by}" = "tcp" ]; then
+						DNS_FORWARD=""
+						_doh_bootstrap_dns=$(echo $_doh_bootstrap | sed "s/,/ /g")
+						for _dns in $_doh_bootstrap_dns; do
+							_dns=$(echo $_dns | awk -F ':' '{print $1}'):${_doh_port:-443}
+							[ -n "$DNS_FORWARD" ] && DNS_FORWARD=${DNS_FORWARD},${_dns} || DNS_FORWARD=${_dns}
+						done
+						unset _dns _doh_bootstrap_dns
+					fi
+					lua $API_GEN_V2RAY -dns_listen_port "${dns_listen_port}" -dns_server "${_doh_bootstrap}" -doh_url "${_doh_url}" -doh_host "${_doh_host}" -dns_client_ip "${_dns_client_ip}" ${_extra_param} > $TMP_PATH/DNS.json
+					unset _doh_url _doh_port _doh_bootstrap
+					echolog "  - 域名解析 DNS Over HTTPS..."
+				;;
+			esac
+			ln_start_bin "$(first_type $(config_t_get global_app ${DNS_MODE}_file) ${DNS_MODE})" ${DNS_MODE} $TMP_PATH/DNS.log -config="$TMP_PATH/DNS.json"
+		}
 	;;
 	pdnsd)
 		use_tcp_node_resolve_dns=1
