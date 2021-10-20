@@ -25,6 +25,7 @@ function gen_config(user)
         end
     elseif user.protocol == "socks" then
         settings = {
+            udp = ("1" == user.udp_forward) and true or false,
             auth = ("1" == user.auth) and "password" or "noauth",
             accounts = ("1" == user.auth) and {
                 {
