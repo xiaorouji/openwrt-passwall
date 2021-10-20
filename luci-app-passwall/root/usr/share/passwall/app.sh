@@ -560,7 +560,7 @@ run_redir() {
 			local _socks_username=$(config_n_get $node username)
 			local _socks_password=$(config_n_get $node password)
 			[ -n "${_socks_username}" ] && [ -n "${_socks_password}" ] && local _extra_param="-a ${_socks_username} -k ${_socks_password}"
-			ln_start_bin "$(first_type ipt2socks)" "ipt2socks_UDP" $log_file -l $local_port -b 127.0.0.1 -s ${_socks_address} -p ${_socks_port} ${_extra_param} -U -v
+			ln_start_bin "$(first_type ipt2socks)" "ipt2socks_UDP" $log_file -l $local_port -b 0.0.0.0 -s ${_socks_address} -p ${_socks_port} ${_extra_param} -U -v
 		;;
 		v2ray|\
 		xray)
@@ -793,7 +793,7 @@ run_redir() {
 			[ "$tcp_proxy_way" = "tproxy" ] && _socks_tproxy=""
 			_extra_param="${_extra_param} ${_socks_tproxy}"
 			[ -n "${_socks_username}" ] && [ -n "${_socks_password}" ] && _extra_param="-a ${_socks_username} -k ${_socks_password} ${_extra_param}"
-			ln_start_bin "$(first_type ipt2socks)" "ipt2socks_${_flag}" $log_file -l $local_port -b 127.0.0.1 -s ${_socks_address} -p ${_socks_port} ${_extra_param} -v
+			ln_start_bin "$(first_type ipt2socks)" "ipt2socks_${_flag}" $log_file -l $local_port -b 0.0.0.0 -s ${_socks_address} -p ${_socks_port} ${_extra_param} -v
 		fi
 
 		([ "$type" != "v2ray" ] && [ "$type" != "xray" ]) && {
