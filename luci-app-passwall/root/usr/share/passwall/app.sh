@@ -1210,29 +1210,25 @@ gen_pdnsd_config() {
 add_ip2route() {
 	local ip=$(get_host_ip "ipv4" $1)
 	[ -z "$ip" ] && {
-		echolog "  - 无法解析${1}，路由表添加失败！"
+		echolog "  - 无法解析[${1}]，路由表添加失败！"
 		return 1
 	}
 	local remarks="${1}"
 	[ "$remarks" != "$ip" ] && remarks="${1}(${ip})"
-	local interface=$2
-	local retries=5
-	local failcount=0
-	while [ "$failcount" -lt $retries ]; do
-		unset msg
-		ip route show dev ${interface} >/dev/null 2>&1
-		if [ $? -ne 0 ]; then
-			let "failcount++"
-			echolog "  - 找不到出口接口：$interface，1分钟后再重试(${failcount}/${retries})，${ip}"
-			[ "$failcount" -ge $retries ] && return 1
-			sleep 1m
-		else
-			route add -host ${ip} dev ${interface} >/dev/null 2>&1
-			echolog "  - ${remarks}添加路由表${interface}接口成功！"
-			echo "$ip" >> $TMP_ROUTE_PATH/${interface}
-			break
-		fi
-	done
+	
+	. /lib/functions/network.sh
+	local gateway device
+	network_get_gateway gateway "$2"
+	network_get_device device "$2"
+	[ -z "${device}" ] && device="$2"
+	
+	if [ -n "${gateway}" ]; then
+		route add -host ${ip} gw ${gateway} dev ${device} >/dev/null 2>&1
+		echo "$ip" >> $TMP_ROUTE_PATH/${device}
+		echolog "  - [${remarks}]添加到接口[${device}]路由表成功！"
+	else
+		echolog "  - [${remarks}]添加到接口[${device}]路由表失功！原因是找不到[${device}]网关。"
+	fi
 }
 
 delete_ip2route() {
