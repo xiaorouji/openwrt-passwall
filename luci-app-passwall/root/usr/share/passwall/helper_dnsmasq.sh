@@ -231,7 +231,7 @@ add() {
 			}
 		fi
 		
-		ipset_merge ${TMP_DNSMASQ_PATH} > /dev/null 2>&1 &
+		ipset_merge ${TMP_DNSMASQ_PATH}
 	fi
 	
 	echo "conf-dir=${TMP_DNSMASQ_PATH}" > $DNSMASQ_CONF_FILE

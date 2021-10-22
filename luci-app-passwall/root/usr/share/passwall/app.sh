@@ -724,7 +724,6 @@ run_redir() {
 					;;
 				esac
 			}
-			echolog ${_extra_param}
 			lua $API_GEN_V2RAY -node $node -redir_port $local_port -proxy_way $tcp_proxy_way -loglevel $loglevel ${_extra_param} > $config_file
 			ln_start_bin "$(first_type $(config_t_get global_app ${type}_file) ${type})" ${type} $log_file -config="$config_file"
 		;;
