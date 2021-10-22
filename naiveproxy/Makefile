@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=naiveproxy
-PKG_VERSION:=94.0.4606.61-1
+PKG_VERSION:=95.0.4638.54-1
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/klzgrad/naiveproxy/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=26c00dfe14284ff19fe78e4185649a48292582adf7d6e3d2d0e994098c393097
+PKG_HASH:=ccfb2462d91d9c0a77be23aef33962a0ce761a63e8e77c9a34e815c504dceac0
 
 PKG_LICENSE:=BSD 3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -36,17 +36,13 @@ endif
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/naiveproxy/config
-	depends on !(arc||armeb||mips||mips64||powerpc)
-endef
-
 define Package/naiveproxy
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   URL:=https://github.com/klzgrad/naiveproxy
   TITLE:=Make a fortune quietly
-  DEPENDS:=+libatomic
+  DEPENDS:=@!(arc||armeb||mips||mips64||powerpc) +libatomic
 endef
 
 define Package/naiveproxy/description
@@ -62,13 +58,13 @@ ifneq ($(CONFIG_CCACHE),)
   export naive_ccache_flags=cc_wrapper="$(CCACHE)"
 endif
 
-CLANG_VER:=14-init-1002-gb5e470aa-1
+CLANG_VER:=14-init-3191-g0e03450a-1
 CLANG_FILE:=clang-llvmorg-$(CLANG_VER).tgz
 define Download/CLANG
 	URL:=https://commondatastorage.googleapis.com/chromium-browser-clang/Linux_x64
 	URL_FILE:=$(CLANG_FILE)
 	FILE:=$(CLANG_FILE)
-	HASH:=bed9118082c98d990434c02230d9eec5e3aa3158b479d4cd3317482906d4e897
+	HASH:=dd7479d43ce61401e057a5dee8b7e32bc2bd0d0e15d4f46c6858daf9170c9978
 endef
 
 GN_VER:=69ec4fca1fa69ddadae13f9e6b7507efa0675263
@@ -80,14 +76,14 @@ define Download/GN_TOOL
 	HASH:=8bedd600ac58311f384e5113ab6a544bc72edb587ccb8f9e784c4dff208872c4
 endef
 
-PGO_VER:=4606-1632147900-2674511630c4bfe602871b9780dec43586d68327
+PGO_VER:=4638-1634308623-72bf2d0e0b11b9cb785718016169434ba1d25ee3
 PGO_FILE:=chrome-linux-$(PGO_VER).profdata
 define Download/PGO_PROF
 	URL:=https://storage.googleapis.com.cnpmjs.org/chromium-optimization-profiles/pgo_profiles \
 	     https://storage.googleapis.com/chromium-optimization-profiles/pgo_profiles
 	URL_FILE:=$(PGO_FILE)
 	FILE:=$(PGO_FILE)
-	HASH:=d729c99079a619fc0fa33b3f79a731942cad7fcefae0a683678e3c32530d1bf7
+	HASH:=252703067ad0897cc0f39f618eb792b0899769bb0e1b715b64bee15bcfba6f0b
 endef
 
 define Build/Prepare
