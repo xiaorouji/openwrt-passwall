@@ -45,7 +45,6 @@ config $(PKG_NAME)_COMPRESS_UPX
 	depends on @!mips64
 	default y
 endef
-endef
 
 ifeq ($(CONFIG_$(PKG_NAME)_INCLUDE_GOPROXY),y)
 export GO111MODULE=on
