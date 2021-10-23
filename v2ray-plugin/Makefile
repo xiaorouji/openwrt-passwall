@@ -42,7 +42,7 @@ config $(PKG_NAME)_INCLUDE_GOPROXY
 
 config $(PKG_NAME)_COMPRESS_UPX
 	bool "Compress executable files with UPX"
-	depends on @!mips64
+	depends on !mips64
 	default y
 endef
 
