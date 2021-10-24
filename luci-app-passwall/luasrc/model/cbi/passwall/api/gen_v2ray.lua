@@ -20,6 +20,8 @@ local dns_tcp_server = var["-dns_tcp_server"]
 local dns_cache = var["-dns_cache"]
 local doh_url = var["-doh_url"]
 local doh_host = var["-doh_host"]
+local dns_client_ip = var["-dns_client_ip"]
+local dns_query_strategy = var["-dns_query_strategy"]
 local dns_socks_address = var["-dns_socks_address"]
 local dns_socks_port = var["-dns_socks_port"]
 local loglevel = var["-loglevel"] or "warning"
@@ -291,6 +293,22 @@ if node_section then
     end
 
     if node.protocol == "_shunt" then
+        table.insert(outbounds, {
+            protocol = "freedom",
+            tag = "direct",
+            settings = {
+                domainStrategy = "UseIPv4"
+            },
+            streamSettings = {
+                sockopt = {
+                    mark = 255
+                }
+            }
+        })
+        table.insert(outbounds, {
+            protocol = "blackhole",
+            tag = "blackhole"
+        })
         local rules = {}
 
         local default_node_id = node.default_node or "_direct"
@@ -491,6 +509,10 @@ if node_section then
 end
 
 if dns_server then
+    table.insert(outbounds, {
+        protocol = "dns",
+        tag = "dns-out"
+    })
     local rules = {}
 
     dns = {
@@ -498,18 +520,26 @@ if dns_server then
         disableCache = (dns_cache and dns_cache == "0") and true or false,
         servers = {
             dns_server
-        }
+        },
+        clientIp = (dns_client_ip and dns_client_ip ~= "") and dns_client_ip or nil,
+        queryStrategy = (dns_query_strategy and dns_query_strategy ~= "") and dns_query_strategy or nil
     }
     if doh_url and doh_host then
         dns.hosts = {
             [doh_host] = dns_server
         }
+        if not redir_port and not dns_socks_port then
+            doh_url = doh_url:gsub("https://", "https+local://")
+        end
         dns.servers = {
             doh_url
         }
     end
 
     if dns_tcp_server then
+        if not redir_port and not dns_socks_port then
+            dns_tcp_server = dns_tcp_server:gsub("tcp://", "tcp+local://")
+        end
         dns.servers = {
             dns_tcp_server
         }
@@ -523,7 +553,6 @@ if dns_server then
             tag = "dns-in",
             settings = {
                 address = dns_server,
-                port = 53,
                 network = "udp"
             }
         })
@@ -537,7 +566,6 @@ if dns_server then
         outboundTag = "dns-out"
     })
 
-    local outboundTag = "direct"
     if dns_socks_address and dns_socks_port then
         table.insert(outbounds, 1, {
             tag = "out",
@@ -555,44 +583,44 @@ if dns_server then
                 }
             }
         })
-        outboundTag = "out"
+        local outboundTag = "out"
+        table.insert(rules, {
+            type = "field",
+            inboundTag = {
+                "dns-in1"
+            },
+            outboundTag = outboundTag
+        })
     end
-    table.insert(rules, {
-        type = "field",
-        inboundTag = {
-            "dns-in1"
-        },
-        outboundTag = outboundTag
-    })
+
+    if node_section and (proto and proto:find("tcp")) and redir_port then
+        local outboundTag = node_section
+        local node = uci:get_all(appname, node_section)
+        if node.protocol == "_shunt" then
+            outboundTag = "default"
+        end
+        table.insert(rules, {
+            type = "field",
+            inboundTag = {
+                "dns-in1"
+            },
+            outboundTag = outboundTag
+        })
+    end
     
-    routing = {
-        domainStrategy = "IPOnDemand",
-        rules = rules
-    }
+    if not routing then
+        routing = {
+            domainStrategy = "IPOnDemand",
+            rules = rules
+        }
+    else
+        for index, value in ipairs(rules) do
+            table.insert(routing.rules, 1, value)
+        end
+    end
 end
 
 if inbounds or outbounds then
-    table.insert(outbounds, {
-        protocol = "freedom",
-        tag = "direct",
-        settings = {
-            domainStrategy = "UseIPv4"
-        },
-        streamSettings = {
-            sockopt = {
-                mark = 255
-            }
-        }
-    })
-    table.insert(outbounds, {
-        protocol = "blackhole",
-        tag = "blackhole"
-    })
-    table.insert(outbounds, {
-        protocol = "dns",
-        tag = "dns-out"
-    })
-
     local config = {
         log = {
             -- error = string.format("/var/etc/%s/%s.log", appname, node[".name"]),
