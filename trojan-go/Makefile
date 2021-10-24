@@ -53,6 +53,7 @@ config TROJAN_GO_COMPRESS_GOPROXY
 
 config TROJAN_GO_COMPRESS_UPX
 	bool "Compress executable files with UPX"
+	depends on @!mips64
 	default y
 
 endmenu

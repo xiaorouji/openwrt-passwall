@@ -61,7 +61,6 @@ use_glib=false
 
 disable_file_support=true
 enable_websockets=false
-disable_ftp_support=true
 use_kerberos=false
 enable_mdns=false
 enable_reporting=false
@@ -85,8 +84,8 @@ case "${target_arch}" in
 		naive_flags+=" arm_float_abi=\"soft\" arm_use_neon=false"
 	fi
 	;;
-"mips"|"mips64"|"mipsel"|"mips64el")
-	naive_flags+=" use_gold=false is_cfi=false use_cfi_icall=false use_thin_lto=false mips_arch_variant=\"r2\""
-	[[ "${target_arch}" =~ ^"mips"$|^"mipsel"$ ]] && naive_flags+=" mips_float_abi=\"soft\" mips_tune=\"${cpu_type}\" chrome_pgo_phase=0"
+"mipsel"|"mips64el")
+	naive_flags+=" use_gold=false use_thin_lto=false use_lld=false chrome_pgo_phase=0 mips_arch_variant=\"r2\""
+	[ "${target_arch}" == "mipsel" ] && naive_flags+=" mips_float_abi=\"soft\" mips_tune=\"${cpu_type}\""
 	;;
 esac

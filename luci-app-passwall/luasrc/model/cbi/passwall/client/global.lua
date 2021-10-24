@@ -187,15 +187,20 @@ if api.is_finded("dns2socks") then
     o:value("dns2socks", "dns2socks")
 end
 if has_v2ray then
-    o:value("v2ray_tcp", "V2ray DNS(TCP)")
-    o:value("v2ray_doh", "V2ray DNS(DoH)")
+    o:value("v2ray", "V2ray")
 end
 if has_xray then
-    o:value("xray_doh", "Xray DNS(DoH)")
+    o:value("xray", "Xray")
 end
 o:value("udp", translatef("Requery DNS By %s", translate("UDP Node")))
 o:value("custom", translate("Custom DNS") .. "(UDP)")
 o:value("nonuse", translate("No Filter"))
+
+o = s:taboption("DNS", ListValue, "v2ray_dns_mode", " ")
+o:value("tcp", "TCP")
+o:value("doh", "DoH")
+o:depends("dns_mode", "v2ray")
+o:depends("dns_mode", "xray")
 
 ---- Custom DNS
 o = s:taboption("DNS", Value, "custom_dns", translate("Custom DNS"))
@@ -209,16 +214,11 @@ o.validate = function(self, value, t)
 end
 o:depends({dns_mode = "custom"})
 
-o = s:taboption("DNS", ListValue, "up_trust_tcp_dns", translate("Resolver For The List Proxied"))
+o = s:taboption("DNS", ListValue, "dns_by", translate("Resolver For The List Proxied"))
 o:value("tcp", translatef("Requery DNS By %s", translate("TCP Node")))
 o:value("socks", translatef("Requery DNS By %s", translate("Socks Node")))
-o:depends("dns_mode", "v2ray_tcp")
-
-o = s:taboption("DNS", ListValue, "up_trust_doh_dns", translate("Resolver For The List Proxied"))
-o:value("tcp", translatef("Requery DNS By %s", translate("TCP Node")))
-o:value("socks", translatef("Requery DNS By %s", translate("Socks Node")))
-o:depends("dns_mode", "v2ray_doh")
-o:depends("dns_mode", "xray_doh")
+o:depends("v2ray_dns_mode", "tcp")
+o:depends("v2ray_dns_mode", "doh")
 
 o = s:taboption("DNS", Value, "socks_server", translate("Socks Server"), translate("Make sure socks service is available on this address."))
 for k, v in pairs(socks_table) do o:value(v.id, v.remarks) end
@@ -229,29 +229,28 @@ o.validate = function(self, value, t)
     return value
 end
 o:depends({dns_mode = "dns2socks"})
-o:depends({dns_mode = "v2ray_tcp", up_trust_tcp_dns = "socks"})
-o:depends({dns_mode = "v2ray_doh", up_trust_doh_dns = "socks"})
-o:depends({dns_mode = "xray_doh", up_trust_doh_dns = "socks"})
+o:depends({dns_by = "socks"})
 
 ---- DoH
 o = s:taboption("DNS", Value, "up_trust_doh", translate("DoH request address"))
-o:value("https://dns.adguard.com/dns-query,176.103.130.130", "AdGuard")
-o:value("https://cloudflare-dns.com/dns-query,1.1.1.1", "Cloudflare")
-o:value("https://security.cloudflare-dns.com/dns-query,1.1.1.2", "Cloudflare-Security")
+o:value("https://cloudflare-dns.com/dns-query,1.1.1.1", "CloudFlare")
+o:value("https://security.cloudflare-dns.com/dns-query,1.1.1.2", "CloudFlare-Security")
 o:value("https://doh.opendns.com/dns-query,208.67.222.222", "OpenDNS")
 o:value("https://dns.google/dns-query,8.8.8.8", "Google")
 o:value("https://doh.libredns.gr/dns-query,116.202.176.26", "LibreDNS")
 o:value("https://doh.libredns.gr/ads,116.202.176.26", "LibreDNS (No Ads)")
 o:value("https://dns.quad9.net/dns-query,9.9.9.9", "Quad9-Recommended")
-o.default = "https://dns.google/dns-query,8.8.8.8"
+o:value("https://dns.adguard.com/dns-query,176.103.130.130", "AdGuard")
+o.default = "https://cloudflare-dns.com/dns-query,1.1.1.1"
 o.validate = doh_validate
-o:depends({dns_mode = "v2ray_doh"})
-o:depends({dns_mode = "xray_doh"})
+o:depends("v2ray_dns_mode", "doh")
 
 ---- DNS Forward
 o = s:taboption("DNS", Value, "dns_forward", translate("Remote DNS"))
 --o.description = translate("IP:Port mode acceptable, multi value split with english comma.") .. " " .. translate("If you use dns2socks, only the first one is valid.")
-o.default = "8.8.8.8"
+o.default = "1.1.1.1"
+o:value("1.1.1.1", "1.1.1.1 (CloudFlare DNS)")
+o:value("1.1.1.2", "1.1.1.2 (CloudFlare DNS)")
 o:value("8.8.8.8", "8.8.8.8 (Google DNS)")
 o:value("8.8.4.4", "8.8.4.4 (Google DNS)")
 o:value("208.67.222.222", "208.67.222.222 (Open DNS)")
@@ -259,15 +258,26 @@ o:value("208.67.220.220", "208.67.220.220 (Open DNS)")
 o:depends({dns_mode = "dns2socks"})
 o:depends({dns_mode = "pdnsd"})
 o:depends({dns_mode = "udp"})
-o:depends({dns_mode = "v2ray_tcp"})
+o:depends({v2ray_dns_mode = "tcp"})
+
+o = s:taboption("DNS", Value, "dns_client_ip", translate("EDNS Client Subnet"))
+o.datatype = "ipaddr"
+o:depends("v2ray_dns_mode", "doh")
+
+o = s:taboption("DNS", ListValue, "dns_query_strategy", translate("Query Strategy"))
+o.default = "UseIPv4"
+o:value("UseIPv4")
+o:value("UseIPv6")
+o:value("UseIP")
+o:depends("dns_mode", "v2ray")
+o:depends("dns_mode", "xray")
 
 o = s:taboption("DNS", Flag, "dns_cache", translate("Cache Resolved"))
 o.default = "1"
 o:depends({dns_mode = "dns2socks"})
 o:depends({dns_mode = "pdnsd"})
-o:depends({dns_mode = "v2ray_tcp"})
-o:depends({dns_mode = "v2ray_doh"})
-o:depends({dns_mode = "xray_doh"})
+o:depends({dns_mode = "v2ray"})
+o:depends({dns_mode = "xray"})
 o.rmempty = false
 
 if has_chnlist and api.is_finded("chinadns-ng") then

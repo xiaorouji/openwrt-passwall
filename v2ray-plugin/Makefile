@@ -28,7 +28,9 @@ GO_PKG:=github.com/shadowsocks/v2ray-plugin
 GO_PKG_LDFLAGS:=-s -w
 GO_PKG_LDFLAGS_X:=main.VERSION=v$(PKG_VERSION)
 
-PKG_CONFIG_DEPENDS := CONFIG_$(PKG_NAME)_INCLUDE_GOPROXY
+PKG_CONFIG_DEPENDS := \
+	CONFIG_$(PKG_NAME)_INCLUDE_GOPROXY \
+	CONFIG_$(PKG_NAME)_COMPRESS_UPX
 
 include $(INCLUDE_DIR)/package.mk
 include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
@@ -38,6 +40,10 @@ config $(PKG_NAME)_INCLUDE_GOPROXY
 	bool "Compiling with GOPROXY proxy"
 	default n
 
+config $(PKG_NAME)_COMPRESS_UPX
+	bool "Compress executable files with UPX"
+	depends on @!mips64
+	default y
 endef
 
 ifeq ($(CONFIG_$(PKG_NAME)_INCLUDE_GOPROXY),y)
@@ -60,7 +66,9 @@ endef
 
 define Build/Compile
 	$(call GoPackage/Build/Compile)
+ifneq ($(CONFIG_$(PKG_NAME)_COMPRESS_UPX),)
 	$(STAGING_DIR_HOST)/bin/upx --lzma --best $(GO_PKG_BUILD_BIN_DIR)/v2ray-plugin
+endif
 endef
 
 define Package/$(PKG_NAME)/install

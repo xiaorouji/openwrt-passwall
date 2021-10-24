@@ -107,16 +107,8 @@ o.rmempty = false
 ---- Export
 o = s:option(ListValue, "export", translate("Export Of Multi WAN"))
 o:value(0, translate("Auto"))
-local ifaces = sys.net:devices()
-for _, iface in ipairs(ifaces) do
-    if (iface:match("^br") or iface:match("^eth*") or iface:match("^pppoe*")) then
-        local nets = net:get_interface(iface)
-        nets = nets and nets:get_networks() or {}
-        for k, v in pairs(nets) do nets[k] = nets[k].sid end
-        nets = table.concat(nets, ",")
-        o:value(iface, ((#nets > 0) and "%s (%s)" % {iface, nets} or iface))
-    end
-end
+local wa = require "luci.tools.webadmin"
+wa.cbi_add_networks(o)
 o.default = 0
 o.rmempty = false
 

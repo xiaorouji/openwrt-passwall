@@ -268,6 +268,8 @@ udp_forward = s:option(Flag, "udp_forward", translate("UDP Forward"))
 udp_forward.default = "1"
 udp_forward.rmempty = false
 udp_forward:depends("type", "SSR")
+udp_forward:depends({ type = "V2ray", protocol = "socks" })
+udp_forward:depends({ type = "Xray", protocol = "socks" })
 
 uuid = s:option(DynamicList, "uuid", translate("ID") .. "/" .. translate("Password"))
 for i = 1, 3 do
