@@ -83,6 +83,11 @@ case "${target_arch}" in
 	else
 		naive_flags+=" arm_float_abi=\"soft\" arm_use_neon=false"
 	fi
+	case "${cpu_type}" in
+	"arm1176jzf-s"|"arm926ej-s"|"mpcore"|"xscale")
+		naive_flags+=" arm_use_thumb=false"
+		;;
+	esac
 	;;
 "mipsel"|"mips64el")
 	naive_flags+=" use_gold=false use_thin_lto=false use_lld=false chrome_pgo_phase=0 mips_arch_variant=\"r2\""
