@@ -89,8 +89,28 @@ config nodes '696cd32c1d5149ee95fd1b3accbad6df'
 	option Netflix 'nil'
 	option TVB 'nil'
 	option China 'nil'
+	option SteamGame 'nil'
+	option EpicGame 'nil'
+	option OriginGame 'nil'
+	option BlizzardGame 'nil'
 	option default_node 'nil'
 	option domainStrategy 'IPIfNonMatch'
+
+config shunt_rules 'SteamGame'
+	option remarks 'SteamGame'
+	option domain_list 'geosite:steam'
+
+config shunt_rules 'EpicGame'
+	option remarks 'EpicGame'
+	option domain_list 'geosite:epicgames'
+
+config shunt_rules 'OriginGame'
+	option remarks 'OriginGame'
+	option domain_list 'geosite:origin'
+
+config shunt_rules 'BlizzardGame'
+	option remarks 'BlizzardGame'
+	option domain_list 'geosite:blizzard'
 
 config shunt_rules 'AD'
 	option remarks 'AD'
