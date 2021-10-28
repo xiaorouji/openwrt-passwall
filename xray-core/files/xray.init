@@ -5,7 +5,6 @@ START=99
 
 CONF="xray"
 PROG="/usr/bin/xray"
-CAPA_FILE="/etc/capabilities/xray.json"
 
 start_service() {
 	config_load "$CONF"
@@ -44,12 +43,6 @@ start_service() {
 	procd_set_param stderr 1
 	procd_set_param respawn
 
-	[ -x "/sbin/ujail" -a -e "$CAPA_FILE" ] && {
-		procd_add_jail "$CONF"
-		procd_set_param capabilities "$CAPA_FILE"
-		procd_set_param user nobody
-		procd_set_param no_new_privs 1
-	}
 	procd_close_instance
 }
 
