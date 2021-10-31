@@ -53,6 +53,13 @@ define Package/v2ray-ctl
   DEPENDS:=v2ray-core
 endef
 
+define Package/v2ray-example
+  $(call Package/v2ray/template)
+  TITLE+= (example configs)
+  DEPENDS:=v2ray-core
+  PKGARCH:=all
+endef
+
 define Package/v2ray-extra
   $(call Package/v2ray/template)
   TITLE+= (extra resources)
@@ -80,6 +87,12 @@ define Package/v2ray-ctl/description
   $(call Package/v2ray/description)
 
   This includes configuration tool for v2ray-core.
+endef
+
+define Package/v2ray-example/description
+  $(call Package/v2ray/description)
+
+  This includes example configuration files for v2ray-core.
 endef
 
 define Package/v2ray-extra/description
@@ -124,29 +137,35 @@ config V2RAY_CTL_COMPRESS_UPX
 endmenu
 endef
 
-GEOIP_VER:=202106030115
+
+define Package/v2ray-core/conffiles
+/etc/config/v2ray
+/etc/v2ray/
+endef
+
+GEOIP_VER:=202110210032
 GEOIP_FILE:=geoip.dat.$(GEOIP_VER)
 
 define Download/geoip
   URL:=https://github.com/v2fly/geoip/releases/download/$(GEOIP_VER)/
   URL_FILE:=geoip.dat
   FILE:=$(GEOIP_FILE)
-  HASH:=acf231d7c6461d088ae479fe0c1cb143b5ee3cf7048a897c5a9b7807ab7005df
+  HASH:=932cd484471f8066c040ab84a04fdd70df6c5cee99545de610e1f337bb696220
 endef
 
-GEOSITE_VER:=20210531212831
+GEOSITE_VER:=20211018134657
 GEOSITE_FILE:=dlc.dat.$(GEOSITE_VER)
 
 define Download/geosite
   URL:=https://github.com/v2fly/domain-list-community/releases/download/$(GEOSITE_VER)/
   URL_FILE:=dlc.dat
   FILE:=$(GEOSITE_FILE)
-  HASH:=332bbe53af49582dbf89bda04ee5e60e474f9293fc368ab55b517fdcd4a78ed2
+  HASH:=60b2388b11f1f9b6e14794fbacdf3bf693e3101e3ec651ce5423d8caceda5497
 endef
 
 ifneq ($(CONFIG_V2RAY_CORE_COMPRESS_GOPROXY)$(CONFIG_V2RAY_CTL_COMPRESS_GOPROXY),)
 	export GO111MODULE=on
-	export GOPROXY=https://goproxy.io
+	export GOPROXY=https://goproxy.baidu.com
 endif
 
 define Build/Prepare
@@ -178,6 +197,14 @@ define Package/v2ray-core/install
 	$(call GoPackage/Package/Install/Bin,$(PKG_INSTALL_DIR))
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/v2ray $(1)/usr/bin/
+
+	$(INSTALL_DIR) $(1)/etc/v2ray/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/release/config/config.json $(1)/etc/v2ray/
+
+	$(INSTALL_DIR) $(1)/etc/config/
+	$(INSTALL_CONF) $(CURDIR)/files/v2ray.conf $(1)/etc/config/v2ray
+	$(INSTALL_DIR) $(1)/etc/init.d/
+	$(INSTALL_BIN) $(CURDIR)/files/v2ray.init $(1)/etc/init.d/v2ray
 endef
 
 define Package/v2ray-ctl/install
@@ -185,6 +212,12 @@ define Package/v2ray-ctl/install
 
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/v2ctl $(1)/usr/bin/
+endef
+
+define Package/v2ray-example/install
+	$(INSTALL_DIR) $(1)/etc/v2ray/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/release/config/vpoint_socks_vmess.json $(1)/etc/v2ray/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/release/config/vpoint_vmess_freedom.json $(1)/etc/v2ray/
 endef
 
 define Package/v2ray-extra/install
@@ -200,5 +233,6 @@ endef
 
 $(eval $(call BuildPackage,v2ray-core))
 $(eval $(call BuildPackage,v2ray-ctl))
+$(eval $(call BuildPackage,v2ray-example))
 $(eval $(call BuildPackage,v2ray-extra))
 $(eval $(call BuildPackage,v2ray-geodata))
