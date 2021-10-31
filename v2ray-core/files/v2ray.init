@@ -3,8 +3,9 @@
 USE_PROCD=1
 START=99
 
-CONF="xray"
-PROG="/usr/bin/xray"
+CONF="v2ray"
+PROG="/usr/bin/v2ray"
+CAPA_FILE="/etc/capabilities/v2ray.json"
 
 start_service() {
 	config_load "$CONF"
@@ -16,13 +17,11 @@ start_service() {
 	local confdir
 	local conffiles
 	local datadir
-	local dialer
 	local format
 
 	config_get confdir "config" "confdir"
 	config_get conffiles "config" "conffiles"
-	config_get datadir "config" "datadir" "/usr/share/xray"
-	config_get dialer "config" "dialer"
+	config_get datadir "config" "datadir" "/usr/share/v2ray"
 	config_get format "config" "format" "json"
 
 	procd_open_instance "$CONF"
@@ -35,8 +34,7 @@ start_service() {
 		done
 	}
 	[ -n "$format" ] && procd_append_param command -format "$format"
-	[ -n "$dialer" ] && procd_set_param env XRAY_BROWSER_DIALER="$dialer"
-	procd_set_param env XRAY_LOCATION_ASSET="$datadir"
+	procd_set_param env v2ray.local.asset="$datadir"
 	procd_set_param file $conffiles
 
 	procd_set_param stdout 1
