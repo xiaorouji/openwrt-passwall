@@ -46,6 +46,7 @@ use_sysroot=false
 
 use_allocator=\"none\"
 use_allocator_shim=false
+use_partition_alloc=false
 
 fatal_linker_warnings=false
 treat_warnings_as_errors=false
