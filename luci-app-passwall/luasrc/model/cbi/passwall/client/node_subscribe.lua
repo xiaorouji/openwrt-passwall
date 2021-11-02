@@ -70,12 +70,23 @@ function o.write(e, e)
     luci.sys.call("lua /usr/share/" .. appname .. "/subscribe.lua truncate > /dev/null 2>&1")
 end
 
+o = s:option(Button, "_update", translate("Manual subscription All"))
+o.inputstyle = "apply"
+function o.write(t, n)
+    luci.sys.call("lua /usr/share/" .. appname .. "/subscribe.lua start > /dev/null 2>&1 &")
+    luci.http.redirect(api.url("log"))
+end
+
 s = m:section(TypedSection, "subscribe_list", "", "<font color='red'>" .. translate("Please input the subscription url first, save and submit before manual subscription.") .. "</font>")
 s.addremove = true
 s.anonymous = true
 s.sortable = true
 s.template = "cbi/tblsection"
 s.extedit = api.url("node_subscribe_config", "%s")
+function s.create(e, t)
+    local id = TypedSection.create(e, t)
+    luci.http.redirect(e.extedit:format(id))
+end
 
 o = s:option(Value, "remark", translate("Remarks"))
 o.width = "auto"

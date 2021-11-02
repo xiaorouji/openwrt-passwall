@@ -678,7 +678,7 @@ add_firewall_rule() {
 
 	# 忽略特殊IP段
 	local lan_ifname lan_ip
-	lan_ifname=$(uci -q -p /var/state get network.lan.ifname)
+	lan_ifname=$(uci -q -p /tmp/state get network.lan.ifname)
 	[ -n "$lan_ifname" ] && {
 		lan_ip=$(ip address show $lan_ifname | grep -w "inet" | awk '{print $2}')
 		lan_ip6=$(ip address show $lan_ifname | grep -w "inet6" | awk '{print $2}')

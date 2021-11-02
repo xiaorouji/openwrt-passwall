@@ -86,7 +86,7 @@ function gen_outbound(node, tag, proxy_table)
                         node_id, --node
                         "127.0.0.1", --bind
                         new_port, --socks port
-                        string.format("/var/etc/%s/v2_%s_%s_%s.json", appname, node_type, node_id, new_port), --config file
+                        string.format("/tmp/etc/%s/v2_%s_%s_%s.json", appname, node_type, node_id, new_port), --config file
                         (proxy == 1 and proxy_tag ~= "nil" and relay_port) and tostring(relay_port) or "" --relay port
                         )
                     )
@@ -553,7 +553,8 @@ if dns_server then
             tag = "dns-in",
             settings = {
                 address = dns_server,
-                network = "udp"
+                port = 53,
+                network = "tcp,udp"
             }
         })
     end
@@ -623,7 +624,7 @@ end
 if inbounds or outbounds then
     local config = {
         log = {
-            -- error = string.format("/var/etc/%s/%s.log", appname, node[".name"]),
+            -- error = string.format("/tmp/etc/%s/%s.log", appname, node[".name"]),
             loglevel = loglevel
         },
         -- DNS

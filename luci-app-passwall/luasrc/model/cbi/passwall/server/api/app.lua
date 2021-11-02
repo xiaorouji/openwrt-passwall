@@ -7,8 +7,8 @@ local uci = api.uci
 local jsonc = api.jsonc
 
 local CONFIG = "passwall_server"
-local CONFIG_PATH = "/var/etc/" .. CONFIG
-local LOG_APP_FILE = "/var/log/" .. CONFIG .. ".log"
+local CONFIG_PATH = "/tmp/etc/" .. CONFIG
+local LOG_APP_FILE = "/tmp/log/" .. CONFIG .. ".log"
 local TMP_BIN_PATH = CONFIG_PATH .. "/bin"
 local require_dir = "luci.model.cbi.passwall.server.api."
 
@@ -35,7 +35,7 @@ local function ln_start(s, d, command, output)
 end
 
 local function gen_include()
-    cmd(string.format("echo '#!/bin/sh' > /var/etc/%s.include", CONFIG))
+    cmd(string.format("echo '#!/bin/sh' > /tmp/etc/%s.include", CONFIG))
     local function extract_rules(n, a)
         local _ipt = "iptables"
         if n == "6" then
@@ -46,7 +46,7 @@ local function gen_include()
         result = result .. "COMMIT"
         return result
     end
-    local f, err = io.open("/var/etc/" .. CONFIG .. ".include", "a")
+    local f, err = io.open("/tmp/etc/" .. CONFIG .. ".include", "a")
     if f and err == nil then
         f:write('iptables-save -c | grep -v "PSW-SERVER" | iptables-restore -c' .. "\n")
         f:write('iptables-restore -n <<-EOT' .. "\n")
@@ -174,7 +174,7 @@ local function stop()
     cmd("ip6tables -D INPUT -j PSW-SERVER 2>/dev/null")
     cmd("ip6tables -F PSW-SERVER 2>/dev/null")
     cmd("ip6tables -X PSW-SERVER 2>/dev/null")
-    cmd(string.format("rm -rf %s %s /var/etc/%s.include", CONFIG_PATH, LOG_APP_FILE, CONFIG))
+    cmd(string.format("rm -rf %s %s /tmp/etc/%s.include", CONFIG_PATH, LOG_APP_FILE, CONFIG))
 end
 
 if action then
