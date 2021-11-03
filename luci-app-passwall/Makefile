@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
-PKG_VERSION:=4.42
+PKG_VERSION:=4.43
 PKG_RELEASE:=1
 #20211103
 
@@ -153,6 +153,8 @@ define Package/$(PKG_NAME)/conffiles
 /usr/share/passwall/rules/proxy_ip
 /usr/share/passwall/rules/block_host
 /usr/share/passwall/rules/block_ip
+/usr/share/passwall/rules/lanlist_ipv4
+/usr/share/passwall/rules/lanlist_ipv6
 endef
 
 include $(TOPDIR)/feeds/luci/luci.mk

@@ -71,7 +71,7 @@ msgid "Rule Manage"
 msgstr "规则管理"
 
 msgid "Rule List Manage"
-msgstr "直连/代理名单管理"
+msgstr "直连/代理/局域网/hosts名单管理"
 
 msgid "Access control"
 msgstr "访问控制"
@@ -922,6 +922,12 @@ msgstr "代理列表"
 msgid "Block List"
 msgstr "屏蔽列表"
 
+msgid "Lan Ip List"
+msgstr "局域网IP列表"
+
+msgid "Route Hosts"
+msgstr "路由Hosts文件"
+
 msgid "Join the direct hosts list of domain names will not proxy."
 msgstr "加入的域名不走代理，对所有模式有效。且优先级最高。"
 
@@ -936,6 +942,15 @@ msgstr "加入的IP段将走代理。可输入IP地址或地址段，如：35.24
 
 msgid "These had been joined websites will be block. Please input the domain names of websites, every line can input only one website domain. For example: twitter.com."
 msgstr "加入的域名将屏蔽。输入网站域名，如：twitter.com，每个地址段一行。"
+
+msgid "The list is the IPv4 LAN IP list, which represents the direct connection IP of the LAN. If you need the LAN IP in the proxy list, please clear it from the list. Do not modify this list by default."
+msgstr "列表中为IPv4的局域网IP列表，代表局域网直连IP。如果需要代理列表中的局域网IP，请将其在该列表中清除,并将其添加到代理列表中。默认情况下不要修改这个列表。"
+
+msgid "The list is the IPv6 LAN IP list, which represents the direct connection IP of the LAN. If you need the LAN IP in the proxy list, please clear it from the list. Do not modify this list by default."
+msgstr "列表中为IPv6的局域网IP列表，代表局域网直连IP。如果需要代理列表中的局域网IP，请将其在该列表中清除,并将其添加到代理列表中。默认情况下不要修改这个列表。"
+
+msgid "Configure routing etc/hosts file, if you don't know what you are doing, please don't change the content."
+msgstr "配置路由etc/hosts文件，如果你不知道自己在做什么，请不要改动内容。"
 
 msgid "These had been joined ip addresses will be block. Please input the ip address or ip address segment, every line can input only one ip address."
 msgstr "加入的IP段将屏蔽。可输入IP地址或地址段，每个地址段一行。"
