@@ -65,7 +65,7 @@ local log = function(...)
 	if debug == true then
 		print(result)
 	else
-		local f, err = io.open("/var/log/" .. appname .. ".log", "a")
+		local f, err = io.open("/tmp/log/" .. appname .. ".log", "a")
 		if f and err == nil then
 			f:write(result .. "\n")
 			f:close()
@@ -1073,7 +1073,13 @@ local execute = function()
 		local subscribe_list = {}
 		local retry = {}
 		if arg[2] then
-			subscribe_list[#subscribe_list + 1] = uci:get_all(appname, arg[2]) or {}
+			string.gsub(arg[2], '[^' .. "," .. ']+', function(w)
+				subscribe_list[#subscribe_list + 1] = uci:get_all(appname, w) or {}
+			end)
+		else
+			uci:foreach(appname, "subscribe_list", function(o)
+				subscribe_list[#subscribe_list + 1] = o
+			end)
 		end
 
 		for index, value in ipairs(subscribe_list) do

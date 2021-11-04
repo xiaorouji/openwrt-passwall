@@ -31,6 +31,7 @@ if has_trojan_go then
 end
 
 m = Map(appname)
+m.redirect = api.url("node_subscribe")
 
 s = m:section(NamedSection, arg[1])
 s.addremove = false

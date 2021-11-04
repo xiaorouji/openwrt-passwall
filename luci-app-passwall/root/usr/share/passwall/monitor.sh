@@ -1,7 +1,7 @@
 #!/bin/sh
 
 CONFIG=passwall
-TMP_PATH=/var/etc/$CONFIG
+TMP_PATH=/tmp/etc/$CONFIG
 TMP_BIN_PATH=$TMP_PATH/bin
 TMP_ID_PATH=$TMP_PATH/id
 
