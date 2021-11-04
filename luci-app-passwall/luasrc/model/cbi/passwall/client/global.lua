@@ -93,7 +93,7 @@ tcp_node = s:taboption("Main", ListValue, "tcp_node", "<a style='color: red'>" .
 tcp_node.description = ""
 --tcp_node.description = translate("For proxy specific list.")
 --tcp_node.description = o.description .. "<br />"
-local current_node = luci.sys.exec(string.format("[ -f '/var/etc/%s/id/TCP' ] && echo -n $(cat /var/etc/%s/id/TCP)", appname, appname))
+local current_node = luci.sys.exec(string.format("[ -f '/tmp/etc/%s/id/TCP' ] && echo -n $(cat /tmp/etc/%s/id/TCP)", appname, appname))
 if current_node and current_node ~= "" and current_node ~= "nil" then
     local n = uci:get_all(appname, current_node)
     if n then

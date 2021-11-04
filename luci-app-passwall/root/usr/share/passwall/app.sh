@@ -6,16 +6,16 @@
 . $IPKG_INSTROOT/lib/functions/service.sh
 
 CONFIG=passwall
-TMP_PATH=/var/etc/$CONFIG
+TMP_PATH=/tmp/etc/$CONFIG
 TMP_BIN_PATH=$TMP_PATH/bin
 TMP_ID_PATH=$TMP_PATH/id
 TMP_PORT_PATH=$TMP_PATH/port
 TMP_ROUTE_PATH=$TMP_PATH/route
 TMP_ACL_PATH=$TMP_PATH/acl
-TMP_PATH2=/var/etc/${CONFIG}_tmp
+TMP_PATH2=/tmp/etc/${CONFIG}_tmp
 DNSMASQ_PATH=/etc/dnsmasq.d
-TMP_DNSMASQ_PATH=/var/etc/dnsmasq-passwall.d
-LOG_FILE=/var/log/$CONFIG.log
+TMP_DNSMASQ_PATH=/tmp/dnsmasq.d/passwall
+LOG_FILE=/tmp/log/$CONFIG.log
 APP_PATH=/usr/share/$CONFIG
 RULES_PATH=/usr/share/${CONFIG}/rules
 DNS_N=dnsmasq
@@ -25,6 +25,7 @@ LOCAL_DNS=119.29.29.29
 DEFAULT_DNS=
 NO_PROXY=0
 PROXY_IPV6=0
+resolve_dns=0
 use_tcp_node_resolve_dns=0
 use_udp_node_resolve_dns=0
 LUA_API_PATH=/usr/lib/lua/luci/model/cbi/$CONFIG/api
@@ -313,7 +314,7 @@ load_config() {
 
 	export V2RAY_LOCATION_ASSET=$(config_t_get global_rules v2ray_location_asset "/usr/share/xray/")
 	export XRAY_LOCATION_ASSET=$V2RAY_LOCATION_ASSET
-	mkdir -p /var/etc $TMP_PATH $TMP_BIN_PATH $TMP_ID_PATH $TMP_PORT_PATH $TMP_ROUTE_PATH $TMP_ACL_PATH $TMP_PATH2
+	mkdir -p /tmp/etc $TMP_PATH $TMP_BIN_PATH $TMP_ID_PATH $TMP_PORT_PATH $TMP_ROUTE_PATH $TMP_ACL_PATH $TMP_PATH2
 }
 
 run_ipt2socks() {
@@ -691,7 +692,7 @@ run_redir() {
 			_extra_param="${_extra_param} ${proto}"
 			[ "${DNS_MODE}" = "v2ray" -o "${DNS_MODE}" = "xray" ] && [ "$(config_t_get global dns_by)" = "tcp" ] && {
 				config_file=$(echo $config_file | sed "s/.json/_DNS.json/g")
-				use_tcp_node_resolve_dns=1
+				resolve_dns=1
 				local v2ray_dns_mode=$(config_t_get global v2ray_dns_mode tcp)
 				case "$v2ray_dns_mode" in
 					tcp)
@@ -708,16 +709,6 @@ run_redir() {
 						_doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
 						_doh_bootstrap=$(echo $up_trust_doh | cut -d ',' -sf 2-)
 						_dns_client_ip=$(config_t_get global dns_client_ip)
-
-						if [ "${dns_by}" = "tcp" ]; then
-							DNS_FORWARD=""
-							_doh_bootstrap_dns=$(echo $_doh_bootstrap | sed "s/,/ /g")
-							for _dns in $_doh_bootstrap_dns; do
-								_dns=$(echo $_dns | awk -F ':' '{print $1}'):${_doh_port:-443}
-								[ -n "$DNS_FORWARD" ] && DNS_FORWARD=${DNS_FORWARD},${_dns} || DNS_FORWARD=${_dns}
-							done
-							unset _dns _doh_bootstrap_dns
-						fi
 						_extra_param="${_extra_param} -dns_listen_port ${dns_listen_port} -dns_server ${_doh_bootstrap} -doh_url ${_doh_url} -doh_host ${_doh_host} -dns_client_ip ${_dns_client_ip}"
 						unset _doh_url _doh_port _doh_bootstrap
 						echolog "  - 域名解析 DNS Over HTTPS..."
@@ -1034,19 +1025,30 @@ start_crontab() {
 		echolog "配置定时任务：自动更新规则。"
 	fi
 	
+	TMP_SUB_PATH=$TMP_PATH/sub_crontabs
+	mkdir -p $TMP_SUB_PATH
 	for item in $(uci show ${CONFIG} | grep "=subscribe_list" | cut -d '.' -sf 2 | cut -d '=' -sf 1); do
-		cfgid=$(uci show ${CONFIG}.$item | head -n 1 | cut -d '.' -sf 2 | cut -d '=' -sf 1)
-		remark=$(config_n_get $item remark)
-		auto_update=$(config_n_get $item auto_update)
-		week_update=$(config_n_get $item week_update)
-		time_update=$(config_n_get $item time_update)
-		if [ "$auto_update" = "1" ]; then
-			local t="0 $time_update * * $week_update"
-			[ "$week_update" = "7" ] && t="0 $time_update * * *"
-			echo "$t lua $APP_PATH/subscribe.lua start $cfgid > /dev/null 2>&1 &" >>/etc/crontabs/root
+		if [ "$(config_n_get $item auto_update 0)" = "1" ]; then
+			cfgid=$(uci show ${CONFIG}.$item | head -n 1 | cut -d '.' -sf 2 | cut -d '=' -sf 1)
+			remark=$(config_n_get $item remark)
+			week_update=$(config_n_get $item week_update)
+			time_update=$(config_n_get $item time_update)
+			echo "$cfgid" >> $TMP_SUB_PATH/${week_update}_${time_update}
 			echolog "配置定时任务：自动更新【$remark】订阅。"
 		fi
 	done
+	
+	[ -d "${TMP_SUB_PATH}" ] && {
+		for name in $(ls ${TMP_SUB_PATH}); do
+			week_update=$(echo $name | awk -F '_' '{print $1}')
+			time_update=$(echo $name | awk -F '_' '{print $2}')
+			local t="0 $time_update * * $week_update"
+			[ "$week_update" = "7" ] && t="0 $time_update * * *"
+			cfgids=$(echo -n $(cat ${TMP_SUB_PATH}/${name}) | sed 's# #,#g')
+			echo "$t lua $APP_PATH/subscribe.lua start $cfgids > /dev/null 2>&1 &" >>/etc/crontabs/root
+		done
+		rm -rf $TMP_SUB_PATH
+	}
 
 	if [ "$NO_PROXY" == 0 ]; then
 		start_daemon=$(config_t_get global_delay start_daemon 0)
@@ -1087,7 +1089,7 @@ start_dns() {
 	;;
 	v2ray|\
 	xray)
-		[ "${use_tcp_node_resolve_dns}" == "0" ] && {
+		[ "${resolve_dns}" == "0" ] && {
 			[ "${DNS_CACHE}" == "0" ] && local _extra_param="-dns_cache 0"
 			local dns_query_strategy=$(config_t_get global dns_query_strategy UseIPv4)
 			_extra_param="${_extra_param} -dns_query_strategy ${dns_query_strategy}"
@@ -1183,7 +1185,7 @@ start_dns() {
 		echolog "  + 过滤服务：ChinaDNS-NG(:${china_ng_listen_port})：国内DNS：${china_ng_chn}，可信DNS：${china_ng_gfw}"
 	}
 	source $APP_PATH/helper_${DNS_N}.sh stretch
-	source $APP_PATH/helper_${DNS_N}.sh add DNS_MODE=$DNS_MODE TMP_DNSMASQ_PATH=$TMP_DNSMASQ_PATH DNSMASQ_CONF_FILE=/var/dnsmasq.d/dnsmasq-passwall.conf DEFAULT_DNS=$DEFAULT_DNS LOCAL_DNS=$LOCAL_DNS TUN_DNS=$TUN_DNS CHINADNS_DNS=$china_ng_listen TCP_NODE=$TCP_NODE PROXY_MODE=${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}
+	source $APP_PATH/helper_${DNS_N}.sh add DNS_MODE=$DNS_MODE TMP_DNSMASQ_PATH=$TMP_DNSMASQ_PATH DNSMASQ_CONF_FILE=/tmp/dnsmasq.d/dnsmasq-passwall.conf DEFAULT_DNS=$DEFAULT_DNS LOCAL_DNS=$LOCAL_DNS TUN_DNS=$TUN_DNS CHINADNS_DNS=$china_ng_listen TCP_NODE=$TCP_NODE PROXY_MODE=${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}
 }
 
 gen_pdnsd_config() {

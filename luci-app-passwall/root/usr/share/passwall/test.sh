@@ -1,7 +1,7 @@
 #!/bin/sh
 
 CONFIG=passwall
-LOG_FILE=/var/log/$CONFIG.log
+LOG_FILE=/tmp/log/$CONFIG.log
 
 echolog() {
 	local d="$(date "+%Y-%m-%d %H:%M:%S")"
@@ -75,12 +75,12 @@ test_node() {
 			}
 		else
 			local _tmp_port=$(/usr/share/${CONFIG}/app.sh get_new_port 61080 tcp)
-			/usr/share/${CONFIG}/app.sh run_socks flag=auto_switch node=$node_id bind=127.0.0.1 socks_port=${_tmp_port} config_file=/var/etc/${CONFIG}/test.json
+			/usr/share/${CONFIG}/app.sh run_socks flag=auto_switch node=$node_id bind=127.0.0.1 socks_port=${_tmp_port} config_file=/tmp/etc/${CONFIG}/test.json
 			local curlx="socks5h://127.0.0.1:${_tmp_port}"
 		fi
 		_proxy_status=$(test_url "https://www.google.com/generate_204" ${retry_num} ${connect_timeout} "-x $curlx")
-		pgrep -f "/var/etc/${CONFIG}/test\.json|auto_switch" | xargs kill -9 >/dev/null 2>&1
-		rm -rf "/var/etc/${CONFIG}/test.json"
+		pgrep -f "/tmp/etc/${CONFIG}/test\.json|auto_switch" | xargs kill -9 >/dev/null 2>&1
+		rm -rf "/tmp/etc/${CONFIG}/test.json"
 		if [ "${_proxy_status}" -eq 200 ]; then
 			return 0
 		fi
@@ -97,13 +97,13 @@ test_auto_switch() {
 	local b_tcp_nodes=$2
 	local now_node=$3
 	[ -z "$now_node" ] && {
-		if [ -f "/var/etc/$CONFIG/id/${TYPE}" ]; then
-			now_node=$(cat /var/etc/$CONFIG/id/${TYPE})
+		if [ -f "/tmp/etc/$CONFIG/id/${TYPE}" ]; then
+			now_node=$(cat /tmp/etc/$CONFIG/id/${TYPE})
 			if [ "$(config_n_get $now_node protocol nil)" = "_shunt" ]; then
-				if [ "$shunt_logic" == "1" ] && [ -f "/var/etc/$CONFIG/id/${TYPE}_default" ]; then
-					now_node=$(cat /var/etc/$CONFIG/id/${TYPE}_default)
-				elif [ "$shunt_logic" == "2" ] && [ -f "/var/etc/$CONFIG/id/${TYPE}_main" ]; then
-					now_node=$(cat /var/etc/$CONFIG/id/${TYPE}_main)
+				if [ "$shunt_logic" == "1" ] && [ -f "/tmp/etc/$CONFIG/id/${TYPE}_default" ]; then
+					now_node=$(cat /tmp/etc/$CONFIG/id/${TYPE}_default)
+				elif [ "$shunt_logic" == "2" ] && [ -f "/tmp/etc/$CONFIG/id/${TYPE}_main" ]; then
+					now_node=$(cat /tmp/etc/$CONFIG/id/${TYPE}_main)
 				else
 					shunt_logic=0
 				fi
