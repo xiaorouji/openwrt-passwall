@@ -177,6 +177,6 @@ o.wrap = "off"
 o.cfgvalue = function(self, section) return fs.readfile(hosts) or "" end
 o.write = function(self, section, value) fs.writefile(hosts, value:gsub("\r\n", "\n")) end
 o.remove = function(self, section, value) fs.writefile(hosts, "") end
-end
+
 
 return m
