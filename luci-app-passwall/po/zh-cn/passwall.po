@@ -952,7 +952,7 @@ msgstr "列表中为IPv6的局域网IP列表，代表局域网直连IP。如果�
 msgid "Configure routing etc/hosts file, if you don't know what you are doing, please don't change the content."
 msgstr "配置路由etc/hosts文件，如果你不知道自己在做什么，请不要改动内容。"
 
-msgid "The IP in the list is the IPv4 LAN IP list, which represents the direct connection IP of the LAN. If you need an IP in the proxy list, leave its presence first. Do not modify by default."
+msgid "These had been joined ip addresses will be block. Please input the ip address or ip address segment, every line can input only one ip address."
 msgstr "加入的IP段将屏蔽。可输入IP地址或地址段，每个地址段一行。"
 
 msgid "Not valid domain name, please re-enter!"
