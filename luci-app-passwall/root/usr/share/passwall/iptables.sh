@@ -26,6 +26,8 @@ ip6t_m="ip6tables -t mangle -w"
 FWI=$(uci -q get firewall.passwall.path 2>/dev/null)
 FAKE_IP=198.18.0.0/16
 
+app_name=$(lua -e "local api = require 'luci.model.cbi.passwall.api.api' print(api.appname)")
+
 factor() {
 	if [ -z "$1" ] || [ -z "$2" ]; then
 		echo ""
@@ -141,12 +143,13 @@ get_action_chain_name() {
 	esac
 }
 
+
 gen_laniplist() {
-	cat /usr/share/passwall/rules/lanlist_ipv4
+	cat /usr/share/${app_name}/rules/lanlist_ipv4
 }
 
 gen_laniplist_6() {
-	cat /usr/share/passwall/rules/lanlist_ipv4
+	cat /usr/share/${app_name}/rules/lanlist_ipv6
 }
 
 load_acl() {
