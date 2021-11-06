@@ -3,7 +3,7 @@ local appname = api.appname
 local fs = api.fs
 local datatypes = api.datatypes
 local path = string.format("/usr/share/%s/rules/", appname)
-local route_hosts_path = string.format("/etc/", appname)
+local route_hosts_path = "/etc/"
 
 m = Map(appname)
 
