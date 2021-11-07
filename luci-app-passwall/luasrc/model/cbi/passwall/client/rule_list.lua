@@ -3,6 +3,7 @@ local appname = api.appname
 local fs = api.fs
 local datatypes = api.datatypes
 local path = string.format("/usr/share/%s/rules/", appname)
+local route_hosts_path = "/etc/"
 
 m = Map(appname)
 
@@ -13,6 +14,8 @@ s.anonymous = true
 s:tab("direct_list", translate("Direct List"))
 s:tab("proxy_list", translate("Proxy List"))
 s:tab("block_list", translate("Block List"))
+s:tab("lan_ip_list", translate("Lan Ip List"))
+s:tab("route_hosts", translate("Route Hosts"))
 
 ---- Direct Hosts
 local direct_host = path .. "direct_host"
@@ -127,5 +130,53 @@ o.validate = function(self, value)
     end
     return value
 end
+
+---- Lan IPv4
+local lanlist_ipv4 = path .. "lanlist_ipv4"
+o = s:taboption("lan_ip_list", TextValue, "lanlist_ipv4", "", "<font color='red'>" .. translate("The list is the IPv4 LAN IP list, which represents the direct connection IP of the LAN. If you need the LAN IP in the proxy list, please clear it from the list. Do not modify this list by default.") .. "</font>")
+o.rows = 15
+o.wrap = "off"
+o.cfgvalue = function(self, section) return fs.readfile(lanlist_ipv4) or "" end
+o.write = function(self, section, value) fs.writefile(lanlist_ipv4, value:gsub("\r\n", "\n")) end
+o.remove = function(self, section, value) fs.writefile(lanlist_ipv4, "") end
+o.validate = function(self, value)
+    local ipmasks= {}
+    string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(ipmasks, w) end)
+    for index, ipmask in ipairs(ipmasks) do
+        if not ( datatypes.ipmask4(ipmask) or datatypes.ipmask6(ipmask) ) then
+            return nil, ipmask .. " " .. translate("Not valid IP format, please re-enter!")
+        end
+    end
+    return value
+end
+
+---- Lan IPv6
+local lanlist_ipv6 = path .. "lanlist_ipv6"
+o = s:taboption("lan_ip_list", TextValue, "lanlist_ipv6", "", "<font color='red'>" .. translate("The list is the IPv6 LAN IP list, which represents the direct connection IP of the LAN. If you need the LAN IP in the proxy list, please clear it from the list. Do not modify this list by default.") .. "</font>")
+o.rows = 15
+o.wrap = "off"
+o.cfgvalue = function(self, section) return fs.readfile(lanlist_ipv6) or "" end
+o.write = function(self, section, value) fs.writefile(lanlist_ipv6, value:gsub("\r\n", "\n")) end
+o.remove = function(self, section, value) fs.writefile(lanlist_ipv6, "") end
+o.validate = function(self, value)
+    local ipmasks= {}
+    string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(ipmasks, w) end)
+    for index, ipmask in ipairs(ipmasks) do
+        if not ( datatypes.ipmask4(ipmask) or datatypes.ipmask6(ipmask) ) then
+            return nil, ipmask .. " " .. translate("Not valid IP format, please re-enter!")
+        end
+    end
+    return value
+end
+
+---- Route Hosts
+local hosts = route_hosts_path .. "hosts"
+o = s:taboption("route_hosts", TextValue, "hosts", "", "<font color='red'>" .. translate("Configure routing etc/hosts file, if you don't know what you are doing, please don't change the content.") .. "</font>")
+o.rows = 15
+o.wrap = "off"
+o.cfgvalue = function(self, section) return fs.readfile(hosts) or "" end
+o.write = function(self, section, value) fs.writefile(hosts, value:gsub("\r\n", "\n")) end
+o.remove = function(self, section, value) fs.writefile(hosts, "") end
+
 
 return m
