@@ -1,10 +1,6 @@
+# SPDX-License-Identifier: GPL-3.0-only
 #
-# Copyright (C) 2021 ImmortalWrt
-# <https://project-openwrt.eu.org>
-#
-# This is free software, licensed under the GNU General Public License v3.
-# See /LICENSE for more information.
-#
+# Copyright (C) 2021 ImmortalWrt.org
 
 include $(TOPDIR)/rules.mk
 
@@ -21,7 +17,6 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Tianling Shen <cnsztl@project-openwrt.eu.org>
 
 PKG_CONFIG_DEPENDS:= \
-	CONFIG_XRAY_PLUGIN_PROVIDE_V2RAY_PLUGIN \
 	CONFIG_XRAY_PLUGIN_COMPRESS_GOPROXY \
 	CONFIG_XRAY_PLUGIN_COMPRESS_UPX
 
@@ -36,10 +31,6 @@ include $(INCLUDE_DIR)/package.mk
 include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
 
 define Package/xray-plugin/config
-config XRAY_PLUGIN_PROVIDE_V2RAY_PLUGIN
-	bool "Provide v2ray-plugin binary using xray-plugin"
-	default n
-
 config XRAY_PLUGIN_COMPRESS_GOPROXY
 	bool "Compiling with GOPROXY proxy"
 	default n
@@ -56,15 +47,12 @@ ifneq ($(CONFIG_XRAY_PLUGIN_COMPRESS_GOPROXY),)
 endif
 
 define Package/xray-plugin
-	SECTION:=net
-	CATEGORY:=Network
-	TITLE:=SIP003 plugin for Shadowsocks, based on Xray
-	URL:=https://github.com/teddysun/xray-plugin
-	DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle
-endef
-
-define Package/xray-plugin/description
-	Yet another SIP003 plugin for Shadowsocks, based on Xray.
+  SECTION:=net
+  CATEGORY:=Network
+  SUBMENU:=Web Servers/Proxies
+  TITLE:=SIP003 plugin for Shadowsocks, based on Xray
+  URL:=https://github.com/teddysun/xray-plugin
+  DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle
 endef
 
 define Build/Compile
@@ -75,10 +63,8 @@ endif
 endef
 
 define Package/xray-plugin/install
-	$(call GoPackage/Package/Install/Bin,$(1))
-ifneq ($(CONFIG_XRAY_PLUGIN_PROVIDE_V2RAY_PLUGIN),)
-	$(LN) xray-plugin $(1)/usr/bin/v2ray-plugin
-endif
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/xray-plugin $(1)/usr/bin/xray-plugin
 endef
 
 $(eval $(call GoBinPackage,xray-plugin))
