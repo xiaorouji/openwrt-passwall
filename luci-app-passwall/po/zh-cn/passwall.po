@@ -961,6 +961,12 @@ msgstr "不是有效域名，请重新输入！"
 msgid "Not valid IP format, please re-enter!"
 msgstr "不是有效IP格式，请重新输入！"
 
+msgid "Not valid IPv4 format, please re-enter!"
+msgstr "不是有效IPv4格式，请重新输入！"
+
+msgid "Not valid IPv6 format, please re-enter!"
+msgstr "不是有效IPv6格式，请重新输入！"
+
 msgid "Plaintext: If this string matches any part of the targeting domain, this rule takes effet. Example: rule 'sina.com' matches targeting domain 'sina.com', 'sina.com.cn' and 'www.sina.com', but not 'sina.cn'."
 msgstr "纯字符串: 当此字符串匹配目标域名中任意部分，该规则生效。比如'sina.com'可以匹配'sina.com'、'sina.com.cn'和'www.sina.com'，但不匹配'sina.cn'。"
 
