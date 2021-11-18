@@ -1478,6 +1478,9 @@ run_redir)
 node_switch)
 	node_switch $@
 	;;
+echolog)
+	echolog $@
+	;;
 stop)
 	[ "$1" = "force" ] && force_stop
 	stop
