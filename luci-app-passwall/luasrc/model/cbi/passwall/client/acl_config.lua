@@ -14,6 +14,26 @@ end
 
 local global_proxy_mode = (m:get("@global[0]", "tcp_proxy_mode") or "") .. (m:get("@global[0]", "udp_proxy_mode") or "")
 
+local dynamicList_write = function(self, section, value)
+    local t = {}
+    local t2 = {}
+    if type(value) == "table" then
+		local x
+		for _, x in ipairs(value) do
+			if x and #x > 0 then
+                if not t2[x] then
+                    t2[x] = x
+                    t[#t+1] = x
+                end
+			end
+		end
+	else
+		t = { value }
+	end
+    t = table.concat(t, " ")
+	return DynamicList.write(self, section, t)
+end
+
 -- [[ ACLs Settings ]]--
 s = m:section(NamedSection, arg[1], translate("ACLs"), translate("ACLs"))
 s.addremove = false
@@ -29,10 +49,20 @@ o = s:option(Value, "remarks", translate("Remarks"))
 o.default = arg[1]
 o.rmempty = true
 
-o = s:option(DynamicList, "ip_mac", translate("IP/MAC"))
-o.datatype = "or(ip4addr,macaddr)"
-o.cast = "string"
-o.rmempty = false
+---- Source
+source = s:option(ListValue, "source", translate("Source Type"))
+source.rmempty = false
+source.default = "ip_mac"
+source:value("ip_mac", translate("IP/MAC"))
+if os.execute("lsmod | grep -i iprange >/dev/null") == 0 then
+    source:value("iprange", translate("IP range"))
+end
+source:value("ipset", "IPSet")
+
+source_ip_mac = s:option(DynamicList, "ip_mac", translate("IP/MAC"))
+source_ip_mac.datatype = "or(ip4addr,macaddr)"
+source_ip_mac.cast = "string"
+source_ip_mac:depends("source", "ip_mac")
 
 local mac_t = {}
 sys.net.mac_hints(function(e, t)
@@ -54,26 +84,37 @@ table.sort(mac_t, function(a,b)
     return false
 end)
 for _, key in pairs(mac_t) do
-    o:value(key.mac, "%s (%s)" % {key.mac, key.ip})
+    source_ip_mac:value(key.mac, "%s (%s)" % {key.mac, key.ip})
 end
-function o.write(self, section, value)
-    local t = {}
-    local t2 = {}
-    if type(value) == "table" then
-		local x
-		for _, x in ipairs(value) do
-			if x and #x > 0 then
-                if not t2[x] then
-                    t2[x] = x
-                    t[#t+1] = x
-                end
-			end
-		end
-	else
-		t = { value }
-	end
-    t = table.concat(t, " ")
-	return DynamicList.write(self, section, t)
+source_ip_mac.write = dynamicList_write
+
+source_iprange = s:option(DynamicList, "iprange", translate("IP range"))
+source_iprange.cast = "string"
+source_iprange:depends("source", "iprange")
+source_iprange.write = dynamicList_write
+source_iprange.validate = function(self, value, t)
+    for _, v in ipairs(value) do
+        if not api.iprange(v) then
+            return nil, v .. " " .. translate("Not valid IP range format, please re-enter!")
+        end
+    end
+    return value
+end
+
+source_ipset = s:option(DynamicList, "ipset", "IPSet")
+source_ipset.cast = "string"
+source_ipset:depends("source", "ipset")
+source_ipset.write = dynamicList_write
+
+source.validate = function(self, value)
+    if value == "ip_mac" then
+        source_ip_mac.rmempty = false
+    elseif value == "iprange" then
+        source_iprange.rmempty = false
+    elseif value == "ipset" then
+        source_ipset.rmempty = false
+    end
+    return value
 end
 
 ---- TCP Proxy Mode

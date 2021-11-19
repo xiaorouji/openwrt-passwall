@@ -8,7 +8,7 @@ m = Map(appname)
 local global_proxy_mode = (m:get("@global[0]", "tcp_proxy_mode") or "") .. (m:get("@global[0]", "udp_proxy_mode") or "")
 
 -- [[ ACLs Settings ]]--
-s = m:section(TypedSection, "acl_rule", translate("ACLs"), "<font color='red'>" .. translate("ACLs is a tools which used to designate specific IP proxy mode, IP or MAC address can be entered.") .. "</font>")
+s = m:section(TypedSection, "acl_rule", translate("ACLs"), "<font color='red'>" .. translate("ACLs is a tools which used to designate specific IP proxy mode.") .. "</font>")
 s.template = "cbi/tblsection"
 s.sortable = true
 s.anonymous = true
@@ -36,15 +36,19 @@ sys.net.mac_hints(function(e, t)
     }
 end)
 
-o = s:option(DummyValue, "ip_mac", translate("IP/MAC"))
+o = s:option(DummyValue, "_source", translate("Source"))
 o.rawhtml = true
 o.cfgvalue = function(t, n)
     local e = ''
-    local v = Value.cfgvalue(t, n) or ''
+    local v = ''
+    local source = m:get(n, "source") or "ip_mac"
+    v = m:get(n, source) or ""
     string.gsub(v, '[^' .. " " .. ']+', function(w)
         local a = w
-        if mac_t[w] then
+        if source == "ip_mac" and mac_t[w] then
             a = a .. ' (' .. mac_t[w].ip .. ')'
+        elseif source == "ipset" then
+            a = 'ipset: ' .. a
         end
         if #e > 0 then
             e = e .. "<br />"
