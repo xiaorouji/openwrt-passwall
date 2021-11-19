@@ -44,6 +44,8 @@ o = s:option(ListValue, "filter_keyword_mode", translate("Filter keyword Mode"))
 o:value("0", translate("Close"))
 o:value("1", translate("Discard List"))
 o:value("2", translate("Keep List"))
+o:value("3", translate("Discard List,But Keep List First"))
+o:value("4", translate("Keep List,But Discard List First"))
 
 o = s:option(DynamicList, "filter_discard_list", translate("Discard List"))
 
