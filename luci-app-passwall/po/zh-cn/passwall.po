@@ -895,6 +895,12 @@ msgstr "丢弃列表"
 msgid "Keep List"
 msgstr "保留列表"
 
+msgid "Discard List,But Keep List First"
+msgstr "丢弃列表，但保留列表优先"
+
+msgid "Keep List,But Discard List First"
+msgstr "保留列表，但丢弃列表优先"
+
 msgid "Use global config"
 msgstr "使用全局配置"
 

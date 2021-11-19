@@ -53,13 +53,19 @@ o.default = "3"
 o:value("0", translate("Close"))
 o:value("1", translate("Discard List"))
 o:value("2", translate("Keep List"))
-o:value("3", translate("Use global config"))
+o:value("3", translate("Discard List,But Keep List First"))
+o:value("4", translate("Keep List,But Discard List First"))
+o:value("5", translate("Use global config"))
 
 o = s:option(DynamicList, "filter_discard_list", translate("Discard List"))
 o:depends("filter_keyword_mode", "1")
+o:depends("filter_keyword_mode", "3")
+o:depends("filter_keyword_mode", "4")
 
 o = s:option(DynamicList, "filter_keep_list", translate("Keep List"))
 o:depends("filter_keyword_mode", "2")
+o:depends("filter_keyword_mode", "3")
+o:depends("filter_keyword_mode", "4")
 
 if #ss_aead_type > 0 then
     o = s:option(ListValue, "ss_aead_type", translate("SS AEAD Node Use Type"))

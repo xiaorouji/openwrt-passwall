@@ -49,6 +49,32 @@ local function is_filter_keyword(value)
 			end
 		end
 		return result
+	elseif filter_keyword_mode_default == "3" then
+		local result = false
+		for k,v in ipairs(filter_keyword_discard_list_default) do
+			if value:find(v) then
+				result = true
+			end
+		end
+		for k,v in ipairs(filter_keyword_keep_list_default) do
+			if value:find(v) then
+				result = false
+			end
+		end
+		return result
+	elseif filter_keyword_mode_default == "4" then
+		local result = true
+		for k,v in ipairs(filter_keyword_keep_list_default) do
+			if value:find(v) then
+				result = false
+			end
+		end
+		for k,v in ipairs(filter_keyword_discard_list_default) do
+			if value:find(v) then
+				result = true
+			end
+		end
+		return result
 	end
 	return false
 end
@@ -1088,7 +1114,7 @@ local execute = function()
 			if value.allowInsecure and value.allowInsecure ~= "1" then
 				allowInsecure_default = nil
 			end
-			local filter_keyword_mode = value.filter_keyword_mode or "3"
+			local filter_keyword_mode = value.filter_keyword_mode or "5"
 			if filter_keyword_mode == "0" then
 				filter_keyword_mode_default = "0"
 			elseif filter_keyword_mode == "1" then
@@ -1097,6 +1123,14 @@ local execute = function()
 			elseif filter_keyword_mode == "2" then
 				filter_keyword_mode_default = "2"
 				filter_keyword_keep_list_default = value.filter_keep_list or {}
+			elseif filter_keyword_mode == "3" then
+				filter_keyword_mode_default = "3"
+				filter_keyword_keep_list_default = value.filter_keep_list or {}
+				filter_keyword_discard_list_default = value.filter_discard_list or {}
+			elseif filter_keyword_mode == "4" then
+				filter_keyword_mode_default = "4"
+				filter_keyword_keep_list_default = value.filter_keep_list or {}
+				filter_keyword_discard_list_default = value.filter_discard_list or {}
 			end
 			local ss_aead_type = value.ss_aead_type or "global"
 			if ss_aead_type ~= "global" then
