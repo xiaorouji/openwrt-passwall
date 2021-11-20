@@ -80,7 +80,9 @@ PGO_VER:=4664-1636557077-6e390f4e505916531ca2ab0c895d5903ab4d88a9
 PGO_FILE:=chrome-linux-$(PGO_VER).profdata
 define Download/PGO_PROF
 	URL:=https://storage.googleapis.com.cnpmjs.org/chromium-optimization-profiles/pgo_profiles \
-	     https://storage.googleapis.com/chromium-optimization-profiles/pgo_profiles
+	     https://storage.googleapis.com/chromium-optimization-profiles/pgo_profiles \
+	     https://mirror01.download.immortalwrt.eu.org \
+	     https://mirror02.download.immortalwrt.eu.org
 	URL_FILE:=$(PGO_FILE)
 	FILE:=$(PGO_FILE)
 	HASH:=8dcf5973033d40c9a7b15e571dea3832e7b67976aad9113369e22d43808c603f
