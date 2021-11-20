@@ -36,19 +36,15 @@ sys.net.mac_hints(function(e, t)
     }
 end)
 
-o = s:option(DummyValue, "_source", translate("Source"))
+o = s:option(DummyValue, "sources", translate("Source"))
 o.rawhtml = true
 o.cfgvalue = function(t, n)
     local e = ''
-    local v = ''
-    local source = m:get(n, "source") or "ip_mac"
-    v = m:get(n, source) or ""
+    local v = Value.cfgvalue(t, n) or ''
     string.gsub(v, '[^' .. " " .. ']+', function(w)
         local a = w
-        if source == "ip_mac" and mac_t[w] then
+        if mac_t[w] then
             a = a .. ' (' .. mac_t[w].ip .. ')'
-        elseif source == "ipset" then
-            a = 'ipset: ' .. a
         end
         if #e > 0 then
             e = e .. "<br />"

@@ -49,21 +49,6 @@ o = s:option(Value, "remarks", translate("Remarks"))
 o.default = arg[1]
 o.rmempty = true
 
----- Source
-source = s:option(ListValue, "source", translate("Source Type"))
-source.rmempty = false
-source.default = "ip_mac"
-source:value("ip_mac", translate("IP/MAC"))
-if os.execute("lsmod | grep -i iprange >/dev/null") == 0 then
-    source:value("iprange", translate("IP range"))
-end
-source:value("ipset", "IPSet")
-
-source_ip_mac = s:option(DynamicList, "ip_mac", translate("IP/MAC"))
-source_ip_mac.datatype = "or(ip4addr,macaddr)"
-source_ip_mac.cast = "string"
-source_ip_mac:depends("source", "ip_mac")
-
 local mac_t = {}
 sys.net.mac_hints(function(e, t)
     mac_t[#mac_t + 1] = {
@@ -83,39 +68,72 @@ table.sort(mac_t, function(a,b)
     end
     return false
 end)
-for _, key in pairs(mac_t) do
-    source_ip_mac:value(key.mac, "%s (%s)" % {key.mac, key.ip})
-end
-source_ip_mac.write = dynamicList_write
 
-source_iprange = s:option(DynamicList, "iprange", translate("IP range"))
-source_iprange.cast = "string"
-source_iprange:depends("source", "iprange")
-source_iprange.write = dynamicList_write
-source_iprange.validate = function(self, value, t)
+---- Source
+sources = s:option(DynamicList, "sources", translate("Source"))
+sources.description = "<ul><li>" .. translate("Example:")
+.. "</li><li>" .. translate("MAC") .. ": 00:00:00:FF:FF:FF"
+.. "</li><li>" .. translate("IP") .. ": 192.168.1.100"
+.. "</li><li>" .. translate("IP CIDR") .. ": 192.168.1.0/24"
+.. "</li><li>" .. translate("IP range") .. ": 192.168.1.100-192.168.1.200"
+.. "</li><li>" .. translate("IPSet") .. ": ipset:lanlist"
+.. "</li></ul>"
+sources.cast = "string"
+for _, key in pairs(mac_t) do
+    sources:value(key.mac, "%s (%s)" % {key.mac, key.ip})
+end
+sources.cfgvalue = function(self, section)
+    local value
+	if self.tag_error[section] then
+		value = self:formvalue(section)
+	else
+		value = self.map:get(section, self.option)
+        if type(value) == "string" then
+            local value2 = {}
+            string.gsub(value, '[^' .. " " .. ']+', function(w) table.insert(value2, w) end)
+            value = value2
+        end
+	end
+    return value
+end
+sources.validate = function(self, value, t)
+    local err = {}
     for _, v in ipairs(value) do
-        if not api.iprange(v) then
-            return nil, v .. " " .. translate("Not valid IP range format, please re-enter!")
+        local flag = false
+        if v:find("ipset:") and v:find("ipset:") == 1 then
+            local ipset = v:gsub("ipset:", "")
+            if ipset and ipset ~= "" then
+                flag = true
+            end
+        end
+
+        if flag == false and datatypes.macaddr(v) then
+            flag = true
+        end
+
+        if flag == false and datatypes.ip4addr(v) then
+            flag = true
+        end
+
+        if flag == false and api.iprange(v) then
+            flag = true
+        end
+
+        if flag == false then
+            err[#err + 1] = v
         end
     end
-    return value
-end
 
-source_ipset = s:option(DynamicList, "ipset", "IPSet")
-source_ipset.cast = "string"
-source_ipset:depends("source", "ipset")
-source_ipset.write = dynamicList_write
-
-source.validate = function(self, value)
-    if value == "ip_mac" then
-        source_ip_mac.rmempty = false
-    elseif value == "iprange" then
-        source_iprange.rmempty = false
-    elseif value == "ipset" then
-        source_ipset.rmempty = false
+    if #err > 0 then
+        self:add_error(t, "invalid", translate("Not true format, please re-enter!"))
+        for _, v in ipairs(err) do
+            self:add_error(t, "invalid", v)
+        end
     end
+
     return value
 end
+sources.write = dynamicList_write
 
 ---- TCP Proxy Mode
 tcp_proxy_mode = s:option(ListValue, "tcp_proxy_mode", translatef("%s Proxy Mode", "TCP"))

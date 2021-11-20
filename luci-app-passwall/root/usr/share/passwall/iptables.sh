@@ -162,34 +162,28 @@ load_acl() {
 		dnsmasq_port=11400
 		echolog "访问控制："
 		for item in $items; do
-			local enabled sid remarks source ip_mac iprange ipset tcp_proxy_mode udp_proxy_mode tcp_no_redir_ports udp_no_redir_ports tcp_redir_ports udp_redir_ports tcp_node udp_node dns_mode dns_forward v2ray_dns_mode dns_doh dns_client_ip dns_query_strategy
+			local enabled sid remarks sources tcp_proxy_mode udp_proxy_mode tcp_no_redir_ports udp_no_redir_ports tcp_redir_ports udp_redir_ports tcp_node udp_node dns_mode dns_forward v2ray_dns_mode dns_doh dns_client_ip dns_query_strategy
 			local _ip _mac _iprange _ipset _ip_or_mac rule_list tcp_port udp_port tcp_node_remark udp_node_remark config_file
 			sid=$(uci -q show "${CONFIG}.${item}" | grep "=acl_rule" | awk -F '=' '{print $1}' | awk -F '.' '{print $2}')
 			eval $(uci -q show "${CONFIG}.${item}" | cut -d'.' -sf 3-)
 			[ "$enabled" = "1" ] || continue
 			
-			if [ "$source" = "iprange" ]; then
-				for i in ${iprange}; do
-					is_iprange=$(lua_api "iprange(\"${i}\")")
-					if [ "${is_iprange}" = "true" ]; then
-						rule_list="${rule_list}\niprange:${i}"
-					fi
-				done
-			elif [ "$source" = "ipset" ]; then
-				for i in ${ipset}; do
-					rule_list="${rule_list}\nipset:${i}"
-				done
-			else
-				[ -z "${ip_mac}" ] && continue
-				for i in ${ip_mac}; do
-					_ip_or_mac=$(lua_api "ip_or_mac(\"${i}\")")
+			[ -z "${sources}" ] && continue
+			for s in $sources; do
+				is_iprange=$(lua_api "iprange(\"${s}\")")
+				if [ "${is_iprange}" = "true" ]; then
+					rule_list="${rule_list}\niprange:${s}"
+				elif [ -n "$(echo ${s} | grep '^ipset:')" ]; then
+					rule_list="${rule_list}\nipset:${s}"
+				else
+					_ip_or_mac=$(lua_api "ip_or_mac(\"${s}\")")
 					if [ "${_ip_or_mac}" = "ip" ]; then
-						rule_list="${rule_list}\nip:${i}"
+						rule_list="${rule_list}\nip:${s}"
 					elif [ "${_ip_or_mac}" = "mac" ]; then
-						rule_list="${rule_list}\nmac:${i}"
+						rule_list="${rule_list}\nmac:${s}"
 					fi
-				done
-			fi
+				fi
+			done
 			[ -z "${rule_list}" ] && continue
 			
 			tcp_proxy_mode=${tcp_proxy_mode:-default}
@@ -423,7 +417,7 @@ load_acl() {
 				$ipt_m -A PSW $(comment "$remarks") ${_ipt_source} -p udp -j RETURN
 				$ip6t_m -A PSW $(comment "$remarks") ${_ipt_source} -p udp -j RETURN 2>/dev/null
 			done
-			unset enabled sid remarks source ip_mac iprange ipset tcp_proxy_mode udp_proxy_mode tcp_no_redir_ports udp_no_redir_ports tcp_redir_ports udp_redir_ports tcp_node udp_node dns_mode dns_forward v2ray_dns_mode dns_doh dns_client_ip dns_query_strategy
+			unset enabled sid remarks sources tcp_proxy_mode udp_proxy_mode tcp_no_redir_ports udp_no_redir_ports tcp_redir_ports udp_redir_ports tcp_node udp_node dns_mode dns_forward v2ray_dns_mode dns_doh dns_client_ip dns_query_strategy
 			unset _ip _mac _iprange _ipset _ip_or_mac rule_list tcp_port udp_port tcp_node_remark udp_node_remark config_file
 			unset ipt_tmp msg msg2
 			unset redirect_dns_port
