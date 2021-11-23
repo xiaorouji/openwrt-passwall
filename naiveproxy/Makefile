@@ -61,7 +61,9 @@ endif
 CLANG_VER:=14-init-5759-g02895eed-1
 CLANG_FILE:=clang-llvmorg-$(CLANG_VER).tgz
 define Download/CLANG
-	URL:=https://commondatastorage.googleapis.com/chromium-browser-clang/Linux_x64
+	URL:=https://commondatastorage.googleapis.com/chromium-browser-clang/Linux_x64 \
+	     https://sources.immortalwrt.org \
+	     https://sources.cdn.immortalwrt.org
 	URL_FILE:=$(CLANG_FILE)
 	FILE:=$(CLANG_FILE)
 	HASH:=5c2d11236c7254d48b02535ff58897830bc64e7258434d658c7d606e8d01b179
@@ -70,7 +72,9 @@ endef
 GN_VER:=0153d369bbccc908f4da4993b1ba82728055926a
 GN_FILE:=gn-git_revision-$(GN_VER).zip
 define Download/GN_TOOL
-	URL:=https://chrome-infra-packages.appspot.com/dl/gn/gn/linux-amd64/+
+	URL:=https://chrome-infra-packages.appspot.com/dl/gn/gn/linux-amd64/+ \
+	     https://sources.immortalwrt.org \
+	     https://sources.cdn.immortalwrt.org
 	URL_FILE:=git_revision:$(GN_VER)
 	FILE:=$(GN_FILE)
 	HASH:=8022d1e0d6627a740847806c27a195fa9fc15c4883359a6d162944c3d5e26b44
@@ -80,7 +84,9 @@ PGO_VER:=4664-1636557077-6e390f4e505916531ca2ab0c895d5903ab4d88a9
 PGO_FILE:=chrome-linux-$(PGO_VER).profdata
 define Download/PGO_PROF
 	URL:=https://storage.googleapis.com.cnpmjs.org/chromium-optimization-profiles/pgo_profiles \
-	     https://storage.googleapis.com/chromium-optimization-profiles/pgo_profiles
+	     https://storage.googleapis.com/chromium-optimization-profiles/pgo_profiles \
+	     https://sources.immortalwrt.org \
+	     https://sources.cdn.immortalwrt.org
 	URL_FILE:=$(PGO_FILE)
 	FILE:=$(PGO_FILE)
 	HASH:=8dcf5973033d40c9a7b15e571dea3832e7b67976aad9113369e22d43808c603f
