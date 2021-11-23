@@ -895,6 +895,12 @@ msgstr "丢弃列表"
 msgid "Keep List"
 msgstr "保留列表"
 
+msgid "Discard List,But Keep List First"
+msgstr "丢弃列表，但保留列表优先"
+
+msgid "Keep List,But Discard List First"
+msgstr "保留列表，但丢弃列表优先"
+
 msgid "Use global config"
 msgstr "使用全局配置"
 
@@ -907,8 +913,14 @@ msgstr "添加"
 msgid "ACLs"
 msgstr "访问控制"
 
-msgid "ACLs is a tools which used to designate specific IP proxy mode, IP or MAC address can be entered."
-msgstr "访问控制列表是用于指定特殊IP代理模式的工具。IP、MAC地址可只填写一项。"
+msgid "ACLs is a tools which used to designate specific IP proxy mode."
+msgstr "访问控制列表是用于指定特殊IP代理模式的工具。"
+
+msgid "Example:"
+msgstr "例："
+
+msgid "IP range"
+msgstr "IP 范围"
 
 msgid "Remarks"
 msgstr "备注"
@@ -966,6 +978,9 @@ msgstr "不是有效IPv4格式，请重新输入！"
 
 msgid "Not valid IPv6 format, please re-enter!"
 msgstr "不是有效IPv6格式，请重新输入！"
+
+msgid "Not true format, please re-enter!"
+msgstr "不是正确的格式，请重新输入！"
 
 msgid "Plaintext: If this string matches any part of the targeting domain, this rule takes effet. Example: rule 'sina.com' matches targeting domain 'sina.com', 'sina.com.cn' and 'www.sina.com', but not 'sina.cn'."
 msgstr "纯字符串: 当此字符串匹配目标域名中任意部分，该规则生效。比如'sina.com'可以匹配'sina.com'、'sina.com.cn'和'www.sina.com'，但不匹配'sina.cn'。"
