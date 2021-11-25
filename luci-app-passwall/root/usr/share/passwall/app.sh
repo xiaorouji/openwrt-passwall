@@ -61,6 +61,18 @@ get_enabled_anonymous_secs() {
 	uci -q show "${CONFIG}" | grep "${1}\[.*\.enabled='1'" | cut -d '.' -sf2
 }
 
+convert_ip_port_format() {
+	local ip=$1
+	local ip_port=
+	local result=$(echo $ip | grep "#")
+	if [ -z "$result" ]; then
+		ip_port=$(echo $ip | sed -E 's/\:([^:]+)$/#\1/g')
+	else
+		ip_port=$result
+	fi
+	echo $ip_port
+}
+
 get_host_ip() {
 	local host=$2
 	local count=$3
@@ -301,7 +313,7 @@ load_config() {
 	chnlist=$(echo "${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}${UDP_PROXY_MODE}${LOCALHOST_UDP_PROXY_MODE}" | grep "chnroute")
 	gfwlist=$(echo "${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}${UDP_PROXY_MODE}${LOCALHOST_UDP_PROXY_MODE}" | grep "gfwlist")
 	DNS_MODE=$(config_t_get global dns_mode pdnsd)
-	DNS_FORWARD=$(config_t_get global dns_forward 1.1.1.1:53 | sed 's/:/#/g')
+	DNS_FORWARD=$(convert_ip_port_format $(config_t_get global dns_forward 1.1.1.1:53))
 	DNS_CACHE=$(config_t_get global dns_cache 0)
 	CHINADNS_NG=$(config_t_get global chinadns_ng 1)
 	dns_listen_port=${DNS_PORT}
@@ -1150,7 +1162,7 @@ start_dns() {
 	;;
 	custom)
 		custom_dns=$(config_t_get global custom_dns)
-		TUN_DNS="$(echo ${custom_dns} | sed 's/:/#/g')"
+		TUN_DNS="$(convert_ip_port_format $(echo ${custom_dns}))"
 		echolog "  - 域名解析：使用UDP协议自定义DNS（$TUN_DNS）解析..."
 	;;
 	esac
@@ -1465,6 +1477,9 @@ run_redir)
 	;;
 node_switch)
 	node_switch $@
+	;;
+echolog)
+	echolog $@
 	;;
 stop)
 	[ "$1" = "force" ] && force_stop
