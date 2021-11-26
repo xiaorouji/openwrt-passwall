@@ -1190,7 +1190,7 @@ start_dns() {
 			cat "${RULES_PATH}/direct_host" >> "${chnlist_param}"
 			echolog "  | - [$?](chinadns-ng) 域名白名单合并到中国域名表"
 		}
-		chnlist_param=${chnlist_param:+-m "${chnlist_param}" -M}
+		chnlist_param=${chnlist_param:+-m "${chnlist_param}"}
 		local log_path="${TMP_PATH}/chinadns-ng.log"
 		log_path="/dev/null"
 		ln_start_bin "$(first_type chinadns-ng)" chinadns-ng "$log_path" -v -b 0.0.0.0 -l "${china_ng_listen_port}" ${china_ng_chn:+-c "${china_ng_chn}"} ${chnlist_param} ${china_ng_gfw:+-t "${china_ng_gfw}"} ${gfwlist_param:+-g "${gfwlist_param}"} -f
