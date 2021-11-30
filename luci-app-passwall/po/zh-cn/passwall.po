@@ -934,7 +934,7 @@ msgstr "代理列表"
 msgid "Block List"
 msgstr "屏蔽列表"
 
-msgid "Lan Ip List"
+msgid "Lan IP List"
 msgstr "局域网IP列表"
 
 msgid "Route Hosts"
