@@ -14,7 +14,7 @@ s.anonymous = true
 s:tab("direct_list", translate("Direct List"))
 s:tab("proxy_list", translate("Proxy List"))
 s:tab("block_list", translate("Block List"))
-s:tab("lan_ip_list", translate("Lan Ip List"))
+s:tab("lan_ip_list", translate("Lan IP List"))
 s:tab("route_hosts", translate("Route Hosts"))
 
 ---- Direct Hosts
