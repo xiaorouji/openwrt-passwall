@@ -70,8 +70,8 @@ msgstr "进入界面"
 msgid "Rule Manage"
 msgstr "规则管理"
 
-msgid "Rule List Manage"
-msgstr "直连/代理/局域网/hosts名单管理"
+msgid "Rule List"
+msgstr "规则列表"
 
 msgid "Access control"
 msgstr "访问控制"
