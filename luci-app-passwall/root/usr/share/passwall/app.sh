@@ -1183,11 +1183,11 @@ start_dns() {
 		[ -s "${RULES_PATH}/chnlist" ] && cp -a "${RULES_PATH}/chnlist" "${chnlist_param}"
 
 		[ -s "${RULES_PATH}/proxy_host" ] && {
-			cat "${RULES_PATH}/proxy_host" >> "${gfwlist_param}"
+			cat "${RULES_PATH}/proxy_host" | tr -s '\n' | grep -v "^#" | sort -u >> "${gfwlist_param}"
 			echolog "  | - [$?](chinadns-ng) 代理域名表合并到防火墙域名表"
 		}
 		[ -s "${RULES_PATH}/direct_host" ] && {
-			cat "${RULES_PATH}/direct_host" >> "${chnlist_param}"
+			cat "${RULES_PATH}/direct_host" | tr -s '\n' | grep -v "^#" | sort -u >> "${chnlist_param}"
 			echolog "  | - [$?](chinadns-ng) 域名白名单合并到中国域名表"
 		}
 		chnlist_param=${chnlist_param:+-m "${chnlist_param}" -M}

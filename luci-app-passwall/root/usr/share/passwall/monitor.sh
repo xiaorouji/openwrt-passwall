@@ -17,10 +17,6 @@ config_t_get() {
 	echo ${ret:=$3}
 }
 
-if [ "$(pgrep -f $CONFIG/monitor.sh | wc -l)" -gt 2 ]; then
-	exit 1
-fi
-
 ENABLED=$(config_t_get global enabled 0)
 [ "$ENABLED" != 1 ] && return 1
 ENABLED=$(config_t_get global_delay start_daemon 0)

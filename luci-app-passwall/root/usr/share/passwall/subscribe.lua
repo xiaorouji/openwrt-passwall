@@ -1109,6 +1109,7 @@ local execute = function()
 		end
 
 		for index, value in ipairs(subscribe_list) do
+			local cfgid = value[".name"]
 			local remark = value.remark
 			local url = value.url
 			if value.allowInsecure and value.allowInsecure ~= "1" then
@@ -1142,13 +1143,13 @@ local execute = function()
 			end
 			local ua = value.user_agent
 			log('正在订阅:【' .. remark .. '】' .. url)
-			local raw = curl(url, "/tmp/" .. remark, ua)
+			local raw = curl(url, "/tmp/" .. cfgid, ua)
 			if raw == 0 then
-				local f = io.open("/tmp/" .. remark, "r")
+				local f = io.open("/tmp/" .. cfgid, "r")
 				local stdout = f:read("*all")
 				f:close()
 				raw = trim(stdout)
-				os.remove("/tmp/" .. remark)
+				os.remove("/tmp/" .. cfgid)
 				parse_link(raw, "2", remark)
 			else
 				retry[#retry + 1] = value

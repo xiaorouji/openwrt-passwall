@@ -70,8 +70,8 @@ msgstr "进入界面"
 msgid "Rule Manage"
 msgstr "规则管理"
 
-msgid "Rule List Manage"
-msgstr "直连/代理/局域网/hosts名单管理"
+msgid "Rule List"
+msgstr "规则列表"
 
 msgid "Access control"
 msgstr "访问控制"
@@ -489,6 +489,15 @@ msgstr "最大上行(Mbps)"
 
 msgid "Max download Mbps"
 msgstr "最大下行(Mbps)"
+
+msgid "QUIC stream receive window"
+msgstr "QUIC 流接收窗口"
+
+msgid "QUIC connection receive window"
+msgstr "QUIC 连接接收窗口"
+
+msgid "Disable MTU detection"
+msgstr "禁用 MTU 检测"
 
 msgid "Encrypt Method"
 msgstr "加密"
