@@ -1,6 +1,6 @@
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=xray-core
+PKG_NAME:=Xray-core
 PKG_VERSION:=1.5.1
 PKG_RELEASE:=$(AUTORELEASE)
 
@@ -22,7 +22,6 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_XRAY_CORE_COMPRESS_GOPROXY \
 	CONFIG_XRAY_CORE_COMPRESS_UPX \
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/Xray-core-$(PKG_VERSION)
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
@@ -89,12 +88,11 @@ endef
 define Package/xray-core/conffiles
 /etc/xray/
 /etc/config/xray
-/usr/share/xray
 endef
 
 ifneq ($(CONFIG_XRAY_CORE_COMPRESS_GOPROXY),)
 	export GO111MODULE=on
-	export GOPROXY=https://goproxy.io
+	export GOPROXY=https://goproxy.baidu.com
 endif
 
 define Build/Compile
