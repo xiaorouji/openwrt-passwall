@@ -17,4 +17,3 @@ function gen_config(user)
     }
     return config
 end
-
