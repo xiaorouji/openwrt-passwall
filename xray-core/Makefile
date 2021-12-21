@@ -56,13 +56,6 @@ define Package/xray-example
   PKGARCH:=all
 endef
 
-define Package/xray-geodata
-  $(call Package/xray/template)
-  TITLE+= (geodata files)
-  DEPENDS:=xray-core
-  PKGARCH:=all
-endef
-
 define Package/xray/description
   Xray, Penetrates Everything. It helps you to build your own computer network.
   It secures your network connections and thus protects your privacy.
@@ -76,12 +69,6 @@ define Package/xray-example/description
   $(call Package/xray/description)
 
   This includes example configuration files for xray-core.
-endef
-
-define Package/xray-geodata/description
-  $(call Package/xray/description)
-
-  This includes GEO datas used for xray-core.
 endef
 
 define Package/xray-core/config
@@ -105,38 +92,10 @@ define Package/xray-core/conffiles
 /usr/share/xray
 endef
 
-GEOIP_VER:=202109062209
-GEOIP_FILE:=geoip.dat.$(GEOIP_VER)
-
-define Download/geoip
-  URL:=https://github.com/Loyalsoldier/v2ray-rules-dat/releases/download/$(GEOIP_VER)/
-  URL_FILE:=geoip.dat
-  FILE:=$(GEOIP_FILE)
-  HASH:=3f347a3ff4a849cea4d0144565d2fa85f40a52b5c15cda4d43eefec57cbff3e8
-endef
-
-GEOSITE_VER:=202109062209
-GEOSITE_FILE:=geosite.dat.$(GEOSITE_VER)
-
-define Download/geosite
-  URL:=https://github.com/Loyalsoldier/v2ray-rules-dat/releases/download/$(GEOSITE_VER)/
-  URL_FILE:=geosite.dat
-  FILE:=$(GEOSITE_FILE)
-  HASH:=2a6d667bdfb345c919608b0c3a296e172ceb15eb0bf8488fa7fc06316db16840
-endef
-
 ifneq ($(CONFIG_XRAY_CORE_COMPRESS_GOPROXY),)
 	export GO111MODULE=on
 	export GOPROXY=https://goproxy.io
 endif
-
-define Build/Prepare
-	$(call Build/Prepare/Default)
-ifneq ($(CONFIG_PACKAGE_xray-geodata),)
-	$(call Download,geoip)
-	$(call Download,geosite)
-endif
-endef
 
 define Build/Compile
 	$(call GoPackage/Build/Compile)
@@ -165,12 +124,5 @@ define Package/xray-example/install
 	$(INSTALL_DATA) $(CURDIR)/files/vpoint_vmess_freedom.json $(1)/etc/xray/
 endef
 
-define Package/xray-geodata/install
-	$(INSTALL_DIR) $(1)/usr/share/xray/
-	$(INSTALL_DATA) $(DL_DIR)/$(GEOIP_FILE) $(1)/usr/share/xray/geoip.dat
-	$(INSTALL_DATA) $(DL_DIR)/$(GEOSITE_FILE) $(1)/usr/share/xray/geosite.dat
-endef
-
 $(eval $(call BuildPackage,xray-core))
 $(eval $(call BuildPackage,xray-example))
-$(eval $(call BuildPackage,xray-geodata))
