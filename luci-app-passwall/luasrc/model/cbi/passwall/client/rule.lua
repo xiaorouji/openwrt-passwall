@@ -63,7 +63,7 @@ o:depends("auto_update", true)
 
 if has_v2ray or has_xray then
     o = s:option(Value, "v2ray_location_asset", translate("Location of V2ray/Xray asset"), translate("This variable specifies a directory where geoip.dat and geosite.dat files are."))
-    o.default = "/usr/share/xray/"
+    o.default = "/usr/share/v2ray/"
     o.rmempty = false
     
     s = m:section(TypedSection, "shunt_rules", "V2ray/Xray " .. translate("Shunt Rule"), "<a style='color: red'>" .. translate("Please note attention to the priority, the higher the order, the higher the priority.") .. "</a>")
