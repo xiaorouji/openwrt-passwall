@@ -67,13 +67,6 @@ define Package/v2ray-extra
   PKGARCH:=all
 endef
 
-define Package/v2ray-geodata
-  $(call Package/v2ray/template)
-  TITLE+= (geodata files)
-  DEPENDS:=v2ray-core
-  PKGARCH:=all
-endef
-
 define Package/v2ray/description
   Project V is a set of network tools that help you to build your own computer network.
   It secures your network connections and thus protects your privacy.
@@ -99,12 +92,6 @@ define Package/v2ray-extra/description
   $(call Package/v2ray/description)
 
   This includes extra resources for v2ray-core.
-endef
-
-define Package/v2ray-geodata/description
-  $(call Package/v2ray/description)
-
-  This includes GEO datas used for v2ray-core.
 endef
 
 define Package/v2ray-core/config
@@ -137,44 +124,15 @@ config V2RAY_CTL_COMPRESS_UPX
 endmenu
 endef
 
-
 define Package/v2ray-core/conffiles
 /etc/config/v2ray
 /etc/v2ray/
-endef
-
-GEOIP_VER:=202110210032
-GEOIP_FILE:=geoip.dat.$(GEOIP_VER)
-
-define Download/geoip
-  URL:=https://github.com/v2fly/geoip/releases/download/$(GEOIP_VER)/
-  URL_FILE:=geoip.dat
-  FILE:=$(GEOIP_FILE)
-  HASH:=932cd484471f8066c040ab84a04fdd70df6c5cee99545de610e1f337bb696220
-endef
-
-GEOSITE_VER:=20211018134657
-GEOSITE_FILE:=dlc.dat.$(GEOSITE_VER)
-
-define Download/geosite
-  URL:=https://github.com/v2fly/domain-list-community/releases/download/$(GEOSITE_VER)/
-  URL_FILE:=dlc.dat
-  FILE:=$(GEOSITE_FILE)
-  HASH:=60b2388b11f1f9b6e14794fbacdf3bf693e3101e3ec651ce5423d8caceda5497
 endef
 
 ifneq ($(CONFIG_V2RAY_CORE_COMPRESS_GOPROXY)$(CONFIG_V2RAY_CTL_COMPRESS_GOPROXY),)
 	export GO111MODULE=on
 	export GOPROXY=https://goproxy.baidu.com
 endif
-
-define Build/Prepare
-	$(call Build/Prepare/Default)
-ifneq ($(CONFIG_PACKAGE_v2ray-geodata),)
-	$(call Download,geoip)
-	$(call Download,geosite)
-endif
-endef
 
 define Build/Compile
 	$(call GoPackage/Build/Compile)
@@ -225,14 +183,7 @@ define Package/v2ray-extra/install
 	$(CP) $(PKG_BUILD_DIR)/release/extra/* $(1)/usr/share/v2ray/
 endef
 
-define Package/v2ray-geodata/install
-	$(INSTALL_DIR) $(1)/usr/share/v2ray/
-	$(INSTALL_DATA) $(DL_DIR)/$(GEOIP_FILE) $(1)/usr/share/v2ray/geoip.dat
-	$(INSTALL_DATA) $(DL_DIR)/$(GEOSITE_FILE) $(1)/usr/share/v2ray/geosite.dat
-endef
-
 $(eval $(call BuildPackage,v2ray-core))
 $(eval $(call BuildPackage,v2ray-ctl))
 $(eval $(call BuildPackage,v2ray-example))
 $(eval $(call BuildPackage,v2ray-extra))
-$(eval $(call BuildPackage,v2ray-geodata))
