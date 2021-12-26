@@ -1,17 +1,20 @@
-# Copyright (C) 2021 xiaorouji
+# SPDX-License-Identifier: GPL-3.0-only
 #
-# This is free software, licensed under the GNU General Public License v3.
-#
+# Copyright (C) 2021 ImmortalWrt.org
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hysteria
-PKG_VERSION:=0.9.1
+PKG_VERSION:=0.9.2
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/HyNetwork/hysteria/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=ac578673f2d817b7723830292027c9e439da7b4308f63f7d9f2720947a44c8e7
+PKG_HASH:=dd8ae6b6c6239a53e53f4d318a5f5842b584a0e2cc024b12d3b6ba8ee17395ee
+
+PKG_LICENSE:=MIT
+PKG_LICENSE_FILE:=LICENSE
+PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_HYSTERIA_COMPRESS_GOPROXY \
@@ -22,28 +25,29 @@ PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
 GO_PKG:=github.com/tobyxdd/hysteria
-GO_PKG_BUILD_PKG:=$(GO_PKG)/cmd
+GO_PKG_BUILD_PKG:=github.com/tobyxdd/hysteria/cmd
 GO_PKG_LDFLAGS:=-s -w
-GO_PKG_LDFLAGS_X:= \
-	main.appVersion=$(PKG_VERSION)
+GO_PKG_LDFLAGS_X:=main.appVersion=$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
 
-define Package/$(PKG_NAME)
-	SECTION:=net
-	CATEGORY:=Network
-	SUBMENU:=Web Servers/Proxies
-	DEPENDS:=$$(GO_ARCH_DEPENDS)
-	TITLE:=Hysteria is a feature-packed network utility optimized for networks of poor quality (e.g. satellite connections, congested public Wi-Fi, connecting from China to servers abroad)
-	URL:=https://github.com/HyNetwork/hysteria
+define Package/hysteria
+  SECTION:=net
+  CATEGORY:=Network
+  TITLE:=A feature-packed network utility optimized for networks of poor quality
+  URL:=https://github.com/tobyxdd/hysteria
+  DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle
 endef
 
-define Package/$(PKG_NAME)/config
+define Package/hysteria/description
+  Hysteria is a feature-packed network utility optimized for networks
+  of poor quality (e.g. satellite connections, congested public Wi-Fi,
+  connecting from China to servers abroad) powered by a custom version
+  of QUIC protocol.
+endef
 
-menu "Configuration"
-	depends on PACKAGE_$(PKG_NAME)
-
+define Package/hysteria/config
 config HYSTERIA_COMPRESS_GOPROXY
 	bool "Compiling with GOPROXY proxy"
 	default n
@@ -51,15 +55,12 @@ config HYSTERIA_COMPRESS_GOPROXY
 config HYSTERIA_COMPRESS_UPX
 	bool "Compress executable files with UPX"
 	depends on !mips64
-	default y
-
-endmenu
-
+	default y	
 endef
 
 ifeq ($(CONFIG_HYSTERIA_COMPRESS_GOPROXY),y)
-export GO111MODULE=on
-export GOPROXY=https://goproxy.io
+	export GO111MODULE=on
+	export GOPROXY=https://goproxy.baidu.com
 endif
 
 define Build/Compile
@@ -69,11 +70,11 @@ ifeq ($(CONFIG_HYSTERIA_COMPRESS_UPX),y)
 endif
 endef
 
-define Package/$(PKG_NAME)/install
+define Package/hysteria/install
 	$(call GoPackage/Package/Install/Bin,$(PKG_INSTALL_DIR))
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/cmd $(1)/usr/bin/hysteria
 endef
 
-$(eval $(call GoBinPackage,$(PKG_NAME)))
-$(eval $(call BuildPackage,$(PKG_NAME)))
+$(eval $(call GoBinPackage,hysteria))
+$(eval $(call BuildPackage,hysteria))
