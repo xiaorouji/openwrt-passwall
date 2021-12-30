@@ -141,7 +141,6 @@ get_action_chain_name() {
 	esac
 }
 
-
 gen_laniplist() {
 	cat $RULES_PATH/lanlist_ipv4 | tr -s '\n' | grep -v "^#"
 }
@@ -772,7 +771,9 @@ add_firewall_rule() {
 	$ip6t_m -N PSW_DIVERT
 	$ip6t_m -A PSW_DIVERT -j MARK --set-mark 1
 	$ip6t_m -A PSW_DIVERT -j ACCEPT
-	$ip6t_m -A PREROUTING -p tcp -m socket -j PSW_DIVERT
+
+	PR_INDEX=$(RULE_LAST_INDEX "$ip6t_m" PREROUTING mwan3 1)
+	$ip6t_m -I PREROUTING $PR_INDEX -p tcp -m socket -j PSW_DIVERT
 
 	$ip6t_m -N PSW
 	$ip6t_m -A PSW $(dst $IPSET_LANIPLIST6) -j RETURN
@@ -780,7 +781,10 @@ add_firewall_rule() {
 	$ip6t_m -A PSW $(dst $IPSET_WHITELIST6) -j RETURN
 	$ip6t_m -A PSW -m mark --mark 0xff -j RETURN
 	$ip6t_m -A PSW $(dst $IPSET_BLOCKLIST6) -j DROP
-	$ip6t_m -A PREROUTING -j PSW
+
+	PR_INDEX=$((PR_INDEX + 1))
+	$ip6t_m -I PREROUTING $PR_INDEX -j PSW
+	unset PR_INDEX
 
 	$ip6t_m -N PSW_OUTPUT
 	$ip6t_m -A PSW_OUTPUT $(dst $IPSET_LANIPLIST6) -j RETURN
@@ -1019,7 +1023,7 @@ gen_include() {
 		[ "$1" == "6" ] && _ipt="ip6tables"
 
 		echo "*$2"
-		${_ipt}-save -t $2 | grep "PSW" | grep -v "\-j PSW$" | sed -e "s/^-A \(OUTPUT\|PREROUTING\)/-I \1 1/"
+		${_ipt}-save -t $2 | grep "PSW" | grep -v "\-j PSW$" | grep -v "socket \-j PSW_DIVERT$" | sed -e "s/^-A \(OUTPUT\|PREROUTING\)/-I \1 1/"
 		echo 'COMMIT'
 	}
 	cat <<-EOF >> $FWI
@@ -1044,6 +1048,12 @@ gen_include() {
 		
 		PR_INDEX=\$((PR_INDEX + 1))
 		$ipt_m -I PREROUTING \$PR_INDEX -j PSW
+		
+		PR_INDEX=\$(/usr/share/passwall/iptables.sh RULE_LAST_INDEX "$ip6t_m" PREROUTING mwan3 1)
+		$ip6t_m -I PREROUTING \$PR_INDEX -p tcp -m socket -j PSW_DIVERT
+		
+		PR_INDEX=\$((PR_INDEX + 1))
+		$ip6t_m -I PREROUTING \$PR_INDEX -j PSW
 	EOF
 	return 0
 }
