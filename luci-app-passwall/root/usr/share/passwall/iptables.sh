@@ -403,11 +403,11 @@ load_acl() {
 						$ipt_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} $(factor $udp_redir_ports "-m multiport --dport") $(dst $IPSET_BLACKLIST) $(REDIRECT $udp_port TPROXY)
 						$ipt_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} $(factor $udp_redir_ports "-m multiport --dport") $(get_redirect_ipt $udp_proxy_mode $udp_port TPROXY)
 
-						# if [ "$PROXY_IPV6" == "1" ]; then
-						# 	$ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} $(factor $udp_redir_ports "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) $(REDIRECT $udp_port TPROXY) 2>/dev/null
-						# 	$ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} $(factor $udp_redir_ports "-m multiport --dport") $(dst $IPSET_BLACKLIST6) $(REDIRECT $udp_port TPROXY) 2>/dev/null
-						# 	$ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} $(factor $udp_redir_ports "-m multiport --dport") $(get_redirect_ip6t $udp_proxy_mode $udp_port TPROXY) 2>/dev/null
-						# fi
+						if [ "$PROXY_IPV6_UDP" == "1" ]; then
+							$ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} $(factor $udp_redir_ports "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) $(REDIRECT $udp_port TPROXY) 2>/dev/null
+							$ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} $(factor $udp_redir_ports "-m multiport --dport") $(dst $IPSET_BLACKLIST6) $(REDIRECT $udp_port TPROXY) 2>/dev/null
+							$ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} $(factor $udp_redir_ports "-m multiport --dport") $(get_redirect_ip6t $udp_proxy_mode $udp_port TPROXY) 2>/dev/null
+						fi
 					else
 						msg2="${msg}不代理UDP"
 					fi
@@ -486,11 +486,11 @@ load_acl() {
 			$ipt_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST) $(REDIRECT $UDP_REDIR_PORT TPROXY)
 			$ipt_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ipt $UDP_PROXY_MODE $UDP_REDIR_PORT TPROXY)
 
-			# if [ "$PROXY_IPV6" == "1" ]; then
-			# 	$ip6t_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) $(REDIRECT $UDP_REDIR_PORT TPROXY)
-			# 	$ip6t_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST6) $(REDIRECT $UDP_REDIR_PORT TPROXY)
-			# 	$ip6t_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ip6t $UDP_PROXY_MODE $UDP_REDIR_PORT TPROXY)
-			# fi
+			if [ "$PROXY_IPV6_UDP" == "1" ]; then
+				$ip6t_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) $(REDIRECT $UDP_REDIR_PORT TPROXY)
+				$ip6t_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST6) $(REDIRECT $UDP_REDIR_PORT TPROXY)
+				$ip6t_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ip6t $UDP_PROXY_MODE $UDP_REDIR_PORT TPROXY)
+			fi
 
 			echolog "${msg}"
 		}
@@ -863,9 +863,9 @@ add_firewall_rule() {
 			$ip6t_m -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST6) $(REDIRECT 1 MARK)
 			$ip6t_m -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ip6t $LOCALHOST_TCP_PROXY_MODE 1 MARK)
 
-			$ip6t_m -A PSW $(comment "本机") -p tcp -i lo $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) $(REDIRECT $TCP_REDIR_PORT $is_tproxy)
-			$ip6t_m -A PSW $(comment "本机") -p tcp -i lo $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST6) $(REDIRECT $TCP_REDIR_PORT $is_tproxy)
-			$ip6t_m -A PSW $(comment "本机") -p tcp -i lo $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ip6t $LOCALHOST_TCP_PROXY_MODE $TCP_REDIR_PORT $is_tproxy)
+			$ip6t_m -A PSW $(comment "本机") -p tcp -i lo $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) $(REDIRECT $TCP_REDIR_PORT TPROXY)
+			$ip6t_m -A PSW $(comment "本机") -p tcp -i lo $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST6) $(REDIRECT $TCP_REDIR_PORT TPROXY)
+			$ip6t_m -A PSW $(comment "本机") -p tcp -i lo $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ip6t $LOCALHOST_TCP_PROXY_MODE $TCP_REDIR_PORT TPROXY)
 			$ip6t_m -A PSW $(comment "本机") -p tcp -i lo -j RETURN
 		fi
 	fi
@@ -944,16 +944,16 @@ add_firewall_rule() {
 		$ipt_m -A PSW $(comment "本机") -p udp -i lo $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ipt $LOCALHOST_UDP_PROXY_MODE $UDP_REDIR_PORT TPROXY)
 		$ipt_m -A PSW $(comment "本机") -p udp -i lo -j RETURN
 
-		# if [ "$PROXY_IPV6" == "1" ]; then
-		# 	$ip6t_m -A PSW_OUTPUT -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) $(REDIRECT 1 MARK)
-		# 	$ip6t_m -A PSW_OUTPUT -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST6) $(REDIRECT 1 MARK)
-		# 	$ip6t_m -A PSW_OUTPUT -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ip6t $LOCALHOST_UDP_PROXY_MODE 1 MARK)
+		if [ "$PROXY_IPV6_UDP" == "1" ]; then
+			$ip6t_m -A PSW_OUTPUT -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) $(REDIRECT 1 MARK)
+			$ip6t_m -A PSW_OUTPUT -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST6) $(REDIRECT 1 MARK)
+			$ip6t_m -A PSW_OUTPUT -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ip6t $LOCALHOST_UDP_PROXY_MODE 1 MARK)
 
-		# 	$ip6t_m -A PSW $(comment "本机") -p udp -i lo $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) $(REDIRECT $UDP_REDIR_PORT $is_tproxy)
-		# 	$ip6t_m -A PSW $(comment "本机") -p udp -i lo $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST6) $(REDIRECT $UDP_REDIR_PORT $is_tproxy)
-		# 	$ip6t_m -A PSW $(comment "本机") -p udp -i lo $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ip6t $LOCALHOST_UDP_PROXY_MODE $UDP_REDIR_PORT $is_tproxy)
-		# 	$ip6t_m -A PSW $(comment "本机") -p udp -i lo -j RETURN
-		# fi
+			$ip6t_m -A PSW $(comment "本机") -p udp -i lo $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) $(REDIRECT $UDP_REDIR_PORT TPROXY)
+			$ip6t_m -A PSW $(comment "本机") -p udp -i lo $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST6) $(REDIRECT $UDP_REDIR_PORT TPROXY)
+			$ip6t_m -A PSW $(comment "本机") -p udp -i lo $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ip6t $LOCALHOST_UDP_PROXY_MODE $UDP_REDIR_PORT TPROXY)
+			$ip6t_m -A PSW $(comment "本机") -p udp -i lo -j RETURN
+		fi
 	fi
 
 	#  加载ACLS

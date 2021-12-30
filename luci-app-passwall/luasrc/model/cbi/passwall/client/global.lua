@@ -332,6 +332,7 @@ localhost_tcp_proxy_mode:value("chnroute", translate("Not China List"))
 if has_chnlist then
     localhost_tcp_proxy_mode:value("returnhome", translate("China List"))
 end
+localhost_tcp_proxy_mode:value("disable", translate("No Proxy"))
 localhost_tcp_proxy_mode:value("direct/proxy", translate("Only use direct/proxy list"))
 localhost_tcp_proxy_mode.default = "default"
 --localhost_tcp_proxy_mode.validate = redir_mode_validate

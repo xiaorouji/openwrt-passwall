@@ -26,6 +26,7 @@ LOCAL_DNS=119.29.29.29
 DEFAULT_DNS=
 NO_PROXY=0
 PROXY_IPV6=0
+PROXY_IPV6_UDP=0
 resolve_dns=0
 use_tcp_node_resolve_dns=0
 use_udp_node_resolve_dns=0
@@ -60,18 +61,6 @@ config_t_get() {
 
 get_enabled_anonymous_secs() {
 	uci -q show "${CONFIG}" | grep "${1}\[.*\.enabled='1'" | cut -d '.' -sf2
-}
-
-convert_ip_port_format() {
-	local ip=$1
-	local ip_port=
-	local result=$(echo $ip | grep "#")
-	if [ -z "$result" ]; then
-		ip_port=$(echo $ip | sed -E 's/\:([^:]+)$/#\1/g')
-	else
-		ip_port=$result
-	fi
-	echo $ip_port
 }
 
 get_host_ip() {
@@ -581,6 +570,11 @@ run_redir() {
 	TCP)
 		if [ $PROXY_IPV6 == "1" ]; then
 			echolog "开启实验性IPv6透明代理(TProxy)，请确认您的节点及类型支持IPv6！"
+			if [ $type != "v2ray" ]; then
+				PROXY_IPV6_UDP=1
+			else
+				echolog "节点类型：$type暂未支持IPv6 UDP代理！"
+			fi
 		fi
 		local kcptun_use=$(config_n_get $node use_kcp 0)
 		if [ "$kcptun_use" == "1" ]; then
@@ -1113,7 +1107,7 @@ start_dns() {
 	;;
 	custom)
 		custom_dns=$(config_t_get global custom_dns)
-		TUN_DNS="$(convert_ip_port_format $(echo ${custom_dns}))"
+		TUN_DNS="$(echo ${custom_dns} | sed 's/#/:/g' | sed -E 's/\:([^:]+)$/#\1/g')"
 		echolog "  - 域名解析：使用UDP协议自定义DNS（$TUN_DNS）解析..."
 	;;
 	esac
@@ -1445,7 +1439,7 @@ returnhome=$(echo "${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}${UDP_PROXY_MODE}
 chnlist=$(echo "${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}${UDP_PROXY_MODE}${LOCALHOST_UDP_PROXY_MODE}" | grep "chnroute")
 gfwlist=$(echo "${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}${UDP_PROXY_MODE}${LOCALHOST_UDP_PROXY_MODE}" | grep "gfwlist")
 DNS_MODE=$(config_t_get global dns_mode pdnsd)
-DNS_FORWARD=$(convert_ip_port_format $(config_t_get global dns_forward 1.1.1.1:53))
+DNS_FORWARD=$(config_t_get global dns_forward 1.1.1.1:53 | sed 's/#/:/g' | sed -E 's/\:([^:]+)$/#\1/g')
 DNS_CACHE=$(config_t_get global dns_cache 0)
 CHINADNS_NG=$(config_t_get global chinadns_ng 1)
 dns_listen_port=${DNS_PORT}
