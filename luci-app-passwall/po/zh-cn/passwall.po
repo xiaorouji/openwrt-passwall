@@ -1344,3 +1344,6 @@ msgstr "检查超时时间"
 
 msgid "Permit without stream"
 msgstr "无子连接时的健康检查"
+
+msgid "Initial Windows Size"
+msgstr "初始窗口大小"

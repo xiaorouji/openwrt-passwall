@@ -786,6 +786,10 @@ grpc_permit_without_stream = s:option(Flag, "grpc_permit_without_stream", transl
 grpc_permit_without_stream.default = "0"
 grpc_permit_without_stream:depends("grpc_health_check", true)
 
+grpc_initial_windows_size = s:option(Value, "grpc_initial_windows_size", translate("Initial Windows Size"))
+grpc_initial_windows_size.default = "0"
+grpc_initial_windows_size:depends({ type = "Xray", transport = "grpc"})
+
 -- [[ Trojan-Go Shadowsocks2 ]] --
 ss_aead = s:option(Flag, "ss_aead", translate("Shadowsocks secondary encryption"))
 ss_aead:depends("type", "Trojan-Go")
