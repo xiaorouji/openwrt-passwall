@@ -37,6 +37,10 @@ local v_ss_encrypt_method_list = {
     "aes-128-gcm", "aes-256-gcm", "chacha20-poly1305"
 }
 
+local x_ss_encrypt_method_list = {
+    "aes-128-gcm", "aes-256-gcm", "chacha20-poly1305", "xchacha20-poly1305"
+}
+
 local security_list = {"none", "auto", "aes-128-gcm", "chacha20-poly1305", "zero"}
 
 local header_type_list = {
@@ -398,11 +402,21 @@ encryption:depends({ type = "Xray", protocol = "vless" })
 
 v_ss_encrypt_method = s:option(ListValue, "v_ss_encrypt_method", translate("Encrypt Method"))
 for a, t in ipairs(v_ss_encrypt_method_list) do v_ss_encrypt_method:value(t) end
-v_ss_encrypt_method:depends("protocol", "shadowsocks")
+v_ss_encrypt_method:depends({ type = "V2ray", protocol = "shadowsocks" })
 function v_ss_encrypt_method.cfgvalue(self, section)
 	return m:get(section, "method")
 end
 function v_ss_encrypt_method.write(self, section, value)
+	m:set(section, "method", value)
+end
+
+x_ss_encrypt_method = s:option(ListValue, "x_ss_encrypt_method", translate("Encrypt Method"))
+for a, t in ipairs(x_ss_encrypt_method_list) do x_ss_encrypt_method:value(t) end
+x_ss_encrypt_method:depends({ type = "Xray", protocol = "shadowsocks" })
+function x_ss_encrypt_method.cfgvalue(self, section)
+	return m:get(section, "method")
+end
+function x_ss_encrypt_method.write(self, section, value)
 	m:set(section, "method", value)
 end
 
