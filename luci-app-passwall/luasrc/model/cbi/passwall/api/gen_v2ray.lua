@@ -187,7 +187,6 @@ function gen_outbound(node, tag, proxy_table)
                         users = {
                             {
                                 id = node.uuid,
-                                alterId = tonumber(node.alter_id),
                                 level = 0,
                                 security = (node.protocol == "vmess") and node.security or nil,
                                 encryption = node.encryption or "none",
