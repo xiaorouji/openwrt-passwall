@@ -40,7 +40,7 @@ config V2RAY_PLUGIN_INCLUDE_GOPROXY
 config V2RAY_PLUGIN_COMPRESS_UPX
 	bool "Compress executable files with UPX"
 	depends on !mips64
-	default y
+	default n
 endef
 
 ifeq ($(CONFIG_V2RAY_PLUGIN_INCLUDE_GOPROXY),y)
