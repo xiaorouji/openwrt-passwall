@@ -420,6 +420,10 @@ function x_ss_encrypt_method.write(self, section, value)
 	m:set(section, "method", value)
 end
 
+iv_check = s:option(Flag, "iv_check", translate("IV Check"))
+iv_check:depends({ type = "V2ray", protocol = "shadowsocks" })
+iv_check:depends({ type = "Xray", protocol = "shadowsocks" })
+
 ssr_protocol = s:option(Value, "ssr_protocol", translate("Protocol"))
 for a, t in ipairs(ssr_protocol_list) do ssr_protocol:value(t) end
 ssr_protocol:depends("type", "SSR")

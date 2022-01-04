@@ -243,6 +243,10 @@ function x_ss_encrypt_method.write(self, section, value)
 	m:set(section, "method", value)
 end
 
+iv_check = s:option(Flag, "iv_check", translate("IV Check"))
+iv_check:depends({ type = "V2ray", protocol = "shadowsocks" })
+iv_check:depends({ type = "Xray", protocol = "shadowsocks" })
+
 ss_network = s:option(ListValue, "ss_network", translate("Transport"))
 ss_network.default = "tcp,udp"
 ss_network:value("tcp", "TCP")
