@@ -5,7 +5,9 @@ local sys = api.sys
 local util = api.util
 local i18n = api.i18n
 
-local trojan_go_api = "https://api.github.com/repos/p4gefau1t/trojan-go/releases?per_page=1"
+local pre_release_url = "https://api.github.com/repos/p4gefau1t/trojan-go/releases?per_page=1"
+local release_url = "https://api.github.com/repos/p4gefau1t/trojan-go/releases/latest"
+local trojan_go_api = release_url
 local app_path = api.get_trojan_go_path() or ""
 
 function check_path()

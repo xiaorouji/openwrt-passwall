@@ -5,7 +5,9 @@ local sys = api.sys
 local util = api.util
 local i18n = api.i18n
 
-local kcptun_api = "https://api.github.com/repos/xtaci/kcptun/releases?per_page=1"
+local pre_release_url = "https://api.github.com/repos/xtaci/kcptun/releases?per_page=1"
+local release_url = "https://api.github.com/repos/xtaci/kcptun/releases/latest"
+local kcptun_api = release_url
 local app_path = api.get_kcptun_path() or ""
 
 function check_path()
