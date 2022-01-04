@@ -5,7 +5,9 @@ local sys = api.sys
 local util = api.util
 local i18n = api.i18n
 
-local brook_api = "https://api.github.com/repos/txthinking/brook/releases?per_page=1"
+local pre_release_url = "https://api.github.com/repos/txthinking/brook/releases?per_page=1"
+local release_url = "https://api.github.com/repos/txthinking/brook/releases/latest"
+local brook_api = release_url
 local app_path = api.get_brook_path() or ""
 
 function check_path()

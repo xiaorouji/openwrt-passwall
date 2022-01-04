@@ -279,30 +279,35 @@ function clone(org)
     return res
 end
 
+function get_bin_version_cache(file, cmd)
+    sys.call("mkdir -p /tmp/etc/passwall_tmp")
+    if fs.access(file) then
+        chmod_755(file)
+        local md5 = sys.exec("echo -n $(md5sum " .. file .. " | awk '{print $1}')")
+        if fs.access("/tmp/etc/passwall_tmp/" .. md5) then
+            return sys.exec("echo -n $(cat /tmp/etc/passwall_tmp/%s)" % md5)
+        else
+            local version = sys.exec(string.format("echo -n $(%s %s)", file, cmd))
+            sys.call("echo '" .. version .. "' > " .. "/tmp/etc/passwall_tmp/" .. md5)
+            return version
+        end
+    end
+    return ""
+end
+
 function get_v2ray_path()
     local path = uci_get_type("global_app", "v2ray_file")
     return path
 end
 
 function get_v2ray_version(file)
-    sys.call("mkdir -p /tmp/etc/passwall_tmp")
     if file == nil then file = get_v2ray_path() end
-    chmod_755(file)
-    if fs.access(file) then
-        if file == get_v2ray_path() then
-            local md5 = sys.exec("echo -n $(md5sum " .. file .. " | awk '{print $1}')")
-            if fs.access("/tmp/etc/passwall_tmp/" .. md5) then
-                return sys.exec("echo -n $(cat /tmp/etc/passwall_tmp/%s)" % md5)
-            else
-                local version = sys.exec("echo -n $(%s -version | awk '{print $2}' | sed -n 1P)" % file)
-                sys.call("echo '" .. version .. "' > " .. "/tmp/etc/passwall_tmp/" .. md5)
-                return version
-            end
-        else
-            return sys.exec("echo -n $(%s -version | awk '{print $2}' | sed -n 1P)" % file)
-        end
+    local cmd = "-version | awk '{print $2}' | sed -n 1P"
+    if file == get_v2ray_path() then
+        return get_bin_version_cache(file, cmd)
+    else
+        return sys.exec(string.format("echo -n $(%s %s)", file, cmd))
     end
-    return ""
 end
 
 function get_xray_path()
@@ -311,24 +316,13 @@ function get_xray_path()
 end
 
 function get_xray_version(file)
-    sys.call("mkdir -p /tmp/etc/passwall_tmp")
     if file == nil then file = get_xray_path() end
-    chmod_755(file)
-    if fs.access(file) then
-        if file == get_xray_path() then
-            local md5 = sys.exec("echo -n $(md5sum " .. file .. " | awk '{print $1}')")
-            if fs.access("/tmp/etc/passwall_tmp/" .. md5) then
-                return sys.exec("echo -n $(cat /tmp/etc/passwall_tmp/%s)" % md5)
-            else
-                local version = sys.exec("echo -n $(%s -version | awk '{print $2}' | sed -n 1P)" % file)
-                sys.call("echo '" .. version .. "' > " .. "/tmp/etc/passwall_tmp/" .. md5)
-                return version
-            end
-        else
-            return sys.exec("echo -n $(%s -version | awk '{print $2}' | sed -n 1P)" % file)
-        end
+    local cmd = "-version | awk '{print $2}' | sed -n 1P"
+    if file == get_xray_path() then
+        return get_bin_version_cache(file, cmd)
+    else
+        return sys.exec(string.format("echo -n $(%s %s)", file, cmd))
     end
-    return ""
 end
 
 function get_trojan_go_path()
@@ -337,24 +331,13 @@ function get_trojan_go_path()
 end
 
 function get_trojan_go_version(file)
-    sys.call("mkdir -p /tmp/etc/passwall_tmp")
     if file == nil then file = get_trojan_go_path() end
-    chmod_755(file)
-    if fs.access(file) then
-        if file == get_trojan_go_path() then
-            local md5 = sys.exec("echo -n $(md5sum " .. file .. " | awk '{print $1}')")
-            if fs.access("/tmp/etc/passwall_tmp/" .. md5) then
-                return sys.exec("echo -n $(cat /tmp/etc/passwall_tmp/%s)" % md5)
-            else
-                local version = sys.exec("echo -n $(%s -version | awk '{print $2}' | sed -n 1P)" % file)
-                sys.call("echo '" .. version .. "' > " .. "/tmp/etc/passwall_tmp/" .. md5)
-                return version
-            end
-        else
-            return sys.exec("echo -n $(%s -version | awk '{print $2}' | sed -n 1P)" % file)
-        end
+    local cmd = "-version | awk '{print $2}' | sed -n 1P"
+    if file == get_trojan_go_path() then
+        return get_bin_version_cache(file, cmd)
+    else
+        return sys.exec(string.format("echo -n $(%s %s)", file, cmd))
     end
-    return ""
 end
 
 function get_kcptun_path()
@@ -363,24 +346,13 @@ function get_kcptun_path()
 end
 
 function get_kcptun_version(file)
-    sys.call("mkdir -p /tmp/etc/passwall_tmp")
     if file == nil then file = get_kcptun_path() end
-    chmod_755(file)
-    if fs.access(file) then
-        if file == get_kcptun_path() then
-            local md5 = sys.exec("echo -n $(md5sum " .. file .. " | awk '{print $1}')")
-            if fs.access("/tmp/etc/passwall_tmp/" .. md5) then
-                return sys.exec("echo -n $(cat /tmp/etc/passwall_tmp/%s)" % md5)
-            else
-                local version = sys.exec("echo -n $(%s -v | awk '{print $3}')" % file)
-                sys.call("echo '" .. version .. "' > " .. "/tmp/etc/passwall_tmp/" .. md5)
-                return version
-            end
-        else
-            return sys.exec("echo -n $(%s -v | awk '{print $3}')" % file)
-        end
+    local cmd = "-v | awk '{print $3}'"
+    if file == get_kcptun_path() then
+        return get_bin_version_cache(file, cmd)
+    else
+        return sys.exec(string.format("echo -n $(%s %s)", file, cmd))
     end
-    return ""
 end
 
 function get_brook_path()
@@ -389,24 +361,13 @@ function get_brook_path()
 end
 
 function get_brook_version(file)
-    sys.call("mkdir -p /tmp/etc/passwall_tmp")
     if file == nil then file = get_brook_path() end
-    chmod_755(file)
-    if fs.access(file) then
-        if file == get_brook_path() then
-            local md5 = sys.exec("echo -n $(md5sum " .. file .. " | awk '{print $1}')")
-            if fs.access("/tmp/etc/passwall_tmp/" .. md5) then
-                return sys.exec("echo -n $(cat /tmp/etc/passwall_tmp/%s)" % md5)
-            else
-                local version = sys.exec("echo -n $(%s -v | awk '{print $3}')" % file)
-                sys.call("echo '" .. version .. "' > " .. "/tmp/etc/passwall_tmp/" .. md5)
-                return version
-            end
-        else
-            return sys.exec("echo -n $(%s -v | awk '{print $3}')" % file)
-        end
+    local cmd = "-v | awk '{print $3}'"
+    if file == get_brook_path() then
+        return get_bin_version_cache(file, cmd)
+    else
+        return sys.exec(string.format("echo -n $(%s %s)", file, cmd))
     end
-    return ""
 end
 
 function get_hysteria_path()
@@ -415,24 +376,13 @@ function get_hysteria_path()
 end
 
 function get_hysteria_version(file)
-    sys.call("mkdir -p /tmp/etc/passwall_tmp")
     if file == nil then file = get_hysteria_path() end
-    chmod_755(file)
-    if fs.access(file) then
-        if file == get_hysteria_path() then
-            local md5 = sys.exec("echo -n $(md5sum " .. file .. " | awk '{print $1}')")
-            if fs.access("/tmp/etc/passwall_tmp/" .. md5) then
-                return sys.exec("echo -n $(cat /tmp/etc/passwall_tmp/%s)" % md5)
-            else
-                local version = sys.exec("echo -n $(%s -v | awk '{print $3}')" % file)
-                sys.call("echo '" .. version .. "' > " .. "/tmp/etc/passwall_tmp/" .. md5)
-                return version
-            end
-        else
-            return sys.exec("echo -n $(%s -v | awk '{print $3}')" % file)
-        end
+    local cmd = "-v | awk '{print $3}'"
+    if file == get_hysteria_path() then
+        return get_bin_version_cache(file, cmd)
+    else
+        return sys.exec(string.format("echo -n $(%s %s)", file, cmd))
     end
-    return ""
 end
 
 function get_free_space(dir)

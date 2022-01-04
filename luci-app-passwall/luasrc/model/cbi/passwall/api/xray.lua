@@ -5,8 +5,9 @@ local sys = api.sys
 local util = api.util
 local i18n = api.i18n
 
-local xray_api = "https://api.github.com/repos/XTLS/Xray-core/releases?per_page=1"
-local is_armv7 = false
+local pre_release_url = "https://api.github.com/repos/XTLS/Xray-core/releases?per_page=1"
+local release_url = "https://api.github.com/repos/XTLS/Xray-core/releases/latest"
+local xray_api = release_url
 local app_path = api.get_xray_path() or ""
 
 function check_path()

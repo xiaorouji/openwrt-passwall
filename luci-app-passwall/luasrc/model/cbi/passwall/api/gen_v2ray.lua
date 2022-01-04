@@ -272,7 +272,7 @@ if node_section then
             protocol = "dokodemo-door",
             settings = {network = proto, followRedirect = true},
             streamSettings = {sockopt = {tproxy = proxy_way}},
-            sniffing = {enabled = true, destOverride = {"http", "tls"}}
+            sniffing = {enabled = true, destOverride = {"http", "tls"}, RouteOnly = true}
         })
     end
 

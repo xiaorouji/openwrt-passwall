@@ -5,8 +5,9 @@ local sys = api.sys
 local util = api.util
 local i18n = api.i18n
 
-local v2ray_api = "https://api.github.com/repos/v2fly/v2ray-core/releases?per_page=1"
-local is_armv7 = false
+local pre_release_url = "https://api.github.com/repos/v2fly/v2ray-core/releases?per_page=1"
+local release_url = "https://api.github.com/repos/v2fly/v2ray-core/releases/latest"
+local v2ray_api = release_url
 local app_path = api.get_v2ray_path() or ""
 
 function check_path()
