@@ -201,9 +201,14 @@ function gen_outbound(node, tag, proxy_table)
                         port = tonumber(node.port),
                         method = node.method or nil,
                         flow = node.flow or nil,
+                        ivCheck = (node.iv_check == "1") and true or false,
                         password = node.password or "",
-                        users = (node.username and node.password) and
-                            {{user = node.username, pass = node.password}} or nil
+                        users = (node.username and node.password) and {
+                            {
+                                user = node.username,
+                                pass = node.password
+                            }
+                        } or nil
                     }
                 } or nil
             }

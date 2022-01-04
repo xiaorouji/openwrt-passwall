@@ -49,6 +49,7 @@ function gen_config(user)
         settings = {
             method = user.method,
             password = user.password,
+            ivCheck = ("1" == user.iv_check) and true or false,
             network = user.ss_network or "TCP,UDP"
         }
     elseif user.protocol == "trojan" then
