@@ -295,6 +295,9 @@ msgstr "危险"
 msgid "Same as the %s default proxy mode"
 msgstr "与 %s 默认代理模式相同"
 
+msgid "Want different devices to use different proxy modes/ports/nodes? Please use access control."
+msgstr "希望不同设备使用不同的代理模式/端口/节点？请使用访问控制。"
+
 msgid "Operation"
 msgstr "操作"
 
