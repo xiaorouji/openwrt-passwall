@@ -202,6 +202,15 @@ msgstr "当访问的域名不存在规则列表中，使用的默认DNS。"
 msgid "The effect is better, but will increase the memory."
 msgstr "效果更好，但会增加内存使用。"
 
+msgid "Filter GFW List IPv6"
+msgstr "过滤GFW列表 IPv6"
+
+msgid "Filter Proxy List IPv6"
+msgstr "过滤代理列表 IPv6"
+
+msgid "Experimental feature."
+msgstr "实验性功能。"
+
 msgid "Clear IPSET"
 msgstr "清空 IPSET"
 
@@ -294,6 +303,9 @@ msgstr "危险"
 
 msgid "Same as the %s default proxy mode"
 msgstr "与 %s 默认代理模式相同"
+
+msgid "Want different devices to use different proxy modes/ports/nodes? Please use access control."
+msgstr "希望不同设备使用不同的代理模式/端口/节点？请使用访问控制。"
 
 msgid "Operation"
 msgstr "操作"
@@ -1305,6 +1317,9 @@ msgstr "文件下载失败或超时：%s"
 
 msgid "File path required."
 msgstr "请指定文件路径。"
+
+msgid "%s not enough space."
+msgstr "%s 空间不足。"
 
 msgid "Can't find client in file: %s"
 msgstr "无法在文件中找到客户端：%s"

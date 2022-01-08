@@ -37,14 +37,14 @@ local filter_keyword_keep_list_default = uci:get(appname, "@global_subscribe[0]"
 local function is_filter_keyword(value)
 	if filter_keyword_mode_default == "1" then
 		for k,v in ipairs(filter_keyword_discard_list_default) do
-			if value:find(v) then
+			if value:find(v, 1, true) then
 				return true
 			end
 		end
 	elseif filter_keyword_mode_default == "2" then
 		local result = true
 		for k,v in ipairs(filter_keyword_keep_list_default) do
-			if value:find(v) then
+			if value:find(v, 1, true) then
 				result = false
 			end
 		end
@@ -52,12 +52,12 @@ local function is_filter_keyword(value)
 	elseif filter_keyword_mode_default == "3" then
 		local result = false
 		for k,v in ipairs(filter_keyword_discard_list_default) do
-			if value:find(v) then
+			if value:find(v, 1, true) then
 				result = true
 			end
 		end
 		for k,v in ipairs(filter_keyword_keep_list_default) do
-			if value:find(v) then
+			if value:find(v, 1, true) then
 				result = false
 			end
 		end
@@ -65,12 +65,12 @@ local function is_filter_keyword(value)
 	elseif filter_keyword_mode_default == "4" then
 		local result = true
 		for k,v in ipairs(filter_keyword_keep_list_default) do
-			if value:find(v) then
+			if value:find(v, 1, true) then
 				result = false
 			end
 		end
 		for k,v in ipairs(filter_keyword_discard_list_default) do
-			if value:find(v) then
+			if value:find(v, 1, true) then
 				result = true
 			end
 		end
@@ -962,7 +962,7 @@ local function update_node(manual)
 	if manual == 0 and #group > 0 then
 		uci:foreach(appname, "nodes", function(node)
 			-- 如果是未发现新节点或手动导入的节点就不要删除了...
-			if (node.add_from and group:find(node.add_from)) and node.add_mode == "2" then
+			if (node.add_from and group:find(node.add_from, 1, true)) and node.add_mode == "2" then
 				uci:delete(appname, node['.name'])
 			end
 		end)

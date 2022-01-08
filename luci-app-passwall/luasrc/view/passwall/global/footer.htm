@@ -52,7 +52,7 @@ local auto_switch = api.uci_get_type("auto_switch", "enable", 0)
 								dom_id = dom.id.split("cbi-").join("cbid-").split("-").join(".");
 								var node_select = document.getElementsByName(dom_id)[0];
 								var node_select_value = node_select.value;
-								if (node_select_value && node_select_value != "nil" && node_select_value.indexOf("_direct") != 0 && node_select_value.indexOf("_blackhole") != 0) {
+								if (node_select_value && node_select_value != "nil" && node_select_value.indexOf("_default") != 0 && node_select_value.indexOf("_direct") != 0 && node_select_value.indexOf("_blackhole") != 0) {
 									if (global_id != null && node_select_value.indexOf("tcp") == 0) {
 										var d = global_id + "-tcp_node";
 										d = d.replace("cbi-", "cbid-").replace(new RegExp("-", 'g'), ".");

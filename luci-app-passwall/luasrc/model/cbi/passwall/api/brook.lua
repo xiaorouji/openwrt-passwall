@@ -7,7 +7,7 @@ local i18n = api.i18n
 
 local pre_release_url = "https://api.github.com/repos/txthinking/brook/releases?per_page=1"
 local release_url = "https://api.github.com/repos/txthinking/brook/releases/latest"
-local brook_api = release_url
+local api_url = release_url
 local app_path = api.get_brook_path() or ""
 
 function check_path()
@@ -39,54 +39,10 @@ function to_check(arch)
         }
     end
 
-    local json = api.get_api_json(brook_api)
-
-    if #json > 0 then
-        json = json[1]
-    end
-
-    if json.tag_name == nil then
-        return {
-            code = 1,
-            error = i18n.translate("Get remote version info failed.")
-        }
-    end
-
-    local now_version = api.get_brook_version()
-    local remote_version = json.tag_name
-    local needs_update = api.compare_versions(now_version:match("[^v]+"), "<", remote_version:match("[^v]+"))
-    local html_url, download_url
-
-    if needs_update then
-        html_url = json.html_url
-        for _, v in ipairs(json.assets) do
-            if v.name and v.name:match("linux_" .. file_tree .. sub_version) then
-                download_url = v.browser_download_url
-                break
-            end
-        end
-    end
-
-    if needs_update and not download_url then
-        return {
-            code = 1,
-            now_version = now_version,
-            version = remote_version,
-            html_url = html_url,
-            error = i18n.translate("New version found, but failed to get new version download url.")
-        }
-    end
-
-    return {
-        code = 0,
-        update = needs_update,
-        now_version = now_version,
-        version = remote_version,
-        url = {html = html_url, download = download_url}
-    }
+    return api.common_to_check(api_url, api.get_brook_version(), "linux_" .. file_tree .. sub_version)
 end
 
-function to_download(url)
+function to_download(url, size)
     local result = check_path()
     if result.code ~= 0 then
         return result
@@ -99,6 +55,13 @@ function to_download(url)
     sys.call("/bin/rm -f /tmp/brook_download.*")
 
     local tmp_file = util.trim(util.exec("mktemp -u -t brook_download.XXXXXX"))
+
+    if size then
+        local kb1 = api.get_free_space("/tmp")
+        if tonumber(size) > tonumber(kb1) then
+            return {code = 1, error = i18n.translatef("%s not enough space.", "/tmp")}
+        end
+    end
 
     result = api.exec(api.curl, {api._unpack(api.curl_args), "-o", tmp_file, url}, nil, api.command_timeout) == 0
 
@@ -138,40 +101,33 @@ function to_move(file)
         sys.call("/etc/init.d/passwall stop")
     end
 
-    local app_path_bak
-
+    local old_app_size = 0
     if fs.access(app_path) then
-        app_path_bak = app_path .. ".bak"
-        api.exec("/bin/mv", {"-f", app_path, app_path_bak})
+        old_app_size = api.get_file_space(app_path)
+    end
+    local new_app_size = api.get_file_space(file)
+    local final_dir = api.get_final_dir(app_path)
+    local final_dir_free_size = api.get_free_space(final_dir)
+    if final_dir_free_size > 0 then
+        final_dir_free_size = final_dir_free_size + old_app_size
+        if new_app_size > final_dir_free_size then
+            sys.call("/bin/rm -rf /tmp/brook_download.*")
+            return {code = 1, error = i18n.translatef("%s not enough space.", final_dir)}
+        end
     end
 
     result = api.exec("/bin/mv", {"-f", file, app_path}, nil, api.command_timeout) == 0
 
+    sys.call("/bin/rm -rf /tmp/brook_download.*")
+    if flag == 0 then
+        sys.call("/etc/init.d/passwall restart >/dev/null 2>&1 &")
+    end
+
     if not result or not fs.access(app_path) then
-        sys.call("/bin/rm -rf /tmp/brook_download.*")
-        if flag == 0 then
-            sys.call("/etc/init.d/passwall restart >/dev/null 2>&1 &")
-        end
-        if app_path_bak then
-            api.exec("/bin/mv", {"-f", app_path_bak, app_path})
-        end
-        if #app_path > 1 then
-            sys.call("/bin/rm -rf " .. app_path)
-        end
         return {
             code = 1,
             error = i18n.translatef("Can't move new file to path: %s", app_path)
         }
-    end
-
-    api.exec("/bin/chmod", {"755", app_path})
-
-    if app_path_bak then api.exec("/bin/rm", {"-f", app_path_bak}) end
-
-    sys.call("/bin/rm -rf /tmp/brook_download.*")
-
-    if flag == 0 then
-        sys.call("/etc/init.d/passwall restart >/dev/null 2>&1 &")
     end
 
     return {code = 0}
