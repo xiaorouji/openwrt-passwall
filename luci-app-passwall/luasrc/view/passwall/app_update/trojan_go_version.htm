@@ -18,13 +18,13 @@ local trojan_go_version = api.get_trojan_go_version()
 	var decompressioningText = '<%:Unpacking...%>';
 	var movingText = '<%:Moving...%>';
 
-	window.onload = function() {
+	window.onload = function () {
 		var trojanCheckBtn = document.getElementById('_trojan-check_btn');
 		var trojanDetailElm = document.getElementById('_trojan-check_btn-detail');
 	};
 
 	function addPageNotice_trojan() {
-		window.onbeforeunload = function(e) {
+		window.onbeforeunload = function (e) {
 			e.returnValue = updateInProgressNotice;
 			return updateInProgressNotice;
 		};
@@ -37,13 +37,13 @@ local trojan_go_version = api.get_trojan_go_version()
 	function onUpdateSuccess_trojan(btn) {
 		alert(updateSuccessText);
 
-		if(btn) {
+		if (btn) {
 			btn.value = updateSuccessText;
 			btn.placeholder = updateSuccessText;
 			btn.disabled = true;
 		}
 
-		window.setTimeout(function() {
+		window.setTimeout(function () {
 			window.location.reload();
 		}, 1000);
 	}
@@ -52,13 +52,13 @@ local trojan_go_version = api.get_trojan_go_version()
 		btn.disabled = false;
 		btn.value = manuallyUpdateText;
 
-		if(errorMessage) {
+		if (errorMessage) {
 			alert(errorMessage);
 		}
 	}
 
 	function onBtnClick_trojan(btn) {
-		if(trojanInfo === undefined) {
+		if (trojanInfo === undefined) {
 			checkUpdate_trojan(btn);
 		} else {
 			doUpdate_trojan(btn);
@@ -76,25 +76,25 @@ local trojan_go_version = api.get_trojan_go_version()
 		XHR.get('<%=api.url("trojan_go_check")%>', {
 			token: tokenStr,
 			arch: ''
-		}, function(x,json) {
+		}, function (x, json) {
 			removePageNotice_trojan();
 
-			if(json.code) {
+			if (json.code) {
 				trojanInfo = undefined;
 				onRequestError_trojan(btn, json.error);
 			} else {
-				if(json.update) {
+				if (json.has_update) {
 					trojanInfo = json;
 					btn.disabled = false;
 					btn.value = clickToUpdateText;
 					btn.placeholder = clickToUpdateText;
-					
-					if(ckeckDetailElm) {
+
+					if (ckeckDetailElm) {
 						var urlNode = '';
-						if(json.version) {
-							urlNode = '<em style="color:red;">' + json.version + '</em>';
-							if(json.url && json.url.html) {
-								urlNode = '<a href="' + json.url.html + '" target="_blank">' + urlNode + '</a>';
+						if (json.remote_version) {
+							urlNode = '<em style="color:red;">' + json.remote_version + '</em>';
+							if (json.html_url) {
+								urlNode = '<a href="' + json.html_url + '" target="_blank">' + urlNode + '</a>';
 							}
 						}
 						ckeckDetailElm.innerHTML = urlNode;
@@ -104,7 +104,7 @@ local trojan_go_version = api.get_trojan_go_version()
 					btn.value = noUpdateText;
 				}
 			}
-		},300);
+		}, 300);
 	}
 
 	function doUpdate_trojan(btn) {
@@ -117,9 +117,10 @@ local trojan_go_version = api.get_trojan_go_version()
 		// Download file
 		XHR.get(trojanUpdateUrl, {
 			token: tokenStr,
-			url: trojanInfo ? trojanInfo.url.download : ''
-		}, function(x,json) {
-			if(json.code) {
+			url: trojanInfo ? trojanInfo.data.browser_download_url : '',
+			size: trojanInfo ? trojanInfo.data.size / 1024 : null
+		}, function (x, json) {
+			if (json.code) {
 				removePageNotice_trojan();
 				onRequestError_trojan(btn, json.error);
 			} else {
@@ -131,8 +132,8 @@ local trojan_go_version = api.get_trojan_go_version()
 					task: 'extract',
 					file: json.file,
 					subfix: trojanInfo ? trojanInfo.type : ''
-				}, function(x,json) {
-					if(json.code) {
+				}, function (x, json) {
+					if (json.code) {
 						removePageNotice_trojan();
 						onRequestError_trojan(btn, json.error);
 					} else {
@@ -143,20 +144,20 @@ local trojan_go_version = api.get_trojan_go_version()
 							token: tokenStr,
 							task: 'move',
 							file: json.file
-						}, function(x,json) {
+						}, function (x, json) {
 							removePageNotice_trojan();
-							if(json.code) {
+							if (json.code) {
 								onRequestError_trojan(btn, json.error);
 							} else {
 								onUpdateSuccess_trojan(btn);
 							}
-						},300)
+						}, 300)
 					}
-				},300)
+				}, 300)
 			}
-		},300)
+		}, 300)
 	}
-	//]]>
+//]]>
 </script>
 
 <div class="cbi-value">
@@ -165,8 +166,9 @@ local trojan_go_version = api.get_trojan_go_version()
 	</label>
 	<div class="cbi-value-field">
 		<div class="cbi-value-description">
-			<span>【 <%=trojan_go_version ~= "" and trojan_go_version or translate("Null") %> 】</span>
-			<input class="btn cbi-button cbi-button-apply" type="button" id="_trojan-check_btn" onclick="onBtnClick_trojan(this);" value="<%:Manually update%>" />
+			<span>【 <%=trojan_go_version ~="" and trojan_go_version or translate("Null") %> 】</span>
+			<input class="btn cbi-button cbi-button-apply" type="button" id="_trojan-check_btn"
+				onclick="onBtnClick_trojan(this);" value="<%:Manually update%>" />
 			<span id="_trojan-check_btn-detail"></span>
 		</div>
 	</div>

@@ -1318,6 +1318,9 @@ msgstr "文件下载失败或超时：%s"
 msgid "File path required."
 msgstr "请指定文件路径。"
 
+msgid "%s not enough space."
+msgstr "%s 空间不足。"
+
 msgid "Can't find client in file: %s"
 msgstr "无法在文件中找到客户端：%s"
 

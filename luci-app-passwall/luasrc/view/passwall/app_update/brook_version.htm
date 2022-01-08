@@ -18,13 +18,13 @@ local brook_version = api.get_brook_version()
 	var decompressioningText = '<%:Unpacking...%>';
 	var movingText = '<%:Moving...%>';
 
-	window.onload = function() {
+	window.onload = function () {
 		var brookCheckBtn = document.getElementById('_brook-check_btn');
 		var brookDetailElm = document.getElementById('_brook-check_btn-detail');
 	};
 
 	function addPageNotice_brook() {
-		window.onbeforeunload = function(e) {
+		window.onbeforeunload = function (e) {
 			e.returnValue = updateInProgressNotice;
 			return updateInProgressNotice;
 		};
@@ -37,13 +37,13 @@ local brook_version = api.get_brook_version()
 	function onUpdateSuccess_brook(btn) {
 		alert(updateSuccessText);
 
-		if(btn) {
+		if (btn) {
 			btn.value = updateSuccessText;
 			btn.placeholder = updateSuccessText;
 			btn.disabled = true;
 		}
 
-		window.setTimeout(function() {
+		window.setTimeout(function () {
 			window.location.reload();
 		}, 1000);
 	}
@@ -52,13 +52,13 @@ local brook_version = api.get_brook_version()
 		btn.disabled = false;
 		btn.value = manuallyUpdateText;
 
-		if(errorMessage) {
+		if (errorMessage) {
 			alert(errorMessage);
 		}
 	}
 
 	function onBtnClick_brook(btn) {
-		if(brookInfo === undefined) {
+		if (brookInfo === undefined) {
 			checkUpdate_brook(btn);
 		} else {
 			doUpdate_brook(btn);
@@ -76,25 +76,25 @@ local brook_version = api.get_brook_version()
 		XHR.get('<%=api.url("brook_check")%>', {
 			token: tokenStr,
 			arch: ''
-		}, function(x,json) {
+		}, function (x, json) {
 			removePageNotice_brook();
 
-			if(json.code) {
+			if (json.code) {
 				brookInfo = undefined;
 				onRequestError_brook(btn, json.error);
 			} else {
-				if(json.update) {
+				if (json.has_update) {
 					brookInfo = json;
 					btn.disabled = false;
 					btn.value = clickToUpdateText;
 					btn.placeholder = clickToUpdateText;
-					
-					if(ckeckDetailElm) {
+
+					if (ckeckDetailElm) {
 						var urlNode = '';
-						if(json.version) {
-							urlNode = '<em style="color:red;">' + json.version + '</em>';
-							if(json.url && json.url.html) {
-								urlNode = '<a href="' + json.url.html + '" target="_blank">' + urlNode + '</a>';
+						if (json.remote_version) {
+							urlNode = '<em style="color:red;">' + json.remote_version + '</em>';
+							if (json.html_url) {
+								urlNode = '<a href="' + json.html_url + '" target="_blank">' + urlNode + '</a>';
 							}
 						}
 						ckeckDetailElm.innerHTML = urlNode;
@@ -104,7 +104,7 @@ local brook_version = api.get_brook_version()
 					btn.value = noUpdateText;
 				}
 			}
-		},300);
+		}, 300);
 	}
 
 	function doUpdate_brook(btn) {
@@ -117,30 +117,31 @@ local brook_version = api.get_brook_version()
 		// Download file
 		XHR.get(brookUpdateUrl, {
 			token: tokenStr,
-			url: brookInfo ? brookInfo.url.download : ''
-		}, function(x,json) {
-			if(json.code) {
+			url: brookInfo ? brookInfo.data.browser_download_url : '',
+			size: brookInfo ? brookInfo.data.size / 1024 : null
+		}, function (x, json) {
+			if (json.code) {
 				removePageNotice_brook();
 				onRequestError_brook(btn, json.error);
 			} else {
 				btn.value = decompressioningText;
-					// Move file to target dir
-					XHR.get(brookUpdateUrl, {
-						token: tokenStr,
-						task: 'move',
-						file: json.file
-					}, function(x,json) {
-						removePageNotice_brook();
-						if(json.code) {
-							onRequestError_brook(btn, json.error);
-						} else {
-							onUpdateSuccess_brook(btn);
-						}
-					},300)
-				}
-			},300)
-		}
-	//]]>
+				// Move file to target dir
+				XHR.get(brookUpdateUrl, {
+					token: tokenStr,
+					task: 'move',
+					file: json.file
+				}, function (x, json) {
+					removePageNotice_brook();
+					if (json.code) {
+						onRequestError_brook(btn, json.error);
+					} else {
+						onUpdateSuccess_brook(btn);
+					}
+				}, 300)
+			}
+		}, 300)
+	}
+//]]>
 </script>
 
 <div class="cbi-value">
@@ -149,8 +150,9 @@ local brook_version = api.get_brook_version()
 	</label>
 	<div class="cbi-value-field">
 		<div class="cbi-value-description">
-			<span>【 <%=brook_version ~= "" and brook_version or translate("Null") %> 】</span>
-			<input class="btn cbi-button cbi-button-apply" type="button" id="_brook-check_btn" onclick="onBtnClick_brook(this);" value="<%:Manually update%>" />
+			<span>【 <%=brook_version ~="" and brook_version or translate("Null") %> 】</span>
+			<input class="btn cbi-button cbi-button-apply" type="button" id="_brook-check_btn"
+				onclick="onBtnClick_brook(this);" value="<%:Manually update%>" />
 			<span id="_brook-check_btn-detail"></span>
 		</div>
 	</div>
