@@ -114,7 +114,7 @@ ipset_merge() {
 
 add() {
 	local fwd_dns item servers msg
-	local DNS_MODE TMP_DNSMASQ_PATH DNSMASQ_CONF_FILE DEFAULT_DNS LOCAL_DNS TUN_DNS CHINADNS_DNS TCP_NODE PROXY_MODE NO_LOGIC_LOG
+	local DNS_MODE TMP_DNSMASQ_PATH DNSMASQ_CONF_FILE DEFAULT_DNS LOCAL_DNS TUN_DNS CHINADNS_DNS TCP_NODE PROXY_MODE NO_LOGIC_LOG NO_GFWLIST_IPV6 NO_PROXYLIST_IPV6
 	eval_set_val $@
 	_LOG_FILE=$LOG_FILE
 	[ -n "$NO_LOGIC_LOG" ] && LOG_FILE="/dev/null"
@@ -171,9 +171,15 @@ add() {
 		
 		#始终使用远程DNS解析代理（黑名单）列表
 		[ -s "${RULES_PATH}/proxy_host" ] && {
+			local ipset_flag="blacklist,blacklist6"
+			if [ "${NO_PROXYLIST_IPV6}" = "1" ]; then
+				ipset_flag="blacklist"
+				cat "${RULES_PATH}/proxy_host" | tr -s '\n' | grep -v "^#" | sort -u | gen_dnsmasq_address_items "::" "${TMP_DNSMASQ_PATH}/97-proxy_host-noipv6.conf"
+			fi
+		
 			fwd_dns="${TUN_DNS}"
 			#[ -n "$CHINADNS_DNS" ] && unset fwd_dns
-			cat "${RULES_PATH}/proxy_host" | tr -s '\n' | grep -v "^#" | sort -u | gen_dnsmasq_items "blacklist,blacklist6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/97-proxy_host.conf"
+			cat "${RULES_PATH}/proxy_host" | tr -s '\n' | grep -v "^#" | sort -u | gen_dnsmasq_items "${ipset_flag}" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/97-proxy_host.conf"
 			echolog "  - [$?]代理域名表(blacklist)：${fwd_dns:-默认}"
 		}
 
@@ -210,9 +216,16 @@ add() {
 			# GFW 模式
 			[ -s "${RULES_PATH}/gfwlist" ] && {
 				grep -v -E "$count_hosts_str" "${RULES_PATH}/gfwlist" > "${TMP_PATH}/gfwlist"
+				
+				local ipset_flag="gfwlist,gfwlist6"
+				if [ "${NO_GFWLIST_IPV6}" = "1" ]; then
+					ipset_flag="gfwlist"
+					sort -u "${TMP_PATH}/gfwlist" | gen_dnsmasq_address_items "::" "${TMP_DNSMASQ_PATH}/99-gfwlist-noipv6.conf"
+				fi
+				
 				fwd_dns="${TUN_DNS}"
 				[ -n "$CHINADNS_DNS" ] && unset fwd_dns
-				sort -u "${TMP_PATH}/gfwlist" | gen_dnsmasq_items "gfwlist,gfwlist6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/99-gfwlist.conf"
+				sort -u "${TMP_PATH}/gfwlist" | gen_dnsmasq_items "${ipset_flag}" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/99-gfwlist.conf"
 				echolog "  - [$?]防火墙域名表(gfwlist)：${fwd_dns:-默认}"
 				rm -f "${TMP_PATH}/gfwlist"
 			}

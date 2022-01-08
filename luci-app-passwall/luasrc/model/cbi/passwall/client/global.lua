@@ -286,6 +286,14 @@ if has_chnlist and api.is_finded("chinadns-ng") then
     o:depends({dns_mode = "nonuse", ["!reverse"] = true})
 end
 
+o = s:taboption("DNS", Flag, "filter_gfwlist_ipv6", translate("Filter GFW List IPv6"), translate("Experimental feature."))
+o.default = "0"
+o:depends({dns_mode = "nonuse", ["!reverse"] = true})
+
+o = s:taboption("DNS", Flag, "filter_proxylist_ipv6", translate("Filter Proxy List IPv6"), translate("Experimental feature."))
+o.default = "0"
+o:depends({dns_mode = "nonuse", ["!reverse"] = true})
+
 o = s:taboption("DNS", Button, "clear_ipset", translate("Clear IPSET"), translate("Try this feature if the rule modification does not take effect."))
 o.inputstyle = "remove"
 function o.write(e, e)
