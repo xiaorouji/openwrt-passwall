@@ -646,6 +646,9 @@ run_redir() {
 			[ "${DNS_MODE}" = "v2ray" -o "${DNS_MODE}" = "xray" ] && [ "$(config_t_get global dns_by)" = "tcp" ] && {
 				config_file=$(echo $config_file | sed "s/.json/_DNS.json/g")
 				resolve_dns=1
+				local dns_query_strategy=$(config_t_get global dns_query_strategy UseIPv4)
+				_extra_param="${_extra_param} -dns_query_strategy ${dns_query_strategy}"
+				[ "${DNS_CACHE}" == "0" ] && _extra_param="${_extra_param} -dns_cache 0"
 				local v2ray_dns_mode=$(config_t_get global v2ray_dns_mode tcp)
 				case "$v2ray_dns_mode" in
 					tcp)
