@@ -221,6 +221,7 @@ end
 if has_xray then
     o:value("xray", "Xray")
 end
+o:value("fakedns", "FakeDNS")
 
 o = s:option(ListValue, "v2ray_dns_mode", " ")
 o:value("tcp", "TCP")

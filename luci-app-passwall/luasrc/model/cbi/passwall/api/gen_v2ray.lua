@@ -6,6 +6,7 @@ local node_section = var["-node"]
 local proto = var["-proto"]
 local proxy_way = var["-proxy_way"]
 local redir_port = var["-redir_port"]
+local route_only = var["-route_only"]
 local local_socks_address = var["-local_socks_address"] or "0.0.0.0"
 local local_socks_port = var["-local_socks_port"]
 local local_socks_username = var["-local_socks_username"]
@@ -24,6 +25,7 @@ local dns_client_ip = var["-dns_client_ip"]
 local dns_query_strategy = var["-dns_query_strategy"]
 local dns_socks_address = var["-dns_socks_address"]
 local dns_socks_port = var["-dns_socks_port"]
+local dns_fakedns = var["-dns_fakedns"]
 local loglevel = var["-loglevel"] or "warning"
 local network = proto
 local new_port
@@ -33,6 +35,7 @@ local sys = api.sys
 local jsonc = api.jsonc
 local appname = api.appname
 local dns = nil
+local fakedns = nil
 local inbounds = {}
 local outbounds = {}
 local routing = nil
@@ -277,7 +280,7 @@ if node_section then
             protocol = "dokodemo-door",
             settings = {network = proto, followRedirect = true},
             streamSettings = {sockopt = {tproxy = proxy_way}},
-            sniffing = {enabled = true, destOverride = {"http", "tls"}, RouteOnly = true}
+            sniffing = {enabled = true, destOverride = {"http", "tls", (dns_fakedns) and "fakedns"}, metadataOnly = dns_fakedns and true or nil, RouteOnly = route_only and true or nil}
         })
     end
 
@@ -513,7 +516,7 @@ if node_section then
     end
 end
 
-if dns_server then
+if dns_server or dns_fakedns then
     table.insert(outbounds, {
         protocol = "dns",
         tag = "dns-out"
@@ -547,6 +550,18 @@ if dns_server then
         end
         dns.servers = {
             dns_tcp_server
+        }
+    end
+
+    if dns_fakedns then
+        fakedns = {}
+        fakedns[#fakedns + 1] = {
+            ipPool = "198.18.0.0/16",
+            poolSize = 65535
+        }
+        dns_server = "1.1.1.1"
+        dns.servers = {
+            "fakedns"
         }
     end
 
@@ -599,7 +614,7 @@ if dns_server then
         })
     end
 
-    if node_section and (proto and proto:find("tcp")) and redir_port then
+    if node_section and (proto and proto:find("tcp")) and redir_port and not dns_fakedns then
         local outboundTag = node_section
         local node = uci:get_all(appname, node_section)
         if node.protocol == "_shunt" then
@@ -634,6 +649,7 @@ if inbounds or outbounds then
         },
         -- DNS
         dns = dns,
+        fakedns = fakedns,
         -- 传入连接
         inbounds = inbounds,
         -- 传出连接

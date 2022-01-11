@@ -145,11 +145,8 @@ msgstr "用于代理游戏或DNS劫持等..."
 msgid "Filter Mode"
 msgstr "过滤模式"
 
-msgid "No Filter"
-msgstr "不过滤"
-
-msgid "Custom DNS"
-msgstr "自定义DNS"
+msgid "TCP node must be '%s' type to use FakeDNS."
+msgstr "TCP节点必须是 '%s' 类型才能使用 FakeDNS。"
 
 msgid "Remote DNS"
 msgstr "远程DNS"
@@ -193,6 +190,12 @@ msgstr "中国列表不能和中国列表外或防火墙表一起使用！"
 msgid "Cache Resolved"
 msgstr "缓存解析结果"
 
+msgid "Notify the DNS server when the DNS query is notified, the location of the client (cannot be a private IP address)."
+msgstr "用于 DNS 查询时通知 DNS 服务器，客户端所在的地理位置（不能是私有 IP 地址）。"
+
+msgid "This feature requires the DNS server to support the Edns Client Subnet (RFC7871)."
+msgstr "此功能需要 DNS 服务器支持 EDNS Client Subnet（RFC7871）。"
+
 msgid "Query Strategy"
 msgstr "查询策略"
 
@@ -202,11 +205,8 @@ msgstr "当访问的域名不存在规则列表中，使用的默认DNS。"
 msgid "The effect is better, but will increase the memory."
 msgstr "效果更好，但会增加内存使用。"
 
-msgid "Filter GFW List IPv6"
-msgstr "过滤GFW列表 IPv6"
-
-msgid "Filter Proxy List IPv6"
-msgstr "过滤代理列表 IPv6"
+msgid "Filter Proxy Host IPv6"
+msgstr "过滤代理域名 IPv6"
 
 msgid "Experimental feature."
 msgstr "实验性功能。"
