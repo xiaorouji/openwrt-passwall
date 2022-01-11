@@ -177,30 +177,41 @@ udp_node:value("tcp", translate("Same as the tcp node"))
 s:tab("DNS", translate("DNS"))
 
 ---- DNS Forward Mode
-o = s:taboption("DNS", ListValue, "dns_mode", translate("Filter Mode"))
-o.rmempty = false
-o:reset_values()
+dns_mode = s:taboption("DNS", ListValue, "dns_mode", translate("Filter Mode"))
+dns_mode.rmempty = false
+dns_mode:reset_values()
 if api.is_finded("pdnsd") then
-    o:value("pdnsd", "pdnsd " .. translatef("Requery DNS By %s", translate("TCP Node")))
+    dns_mode:value("pdnsd", "pdnsd " .. translatef("Requery DNS By %s", translate("TCP Node")))
 end
 if api.is_finded("dns2socks") then
-    o:value("dns2socks", "dns2socks")
+    dns_mode:value("dns2socks", "dns2socks")
 end
 if has_v2ray then
-    o:value("v2ray", "V2ray")
+    dns_mode:value("v2ray", "V2ray")
 end
 if has_xray then
-    o:value("xray", "Xray")
+    dns_mode:value("xray", "Xray")
 end
-o:value("udp", translatef("Requery DNS By %s", translate("UDP Node")))
-o:value("custom", translate("Custom DNS") .. "(UDP)")
-o:value("nonuse", translate("No Filter"))
+dns_mode:value("udp", translatef("Requery DNS By %s", translate("UDP Node")))
+dns_mode:value("custom", translate("Custom DNS") .. "(UDP)")
+dns_mode:value("nonuse", translate("No Filter"))
 
 o = s:taboption("DNS", ListValue, "v2ray_dns_mode", " ")
 o:value("tcp", "TCP")
 o:value("doh", "DoH")
+o:value("fakedns", "FakeDNS")
 o:depends("dns_mode", "v2ray")
 o:depends("dns_mode", "xray")
+o.validate = function(self, value, t)
+    if value == "fakedns" then
+        local _dns_mode = dns_mode:formvalue(t)
+        local _tcp_node = tcp_node:formvalue(t)
+        if m:get(_tcp_node, "type"):lower() ~= _dns_mode then
+            return nil, translatef("TCP node must be '%s' type to use FakeDNS.", _dns_mode)
+        end
+    end
+    return value
+end
 
 ---- Custom DNS
 o = s:taboption("DNS", Value, "custom_dns", translate("Custom DNS"))
@@ -269,21 +280,31 @@ o.default = "UseIPv4"
 o:value("UseIPv4")
 o:value("UseIPv6")
 o:value("UseIP")
-o:depends("dns_mode", "v2ray")
-o:depends("dns_mode", "xray")
+o:depends({dns_mode = "v2ray", v2ray_dns_mode = "tcp"})
+o:depends({dns_mode = "v2ray", v2ray_dns_mode = "doh"})
+o:depends({dns_mode = "xray", v2ray_dns_mode = "tcp"})
+o:depends({dns_mode = "xray", v2ray_dns_mode = "doh"})
 
 o = s:taboption("DNS", Flag, "dns_cache", translate("Cache Resolved"))
 o.default = "1"
 o:depends({dns_mode = "dns2socks"})
 o:depends({dns_mode = "pdnsd"})
-o:depends({dns_mode = "v2ray"})
-o:depends({dns_mode = "xray"})
+o:depends({dns_mode = "v2ray", v2ray_dns_mode = "tcp"})
+o:depends({dns_mode = "v2ray", v2ray_dns_mode = "doh"})
+o:depends({dns_mode = "xray", v2ray_dns_mode = "tcp"})
+o:depends({dns_mode = "xray", v2ray_dns_mode = "doh"})
 o.rmempty = false
 
 if has_chnlist and api.is_finded("chinadns-ng") then
     o = s:taboption("DNS", Flag, "chinadns_ng", translate("ChinaDNS-NG"), translate("The effect is better, but will increase the memory."))
     o.default = "1"
-    o:depends({dns_mode = "nonuse", ["!reverse"] = true})
+    o:depends({dns_mode = "dns2socks"})
+    o:depends({dns_mode = "pdnsd"})
+    o:depends({dns_mode = "v2ray", v2ray_dns_mode = "tcp"})
+    o:depends({dns_mode = "v2ray", v2ray_dns_mode = "doh"})
+    o:depends({dns_mode = "xray", v2ray_dns_mode = "tcp"})
+    o:depends({dns_mode = "xray", v2ray_dns_mode = "doh"})
+    o:depends({dns_mode = "udp"})
 end
 
 o = s:taboption("DNS", Flag, "filter_gfwlist_ipv6", translate("Filter GFW List IPv6"), translate("Experimental feature."))

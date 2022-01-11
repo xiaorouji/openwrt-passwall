@@ -643,33 +643,40 @@ run_redir() {
 				UDP_NODE="nil"
 			}
 			_extra_param="${_extra_param} ${proto}"
-			[ "${DNS_MODE}" = "v2ray" -o "${DNS_MODE}" = "xray" ] && [ "$(config_t_get global dns_by)" = "tcp" ] && {
-				config_file=$(echo $config_file | sed "s/.json/_DNS.json/g")
-				resolve_dns=1
-				local dns_query_strategy=$(config_t_get global dns_query_strategy UseIPv4)
-				_extra_param="${_extra_param} -dns_query_strategy ${dns_query_strategy}"
-				[ "${DNS_CACHE}" == "0" ] && _extra_param="${_extra_param} -dns_cache 0"
+			[ "${DNS_MODE}" = "v2ray" -o "${DNS_MODE}" = "xray" ] && {
 				local v2ray_dns_mode=$(config_t_get global v2ray_dns_mode tcp)
-				case "$v2ray_dns_mode" in
-					tcp)
-						local dns_forward=$(get_first_dns DNS_FORWARD 53 | sed 's/#/:/g')
-						local dns_address=$(echo $dns_forward | awk -F ':' '{print $1}')
-						_extra_param="${_extra_param} -dns_listen_port ${dns_listen_port} -dns_server ${dns_address} -dns_tcp_server tcp://${dns_forward}"
-						echolog "  - 域名解析 DNS Over TCP..."
-					;;
-					doh)
-						up_trust_doh=$(config_t_get global up_trust_doh "https://cloudflare-dns.com/dns-query,1.1.1.1")
-						_doh_url=$(echo $up_trust_doh | awk -F ',' '{print $1}')
-						_doh_host_port=$(echo $_doh_url | sed "s/https:\/\///g" | awk -F '/' '{print $1}')
-						_doh_host=$(echo $_doh_host_port | awk -F ':' '{print $1}')
-						_doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
-						_doh_bootstrap=$(echo $up_trust_doh | cut -d ',' -sf 2-)
-						_dns_client_ip=$(config_t_get global dns_client_ip)
-						_extra_param="${_extra_param} -dns_listen_port ${dns_listen_port} -dns_server ${_doh_bootstrap} -doh_url ${_doh_url} -doh_host ${_doh_host} -dns_client_ip ${_dns_client_ip}"
-						unset _doh_url _doh_port _doh_bootstrap
-						echolog "  - 域名解析 DNS Over HTTPS..."
-					;;
-				esac
+				[ "$(config_t_get global dns_by)" = "tcp" -o "${v2ray_dns_mode}" = "fakedns" ] && {
+					config_file=$(echo $config_file | sed "s/.json/_DNS.json/g")
+					resolve_dns=1
+					local dns_query_strategy=$(config_t_get global dns_query_strategy UseIPv4)
+					_extra_param="${_extra_param} -dns_query_strategy ${dns_query_strategy}"
+					[ "${DNS_CACHE}" == "0" ] && _extra_param="${_extra_param} -dns_cache 0"
+					case "$v2ray_dns_mode" in
+						tcp)
+							local dns_forward=$(get_first_dns DNS_FORWARD 53 | sed 's/#/:/g')
+							local dns_address=$(echo $dns_forward | awk -F ':' '{print $1}')
+							_extra_param="${_extra_param} -dns_listen_port ${dns_listen_port} -dns_server ${dns_address} -dns_tcp_server tcp://${dns_forward}"
+							echolog "  - 域名解析 DNS Over TCP..."
+						;;
+						doh)
+							up_trust_doh=$(config_t_get global up_trust_doh "https://cloudflare-dns.com/dns-query,1.1.1.1")
+							_doh_url=$(echo $up_trust_doh | awk -F ',' '{print $1}')
+							_doh_host_port=$(echo $_doh_url | sed "s/https:\/\///g" | awk -F '/' '{print $1}')
+							_doh_host=$(echo $_doh_host_port | awk -F ':' '{print $1}')
+							_doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
+							_doh_bootstrap=$(echo $up_trust_doh | cut -d ',' -sf 2-)
+							_dns_client_ip=$(config_t_get global dns_client_ip)
+							_extra_param="${_extra_param} -dns_listen_port ${dns_listen_port} -dns_server ${_doh_bootstrap} -doh_url ${_doh_url} -doh_host ${_doh_host} -dns_client_ip ${_dns_client_ip}"
+							unset _doh_url _doh_port _doh_bootstrap
+							echolog "  - 域名解析 DNS Over HTTPS..."
+						;;
+						fakedns)
+							CHINADNS_NG=0
+							_extra_param="${_extra_param} -dns_listen_port ${dns_listen_port} -dns_fakedns 1"
+							echolog "  - 域名解析 Fake DNS..."
+						;;
+					esac
+				}
 			}
 			lua $API_GEN_V2RAY -node $node -redir_port $local_port -proxy_way $tcp_proxy_way -loglevel $loglevel ${_extra_param} > $config_file
 			ln_run "$(first_type $(config_t_get global_app ${type}_file) ${type})" ${type} $log_file -config="$config_file"
