@@ -148,9 +148,6 @@ msgstr "过滤模式"
 msgid "TCP node must be '%s' type to use FakeDNS."
 msgstr "TCP节点必须是 '%s' 类型才能使用 FakeDNS。"
 
-msgid "Custom DNS"
-msgstr "自定义DNS"
-
 msgid "Remote DNS"
 msgstr "远程DNS"
 

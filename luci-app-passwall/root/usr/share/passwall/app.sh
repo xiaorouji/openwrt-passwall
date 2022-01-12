@@ -1106,13 +1106,8 @@ start_dns() {
 	;;
 	udp)
 		use_udp_node_resolve_dns=1
-		TUN_DNS=${DNS_FORWARD}
-		echolog "  - 域名解析：直接使用UDP节点请求DNS（$TUN_DNS）"
-	;;
-	custom)
-		custom_dns=$(config_t_get global custom_dns)
-		TUN_DNS="$(echo ${custom_dns} | sed 's/#/:/g' | sed -E 's/\:([^:]+)$/#\1/g')"
-		echolog "  - 域名解析：使用UDP协议自定义DNS（$TUN_DNS）解析..."
+		TUN_DNS="$(echo ${DNS_FORWARD} | sed 's/#/:/g' | sed -E 's/\:([^:]+)$/#\1/g')"
+		echolog "  - 域名解析：使用UDP协议请求DNS（$TUN_DNS）..."
 	;;
 	esac
 

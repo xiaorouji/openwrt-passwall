@@ -192,8 +192,7 @@ end
 if has_xray then
     dns_mode:value("xray", "Xray")
 end
-dns_mode:value("udp", translatef("Requery DNS By %s", translate("UDP Node")))
-dns_mode:value("custom", translate("Custom DNS") .. "(UDP)")
+dns_mode:value("udp", translatef("Requery DNS By %s", "UDP"))
 
 o = s:taboption("DNS", ListValue, "v2ray_dns_mode", " ")
 o:value("tcp", "TCP")
@@ -211,18 +210,6 @@ o.validate = function(self, value, t)
     end
     return value
 end
-
----- Custom DNS
-o = s:taboption("DNS", Value, "custom_dns", translate("Custom DNS"))
-o.default = "127.0.0.1#5353"
-o.validate = function(self, value, t)
-    local v = string.gsub(value, "#", ":")
-    if not datatypes.ipaddrport(v) then
-        return nil, translate("Custom DNS") .. " " .. translate("Not valid IP format, please re-enter!")
-    end
-    return value
-end
-o:depends({dns_mode = "custom"})
 
 o = s:taboption("DNS", ListValue, "dns_by", translate("Resolver For The List Proxied"))
 o:value("tcp", translatef("Requery DNS By %s", translate("TCP Node")))
