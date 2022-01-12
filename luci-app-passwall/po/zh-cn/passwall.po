@@ -190,6 +190,12 @@ msgstr "中国列表不能和中国列表外或防火墙表一起使用！"
 msgid "Cache Resolved"
 msgstr "缓存解析结果"
 
+msgid "Notify the DNS server when the DNS query is notified, the location of the client (cannot be a private IP address)."
+msgstr "用于 DNS 查询时通知 DNS 服务器，客户端所在的地理位置（不能是私有 IP 地址）。"
+
+msgid "This feature requires the DNS server to support the Edns Client Subnet (RFC7871)."
+msgstr "此功能需要 DNS 服务器支持 EDNS Client Subnet（RFC7871）。"
+
 msgid "Query Strategy"
 msgstr "查询策略"
 

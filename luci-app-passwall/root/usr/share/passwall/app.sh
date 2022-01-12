@@ -347,18 +347,22 @@ run_v2ray_dns_socks() {
 	}
 	[ -z "$type" ] && return 1
 	[ -n "$log_file" ] || log_file="/dev/null"
+	local _extra_param="-dns_listen_port ${listen_port} -dns_socks_address ${socks_address} -dns_socks_port ${socks_port}"
+	[ -n "${dns_query_strategy}" ] && _extra_param="${_extra_param} -dns_query_strategy ${dns_query_strategy}"
+	[ -n "${dns_client_ip}" ] && _extra_param="${_extra_param} -dns_client_ip ${dns_client_ip}"
 	if [ "$dns_proto" = "tcp" ]; then
 		local _dns_forward=$(get_first_dns dns_tcp_server 53 | sed 's/#/:/g')
 		local _dns_address=$(echo ${_dns_forward} | awk -F ':' '{print $1}')
-		lua $API_GEN_V2RAY -dns_listen_port "${listen_port}" -dns_server "${_dns_address}" -dns_tcp_server "tcp://${_dns_forward}" -dns_query_strategy "${dns_query_strategy}" -dns_socks_address "${socks_address}" -dns_socks_port "${socks_port}" > $config_file
+		_extra_param="${_extra_param} -dns_server ${_dns_address} -dns_tcp_server tcp://${_dns_forward}"
 	elif [ "$dns_proto" = "doh" ]; then
 		_doh_url=$(echo $doh | awk -F ',' '{print $1}')
 		_doh_host_port=$(echo $_doh_url | sed "s/https:\/\///g" | awk -F '/' '{print $1}')
 		_doh_host=$(echo $_doh_host_port | awk -F ':' '{print $1}')
 		_doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
 		_doh_bootstrap=$(echo $doh | cut -d ',' -sf 2-)
-		lua $API_GEN_V2RAY -dns_listen_port "${listen_port}" -dns_server "${_doh_bootstrap}" -doh_url "${_doh_url}" -doh_host "${_doh_host}" -dns_client_ip "${dns_client_ip}" -dns_query_strategy "${dns_query_strategy}" -dns_socks_address "${socks_address}" -dns_socks_port "${socks_port}" > $config_file
+		_extra_param="${_extra_param} -dns_server ${_doh_bootstrap} -doh_url ${_doh_url} -doh_host ${_doh_host}"
 	fi
+	lua $API_GEN_V2RAY ${_extra_param} > $config_file
 	ln_run "$(first_type $(config_t_get global_app ${type}_file) ${type})" ${type} $log_file -config="$config_file"
 }
 
@@ -650,6 +654,8 @@ run_redir() {
 					resolve_dns=1
 					local dns_query_strategy=$(config_t_get global dns_query_strategy UseIPv4)
 					_extra_param="${_extra_param} -dns_query_strategy ${dns_query_strategy}"
+					local _dns_client_ip=$(config_t_get global dns_client_ip)
+					[ -n "${_dns_client_ip}" ] && _extra_param="${_extra_param} -dns_client_ip ${_dns_client_ip}"
 					[ "${DNS_CACHE}" == "0" ] && _extra_param="${_extra_param} -dns_cache 0"
 					case "$v2ray_dns_mode" in
 						tcp)
@@ -665,8 +671,7 @@ run_redir() {
 							_doh_host=$(echo $_doh_host_port | awk -F ':' '{print $1}')
 							_doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
 							_doh_bootstrap=$(echo $up_trust_doh | cut -d ',' -sf 2-)
-							_dns_client_ip=$(config_t_get global dns_client_ip)
-							_extra_param="${_extra_param} -dns_listen_port ${dns_listen_port} -dns_server ${_doh_bootstrap} -doh_url ${_doh_url} -doh_host ${_doh_host} -dns_client_ip ${_dns_client_ip}"
+							_extra_param="${_extra_param} -dns_listen_port ${dns_listen_port} -dns_server ${_doh_bootstrap} -doh_url ${_doh_url} -doh_host ${_doh_host}"
 							unset _doh_url _doh_port _doh_bootstrap
 							echolog "  - 域名解析 DNS Over HTTPS..."
 						;;
@@ -1054,6 +1059,8 @@ start_dns() {
 			[ "${DNS_CACHE}" == "0" ] && local _extra_param="-dns_cache 0"
 			local dns_query_strategy=$(config_t_get global dns_query_strategy UseIPv4)
 			_extra_param="${_extra_param} -dns_query_strategy ${dns_query_strategy}"
+			local _dns_client_ip=$(config_t_get global dns_client_ip)
+			[ -n "${_dns_client_ip}" ] && _extra_param="${_extra_param} -dns_client_ip ${_dns_client_ip}"
 			local dns_by=$(config_t_get global dns_by "tcp")
 			if [ "${dns_by}" = "tcp" ]; then
 				use_tcp_node_resolve_dns=1
@@ -1079,7 +1086,6 @@ start_dns() {
 					_doh_host=$(echo $_doh_host_port | awk -F ':' '{print $1}')
 					_doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
 					_doh_bootstrap=$(echo $up_trust_doh | cut -d ',' -sf 2-)
-					_dns_client_ip=$(config_t_get global dns_client_ip)
 
 					if [ "${dns_by}" = "tcp" ]; then
 						DNS_FORWARD=""
@@ -1090,7 +1096,7 @@ start_dns() {
 						done
 						unset _dns _doh_bootstrap_dns
 					fi
-					lua $API_GEN_V2RAY -dns_listen_port "${dns_listen_port}" -dns_server "${_doh_bootstrap}" -doh_url "${_doh_url}" -doh_host "${_doh_host}" -dns_client_ip "${_dns_client_ip}" ${_extra_param} > $TMP_PATH/DNS.json
+					lua $API_GEN_V2RAY -dns_listen_port "${dns_listen_port}" -dns_server "${_doh_bootstrap}" -doh_url "${_doh_url}" -doh_host "${_doh_host}" ${_extra_param} > $TMP_PATH/DNS.json
 					unset _doh_url _doh_port _doh_bootstrap
 					echolog "  - 域名解析 DNS Over HTTPS..."
 				;;

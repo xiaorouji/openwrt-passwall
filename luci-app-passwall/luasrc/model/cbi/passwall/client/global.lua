@@ -259,7 +259,10 @@ o:depends({dns_mode = "udp"})
 o:depends({v2ray_dns_mode = "tcp"})
 
 o = s:taboption("DNS", Value, "dns_client_ip", translate("EDNS Client Subnet"))
+o.description = translate("Notify the DNS server when the DNS query is notified, the location of the client (cannot be a private IP address).") .. "<br />" ..
+                translate("This feature requires the DNS server to support the Edns Client Subnet (RFC7871).")
 o.datatype = "ipaddr"
+o:depends("v2ray_dns_mode", "tcp")
 o:depends("v2ray_dns_mode", "doh")
 
 o = s:taboption("DNS", ListValue, "dns_query_strategy", translate("Query Strategy"))
