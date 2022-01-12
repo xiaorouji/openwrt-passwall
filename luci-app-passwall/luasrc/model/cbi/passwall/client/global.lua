@@ -194,7 +194,6 @@ if has_xray then
 end
 dns_mode:value("udp", translatef("Requery DNS By %s", translate("UDP Node")))
 dns_mode:value("custom", translate("Custom DNS") .. "(UDP)")
-dns_mode:value("nonuse", translate("No Filter"))
 
 o = s:taboption("DNS", ListValue, "v2ray_dns_mode", " ")
 o:value("tcp", "TCP")
@@ -309,11 +308,9 @@ end
 
 o = s:taboption("DNS", Flag, "filter_gfwlist_ipv6", translate("Filter GFW List IPv6"), translate("Experimental feature."))
 o.default = "0"
-o:depends({dns_mode = "nonuse", ["!reverse"] = true})
 
 o = s:taboption("DNS", Flag, "filter_proxylist_ipv6", translate("Filter Proxy List IPv6"), translate("Experimental feature."))
 o.default = "0"
-o:depends({dns_mode = "nonuse", ["!reverse"] = true})
 
 o = s:taboption("DNS", Button, "clear_ipset", translate("Clear IPSET"), translate("Try this feature if the rule modification does not take effect."))
 o.inputstyle = "remove"
