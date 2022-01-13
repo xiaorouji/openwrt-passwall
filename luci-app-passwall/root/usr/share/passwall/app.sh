@@ -1183,7 +1183,7 @@ gen_pdnsd_config() {
 			max_ttl = 1w;
 			timeout = 10;
 			par_queries = 2;
-			neg_domain_pol = on;
+			neg_domain_pol = off;
 			udpbufsize = 1024;
 			proc_limit = 2;
 			procq_limit = 8;
