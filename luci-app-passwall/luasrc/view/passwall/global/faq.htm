@@ -2,7 +2,15 @@
 local api = require "luci.model.cbi.passwall.api.api"
 -%>
 <div class="cbi-section cbi-tblsection">
-	<div id="tips_div"></div>
+	<div id="dns_div">
+		<ul><b style="color:red"><%:About DNS issues:%></b>
+			<li style="color:red">1. <span><%:Some browsers may have built-in DNS, be sure to close. Example: Chrome. Settings - Security and Privacy - Security - Use secure DNS disabled.%></span></li>
+			<li style="color:red">2. <span><%:Sometimes after restart, you can not internet, especially the GFW mode. At this time, close all browsers (important), Windows Client, please `ipconfig / flushdns`. Please close the WiFi on the phone, cut the flight mode and then cut back.%></span></li>
+			<li style="color:red">3. <span><%:The client DNS and the default gateway must point to this router.%></span></li>
+			<li style="color:red">4. <span><%:If you have a wrong DNS process, the consequences are at your own risk!%></span></li>
+		</ul>
+	</div>
+	<div id="div2"></div>
 </div>
 
 <script>
@@ -23,7 +31,7 @@ local api = require "luci.model.cbi.passwall.api.api"
 		}
 	}
 	
-	var dom = document.getElementById("tips_div");
+	var dom = document.getElementById("div2");
 	if (dom) {
 		var li = "";
 		li += "<%:You can use load balancing for failover.%>" + "<br />";

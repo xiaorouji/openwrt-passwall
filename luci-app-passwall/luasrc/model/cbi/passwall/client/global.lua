@@ -387,10 +387,10 @@ trojan_loglevel:value("2", "warn")
 trojan_loglevel:value("3", "error")
 trojan_loglevel:value("4", "fatal")
 
-s:tab("tips", translate("Tips"))
+s:tab("faq", "FAQ")
 
-o = s:taboption("tips", DummyValue, "")
-o.template = appname .. "/global/tips"
+o = s:taboption("faq", DummyValue, "")
+o.template = appname .. "/global/faq"
 
 -- [[ Socks Server ]]--
 o = s:taboption("Main", Flag, "socks_enabled", "Socks " .. translate("Main switch"))

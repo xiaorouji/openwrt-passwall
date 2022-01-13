@@ -220,8 +220,20 @@ msgstr "如果修改规则后没有生效，请尝试此功能。"
 msgid "The server client can also use this rule to scientifically surf the Internet."
 msgstr "本机服务器的客户端也可以使用这个代理模式上网。"
 
-msgid "Tips"
-msgstr "小提示"
+msgid "About DNS issues:"
+msgstr "关于DNS问题："
+
+msgid "Some browsers may have built-in DNS, be sure to close. Example: Chrome. Settings - Security and Privacy - Security - Use secure DNS disabled."
+msgstr "部分浏览器可能有内置的DNS，请务必关闭。如：chrome。 设置 - 安全和隐私设置 - 使用安全 DNS 关闭。"
+
+msgid "Sometimes after restart, you can not internet, especially the GFW mode. At this time, close all browsers (important), Windows Client, please `ipconfig / flushdns`. Please close the WiFi on the phone, cut the flight mode and then cut back."
+msgstr "有时候重启后，上不了，尤其是GFW模式。这时请先关闭所有浏览器（重要），Windows客户端请`ipconfig/flushdns`。手机端请关闭WIFI，切一下飞行模式再切回来。"
+
+msgid "The client DNS and the default gateway must point to this router."
+msgstr "客户端DNS和默认网关必须指向本路由器。"
+
+msgid "If you have a wrong DNS process, the consequences are at your own risk!"
+msgstr "如果你自行配置了错误的DNS流程，后果自负！"
 
 msgid "You can use load balancing for failover."
 msgstr "可以使用负载均衡实现故障切换功能。"
