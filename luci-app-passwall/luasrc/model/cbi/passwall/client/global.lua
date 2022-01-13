@@ -362,7 +362,7 @@ localhost_udp_proxy_mode.validate = redir_mode_validate
 tips = s:taboption("Proxy", DummyValue, "tips", " ")
 tips.rawhtml = true
 tips.cfgvalue = function(t, n)
-    return string.format('<a style="color: red" href="acl">%s</a>', translate("Want different devices to use different proxy modes/ports/nodes? Please use access control."))
+    return string.format('<a style="color: red" href="%s">%s</a>', api.url("acl"), translate("Want different devices to use different proxy modes/ports/nodes? Please use access control."))
 end
 
 s:tab("log", translate("Log"))
