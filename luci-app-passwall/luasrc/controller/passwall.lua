@@ -13,6 +13,7 @@ local brook = require("luci.model.cbi." .. appname ..".api.brook")
 local v2ray = require("luci.model.cbi." .. appname ..".api.v2ray")
 local xray = require("luci.model.cbi." .. appname ..".api.xray")
 local trojan_go = require("luci.model.cbi." .. appname ..".api.trojan_go")
+local hysteria = require("luci.model.cbi." .. appname ..".api.hysteria")
 
 function index()
 	appname = require "luci.model.cbi.passwall.api.api".appname
@@ -37,7 +38,7 @@ function index()
 	end
 	entry({"admin", "services", appname, "app_update"}, cbi(appname .. "/client/app_update"), _("App Update"), 95).leaf = true
 	entry({"admin", "services", appname, "rule"}, cbi(appname .. "/client/rule"), _("Rule Manage"), 96).leaf = true
-	entry({"admin", "services", appname, "rule_list"}, cbi(appname .. "/client/rule_list"), _("Rule List Manage"), 97).leaf = true
+	entry({"admin", "services", appname, "rule_list"}, cbi(appname .. "/client/rule_list"), _("Rule List"), 97).leaf = true
 	entry({"admin", "services", appname, "node_subscribe_config"}, cbi(appname .. "/client/node_subscribe_config")).leaf = true
 	entry({"admin", "services", appname, "node_config"}, cbi(appname .. "/client/node_config")).leaf = true
 	entry({"admin", "services", appname, "shunt_rules"}, cbi(appname .. "/client/shunt_rules")).leaf = true
@@ -82,6 +83,8 @@ function index()
 	entry({"admin", "services", appname, "xray_update"}, call("xray_update")).leaf = true
 	entry({"admin", "services", appname, "trojan_go_check"}, call("trojan_go_check")).leaf = true
 	entry({"admin", "services", appname, "trojan_go_update"}, call("trojan_go_update")).leaf = true
+	entry({"admin", "services", appname, "hysteria_check"}, call("hysteria_check")).leaf = true
+	entry({"admin", "services", appname, "hysteria_update"}, call("hysteria_update")).leaf = true
 end
 
 local function http_write_json(content)
@@ -422,7 +425,7 @@ function kcptun_update()
 	elseif task == "move" then
 		json = kcptun.to_move(http.formvalue("file"))
 	else
-		json = kcptun.to_download(http.formvalue("url"))
+		json = kcptun.to_download(http.formvalue("url"), http.formvalue("size"))
 	end
 
 	http_write_json(json)
@@ -439,7 +442,7 @@ function brook_update()
 	if task == "move" then
 		json = brook.to_move(http.formvalue("file"))
 	else
-		json = brook.to_download(http.formvalue("url"))
+		json = brook.to_download(http.formvalue("url"), http.formvalue("size"))
 	end
 
 	http_write_json(json)
@@ -458,7 +461,7 @@ function v2ray_update()
 	elseif task == "move" then
 		json = v2ray.to_move(http.formvalue("file"))
 	else
-		json = v2ray.to_download(http.formvalue("url"))
+		json = v2ray.to_download(http.formvalue("url"), http.formvalue("size"))
 	end
 
 	http_write_json(json)
@@ -477,7 +480,7 @@ function xray_update()
 	elseif task == "move" then
 		json = xray.to_move(http.formvalue("file"))
 	else
-		json = xray.to_download(http.formvalue("url"))
+		json = xray.to_download(http.formvalue("url"), http.formvalue("size"))
 	end
 
 	http_write_json(json)
@@ -496,8 +499,26 @@ function trojan_go_update()
 	elseif task == "move" then
 		json = trojan_go.to_move(http.formvalue("file"))
 	else
-		json = trojan_go.to_download(http.formvalue("url"))
+		json = trojan_go.to_download(http.formvalue("url"), http.formvalue("size"))
 	end
 
 	http_write_json(json)
 end
+
+function hysteria_check()
+	local json = hysteria.to_check("")
+	http_write_json(json)
+end
+
+function hysteria_update()
+	local json = nil
+	local task = http.formvalue("task")
+	if task == "move" then
+		json = hysteria.to_move(http.formvalue("file"))
+	else
+		json = hysteria.to_download(http.formvalue("url"), http.formvalue("size"))
+	end
+
+	http_write_json(json)
+end
+

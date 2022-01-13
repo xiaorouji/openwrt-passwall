@@ -11,7 +11,7 @@ start_service() {
 	config_load "$CONF"
 
 	local enabled
-	config_get enabled "enabled" "enabled" "0"
+	config_get_bool enabled "enabled" "enabled" "0"
 	[ "$enabled" -eq "0" ] && exit 1
 
 	local confdir
@@ -23,6 +23,7 @@ start_service() {
 	config_get conffiles "config" "conffiles"
 	config_get datadir "config" "datadir" "/usr/share/v2ray"
 	config_get format "config" "format" "json"
+	config_get_bool memconservative "config" "memconservative" "1"
 
 	procd_open_instance "$CONF"
 	procd_set_param command "$PROG" run
@@ -35,6 +36,7 @@ start_service() {
 	}
 	[ -n "$format" ] && procd_append_param command -format "$format"
 	procd_set_param env v2ray.local.asset="$datadir"
+	[ "$memconservative" -eq "1" ] && procd_append_param env V2RAY_CONF_GEOLOADER="memconservative"
 	procd_set_param file $conffiles
 
 	procd_set_param stdout 1

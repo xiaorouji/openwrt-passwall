@@ -70,8 +70,8 @@ msgstr "进入界面"
 msgid "Rule Manage"
 msgstr "规则管理"
 
-msgid "Rule List Manage"
-msgstr "直连/代理/局域网/hosts名单管理"
+msgid "Rule List"
+msgstr "规则列表"
 
 msgid "Access control"
 msgstr "访问控制"
@@ -202,6 +202,15 @@ msgstr "当访问的域名不存在规则列表中，使用的默认DNS。"
 msgid "The effect is better, but will increase the memory."
 msgstr "效果更好，但会增加内存使用。"
 
+msgid "Filter GFW List IPv6"
+msgstr "过滤GFW列表 IPv6"
+
+msgid "Filter Proxy List IPv6"
+msgstr "过滤代理列表 IPv6"
+
+msgid "Experimental feature."
+msgstr "实验性功能。"
+
 msgid "Clear IPSET"
 msgstr "清空 IPSET"
 
@@ -294,6 +303,9 @@ msgstr "危险"
 
 msgid "Same as the %s default proxy mode"
 msgstr "与 %s 默认代理模式相同"
+
+msgid "Want different devices to use different proxy modes/ports/nodes? Please use access control."
+msgstr "希望不同设备使用不同的代理模式/端口/节点？请使用访问控制。"
 
 msgid "Operation"
 msgstr "操作"
@@ -489,6 +501,15 @@ msgstr "最大上行(Mbps)"
 
 msgid "Max download Mbps"
 msgstr "最大下行(Mbps)"
+
+msgid "QUIC stream receive window"
+msgstr "QUIC 流接收窗口"
+
+msgid "QUIC connection receive window"
+msgstr "QUIC 连接接收窗口"
+
+msgid "Disable MTU detection"
+msgstr "禁用 MTU 检测"
 
 msgid "Encrypt Method"
 msgstr "加密"
@@ -1024,6 +1045,9 @@ msgstr "HAProxy不能和KCP一起使用"
 msgid "Password"
 msgstr "密码"
 
+msgid "IV Check"
+msgstr "IV 检查"
+
 msgid "Connection Timeout"
 msgstr "连接超时时间"
 
@@ -1041,9 +1065,6 @@ msgstr "插件"
 
 msgid "opts"
 msgstr "插件选项"
-
-msgid "Xray is currently directly compatible with V2ray and used."
-msgstr "Xray 目前可直接兼容 V2ray 并使用。"
 
 msgid "Protocol"
 msgstr "协议名称"
@@ -1092,9 +1113,6 @@ msgstr "Naiveproxy协议"
 
 msgid "V2ray Protocol"
 msgstr "V2ray协议"
-
-msgid "Alter ID"
-msgstr "额外ID(alterId)"
 
 msgid "User Level"
 msgstr "用户等级(level)"
@@ -1300,6 +1318,9 @@ msgstr "文件下载失败或超时：%s"
 msgid "File path required."
 msgstr "请指定文件路径。"
 
+msgid "%s not enough space."
+msgstr "%s 空间不足。"
+
 msgid "Can't find client in file: %s"
 msgstr "无法在文件中找到客户端：%s"
 
@@ -1335,3 +1356,6 @@ msgstr "检查超时时间"
 
 msgid "Permit without stream"
 msgstr "无子连接时的健康检查"
+
+msgid "Initial Windows Size"
+msgstr "初始窗口大小"

@@ -183,7 +183,6 @@ local has_xray = api.is_finded("xray")
 			info.add = opt.get("address").value;
 			info.port = opt.get("port").value;
 			info.id = opt.get("uuid").value;
-			info.aid = opt.get("alter_id").value;
 			
 			var v_transport = opt.get("transport").value;
 			if (v_transport === "ws") {
@@ -710,7 +709,6 @@ local has_xray = api.is_finded("xray")
 			opt.set('remarks', ssm.ps);
 			opt.set('address', ssm.add);
 			opt.set('port', ssm.port);
-			opt.set('alter_id', ssm.aid);
 			opt.set('uuid', ssm.id);
 			opt.set('tls', ssm.tls === "tls");
 			if (ssm.tls === "tls") {

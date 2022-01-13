@@ -2,6 +2,8 @@
 
 CONFIG=passwall
 LOG_FILE=/tmp/log/$CONFIG.log
+LOCK_FILE_DIR=/tmp/lock
+LOCK_FILE=${LOCK_FILE_DIR}/${CONFIG}_script.lock
 
 echolog() {
 	local d="$(date "+%Y-%m-%d %H:%M:%S")"
@@ -203,27 +205,28 @@ test_auto_switch() {
 }
 
 start() {
-	if [ "$(pgrep -f $CONFIG/test.sh | wc -l)" -gt 2 ]; then
-		exit 1
-	fi
 	ENABLED=$(config_t_get global enabled 0)
 	[ "$ENABLED" != 1 ] && return 1
 	ENABLED=$(config_t_get auto_switch enable 0)
 	[ "$ENABLED" != 1 ] && return 1
 	delay=$(config_t_get auto_switch testing_time 1)
-	#sleep ${delay}m
 	#sleep 9s
 	connect_timeout=$(config_t_get auto_switch connect_timeout 3)
 	retry_num=$(config_t_get auto_switch retry_num 3)
 	restore_switch=$(config_t_get auto_switch restore_switch 0)
 	shunt_logic=$(config_t_get auto_switch shunt_logic 0)
-	while [ "$ENABLED" -eq 1 ]
-	do
+	while [ "$ENABLED" -eq 1 ]; do
+		[ -f "$LOCK_FILE" ] && {
+			sleep 6s
+			continue
+		}
+		touch $LOCK_FILE
 		TCP_NODE=$(config_t_get auto_switch tcp_node nil)
 		[ -n "$TCP_NODE" -a "$TCP_NODE" != "nil" ] && {
 			TCP_NODE=$(echo $TCP_NODE | tr -s ' ' '\n' | uniq | tr -s '\n' ' ')
 			test_auto_switch TCP "$TCP_NODE"
 		}
+		rm -f $LOCK_FILE
 		sleep ${delay}m
 	done
 }
