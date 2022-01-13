@@ -258,6 +258,7 @@ o:depends("v2ray_dns_mode", "doh")
 ---- DNS Forward
 o = s:taboption("DNS", Value, "dns_forward", translate("Remote DNS"))
 --o.description = translate("IP:Port mode acceptable, multi value split with english comma.") .. " " .. translate("If you use dns2socks, only the first one is valid.")
+o.datatype = "or(ipaddr,ipaddrport)"
 o.default = "1.1.1.1"
 o:value("1.1.1.1", "1.1.1.1 (CloudFlare DNS)")
 o:value("1.1.1.2", "1.1.1.2 (CloudFlare DNS)")
