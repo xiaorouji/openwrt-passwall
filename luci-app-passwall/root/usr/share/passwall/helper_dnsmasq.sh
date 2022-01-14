@@ -114,7 +114,7 @@ ipset_merge() {
 
 add() {
 	local fwd_dns item servers msg
-	local DNS_MODE TMP_DNSMASQ_PATH DNSMASQ_CONF_FILE DEFAULT_DNS LOCAL_DNS TUN_DNS CHINADNS_DNS TCP_NODE PROXY_MODE NO_LOGIC_LOG NO_GFWLIST_IPV6 NO_PROXYLIST_IPV6
+	local DNS_MODE TMP_DNSMASQ_PATH DNSMASQ_CONF_FILE DEFAULT_DNS LOCAL_DNS TUN_DNS CHINADNS_DNS TCP_NODE PROXY_MODE NO_LOGIC_LOG NO_PROXY_IPV6
 	eval_set_val $@
 	_LOG_FILE=$LOG_FILE
 	[ -n "$NO_LOGIC_LOG" ] && LOG_FILE="/dev/null"
@@ -172,7 +172,7 @@ add() {
 	#始终使用远程DNS解析代理（黑名单）列表
 	[ -s "${RULES_PATH}/proxy_host" ] && {
 		local ipset_flag="blacklist,blacklist6"
-		if [ "${NO_PROXYLIST_IPV6}" = "1" ]; then
+		if [ "${NO_PROXY_IPV6}" = "1" ]; then
 			ipset_flag="blacklist"
 			cat "${RULES_PATH}/proxy_host" | tr -s '\n' | grep -v "^#" | sort -u | gen_dnsmasq_address_items "::" "${TMP_DNSMASQ_PATH}/97-proxy_host-noipv6.conf"
 		fi
@@ -208,6 +208,13 @@ add() {
 			}
 			local shunt_node=$(config_n_get $shunt_node_id address nil)
 			[ "$shunt_node" = "nil" ] && continue
+
+			local ipset_flag="shuntlist,shuntlist6"
+			if [ "${NO_PROXY_IPV6}" = "1" ]; then
+				ipset_flag="shuntlist"
+				echo $str | sed "s/|/\n/g" | gen_dnsmasq_address_items "::" "${TMP_DNSMASQ_PATH}/98-shunt_host-noipv6.conf"
+			fi
+
 			if [ "$DNS_MODE" = "fakedns" ]; then
 				[ -n "$str" ] && {
 					echo $str | sed "s/|/\n/g" | gen_dnsmasq_address_items "198.18.0.1" "${TMP_DNSMASQ_PATH}/98-shunt_host.conf"
@@ -215,7 +222,7 @@ add() {
 				}
 			else
 				[ -n "$str" ] && {
-					echo $str | sed "s/|/\n/g" | gen_dnsmasq_items "shuntlist,shuntlist6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/98-shunt_host.conf"
+					echo $str | sed "s/|/\n/g" | gen_dnsmasq_items "${ipset_flag}" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/98-shunt_host.conf"
 					msg_dns="${fwd_dns}"
 				}
 			fi
@@ -235,7 +242,7 @@ add() {
 			grep -v -E "$count_hosts_str" "${RULES_PATH}/gfwlist" > "${TMP_PATH}/gfwlist"
 			
 			local ipset_flag="gfwlist,gfwlist6"
-			if [ "${NO_GFWLIST_IPV6}" = "1" ]; then
+			if [ "${NO_PROXY_IPV6}" = "1" ]; then
 				ipset_flag="gfwlist"
 				sort -u "${TMP_PATH}/gfwlist" | gen_dnsmasq_address_items "::" "${TMP_DNSMASQ_PATH}/99-gfwlist-noipv6.conf"
 			fi
@@ -265,6 +272,12 @@ add() {
 		#回国模式
 		[ -s "${RULES_PATH}/chnlist" ] && {
 			grep -v -E "$count_hosts_str" "${RULES_PATH}/chnlist" > "${TMP_PATH}/chnlist"
+			
+			local ipset_flag="chnroute,chnroute6"
+			if [ "${NO_PROXY_IPV6}" = "1" ]; then
+				ipset_flag="chnroute"
+				sort -u "${TMP_PATH}/chnlist" | gen_dnsmasq_address_items "::" "${TMP_DNSMASQ_PATH}/99-chinalist_host-noipv6.conf"
+			fi
 			
 			if [ "$DNS_MODE" = "fakedns" ]; then
 				sort -u "${TMP_PATH}/chnlist" | gen_dnsmasq_address_items "198.18.0.1" "${TMP_DNSMASQ_PATH}/99-chinalist_host.conf"
