@@ -156,16 +156,11 @@ add() {
 			echo -e "$subscribe_list" | sort -u | gen_dnsmasq_items "whitelist,whitelist6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/12-subscribe.conf"
 			echolog "  - [$?]节点订阅域名(whitelist)：${fwd_dns:-默认}"
 		else
-			if [ "$DNS_MODE" = "fakedns" ]; then
-				echo -e "$subscribe_list" | sort -u | gen_dnsmasq_address_items "198.18.0.1" "${TMP_DNSMASQ_PATH}/91-subscribe.conf"
-				echolog "  - [$?]节点订阅域名(blacklist)：198.18.0.1"
-			else
-				#如果开启了通过代理订阅
-				fwd_dns="${TUN_DNS}"
-				#[ -n "$CHINADNS_DNS" ] && unset fwd_dns
-				echo -e "$subscribe_list" | sort -u | gen_dnsmasq_items "blacklist,blacklist6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/91-subscribe.conf"
-				echolog "  - [$?]节点订阅域名(blacklist)：${fwd_dns:-默认}"
-			fi
+			#如果开启了通过代理订阅
+			fwd_dns="${TUN_DNS}"
+			#[ -n "$CHINADNS_DNS" ] && unset fwd_dns
+			echo -e "$subscribe_list" | sort -u | gen_dnsmasq_items "blacklist,blacklist6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/91-subscribe.conf"
+			echolog "  - [$?]节点订阅域名(blacklist)：${fwd_dns:-默认}"
 		fi
 	}
 	
@@ -176,16 +171,10 @@ add() {
 			ipset_flag="blacklist"
 			cat "${RULES_PATH}/proxy_host" | tr -s '\n' | grep -v "^#" | sort -u | gen_dnsmasq_address_items "::" "${TMP_DNSMASQ_PATH}/97-proxy_host-noipv6.conf"
 		fi
-		
-		if [ "$DNS_MODE" = "fakedns" ]; then
-			cat "${RULES_PATH}/proxy_host" | tr -s '\n' | grep -v "^#" | sort -u | gen_dnsmasq_address_items "198.18.0.1" "${TMP_DNSMASQ_PATH}/97-proxy_host.conf"
-			echolog "  - [$?]代理域名表(blacklist)：198.18.0.1"
-		else
-			fwd_dns="${TUN_DNS}"
-			#[ -n "$CHINADNS_DNS" ] && unset fwd_dns
-			cat "${RULES_PATH}/proxy_host" | tr -s '\n' | grep -v "^#" | sort -u | gen_dnsmasq_items "${ipset_flag}" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/97-proxy_host.conf"
-			echolog "  - [$?]代理域名表(blacklist)：${fwd_dns:-默认}"
-		fi
+		fwd_dns="${TUN_DNS}"
+		#[ -n "$CHINADNS_DNS" ] && unset fwd_dns
+		cat "${RULES_PATH}/proxy_host" | tr -s '\n' | grep -v "^#" | sort -u | gen_dnsmasq_items "${ipset_flag}" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/97-proxy_host.conf"
+		echolog "  - [$?]代理域名表(blacklist)：${fwd_dns:-默认}"
 	}
 
 	#分流规则
@@ -214,18 +203,10 @@ add() {
 				ipset_flag="shuntlist"
 				echo $str | sed "s/|/\n/g" | gen_dnsmasq_address_items "::" "${TMP_DNSMASQ_PATH}/98-shunt_host-noipv6.conf"
 			fi
-
-			if [ "$DNS_MODE" = "fakedns" ]; then
-				[ -n "$str" ] && {
-					echo $str | sed "s/|/\n/g" | gen_dnsmasq_address_items "198.18.0.1" "${TMP_DNSMASQ_PATH}/98-shunt_host.conf"
-					msg_dns="198.18.0.1"
-				}
-			else
-				[ -n "$str" ] && {
-					echo $str | sed "s/|/\n/g" | gen_dnsmasq_items "${ipset_flag}" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/98-shunt_host.conf"
-					msg_dns="${fwd_dns}"
-				}
-			fi
+			[ -n "$str" ] && {
+				echo $str | sed "s/|/\n/g" | gen_dnsmasq_items "${ipset_flag}" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/98-shunt_host.conf"
+				msg_dns="${fwd_dns}"
+			}
 		done
 		echolog "  - [$?]V2ray/Xray分流规则(shuntlist)：${msg_dns:-默认}"
 	}
@@ -246,16 +227,10 @@ add() {
 				ipset_flag="gfwlist"
 				sort -u "${TMP_PATH}/gfwlist" | gen_dnsmasq_address_items "::" "${TMP_DNSMASQ_PATH}/99-gfwlist-noipv6.conf"
 			fi
-			
-			if [ "$DNS_MODE" = "fakedns" ]; then
-				sort -u "${TMP_PATH}/gfwlist" | gen_dnsmasq_address_items "198.18.0.1" "${TMP_DNSMASQ_PATH}/99-gfwlist.conf"
-				echolog "  - [$?]防火墙域名表(gfwlist)：198.18.0.1"
-			else
-				fwd_dns="${TUN_DNS}"
-				[ -n "$CHINADNS_DNS" ] && unset fwd_dns
-				sort -u "${TMP_PATH}/gfwlist" | gen_dnsmasq_items "${ipset_flag}" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/99-gfwlist.conf"
-				echolog "  - [$?]防火墙域名表(gfwlist)：${fwd_dns:-默认}"
-			fi
+			fwd_dns="${TUN_DNS}"
+			[ -n "$CHINADNS_DNS" ] && unset fwd_dns
+			sort -u "${TMP_PATH}/gfwlist" | gen_dnsmasq_items "${ipset_flag}" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/99-gfwlist.conf"
+			echolog "  - [$?]防火墙域名表(gfwlist)：${fwd_dns:-默认}"
 			rm -f "${TMP_PATH}/gfwlist"
 		}
 		
@@ -278,15 +253,9 @@ add() {
 				ipset_flag="chnroute"
 				sort -u "${TMP_PATH}/chnlist" | gen_dnsmasq_address_items "::" "${TMP_DNSMASQ_PATH}/99-chinalist_host-noipv6.conf"
 			fi
-			
-			if [ "$DNS_MODE" = "fakedns" ]; then
-				sort -u "${TMP_PATH}/chnlist" | gen_dnsmasq_address_items "198.18.0.1" "${TMP_DNSMASQ_PATH}/99-chinalist_host.conf"
-				echolog "  - [$?]中国域名表(chnroute)：198.18.0.1"
-			else
-				fwd_dns="${TUN_DNS}"
-				sort -u "${TMP_PATH}/chnlist" | gen_dnsmasq_items "chnroute,chnroute6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/99-chinalist_host.conf"
-				echolog "  - [$?]中国域名表(chnroute)：${fwd_dns:-默认}"
-			fi
+			fwd_dns="${TUN_DNS}"
+			sort -u "${TMP_PATH}/chnlist" | gen_dnsmasq_items "chnroute,chnroute6" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/99-chinalist_host.conf"
+			echolog "  - [$?]中国域名表(chnroute)：${fwd_dns:-默认}"
 			rm -f "${TMP_PATH}/chnlist"
 		}
 	fi
