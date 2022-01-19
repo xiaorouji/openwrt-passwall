@@ -647,7 +647,7 @@ run_redir() {
 				UDP_NODE="nil"
 			}
 			_extra_param="${_extra_param} ${proto}"
-			[ "${DNS_MODE}" != "fakedns" ] && _extra_param="${_extra_param} -route_only 1"
+			_extra_param="${_extra_param} -route_only 1"
 			[ "${DNS_MODE}" = "v2ray" -o "${DNS_MODE}" = "xray" ] && {
 				local v2ray_dns_mode=$(config_t_get global v2ray_dns_mode tcp)
 				[ "$(config_t_get global dns_by)" = "tcp" -o "${v2ray_dns_mode}" = "fakedns" ] && {
@@ -677,7 +677,6 @@ run_redir() {
 							echolog "  - 域名解析 DNS Over HTTPS..."
 						;;
 						fakedns)
-							CHINADNS_NG=0
 							_extra_param="${_extra_param} -dns_listen_port ${dns_listen_port} -dns_fakedns 1"
 							echolog "  - 域名解析 Fake DNS..."
 						;;
@@ -1115,10 +1114,6 @@ start_dns() {
 		use_udp_node_resolve_dns=1
 		TUN_DNS="$(echo ${DNS_FORWARD} | sed 's/#/:/g' | sed -E 's/\:([^:]+)$/#\1/g')"
 		echolog "  - 域名解析：使用UDP协议请求DNS（$TUN_DNS）..."
-	;;
-	fakedns)
-		CHINADNS_NG=0
-		echolog "  - 域名解析：使用Dnsmasq直接返回假IP，请确保代理工具支持域名嗅探..."
 	;;
 	esac
 
