@@ -176,6 +176,18 @@ udp_node:value("tcp", translate("Same as the tcp node"))
 
 s:tab("DNS", translate("DNS"))
 
+if api.is_finded("smartdns") then
+    dns_shunt = s:taboption("DNS", ListValue, "dns_shunt", translate("DNS Shunt"))
+    dns_shunt:value("dnsmasq", "Dnsmasq")
+    dns_shunt:value("smartdns", "SmartDNS")
+
+    group_domestic = s:taboption("DNS", Value, "group_domestic", translate("Domestic group name"))
+    group_domestic.placeholder = "default"
+    group_domestic.default = group_domestic.placeholder
+    group_domestic:depends("dns_shunt", "smartdns")
+    group_domestic.description = translate("You only need to configure domestic DNS packets in SmartDNS and set it redirect or as Dnsmasq upstream, and fill in the domestic DNS group name here.")
+end
+
 ---- DNS Forward Mode
 dns_mode = s:taboption("DNS", ListValue, "dns_mode", translate("Filter Mode"))
 dns_mode.rmempty = false
