@@ -142,6 +142,15 @@ msgstr "用于代理特定的列表。"
 msgid "For proxy game network, DNS hijack etc."
 msgstr "用于代理游戏或DNS劫持等..."
 
+msgid "DNS Shunt"
+msgstr "DNS分流"
+
+msgid "Domestic group name"
+msgstr "国内分组名"
+
+msgid "You only need to configure domestic DNS packets in SmartDNS and set it redirect or as Dnsmasq upstream, and fill in the domestic DNS group name here."
+msgstr "你只需要在SmartDNS配置好国内DNS分组，并设置重定向或作为Dnsmasq上游，此处填入国内DNS分组名。"
+
 msgid "Filter Mode"
 msgstr "过滤模式"
 
