@@ -677,6 +677,8 @@ run_redir() {
 							echolog "  - 域名解析 DNS Over HTTPS..."
 						;;
 						fakedns)
+							fakedns=1
+							CHINADNS_NG=0
 							_extra_param="${_extra_param} -dns_listen_port ${dns_listen_port} -dns_fakedns 1"
 							echolog "  - 域名解析 Fake DNS..."
 						;;
@@ -1123,9 +1125,9 @@ start_dns() {
 	case "$DNS_SHUNT" in
 	smartdns)
 		if [ -n "$(first_type smartdns)" ]; then
-			local group_domestic=$(config_t_get global group_domestic default)
+			local group_domestic=$(config_t_get global group_domestic)
 			CHINADNS_NG=0
-			source $APP_PATH/helper_smartdns.sh add DNS_MODE=$DNS_MODE SMARTDNS_CONF=/tmp/etc/smartdns/$CONFIG.conf DEFAULT_DNS=$DEFAULT_DNS LOCAL_GROUP=$group_domestic TUN_DNS=$TUN_DNS TCP_NODE=$TCP_NODE PROXY_MODE=${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE} NO_PROXY_IPV6=${filter_proxy_ipv6}
+			source $APP_PATH/helper_smartdns.sh add DNS_MODE=$DNS_MODE SMARTDNS_CONF=/tmp/etc/smartdns/$CONFIG.conf REMOTE_FAKEDNS=$fakedns DEFAULT_DNS=$DEFAULT_DNS LOCAL_GROUP=$group_domestic TUN_DNS=$TUN_DNS TCP_NODE=$TCP_NODE PROXY_MODE=${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE} NO_PROXY_IPV6=${filter_proxy_ipv6}
 			source $APP_PATH/helper_smartdns.sh restart
 			echolog "  - 域名解析：使用SmartDNS，请确保配置正常。"
 		else
@@ -1163,7 +1165,7 @@ start_dns() {
 	
 	[ "$DNS_SHUNT" = "dnsmasq" ] && {
 		source $APP_PATH/helper_dnsmasq.sh stretch
-		source $APP_PATH/helper_dnsmasq.sh add DNS_MODE=$DNS_MODE TMP_DNSMASQ_PATH=$TMP_DNSMASQ_PATH DNSMASQ_CONF_FILE=/tmp/dnsmasq.d/dnsmasq-passwall.conf DEFAULT_DNS=$DEFAULT_DNS LOCAL_DNS=$LOCAL_DNS TUN_DNS=$TUN_DNS CHINADNS_DNS=$china_ng_listen TCP_NODE=$TCP_NODE PROXY_MODE=${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE} NO_PROXY_IPV6=${filter_proxy_ipv6}
+		source $APP_PATH/helper_dnsmasq.sh add DNS_MODE=$DNS_MODE TMP_DNSMASQ_PATH=$TMP_DNSMASQ_PATH DNSMASQ_CONF_FILE=/tmp/dnsmasq.d/dnsmasq-passwall.conf REMOTE_FAKEDNS=$fakedns DEFAULT_DNS=$DEFAULT_DNS LOCAL_DNS=$LOCAL_DNS TUN_DNS=$TUN_DNS CHINADNS_DNS=$china_ng_listen TCP_NODE=$TCP_NODE PROXY_MODE=${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE} NO_PROXY_IPV6=${filter_proxy_ipv6}
 	}
 }
 
@@ -1466,7 +1468,7 @@ DNS_SHUNT=$(config_t_get global dns_shunt dnsmasq)
 DNS_MODE=$(config_t_get global dns_mode pdnsd)
 DNS_FORWARD=$(config_t_get global dns_forward 1.1.1.1:53 | sed 's/#/:/g' | sed -E 's/\:([^:]+)$/#\1/g')
 DNS_CACHE=$(config_t_get global dns_cache 0)
-CHINADNS_NG=$(config_t_get global chinadns_ng 1)
+CHINADNS_NG=$(config_t_get global chinadns_ng 0)
 filter_proxy_ipv6=$(config_t_get global filter_proxy_ipv6 0)
 dns_listen_port=${DNS_PORT}
 
