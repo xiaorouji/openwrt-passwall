@@ -52,7 +52,7 @@ gen_address_items() {
 
 add() {
 	local fwd_dns fwd_group item servers msg
-	local DNS_MODE SMARTDNS_CONF DNSMASQ_CONF_FILE DEFAULT_DNS LOCAL_GROUP REMOTE_GROUP TUN_DNS TCP_NODE PROXY_MODE NO_LOGIC_LOG NO_PROXY_IPV6
+	local DNS_MODE SMARTDNS_CONF DNSMASQ_CONF_FILE DEFAULT_DNS LOCAL_GROUP REMOTE_GROUP REMOTE_FAKEDNS TUN_DNS TCP_NODE PROXY_MODE NO_LOGIC_LOG NO_PROXY_IPV6
 	eval_set_val $@
 	_LOG_FILE=$LOG_FILE
 	[ -n "$NO_LOGIC_LOG" ] && LOG_FILE="/dev/null"
@@ -76,12 +76,12 @@ add() {
 	#始终用国内DNS解析节点域名
 	servers=$(uci show "${CONFIG}" | grep ".address=" | cut -d "'" -f 2)
 	hosts_foreach "servers" host_from_url | grep '[a-zA-Z]$' | sort -u | gen_items ipsets="#4:vpsiplist,#6:vpsiplist6" group="${LOCAL_GROUP}" outf="${SMARTDNS_CONF}"
-	echolog "  - [$?]节点列表中的域名(vpsiplist)使用分组：${LOCAL_GROUP}"
+	echolog "  - [$?]节点列表中的域名(vpsiplist)使用分组：${LOCAL_GROUP:-默认}"
 
 	#始终用国内DNS解析直连（白名单）列表
 	[ -s "${RULES_PATH}/direct_host" ] && {
 		cat "${RULES_PATH}/direct_host" | tr -s '\n' | grep -v "^#" | sort -u | gen_items ipsets="#4:whitelist,#6:whitelist6" group="${LOCAL_GROUP}" outf="${SMARTDNS_CONF}"
-		echolog "  - [$?]域名白名单(whitelist)使用分组：${LOCAL_GROUP}"
+		echolog "  - [$?]域名白名单(whitelist)使用分组：${LOCAL_GROUP:-默认}"
 	}
 	
 	subscribe_list=""
@@ -93,10 +93,16 @@ add() {
 		if [ "$(config_t_get global_subscribe subscribe_proxy 0)" = "0" ]; then
 			#如果没有开启通过代理订阅
 			echo -e "$subscribe_list" | sort -u | gen_items ipsets="#4:whitelist,#6:whitelist6" group="${LOCAL_GROUP}" outf="${SMARTDNS_CONF}"
-			echolog "  - [$?]节点订阅域名(whitelist)使用分组：${LOCAL_GROUP}"
+			echolog "  - [$?]节点订阅域名(whitelist)使用分组：${LOCAL_GROUP:-默认}"
 		else
 			#如果开启了通过代理订阅
-			echo -e "$subscribe_list" | sort -u | gen_items ipsets="blacklist,blacklist6" group="${REMOTE_GROUP}" speed_check_mode="none" outf="${SMARTDNS_CONF}"
+			local ipset_flag="#4:blacklist,#6:blacklist6"
+			if [ "${NO_PROXY_IPV6}" = "1" ]; then
+				ipset_flag="#4:blacklist"
+				address="#6"
+			fi
+			[ -n "${REMOTE_FAKEDNS}" ] && unset ipset_flag
+			echo -e "$subscribe_list" | sort -u | gen_items ipsets="${ipset_flag}" group="${REMOTE_GROUP}" address="${address}" speed_check_mode="none" outf="${SMARTDNS_CONF}"
 			echolog "  - [$?]节点订阅域名(blacklist)使用分组：${REMOTE_GROUP}"
 		fi
 	}
@@ -108,6 +114,7 @@ add() {
 			ipset_flag="#4:blacklist"
 			address="#6"
 		fi
+		[ -n "${REMOTE_FAKEDNS}" ] && unset ipset_flag
 		cat "${RULES_PATH}/proxy_host" | tr -s '\n' | grep -v "^#" | sort -u | gen_items ipsets="${ipset_flag}" group="${REMOTE_GROUP}" address="${address}" speed_check_mode="none" outf="${SMARTDNS_CONF}"
 		echolog "  - [$?]代理域名表(blacklist)使用分组：${REMOTE_GROUP}"
 	}
@@ -131,12 +138,13 @@ add() {
 			local shunt_node=$(config_n_get $shunt_node_id address nil)
 			[ "$shunt_node" = "nil" ] && continue
 
-			local ipset_flag="#4:shuntlist,#6:shuntlist6"
-			if [ "${NO_PROXY_IPV6}" = "1" ]; then
-				ipset_flag="#4:shuntlist"
-				address="#6"
-			fi
 			[ -n "$str" ] && {
+				local ipset_flag="#4:shuntlist,#6:shuntlist6"
+				if [ "${NO_PROXY_IPV6}" = "1" ]; then
+					ipset_flag="#4:shuntlist"
+					address="#6"
+				fi
+				[ -n "${REMOTE_FAKEDNS}" ] && unset ipset_flag
 				echo $str | sed "s/|/\n/g" | gen_items ipsets="${ipset_flag}" group="${REMOTE_GROUP}" address="${address}" speed_check_mode="none" outf="${SMARTDNS_CONF}"
 				msg_dns="${REMOTE_GROUP}"
 			}
@@ -160,6 +168,7 @@ add() {
 				ipset_flag="#4:gfwlist"
 				address="#6"
 			fi
+			[ -n "${REMOTE_FAKEDNS}" ] && unset ipset_flag
 			sort -u "${TMP_PATH}/gfwlist" | gen_items ipsets="${ipset_flag}" group="${REMOTE_GROUP}" address="${address}" speed_check_mode="none" outf="${SMARTDNS_CONF}"
 			echolog "  - [$?]防火墙域名表(gfwlist)使用分组：${REMOTE_GROUP}"
 			rm -f "${TMP_PATH}/gfwlist"
@@ -168,7 +177,7 @@ add() {
 		# 中国列表以外 模式
 		[ -s "${RULES_PATH}/chnlist" ] && [ -n "${chnlist}" ] && {
 			grep -v -E "$count_hosts_str" "${RULES_PATH}/chnlist" | gen_items ipsets="#4:chnroute,#6:chnroute6" group="${LOCAL_GROUP}" outf="${SMARTDNS_CONF}"
-			echolog "  - [$?]中国域名表(chnroute)使用分组：${LOCAL_GROUP}"
+			echolog "  - [$?]中国域名表(chnroute)使用分组：${LOCAL_GROUP:-默认}"
 		}
 	else
 		#回国模式
@@ -180,7 +189,8 @@ add() {
 				ipset_flag="#4:chnroute"
 				address="#6"
 			fi
-			sort -u "${TMP_PATH}/chnlist" | gen_items ipsets="#4:chnroute,#6:chnroute6" group="${REMOTE_GROUP}" address="${address}" speed_check_mode="none" outf="${SMARTDNS_CONF}"
+			[ -n "${REMOTE_FAKEDNS}" ] && unset ipset_flag
+			sort -u "${TMP_PATH}/chnlist" | gen_items ipsets="${ipset_flag}" group="${REMOTE_GROUP}" address="${address}" speed_check_mode="none" outf="${SMARTDNS_CONF}"
 			echolog "  - [$?]中国域名表(chnroute)使用分组：${REMOTE_GROUP}"
 			rm -f "${TMP_PATH}/chnlist"
 		}
