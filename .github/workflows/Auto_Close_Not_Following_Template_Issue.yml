@@ -1,3 +1,4 @@
+name: 'Auto Close Not Following Template Issue'
 on:
   issues:
     types: [opened, edited]
