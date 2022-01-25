@@ -27,7 +27,7 @@ local has_trojan_plus = api.is_finded("trojan-plus")
 local has_v2ray = api.is_finded("v2ray")
 local has_xray = api.is_finded("xray")
 local has_trojan_go = api.is_finded("trojan-go")
-local allowInsecure_default = true
+local allowInsecure_default = uci:get(appname, "@global_subscribe[0]", "allowInsecure") or "0"
 local ss_aead_type_default = uci:get(appname, "@global_subscribe[0]", "ss_aead_type") or "shadowsocks-libev"
 local trojan_type_default = uci:get(appname, "@global_subscribe[0]", "trojan_type") or "trojan-plus"
 -- 判断是否过滤节点关键字
@@ -448,7 +448,7 @@ local function processData(szType, content, add_mode, add_from)
 		if info.tls == "tls" or info.tls == "1" then
 			result.tls = "1"
 			result.tls_serverName = (info.sni and info.sni ~= "") and info.sni or info.host
-			result.tls_allowInsecure = allowInsecure_default and "1" or "0"
+			result.tls_allowInsecure = allowInsecure_default == "1" and "1" or "0"
 		else
 			result.tls = "0"
 		end
@@ -591,7 +591,7 @@ local function processData(szType, content, add_mode, add_from)
 			end
 			result.tls = '1'
 			result.tls_serverName = peer and peer or sni
-			result.tls_allowInsecure = allowInsecure and "1" or "0"
+			result.tls_allowInsecure = allowInsecure == "1" and "1" or "0"
 		end
 		if trojan_type_default == "trojan-plus" and has_trojan_plus then
 			result.type = "Trojan-Plus"
@@ -764,7 +764,7 @@ local function processData(szType, content, add_mode, add_from)
 			end
 
 			result.port = port
-			result.tls_allowInsecure = allowInsecure_default and "1" or "0"
+			result.tls_allowInsecure = allowInsecure_default == "1" and "1" or "0"
 		end
 	else
 		log('暂时不支持' .. szType .. "类型的节点订阅，跳过此节点。")
@@ -1153,7 +1153,7 @@ local execute = function()
 			else
 				retry[#retry + 1] = value
 			end
-			allowInsecure_default = true
+			allowInsecure_default = uci:get(appname, "@global_subscribe[0]", "allowInsecure") or "0"
 			filter_keyword_mode_default = uci:get(appname, "@global_subscribe[0]", "filter_keyword_mode") or "0"
 			filter_keyword_discard_list_default = uci:get(appname, "@global_subscribe[0]", "filter_discard_list") or {}
 			filter_keyword_keep_list_default = uci:get(appname, "@global_subscribe[0]", "filter_keep_list") or {}
