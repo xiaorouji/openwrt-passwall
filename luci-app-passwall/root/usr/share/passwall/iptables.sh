@@ -22,6 +22,7 @@ FORCE_INDEX=2
 
 ipt_n="iptables -t nat -w"
 ipt_m="iptables -t mangle -w"
+ip6t_n="ip6tables -t nat -w"
 ip6t_m="ip6tables -t mangle -w"
 FWI=$(uci -q get firewall.passwall.path 2>/dev/null)
 FAKE_IP=198.18.0.0/16
@@ -69,6 +70,7 @@ REDIRECT() {
 	local redirect="-j REDIRECT --to-ports $1"
 	[ "$2" == "TPROXY" ] && redirect="-j TPROXY --tproxy-mark 0x1/0x1 --on-port $1"
 	[ "$2" == "MARK" ] && redirect="-j MARK --set-mark $1"
+	[ "$2" == "ICMP" ] && redirect="-j REDIRECT"
 	echo $redirect
 }
 
@@ -378,6 +380,7 @@ load_acl() {
 							$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) $(REDIRECT $tcp_port TPROXY) 2>/dev/null
 							$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_BLACKLIST6) $(REDIRECT $tcp_port TPROXY) 2>/dev/null
 							$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(get_redirect_ip6t $tcp_proxy_mode $tcp_port TPROXY) 2>/dev/null
+							[ "$accept_icmpv6" = "1" ] && $ip6t_n -A PSW $(comment "$remarks") -p ipv6-icmp ${_ipt_source} $(get_redirect_ip6t $tcp_proxy_mode $tcp_port ICMP) 2>/dev/null
 						fi
 					else
 						msg2="${msg}不代理TCP"
@@ -460,6 +463,7 @@ load_acl() {
 				$ip6t_m -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) $(REDIRECT $TCP_REDIR_PORT TPROXY)
 				$ip6t_m -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST6) $(REDIRECT $TCP_REDIR_PORT TPROXY)
 				$ip6t_m -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ip6t $TCP_PROXY_MODE $TCP_REDIR_PORT TPROXY)
+				[ "$accept_icmpv6" = "1" ] && $ip6t_n -A PSW $(comment "默认") -p ipv6-icmp $(get_redirect_ip6t $TCP_PROXY_MODE $TCP_REDIR_PORT ICMP)
 			fi
 
 			echolog "${msg}"
@@ -710,7 +714,8 @@ add_firewall_rule() {
 	filter_vpsip > /dev/null 2>&1 &
 	filter_haproxy > /dev/null 2>&1 &
 
-	local accept_icmp=$(config_t_get global_forwarding accept_icmp 0)
+	accept_icmp=$(config_t_get global_forwarding accept_icmp 0)
+	accept_icmpv6=$(config_t_get global_forwarding accept_icmpv6 0)
 
 	local tcp_proxy_way=$(config_t_get global_forwarding tcp_proxy_way redirect)
 	if [ "$tcp_proxy_way" = "redirect" ]; then
@@ -768,6 +773,21 @@ add_firewall_rule() {
 	ip rule add fwmark 1 lookup 100
 	ip route add local 0.0.0.0/0 dev lo table 100
 
+	[ "$accept_icmpv6" = "1" ] && {
+		$ip6t_n -N PSW
+		$ip6t_n -A PSW $(dst $IPSET_LANIPLIST6) -j RETURN
+		$ip6t_n -A PSW $(dst $IPSET_VPSIPLIST6) -j RETURN
+		$ip6t_n -A PSW $(dst $IPSET_WHITELIST6) -j RETURN
+		$ip6t_n -A PSW -m mark --mark 0xff -j RETURN
+		$ip6t_n -A PREROUTING -p ipv6-icmp -j PSW
+
+		$ip6t_n -N PSW_OUTPUT
+		$ip6t_n -A PSW_OUTPUT $(dst $IPSET_LANIPLIST6) -j RETURN
+		$ip6t_n -A PSW_OUTPUT $(dst $IPSET_VPSIPLIST6) -j RETURN
+		$ip6t_n -A PSW_OUTPUT $(dst $IPSET_WHITELIST6) -j RETURN
+		$ip6t_n -A PSW_OUTPUT -m mark --mark 0xff -j RETURN
+	}
+
 	$ip6t_m -N PSW_DIVERT
 	$ip6t_m -A PSW_DIVERT -j MARK --set-mark 1
 	$ip6t_m -A PSW_DIVERT -j ACCEPT
@@ -817,6 +837,11 @@ add_firewall_rule() {
 			$ipt_n -A PSW_OUTPUT -p icmp $(dst $IPSET_SHUNTLIST) $(REDIRECT $TCP_REDIR_PORT)
 			$ipt_n -A PSW_OUTPUT -p icmp $(dst $IPSET_BLACKLIST) $(REDIRECT $TCP_REDIR_PORT)
 			$ipt_n -A PSW_OUTPUT -p icmp $(get_redirect_ipt $TCP_PROXY_MODE $TCP_REDIR_PORT)
+		}
+
+		[ "$accept_icmpv6" = "1" ] && {
+			$ip6t_n -A OUTPUT -p ipv6-icmp -j PSW_OUTPUT
+			$ip6t_n -A PSW_OUTPUT -p ipv6-icmp $(get_redirect_ip6t $TCP_PROXY_MODE $TCP_REDIR_PORT ICMP)
 		}
 
 		_proxy_tcp_access() {
@@ -965,7 +990,7 @@ add_firewall_rule() {
 }
 
 del_firewall_rule() {
-	for ipt in "$ipt_n" "$ipt_m" "$ip6t_m"; do
+	for ipt in "$ipt_n" "$ipt_m" "$ip6t_n" "$ip6t_m"; do
 		for chain in "PREROUTING" "OUTPUT"; do
 			for i in $(seq 1 $($ipt -nL $chain | grep -c PSW)); do
 				local index=$($ipt --line-number -nL $chain | grep PSW | head -1 | awk '{print $1}')
@@ -1048,6 +1073,8 @@ gen_include() {
 		
 		PR_INDEX=\$((PR_INDEX + 1))
 		$ipt_m -I PREROUTING \$PR_INDEX -j PSW
+		
+		[ "$accept_icmpv6" = "1" ] && $ip6t_n -A PREROUTING -p ipv6-icmp -j PSW
 		
 		PR_INDEX=\$(/usr/share/passwall/iptables.sh RULE_LAST_INDEX "$ip6t_m" PREROUTING mwan3 1)
 		$ip6t_m -I PREROUTING \$PR_INDEX -p tcp -m socket -j PSW_DIVERT

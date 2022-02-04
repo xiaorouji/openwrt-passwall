@@ -655,6 +655,9 @@ msgstr "关闭"
 msgid "Hijacking ICMP (PING)"
 msgstr "劫持ICMP (PING)"
 
+msgid "Hijacking ICMPv6 (IPv6 PING)"
+msgstr "劫持ICMPv6 (IPv6 PING)"
+
 msgid "TCP Proxy Way"
 msgstr "TCP代理方式"
 
