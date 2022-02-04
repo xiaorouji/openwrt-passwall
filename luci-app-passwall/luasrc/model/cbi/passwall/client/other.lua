@@ -83,9 +83,6 @@ o.default = "1:65535"
 o:value("1:65535", translate("All"))
 o:value("53", "DNS")
 
-o = s:option(Flag, "accept_icmp", translate("Hijacking ICMP (PING)"))
-o.default = 0
-
 if os.execute("lsmod | grep -i REDIRECT >/dev/null") == 0 and os.execute("lsmod | grep -i TPROXY >/dev/null") == 0 then
     o = s:option(ListValue, "tcp_proxy_way", translate("TCP Proxy Way"))
     o.default = "redirect"
@@ -109,6 +106,13 @@ if os.execute("lsmod | grep -i REDIRECT >/dev/null") == 0 and os.execute("lsmod 
     o.default = 0
     o.rmempty = false
 end
+
+o = s:option(Flag, "accept_icmp", translate("Hijacking ICMP (PING)"))
+o.default = 0
+
+o = s:option(Flag, "accept_icmpv6", translate("Hijacking ICMPv6 (IPv6 PING)"))
+o:depends("ipv6_tproxy", true)
+o.default = 0
 
 --[[
 ---- TCP Redir Port
