@@ -27,7 +27,7 @@ config global_delay
 config global_forwarding
 	option process '0'
 	option tcp_no_redir_ports 'disable'
-	option udp_no_redir_ports '80,443'
+	option udp_no_redir_ports '53,80,443'
 	option tcp_redir_ports '22,25,53,143,465,587,853,993,995,80,443'
 	option udp_redir_ports '1:65535'
 	option accept_icmp '0'
