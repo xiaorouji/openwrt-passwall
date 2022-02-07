@@ -381,10 +381,14 @@ load_acl() {
 						}
 
 						if [ "$PROXY_IPV6" == "1" ]; then
-							$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) $(REDIRECT $tcp_port TPROXY) 2>/dev/null
-							$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_BLACKLIST6) $(REDIRECT $tcp_port TPROXY) 2>/dev/null
-							$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(get_redirect_ip6t $tcp_proxy_mode $tcp_port TPROXY) 2>/dev/null
-							[ "$accept_icmpv6" = "1" ] && $ip6t_n -A PSW $(comment "$remarks") -p ipv6-icmp ${_ipt_source} $(get_redirect_ip6t $tcp_proxy_mode) 2>/dev/null
+							$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) $(REDIRECT $tcp_port TPROXY)
+							$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_BLACKLIST6) $(REDIRECT $tcp_port TPROXY)
+							$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(get_redirect_ip6t $tcp_proxy_mode $tcp_port TPROXY)
+							[ "$accept_icmpv6" = "1" ] && {
+								$ip6t_n -A PSW $(comment "$remarks") -p ipv6-icmp ${_ipt_source} $(dst $IPSET_SHUNTLIST6) $(REDIRECT)
+								$ip6t_n -A PSW $(comment "$remarks") -p ipv6-icmp ${_ipt_source} $(dst $IPSET_BLACKLIST6) $(REDIRECT)
+								$ip6t_n -A PSW $(comment "$remarks") -p ipv6-icmp ${_ipt_source} $(get_redirect_ip6t $tcp_proxy_mode)
+							}
 						fi
 					else
 						msg2="${msg}不代理TCP"
@@ -467,7 +471,11 @@ load_acl() {
 				$ip6t_m -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) $(REDIRECT $TCP_REDIR_PORT TPROXY)
 				$ip6t_m -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST6) $(REDIRECT $TCP_REDIR_PORT TPROXY)
 				$ip6t_m -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ip6t $TCP_PROXY_MODE $TCP_REDIR_PORT TPROXY)
-				[ "$accept_icmpv6" = "1" ] && $ip6t_n -A PSW $(comment "默认") -p ipv6-icmp $(get_redirect_ip6t $TCP_PROXY_MODE)
+				[ "$accept_icmpv6" = "1" ] && {
+					$ip6t_n -A PSW $(comment "默认") -p ipv6-icmp $(dst $IPSET_SHUNTLIST6) $(REDIRECT)
+					$ip6t_n -A PSW $(comment "默认") -p ipv6-icmp $(dst $IPSET_BLACKLIST6) $(REDIRECT)
+					$ip6t_n -A PSW $(comment "默认") -p ipv6-icmp $(get_redirect_ip6t $TCP_PROXY_MODE)
+				}
 			fi
 
 			echolog "${msg}"
@@ -845,6 +853,8 @@ add_firewall_rule() {
 
 		[ "$accept_icmpv6" = "1" ] && {
 			$ip6t_n -A OUTPUT -p ipv6-icmp -j PSW_OUTPUT
+			$ip6t_n -A PSW_OUTPUT -p ipv6-icmp $(dst $IPSET_SHUNTLIST6) $(REDIRECT)
+			$ip6t_n -A PSW_OUTPUT -p ipv6-icmp $(dst $IPSET_BLACKLIST6) $(REDIRECT)
 			$ip6t_n -A PSW_OUTPUT -p ipv6-icmp $(get_redirect_ip6t $TCP_PROXY_MODE)
 		}
 
