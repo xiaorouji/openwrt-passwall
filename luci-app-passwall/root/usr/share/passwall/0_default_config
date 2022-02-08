@@ -33,6 +33,7 @@ config global_forwarding
 	option accept_icmp '0'
 	option tcp_proxy_way 'redirect'
 	option ipv6_tproxy '0'
+	option route_only '1'
 
 config global_other
 	option status 'big_icon show_check_port show_ip111'

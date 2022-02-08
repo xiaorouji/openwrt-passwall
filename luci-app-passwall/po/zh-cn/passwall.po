@@ -658,6 +658,9 @@ msgstr "劫持ICMP (PING)"
 msgid "Hijacking ICMPv6 (IPv6 PING)"
 msgstr "劫持ICMPv6 (IPv6 PING)"
 
+msgid "Sniffing Route Only (V2Ray/Xray)"
+msgstr "流量嗅探只供路由使用 (V2Ray/Xray)"
+
 msgid "TCP Proxy Way"
 msgstr "TCP代理方式"
 

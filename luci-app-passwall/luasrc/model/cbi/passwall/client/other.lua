@@ -114,6 +114,9 @@ o = s:option(Flag, "accept_icmpv6", translate("Hijacking ICMPv6 (IPv6 PING)"))
 o:depends("ipv6_tproxy", true)
 o.default = 0
 
+o = s:option(Flag, "route_only", translate("Sniffing Route Only (V2Ray/Xray)"))
+o.default = 1
+
 --[[
 ---- TCP Redir Port
 o = s:option(Value, "tcp_redir_port", translate("TCP Redir Port"))
