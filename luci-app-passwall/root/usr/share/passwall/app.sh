@@ -647,7 +647,8 @@ run_redir() {
 				UDP_NODE="nil"
 			}
 			_extra_param="${_extra_param} ${proto}"
-			_extra_param="${_extra_param} -route_only 1"
+			local route_only=$(config_t_get global_forwarding route_only 1)
+			[ "${route_only}" = "1" ] && _extra_param="${_extra_param} -route_only 1"
 			[ "${DNS_MODE}" = "v2ray" -o "${DNS_MODE}" = "xray" ] && {
 				local v2ray_dns_mode=$(config_t_get global v2ray_dns_mode tcp)
 				[ "$(config_t_get global dns_by)" = "tcp" -o "${v2ray_dns_mode}" = "fakedns" ] && {
