@@ -20,6 +20,8 @@ IPSET_BLOCKLIST6="blocklist6"
 
 FORCE_INDEX=2
 
+. /lib/functions/network.sh
+
 ipt_n="iptables -t nat -w"
 ipt_m="iptables -t mangle -w"
 ip6t_n="ip6tables -t nat -w"
@@ -153,6 +155,28 @@ gen_laniplist() {
 
 gen_laniplist_6() {
 	cat $RULES_PATH/lanlist_ipv6 | tr -s '\n' | grep -v "^#"
+}
+
+get_wan_ip() {
+	local NET_IF
+	local NET_ADDR
+	
+	network_flush_cache
+	network_find_wan NET_IF
+	network_get_ipaddr NET_ADDR "${NET_IF}"
+	
+	echo $NET_ADDR
+}
+
+get_wan6_ip() {
+	local NET_IF
+	local NET_ADDR
+	
+	network_flush_cache
+	network_find_wan6 NET_IF
+	network_get_ipaddr6 NET_ADDR "${NET_IF}"
+	
+	echo $NET_ADDR
 }
 
 load_acl() {
@@ -771,6 +795,10 @@ add_firewall_rule() {
 	$ipt_m -A PSW -m mark --mark 0xff -j RETURN
 	$ipt_m -A PSW $(dst $IPSET_BLOCKLIST) -j DROP
 	
+	WAN_IP=$(get_wan_ip)
+	[ ! -z "${WAN_IP}" ] && $ipt_m -A PSW $(comment "WAN_IP_RETURN") -d "${WAN_IP}" -j RETURN
+	unset WAN_IP
+	
 	PR_INDEX=$((PR_INDEX + 1))
 	$ipt_m -I PREROUTING $PR_INDEX -j PSW
 	unset PR_INDEX
@@ -813,6 +841,10 @@ add_firewall_rule() {
 	$ip6t_m -A PSW $(dst $IPSET_WHITELIST6) -j RETURN
 	$ip6t_m -A PSW -m mark --mark 0xff -j RETURN
 	$ip6t_m -A PSW $(dst $IPSET_BLOCKLIST6) -j DROP
+	
+	WAN6_IP=$(get_wan6_ip)
+	[ ! -z "${WAN6_IP}" ] && $ip6t_m -A PSW $(comment "WAN6_IP_RETURN") -d ${WAN6_IP} -j RETURN
+	unset WAN6_IP
 
 	PR_INDEX=$((PR_INDEX + 1))
 	$ip6t_m -I PREROUTING $PR_INDEX -j PSW
@@ -1088,6 +1120,12 @@ gen_include() {
 		PR_INDEX=\$((PR_INDEX + 1))
 		$ipt_m -I PREROUTING \$PR_INDEX -j PSW
 		
+		PR_INDEX=\$(/usr/share/passwall/iptables.sh RULE_LAST_INDEX "$ipt_m" PSW WAN_IP_RETURN -1)
+		if [ \$PR_INDEX -ge 0 ]; then
+			WAN_IP=\$(/usr/share/passwall/iptables.sh get_wan_ip)
+			[ ! -z "\${WAN_IP}" ] && $ipt_m -R PSW \$PR_INDEX $(comment "WAN_IP_RETURN") -d "\${WAN_IP}" -j RETURN
+		fi
+		
 		[ "$accept_icmpv6" = "1" ] && $ip6t_n -A PREROUTING -p ipv6-icmp -j PSW
 		
 		PR_INDEX=\$(/usr/share/passwall/iptables.sh RULE_LAST_INDEX "$ip6t_m" PREROUTING mwan3 1)
@@ -1095,6 +1133,12 @@ gen_include() {
 		
 		PR_INDEX=\$((PR_INDEX + 1))
 		$ip6t_m -I PREROUTING \$PR_INDEX -j PSW
+		
+		PR_INDEX=\$(/usr/share/passwall/iptables.sh RULE_LAST_INDEX "$ip6t_m" PSW WAN6_IP_RETURN -1)
+		if [ \$PR_INDEX -ge 0 ]; then
+			WAN6_IP=\$(/usr/share/passwall/iptables.sh get_wan6_ip)
+			[ ! -z "\${WAN6_IP}" ] && $ip6t_m -R PSW \$PR_INDEX $(comment "WAN6_IP_RETURN") -d "\${WAN6_IP}" -j RETURN
+		fi
 	EOF
 	return 0
 }
@@ -1116,6 +1160,12 @@ RULE_LAST_INDEX)
 	;;
 flush_ipset)
 	flush_ipset
+	;;
+get_wan_ip)
+	get_wan_ip
+	;;
+get_wan6_ip)
+	get_wan6_ip
 	;;
 stop)
 	stop
