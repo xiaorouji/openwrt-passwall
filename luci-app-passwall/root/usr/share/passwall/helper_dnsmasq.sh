@@ -86,8 +86,8 @@ gen_items() {
 }
 
 gen_address_items() {
-	local address=${1}; shift 1
-	local outf=${1}; shift 1
+	local address outf
+	eval_set_val $@
 
 	awk -v address="${address}" -v outf="${outf}" '
 		BEGIN {

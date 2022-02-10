@@ -33,8 +33,8 @@ gen_items() {
 }
 
 gen_address_items() {
-	local address=${1}; shift 1
-	local outf=${1}; shift 1
+	local address outf
+	eval_set_val $@
 
 	awk -v address="${address}" -v outf="${outf}" '
 		BEGIN {
@@ -65,12 +65,13 @@ add() {
 	[ -z "${REMOTE_GROUP}" ] && {
 		REMOTE_GROUP="${CONFIG}_proxy"
 		[ -n "${TUN_DNS}" ] && TUN_DNS="$(echo ${TUN_DNS} | sed 's/#/:/g')"
+		sed -i "/passwall/d" /etc/smartdns/custom.conf >/dev/null 2>&1
 		echo "server ${TUN_DNS}  -group ${REMOTE_GROUP} -exclude-default-group" >> ${SMARTDNS_CONF}
 	}
 
 	#屏蔽列表
 	[ -s "${RULES_PATH}/block_host" ] && {
-		cat "${RULES_PATH}/block_host" | tr -s '\n' | grep -v "^#" | sort -u | gen_address_items "-" "${SMARTDNS_CONF}"
+		cat "${RULES_PATH}/block_host" | tr -s '\n' | grep -v "^#" | sort -u | gen_address_items address="-" outf="${SMARTDNS_CONF}"
 	}
 
 	#始终用国内DNS解析节点域名
@@ -205,7 +206,7 @@ del() {
 	rm -rf /tmp/etc/smartdns/passwall.conf
 	sed -i "/passwall/d" /etc/smartdns/custom.conf >/dev/null 2>&1
 	rm -rf /tmp/smartdns.cache
-	/etc/init.d/smartdns reload
+	/etc/init.d/smartdns reload >/dev/null 2>&1
 }
 
 arg1=$1
