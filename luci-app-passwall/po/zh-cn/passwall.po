@@ -622,6 +622,12 @@ msgstr "UDP不转发端口"
 msgid "Fill in the ports you don't want to be forwarded by the agent, with the highest priority."
 msgstr "填写你不希望被代理转发的端口，优先级最高。"
 
+msgid "TCP Proxy Drop Ports"
+msgstr "TCP转发屏蔽端口"
+
+msgid "UDP Proxy Drop Ports"
+msgstr "UDP转发屏蔽端口"
+
 msgid "TCP Redir Ports"
 msgstr "TCP转发端口"
 
