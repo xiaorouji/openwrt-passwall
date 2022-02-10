@@ -179,6 +179,19 @@ o:value("disable", translate("No patterns are used"))
 o:value("default", translate("Default"))
 o:value("1:65535", translate("All"))
 
+---- TCP Proxy Drop Ports
+o = s:option(Value, "tcp_proxy_drop_ports", translate("TCP Proxy Drop Ports"))
+o.default = "default"
+o:value("disable", translate("No patterns are used"))
+o:value("default", translate("Default"))
+
+---- UDP Proxy Drop Ports
+o = s:option(Value, "udp_proxy_drop_ports", translate("UDP Proxy Drop Ports"))
+o.default = "default"
+o:value("disable", translate("No patterns are used"))
+o:value("default", translate("Default"))
+o:value("80,443", translate("QUIC"))
+
 ---- TCP Redir Ports
 o = s:option(Value, "tcp_redir_ports", translate("TCP Redir Ports"))
 o.default = "default"
