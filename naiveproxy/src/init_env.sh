@@ -55,7 +55,6 @@ enable_base_tracing=false
 use_udev=false
 use_aura=false
 use_ozone=false
-use_x11=false
 use_gio=false
 use_platform_icu_alternatives=true
 use_glib=false
