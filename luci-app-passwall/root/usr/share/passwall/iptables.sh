@@ -1,5 +1,7 @@
 #!/bin/sh
 
+DIR="$(cd "$(dirname "$0")" && pwd)"
+MY_PATH=$DIR/iptables.sh
 IPSET_LANIPLIST="laniplist"
 IPSET_VPSIPLIST="vpsiplist"
 IPSET_SHUNTLIST="shuntlist"
@@ -22,10 +24,13 @@ FORCE_INDEX=2
 
 . /lib/functions/network.sh
 
-ipt_n="iptables -t nat -w"
-ipt_m="iptables -t mangle -w"
-ip6t_n="ip6tables -t nat -w"
-ip6t_m="ip6tables -t mangle -w"
+ipt=$(command -v iptables-legacy || command -v iptables)
+ip6t=$(command -v ip6tables-legacy || command -v ip6tables)
+
+ipt_n="$ipt -t nat -w"
+ipt_m="$ipt -t mangle -w"
+ip6t_n="$ip6t -t nat -w"
+ip6t_m="$ip6t -t mangle -w"
 [ -z "$(lsmod | grep 'ip6table_nat')" ] && ip6t_n="eval #$ip6t_n"
 [ -z "$(lsmod | grep 'ip6table_mangle')" ] && ip6t_m="eval #$ip6t_m"
 FWI=$(uci -q get firewall.passwall.path 2>/dev/null)
@@ -1090,57 +1095,65 @@ flush_include() {
 gen_include() {
 	flush_include
 	extract_rules() {
-		local _ipt="iptables"
-		[ "$1" == "6" ] && _ipt="ip6tables"
+		local _ipt="$ipt"
+		[ "$1" == "6" ] && _ipt="$ip6t"
 
 		echo "*$2"
 		${_ipt}-save -t $2 | grep "PSW" | grep -v "\-j PSW$" | grep -v "socket \-j PSW_DIVERT$" | sed -e "s/^-A \(OUTPUT\|PREROUTING\)/-I \1 1/"
 		echo 'COMMIT'
 	}
 	cat <<-EOF >> $FWI
-		iptables-save -c | grep -v "PSW" | iptables-restore -c
-		iptables-restore -n <<-EOT
+		$ipt-save -c | grep -v "PSW" | $ipt-restore -c
+		$ipt-restore -n <<-EOT
 		$(extract_rules 4 nat)
 		$(extract_rules 4 mangle)
 		EOT
-		ip6tables-save -c | grep -v "PSW" | ip6tables-restore -c
-		ip6tables-restore -n <<-EOT
+		$ip6t-save -c | grep -v "PSW" | $ip6t-restore -c
+		$ip6t-restore -n <<-EOT
 		$(extract_rules 6 nat)
 		$(extract_rules 6 mangle)
 		EOT
 		
-		PR_INDEX=\$(/usr/share/passwall/iptables.sh RULE_LAST_INDEX "$ipt_n" PREROUTING prerouting_rule 1)
+		PR_INDEX=\$(${MY_PATH} RULE_LAST_INDEX "$ipt_n" PREROUTING prerouting_rule 1)
 		PR_INDEX=\$((PR_INDEX + 1))
 		[ "$accept_icmp" = "1" ] && $ipt_n -I PREROUTING \$PR_INDEX -p icmp -j PSW
 		[ -z "${is_tproxy}" ] && $ipt_n -I PREROUTING \$PR_INDEX -p tcp -j PSW
 		
-		PR_INDEX=\$(/usr/share/passwall/iptables.sh RULE_LAST_INDEX "$ipt_m" PREROUTING mwan3 1)
+		PR_INDEX=\$(${MY_PATH} RULE_LAST_INDEX "$ipt_m" PREROUTING mwan3 1)
 		$ipt_m -I PREROUTING \$PR_INDEX -p tcp -m socket -j PSW_DIVERT
 		
 		PR_INDEX=\$((PR_INDEX + 1))
 		$ipt_m -I PREROUTING \$PR_INDEX -j PSW
 		
-		PR_INDEX=\$(/usr/share/passwall/iptables.sh RULE_LAST_INDEX "$ipt_m" PSW WAN_IP_RETURN -1)
+		PR_INDEX=\$(${MY_PATH} RULE_LAST_INDEX "$ipt_m" PSW WAN_IP_RETURN -1)
 		if [ \$PR_INDEX -ge 0 ]; then
-			WAN_IP=\$(/usr/share/passwall/iptables.sh get_wan_ip)
+			WAN_IP=\$(${MY_PATH} get_wan_ip)
 			[ ! -z "\${WAN_IP}" ] && $ipt_m -R PSW \$PR_INDEX $(comment "WAN_IP_RETURN") -d "\${WAN_IP}" -j RETURN
 		fi
 		
 		[ "$accept_icmpv6" = "1" ] && $ip6t_n -A PREROUTING -p ipv6-icmp -j PSW
 		
-		PR_INDEX=\$(/usr/share/passwall/iptables.sh RULE_LAST_INDEX "$ip6t_m" PREROUTING mwan3 1)
+		PR_INDEX=\$(${MY_PATH} RULE_LAST_INDEX "$ip6t_m" PREROUTING mwan3 1)
 		$ip6t_m -I PREROUTING \$PR_INDEX -p tcp -m socket -j PSW_DIVERT
 		
 		PR_INDEX=\$((PR_INDEX + 1))
 		$ip6t_m -I PREROUTING \$PR_INDEX -j PSW
 		
-		PR_INDEX=\$(/usr/share/passwall/iptables.sh RULE_LAST_INDEX "$ip6t_m" PSW WAN6_IP_RETURN -1)
+		PR_INDEX=\$(${MY_PATH} RULE_LAST_INDEX "$ip6t_m" PSW WAN6_IP_RETURN -1)
 		if [ \$PR_INDEX -ge 0 ]; then
-			WAN6_IP=\$(/usr/share/passwall/iptables.sh get_wan6_ip)
+			WAN6_IP=\$(${MY_PATH} get_wan6_ip)
 			[ ! -z "\${WAN6_IP}" ] && $ip6t_m -R PSW \$PR_INDEX $(comment "WAN6_IP_RETURN") -d "\${WAN6_IP}" -j RETURN
 		fi
 	EOF
 	return 0
+}
+
+get_ipt_bin() {
+	echo $ipt
+}
+
+get_ip6t_bin() {
+	echo $ip6t
 }
 
 start() {
@@ -1160,6 +1173,12 @@ RULE_LAST_INDEX)
 	;;
 flush_ipset)
 	flush_ipset
+	;;
+get_ipt_bin)
+	get_ipt_bin
+	;;
+get_ip6t_bin)
+	get_ip6t_bin
 	;;
 get_wan_ip)
 	get_wan_ip

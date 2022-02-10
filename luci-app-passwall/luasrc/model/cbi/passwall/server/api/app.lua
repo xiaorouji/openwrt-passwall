@@ -12,6 +12,9 @@ local LOG_APP_FILE = "/tmp/log/" .. CONFIG .. ".log"
 local TMP_BIN_PATH = CONFIG_PATH .. "/bin"
 local require_dir = "luci.model.cbi.passwall.server.api."
 
+local ipt_bin = sys.exec("echo -n $(/usr/share/passwall/iptables.sh get_ipt_bin)")
+local ip6t_bin = sys.exec("echo -n $(/usr/share/passwall/iptables.sh get_ip6t_bin)")
+
 local function log(...)
 	local f, err = io.open(LOG_APP_FILE, "a")
     if f and err == nil then
@@ -23,6 +26,14 @@ end
 
 local function cmd(cmd)
     sys.call(cmd)
+end
+
+local function ipt(arg)
+    cmd(ipt_bin .. " -w " .. arg)
+end
+
+local function ip6t(arg)
+    cmd(ip6t_bin .. " -w " .. arg)
 end
 
 local function ln_run(s, d, command, output)
@@ -37,9 +48,9 @@ end
 local function gen_include()
     cmd(string.format("echo '#!/bin/sh' > /tmp/etc/%s.include", CONFIG))
     local function extract_rules(n, a)
-        local _ipt = "iptables"
+        local _ipt = ipt_bin
         if n == "6" then
-            _ipt = "ip6tables"
+            _ipt = ip6t_bin
         end
         local result = "*" .. a
         result = result .. "\n" .. sys.exec(_ipt .. '-save -t ' .. a .. ' | grep "PSW-SERVER" | sed -e "s/^-A \\(INPUT\\)/-I \\1 1/"')
@@ -48,12 +59,12 @@ local function gen_include()
     end
     local f, err = io.open("/tmp/etc/" .. CONFIG .. ".include", "a")
     if f and err == nil then
-        f:write('iptables-save -c | grep -v "PSW-SERVER" | iptables-restore -c' .. "\n")
-        f:write('iptables-restore -n <<-EOT' .. "\n")
+        f:write(ipt_bin .. '-save -c | grep -v "PSW-SERVER" | ' .. ipt_bin .. '-restore -c' .. "\n")
+        f:write(ipt_bin .. '-restore -n <<-EOT' .. "\n")
         f:write(extract_rules("4", "filter") .. "\n")
         f:write("EOT" .. "\n")
-        f:write('ip6tables-save -c | grep -v "PSW-SERVER" | ip6tables-restore -c' .. "\n")
-        f:write('ip6tables-restore -n <<-EOT' .. "\n")
+        f:write(ip6t_bin .. '-save -c | grep -v "PSW-SERVER" | ' .. ip6t_bin .. '-restore -c' .. "\n")
+        f:write(ip6t_bin .. '-restore -n <<-EOT' .. "\n")
         f:write(extract_rules("6", "filter") .. "\n")
         f:write("EOT" .. "\n")
         f:close()
@@ -67,10 +78,10 @@ local function start()
     end
     cmd(string.format("mkdir -p %s %s", CONFIG_PATH, TMP_BIN_PATH))
     cmd(string.format("touch %s", LOG_APP_FILE))
-    cmd("iptables -N PSW-SERVER")
-    cmd("iptables -I INPUT -j PSW-SERVER")
-    cmd("ip6tables -N PSW-SERVER")
-    cmd("ip6tables -I INPUT -j PSW-SERVER")
+    ipt("-N PSW-SERVER")
+    ipt("-I INPUT -j PSW-SERVER")
+    ip6t("-N PSW-SERVER")
+    ip6t("-I INPUT -j PSW-SERVER")
     uci:foreach(CONFIG, "user", function(user)
         local id = user[".name"]
         local enable = user.enable
@@ -154,11 +165,11 @@ local function start()
 
             local bind_local = user.bind_local or 0
             if bind_local and tonumber(bind_local) ~= 1 then
-                cmd(string.format('iptables -A PSW-SERVER -p tcp --dport %s -m comment --comment "%s" -j ACCEPT', port, remarks))
-                cmd(string.format('ip6tables -A PSW-SERVER -p tcp --dport %s -m comment --comment "%s" -j ACCEPT', port, remarks))
+                ipt(string.format('-A PSW-SERVER -p tcp --dport %s -m comment --comment "%s" -j ACCEPT', port, remarks))
+                ip6t(string.format('-A PSW-SERVER -p tcp --dport %s -m comment --comment "%s" -j ACCEPT', port, remarks))
                 if udp_forward == 1 then
-                    cmd(string.format('iptables -A PSW-SERVER -p udp --dport %s -m comment --comment "%s" -j ACCEPT', port, remarks))
-                    cmd(string.format('ip6tables -A PSW-SERVER -p udp --dport %s -m comment --comment "%s" -j ACCEPT', port, remarks))
+                    ipt(string.format('-A PSW-SERVER -p udp --dport %s -m comment --comment "%s" -j ACCEPT', port, remarks))
+                    ip6t(string.format('-A PSW-SERVER -p udp --dport %s -m comment --comment "%s" -j ACCEPT', port, remarks))
                 end 
             end
         end
@@ -168,12 +179,12 @@ end
 
 local function stop()
     cmd(string.format("top -bn1 | grep -v 'grep' | grep '%s/' | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1", CONFIG_PATH))
-    cmd("iptables -D INPUT -j PSW-SERVER 2>/dev/null")
-    cmd("iptables -F PSW-SERVER 2>/dev/null")
-    cmd("iptables -X PSW-SERVER 2>/dev/null")
-    cmd("ip6tables -D INPUT -j PSW-SERVER 2>/dev/null")
-    cmd("ip6tables -F PSW-SERVER 2>/dev/null")
-    cmd("ip6tables -X PSW-SERVER 2>/dev/null")
+    ipt("-D INPUT -j PSW-SERVER 2>/dev/null")
+    ipt("-F PSW-SERVER 2>/dev/null")
+    ipt("-X PSW-SERVER 2>/dev/null")
+    ip6t("-D INPUT -j PSW-SERVER 2>/dev/null")
+    ip6t("-F PSW-SERVER 2>/dev/null")
+    ip6t("-X PSW-SERVER 2>/dev/null")
     cmd(string.format("rm -rf %s %s /tmp/etc/%s.include", CONFIG_PATH, LOG_APP_FILE, CONFIG))
 end
 
