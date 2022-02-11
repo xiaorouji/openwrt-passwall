@@ -115,7 +115,7 @@ o:depends("ipv6_tproxy", true)
 o.default = 0
 
 o = s:option(Flag, "route_only", translate("Sniffing Route Only (V2Ray/Xray)"))
-o.default = 1
+o.default = "1"
 
 --[[
 ---- TCP Redir Port
