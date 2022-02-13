@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=chinadns-ng
 PKG_VERSION:=1.0-beta.25
-PKG_RELEASE:=$(AUTORELESE)
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/zfl9/chinadns-ng.git
