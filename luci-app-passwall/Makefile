@@ -144,6 +144,7 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_Xray_Plugin
 	default n
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_IPv6_Nat
+	depends on PACKAGE_ip6tables
 	bool "Include IPv6 Nat"
 	default n
 
