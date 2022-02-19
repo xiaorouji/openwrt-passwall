@@ -187,9 +187,6 @@ if api.is_finded("smartdns") then
     group_domestic.description = translate("You only need to configure domestic DNS packets in SmartDNS and set it redirect or as Dnsmasq upstream, and fill in the domestic DNS group name here.")
 end
 
-o = s:taboption("DNS", Flag, "filter_proxy_ipv6", translate("Filter Proxy Host IPv6"), translate("Experimental feature."))
-o.default = "0"
-
 ---- DNS Forward Mode
 dns_mode = s:taboption("DNS", ListValue, "dns_mode", translate("Filter Mode"))
 dns_mode.rmempty = false
@@ -278,16 +275,6 @@ o.description = translate("Notify the DNS server when the DNS query is notified,
 o.datatype = "ipaddr"
 o:depends("v2ray_dns_mode", "tcp")
 o:depends("v2ray_dns_mode", "doh")
-
-o = s:taboption("DNS", ListValue, "dns_query_strategy", translate("Query Strategy"))
-o.default = "UseIPv4"
-o:value("UseIPv4")
-o:value("UseIPv6")
-o:value("UseIP")
-o:depends({dns_mode = "v2ray", v2ray_dns_mode = "tcp"})
-o:depends({dns_mode = "v2ray", v2ray_dns_mode = "doh"})
-o:depends({dns_mode = "xray", v2ray_dns_mode = "tcp"})
-o:depends({dns_mode = "xray", v2ray_dns_mode = "doh"})
 
 o = s:taboption("DNS", Flag, "dns_cache", translate("Cache Resolved"))
 o.default = "1"
