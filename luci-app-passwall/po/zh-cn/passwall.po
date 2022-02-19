@@ -154,6 +154,9 @@ msgstr "你只需要在SmartDNS配置好国内DNS分组，并设置重定向或�
 msgid "Filter Mode"
 msgstr "过滤模式"
 
+msgid "No Filter"
+msgstr "不过滤"
+
 msgid "TCP node must be '%s' type to use FakeDNS."
 msgstr "TCP节点必须是 '%s' 类型才能使用 FakeDNS。"
 

@@ -1050,6 +1050,11 @@ start_dns() {
 	echolog "过滤服务配置：准备接管域名解析..."
 
 	case "$DNS_MODE" in
+	nonuse)
+		echolog "  - 不过滤DNS..."
+		TUN_DNS=""
+		return
+	;;
 	dns2socks)
 		local dns2socks_socks_server=$(echo $(config_t_get global socks_server 127.0.0.1:1080) | sed "s/#/:/g")
 		local dns2socks_forward=$(get_first_dns DNS_FORWARD 53 | sed 's/#/:/g')

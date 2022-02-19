@@ -207,6 +207,7 @@ if has_xray then
     dns_mode:value("xray", "Xray")
 end
 dns_mode:value("udp", translatef("Requery DNS By %s", "UDP"))
+dns_mode:value("nonuse", translate("No Filter"))
 
 o = s:taboption("DNS", ListValue, "v2ray_dns_mode", " ")
 o:value("tcp", "TCP")
@@ -302,6 +303,7 @@ o.rmempty = false
 if has_chnlist and api.is_finded("chinadns-ng") then
     o = s:taboption("DNS", Flag, "chinadns_ng", translate("ChinaDNS-NG"), translate("The effect is better, but will increase the memory."))
     o.default = "0"
+    o:depends({dns_mode = "nonuse", ["!reverse"] = true})
     o:depends({dns_mode = "dns2socks"})
     o:depends({dns_mode = "pdnsd"})
     o:depends({dns_mode = "v2ray", v2ray_dns_mode = "tcp"})
