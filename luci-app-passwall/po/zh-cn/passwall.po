@@ -661,8 +661,17 @@ msgstr "劫持ICMP (PING)"
 msgid "Hijacking ICMPv6 (IPv6 PING)"
 msgstr "劫持ICMPv6 (IPv6 PING)"
 
-msgid "Sniffing Route Only (V2Ray/Xray)"
-msgstr "流量嗅探只供路由使用 (V2Ray/Xray)"
+msgid "Sniffing (V2Ray/Xray)"
+msgstr "流量嗅探 (V2ray/Xray)"
+
+msgid "When using the V2ray/Xray shunt, must be enabled, otherwise the shunt will invalid."
+msgstr "使用 V2Ray/Xray 分流时，必须启用，否则分流将无效。"
+
+msgid "Sniffing Route Only (Xray)"
+msgstr "流量嗅探只供路由使用 (Xray)"
+
+msgid "When enabled, the server not will resolve the domain name again."
+msgstr "启用后，服务器不会再次解析域名。"
 
 msgid "TCP Proxy Way"
 msgstr "TCP代理方式"
