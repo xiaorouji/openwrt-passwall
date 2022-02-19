@@ -104,14 +104,17 @@ local has_xray = api.is_finded("xray")
 				}
 				return ret;
 			},
-			query: function(param, src, tval = "1", fval = "0") {
+			query: function(param, src, default_value, tval = "1", fval = "0") {
 				var ret = "&" + param + "=";
 				var obj = this.get(src);
 				if (obj) {
 					if (obj.type === "checkbox") {
 						return ret + (obj.checked === true ? tval : fval);
 					} else {
-						return ret + encodeURIComponent(obj.value);
+						var result = encodeURIComponent(obj.value);
+						if ((result == null || result.trim() == "") && default_value)
+							result = default_value;
+						return ret + result;
 					}
 				}
 				return ""
@@ -352,6 +355,23 @@ local has_xray = api.is_finded("xray")
 			}
 			url += url_protocol;
 			url += params;
+		} else if (v_type === "Hysteria") {
+			var v_server = opt.get("address");
+			var v_port = opt.get("port");
+			var params = "";
+			params += opt.query("protocol", "hysteria_protocol");
+			params += opt.query("auth", "hysteria_auth_password");
+			params += opt.query("peer", "tls_serverName");
+			params += opt.query("insecure", "tls_allowInsecure");
+			params += opt.query("upmbps", "hysteria_up_mbps", 1000);
+			params += opt.query("downmbps", "hysteria_down_mbps", 1000);
+			params += opt.query("alpn", "hysteria_alpn");
+			params += opt.query("obfsParam", "hysteria_obfs");
+			var url =
+				v_server.value + ":" +
+				v_port.value + "?" +
+				params +
+				"#" + encodeURI(v_alias.value);
 		}
 		if (url) {
 			url = v_type.toLowerCase() + "://" + url;
@@ -456,7 +476,6 @@ local has_xray = api.is_finded("xray")
 			} else {
 				var url0 = sstr;
 			}
-			console.log(param);
 			var ssm = url0.match(/^(.+):([^:]+):([^:]*):([^:]+):([^:]*):([^:]+)/);
 			if (!ssm || ssm.length < 7) {
 				s.innerHTML = "<font color='red'><%:Invalid Share URL Format%></font>";
@@ -543,7 +562,6 @@ local has_xray = api.is_finded("xray")
 		} else if (ssu[0] === "trojan" || ssu[0] === "trojan-plus") {
 			var stype = "Trojan-Plus";
 			var m = parseNodeUrl(ssrurl);
-			console.log(m.search);
 			var password = m.passwd;
 			if (password === "") {
 				s.innerHTML = "<font color='red'><%:Invalid Share URL Format%></font>";
@@ -614,7 +632,6 @@ local has_xray = api.is_finded("xray")
 			}
 		} else if (ssu[0] === "trojan-go") {
 			var m = parseNodeUrl(ssrurl);
-			console.log(m.search);
 			var password = m.passwd;
 			if (password === "") {
 				s.innerHTML = "<font color='red'><%:Invalid Share URL Format%></font>";
@@ -705,7 +722,6 @@ local has_xray = api.is_finded("xray")
 				param = sstr.substr(ploc + 2);
 			}
 			var ssm = JSON.parse(sstr);
-			console.log(ssm);
 			opt.set('remarks', ssm.ps);
 			opt.set('address', ssm.add);
 			opt.set('port', ssm.port);
@@ -750,7 +766,6 @@ local has_xray = api.is_finded("xray")
 			<% end %>
 			opt.set('protocol', "vless");
 			var m = parseNodeUrl(ssrurl);
-			console.log(m.search);
 			var password = m.passwd;
 			if (password === "") {
 				s.innerHTML = "<font color='red'><%:Invalid Share URL Format%></font>";
@@ -820,7 +835,6 @@ local has_xray = api.is_finded("xray")
 		} else if (ssu[0] === "brook") {
 			var stype = "Brook";
 			var m = parseNodeUrl(ssrurl);
-			console.log(m);
 			
 			var from_protocol = m.host;
 			var protocol = from_protocol.split('server').join('client');
@@ -869,6 +883,37 @@ local has_xray = api.is_finded("xray")
 				opt.set('port', server[1]);
 			}
 			
+			if (m.hash) {
+				opt.set('remarks', decodeURI(m.hash.substr(1)));
+			}
+		} else if (ssu[0] === "hysteria") {
+			var stype = "Hysteria";
+			var m = parseNodeUrl(ssrurl);
+			var queryParam = {};
+			if (m.search.length > 1) {
+				var query = m.search.split('?');
+				var queryParams = query[1];
+				var queryArray = queryParams.split('&');
+				var params;
+				for (i = 0; i < queryArray.length; i++) {
+					params = queryArray[i].split('=');
+					queryParam[decodeURIComponent(params[0])] = decodeURIComponent(params[1] || '');
+				}
+			}
+			opt.set('address', m.hostname);
+			opt.set('port', m.port || "443");
+			opt.set('type', stype);
+			opt.set('hysteria_protocol', queryParam.protocol);
+			opt.set('hysteria_obfs', queryParam.obfsParam);
+			opt.set('hysteria_auth_type', "string");
+			opt.set('hysteria_auth_password', queryParam.auth);
+			opt.set('tls_serverName', queryParam.peer);
+			if (queryParam.insecure && queryParam.insecure == "1") {
+				opt.set('tls_allowInsecure', true);
+			}
+			opt.set('hysteria_alpn', queryParam.alpn);
+			opt.set('hysteria_up_mbps', queryParam.upmbps);
+			opt.set('hysteria_down_mbps', queryParam.downmbps);
 			if (m.hash) {
 				opt.set('remarks', decodeURI(m.hash.substr(1)));
 			}

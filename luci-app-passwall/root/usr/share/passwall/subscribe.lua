@@ -766,6 +766,38 @@ local function processData(szType, content, add_mode, add_from)
 			result.port = port
 			result.tls_allowInsecure = allowInsecure_default and "1" or "0"
 		end
+	elseif szType == 'hysteria' then
+		local alias = ""
+		if content:find("#") then
+			local idx_sp = content:find("#")
+			alias = content:sub(idx_sp + 1, -1)
+			content = content:sub(0, idx_sp - 1)
+		end
+		result.remarks = UrlDecode(alias)
+		result.type = "Hysteria"
+		
+		local dat = split(content, '%?')
+		local hostInfo = split(dat[1], ':')
+		result.address = hostInfo[1]
+		result.port = hostInfo[2]
+		local params = {}
+		for _, v in pairs(split(dat[2], '&')) do
+			local t = split(v, '=')
+			if #t > 0 then
+				params[t[1]] = t[2]
+			end
+		end
+		result.hysteria_protocol = params.protocol
+		result.hysteria_obfs = params.obfsParam
+		result.hysteria_auth_type = "string"
+		result.hysteria_auth_password = params.auth
+		result.tls_serverName = params.peer
+		if params.insecure and params.insecure == "1" then
+			result.tls_allowInsecure = "1"
+		end
+		result.hysteria_alpn = params.alpn
+		result.hysteria_up_mbps = params.upmbps
+		result.hysteria_down_mbps = params.downmbps
 	else
 		log('暂时不支持' .. szType .. "类型的节点订阅，跳过此节点。")
 		return nil
