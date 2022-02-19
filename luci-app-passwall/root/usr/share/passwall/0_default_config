@@ -34,6 +34,7 @@ config global_forwarding
 	option accept_icmp '0'
 	option tcp_proxy_way 'redirect'
 	option ipv6_tproxy '0'
+	option sniffing '1'
 	option route_only '1'
 
 config global_other

@@ -6,6 +6,7 @@ local node_section = var["-node"]
 local proto = var["-proto"]
 local proxy_way = var["-proxy_way"]
 local redir_port = var["-redir_port"]
+local sniffing = var["-sniffing"]
 local route_only = var["-route_only"]
 local local_socks_address = var["-local_socks_address"] or "0.0.0.0"
 local local_socks_port = var["-local_socks_port"]
@@ -280,7 +281,7 @@ if node_section then
             protocol = "dokodemo-door",
             settings = {network = proto, followRedirect = true},
             streamSettings = {sockopt = {tproxy = proxy_way}},
-            sniffing = {enabled = true, destOverride = {"http", "tls", (dns_fakedns) and "fakedns"}, metadataOnly = false, routeOnly = route_only and true or nil}
+            sniffing = {enabled = sniffing and true or false, destOverride = {"http", "tls", (dns_fakedns) and "fakedns"}, metadataOnly = false, routeOnly = route_only and true or nil}
         })
     end
 

@@ -125,8 +125,13 @@ o = s:option(Flag, "accept_icmpv6", translate("Hijacking ICMPv6 (IPv6 PING)"))
 o:depends("ipv6_tproxy", true)
 o.default = 0
 
-o = s:option(Flag, "route_only", translate("Sniffing Route Only (V2Ray/Xray)"))
+o = s:option(Flag, "sniffing", translate("Sniffing (V2Ray/Xray)"), translate("When using the V2ray/Xray shunt, must be enabled, otherwise the shunt will invalid."))
+o.default = 1
+o.rmempty = false
+
+o = s:option(Flag, "route_only", translate("Sniffing Route Only (Xray)"), translate("When enabled, the server not will resolve the domain name again."))
 o.default = "1"
+o:depends("sniffing", true)
 
 --[[
 ---- TCP Redir Port
