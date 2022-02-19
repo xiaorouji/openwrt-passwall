@@ -293,12 +293,4 @@ o = s:option(Value, "dns_client_ip", translate("EDNS Client Subnet"))
 o.datatype = "ipaddr"
 o:depends("v2ray_dns_mode", "doh")
 
-o = s:option(ListValue, "dns_query_strategy", translate("Query Strategy"))
-o.default = "UseIPv4"
-o:value("UseIPv4")
-o:value("UseIPv6")
-o:value("UseIP")
-o:depends("dns_mode", "v2ray")
-o:depends("dns_mode", "xray")
-
 return m

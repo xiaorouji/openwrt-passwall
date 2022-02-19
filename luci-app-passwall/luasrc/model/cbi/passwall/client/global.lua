@@ -279,16 +279,6 @@ o.datatype = "ipaddr"
 o:depends("v2ray_dns_mode", "tcp")
 o:depends("v2ray_dns_mode", "doh")
 
-o = s:taboption("DNS", ListValue, "dns_query_strategy", translate("Query Strategy"))
-o.default = "UseIPv4"
-o:value("UseIPv4")
-o:value("UseIPv6")
-o:value("UseIP")
-o:depends({dns_mode = "v2ray", v2ray_dns_mode = "tcp"})
-o:depends({dns_mode = "v2ray", v2ray_dns_mode = "doh"})
-o:depends({dns_mode = "xray", v2ray_dns_mode = "tcp"})
-o:depends({dns_mode = "xray", v2ray_dns_mode = "doh"})
-
 o = s:taboption("DNS", Flag, "dns_cache", translate("Cache Resolved"))
 o.default = "1"
 o:depends({dns_mode = "dns2socks"})
