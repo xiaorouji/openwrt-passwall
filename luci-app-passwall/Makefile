@@ -15,6 +15,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_ChinaDNS_NG \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Haproxy \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Hysteria \
+	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_IPv6_Nat \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Kcptun \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_NaiveProxy \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_PDNSD \
@@ -30,8 +31,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_V2ray \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_V2ray_Plugin \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Xray \
-	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Xray_Plugin \
-	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_IPv6_Nat
+	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Xray_Plugin
 
 LUCI_TITLE:=LuCI support for PassWall
 LUCI_PKGARCH:=all
@@ -43,6 +43,7 @@ LUCI_DEPENDS:=+coreutils +coreutils-base64 +coreutils-nohup +curl \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_ChinaDNS_NG:chinadns-ng \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_Haproxy:haproxy \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_Hysteria:hysteria \
+	+PACKAGE_$(PKG_NAME)_INCLUDE_IPv6_Nat:ip6tables-mod-nat \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_Kcptun:kcptun-client \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_NaiveProxy:naiveproxy \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_PDNSD:pdnsd-alt \
@@ -59,8 +60,7 @@ LUCI_DEPENDS:=+coreutils +coreutils-base64 +coreutils-nohup +curl \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_V2ray:v2ray-core \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_V2ray_Plugin:v2ray-plugin \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_Xray:xray-core \
-	+PACKAGE_$(PKG_NAME)_INCLUDE_Xray_Plugin:xray-plugin \
-	+PACKAGE_$(PKG_NAME)_INCLUDE_IPv6_Nat:ip6tables-mod-nat
+	+PACKAGE_$(PKG_NAME)_INCLUDE_Xray_Plugin:xray-plugin
 
 define Package/$(PKG_NAME)/config
 menu "Configuration"
@@ -79,6 +79,11 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_Haproxy
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_Hysteria
 	bool "Include Hysteria"
+	default n
+
+config PACKAGE_$(PKG_NAME)_INCLUDE_IPv6_Nat
+	depends on PACKAGE_ip6tables
+	bool "Include IPv6 Nat"
 	default n
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_Kcptun
@@ -141,11 +146,6 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_Xray
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_Xray_Plugin
 	bool "Include Xray-Plugin (Shadowsocks Plugin)"
-	default n
-
-config PACKAGE_$(PKG_NAME)_INCLUDE_IPv6_Nat
-	depends on PACKAGE_ip6tables
-	bool "Include IPv6 Nat"
 	default n
 
 endmenu
