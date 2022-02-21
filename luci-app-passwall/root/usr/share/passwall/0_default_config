@@ -5,14 +5,11 @@ config global
 	option tcp_node 'nil'
 	option udp_node 'nil'
 	option dns_mode 'pdnsd'
-	option up_china_dns 'default'
 	option dns_forward '1.1.1.1'
-	option dns_cache '1'
 	option tcp_proxy_mode 'chnroute'
 	option udp_proxy_mode 'chnroute'
 	option localhost_tcp_proxy_mode 'default'
 	option localhost_udp_proxy_mode 'default'
-	option socks_server '127.0.0.1:1080'
 	option close_log_tcp '0'
 	option close_log_udp '0'
 	option loglevel 'error'
@@ -29,12 +26,16 @@ config global_delay
 config global_forwarding
 	option process '0'
 	option tcp_no_redir_ports 'disable'
-	option udp_no_redir_ports '80,443'
+	option udp_no_redir_ports '53'
+	option tcp_proxy_drop_ports 'disable'
+	option udp_proxy_drop_ports '80,443'
 	option tcp_redir_ports '22,25,53,143,465,587,853,993,995,80,443'
 	option udp_redir_ports '1:65535'
 	option accept_icmp '0'
 	option tcp_proxy_way 'redirect'
 	option ipv6_tproxy '0'
+	option sniffing '1'
+	option route_only '1'
 
 config global_other
 	option status 'big_icon show_check_port show_ip111'
@@ -54,7 +55,7 @@ config global_rules
 	list chnlist_url 'https://cdn.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/accelerated-domains.china.conf'
 	list chnlist_url 'https://cdn.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/apple.china.conf'
 	list chnlist_url 'https://cdn.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/google.china.conf'
-	option v2ray_location_asset '/usr/share/xray/'
+	option v2ray_location_asset '/usr/share/v2ray/'
 
 config global_app
 	option v2ray_file '/usr/bin/v2ray'

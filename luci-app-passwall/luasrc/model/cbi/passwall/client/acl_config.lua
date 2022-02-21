@@ -179,6 +179,19 @@ o:value("disable", translate("No patterns are used"))
 o:value("default", translate("Default"))
 o:value("1:65535", translate("All"))
 
+---- TCP Proxy Drop Ports
+o = s:option(Value, "tcp_proxy_drop_ports", translate("TCP Proxy Drop Ports"))
+o.default = "default"
+o:value("disable", translate("No patterns are used"))
+o:value("default", translate("Default"))
+
+---- UDP Proxy Drop Ports
+o = s:option(Value, "udp_proxy_drop_ports", translate("UDP Proxy Drop Ports"))
+o.default = "default"
+o:value("disable", translate("No patterns are used"))
+o:value("default", translate("Default"))
+o:value("80,443", translate("QUIC"))
+
 ---- TCP Redir Ports
 o = s:option(Value, "tcp_redir_ports", translate("TCP Redir Ports"))
 o.default = "default"
@@ -279,13 +292,5 @@ end
 o = s:option(Value, "dns_client_ip", translate("EDNS Client Subnet"))
 o.datatype = "ipaddr"
 o:depends("v2ray_dns_mode", "doh")
-
-o = s:option(ListValue, "dns_query_strategy", translate("Query Strategy"))
-o.default = "UseIPv4"
-o:value("UseIPv4")
-o:value("UseIPv6")
-o:value("UseIP")
-o:depends("dns_mode", "v2ray")
-o:depends("dns_mode", "xray")
 
 return m

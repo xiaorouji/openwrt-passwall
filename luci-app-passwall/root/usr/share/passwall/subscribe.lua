@@ -37,14 +37,14 @@ local filter_keyword_keep_list_default = uci:get(appname, "@global_subscribe[0]"
 local function is_filter_keyword(value)
 	if filter_keyword_mode_default == "1" then
 		for k,v in ipairs(filter_keyword_discard_list_default) do
-			if value:find(v) then
+			if value:find(v, 1, true) then
 				return true
 			end
 		end
 	elseif filter_keyword_mode_default == "2" then
 		local result = true
 		for k,v in ipairs(filter_keyword_keep_list_default) do
-			if value:find(v) then
+			if value:find(v, 1, true) then
 				result = false
 			end
 		end
@@ -52,12 +52,12 @@ local function is_filter_keyword(value)
 	elseif filter_keyword_mode_default == "3" then
 		local result = false
 		for k,v in ipairs(filter_keyword_discard_list_default) do
-			if value:find(v) then
+			if value:find(v, 1, true) then
 				result = true
 			end
 		end
 		for k,v in ipairs(filter_keyword_keep_list_default) do
-			if value:find(v) then
+			if value:find(v, 1, true) then
 				result = false
 			end
 		end
@@ -65,12 +65,12 @@ local function is_filter_keyword(value)
 	elseif filter_keyword_mode_default == "4" then
 		local result = true
 		for k,v in ipairs(filter_keyword_keep_list_default) do
-			if value:find(v) then
+			if value:find(v, 1, true) then
 				result = false
 			end
 		end
 		for k,v in ipairs(filter_keyword_discard_list_default) do
-			if value:find(v) then
+			if value:find(v, 1, true) then
 				result = true
 			end
 		end
@@ -404,7 +404,6 @@ local function processData(szType, content, add_mode, add_from)
 		result.address = info.add
 		result.port = info.port
 		result.protocol = 'vmess'
-		result.alter_id = info.aid
 		result.uuid = info.id
 		result.remarks = info.ps
 		-- result.mux = 1
@@ -767,6 +766,38 @@ local function processData(szType, content, add_mode, add_from)
 			result.port = port
 			result.tls_allowInsecure = allowInsecure_default and "1" or "0"
 		end
+	elseif szType == 'hysteria' then
+		local alias = ""
+		if content:find("#") then
+			local idx_sp = content:find("#")
+			alias = content:sub(idx_sp + 1, -1)
+			content = content:sub(0, idx_sp - 1)
+		end
+		result.remarks = UrlDecode(alias)
+		result.type = "Hysteria"
+		
+		local dat = split(content, '%?')
+		local hostInfo = split(dat[1], ':')
+		result.address = hostInfo[1]
+		result.port = hostInfo[2]
+		local params = {}
+		for _, v in pairs(split(dat[2], '&')) do
+			local t = split(v, '=')
+			if #t > 0 then
+				params[t[1]] = t[2]
+			end
+		end
+		result.hysteria_protocol = params.protocol
+		result.hysteria_obfs = params.obfsParam
+		result.hysteria_auth_type = "string"
+		result.hysteria_auth_password = params.auth
+		result.tls_serverName = params.peer
+		if params.insecure and params.insecure == "1" then
+			result.tls_allowInsecure = "1"
+		end
+		result.hysteria_alpn = params.alpn
+		result.hysteria_up_mbps = params.upmbps
+		result.hysteria_down_mbps = params.downmbps
 	else
 		log('暂时不支持' .. szType .. "类型的节点订阅，跳过此节点。")
 		return nil
@@ -963,7 +994,7 @@ local function update_node(manual)
 	if manual == 0 and #group > 0 then
 		uci:foreach(appname, "nodes", function(node)
 			-- 如果是未发现新节点或手动导入的节点就不要删除了...
-			if (node.add_from and group:find(node.add_from)) and node.add_mode == "2" then
+			if (node.add_from and group:find(node.add_from, 1, true)) and node.add_mode == "2" then
 				uci:delete(appname, node['.name'])
 			end
 		end)

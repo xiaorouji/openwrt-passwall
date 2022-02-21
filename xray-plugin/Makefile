@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xray-plugin
-PKG_VERSION:=1.5.1
+PKG_VERSION:=1.5.3
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/teddysun/xray-plugin/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=3ebbd992fed640bed630f583a3d168da0952190c5f842e0a1278587b0cba5425
+PKG_HASH:=0280e1c7c9c87db13a456be098e42065374066df4108b87c2e1d781337740a73
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -38,7 +38,7 @@ config XRAY_PLUGIN_COMPRESS_GOPROXY
 config XRAY_PLUGIN_COMPRESS_UPX
 	bool "Compress executable files with UPX"
 	depends on !mips64
-	default y
+	default n
 endef
 
 ifneq ($(CONFIG_XRAY_PLUGIN_COMPRESS_GOPROXY),)

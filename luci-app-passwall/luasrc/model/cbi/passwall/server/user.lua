@@ -32,6 +32,10 @@ local v_ss_encrypt_method_list = {
     "aes-128-gcm", "aes-256-gcm", "chacha20-poly1305"
 }
 
+local x_ss_encrypt_method_list = {
+    "aes-128-gcm", "aes-256-gcm", "chacha20-poly1305", "xchacha20-poly1305"
+}
+
 local header_type_list = {
     "none", "srtp", "utp", "wechat-video", "dtls", "wireguard"
 }
@@ -183,6 +187,18 @@ decryption.default = "none"
 decryption:depends({ type = "V2ray", protocol = "vless" })
 decryption:depends({ type = "Xray", protocol = "vless" })
 
+hysteria_protocol = s:option(ListValue, "hysteria_protocol", translate("Protocol"))
+hysteria_protocol:value("udp", "UDP")
+hysteria_protocol:value("faketcp", "faketcp")
+hysteria_protocol:value("wechat-video", "wechat-video")
+hysteria_protocol:depends("type", "Hysteria")
+function hysteria_protocol.cfgvalue(self, section)
+	return m:get(section, "protocol")
+end
+function hysteria_protocol.write(self, section, value)
+	m:set(section, "protocol", value)
+end
+
 hysteria_obfs = s:option(Value, "hysteria_obfs", translate("Obfs Password"))
 hysteria_obfs:depends("type", "Hysteria")
 
@@ -195,9 +211,29 @@ hysteria_auth_password = s:option(Value, "hysteria_auth_password", translate("Au
 hysteria_auth_password.password = true
 hysteria_auth_password:depends("hysteria_auth_type", "string")
 
+hysteria_alpn = s:option(Value, "hysteria_alpn", translate("QUIC TLS ALPN"))
+hysteria_alpn:depends("type", "Hysteria")
+
 hysteria_udp = s:option(Flag, "hysteria_udp", translate("UDP"))
 hysteria_udp.default = "1"
 hysteria_udp:depends("type", "Hysteria")
+
+hysteria_up_mbps = s:option(Value, "hysteria_up_mbps", translate("Max upload Mbps"))
+hysteria_up_mbps.default = "10"
+hysteria_up_mbps:depends("type", "Hysteria")
+
+hysteria_down_mbps = s:option(Value, "hysteria_down_mbps", translate("Max download Mbps"))
+hysteria_down_mbps.default = "50"
+hysteria_down_mbps:depends("type", "Hysteria")
+
+hysteria_recv_window_conn = s:option(Value, "hysteria_recv_window_conn", translate("QUIC stream receive window"))
+hysteria_recv_window_conn:depends("type", "Hysteria")
+
+hysteria_recv_window = s:option(Value, "hysteria_recv_window", translate("QUIC connection receive window"))
+hysteria_recv_window:depends("type", "Hysteria")
+
+hysteria_disable_mtu_discovery = s:option(Flag, "hysteria_disable_mtu_discovery", translate("Disable MTU detection"))
+hysteria_disable_mtu_discovery:depends("type", "Hysteria")
 
 ss_encrypt_method = s:option(ListValue, "ss_encrypt_method", translate("Encrypt Method"))
 for a, t in ipairs(ss_encrypt_method_list) do ss_encrypt_method:value(t) end
@@ -222,13 +258,26 @@ end
 v_ss_encrypt_method = s:option(ListValue, "v_ss_encrypt_method", translate("Encrypt Method"))
 for a, t in ipairs(v_ss_encrypt_method_list) do v_ss_encrypt_method:value(t) end
 v_ss_encrypt_method:depends({ type = "V2ray", protocol = "shadowsocks" })
-v_ss_encrypt_method:depends({ type = "Xray", protocol = "shadowsocks" })
 function v_ss_encrypt_method.cfgvalue(self, section)
 	return m:get(section, "method")
 end
 function v_ss_encrypt_method.write(self, section, value)
 	m:set(section, "method", value)
 end
+
+x_ss_encrypt_method = s:option(ListValue, "x_ss_encrypt_method", translate("Encrypt Method"))
+for a, t in ipairs(x_ss_encrypt_method_list) do x_ss_encrypt_method:value(t) end
+x_ss_encrypt_method:depends({ type = "Xray", protocol = "shadowsocks" })
+function x_ss_encrypt_method.cfgvalue(self, section)
+	return m:get(section, "method")
+end
+function x_ss_encrypt_method.write(self, section, value)
+	m:set(section, "method", value)
+end
+
+iv_check = s:option(Flag, "iv_check", translate("IV Check"))
+iv_check:depends({ type = "V2ray", protocol = "shadowsocks" })
+iv_check:depends({ type = "Xray", protocol = "shadowsocks" })
 
 ss_network = s:option(ListValue, "ss_network", translate("Transport"))
 ss_network.default = "tcp,udp"
@@ -284,10 +333,6 @@ uuid:depends({ type = "Xray", protocol = "trojan" })
 uuid:depends("type", "Trojan")
 uuid:depends("type", "Trojan-Go")
 uuid:depends("type", "Trojan-Plus")
-
-alter_id = s:option(Value, "alter_id", translate("Alter ID"))
-alter_id:depends({ type = "V2ray", protocol = "vmess" })
-alter_id:depends({ type = "Xray", protocol = "vmess" })
 
 tls = s:option(Flag, "tls", translate("TLS"))
 tls.default = 0

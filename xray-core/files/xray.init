@@ -21,7 +21,7 @@ start_service() {
 
 	config_get confdir "config" "confdir"
 	config_get conffiles "config" "conffiles"
-	config_get datadir "config" "datadir" "/usr/share/xray"
+	config_get datadir "config" "datadir" "/usr/share/v2ray"
 	config_get dialer "config" "dialer"
 	config_get format "config" "format" "json"
 

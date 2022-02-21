@@ -14,8 +14,7 @@ function gen_config(user)
             for i = 1, #user.uuid do
                 clients[i] = {
                     id = user.uuid[i],
-                    flow = ("1" == user.xtls) and user.flow or nil,
-                    alterId = user.alter_id and tonumber(user.alter_id) or nil
+                    flow = ("1" == user.xtls) and user.flow or nil
                 }
             end
             settings = {
@@ -50,6 +49,7 @@ function gen_config(user)
         settings = {
             method = user.method,
             password = user.password,
+            ivCheck = ("1" == user.iv_check) and true or false,
             network = user.ss_network or "TCP,UDP"
         }
     elseif user.protocol == "trojan" then

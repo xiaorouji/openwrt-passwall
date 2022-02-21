@@ -6,15 +6,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
-PKG_VERSION:=4.44
+PKG_VERSION:=4.50
 PKG_RELEASE:=1
-#20211218
+#20220219
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Brook \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_ChinaDNS_NG \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Haproxy \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Hysteria \
+	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_IPv6_Nat \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Kcptun \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_NaiveProxy \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_PDNSD \
@@ -42,6 +43,7 @@ LUCI_DEPENDS:=+coreutils +coreutils-base64 +coreutils-nohup +curl \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_ChinaDNS_NG:chinadns-ng \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_Haproxy:haproxy \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_Hysteria:hysteria \
+	+PACKAGE_$(PKG_NAME)_INCLUDE_IPv6_Nat:ip6tables-mod-nat \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_Kcptun:kcptun-client \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_NaiveProxy:naiveproxy \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_PDNSD:pdnsd-alt \
@@ -77,6 +79,11 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_Haproxy
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_Hysteria
 	bool "Include Hysteria"
+	default n
+
+config PACKAGE_$(PKG_NAME)_INCLUDE_IPv6_Nat
+	depends on PACKAGE_ip6tables
+	bool "Include IPv6 Nat"
 	default n
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_Kcptun

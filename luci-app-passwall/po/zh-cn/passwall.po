@@ -142,14 +142,20 @@ msgstr "用于代理特定的列表。"
 msgid "For proxy game network, DNS hijack etc."
 msgstr "用于代理游戏或DNS劫持等..."
 
+msgid "DNS Shunt"
+msgstr "DNS分流"
+
+msgid "Domestic group name"
+msgstr "国内分组名"
+
+msgid "You only need to configure domestic DNS packets in SmartDNS and set it redirect or as Dnsmasq upstream, and fill in the domestic DNS group name here."
+msgstr "你只需要在SmartDNS配置好国内DNS分组，并设置重定向或作为Dnsmasq上游，此处填入国内DNS分组名。"
+
 msgid "Filter Mode"
 msgstr "过滤模式"
 
-msgid "No Filter"
-msgstr "不过滤"
-
-msgid "Custom DNS"
-msgstr "自定义DNS"
+msgid "TCP node must be '%s' type to use FakeDNS."
+msgstr "TCP节点必须是 '%s' 类型才能使用 FakeDNS。"
 
 msgid "Remote DNS"
 msgstr "远程DNS"
@@ -193,8 +199,11 @@ msgstr "中国列表不能和中国列表外或防火墙表一起使用！"
 msgid "Cache Resolved"
 msgstr "缓存解析结果"
 
-msgid "Query Strategy"
-msgstr "查询策略"
+msgid "Notify the DNS server when the DNS query is notified, the location of the client (cannot be a private IP address)."
+msgstr "用于 DNS 查询时通知 DNS 服务器，客户端所在的地理位置（不能是私有 IP 地址）。"
+
+msgid "This feature requires the DNS server to support the Edns Client Subnet (RFC7871)."
+msgstr "此功能需要 DNS 服务器支持 EDNS Client Subnet（RFC7871）。"
 
 msgid "When the accessed domain name does not exist in the rule list, the default DNS used."
 msgstr "当访问的域名不存在规则列表中，使用的默认DNS。"
@@ -211,8 +220,20 @@ msgstr "如果修改规则后没有生效，请尝试此功能。"
 msgid "The server client can also use this rule to scientifically surf the Internet."
 msgstr "本机服务器的客户端也可以使用这个代理模式上网。"
 
-msgid "Tips"
-msgstr "小提示"
+msgid "About DNS issues:"
+msgstr "关于DNS问题："
+
+msgid "Some browsers may have built-in DNS, be sure to close. Example: Chrome. Settings - Security and Privacy - Security - Use secure DNS disabled."
+msgstr "部分浏览器可能有内置的DNS，请务必关闭。如：chrome。 设置 - 安全和隐私设置 - 使用安全 DNS 关闭。"
+
+msgid "Sometimes after restart, you can not internet, especially the GFW mode. At this time, close all browsers (important), Windows Client, please `ipconfig / flushdns`. Please close the WiFi on the phone, cut the flight mode and then cut back."
+msgstr "有时候重启后，上不了，尤其是GFW模式。这时请先关闭所有浏览器（重要），Windows客户端请`ipconfig/flushdns`。手机端请关闭WIFI，切一下飞行模式再切回来。"
+
+msgid "The client DNS and the default gateway must point to this router."
+msgstr "客户端DNS和默认网关必须指向本路由器。"
+
+msgid "If you have a wrong DNS process, the consequences are at your own risk!"
+msgstr "如果你自行配置了错误的DNS流程，后果自负！"
 
 msgid "You can use load balancing for failover."
 msgstr "可以使用负载均衡实现故障切换功能。"
@@ -295,6 +316,9 @@ msgstr "危险"
 msgid "Same as the %s default proxy mode"
 msgstr "与 %s 默认代理模式相同"
 
+msgid "Want different devices to use different proxy modes/ports/nodes? Please use access control."
+msgstr "希望不同设备使用不同的代理模式/端口/节点？请使用访问控制。"
+
 msgid "Operation"
 msgstr "操作"
 
@@ -304,11 +328,11 @@ msgstr "添加节点"
 msgid "Add the node via the link"
 msgstr "通过链接添加节点"
 
-msgid "SS/SSR/Vmess/VLESS/Trojan Link"
-msgstr "SS/SSR/Vmess/VLESS/Trojan链接"
+msgid "SS/SSR/Vmess/VLESS/Trojan/Hysteria Link"
+msgstr "SS/SSR/Vmess/VLESS/Trojan/Hysteria 链接"
 
-msgid "Please enter the correct link, ss:// ssr:// vmess:// vless:// trojan://"
-msgstr "请输入正确的链接，ss:// ssr:// vmess:// vless:// trojan://"
+msgid "Please enter the correct link."
+msgstr "请输入正确的链接。"
 
 msgid "Clear all nodes"
 msgstr "清空所有节点"
@@ -589,6 +613,12 @@ msgstr "UDP不转发端口"
 msgid "Fill in the ports you don't want to be forwarded by the agent, with the highest priority."
 msgstr "填写你不希望被代理转发的端口，优先级最高。"
 
+msgid "TCP Proxy Drop Ports"
+msgstr "TCP转发屏蔽端口"
+
+msgid "UDP Proxy Drop Ports"
+msgstr "UDP转发屏蔽端口"
+
 msgid "TCP Redir Ports"
 msgstr "TCP转发端口"
 
@@ -621,6 +651,21 @@ msgstr "关闭"
 
 msgid "Hijacking ICMP (PING)"
 msgstr "劫持ICMP (PING)"
+
+msgid "Hijacking ICMPv6 (IPv6 PING)"
+msgstr "劫持ICMPv6 (IPv6 PING)"
+
+msgid "Sniffing (V2Ray/Xray)"
+msgstr "流量嗅探 (V2ray/Xray)"
+
+msgid "When using the V2ray/Xray shunt, must be enabled, otherwise the shunt will invalid."
+msgstr "使用 V2Ray/Xray 分流时，必须启用，否则分流将无效。"
+
+msgid "Sniffing Route Only (Xray)"
+msgstr "流量嗅探只供路由使用 (Xray)"
+
+msgid "When enabled, the server not will resolve the domain name again."
+msgstr "启用后，服务器不会再次解析域名。"
 
 msgid "TCP Proxy Way"
 msgstr "TCP代理方式"
@@ -1033,6 +1078,9 @@ msgstr "HAProxy不能和KCP一起使用"
 msgid "Password"
 msgstr "密码"
 
+msgid "IV Check"
+msgstr "IV 检查"
+
 msgid "Connection Timeout"
 msgstr "连接超时时间"
 
@@ -1050,9 +1098,6 @@ msgstr "插件"
 
 msgid "opts"
 msgstr "插件选项"
-
-msgid "Xray is currently directly compatible with V2ray and used."
-msgstr "Xray 目前可直接兼容 V2ray 并使用。"
 
 msgid "Protocol"
 msgstr "协议名称"
@@ -1101,9 +1146,6 @@ msgstr "Naiveproxy协议"
 
 msgid "V2ray Protocol"
 msgstr "V2ray协议"
-
-msgid "Alter ID"
-msgstr "额外ID(alterId)"
 
 msgid "User Level"
 msgstr "用户等级(level)"
@@ -1309,6 +1351,9 @@ msgstr "文件下载失败或超时：%s"
 msgid "File path required."
 msgstr "请指定文件路径。"
 
+msgid "%s not enough space."
+msgstr "%s 空间不足。"
+
 msgid "Can't find client in file: %s"
 msgstr "无法在文件中找到客户端：%s"
 
@@ -1344,3 +1389,6 @@ msgstr "检查超时时间"
 
 msgid "Permit without stream"
 msgstr "无子连接时的健康检查"
+
+msgid "Initial Windows Size"
+msgstr "初始窗口大小"

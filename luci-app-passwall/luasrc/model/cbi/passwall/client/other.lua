@@ -68,6 +68,17 @@ o.default = "disable"
 o:value("disable", translate("No patterns are used"))
 o:value("1:65535", translate("All"))
 
+---- TCP Proxy Drop Ports
+o = s:option(Value, "tcp_proxy_drop_ports", translate("TCP Proxy Drop Ports"))
+o.default = "disable"
+o:value("disable", translate("No patterns are used"))
+
+---- UDP Proxy Drop Ports
+o = s:option(Value, "udp_proxy_drop_ports", translate("UDP Proxy Drop Ports"))
+o.default = "80,443"
+o:value("disable", translate("No patterns are used"))
+o:value("80,443", translate("QUIC"))
+
 ---- TCP Redir Ports
 o = s:option(Value, "tcp_redir_ports", translate("TCP Redir Ports"))
 o.default = "22,25,53,143,465,587,853,993,995,80,443"
@@ -82,9 +93,6 @@ o = s:option(Value, "udp_redir_ports", translate("UDP Redir Ports"))
 o.default = "1:65535"
 o:value("1:65535", translate("All"))
 o:value("53", "DNS")
-
-o = s:option(Flag, "accept_icmp", translate("Hijacking ICMP (PING)"))
-o.default = 0
 
 if os.execute("lsmod | grep -i REDIRECT >/dev/null") == 0 and os.execute("lsmod | grep -i TPROXY >/dev/null") == 0 then
     o = s:option(ListValue, "tcp_proxy_way", translate("TCP Proxy Way"))
@@ -109,6 +117,21 @@ if os.execute("lsmod | grep -i REDIRECT >/dev/null") == 0 and os.execute("lsmod 
     o.default = 0
     o.rmempty = false
 end
+
+o = s:option(Flag, "accept_icmp", translate("Hijacking ICMP (PING)"))
+o.default = 0
+
+o = s:option(Flag, "accept_icmpv6", translate("Hijacking ICMPv6 (IPv6 PING)"))
+o:depends("ipv6_tproxy", true)
+o.default = 0
+
+o = s:option(Flag, "sniffing", translate("Sniffing (V2Ray/Xray)"), translate("When using the V2ray/Xray shunt, must be enabled, otherwise the shunt will invalid."))
+o.default = 1
+o.rmempty = false
+
+o = s:option(Flag, "route_only", translate("Sniffing Route Only (Xray)"), translate("When enabled, the server not will resolve the domain name again."))
+o.default = "1"
+o:depends("sniffing", true)
 
 --[[
 ---- TCP Redir Port
