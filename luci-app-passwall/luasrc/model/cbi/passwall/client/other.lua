@@ -130,7 +130,7 @@ o.default = 1
 o.rmempty = false
 
 o = s:option(Flag, "route_only", translate("Sniffing Route Only (Xray)"), translate("When enabled, the server not will resolve the domain name again."))
-o.default = "1"
+o.default = 0
 o:depends("sniffing", true)
 
 --[[

@@ -6,6 +6,7 @@ config global
 	option udp_node 'nil'
 	option dns_mode 'pdnsd'
 	option dns_forward '1.1.1.1'
+	option filter_proxy_ipv6 '0'
 	option tcp_proxy_mode 'chnroute'
 	option udp_proxy_mode 'chnroute'
 	option localhost_tcp_proxy_mode 'default'
@@ -35,7 +36,7 @@ config global_forwarding
 	option tcp_proxy_way 'redirect'
 	option ipv6_tproxy '0'
 	option sniffing '1'
-	option route_only '1'
+	option route_only '0'
 
 config global_other
 	option status 'big_icon show_check_port show_ip111'

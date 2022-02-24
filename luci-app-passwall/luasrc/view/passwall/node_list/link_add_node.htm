@@ -50,7 +50,7 @@ local api = require "luci.model.cbi.passwall.api.api"
 		if (nodes_link.trim() != "") {
 			var supports = "ss ssr vmess vless trojan trojan-go hysteria";
 			var itype = nodes_link.split('://')[0];
-			if (itype.trim() != "" && supports.indexOf(itype) > 0) {
+			if (itype.trim() != "" && supports.indexOf(itype) >= 0) {
 				ajax_add_node(nodes_link);
 			}
 			else {
