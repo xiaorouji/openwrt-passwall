@@ -211,6 +211,12 @@ msgstr "当访问的域名不存在规则列表中，使用的默认DNS。"
 msgid "The effect is better, but will increase the memory."
 msgstr "效果更好，但会增加内存使用。"
 
+msgid "Filter Proxy Host IPv6"
+msgstr "过滤代理域名 IPv6"
+
+msgid "Experimental feature."
+msgstr "实验性功能。"
+
 msgid "Clear IPSET"
 msgstr "清空 IPSET"
 
