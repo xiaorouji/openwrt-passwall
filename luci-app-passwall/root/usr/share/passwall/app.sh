@@ -658,8 +658,7 @@ run_redir() {
 				[ "$(config_t_get global dns_by)" = "tcp" -o "${v2ray_dns_mode}" = "fakedns" ] && {
 					config_file=$(echo $config_file | sed "s/.json/_DNS.json/g")
 					resolve_dns=1
-					local dns_query_strategy=$(config_t_get global dns_query_strategy UseIPv4)
-					_extra_param="${_extra_param} -dns_query_strategy ${dns_query_strategy}"
+					_extra_param="${_extra_param} -dns_query_strategy ${DNS_QUERY_STRATEGY}"
 					local _dns_client_ip=$(config_t_get global dns_client_ip)
 					[ -n "${_dns_client_ip}" ] && _extra_param="${_extra_param} -dns_client_ip ${_dns_client_ip}"
 					[ "${DNS_CACHE}" == "0" ] && _extra_param="${_extra_param} -dns_cache 0"
@@ -1064,8 +1063,7 @@ start_dns() {
 	xray)
 		[ "${resolve_dns}" == "0" ] && {
 			[ "${DNS_CACHE}" == "0" ] && local _extra_param="-dns_cache 0"
-			local dns_query_strategy=$(config_t_get global dns_query_strategy UseIPv4)
-			_extra_param="${_extra_param} -dns_query_strategy ${dns_query_strategy}"
+			_extra_param="${_extra_param} -dns_query_strategy ${DNS_QUERY_STRATEGY}"
 			local _dns_client_ip=$(config_t_get global dns_client_ip)
 			[ -n "${_dns_client_ip}" ] && _extra_param="${_extra_param} -dns_client_ip ${_dns_client_ip}"
 			local dns_by=$(config_t_get global dns_by "tcp")
