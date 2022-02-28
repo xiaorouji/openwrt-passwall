@@ -92,7 +92,7 @@ endef
 
 ifneq ($(CONFIG_XRAY_CORE_COMPRESS_GOPROXY),)
 	export GO111MODULE=on
-	export GOPROXY=https://goproxy.baidu.com
+	export GOPROXY=https://goproxy.bj.bcebos.com
 endif
 
 define Build/Compile

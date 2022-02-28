@@ -45,7 +45,7 @@ endef
 
 ifeq ($(CONFIG_V2RAY_PLUGIN_INCLUDE_GOPROXY),y)
 export GO111MODULE=on
-export GOPROXY=https://goproxy.io
+export GOPROXY=https://goproxy.bj.bcebos.com
 #export GOPROXY=https://mirrors.aliyun.com/goproxy/
 endif
 

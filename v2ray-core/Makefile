@@ -131,7 +131,7 @@ endef
 
 ifneq ($(CONFIG_V2RAY_CORE_COMPRESS_GOPROXY)$(CONFIG_V2RAY_CTL_COMPRESS_GOPROXY),)
 	export GO111MODULE=on
-	export GOPROXY=https://goproxy.baidu.com
+	export GOPROXY=https://goproxy.bj.bcebos.com
 endif
 
 define Build/Compile
