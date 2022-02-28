@@ -378,12 +378,16 @@ local function processData(szType, content, add_mode, add_from)
 		local dat = split(content, "/%?")
 		local hostInfo = split(dat[1], ':')
 		result.type = "SSR"
-		result.address = hostInfo[1]
-		result.port = hostInfo[2]
-		result.protocol = hostInfo[3]
-		result.method = hostInfo[4]
-		result.obfs = hostInfo[5]
-		result.password = base64Decode(hostInfo[6])
+		result.address = ""
+		for i=1,#hostInfo-5,1 do
+			result.address = result.address .. hostInfo[i] .. ":"
+		end
+		result.address = string.sub(result.address, 0, #result.address-1) 
+		result.port = hostInfo[#hostInfo-4]
+		result.protocol = hostInfo[#hostInfo-3]
+		result.method = hostInfo[#hostInfo-2]
+		result.obfs = hostInfo[#hostInfo-1]
+		result.password = base64Decode(hostInfo[#hostInfo])	
 		local params = {}
 		for _, v in pairs(split(dat[2], '&')) do
 			local t = split(v, '=')
@@ -1102,7 +1106,7 @@ local function parse_link(raw, add_mode, add_from)
 				if result then
 					if not result.type then
 						log('丢弃节点:' .. result.remarks .. ",找不到可使用二进制.")
-					elseif (add_mode == "2" and is_filter_keyword(result.remarks)) or not result.address or result.remarks == "NULL" or
+					elseif (add_mode == "2" and is_filter_keyword(result.remarks)) or not result.address or result.remarks == "NULL" or result.address=="127.0.0.1" or
 							(not datatypes.hostname(result.address) and not (datatypes.ipmask4(result.address) or datatypes.ipmask6(result.address))) then
 						log('丢弃过滤节点: ' .. result.type .. ' 节点, ' .. result.remarks)
 					else
