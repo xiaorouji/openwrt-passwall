@@ -17,7 +17,7 @@ local datatypes = require "luci.cbi.datatypes"
 local tinsert = table.insert
 local ssub, slen, schar, sbyte, sformat, sgsub = string.sub, string.len, string.char, string.byte, string.format, string.gsub
 local jsonParse, jsonStringify = luci.jsonc.parse, luci.jsonc.stringify
-local b64decode = nixio.bin.b64decode
+local base64Decode = api.base64Decode
 local uci = luci.model.uci.cursor()
 uci:revert(appname)
 
@@ -350,22 +350,6 @@ local function trim(text)
 	return (sgsub(text, "^%s*(.-)%s*$", "%1"))
 end
 
--- base64
-local function base64Decode(text)
-	local raw = text
-	if not text then return '' end
-	text = text:gsub("%z", "")
-	text = text:gsub("_", "/")
-	text = text:gsub("-", "+")
-	local mod4 = #text % 4
-	text = text .. string.sub('====', mod4 + 1)
-	local result = b64decode(text)
-	if result then
-		return result:gsub("%z", "")
-	else
-		return raw
-	end
-end
 -- 处理数据
 local function processData(szType, content, add_mode, add_from)
 	--log(content, add_mode, add_from)

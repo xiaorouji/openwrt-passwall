@@ -14,6 +14,23 @@ command_timeout = 300
 LEDE_BOARD = nil
 DISTRIB_TARGET = nil
 
+function base64Decode(text)
+	local raw = text
+	if not text then return '' end
+	text = text:gsub("%z", "")
+	text = text:gsub("%c", "")
+	text = text:gsub("_", "/")
+	text = text:gsub("-", "+")
+	local mod4 = #text % 4
+	text = text .. string.sub('====', mod4 + 1)
+	local result = nixio.bin.b64decode(text)
+	if result then
+		return result:gsub("%z", "")
+	else
+		return raw
+	end
+end
+
 function url(...)
     local url = string.format("admin/services/%s", appname)
     local args = { ... }
