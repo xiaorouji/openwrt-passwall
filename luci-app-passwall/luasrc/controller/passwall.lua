@@ -65,7 +65,6 @@ function index()
 	entry({"admin", "services", appname, "haproxy_status"}, call("haproxy_status")).leaf = true
 	entry({"admin", "services", appname, "socks_status"}, call("socks_status")).leaf = true
 	entry({"admin", "services", appname, "connect_status"}, call("connect_status")).leaf = true
-	entry({"admin", "services", appname, "check_port"}, call("check_port")).leaf = true
 	entry({"admin", "services", appname, "ping_node"}, call("ping_node")).leaf = true
 	entry({"admin", "services", appname, "set_node"}, call("set_node")).leaf = true
 	entry({"admin", "services", appname, "copy_node"}, call("copy_node")).leaf = true
@@ -342,39 +341,6 @@ function delete_select_nodes()
 	end)
 	ucic:commit(appname)
 	luci.sys.call("/etc/init.d/" .. appname .. " restart > /dev/null 2>&1 &")
-end
-
-function check_port()
-	function socket_connect(type, address, port)
-		local socket = nixio.socket(type, "stream")
-		socket:setopt("socket", "rcvtimeo", 3)
-		socket:setopt("socket", "sndtimeo", 3)
-		local ret = socket:connect(address, port)
-		if socket then socket:close() end
-		if tostring(ret) == "true" then
-			return true
-		end
-		return false
-	end
-	local result = {}
-	ucic:foreach(appname, "nodes", function(s)
-		if (s.use_kcp and s.use_kcp == "1" and s.kcp_port) or (s.transport and s.transport == "mkcp" and s.port) then
-		else
-			local type = s.type
-			if type and s.address and s.port and s.remarks then
-				local ip_type = api.get_ip_type(s.address)
-				local o = {}
-				o.remark = "%s：[%s] %s:%s" % {s.type, s.remarks, ip_type == "6" and '[' .. s.address .. ']' or s.address, s.port}
-				o.flag = socket_connect(ip_type == "6" and "inet6" or "inet", s.address, s.port)
-				if not o.flag and ip_type == "" then
-					o.flag = socket_connect("inet6", s.address, s.port)
-				end
-				result[#result + 1] = o
-			end
-		end
-	end)
-	luci.http.prepare_content("application/json")
-	luci.http.write_json(result)
 end
 
 function update_rules()
