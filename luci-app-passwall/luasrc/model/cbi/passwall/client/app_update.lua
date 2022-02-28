@@ -12,7 +12,6 @@ s.anonymous = true
 s:append(Template(appname .. "/app_update/v2ray_version"))
 s:append(Template(appname .. "/app_update/xray_version"))
 s:append(Template(appname .. "/app_update/trojan_go_version"))
-s:append(Template(appname .. "/app_update/kcptun_version"))
 s:append(Template(appname .. "/app_update/brook_version"))
 s:append(Template(appname .. "/app_update/hysteria_version"))
 
@@ -26,10 +25,6 @@ o.rmempty = false
 
 o = s:option(Value, "trojan_go_file", translatef("%s App Path", "Trojan-Go"))
 o.default = "/usr/bin/trojan-go"
-o.rmempty = false
-
-o = s:option(Value, "kcptun_client_file", translatef("%s Client App Path", "Kcptun"))
-o.default = "/usr/bin/kcptun-client"
 o.rmempty = false
 
 o = s:option(Value, "brook_file", translatef("%s App Path", "Brook"))

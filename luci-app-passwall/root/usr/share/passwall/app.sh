@@ -580,24 +580,6 @@ run_redir() {
 				echolog "节点类型：$type暂未支持IPv6 UDP代理！"
 			fi
 		fi
-		local kcptun_use=$(config_n_get $node use_kcp 0)
-		if [ "$kcptun_use" == "1" ]; then
-			local kcptun_server_host=$(config_n_get $node kcp_server)
-			local network_type="ipv4"
-			local kcptun_port=$(config_n_get $node kcp_port)
-			local kcptun_config="$(config_n_get $node kcp_opts)"
-			if [ -z "$kcptun_port" -o -z "$kcptun_config" ]; then
-				echolog "Kcptun未配置参数，错误！"
-				return 1
-			fi
-			if [ -n "$kcptun_port" -a -n "$kcptun_config" ]; then
-				local run_kcptun_ip=$server_host
-				[ -n "$kcptun_server_host" ] && run_kcptun_ip=$(get_host_ip $network_type $kcptun_server_host)
-				KCPTUN_REDIR_PORT=$(get_new_port $KCPTUN_REDIR_PORT tcp)
-				kcptun_params="-l 0.0.0.0:$KCPTUN_REDIR_PORT -r $run_kcptun_ip:$kcptun_port $kcptun_config"
-				ln_run "$(first_type $(config_t_get global_app kcptun_client_file) kcptun-client)" "kcptun_TCP" $log_file $kcptun_params
-			fi
-		fi
 
 		if [ "$tcp_proxy_way" = "redirect" ]; then
 			can_ipt=$(echo "$REDIRECT_LIST" | grep "$type")
@@ -727,58 +709,42 @@ run_redir() {
 				[ "$brook_tls" == "1" ] && prefix="wss://"
 				local ws_path=$(config_n_get $node ws_path "/ws")
 			}
-			[ "$kcptun_use" == "1" ] && {
-				server_ip=127.0.0.1
-				port=$KCPTUN_REDIR_PORT
-			}
 			server_ip=${prefix}${server_ip}
 			ln_run "$(first_type $(config_t_get global_app brook_file) brook)" "brook_TCP" $log_file tproxy -l ":$local_port" -s "${server_ip}:${port}${ws_path}" -p "$(config_n_get $node password)" --doNotRunScripts
 		;;
 		ssr)
 			[ "$tcp_proxy_way" = "tproxy" ] && lua_tproxy_arg="-tcp_tproxy true"
-			if [ "$kcptun_use" == "1" ]; then
-				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -server_host "127.0.0.1" -server_port $KCPTUN_REDIR_PORT $lua_tproxy_arg > $config_file
-			else
-				[ "$TCP_UDP" = "1" ] && {
-					config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
-					UDP_REDIR_PORT=$TCP_REDIR_PORT
-					UDP_NODE="nil"
-					_extra_param="-u"
-				}
-				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port $lua_tproxy_arg > $config_file
-			fi
+			[ "$TCP_UDP" = "1" ] && {
+				config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
+				UDP_REDIR_PORT=$TCP_REDIR_PORT
+				UDP_NODE="nil"
+				_extra_param="-u"
+			}
+			lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port $lua_tproxy_arg > $config_file
 			ln_run "$(first_type ssr-redir)" "ssr-redir" $log_file -c "$config_file" -v ${_extra_param}
 		;;
 		ss)
 			[ "$tcp_proxy_way" = "tproxy" ] && lua_tproxy_arg="-tcp_tproxy true"
 			lua_mode_arg="-mode tcp_only"
-			if [ "$kcptun_use" == "1" ]; then
-				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -server_host "127.0.0.1" -server_port $KCPTUN_REDIR_PORT $lua_mode_arg $lua_tproxy_arg > $config_file
-			else
-				[ "$TCP_UDP" = "1" ] && {
-					config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
-					UDP_REDIR_PORT=$TCP_REDIR_PORT
-					UDP_NODE="nil"
-					lua_mode_arg="-mode tcp_and_udp"
-				}
-				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port $lua_mode_arg $lua_tproxy_arg > $config_file
-			fi
+			[ "$TCP_UDP" = "1" ] && {
+				config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
+				UDP_REDIR_PORT=$TCP_REDIR_PORT
+				UDP_NODE="nil"
+				lua_mode_arg="-mode tcp_and_udp"
+			}
+			lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port $lua_mode_arg $lua_tproxy_arg > $config_file
 			ln_run "$(first_type ss-redir)" "ss-redir" $log_file -c "$config_file" -v
 		;;
 		ss-rust)
 			[ "$tcp_proxy_way" = "tproxy" ] && lua_tproxy_arg="-tcp_tproxy true"
 			lua_mode_arg="-mode tcp_only"
-			if [ "$kcptun_use" == "1" ]; then
-				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -server_host "127.0.0.1" -server_port $KCPTUN_REDIR_PORT -protocol redir $lua_mode_arg $lua_tproxy_arg > $config_file
-			else
-				[ "$TCP_UDP" = "1" ] && {
-					config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
-					UDP_REDIR_PORT=$TCP_REDIR_PORT
-					UDP_NODE="nil"
-					lua_mode_arg="-mode tcp_and_udp"
-				}
-				lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -protocol redir $lua_mode_arg $lua_tproxy_arg > $config_file
-			fi
+			[ "$TCP_UDP" = "1" ] && {
+				config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
+				UDP_REDIR_PORT=$TCP_REDIR_PORT
+				UDP_NODE="nil"
+				lua_mode_arg="-mode tcp_and_udp"
+			}
+			lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -protocol redir $lua_mode_arg $lua_tproxy_arg > $config_file
 			ln_run "$(first_type sslocal)" "sslocal" $log_file -c "$config_file" -v
 		;;
 		hysteria)
@@ -1462,7 +1428,6 @@ TCP_UDP=0
 tcp_proxy_way=$(config_t_get global_forwarding tcp_proxy_way redirect)
 REDIRECT_LIST="socks ss ss-rust ssr v2ray xray trojan-plus trojan-go naiveproxy"
 TPROXY_LIST="socks ss ss-rust ssr v2ray xray trojan-plus brook trojan-go hysteria"
-KCPTUN_REDIR_PORT=$(config_t_get global_forwarding kcptun_port 12948)
 RESOLVFILE=/tmp/resolv.conf.d/resolv.conf.auto
 [ -f "${RESOLVFILE}" ] && [ -s "${RESOLVFILE}" ] || RESOLVFILE=/tmp/resolv.conf.auto
 TCP_REDIR_PORTS=$(config_t_get global_forwarding tcp_redir_ports '80,443')

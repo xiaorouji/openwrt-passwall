@@ -146,13 +146,6 @@ o.datatype = "port"
 o.default = 1051
 o.rmempty = true
 
----- Kcptun Port
-o = s:option(Value, "kcptun_port", translate("Kcptun Port"))
-o.datatype = "port"
-o.default = 12948
-o.rmempty = true
---]]
-
 -- [[ Other Settings ]]--
 s = m:section(TypedSection, "global_other", translate("Other Settings"))
 s.anonymous = true
