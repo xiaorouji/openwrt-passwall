@@ -133,27 +133,4 @@ o = s:option(Flag, "route_only", translate("Sniffing Route Only (Xray)"), transl
 o.default = 0
 o:depends("sniffing", true)
 
---[[
----- TCP Redir Port
-o = s:option(Value, "tcp_redir_port", translate("TCP Redir Port"))
-o.datatype = "port"
-o.default = 1041
-o.rmempty = true
-
----- UDP Redir Port
-o = s:option(Value, "udp_redir_port", translate("UDP Redir Port"))
-o.datatype = "port"
-o.default = 1051
-o.rmempty = true
-
--- [[ Other Settings ]]--
-s = m:section(TypedSection, "global_other", translate("Other Settings"))
-s.anonymous = true
-s.addremove = false
-
-o = s:option(MultiValue, "status", translate("Status info"))
-o:value("big_icon", translate("Big icon")) -- 大图标
-o:value("show_check_port", translate("Show node check")) -- 显示节点检测
-o:value("show_ip111", translate("Show Show IP111")) -- 显示IP111
-
 return m

@@ -21,7 +21,7 @@ config global_haproxy
 
 config global_delay
 	option auto_on '0'
-	option start_daemon '0'
+	option start_daemon '1'
 	option start_delay '1'
 
 config global_forwarding
@@ -39,7 +39,6 @@ config global_forwarding
 	option route_only '0'
 
 config global_other
-	option status 'big_icon show_check_port show_ip111'
 	option nodes_ping 'auto_ping tcping'
 
 config global_rules

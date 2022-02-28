@@ -374,9 +374,7 @@ xtls:depends({ type = "Xray", protocol = "trojan", tls = true })
 flow = s:option(Value, "flow", translate("flow"))
 flow.default = "xtls-rprx-direct"
 flow:value("xtls-rprx-origin")
-flow:value("xtls-rprx-origin-udp443")
 flow:value("xtls-rprx-direct")
-flow:value("xtls-rprx-direct-udp443")
 flow:depends("xtls", true)
 
 alpn = s:option(ListValue, "alpn", translate("alpn"))
