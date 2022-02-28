@@ -36,16 +36,7 @@ while [ "$ENABLED" -eq 1 ]; do
 	[ -f "$TMP_ID_PATH/TCP" ] && {
 		TCP_NODE=$(cat $TMP_ID_PATH/TCP)
 		if [ "$TCP_NODE" != "nil" ]; then
-			#kcptun
-			use_kcp=$(config_n_get $TCP_NODE use_kcp 0)
-			if [ $use_kcp -gt 0 ]; then
-				icount=$(pgrep -af "$TMP_BIN_PATH/kcptun.*(tcp|TCP)" | grep -v -E 'acl/|acl_' | wc -l)
-				if [ $icount = 0 ]; then
-					/etc/init.d/$CONFIG restart
-					exit 0
-				fi
-			fi
-			icount=$(pgrep -af "$TMP_BIN_PATH.*(tcp|TCP)" | grep -v -E 'kcptun|acl/|acl_' | wc -l)
+			icount=$(pgrep -af "$TMP_BIN_PATH.*(tcp|TCP)" | grep -v -E 'acl/|acl_' | wc -l)
 			if [ $icount = 0 ]; then
 				/etc/init.d/$CONFIG restart
 				exit 0

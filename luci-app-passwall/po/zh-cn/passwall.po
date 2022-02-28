@@ -139,8 +139,8 @@ msgstr "当前节点：%s"
 msgid "For proxy specific list."
 msgstr "用于代理特定的列表。"
 
-msgid "For proxy game network, DNS hijack etc."
-msgstr "用于代理游戏或DNS劫持等..."
+msgid "For proxy game network."
+msgstr "用于代理游戏等。"
 
 msgid "DNS Shunt"
 msgstr "DNS分流"
@@ -532,9 +532,6 @@ msgstr "禁用 MTU 检测"
 msgid "Encrypt Method"
 msgstr "加密"
 
-msgid "Kcptun Switch"
-msgstr "Kcptun开关"
-
 msgid "Latency"
 msgstr "延迟"
 
@@ -684,12 +681,6 @@ msgstr "TCP透明代理端口"
 
 msgid "UDP Redir Port"
 msgstr "UDP透明代理端口"
-
-msgid "Socks Proxy Port"
-msgstr "Socks代理端口"
-
-msgid "Kcptun Port"
-msgstr "Kcptun端口"
 
 msgid "Custom Dnsmasq"
 msgstr "自定义Dnsmasq设置"
@@ -1078,9 +1069,6 @@ msgstr "清空日志"
 msgid "Need node support required"
 msgstr "需要节点支持"
 
-msgid "HAProxy cannot be used with KCP."
-msgstr "HAProxy不能和KCP一起使用"
-
 msgid "Password"
 msgstr "密码"
 
@@ -1122,24 +1110,6 @@ msgstr "插件名称"
 
 msgid "Plugin Arguments"
 msgstr "插件参数"
-
-msgid "Use Kcptun"
-msgstr "使用Kcptun"
-
-msgid "Please confirm whether the Kcptun is installed. If not, please go to Rule Update download installation."
-msgstr "请确认Kcptun是否已安装，若没有请到自动更新下载安装。"
-
-msgid "Kcptun Server"
-msgstr "Kcptun服务器"
-
-msgid "Default:Current Server"
-msgstr "留空则使用当前服务器"
-
-msgid "Kcptun Config"
-msgstr "Kcptun参数配置"
-
-msgid "--crypt aes192 --key abc123 --mtu 1350 --sndwnd 128 --rcvwnd 1024 --mode fast"
-msgstr "参数中无需配置服务器IP和本地端口，需要配置的参数和格式如：--crypt aes192 --key abc123 --mtu 1350 --sndwnd 128 --rcvwnd 1024 --mode fast"
 
 msgid "Brook Protocol"
 msgstr "Brook协议"

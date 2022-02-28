@@ -487,25 +487,6 @@ function ss_plugin_opts.write(self, section, value)
 	m:set(section, "plugin_opts", value)
 end
 
-use_kcp = s:option(Flag, "use_kcp", translate("Use") .. "Kcptun",
-                   "<span style='color:red'>" .. translate("Please confirm whether the Kcptun is installed. If not, please go to Rule Update download installation.") .. "</span>")
-use_kcp.default = 0
-use_kcp:depends("type", "SS")
-use_kcp:depends("type", "SS-Rust")
-use_kcp:depends("type", "SSR")
-
-kcp_server = s:option(Value, "kcp_server", translate("Kcptun Server"))
-kcp_server.placeholder = translate("Default:Current Server")
-kcp_server:depends("use_kcp", "1")
-
-kcp_port = s:option(Value, "kcp_port", translate("Kcptun Port"))
-kcp_port.datatype = "port"
-kcp_port:depends("use_kcp", "1")
-
-kcp_opts = s:option(TextValue, "kcp_opts", translate("Kcptun Config"), translate("--crypt aes192 --key abc123 --mtu 1350 --sndwnd 128 --rcvwnd 1024 --mode fast"))
-kcp_opts.placeholder = "--crypt aes192 --key abc123 --mtu 1350 --sndwnd 128 --rcvwnd 1024 --mode fast"
-kcp_opts:depends("use_kcp", "1")
-
 uuid = s:option(Value, "uuid", translate("ID"))
 uuid.password = true
 uuid:depends({ type = "V2ray", protocol = "vmess" })

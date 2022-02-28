@@ -8,7 +8,6 @@ local ucic = luci.model.uci.cursor()
 local http = require "luci.http"
 local util = require "luci.util"
 local i18n = require "luci.i18n"
-local kcptun = require("luci.model.cbi." .. appname ..".api.kcptun")
 local brook = require("luci.model.cbi." .. appname ..".api.brook")
 local v2ray = require("luci.model.cbi." .. appname ..".api.v2ray")
 local xray = require("luci.model.cbi." .. appname ..".api.xray")
@@ -73,8 +72,6 @@ function index()
 	entry({"admin", "services", appname, "clear_all_nodes"}, call("clear_all_nodes")).leaf = true
 	entry({"admin", "services", appname, "delete_select_nodes"}, call("delete_select_nodes")).leaf = true
 	entry({"admin", "services", appname, "update_rules"}, call("update_rules")).leaf = true
-	entry({"admin", "services", appname, "kcptun_check"}, call("kcptun_check")).leaf = true
-	entry({"admin", "services", appname, "kcptun_update"}, call("kcptun_update")).leaf = true
 	entry({"admin", "services", appname, "brook_check"}, call("brook_check")).leaf = true
 	entry({"admin", "services", appname, "brook_update"}, call("brook_update")).leaf = true
 	entry({"admin", "services", appname, "v2ray_check"}, call("v2ray_check")).leaf = true
@@ -410,25 +407,6 @@ end
 
 function server_clear_log()
 	luci.sys.call("echo '' > /tmp/log/passwall_server.log")
-end
-
-function kcptun_check()
-	local json = kcptun.to_check("")
-	http_write_json(json)
-end
-
-function kcptun_update()
-	local json = nil
-	local task = http.formvalue("task")
-	if task == "extract" then
-		json = kcptun.to_extract(http.formvalue("file"), http.formvalue("subfix"))
-	elseif task == "move" then
-		json = kcptun.to_move(http.formvalue("file"))
-	else
-		json = kcptun.to_download(http.formvalue("url"), http.formvalue("size"))
-	end
-
-	http_write_json(json)
 end
 
 function brook_check()
