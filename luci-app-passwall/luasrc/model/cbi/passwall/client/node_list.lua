@@ -140,6 +140,12 @@ o.cfgvalue = function(t, n)
     return result
 end
 
+o = s:option(DummyValue, "_url_test")
+o.rawhtml = true
+o.cfgvalue = function(t, n)
+    return string.format('<input type="button" class="cbi-button" value="%s" onclick="javascript:urltest_node(\'%s\',this)"', translate("Availability test"), n)
+end
+
 m:append(Template(appname .. "/node_list/node_list"))
 
 return m

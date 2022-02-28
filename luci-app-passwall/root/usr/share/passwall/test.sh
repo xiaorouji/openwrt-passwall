@@ -62,6 +62,33 @@ test_proxy() {
 	echo $result
 }
 
+url_test_node() {
+	result=0
+	local node_id=$1
+	local _type=$(echo $(config_n_get ${node_id} type nil) | tr 'A-Z' 'a-z')
+	[ "${_type}" != "nil" ] && {
+		if [ "${_type}" == "socks" ]; then
+			local _address=$(config_n_get ${node_id} address)
+			local _port=$(config_n_get ${node_id} port)
+			[ -n "${_address}" ] && [ -n "${_port}" ] && {
+				local curlx="socks5h://${_address}:${_port}"
+				local _username=$(config_n_get ${node_id} username)
+				local _password=$(config_n_get ${node_id} password)
+				[ -n "${_username}" ] && [ -n "${_password}" ] && curlx="socks5h://${_username}:${_password}@${_address}:${_port}"
+			}
+		else
+			local _tmp_port=$(/usr/share/${CONFIG}/app.sh get_new_port 61080 tcp)
+			/usr/share/${CONFIG}/app.sh run_socks flag="url_test_${node_id}" node=${node_id} bind=127.0.0.1 socks_port=${_tmp_port} config_file=/tmp/etc/${CONFIG}/url_test_${node_id}.json
+			local curlx="socks5h://127.0.0.1:${_tmp_port}"
+		fi
+		sleep 1s
+		result=$(curl --connect-timeout 3 -o /dev/null -I -skL -w "%{http_code}:%{time_starttransfer}" -x $curlx "https://www.google.com/generate_204")
+		pgrep -af "url_test_${node_id}" | awk '! /test\.sh/{print $1}' | xargs kill -9 >/dev/null 2>&1
+		rm -rf "/tmp/etc/${CONFIG}/url_test_${node_id}.json"
+	}
+	echo $result
+}
+
 test_node() {
 	local node_id=$1
 	local _type=$(echo $(config_n_get ${node_id} type nil) | tr 'A-Z' 'a-z')
@@ -77,12 +104,12 @@ test_node() {
 			}
 		else
 			local _tmp_port=$(/usr/share/${CONFIG}/app.sh get_new_port 61080 tcp)
-			/usr/share/${CONFIG}/app.sh run_socks flag=auto_switch node=$node_id bind=127.0.0.1 socks_port=${_tmp_port} config_file=/tmp/etc/${CONFIG}/test.json
+			/usr/share/${CONFIG}/app.sh run_socks flag="test_node_${node_id}" node=${node_id} bind=127.0.0.1 socks_port=${_tmp_port} config_file=/tmp/etc/${CONFIG}/test_node_${node_id}.json
 			local curlx="socks5h://127.0.0.1:${_tmp_port}"
 		fi
 		_proxy_status=$(test_url "https://www.google.com/generate_204" ${retry_num} ${connect_timeout} "-x $curlx")
-		pgrep -f "/tmp/etc/${CONFIG}/test\.json|auto_switch" | xargs kill -9 >/dev/null 2>&1
-		rm -rf "/tmp/etc/${CONFIG}/test.json"
+		pgrep -af "test_node_${node_id}" | awk '! /test\.sh/{print $1}' | xargs kill -9 >/dev/null 2>&1
+		rm -rf "/tmp/etc/${CONFIG}/test_node_${node_id}.json"
 		if [ "${_proxy_status}" -eq 200 ]; then
 			return 0
 		fi
@@ -236,6 +263,9 @@ shift
 case $arg1 in
 test_url)
 	test_url $@
+	;;
+url_test_node)
+	url_test_node $@
 	;;
 *)
 	start
