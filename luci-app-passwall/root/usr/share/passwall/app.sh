@@ -1051,6 +1051,24 @@ start_dns() {
 	TUN_DNS="127.0.0.1#${dns_listen_port}"
 
 	echolog "过滤服务配置：准备接管域名解析..."
+	local items=$(uci show ${CONFIG} | grep "=acl_rule" | cut -d '.' -sf 2 | cut -d '=' -sf 1)
+	[ -n "$items" ] && {
+		for item in $items; do
+			[ "$(config_n_get $item enabled)" = "1" ] || continue
+			[ "$(config_n_get $item tcp_node)" = "default" -o "$(config_n_get $item udp_node)" = "default" ] && {
+				local item_tcp_proxy_mode=$(config_n_get $item tcp_proxy_mode default)
+				local item_udp_proxy_mode=$(config_n_get $item udp_proxy_mode default)
+				[ "$item_tcp_proxy_mode" = "default" ] && item_tcp_proxy_mode=$TCP_PROXY_MODE
+				[ "$item_udp_proxy_mode" = "default" ] && item_udp_proxy_mode=$UDP_PROXY_MODE
+				global=$(echo "${global}${item_tcp_proxy_mode}${item_udp_proxy_mode}" | grep "global")
+				returnhome=$(echo "${returnhome}${item_tcp_proxy_mode}${item_udp_proxy_mode}" | grep "returnhome")
+				chnlist=$(echo "${chnlist}${item_tcp_proxy_mode}${item_udp_proxy_mode}" | grep "chnroute")
+				gfwlist=$(echo "${gfwlist}${item_tcp_proxy_mode}${item_udp_proxy_mode}" | grep "gfwlist")
+				ACL_TCP_PROXY_MODE=${ACL_TCP_PROXY_MODE}${item_tcp_proxy_mode}
+				ACL_UDP_PROXY_MODE=${ACL_UDP_PROXY_MODE}${item_udp_proxy_mode}
+			}
+		done
+	}
 
 	case "$DNS_MODE" in
 	dns2socks)
@@ -1129,7 +1147,7 @@ start_dns() {
 	smartdns)
 		local group_domestic=$(config_t_get global group_domestic)
 		CHINADNS_NG=0
-		source $APP_PATH/helper_smartdns.sh add DNS_MODE=$DNS_MODE SMARTDNS_CONF=/tmp/etc/smartdns/$CONFIG.conf REMOTE_FAKEDNS=$fakedns DEFAULT_DNS=$DEFAULT_DNS LOCAL_GROUP=$group_domestic TUN_DNS=$TUN_DNS TCP_NODE=$TCP_NODE PROXY_MODE=${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE} NO_PROXY_IPV6=${filter_proxy_ipv6}
+		source $APP_PATH/helper_smartdns.sh add DNS_MODE=$DNS_MODE SMARTDNS_CONF=/tmp/etc/smartdns/$CONFIG.conf REMOTE_FAKEDNS=$fakedns DEFAULT_DNS=$DEFAULT_DNS LOCAL_GROUP=$group_domestic TUN_DNS=$TUN_DNS TCP_NODE=$TCP_NODE PROXY_MODE=${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}${ACL_TCP_PROXY_MODE} NO_PROXY_IPV6=${filter_proxy_ipv6}
 		source $APP_PATH/helper_smartdns.sh restart
 		echolog "  - 域名解析：使用SmartDNS，请确保配置正常。"
 	;;
@@ -1164,7 +1182,7 @@ start_dns() {
 	
 	[ "$DNS_SHUNT" = "dnsmasq" ] && {
 		source $APP_PATH/helper_dnsmasq.sh stretch
-		source $APP_PATH/helper_dnsmasq.sh add DNS_MODE=$DNS_MODE TMP_DNSMASQ_PATH=$TMP_DNSMASQ_PATH DNSMASQ_CONF_FILE=/tmp/dnsmasq.d/dnsmasq-passwall.conf REMOTE_FAKEDNS=$fakedns DEFAULT_DNS=$DEFAULT_DNS LOCAL_DNS=$LOCAL_DNS TUN_DNS=$TUN_DNS CHINADNS_DNS=$china_ng_listen TCP_NODE=$TCP_NODE PROXY_MODE=${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE} NO_PROXY_IPV6=${filter_proxy_ipv6}
+		source $APP_PATH/helper_dnsmasq.sh add DNS_MODE=$DNS_MODE TMP_DNSMASQ_PATH=$TMP_DNSMASQ_PATH DNSMASQ_CONF_FILE=/tmp/dnsmasq.d/dnsmasq-passwall.conf REMOTE_FAKEDNS=$fakedns DEFAULT_DNS=$DEFAULT_DNS LOCAL_DNS=$LOCAL_DNS TUN_DNS=$TUN_DNS CHINADNS_DNS=$china_ng_listen TCP_NODE=$TCP_NODE PROXY_MODE=${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}${ACL_TCP_PROXY_MODE} NO_PROXY_IPV6=${filter_proxy_ipv6}
 	}
 }
 
@@ -1395,7 +1413,7 @@ start() {
 	start_socks
 
 	[ "$NO_PROXY" == 1 ] || {
-		if [ -z "$(command -v iptables)" ] && [ -z "$(command -v ipset)" ]; then
+		if [ -z "$(command -v iptables-legacy || command -v iptables)" ] || [ -z "$(command -v ipset)" ]; then
 			echolog "系统未安装iptables或ipset，无法透明代理！"
 		else
 			start_redir TCP

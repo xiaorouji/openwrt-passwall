@@ -123,6 +123,9 @@ add() {
 	mkdir -p "${TMP_DNSMASQ_PATH}" "${DNSMASQ_PATH}" "/tmp/dnsmasq.d"
 	count_hosts_str="!"
 
+	[ -n "$CHINADNS_DNS" ] && dnsmasq_default_dns="${CHINADNS_DNS}"
+	[ -n "$global" ] && [ -z "$returnhome" ] && [ -z "$chnlist" ] && [ -z "$gfwlist" ] && only_global=1 && dnsmasq_default_dns="${TUN_DNS}"
+
 	#屏蔽列表
 	[ -s "${RULES_PATH}/block_host" ] && {
 		cat "${RULES_PATH}/block_host" | tr -s '\n' | grep -v "^#" | sort -u | gen_address_items address="0.0.0.0" outf="${TMP_DNSMASQ_PATH}/00-block_host.conf"
@@ -155,15 +158,17 @@ add() {
 			echolog "  - [$?]节点订阅域名(whitelist)：${fwd_dns:-默认}"
 		else
 			#如果开启了通过代理订阅
-			fwd_dns="${TUN_DNS}"
 			local ipset_flag="blacklist,blacklist6"
 			if [ "${NO_PROXY_IPV6}" = "1" ]; then
 				ipset_flag="blacklist"
 				echo -e "$subscribe_list" | sort -u | gen_address_items address="::" outf="${TMP_DNSMASQ_PATH}/91-subscribe-noipv6.conf"
 			fi
-			[ -n "${REMOTE_FAKEDNS}" ] && unset ipset_flag
-			echo -e "$subscribe_list" | sort -u | gen_items ipsets="${ipset_flag}" dnss="${fwd_dns}" outf="${TMP_DNSMASQ_PATH}/91-subscribe.conf" ipsetoutf="${TMP_DNSMASQ_PATH}/ipset.conf"
-			echolog "  - [$?]节点订阅域名(blacklist)：${fwd_dns:-默认}"
+			[ -z "${only_global}" ] && {
+				fwd_dns="${TUN_DNS}"
+				[ -n "${REMOTE_FAKEDNS}" ] && unset ipset_flag
+				echo -e "$subscribe_list" | sort -u | gen_items ipsets="${ipset_flag}" dnss="${fwd_dns}" outf="${TMP_DNSMASQ_PATH}/91-subscribe.conf" ipsetoutf="${TMP_DNSMASQ_PATH}/ipset.conf"
+				echolog "  - [$?]节点订阅域名(blacklist)：${fwd_dns:-默认}"
+			}
 		fi
 	}
 	
@@ -174,16 +179,16 @@ add() {
 			ipset_flag="blacklist"
 			cat "${RULES_PATH}/proxy_host" | tr -s '\n' | grep -v "^#" | sort -u | gen_address_items address="::" outf="${TMP_DNSMASQ_PATH}/97-proxy_host-noipv6.conf"
 		fi
-		fwd_dns="${TUN_DNS}"
-		[ -n "${REMOTE_FAKEDNS}" ] && unset ipset_flag
-		cat "${RULES_PATH}/proxy_host" | tr -s '\n' | grep -v "^#" | sort -u | gen_items ipsets="${ipset_flag}" dnss="${fwd_dns}" outf="${TMP_DNSMASQ_PATH}/97-proxy_host.conf" ipsetoutf="${TMP_DNSMASQ_PATH}/ipset.conf"
-		echolog "  - [$?]代理域名表(blacklist)：${fwd_dns:-默认}"
+		[ -z "${only_global}" ] && {
+			fwd_dns="${TUN_DNS}"
+			[ -n "${REMOTE_FAKEDNS}" ] && unset ipset_flag
+			cat "${RULES_PATH}/proxy_host" | tr -s '\n' | grep -v "^#" | sort -u | gen_items ipsets="${ipset_flag}" dnss="${fwd_dns}" outf="${TMP_DNSMASQ_PATH}/97-proxy_host.conf" ipsetoutf="${TMP_DNSMASQ_PATH}/ipset.conf"
+			echolog "  - [$?]代理域名表(blacklist)：${fwd_dns:-默认}"
+		}
 	}
 
 	#分流规则
 	[ "$(config_n_get $TCP_NODE protocol)" = "_shunt" ] && {
-		fwd_dns="${TUN_DNS}"
-		msg_dns="${fwd_dns}"
 		local default_node_id=$(config_n_get $TCP_NODE default_node _direct)
 		local shunt_ids=$(uci show $CONFIG | grep "=shunt_rules" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}')
 		for shunt_id in $shunt_ids; do
@@ -207,9 +212,12 @@ add() {
 					ipset_flag="shuntlist"
 					echo $str | sed "s/|/\n/g" | gen_address_items address="::" outf="${TMP_DNSMASQ_PATH}/98-shunt_host-noipv6.conf"
 				fi
-				[ -n "${REMOTE_FAKEDNS}" ] && unset ipset_flag
-				echo $str | sed "s/|/\n/g" | gen_items ipsets="${ipset_flag}" dnss="${fwd_dns}" outf="${TMP_DNSMASQ_PATH}/98-shunt_host.conf" ipsetoutf="${TMP_DNSMASQ_PATH}/ipset.conf"
-				msg_dns="${fwd_dns}"
+				[ -z "${only_global}" ] && {
+					fwd_dns="${TUN_DNS}"
+					msg_dns="${fwd_dns}"
+					[ -n "${REMOTE_FAKEDNS}" ] && unset ipset_flag
+					echo $str | sed "s/|/\n/g" | gen_items ipsets="${ipset_flag}" dnss="${fwd_dns}" outf="${TMP_DNSMASQ_PATH}/98-shunt_host.conf" ipsetoutf="${TMP_DNSMASQ_PATH}/ipset.conf"
+				}
 			}
 		done
 		echolog "  - [$?]V2ray/Xray分流规则(shuntlist)：${msg_dns:-默认}"
@@ -231,11 +239,13 @@ add() {
 				ipset_flag="gfwlist"
 				sort -u "${TMP_PATH}/gfwlist" | gen_address_items address="::" outf="${TMP_DNSMASQ_PATH}/99-gfwlist-noipv6.conf"
 			fi
-			fwd_dns="${TUN_DNS}"
-			[ -n "$CHINADNS_DNS" ] && unset fwd_dns
-			[ -n "${REMOTE_FAKEDNS}" ] && unset ipset_flag
-			sort -u "${TMP_PATH}/gfwlist" | gen_items ipsets="${ipset_flag}" dnss="${fwd_dns}" outf="${TMP_DNSMASQ_PATH}/99-gfwlist.conf" ipsetoutf="${TMP_DNSMASQ_PATH}/ipset.conf"
-			echolog "  - [$?]防火墙域名表(gfwlist)：${fwd_dns:-默认}"
+			[ -z "${only_global}" ] && {
+				fwd_dns="${TUN_DNS}"
+				[ -n "$CHINADNS_DNS" ] && unset fwd_dns
+				[ -n "${REMOTE_FAKEDNS}" ] && unset ipset_flag
+				sort -u "${TMP_PATH}/gfwlist" | gen_items ipsets="${ipset_flag}" dnss="${fwd_dns}" outf="${TMP_DNSMASQ_PATH}/99-gfwlist.conf" ipsetoutf="${TMP_DNSMASQ_PATH}/ipset.conf"
+				echolog "  - [$?]防火墙域名表(gfwlist)：${fwd_dns:-默认}"
+			}
 			rm -f "${TMP_PATH}/gfwlist"
 		}
 		
@@ -258,10 +268,12 @@ add() {
 				ipset_flag="chnroute"
 				sort -u "${TMP_PATH}/chnlist" | gen_address_items address="::" outf="${TMP_DNSMASQ_PATH}/99-chinalist_host-noipv6.conf"
 			fi
-			fwd_dns="${TUN_DNS}"
-			[ -n "${REMOTE_FAKEDNS}" ] && unset ipset_flag
-			sort -u "${TMP_PATH}/chnlist" | gen_items ipsets="${ipset_flag}" dnss="${fwd_dns}" outf="${TMP_DNSMASQ_PATH}/99-chinalist_host.conf" ipsetoutf="${TMP_DNSMASQ_PATH}/ipset.conf"
-			echolog "  - [$?]中国域名表(chnroute)：${fwd_dns:-默认}"
+			[ -z "${only_global}" ] && {
+				fwd_dns="${TUN_DNS}"
+				[ -n "${REMOTE_FAKEDNS}" ] && unset ipset_flag
+				sort -u "${TMP_PATH}/chnlist" | gen_items ipsets="${ipset_flag}" dnss="${fwd_dns}" outf="${TMP_DNSMASQ_PATH}/99-chinalist_host.conf" ipsetoutf="${TMP_DNSMASQ_PATH}/ipset.conf"
+				echolog "  - [$?]中国域名表(chnroute)：${fwd_dns:-默认}"
+			}
 			rm -f "${TMP_PATH}/chnlist"
 		}
 	fi
@@ -269,15 +281,15 @@ add() {
 	ipset_merge ${TMP_DNSMASQ_PATH}
 	
 	echo "conf-dir=${TMP_DNSMASQ_PATH}" > $DNSMASQ_CONF_FILE
-	[ -n "${CHINADNS_DNS}" ] && {
+	[ -n "${dnsmasq_default_dns}" ] && {
 		echo "${DEFAULT_DNS}" > $TMP_PATH/default_DNS
 		cat <<-EOF >> $DNSMASQ_CONF_FILE
-			server=${CHINADNS_DNS}
+			server=${dnsmasq_default_dns}
 			all-servers
 			no-poll
 			no-resolv
 		EOF
-		echolog "  - [$?]以上所列以外及默认(ChinaDNS-NG)：${CHINADNS_DNS}"
+		echolog "  - [$?]以上所列以外及默认：${dnsmasq_default_dns}"
 	}
 	echolog "  - PassWall必须依赖于Dnsmasq，如果你自行配置了错误的DNS流程，将会导致域名(直连/代理域名)分流失效！！！"
 	LOG_FILE=${_LOG_FILE}
