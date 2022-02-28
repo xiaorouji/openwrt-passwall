@@ -66,6 +66,7 @@ function index()
 	entry({"admin", "services", appname, "socks_status"}, call("socks_status")).leaf = true
 	entry({"admin", "services", appname, "connect_status"}, call("connect_status")).leaf = true
 	entry({"admin", "services", appname, "ping_node"}, call("ping_node")).leaf = true
+	entry({"admin", "services", appname, "urltest_node"}, call("urltest_node")).leaf = true
 	entry({"admin", "services", appname, "set_node"}, call("set_node")).leaf = true
 	entry({"admin", "services", appname, "copy_node"}, call("copy_node")).leaf = true
 	entry({"admin", "services", appname, "clear_all_nodes"}, call("clear_all_nodes")).leaf = true
@@ -246,6 +247,25 @@ function ping_node()
 	end
 	if e.ping == nil or tonumber(e.ping) == 0 then
 		e.ping = luci.sys.exec("echo -n $(ping -c 1 -W 1 %q 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print $2}') 2>/dev/null" % address)
+	end
+	luci.http.prepare_content("application/json")
+	luci.http.write_json(e)
+end
+
+function urltest_node()
+	local index = luci.http.formvalue("index")
+	local id = luci.http.formvalue("id")
+	local e = {}
+	e.index = index
+	local result = luci.sys.exec(string.format("/usr/share/passwall/test.sh url_test_node %s %s", id, "urltest_node"))
+	local code = tonumber(luci.sys.exec("echo -n '" .. result .. "' | awk -F ':' '{print $1}'") or "0")
+	if code ~= 0 then
+		local use_time = luci.sys.exec("echo -n '" .. result .. "' | awk -F ':' '{print $2}'")
+		if use_time:find("%.") then
+			e.use_time = string.format("%.2f", use_time * 1000)
+		else
+			e.use_time = string.format("%.2f", use_time / 1000)
+		end
 	end
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)

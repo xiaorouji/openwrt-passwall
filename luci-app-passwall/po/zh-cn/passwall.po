@@ -562,6 +562,9 @@ msgstr "简洁显示节点"
 msgid "Show server address and port"
 msgstr "显示服务器地址和端口"
 
+msgid "Availability test"
+msgstr "可用性测试"
+
 msgid "Node num"
 msgstr "节点数量"
 
