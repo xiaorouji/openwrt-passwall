@@ -82,10 +82,6 @@ end
 local nodeResult = {} -- update result
 local debug = false
 
-local ss_rust_encrypt_method_list = {
-    "aes-128-gcm", "aes-256-gcm", "chacha20-ietf-poly1305"
-}
-
 local log = function(...)
 	local result = os.date("%Y-%m-%d %H:%M:%S: ") .. table.concat({...}, " ")
 	if debug == true then
@@ -496,25 +492,34 @@ local function processData(szType, content, add_mode, add_from)
 		result.method = method
 		result.password = password
 
-		local flag = false
-		for k, v in ipairs(ss_rust_encrypt_method_list) do
-			if method:upper() == v:upper() then
-				flag = true
+		local aead = false
+		for k, v in ipairs({"aes-128-gcm", "aes-256-gcm", "chacha20-poly1305", "chacha20-ietf-poly1305"}) do
+			if method:lower() == v:lower() then
+				aead = true
 			end
 		end
-		if flag then
+		if aead then
 			if ss_aead_type_default == "shadowsocks-libev" and has_ss then
 				result.type = "SS"
 			elseif ss_aead_type_default == "shadowsocks-rust" and has_ss_rust then
 				result.type = 'SS-Rust'
+				if method:lower() == "chacha20-poly1305" then
+					result.method = "chacha20-ietf-poly1305"
+				end
 			elseif ss_aead_type_default == "v2ray" and has_v2ray and not result.plugin then
 				result.type = 'V2ray'
 				result.protocol = 'shadowsocks'
 				result.transport = 'tcp'
+				if method:lower() == "chacha20-ietf-poly1305" then
+					result.method = "chacha20-poly1305"
+				end
 			elseif ss_aead_type_default == "xray" and has_xray and not result.plugin then
 				result.type = 'Xray'
 				result.protocol = 'shadowsocks'
 				result.transport = 'tcp'
+				if method:lower() == "chacha20-ietf-poly1305" then
+					result.method = "chacha20-poly1305"
+				end
 			end
 		end
 	elseif szType == "trojan" then
