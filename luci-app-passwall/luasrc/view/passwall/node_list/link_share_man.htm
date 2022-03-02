@@ -408,6 +408,10 @@ local has_xray = api.is_finded("xray")
 					if (combobox) {
 						obj.combobox = combobox;
 					}
+					var div = document.getElementById(id);
+					if (div && div.getElementsByTagName("li").length > 0) {
+						obj = div;
+					}
 					return obj;
 				} else {
 					return null;
@@ -415,7 +419,7 @@ local has_xray = api.is_finded("xray")
 			},
 			set: function(opt, val) {
 				var obj;
-				obj = this.get(opt)
+				obj = this.get(opt);
 				if (obj) {
 					var event = document.createEvent("HTMLEvents");
 					event.initEvent("change", true, true);
@@ -425,6 +429,30 @@ local has_xray = api.is_finded("xray")
 						obj.value = val;
 						if (obj.combobox) {
 							obj.combobox.value = val;
+						}
+						
+						var list = obj.getElementsByTagName("li");
+						if (list.length > 0) {
+							for (var i = 0; i < list.length; i++) {
+								var li = list[i];
+								var data = li.getAttribute("data-value");
+								li.removeAttribute("selected");
+								li.removeAttribute("display");
+								if (data && data == val) {
+									li.setAttribute("selected", true);
+									li.setAttribute("display", "0");
+								}
+							}
+							var input = document.getElementsByName(obj.id)[0];
+							if (input) {
+								input.value = val;
+							} else {
+								var input = document.createElement("input");
+								input.setAttribute("type", "hidden") ;
+								input.setAttribute("name", obj.id) ;
+								input.setAttribute("value", val) ;
+								obj.appendChild(input);
+							}
 						}
 					}
 					try {

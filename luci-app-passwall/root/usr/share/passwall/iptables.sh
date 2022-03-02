@@ -31,10 +31,10 @@ ipt_n="$ipt -t nat -w"
 ipt_m="$ipt -t mangle -w"
 ip6t_n="$ip6t -t nat -w"
 ip6t_m="$ip6t -t mangle -w"
-[ -z "$(lsmod | grep 'ip6table_nat')" ] && ip6t_n="eval #$ip6t_n"
-[ -z "$(lsmod | grep 'ip6table_mangle')" ] && ip6t_m="eval #$ip6t_m"
+[ -z "$ip6t" -o -z "$(lsmod | grep 'ip6table_nat')" ] && ip6t_n="eval #$ip6t_n"
+[ -z "$ip6t" -o -z "$(lsmod | grep 'ip6table_mangle')" ] && ip6t_m="eval #$ip6t_m"
 FWI=$(uci -q get firewall.passwall.path 2>/dev/null)
-FAKE_IP=198.18.0.0/16
+FAKE_IP="198.18.0.0/16"
 
 factor() {
 	if [ -z "$1" ] || [ -z "$2" ]; then
@@ -62,15 +62,41 @@ destroy_ipset() {
 	done
 }
 
+insert_rule_before() {
+	[ $# -ge 3 ] || {
+		return 1
+	}
+	local ipt_tmp="${1}"; shift
+	local chain="${1}"; shift
+	local keyword="${1}"; shift
+	local rule="${1}"; shift
+	local _index=$($ipt_tmp -n -L $chain --line-numbers 2>/dev/null | grep "$keyword" | head -n 1 | awk '{print $1}')
+	$ipt_tmp -I $chain $_index $rule
+}
+
+insert_rule_after() {
+	[ $# -ge 3 ] || {
+		return 1
+	}
+	local ipt_tmp="${1}"; shift
+	local chain="${1}"; shift
+	local keyword="${1}"; shift
+	local rule="${1}"; shift
+	local _index=$($ipt_tmp -n -L $chain --line-numbers 2>/dev/null | grep "$keyword" | awk 'END {print}' | awk '{print $1}')
+	_index=${_index:-0}
+	_index=$((_index + 1))
+	$ipt_tmp -I $chain $_index $rule
+}
+
 RULE_LAST_INDEX() {
 	[ $# -ge 3 ] || {
 		echolog "索引列举方式不正确（iptables），终止执行！"
-		exit 1
+		return 1
 	}
-	local ipt_tmp=${1}; shift
-	local chain=${1}; shift
-	local list=${1}; shift
-	local default=${1:-0}; shift
+	local ipt_tmp="${1}"; shift
+	local chain="${1}"; shift
+	local list="${1}"; shift
+	local default="${1:-0}"; shift
 	local _index=$($ipt_tmp -n -L $chain --line-numbers 2>/dev/null | grep "$list" | head -n 1 | awk '{print $1}')
 	echo "${_index:-${default}}"
 }
@@ -827,11 +853,8 @@ add_firewall_rule() {
 	WAN_IP=$(get_wan_ip)
 	[ ! -z "${WAN_IP}" ] && $ipt_n -A PSW $(comment "WAN_IP_RETURN") -d "${WAN_IP}" -j RETURN
 	
-	PR_INDEX=$(RULE_LAST_INDEX "$ipt_n" PREROUTING prerouting_rule 1)
-	PR_INDEX=$((PR_INDEX + 1))
-	[ "$accept_icmp" = "1" ] && $ipt_n -I PREROUTING $PR_INDEX -p icmp -j PSW
-	[ -z "${is_tproxy}" ] && $ipt_n -I PREROUTING $PR_INDEX -p tcp -j PSW
-	unset PR_INDEX
+	[ "$accept_icmp" = "1" ] && insert_rule_after "$ipt_n" "PREROUTING" "prerouting_rule" "-p icmp -j PSW"
+	[ -z "${is_tproxy}" ] && insert_rule_after "$ipt_n" "PREROUTING" "prerouting_rule" "-p tcp -j PSW"
 
 	$ipt_n -N PSW_OUTPUT
 	$ipt_n -A PSW_OUTPUT $(dst $IPSET_LANIPLIST) -j RETURN
@@ -845,9 +868,6 @@ add_firewall_rule() {
 	$ipt_m -N PSW_DIVERT
 	$ipt_m -A PSW_DIVERT -j MARK --set-mark 1
 	$ipt_m -A PSW_DIVERT -j ACCEPT
-	
-	PR_INDEX=$(RULE_LAST_INDEX "$ipt_m" PREROUTING mwan3 1)
-	$ipt_m -I PREROUTING $PR_INDEX -p tcp -m socket -j PSW_DIVERT
 
 	$ipt_m -N PSW
 	$ipt_m -A PSW $(dst $IPSET_LANIPLIST) -j RETURN
@@ -858,10 +878,9 @@ add_firewall_rule() {
 	
 	[ ! -z "${WAN_IP}" ] && $ipt_m -A PSW $(comment "WAN_IP_RETURN") -d "${WAN_IP}" -j RETURN
 	unset WAN_IP
-	
-	PR_INDEX=$((PR_INDEX + 1))
-	$ipt_m -I PREROUTING $PR_INDEX -j PSW
-	unset PR_INDEX
+
+	insert_rule_after "$ipt_m" "PREROUTING" "mwan3" "-j PSW"
+	insert_rule_before "$ipt_m" "PREROUTING" "PSW" "-p tcp -m socket -j PSW_DIVERT"
 
 	$ipt_m -N PSW_OUTPUT
 	$ipt_m -A PSW_OUTPUT $(dst $IPSET_LANIPLIST) -j RETURN
@@ -893,9 +912,6 @@ add_firewall_rule() {
 	$ip6t_m -A PSW_DIVERT -j MARK --set-mark 1
 	$ip6t_m -A PSW_DIVERT -j ACCEPT
 
-	PR_INDEX=$(RULE_LAST_INDEX "$ip6t_m" PREROUTING mwan3 1)
-	$ip6t_m -I PREROUTING $PR_INDEX -p tcp -m socket -j PSW_DIVERT
-
 	$ip6t_m -N PSW
 	$ip6t_m -A PSW $(dst $IPSET_LANIPLIST6) -j RETURN
 	$ip6t_m -A PSW $(dst $IPSET_VPSIPLIST6) -j RETURN
@@ -907,9 +923,8 @@ add_firewall_rule() {
 	[ ! -z "${WAN6_IP}" ] && $ip6t_m -A PSW $(comment "WAN6_IP_RETURN") -d ${WAN6_IP} -j RETURN
 	unset WAN6_IP
 
-	PR_INDEX=$((PR_INDEX + 1))
-	$ip6t_m -I PREROUTING $PR_INDEX -j PSW
-	unset PR_INDEX
+	insert_rule_after "$ip6t_m" "PREROUTING" "mwan3" "-j PSW"
+	insert_rule_before "$ip6t_m" "PREROUTING" "PSW" "-p tcp -m socket -j PSW_DIVERT"
 
 	$ip6t_m -N PSW_OUTPUT
 	$ip6t_m -A PSW_OUTPUT $(dst $IPSET_LANIPLIST6) -j RETURN
@@ -1166,61 +1181,69 @@ flush_include() {
 gen_include() {
 	flush_include
 	extract_rules() {
-		local _ipt="$ipt"
-		[ "$1" == "6" ] && _ipt="$ip6t"
+		local _ipt="${ipt}"
+		[ "$1" == "6" ] && _ipt="${ip6t}"
+		[ -z "${_ipt}" ] && return
 
 		echo "*$2"
 		${_ipt}-save -t $2 | grep "PSW" | grep -v "\-j PSW$" | grep -v "socket \-j PSW_DIVERT$" | sed -e "s/^-A \(OUTPUT\|PREROUTING\)/-I \1 1/"
 		echo 'COMMIT'
 	}
+	local __ipt=""
+	[ -n "${ipt}" ] && {
+		__ipt=$(cat <<- EOF
+			$ipt-save -c | grep -v "PSW" | $ipt-restore -c
+			$ipt-restore -n <<-EOT
+			$(extract_rules 4 nat)
+			$(extract_rules 4 mangle)
+			EOT
+
+			[ "$accept_icmp" = "1" ] && \$(${MY_PATH} insert_rule_after "$ipt_n" "PREROUTING" "prerouting_rule" "-p icmp -j PSW")
+			[ -z "${is_tproxy}" ] && \$(${MY_PATH} insert_rule_after "$ipt_n" "PREROUTING" "prerouting_rule" "-p tcp -j PSW")
+
+			\$(${MY_PATH} insert_rule_after "$ipt_m" "PREROUTING" "mwan3" "-j PSW")
+			\$(${MY_PATH} insert_rule_before "$ipt_m" "PREROUTING" "PSW" "-p tcp -m socket -j PSW_DIVERT")
+
+			WAN_IP=\$(${MY_PATH} get_wan_ip)
+
+			PR_INDEX=\$(${MY_PATH} RULE_LAST_INDEX "$ipt_n" PSW WAN_IP_RETURN -1)
+			if [ \$PR_INDEX -ge 0 ]; then
+				[ ! -z "\${WAN_IP}" ] && $ipt_n -R PSW \$PR_INDEX $(comment "WAN_IP_RETURN") -d "\${WAN_IP}" -j RETURN
+			fi
+
+			PR_INDEX=\$(${MY_PATH} RULE_LAST_INDEX "$ipt_m" PSW WAN_IP_RETURN -1)
+			if [ \$PR_INDEX -ge 0 ]; then
+				[ ! -z "\${WAN_IP}" ] && $ipt_m -R PSW \$PR_INDEX $(comment "WAN_IP_RETURN") -d "\${WAN_IP}" -j RETURN
+			fi
+		EOF
+		)
+	}
+	local __ip6t=""
+	[ -n "${ip6t}" ] && {
+		__ip6t=$(cat <<- EOF
+			$ip6t-save -c | grep -v "PSW" | $ip6t-restore -c
+			$ip6t-restore -n <<-EOT
+			$(extract_rules 6 nat)
+			$(extract_rules 6 mangle)
+			EOT
+
+			[ "$accept_icmpv6" = "1" ] && $ip6t_n -A PREROUTING -p ipv6-icmp -j PSW
+
+			\$(${MY_PATH} insert_rule_after "$ip6t_m" "PREROUTING" "mwan3" "-j PSW")
+			\$(${MY_PATH} insert_rule_before "$ip6t_m" "PREROUTING" "PSW" "-p tcp -m socket -j PSW_DIVERT")
+
+			PR_INDEX=\$(${MY_PATH} RULE_LAST_INDEX "$ip6t_m" PSW WAN6_IP_RETURN -1)
+			if [ \$PR_INDEX -ge 0 ]; then
+				WAN6_IP=\$(${MY_PATH} get_wan6_ip)
+				[ ! -z "\${WAN6_IP}" ] && $ip6t_m -R PSW \$PR_INDEX $(comment "WAN6_IP_RETURN") -d "\${WAN6_IP}" -j RETURN
+			fi
+		EOF
+		)
+	}
 	cat <<-EOF >> $FWI
-		$ipt-save -c | grep -v "PSW" | $ipt-restore -c
-		$ipt-restore -n <<-EOT
-		$(extract_rules 4 nat)
-		$(extract_rules 4 mangle)
-		EOT
-		$ip6t-save -c | grep -v "PSW" | $ip6t-restore -c
-		$ip6t-restore -n <<-EOT
-		$(extract_rules 6 nat)
-		$(extract_rules 6 mangle)
-		EOT
+		${__ipt}
 		
-		PR_INDEX=\$(${MY_PATH} RULE_LAST_INDEX "$ipt_n" PREROUTING prerouting_rule 1)
-		PR_INDEX=\$((PR_INDEX + 1))
-		[ "$accept_icmp" = "1" ] && $ipt_n -I PREROUTING \$PR_INDEX -p icmp -j PSW
-		[ -z "${is_tproxy}" ] && $ipt_n -I PREROUTING \$PR_INDEX -p tcp -j PSW
-		
-		PR_INDEX=\$(${MY_PATH} RULE_LAST_INDEX "$ipt_m" PREROUTING mwan3 1)
-		$ipt_m -I PREROUTING \$PR_INDEX -p tcp -m socket -j PSW_DIVERT
-		
-		PR_INDEX=\$((PR_INDEX + 1))
-		$ipt_m -I PREROUTING \$PR_INDEX -j PSW
-		
-		WAN_IP=\$(${MY_PATH} get_wan_ip)
-
-		PR_INDEX=\$(${MY_PATH} RULE_LAST_INDEX "$ipt_n" PSW WAN_IP_RETURN -1)
-		if [ \$PR_INDEX -ge 0 ]; then
-			[ ! -z "\${WAN_IP}" ] && $ipt_n -R PSW \$PR_INDEX $(comment "WAN_IP_RETURN") -d "\${WAN_IP}" -j RETURN
-		fi
-
-		PR_INDEX=\$(${MY_PATH} RULE_LAST_INDEX "$ipt_m" PSW WAN_IP_RETURN -1)
-		if [ \$PR_INDEX -ge 0 ]; then
-			[ ! -z "\${WAN_IP}" ] && $ipt_m -R PSW \$PR_INDEX $(comment "WAN_IP_RETURN") -d "\${WAN_IP}" -j RETURN
-		fi
-		
-		[ "$accept_icmpv6" = "1" ] && $ip6t_n -A PREROUTING -p ipv6-icmp -j PSW
-		
-		PR_INDEX=\$(${MY_PATH} RULE_LAST_INDEX "$ip6t_m" PREROUTING mwan3 1)
-		$ip6t_m -I PREROUTING \$PR_INDEX -p tcp -m socket -j PSW_DIVERT
-		
-		PR_INDEX=\$((PR_INDEX + 1))
-		$ip6t_m -I PREROUTING \$PR_INDEX -j PSW
-		
-		PR_INDEX=\$(${MY_PATH} RULE_LAST_INDEX "$ip6t_m" PSW WAN6_IP_RETURN -1)
-		if [ \$PR_INDEX -ge 0 ]; then
-			WAN6_IP=\$(${MY_PATH} get_wan6_ip)
-			[ ! -z "\${WAN6_IP}" ] && $ip6t_m -R PSW \$PR_INDEX $(comment "WAN6_IP_RETURN") -d "\${WAN6_IP}" -j RETURN
-		fi
+		${__ip6t}
 	EOF
 	return 0
 }
@@ -1243,10 +1266,17 @@ stop() {
 	flush_include
 }
 
-case $1 in
+arg1=$1
+shift
+case $arg1 in
 RULE_LAST_INDEX)
-	shift
 	RULE_LAST_INDEX "$@"
+	;;
+insert_rule_before)
+	insert_rule_before "$@"
+	;;
+insert_rule_after)
+	insert_rule_after "$@"
 	;;
 flush_ipset)
 	flush_ipset

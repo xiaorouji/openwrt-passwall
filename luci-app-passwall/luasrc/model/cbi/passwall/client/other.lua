@@ -109,13 +109,15 @@ if os.execute("lsmod | grep -i REDIRECT >/dev/null") == 0 and os.execute("lsmod 
         return self.map:set(section, "tcp_proxy_way", value)
     end
 
-    ---- IPv6 TProxy
-    o = s:option(Flag, "ipv6_tproxy", translate("IPv6 TProxy"),
-                 "<font color='red'>" .. translate(
-                     "Experimental feature. Make sure that your node supports IPv6.") ..
-                     "</font>")
-    o.default = 0
-    o.rmempty = false
+    if os.execute("lsmod | grep -i ip6table_mangle >/dev/null") == 0 then
+        ---- IPv6 TProxy
+        o = s:option(Flag, "ipv6_tproxy", translate("IPv6 TProxy"),
+                    "<font color='red'>" .. translate(
+                        "Experimental feature. Make sure that your node supports IPv6.") ..
+                        "</font>")
+        o.default = 0
+        o.rmempty = false
+    end
 end
 
 o = s:option(Flag, "accept_icmp", translate("Hijacking ICMP (PING)"))

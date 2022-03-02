@@ -2,6 +2,10 @@ local api = require "luci.model.cbi.passwall.api.api"
 local appname = api.appname
 local uci = api.uci
 
+if not arg[1] or not uci:get(appname, arg[1]) then
+    luci.http.redirect(api.url("node_list"))
+end
+
 local ss_encrypt_method_list = {
     "rc4-md5", "aes-128-cfb", "aes-192-cfb", "aes-256-cfb", "aes-128-ctr",
     "aes-192-ctr", "aes-256-ctr", "bf-cfb", "salsa20", "chacha20", "chacha20-ietf",

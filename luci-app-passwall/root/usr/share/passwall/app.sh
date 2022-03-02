@@ -1377,7 +1377,7 @@ start() {
 	start_socks
 
 	[ "$NO_PROXY" == 1 ] || {
-		if [ -z "$(command -v iptables)" ] && [ -z "$(command -v ipset)" ]; then
+		if [ -z "$(command -v iptables-legacy || command -v iptables)" ] || [ -z "$(command -v ipset)" ]; then
 			echolog "系统未安装iptables或ipset，无法透明代理！"
 		else
 			start_redir TCP
