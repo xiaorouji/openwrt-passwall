@@ -27,7 +27,7 @@ local api = require "luci.model.cbi.passwall.api.api"
 			var td = edit_btn[i].parentNode;
 			var new_div = "";
 			//添加"日志"按钮
-			new_div += '<input class="cbi-button cbi-button-add" type="button" value="<%:Log%>" onclick="window.open(\'' + '<%=api.url("server_user_log")%>' + '?id=' + id + '\', \'_blank\')"/>&nbsp;&nbsp;';
+			new_div += '<input class="btn cbi-button cbi-button-add" type="button" value="<%:Log%>" onclick="window.open(\'' + '<%=api.url("server_user_log")%>' + '?id=' + id + '\', \'_blank\')"/>&nbsp;&nbsp;';
 			td.innerHTML = new_div + td.innerHTML;
 		}
 		catch(err) {
