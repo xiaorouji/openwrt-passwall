@@ -136,6 +136,16 @@ function ip_or_mac(val)
     return ""
 end
 
+function iprange(val)
+    if val then
+        local ipStart, ipEnd = val:match("^([^/]+)-([^/]+)$")
+        if (ipStart and datatypes.ip4addr(ipStart)) and (ipEnd and datatypes.ip4addr(ipEnd)) then
+            return true
+        end
+    end
+    return false
+end
+
 function get_valid_nodes()
     local nodes_ping = uci_get_type("global_other", "nodes_ping") or ""
     local nodes = {}

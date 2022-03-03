@@ -22,13 +22,18 @@ local node = uci:get_all("passwall", node_section)
 
 local config = {
     server = node.address .. ":" .. node.port,
+    protocol = node.protocol or "udp",
     obfs = node.hysteria_obfs,
     auth = (node.hysteria_auth_type == "base64") and node.hysteria_auth_password or nil,
     auth_str = (node.hysteria_auth_type == "string") and node.hysteria_auth_password or nil,
+    alpn = node.hysteria_alpn or nil,
     server_name = node.tls_serverName,
     insecure = (node.tls_allowInsecure == "1") and true or false,
     up_mbps = tonumber(node.hysteria_up_mbps) or 10,
     down_mbps = tonumber(node.hysteria_down_mbps) or 50,
+    recv_window_conn = (node.hysteria_recv_window_conn) and tonumber(node.hysteria_recv_window_conn) or nil,
+    recv_window = (node.hysteria_recv_window) and tonumber(node.hysteria_recv_window) or nil,
+    disable_mtu_discovery = (node.hysteria_disable_mtu_discovery) and true or false,
     socks5 = (local_socks_address and local_socks_port) and {
         listen = local_socks_address .. ":" .. local_socks_port,
         timeout = 300,
