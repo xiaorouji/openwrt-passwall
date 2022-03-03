@@ -92,21 +92,22 @@ if os.execute("lsmod | grep -i REDIRECT >/dev/null") == 0 and os.execute("lsmod 
     o:value("redirect", "REDIRECT")
     o:value("tproxy", "TPROXY")
     o:depends("ipv6_tproxy", false)
-    function o.formvalue(self, section)
-        local ipv6_tproxy = ListValue.formvalue(o_ipv6_tproxy, section)
-        if ipv6_tproxy == "1" then
-            return "tproxy"
-        end
-        return ListValue.formvalue(self, section)
+
+    o = s:option(ListValue, "_tcp_proxy_way", translate("TCP Proxy Way"))
+    o.default = "tproxy"
+    o:value("tproxy", "TPROXY")
+    o:depends("ipv6_tproxy", true)
+    o.write = function(self, section, value)
+        return self.map:set(section, "tcp_proxy_way", value)
     end
 
     ---- IPv6 TProxy
-    o_ipv6_tproxy = s:option(Flag, "ipv6_tproxy", translate("IPv6 TProxy"),
+    o = s:option(Flag, "ipv6_tproxy", translate("IPv6 TProxy"),
                  "<font color='red'>" .. translate(
                      "Experimental feature. Make sure that your node supports IPv6.") ..
                      "</font>")
-    o_ipv6_tproxy.default = 0
-    o_ipv6_tproxy.rmempty = false
+    o.default = 0
+    o.rmempty = false
 end
 
 --[[

@@ -122,7 +122,7 @@ add() {
 	returnhome=$(echo "${PROXY_MODE}" | grep "returnhome")
 	chnlist=$(echo "${PROXY_MODE}" | grep "chnroute")
 	gfwlist=$(echo "${PROXY_MODE}" | grep "gfwlist")
-	mkdir -p "${TMP_DNSMASQ_PATH}" "${DNSMASQ_PATH}" "/var/dnsmasq.d"
+	mkdir -p "${TMP_DNSMASQ_PATH}" "${DNSMASQ_PATH}" "/tmp/dnsmasq.d"
 
 	if [ "${DNS_MODE}" = "nonuse" ]; then
 		echolog "  - 不对域名进行分流解析"
@@ -249,7 +249,7 @@ add() {
 }
 
 del() {
-	rm -rf /var/dnsmasq.d/dnsmasq-$CONFIG.conf
+	rm -rf /tmp/dnsmasq.d/dnsmasq-$CONFIG.conf
 	rm -rf $DNSMASQ_PATH/dnsmasq-$CONFIG.conf
 	rm -rf $TMP_DNSMASQ_PATH
 }

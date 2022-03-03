@@ -142,11 +142,11 @@ end
 
 function get_now_use_node()
 	local e = {}
-	local data, code, msg = nixio.fs.readfile("/var/etc/passwall/id/TCP")
+	local data, code, msg = nixio.fs.readfile("/tmp/etc/passwall/id/TCP")
 	if data then
 		e["TCP"] = util.trim(data)
 	end
-	local data, code, msg = nixio.fs.readfile("/var/etc/passwall/id/UDP")
+	local data, code, msg = nixio.fs.readfile("/tmp/etc/passwall/id/UDP")
 	if data then
 		e["UDP"] = util.trim(data)
 	end
@@ -157,11 +157,11 @@ end
 function get_redir_log()
 	local proto = luci.http.formvalue("proto")
 	proto = proto:upper()
-	if proto == "UDP" and (ucic:get(appname, "@global[0]", "udp_node") or "nil") == "tcp" and not nixio.fs.access("/var/etc/passwall/" .. proto .. ".log") then
+	if proto == "UDP" and (ucic:get(appname, "@global[0]", "udp_node") or "nil") == "tcp" and not nixio.fs.access("/tmp/etc/passwall/" .. proto .. ".log") then
 		proto = "TCP"
 	end
-	if nixio.fs.access("/var/etc/passwall/" .. proto .. ".log") then
-		local content = luci.sys.exec("cat /var/etc/passwall/" .. proto .. ".log")
+	if nixio.fs.access("/tmp/etc/passwall/" .. proto .. ".log") then
+		local content = luci.sys.exec("cat /tmp/etc/passwall/" .. proto .. ".log")
 		content = content:gsub("\n", "<br />")
 		luci.http.write(content)
 	else
@@ -170,12 +170,12 @@ function get_redir_log()
 end
 
 function get_log()
-	-- luci.sys.exec("[ -f /var/log/passwall.log ] && sed '1!G;h;$!d' /var/log/passwall.log > /var/log/passwall_show.log")
-	luci.http.write(luci.sys.exec("[ -f '/var/log/passwall.log' ] && cat /var/log/passwall.log"))
+	-- luci.sys.exec("[ -f /tmp/log/passwall.log ] && sed '1!G;h;$!d' /tmp/log/passwall.log > /tmp/log/passwall_show.log")
+	luci.http.write(luci.sys.exec("[ -f '/tmp/log/passwall.log' ] && cat /tmp/log/passwall.log"))
 end
 
 function clear_log()
-	luci.sys.call("echo '' > /var/log/passwall.log")
+	luci.sys.call("echo '' > /tmp/log/passwall.log")
 end
 
 function status()
@@ -392,8 +392,8 @@ end
 
 function server_user_log()
 	local id = luci.http.formvalue("id")
-	if nixio.fs.access("/var/etc/passwall_server/" .. id .. ".log") then
-		local content = luci.sys.exec("cat /var/etc/passwall_server/" .. id .. ".log")
+	if nixio.fs.access("/tmp/etc/passwall_server/" .. id .. ".log") then
+		local content = luci.sys.exec("cat /tmp/etc/passwall_server/" .. id .. ".log")
 		content = content:gsub("\n", "<br />")
 		luci.http.write(content)
 	else
@@ -402,11 +402,11 @@ function server_user_log()
 end
 
 function server_get_log()
-	luci.http.write(luci.sys.exec("[ -f '/var/log/passwall_server.log' ] && cat /var/log/passwall_server.log"))
+	luci.http.write(luci.sys.exec("[ -f '/tmp/log/passwall_server.log' ] && cat /tmp/log/passwall_server.log"))
 end
 
 function server_clear_log()
-	luci.sys.call("echo '' > /var/log/passwall_server.log")
+	luci.sys.call("echo '' > /tmp/log/passwall_server.log")
 end
 
 function kcptun_check()

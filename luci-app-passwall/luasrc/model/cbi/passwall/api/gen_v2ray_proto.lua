@@ -98,7 +98,7 @@ table.insert(outbounds, {
 
 local config = {
     log = {
-        -- error = string.format("/var/etc/passwall/%s.log", node[".name"]),
+        -- error = string.format("/tmp/etc/passwall/%s.log", node[".name"]),
         loglevel = "warning"
     },
     -- 传入连接
