@@ -17,7 +17,7 @@ s:tab("proxy_list3", translate("Proxy List") .. " 3")
 
 ---- Direct Hosts
 local direct_host = string.format("/usr/share/%s/rules/direct_host", appname)
-o = s:taboption("direct_list", TextValue, "direct_hosts", "", "<font color='red'>" .. translate("Join the direct hosts list of domain names will not proxy.") .. "</font>")
+o = s:taboption("direct_list", TextValue, "direct_host", "", "<font color='red'>" .. translate("Join the direct hosts list of domain names will not proxy.") .. "</font>")
 o.rows = 15
 o.wrap = "off"
 o.cfgvalue = function(self, section) return fs.readfile(direct_host) or "" end
