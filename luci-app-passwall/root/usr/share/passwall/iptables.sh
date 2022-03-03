@@ -235,7 +235,7 @@ load_acl() {
 							[ "$tcp_proxy_mode" = "global" ] && d_server=${d_server}#${_dns_port}
 							echo "server=${d_server}" >> $TMP_ACL_PATH/$sid/dnsmasq.conf
 							source $APP_PATH/helper_${DNS_N}.sh add DNS_MODE=$dns_mode TMP_DNSMASQ_PATH=$TMP_ACL_PATH/$sid/dnsmasq.d DNSMASQ_CONF_FILE=/dev/null LOCAL_DNS=$LOCAL_DNS TUN_DNS=127.0.0.1#${_dns_port} TCP_NODE=$tcp_node PROXY_MODE=${tcp_proxy_mode} NO_LOGIC_LOG=1
-							ln_start_bin "$(first_type dnsmasq)" "dnsmasq_${sid}" "/dev/null" -C $TMP_ACL_PATH/$sid/dnsmasq.conf -x $TMP_ACL_PATH/$sid/dnsmasq.pid
+							ln_run "$(first_type dnsmasq)" "dnsmasq_${sid}" "/dev/null" -C $TMP_ACL_PATH/$sid/dnsmasq.conf -x $TMP_ACL_PATH/$sid/dnsmasq.pid
 							eval node_${tcp_node}_$(echo -n "${tcp_proxy_mode}${dns_forward}" | md5sum | cut -d " " -f1)=${dnsmasq_port}
 						}
 						if [ "$tcp_node" = "$TCP_NODE" ]; then
@@ -725,6 +725,7 @@ add_firewall_rule() {
 	$ipt_n -A PSW $(dst $IPSET_VPSIPLIST) -j RETURN
 	$ipt_n -A PSW $(dst $IPSET_WHITELIST) -j RETURN
 	$ipt_n -A PSW -m mark --mark 0xff -j RETURN
+	
 	PR_INDEX=$(RULE_LAST_INDEX "$ipt_n" PREROUTING prerouting_rule 1)
 	PR_INDEX=$((PR_INDEX + 1))
 	[ "$accept_icmp" = "1" ] && $ipt_n -I PREROUTING $PR_INDEX -p icmp -j PSW
@@ -740,11 +741,11 @@ add_firewall_rule() {
 	$ipt_n -N PSW_REDIRECT
 	$ipt_n -I PREROUTING 1 -j PSW_REDIRECT
 
-	# 据说能提升性能？
-	PR_INDEX=$(RULE_LAST_INDEX "$ipt_m" PREROUTING mwan3 1)
 	$ipt_m -N PSW_DIVERT
 	$ipt_m -A PSW_DIVERT -j MARK --set-mark 1
 	$ipt_m -A PSW_DIVERT -j ACCEPT
+	
+	PR_INDEX=$(RULE_LAST_INDEX "$ipt_m" PREROUTING mwan3 1)
 	$ipt_m -I PREROUTING $PR_INDEX -p tcp -m socket -j PSW_DIVERT
 
 	$ipt_m -N PSW
@@ -753,6 +754,7 @@ add_firewall_rule() {
 	$ipt_m -A PSW $(dst $IPSET_WHITELIST) -j RETURN
 	$ipt_m -A PSW -m mark --mark 0xff -j RETURN
 	$ipt_m -A PSW $(dst $IPSET_BLOCKLIST) -j DROP
+	
 	PR_INDEX=$((PR_INDEX + 1))
 	$ipt_m -I PREROUTING $PR_INDEX -j PSW
 	unset PR_INDEX
@@ -767,7 +769,6 @@ add_firewall_rule() {
 	ip rule add fwmark 1 lookup 100
 	ip route add local 0.0.0.0/0 dev lo table 100
 
-	# 据说能提升性能？
 	$ip6t_m -N PSW_DIVERT
 	$ip6t_m -A PSW_DIVERT -j MARK --set-mark 1
 	$ip6t_m -A PSW_DIVERT -j ACCEPT
@@ -1013,9 +1014,36 @@ flush_include() {
 
 gen_include() {
 	flush_include
-	cat <<-EOF >>$FWI
-		echo "" > $LOG_FILE
-		/etc/init.d/passwall reload
+	extract_rules() {
+		local _ipt="iptables"
+		[ "$1" == "6" ] && _ipt="ip6tables"
+
+		echo "*$2"
+		${_ipt}-save -t $2 | grep "PSW" | grep -v "\-j PSW$" | sed -e "s/^-A \(OUTPUT\|PREROUTING\)/-I \1 1/"
+		echo 'COMMIT'
+	}
+	cat <<-EOF >> $FWI
+		iptables-save -c | grep -v "PSW" | iptables-restore -c
+		iptables-restore -n <<-EOT
+		$(extract_rules 4 nat)
+		$(extract_rules 4 mangle)
+		EOT
+		ip6tables-save -c | grep -v "PSW" | ip6tables-restore -c
+		ip6tables-restore -n <<-EOT
+		$(extract_rules 6 nat)
+		$(extract_rules 6 mangle)
+		EOT
+		
+		PR_INDEX=\$(/usr/share/passwall/iptables.sh RULE_LAST_INDEX "$ipt_n" PREROUTING prerouting_rule 1)
+		PR_INDEX=\$((PR_INDEX + 1))
+		[ "$accept_icmp" = "1" ] && $ipt_n -I PREROUTING \$PR_INDEX -p icmp -j PSW
+		[ -z "${is_tproxy}" ] && $ipt_n -I PREROUTING \$PR_INDEX -p tcp -j PSW
+		
+		PR_INDEX=\$(/usr/share/passwall/iptables.sh RULE_LAST_INDEX "$ipt_m" PREROUTING mwan3 1)
+		$ipt_m -I PREROUTING \$PR_INDEX -p tcp -m socket -j PSW_DIVERT
+		
+		PR_INDEX=\$((PR_INDEX + 1))
+		$ipt_m -I PREROUTING \$PR_INDEX -j PSW
 	EOF
 	return 0
 }
@@ -1031,6 +1059,10 @@ stop() {
 }
 
 case $1 in
+RULE_LAST_INDEX)
+	shift
+	RULE_LAST_INDEX "$@"
+	;;
 flush_ipset)
 	flush_ipset
 	;;
