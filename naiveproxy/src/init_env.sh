@@ -65,6 +65,7 @@ use_kerberos=false
 enable_mdns=false
 enable_reporting=false
 include_transport_security_state_preload_list=false
+use_nss_certs=false
 
 target_os=\"openwrt\"
 target_cpu=\"${naive_arch}\"
