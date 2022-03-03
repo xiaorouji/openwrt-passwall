@@ -457,6 +457,9 @@ msgstr "当使用时，本机将首先连接到此节点，然后再使用此节
 msgid "Domain Strategy"
 msgstr "域名解析策略"
 
+msgid "Domain matcher"
+msgstr "域名匹配算法"
+
 msgid "'AsIs': Only use domain for routing. Default value."
 msgstr "AsIs：只使用域名进行路由选择。默认值。"
 
@@ -1323,3 +1326,27 @@ msgstr "客户端文件不适合当前设备。"
 
 msgid "Can't move new file to path: %s"
 msgstr "无法移动新文件到：%s"
+
+msgid "Mux concurrency"
+msgstr "最大并发连接数"
+
+msgid "Mux idle timeout"
+msgstr "最大闲置时间"
+
+msgid "Enable early data"
+msgstr "启用前置数据"
+
+msgid "Early data length"
+msgstr "前置数据最大长度"
+
+msgid "Health check"
+msgstr "健康检查"
+
+msgid "Idle timeout"
+msgstr "闲置时间"
+
+msgid "Health check timeout"
+msgstr "检查超时时间"
+
+msgid "Permit without stream"
+msgstr "无子连接时的健康检查"
