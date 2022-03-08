@@ -2,10 +2,11 @@ module("luci.model.cbi.passwall.api.gen_v2ray", package.seeall)
 local api = require "luci.model.cbi.passwall.api.api"
 
 local var = api.get_args(arg)
-local node_section = var["-node"]
-local proto = var["-proto"]
-local proxy_way = var["-proxy_way"]
-local redir_port = var["-redir_port"]
+local flag = var["-flag"]
+local node_id = var["-node"]
+local tcp_proxy_way = var["-tcp_proxy_way"] or "redirect"
+local tcp_redir_port = var["-tcp_redir_port"]
+local udp_redir_port = var["-udp_redir_port"]
 local sniffing = var["-sniffing"]
 local route_only = var["-route_only"]
 local local_socks_address = var["-local_socks_address"] or "0.0.0.0"
@@ -28,7 +29,6 @@ local dns_socks_address = var["-dns_socks_address"]
 local dns_socks_port = var["-dns_socks_port"]
 local dns_fakedns = var["-dns_fakedns"]
 local loglevel = var["-loglevel"] or "warning"
-local network = proto
 local new_port
 
 local uci = api.uci
@@ -79,10 +79,8 @@ function gen_outbound(node, tag, proxy_table)
                 node.protocol = "socks"
                 node.transport = "tcp"
             else
-                local node_type = proto or "socks"
                 local relay_port = node.port
                 new_port = get_new_port()
-                node.port = new_port
                 sys.call(string.format('/usr/share/%s/app.sh run_socks "%s"> /dev/null',
                     appname,
                     string.format("flag=%s node=%s bind=%s socks_port=%s config_file=%s relay_port=%s",
@@ -90,14 +88,16 @@ function gen_outbound(node, tag, proxy_table)
                         node_id, --node
                         "127.0.0.1", --bind
                         new_port, --socks port
-                        string.format("/tmp/etc/%s/v2_%s_%s_%s.json", appname, node_type, node_id, new_port), --config file
+                        string.format("/tmp/etc/%s/%s_socks_%s_%s.json", appname, flag, node_id, new_port), --config file
                         (proxy == 1 and proxy_tag ~= "nil" and relay_port) and tostring(relay_port) or "" --relay port
                         )
                     )
                 )
+                node = {}
                 node.protocol = "socks"
                 node.transport = "tcp"
                 node.address = "127.0.0.1"
+                node.port = new_port
             end
             node.stream_security = "none"
         else
@@ -205,7 +205,7 @@ function gen_outbound(node, tag, proxy_table)
                         port = tonumber(node.port),
                         method = node.method or nil,
                         flow = node.flow or nil,
-                        ivCheck = (node.iv_check == "1") and true or false,
+                        ivCheck = (node.protocol == "shadowsocks") and node.iv_check == "1" or nil,
                         password = node.password or "",
                         users = (node.username and node.password) and {
                             {
@@ -235,8 +235,8 @@ function gen_outbound(node, tag, proxy_table)
     return result
 end
 
-if node_section then
-    local node = uci:get_all(appname, node_section)
+if node_id then
+    local node = uci:get_all(appname, node_id)
     if local_socks_port then
         local inbound = {
             listen = local_socks_address,
@@ -255,7 +255,6 @@ if node_section then
             }
         end
         table.insert(inbounds, inbound)
-        network = "tcp,udp"
     end
     if local_http_port then
         local inbound = {
@@ -275,12 +274,22 @@ if node_section then
         table.insert(inbounds, inbound)
     end
 
-    if redir_port then
+    if tcp_redir_port then
         table.insert(inbounds, {
-            port = tonumber(redir_port),
+            port = tonumber(tcp_redir_port),
             protocol = "dokodemo-door",
-            settings = {network = proto, followRedirect = true},
-            streamSettings = {sockopt = {tproxy = proxy_way}},
+            settings = {network = "tcp", followRedirect = true},
+            streamSettings = {sockopt = {tproxy = tcp_proxy_way}},
+            sniffing = {enabled = sniffing and true or false, destOverride = {"http", "tls", (dns_fakedns) and "fakedns"}, metadataOnly = false, routeOnly = route_only and true or nil}
+        })
+    end
+
+    if udp_redir_port then
+        table.insert(inbounds, {
+            port = tonumber(udp_redir_port),
+            protocol = "dokodemo-door",
+            settings = {network = "udp", followRedirect = true},
+            streamSettings = {sockopt = {tproxy = "tproxy"}},
             sniffing = {enabled = sniffing and true or false, destOverride = {"http", "tls", (dns_fakedns) and "fakedns"}, metadataOnly = false, routeOnly = route_only and true or nil}
         })
     end
@@ -374,103 +383,105 @@ if node_section then
 
         uci:foreach(appname, "shunt_rules", function(e)
             local name = e[".name"]
-            local _node_id = node[name] or "nil"
-            local proxy_tag = node[name .. "_proxy_tag"] or "nil"
-            local outboundTag
-            if _node_id == "_direct" then
-                outboundTag = "direct"
-            elseif _node_id == "_blackhole" then
-                outboundTag = "blackhole"
-            elseif _node_id == "_default" then
-                outboundTag = "default"
-            else
-                if _node_id ~= "nil" then
-                    local _node = uci:get_all(appname, _node_id)
-                    if _node and api.is_normal_node(_node) then
-                        local new_outbound
-                        for index, value in ipairs(outbounds) do
-                            if value["_flag_tag"] == _node_id and value["_flag_proxy_tag"] == proxy_tag then
-                                new_outbound = api.clone(value)
-                                break
-                            end
-                        end
-                        if new_outbound then
-                            new_outbound["tag"] = name
-                            table.insert(outbounds, new_outbound)
-                            outboundTag = name
-                        else
-                            if _node.type ~= "V2ray" and _node.type ~= "Xray" then
-                                if proxy_tag ~= "nil" then
-                                    new_port = get_new_port()
-                                    table.insert(inbounds, {
-                                        tag = "proxy_" .. name,
-                                        listen = "127.0.0.1",
-                                        port = new_port,
-                                        protocol = "dokodemo-door",
-                                        settings = {network = "tcp,udp", address = _node.address, port = tonumber(_node.port)}
-                                    })
-                                    if _node.tls_serverName == nil then
-                                        _node.tls_serverName = _node.address
-                                    end
-                                    _node.address = "127.0.0.1"
-                                    _node.port = new_port
-                                    table.insert(rules, 1, {
-                                        type = "field",
-                                        inboundTag = {"proxy_" .. name},
-                                        outboundTag = proxy_tag
-                                    })
+            if name and e.remarks then
+                local _node_id = node[name] or "nil"
+                local proxy_tag = node[name .. "_proxy_tag"] or "nil"
+                local outboundTag
+                if _node_id == "_direct" then
+                    outboundTag = "direct"
+                elseif _node_id == "_blackhole" then
+                    outboundTag = "blackhole"
+                elseif _node_id == "_default" then
+                    outboundTag = "default"
+                else
+                    if _node_id ~= "nil" then
+                        local _node = uci:get_all(appname, _node_id)
+                        if _node and api.is_normal_node(_node) then
+                            local new_outbound
+                            for index, value in ipairs(outbounds) do
+                                if value["_flag_tag"] == _node_id and value["_flag_proxy_tag"] == proxy_tag then
+                                    new_outbound = api.clone(value)
+                                    break
                                 end
                             end
-                            local _outbound = gen_outbound(_node, name, { proxy = (proxy_tag ~= "nil") and 1 or 0, tag = (proxy_tag ~= "nil") and proxy_tag or nil })
-                            if _outbound then
-                                table.insert(outbounds, _outbound)
+                            if new_outbound then
+                                new_outbound["tag"] = name
+                                table.insert(outbounds, new_outbound)
                                 outboundTag = name
+                            else
+                                if _node.type ~= "V2ray" and _node.type ~= "Xray" then
+                                    if proxy_tag ~= "nil" then
+                                        new_port = get_new_port()
+                                        table.insert(inbounds, {
+                                            tag = "proxy_" .. name,
+                                            listen = "127.0.0.1",
+                                            port = new_port,
+                                            protocol = "dokodemo-door",
+                                            settings = {network = "tcp,udp", address = _node.address, port = tonumber(_node.port)}
+                                        })
+                                        if _node.tls_serverName == nil then
+                                            _node.tls_serverName = _node.address
+                                        end
+                                        _node.address = "127.0.0.1"
+                                        _node.port = new_port
+                                        table.insert(rules, 1, {
+                                            type = "field",
+                                            inboundTag = {"proxy_" .. name},
+                                            outboundTag = proxy_tag
+                                        })
+                                    end
+                                end
+                                local _outbound = gen_outbound(_node, name, { proxy = (proxy_tag ~= "nil") and 1 or 0, tag = (proxy_tag ~= "nil") and proxy_tag or nil })
+                                if _outbound then
+                                    table.insert(outbounds, _outbound)
+                                    outboundTag = name
+                                end
                             end
                         end
                     end
                 end
-            end
-            if outboundTag then
-                if outboundTag == "default" then 
-                    outboundTag = default_outboundTag
-                end
-                local protocols = nil
-                if e["protocol"] and e["protocol"] ~= "" then
-                    protocols = {}
-                    string.gsub(e["protocol"], '[^' .. " " .. ']+', function(w)
-                        table.insert(protocols, w)
-                    end)
-                end
-                if e.domain_list then
-                    local _domain = {}
-                    string.gsub(e.domain_list, '[^' .. "\r\n" .. ']+', function(w)
-                        table.insert(_domain, w)
-                    end)
-                    table.insert(rules, {
-                        type = "field",
-                        outboundTag = outboundTag,
-                        domain = _domain,
-                        protocol = protocols
-                    })
-                end
-                if e.ip_list then
-                    local _ip = {}
-                    string.gsub(e.ip_list, '[^' .. "\r\n" .. ']+', function(w)
-                        table.insert(_ip, w)
-                    end)
-                    table.insert(rules, {
-                        type = "field",
-                        outboundTag = outboundTag,
-                        ip = _ip,
-                        protocol = protocols
-                    })
-                end
-                if not e.domain_list and not e.ip_list and protocols then
-                    table.insert(rules, {
-                        type = "field",
-                        outboundTag = outboundTag,
-                        protocol = protocols
-                    })
+                if outboundTag then
+                    if outboundTag == "default" then 
+                        outboundTag = default_outboundTag
+                    end
+                    local protocols = nil
+                    if e["protocol"] and e["protocol"] ~= "" then
+                        protocols = {}
+                        string.gsub(e["protocol"], '[^' .. " " .. ']+', function(w)
+                            table.insert(protocols, w)
+                        end)
+                    end
+                    if e.domain_list then
+                        local _domain = {}
+                        string.gsub(e.domain_list, '[^' .. "\r\n" .. ']+', function(w)
+                            table.insert(_domain, w)
+                        end)
+                        table.insert(rules, {
+                            type = "field",
+                            outboundTag = outboundTag,
+                            domain = _domain,
+                            protocol = protocols
+                        })
+                    end
+                    if e.ip_list then
+                        local _ip = {}
+                        string.gsub(e.ip_list, '[^' .. "\r\n" .. ']+', function(w)
+                            table.insert(_ip, w)
+                        end)
+                        table.insert(rules, {
+                            type = "field",
+                            outboundTag = outboundTag,
+                            ip = _ip,
+                            protocol = protocols
+                        })
+                    end
+                    if not e.domain_list and not e.ip_list and protocols then
+                        table.insert(rules, {
+                            type = "field",
+                            outboundTag = outboundTag,
+                            protocol = protocols
+                        })
+                    end
                 end
             end
         end)
@@ -479,7 +490,7 @@ if node_section then
             table.insert(rules, {
                 type = "field",
                 outboundTag = default_outboundTag,
-                network = network
+                network = "tcp,udp"
             })
         end
 
@@ -537,7 +548,7 @@ if dns_server or dns_fakedns then
         dns.hosts = {
             [doh_host] = dns_server
         }
-        if not redir_port and not dns_socks_port then
+        if not tcp_redir_port and not dns_socks_port then
             doh_url = doh_url:gsub("https://", "https+local://")
         end
         dns.servers = {
@@ -546,7 +557,7 @@ if dns_server or dns_fakedns then
     end
 
     if dns_tcp_server then
-        if not redir_port and not dns_socks_port then
+        if not tcp_redir_port and not dns_socks_port then
             dns_tcp_server = dns_tcp_server:gsub("tcp://", "tcp+local://")
         end
         dns.servers = {
@@ -615,9 +626,9 @@ if dns_server or dns_fakedns then
         })
     end
 
-    if node_section and (proto and proto:find("tcp")) and redir_port and not dns_fakedns then
-        local outboundTag = node_section
-        local node = uci:get_all(appname, node_section)
+    if node_id and tcp_redir_port and not dns_fakedns then
+        local outboundTag = node_id
+        local node = uci:get_all(appname, node_id)
         if node.protocol == "_shunt" then
             outboundTag = "default"
         end

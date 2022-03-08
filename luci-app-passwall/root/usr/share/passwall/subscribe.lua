@@ -224,7 +224,9 @@ do
 
 			local rules = {}
 			uci:foreach(appname, "shunt_rules", function(e)
-				table.insert(rules, e)
+				if e[".name"] and e.remarks then
+					table.insert(rules, e)
+				end
 			end)
 			table.insert(rules, {
 				[".name"] = "default_node",

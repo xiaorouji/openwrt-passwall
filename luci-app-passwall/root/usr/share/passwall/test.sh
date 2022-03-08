@@ -107,6 +107,7 @@ test_node() {
 			/usr/share/${CONFIG}/app.sh run_socks flag="test_node_${node_id}" node=${node_id} bind=127.0.0.1 socks_port=${_tmp_port} config_file=/tmp/etc/${CONFIG}/test_node_${node_id}.json
 			local curlx="socks5h://127.0.0.1:${_tmp_port}"
 		fi
+		sleep 1s
 		_proxy_status=$(test_url "https://www.google.com/generate_204" ${retry_num} ${connect_timeout} "-x $curlx")
 		pgrep -af "test_node_${node_id}" | awk '! /test\.sh/{print $1}' | xargs kill -9 >/dev/null 2>&1
 		rm -rf "/tmp/etc/${CONFIG}/test_node_${node_id}.json"
@@ -161,7 +162,7 @@ test_auto_switch() {
 		[ $? -eq 0 ] && {
 			#主节点正常，切换到主节点
 			echolog "自动切换检测：${TYPE}主节点【$(config_n_get $main_node type)：[$(config_n_get $main_node remarks)]】正常，切换到主节点！"
-			/usr/share/${CONFIG}/app.sh node_switch ${TYPE} ${main_node} ${shunt_logic} 1
+			/usr/share/${CONFIG}/app.sh node_switch flag=${TYPE} new_node=${main_node} shunt_logic=${shunt_logic}
 			[ $? -eq 0 ] && {
 				echolog "自动切换检测：${TYPE}节点切换完毕！"
 				[ "$shunt_logic" != "0" ] && {
@@ -209,7 +210,7 @@ test_auto_switch() {
 				uci commit $CONFIG
 			}
 			echolog "自动切换检测：${TYPE}节点【$(config_n_get $new_node type)：[$(config_n_get $new_node remarks)]】正常，切换到此节点！"
-			/usr/share/${CONFIG}/app.sh node_switch ${TYPE} ${new_node} ${shunt_logic} 1
+			/usr/share/${CONFIG}/app.sh node_switch flag=${TYPE} new_node=${new_node} shunt_logic=${shunt_logic}
 			[ $? -eq 0 ] && {
 				[ "$restore_switch" == "1" ] && [ "$shunt_logic" != "0" ] && {
 					local tcp_node=$(config_t_get global tcp_node nil)
