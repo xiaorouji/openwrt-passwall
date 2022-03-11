@@ -309,9 +309,8 @@ run_v2ray() {
 	[ -z "$type" ] && return 1
 	[ -n "$log_file" ] || local log_file="/dev/null"
 	[ -z "$loglevel" ] && local loglevel=$(config_t_get global loglevel "warning")
-	[ -n "$flag" ] && pgrep -af "$TMP_BIN_PATH" | awk -v P1="${flag}" 'BEGIN{IGNORECASE=1}$0~P1{print $1}' | xargs kill -9 >/dev/null 2>&1
-	[ -n "$node" ] && _extra_param="${_extra_param} -node $node"
 	[ -n "$flag" ] && _extra_param="${_extra_param} -flag $flag"
+	[ -n "$node" ] && _extra_param="${_extra_param} -node $node"
 	[ -n "$tcp_redir_port" ] && _extra_param="${_extra_param} -tcp_redir_port $tcp_redir_port"
 	[ -n "$udp_redir_port" ] && _extra_param="${_extra_param} -udp_redir_port $udp_redir_port"
 	[ -n "$socks_address" ] && _extra_param="${_extra_param} -local_socks_address $socks_address"
@@ -376,9 +375,18 @@ run_dns2socks() {
 run_socks() {
 	local flag node bind socks_port config_file http_port http_config_file relay_port log_file
 	eval_set_val $@
+	[ -n "$config_file" ] && config_file=$TMP_PATH/$config_file
 	[ -n "$http_port" ] || http_port=0
-	[ -n "$http_config_file" ] || http_config_file="nil"
-	[ -n "$log_file" ] || log_file="/dev/null"
+	if [ -n "$http_config_file" ]; then
+		http_config_file=$TMP_PATH/$http_config_file
+	else
+		http_config_file="nil"
+	fi
+	if [ -n "$log_file" ]; then
+		log_file=$TMP_PATH/$log_file
+	else
+		log_file="/dev/null"
+	fi
 	local type=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
 	local remarks=$(config_n_get $node remarks)
 	local server_host=$(config_n_get $node address)
@@ -437,7 +445,7 @@ run_socks() {
 			local _v2ray_args="http_port=$http_port"
 			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
 		}
-		run_v2ray node=$node socks_port=$socks_port config_file=$config_file log_file=$log_file ${_v2ray_args}
+		run_v2ray flag=$flag node=$node socks_port=$socks_port config_file=$config_file log_file=$log_file ${_v2ray_args}
 	;;
 	trojan-go)
 		lua $API_GEN_TROJAN -node $node -run_type client -local_addr $bind -local_port $socks_port -server_host $server_host -server_port $port > $config_file
@@ -502,7 +510,12 @@ run_socks() {
 run_redir() {
 	local node proto bind local_port config_file log_file
 	eval_set_val $@
-	[ -n "$log_file" ] || log_file="/dev/null"
+	[ -n "$config_file" ] && config_file=$TMP_PATH/$config_file
+	if [ -n "$log_file" ]; then
+		log_file=$TMP_PATH/$log_file
+	else
+		log_file="/dev/null"
+	fi
 	local proto=$(echo $proto | tr 'A-Z' 'a-z')
 	local PROTO=$(echo $proto | tr 'a-z' 'A-Z')
 	local type=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
@@ -535,7 +548,7 @@ run_redir() {
 		;;
 		v2ray|\
 		xray)
-			run_v2ray node=$node udp_redir_port=$local_port config_file=$config_file log_file=$log_file
+			run_v2ray flag=UDP node=$node udp_redir_port=$local_port config_file=$config_file log_file=$log_file
 		;;
 		trojan-go)
 			local loglevel=$(config_t_get global trojan_loglevel "2")
@@ -614,6 +627,7 @@ run_redir() {
 		;;
 		v2ray|\
 		xray)
+			local _flag="TCP"
 			local _v2ray_args=""
 			[ "$tcp_node_socks" = "1" ] && {
 				_v2ray_args="${_v2ray_args} socks_port=${tcp_node_socks_port}"
@@ -626,6 +640,7 @@ run_redir() {
 			[ "$TCP_UDP" = "1" ] && {
 				UDP_REDIR_PORT=$local_port
 				UDP_NODE="nil"
+				_flag="TCP_UDP"
 				_v2ray_args="${_v2ray_args} udp_redir_port=${UDP_REDIR_PORT}"
 				config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
 			}
@@ -657,7 +672,7 @@ run_redir() {
 					;;
 				esac
 			}
-			run_v2ray node=$node tcp_redir_port=$local_port config_file=$config_file log_file=$log_file ${_v2ray_args}
+			run_v2ray flag=$_flag node=$node tcp_redir_port=$local_port config_file=$config_file log_file=$log_file ${_v2ray_args}
 		;;
 		trojan-go)
 			[ "$TCP_UDP" = "1" ] && {
@@ -762,10 +777,10 @@ run_redir() {
 		([ "$type" != "v2ray" ] && [ "$type" != "xray" ]) && {
 			[ "$tcp_node_socks" = "1" ] && {
 				local port=$tcp_node_socks_port
-				local config_file=$TMP_PATH/SOCKS_$tcp_node_socks_id.json
-				local log_file=$TMP_PATH/SOCKS_$tcp_node_socks_id.log
+				local config_file="SOCKS_$tcp_node_socks_id.json"
+				local log_file="SOCKS_$tcp_node_socks_id.log"
 				local http_port=0
-				local http_config_file=$TMP_PATH/HTTP2SOCKS_$tcp_node_http_id.json
+				local http_config_file="HTTP2SOCKS_$tcp_node_http_id.json"
 				[ "$tcp_node_http" = "1" ] && {
 					http_port=$tcp_node_http_port
 				}
@@ -787,8 +802,8 @@ node_switch() {
 		local node=$2
 		pgrep -af "${TMP_PATH}" | awk -v P1="${FLAG}" 'BEGIN{IGNORECASE=1}$0~P1 && !/acl\/|acl_/{print $1}' | xargs kill -9 >/dev/null 2>&1
 		rm -rf $TMP_PATH/${FLAG}*
-		local config_file=$TMP_PATH/${FLAG}.json
-		local log_file=$TMP_PATH/${FLAG}.log
+		local config_file="${FLAG}.json"
+		local log_file="${FLAG}.log"
 		local port=$(cat $TMP_PORT_PATH/${FLAG})
 		
 		[ "$SOCKS_ENABLED" = "1" ] && {
@@ -852,8 +867,8 @@ start_redir() {
 	eval node=\$${proto}_NODE
 	if [ "$node" != "nil" ]; then
 		TYPE=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
-		local config_file=$TMP_PATH/${proto}.json
-		local log_file=$TMP_PATH/${proto}.log
+		local config_file="${proto}.json"
+		local log_file="${proto}.log"
 		eval current_port=\$${proto}_REDIR_PORT
 		local port=$(echo $(get_new_port $current_port $proto))
 		eval ${proto}_REDIR=$port
@@ -884,10 +899,10 @@ start_socks() {
 				local node=$(config_n_get $id node nil)
 				[ "$node" == "nil" ] && continue
 				local port=$(config_n_get $id port)
-				local config_file=$TMP_PATH/SOCKS_${id}.json
-				local log_file=$TMP_PATH/SOCKS_${id}.log
+				local config_file="SOCKS_${id}.json"
+				local log_file="SOCKS_${id}.log"
 				local http_port=$(config_n_get $id http_port 0)
-				local http_config_file=$TMP_PATH/HTTP2SOCKS_${id}.json
+				local http_config_file="HTTP2SOCKS_${id}.json"
 				[ "$node" == "tcp" ] && {
 					tcp_node_socks=1
 					tcp_node_socks_port=$port

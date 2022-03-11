@@ -198,9 +198,9 @@ add() {
 			[ "$shunt_node_id" = "_blackhole" ] && continue
 			local str=$(echo -n $(config_n_get $shunt_id domain_list | grep -v 'regexp:\|geosite:\|ext:' | sed 's/domain:\|full:\|//g' | tr -s "\r\n" "\n" | sort -u) | sed "s/ /|/g")
 			[ -n "$str" ] && count_hosts_str="${count_hosts_str}|${str}"
+			fwd_dns="${LOCAL_DNS}"
 			[ "$shunt_node_id" = "_direct" ] && {
-				[ -n "$str" ] && echo $str | sed "s/|/\n/g" | gen_items ipsets="whitelist,whitelist6" "${LOCAL_DNS}" "${TMP_DNSMASQ_PATH}/13-shunt_host.conf"
-				msg_dns="${LOCAL_DNS}"
+				[ -n "$str" ] && echo $str | sed "s/|/\n/g" | gen_items ipsets="whitelist,whitelist6" dnss="${fwd_dns}" outf="${TMP_DNSMASQ_PATH}/13-shunt_host.conf" ipsetoutf="${TMP_DNSMASQ_PATH}/ipset.conf"
 				continue
 			}
 			local shunt_node=$(config_n_get $shunt_node_id address nil)
@@ -214,13 +214,12 @@ add() {
 				fi
 				[ -z "${only_global}" ] && {
 					fwd_dns="${TUN_DNS}"
-					msg_dns="${fwd_dns}"
 					[ -n "${REMOTE_FAKEDNS}" ] && unset ipset_flag
 					echo $str | sed "s/|/\n/g" | gen_items ipsets="${ipset_flag}" dnss="${fwd_dns}" outf="${TMP_DNSMASQ_PATH}/98-shunt_host.conf" ipsetoutf="${TMP_DNSMASQ_PATH}/ipset.conf"
 				}
 			}
 		done
-		echolog "  - [$?]V2ray/Xray分流规则(shuntlist)：${msg_dns:-默认}"
+		echolog "  - [$?]V2ray/Xray分流规则(shuntlist)：${fwd_dns:-默认}"
 	}
 	
 	[ -s "${RULES_PATH}/direct_host" ] && direct_hosts_str="$(echo -n $(cat ${RULES_PATH}/direct_host | tr -s '\n' | grep -v "^#" | sort -u) | sed "s/ /|/g")"

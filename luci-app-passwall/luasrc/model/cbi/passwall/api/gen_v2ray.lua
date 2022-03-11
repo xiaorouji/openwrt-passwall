@@ -88,7 +88,7 @@ function gen_outbound(node, tag, proxy_table)
                         node_id, --node
                         "127.0.0.1", --bind
                         new_port, --socks port
-                        string.format("/tmp/etc/%s/%s_socks_%s_%s.json", appname, flag, node_id, new_port), --config file
+                        string.format("%s_%s_%s_%s.json", flag, tag, node_id, new_port), --config file
                         (proxy == 1 and proxy_tag ~= "nil" and relay_port) and tostring(relay_port) or "" --relay port
                         )
                     )

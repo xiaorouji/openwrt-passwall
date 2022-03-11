@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
 PKG_VERSION:=4.51
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_$(PKG_NAME)_Transparent_Proxy \
@@ -35,7 +35,7 @@ PKG_CONFIG_DEPENDS:= \
 LUCI_TITLE:=LuCI support for PassWall
 LUCI_PKGARCH:=all
 LUCI_DEPENDS:=+coreutils +coreutils-base64 +coreutils-nohup +curl \
-	+dns2socks +ip-full +ipt2socks +libuci-lua +lua +luci-compat +luci-lib-jsonc \
+	+dns2socks +ip-full +libuci-lua +lua +luci-compat +luci-lib-jsonc \
 	+microsocks +resolveip +tcping +unzip \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_Brook:brook \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_ChinaDNS_NG:chinadns-ng \
@@ -66,6 +66,7 @@ config PACKAGE_$(PKG_NAME)_Transparent_Proxy
 	bool "Transparent Proxy"
 	select PACKAGE_dnsmasq-full
 	select PACKAGE_ipset
+	select PACKAGE_ipt2socks
 	select PACKAGE_iptables
 	select PACKAGE_iptables-legacy
 	select PACKAGE_iptables-mod-iprange

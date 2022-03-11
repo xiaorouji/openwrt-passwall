@@ -337,7 +337,7 @@ load_acl() {
 								redir_port=$(get_new_port $(expr $redir_port + 1))
 								eval node_${tcp_node}_redir_port=$redir_port
 								tcp_port=$redir_port
-								config_file=$TMP_ACL_PATH/${tcp_node}_SOCKS_${socks_port}.json
+								config_file="acl/${tcp_node}_SOCKS_${socks_port}.json"
 
 								local type=$(echo $(config_n_get $tcp_node type) | tr 'A-Z' 'a-z')
 								if [ -n "${type}" ] && ([ "${type}" = "v2ray" ] || [ "${type}" = "xray" ]); then
@@ -349,6 +349,7 @@ load_acl() {
 										_dns_port=$dns_port
 										_extra_param="dns_listen_port=${_dns_port} dns_proto=${v2ray_dns_mode} dns_tcp_server=${dns_forward} doh=${dns_forward} dns_client_ip=${dns_client_ip} dns_query_strategy=${DNS_QUERY_STRATEGY}"
 									fi
+									config_file="$TMP_PATH/$config_file"
 									run_v2ray flag=$tcp_node node=$tcp_node tcp_redir_port=$redir_port ${_extra_param} config_file=$config_file
 								else
 									run_socks flag=$tcp_node node=$tcp_node bind=127.0.0.1 socks_port=$socks_port config_file=$config_file
@@ -387,12 +388,13 @@ load_acl() {
 								redir_port=$(get_new_port $(expr $redir_port + 1))
 								eval node_${udp_node}_redir_port=$redir_port
 								udp_port=$redir_port
-								config_file=$TMP_ACL_PATH/${udp_node}_SOCKS_${socks_port}.json
+								config_file="acl/${udp_node}_SOCKS_${socks_port}.json"
 
 								local type=$(echo $(config_n_get $udp_node type) | tr 'A-Z' 'a-z')
 								if [ -n "${type}" ] && ([ "${type}" = "v2ray" ] || [ "${type}" = "xray" ]); then
 									config_file=$(echo $config_file | sed "s/SOCKS/TCP_UDP_SOCKS/g")
-									run_v2ray flag=$udp_node node=$udp_node redir_port=$redir_port socks_address=127.0.0.1 socks_port=$socks_port config_file=$config_file
+									config_file="$TMP_PATH/$config_file"
+									run_v2ray flag=$udp_node node=$udp_node udp_redir_port=$redir_port config_file=$config_file
 								else
 									run_socks flag=$udp_node node=$udp_node bind=127.0.0.1 socks_port=$socks_port config_file=$config_file
 									local log_file=$TMP_ACL_PATH/ipt2socks_${udp_node}_${redir_port}.log
