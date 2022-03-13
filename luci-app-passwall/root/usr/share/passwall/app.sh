@@ -375,14 +375,10 @@ run_dns2socks() {
 run_socks() {
 	local flag node bind socks_port config_file http_port http_config_file relay_port log_file
 	eval_set_val $@
-	[ -n "$config_file" ] && config_file=$TMP_PATH/$config_file
+	[ -n "$config_file" ] && [ -z "$(echo ${config_file} | grep $TMP_PATH)" ] && config_file=$TMP_PATH/$config_file
 	[ -n "$http_port" ] || http_port=0
-	if [ -n "$http_config_file" ]; then
-		http_config_file=$TMP_PATH/$http_config_file
-	else
-		http_config_file="nil"
-	fi
-	if [ -n "$log_file" ]; then
+	[ -n "$http_config_file" ] && [ -z "$(echo ${http_config_file} | grep $TMP_PATH)" ] && http_config_file=$TMP_PATH/$http_config_file
+	if [ -n "$log_file" ] && [ -z "$(echo ${log_file} | grep $TMP_PATH)" ]; then
 		log_file=$TMP_PATH/$log_file
 	else
 		log_file="/dev/null"
@@ -493,7 +489,7 @@ run_socks() {
 	esac
 
 	# http to socks
-	[ "$type" != "v2ray" ] && [ "$type" != "xray" ] && [ "$type" != "socks" ] && [ "$http_port" != "0" ] && [ "$http_config_file" != "nil" ] && {
+	[ "$type" != "v2ray" ] && [ "$type" != "xray" ] && [ "$type" != "socks" ] && [ "$http_port" != "0" ] && [ -n "$http_config_file" ] && {
 		local bin=$(first_type $(config_t_get global_app v2ray_file) v2ray)
 		if [ -n "$bin" ]; then
 			type="v2ray"
@@ -510,8 +506,8 @@ run_socks() {
 run_redir() {
 	local node proto bind local_port config_file log_file
 	eval_set_val $@
-	[ -n "$config_file" ] && config_file=$TMP_PATH/$config_file
-	if [ -n "$log_file" ]; then
+	[ -n "$config_file" ] && [ -z "$(echo ${config_file} | grep $TMP_PATH)" ] && config_file=$TMP_PATH/$config_file
+	if [ -n "$log_file" ] && [ -z "$(echo ${log_file} | grep $TMP_PATH)" ]; then
 		log_file=$TMP_PATH/$log_file
 	else
 		log_file="/dev/null"
@@ -616,7 +612,7 @@ run_redir() {
 			_socks_password=$(config_n_get $node password)
 			[ -z "$can_ipt" ] && {
 				local _config_file=$config_file
-				_config_file=$(echo ${_config_file} | sed "s/TCP/SOCKS_${node}/g")
+				_config_file="TCP_SOCKS_${node}.json"
 				local _port=$(get_new_port 2080)
 				run_socks flag="TCP" node=$node bind=127.0.0.1 socks_port=${_port} config_file=${_config_file}
 				_socks_address=127.0.0.1
