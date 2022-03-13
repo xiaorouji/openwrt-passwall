@@ -1,16 +1,3 @@
-From 09171eef574503a82342a8b23d4a55b8a5286724 Mon Sep 17 00:00:00 2001
-From: W_Y_CPP <383152993@qq.com>
-Date: Sat, 1 Jan 2022 13:05:37 +0900
-Subject: [PATCH] fix pdnsd alt build error with kernel_5.15
-
----
- src/conff.h  | 2 +-
- src/dns.h    | 2 +-
- src/netdev.c | 2 +-
- 3 files changed, 3 insertions(+), 3 deletions(-)
-
-diff --git a/src/conff.h b/src/conff.h
-index a07b1561b..c66d210aa 100644
 --- a/src/conff.h
 +++ b/src/conff.h
 @@ -32,7 +32,7 @@
@@ -22,8 +9,6 @@ index a07b1561b..c66d210aa 100644
  #include "ipvers.h"
  #include "list.h"
  
-diff --git a/src/dns.h b/src/dns.h
-index 0f6a4ac1e..ecc9680b2 100644
 --- a/src/dns.h
 +++ b/src/dns.h
 @@ -27,7 +27,7 @@
@@ -35,8 +20,39 @@ index 0f6a4ac1e..ecc9680b2 100644
  #include <sys/types.h>
  #include <inttypes.h>
  #include "rr_types.h"
-diff --git a/src/netdev.c b/src/netdev.c
-index bd5f8c451..bfd5046df 100644
+--- a/src/dns_answer.c
++++ b/src/dns_answer.c
+@@ -37,7 +37,7 @@
+ #include <sys/uio.h>
+ #include <sys/types.h>
+ #ifdef HAVE_SYS_POLL_H
+-#include <sys/poll.h>
++#include <poll.h>
+ #endif
+ #include <sys/param.h>
+ #include <netdb.h>
+--- a/src/dns_query.c
++++ b/src/dns_query.c
+@@ -23,7 +23,7 @@
+ #include <config.h>
+ #include <sys/types.h>
+ #ifdef HAVE_SYS_POLL_H
+-#include <sys/poll.h>
++#include <poll.h>
+ #endif
+ #include <stdlib.h>
+ #include <netdb.h>
+--- a/src/icmp.c
++++ b/src/icmp.c
+@@ -28,7 +28,7 @@
+ 
+ #include <config.h>
+ #ifdef HAVE_SYS_POLL_H
+-#include <sys/poll.h>
++#include <poll.h>
+ #endif
+ #include <sys/time.h>
+ #include <stdlib.h>
 --- a/src/netdev.c
 +++ b/src/netdev.c
 @@ -59,7 +59,7 @@
@@ -48,5 +64,3 @@ index bd5f8c451..bfd5046df 100644
  #include <netdb.h>
  #include <string.h>
  #include <unistd.h>
--- 
-2.17.1
