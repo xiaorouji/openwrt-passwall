@@ -429,8 +429,9 @@ run_socks() {
 		local _socks_username=$(config_n_get $node username)
 		local _socks_password=$(config_n_get $node password)
 		[ "$http_port" != "0" ] && {
-			local _extra_param="-local_http_port $http_port"
+			http_flag=1
 			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
+			local _extra_param="-local_http_port $http_port"
 		}
 		lua $API_GEN_V2RAY_PROTO -local_socks_port $socks_port ${_extra_param} -server_proto socks -server_address ${_socks_address} -server_port ${_socks_port} -server_username ${_socks_username} -server_password ${_socks_password} > $config_file
 		ln_run "$bin" $type $log_file -config="$config_file"
@@ -438,8 +439,9 @@ run_socks() {
 	v2ray|\
 	xray)
 		[ "$http_port" != "0" ] && {
-			local _v2ray_args="http_port=$http_port"
+			http_flag=1
 			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
+			local _v2ray_args="http_port=$http_port"
 		}
 		run_v2ray flag=$flag node=$node socks_port=$socks_port config_file=$config_file log_file=$log_file ${_v2ray_args}
 	;;
@@ -479,17 +481,27 @@ run_socks() {
 		ln_run "$(first_type ss-local)" "ss-local" $log_file -c "$config_file" -v
 	;;
 	ss-rust)
-		lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $socks_port -server_host $server_host -server_port $port -protocol socks -mode tcp_and_udp > $config_file
+		[ "$http_port" != "0" ] && {
+			http_flag=1
+			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
+			local _extra_param="-local_http_port $http_port"
+		}
+		lua $API_GEN_SS -node $node -local_socks_port $socks_port -server_host $server_host -server_port $port ${_extra_param} > $config_file
 		ln_run "$(first_type sslocal)" "sslocal" $log_file -c "$config_file" -v
 	;;
 	hysteria)
-		lua $API_GEN_HYSTERIA -node $node -local_socks_port $socks_port -server_host $server_host -server_port $port > $config_file
+		[ "$http_port" != "0" ] && {
+			http_flag=1
+			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
+			local _extra_param="-local_http_port $http_port"
+		}
+		lua $API_GEN_HYSTERIA -node $node -local_socks_port $socks_port -server_host $server_host -server_port $port ${_extra_param} > $config_file
 		ln_run "$(first_type $(config_t_get global_app hysteria_file))" "hysteria" $log_file -c "$config_file" client
 	;;
 	esac
 
 	# http to socks
-	[ "$type" != "v2ray" ] && [ "$type" != "xray" ] && [ "$type" != "socks" ] && [ "$http_port" != "0" ] && [ -n "$http_config_file" ] && {
+	[ -z "$http_flag" ] && [ "$http_port" != "0" ] && [ -n "$http_config_file" ] && [ "$type" != "v2ray" ] && [ "$type" != "xray" ] && [ "$type" != "socks" ] && {
 		local bin=$(first_type $(config_t_get global_app v2ray_file) v2ray)
 		if [ -n "$bin" ]; then
 			type="v2ray"
@@ -506,6 +518,7 @@ run_socks() {
 run_redir() {
 	local node proto bind local_port config_file log_file
 	eval_set_val $@
+	local tcp_node_socks_flag tcp_node_http_flag
 	[ -n "$config_file" ] && [ -z "$(echo ${config_file} | grep $TMP_PATH)" ] && config_file=$TMP_PATH/$config_file
 	if [ -n "$log_file" ] && [ -z "$(echo ${log_file} | grep $TMP_PATH)" ]; then
 		log_file=$TMP_PATH/$log_file
@@ -576,7 +589,7 @@ run_redir() {
 			ln_run "$(first_type ss-redir)" "ss-redir" $log_file -c "$config_file" -v
 		;;
 		ss-rust)
-			lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -protocol redir -mode udp_only > $config_file
+			lua $API_GEN_SS -node $node -local_udp_redir_port $local_port > $config_file
 			ln_run "$(first_type sslocal)" "sslocal" $log_file -c "$config_file" -v
 		;;
 		hysteria)
@@ -626,10 +639,12 @@ run_redir() {
 			local _flag="TCP"
 			local _v2ray_args=""
 			[ "$tcp_node_socks" = "1" ] && {
+				tcp_node_socks_flag=1
 				_v2ray_args="${_v2ray_args} socks_port=${tcp_node_socks_port}"
 				config_file=$(echo $config_file | sed "s/TCP/TCP_SOCKS_$tcp_node_socks_id/g")
 			}
 			[ "$tcp_node_http" = "1" ] && {
+				tcp_node_http_flag=1
 				_v2ray_args="${_v2ray_args} http_port=${tcp_node_http_port}"
 				config_file=$(echo $config_file | sed "s/TCP/TCP_HTTP_$tcp_node_http_id/g")
 			}
@@ -732,25 +747,46 @@ run_redir() {
 			ln_run "$(first_type ss-redir)" "ss-redir" $log_file -c "$config_file" -v
 		;;
 		ss-rust)
-			[ "$tcp_proxy_way" = "tproxy" ] && lua_tproxy_arg="-tcp_tproxy true"
-			lua_mode_arg="-mode tcp_only"
+			local _extra_param="-local_tcp_redir_port $local_port"
+			[ "$tcp_proxy_way" = "tproxy" ] && _extra_param="${_extra_param} -tcp_tproxy true"
+			[ "$tcp_node_socks" = "1" ] && {
+				tcp_node_socks_flag=1
+				config_file=$(echo $config_file | sed "s/TCP/TCP_SOCKS_$tcp_node_socks_id/g")
+				_extra_param="${_extra_param} -local_socks_port ${tcp_node_socks_port}"
+			}
+			[ "$tcp_node_http" = "1" ] && {
+				tcp_node_http_flag=1
+				config_file=$(echo $config_file | sed "s/TCP/TCP_HTTP_$tcp_node_http_id/g")
+				_extra_param="${_extra_param} -local_http_port ${tcp_node_http_port}"
+			}
 			[ "$TCP_UDP" = "1" ] && {
 				config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
 				UDP_REDIR_PORT=$TCP_REDIR_PORT
 				UDP_NODE="nil"
-				lua_mode_arg="-mode tcp_and_udp"
+				_extra_param="${_extra_param} -local_udp_redir_port $local_port"
 			}
-			lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $local_port -protocol redir $lua_mode_arg $lua_tproxy_arg > $config_file
+			lua $API_GEN_SS -node $node ${_extra_param} > $config_file
 			ln_run "$(first_type sslocal)" "sslocal" $log_file -c "$config_file" -v
 		;;
 		hysteria)
+			local _extra_param="-local_tcp_redir_port $local_port"
+			[ "$tcp_node_socks" = "1" ] && {
+				tcp_node_socks_flag=1
+				config_file=$(echo $config_file | sed "s/TCP/TCP_SOCKS_$tcp_node_socks_id/g")
+				_extra_param="${_extra_param} -local_socks_port ${tcp_node_socks_port}"
+			}
+			[ "$tcp_node_http" = "1" ] && {
+				tcp_node_http_flag=1
+				config_file=$(echo $config_file | sed "s/TCP/TCP_HTTP_$tcp_node_http_id/g")
+				_extra_param="${_extra_param} -local_http_port ${tcp_node_http_port}"
+			}
 			[ "$TCP_UDP" = "1" ] && {
 				config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
 				UDP_REDIR_PORT=$TCP_REDIR_PORT
 				UDP_NODE="nil"
-				_extra_param="-local_udp_redir_port $local_port"
+				_extra_param="${_extra_param} -local_udp_redir_port $local_port"
 			}
-			lua $API_GEN_HYSTERIA -node $node -local_tcp_redir_port $local_port ${_extra_param} > $config_file
+			lua $API_GEN_HYSTERIA -node $node ${_extra_param} > $config_file
 			ln_run "$(first_type $(config_t_get global_app hysteria_file))" "hysteria" $log_file -c "$config_file" client
 		;;
 		esac
@@ -770,14 +806,14 @@ run_redir() {
 			ln_run "$(first_type ipt2socks)" "ipt2socks_${_flag}" $log_file -l $local_port -b 0.0.0.0 -s ${_socks_address} -p ${_socks_port} ${_extra_param} -v
 		fi
 
-		([ "$type" != "v2ray" ] && [ "$type" != "xray" ]) && {
+		[ -z "$tcp_node_socks_flag" ] && {
 			[ "$tcp_node_socks" = "1" ] && {
 				local port=$tcp_node_socks_port
 				local config_file="SOCKS_$tcp_node_socks_id.json"
 				local log_file="SOCKS_$tcp_node_socks_id.log"
 				local http_port=0
 				local http_config_file="HTTP2SOCKS_$tcp_node_http_id.json"
-				[ "$tcp_node_http" = "1" ] && {
+				[ "$tcp_node_http" = "1" ] && [ -z "$tcp_node_http_flag" ] && {
 					http_port=$tcp_node_http_port
 				}
 				run_socks flag=$tcp_node_socks_id node=$node bind=0.0.0.0 socks_port=$port config_file=$config_file http_port=$http_port http_config_file=$http_config_file
@@ -785,6 +821,7 @@ run_redir() {
 		}
 	;;
 	esac
+	unset tcp_node_socks_flag tcp_node_http_flag
 	return 0
 }
 
