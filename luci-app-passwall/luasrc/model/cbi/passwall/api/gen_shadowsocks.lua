@@ -3,22 +3,27 @@ local uci = api.uci
 local jsonc = api.jsonc
 
 local var = api.get_args(arg)
-local node_section = var["-node"]
-if not node_section then
+local node_id = var["-node"]
+if not node_id then
     print("-node 不能为空")
     return
 end
+local node = uci:get_all("passwall", node_id)
 local local_addr = var["-local_addr"]
 local local_port = var["-local_port"]
-local server_host = var["-server_host"]
-local server_port = var["-server_port"]
+local server_host = var["-server_host"] or node.address
+local server_port = var["-server_port"] or node.port
 local protocol = var["-protocol"]
 local mode = var["-mode"]
-local node = uci:get_all("passwall", node_section)
+
+if api.is_ipv6(server_host) then
+    server_host = api.get_ipv6_only(server_host)
+end
+local server = server_host
 
 local config = {
-    server = server_host or node.address,
-    server_port = tonumber(server_port) or tonumber(node.port),
+    server = server,
+    server_port = tonumber(server_port),
     local_address = local_addr,
     local_port = tonumber(local_port),
     password = node.password,
@@ -39,8 +44,8 @@ elseif node.type == "SS-Rust" then
     config = {
         servers = {
             {
-                address = server_host or node.address,
-                port = tonumber(server_port) or tonumber(node.port),
+                address = server,
+                port = tonumber(server_port),
                 method = node.method,
                 password = node.password,
                 timeout = tonumber(node.timeout),

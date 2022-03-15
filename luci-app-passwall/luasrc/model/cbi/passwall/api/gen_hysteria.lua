@@ -3,11 +3,12 @@ local uci = api.uci
 local jsonc = api.jsonc
 
 local var = api.get_args(arg)
-local node_section = var["-node"]
-if not node_section then
+local node_id = var["-node"]
+if not node_id then
     print("-node 不能为空")
     return
 end
+local node = uci:get_all("passwall", node_id)
 local local_tcp_redir_port = var["-local_tcp_redir_port"]
 local local_udp_redir_port = var["-local_udp_redir_port"]
 local local_socks_address = var["-local_socks_address"] or "0.0.0.0"
@@ -18,10 +19,16 @@ local local_http_address = var["-local_http_address"] or "0.0.0.0"
 local local_http_port = var["-local_http_port"]
 local local_http_username = var["-local_http_username"]
 local local_http_password = var["-local_http_password"]
-local node = uci:get_all("passwall", node_section)
+local server_host = var["-server_host"] or node.address
+local server_port = var["-server_port"] or node.port
+
+if api.is_ipv6(server_host) then
+    server_host = api.get_ipv6_full(server_host)
+end
+local server = server_host .. ":" .. server_port
 
 local config = {
-    server = node.address .. ":" .. node.port,
+    server = server,
     protocol = node.protocol or "udp",
     obfs = node.hysteria_obfs,
     auth = (node.hysteria_auth_type == "base64") and node.hysteria_auth_password or nil,

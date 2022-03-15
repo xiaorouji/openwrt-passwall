@@ -103,6 +103,9 @@ function is_special_node(e)
 end
 
 function is_ip(val)
+    if is_ipv6(val) then
+        val = get_ipv6_only(val)
+    end
     return datatypes.ipaddr(val)
 end
 
@@ -126,6 +129,28 @@ function is_ipv6addrport(val)
         end
     end
     return false
+end
+
+function get_ipv6_only(val)
+    local result = ""
+    if is_ipv6(val) then
+        result = val
+        if val:match('%[(.*)%]') then
+            result = val:match('%[(.*)%]')
+        end
+    end
+    return result
+end
+
+function get_ipv6_full(val)
+    local result = ""
+    if is_ipv6(val) then
+        result = val
+        if not val:match('%[(.*)%]') then
+            result = "[" .. result .. "]"
+        end
+    end
+    return result
 end
 
 function get_ip_type(val)
@@ -176,10 +201,9 @@ function get_valid_nodes()
             end
             if e.port and e.address then
                 local address = e.address
-                if datatypes.ipaddr(address) or datatypes.hostname(address) then
-                    local type2 = e.type
-                    local address2 = address
-                    if (type2 == "V2ray" or type2 == "Xray") and e.protocol then
+                if is_ip(address) or datatypes.hostname(address) then
+                    local type = e.type
+                    if (type == "V2ray" or type == "Xray") and e.protocol then
                         local protocol = e.protocol
                         if protocol == "vmess" then
                             protocol = "VMess"
@@ -188,12 +212,12 @@ function get_valid_nodes()
                         else
                             protocol = protocol:gsub("^%l",string.upper)
                         end
-                        type2 = type2 .. " " .. protocol
+                        type = type .. " " .. protocol
                     end
-                    if datatypes.ip6addr(address) then address2 = "[" .. address .. "]" end
-                    e["remark"] = "%s：[%s]" % {type2, e.remarks}
+                    if is_ipv6(address) then address = get_ipv6_full(address) end
+                    e["remark"] = "%s：[%s]" % {type, e.remarks}
                     if nodes_ping:find("info") then
-                        e["remark"] = "%s：[%s] %s:%s" % {type2, e.remarks, address2, e.port}
+                        e["remark"] = "%s：[%s] %s:%s" % {type, e.remarks, address, e.port}
                     end
                     e.node_type = "normal"
                     nodes[#nodes + 1] = e

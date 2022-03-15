@@ -3,27 +3,32 @@ local uci = api.uci
 local json = api.jsonc
 
 local var = api.get_args(arg)
-local node_section = var["-node"]
-if not node_section then
+local node_id = var["-node"]
+if not node_id then
     print("-node 不能为空")
     return
 end
+local node = uci:get_all("passwall", node_id)
 local run_type = var["-run_type"]
 local local_addr = var["-local_addr"]
 local local_port = var["-local_port"]
-local server_host = var["-server_host"]
-local server_port = var["-server_port"]
+local server_host = var["-server_host"] or node.address
+local server_port = var["-server_port"] or node.port
 local loglevel = var["-loglevel"] or 2
-local node = uci:get_all("passwall", node_section)
-
 local cipher = "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES128-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA:AES128-SHA:AES256-SHA:DES-CBC3-SHA"
 local cipher13 = "TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_256_GCM_SHA384"
+
+if api.is_ipv6(server_host) then
+    server_host = api.get_ipv6_only(server_host)
+end
+local server = server_host
+
 local trojan = {
     run_type = run_type,
     local_addr = local_addr,
     local_port = tonumber(local_port),
-    remote_addr = server_host or node.address,
-    remote_port = tonumber(server_port) or tonumber(node.port),
+    remote_addr = server,
+    remote_port = tonumber(server_port),
     password = {node.password},
     log_level = tonumber(loglevel),
     ssl = {
@@ -32,7 +37,7 @@ local trojan = {
         cert = nil,
         cipher = cipher,
         cipher_tls13 = cipher13,
-        sni = node.tls_serverName or node.address,
+        sni = node.tls_serverName or server,
         alpn = {"h2", "http/1.1"},
         reuse_session = true,
         session_ticket = (node.tls_sessionTicket and node.tls_sessionTicket == "1") and true or false,
@@ -65,7 +70,7 @@ if node.type == "Trojan-Go" then
     trojan.websocket = (node.trojan_transport == 'ws') and {
         enabled = true,
         path = node.ws_path or "/",
-        host = node.ws_host or (node.tls_serverName or node.address)
+        host = node.ws_host or (node.tls_serverName or server)
     } or nil
     trojan.shadowsocks = (node.ss_aead == "1") and {
         enabled = true,

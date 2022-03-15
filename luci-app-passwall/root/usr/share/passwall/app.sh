@@ -483,7 +483,7 @@ run_socks() {
 		ln_run "$(first_type sslocal)" "sslocal" $log_file -c "$config_file" -v
 	;;
 	hysteria)
-		lua $API_GEN_HYSTERIA -node $node -local_socks_port $socks_port > $config_file
+		lua $API_GEN_HYSTERIA -node $node -local_socks_port $socks_port -server_host $server_host -server_port $port > $config_file
 		ln_run "$(first_type $(config_t_get global_app hysteria_file))" "hysteria" $log_file -c "$config_file" client
 	;;
 	esac
