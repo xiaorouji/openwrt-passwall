@@ -888,7 +888,7 @@ add_firewall_rule() {
 	[ ! -z "${WAN_IP}" ] && $ipt_m -A PSW $(comment "WAN_IP_RETURN") -d "${WAN_IP}" -j RETURN
 	unset WAN_IP
 
-	insert_rule_after "$ipt_m" "PREROUTING" "mwan3" "-j PSW"
+	insert_rule_before "$ipt_m" "PREROUTING" "mwan3" "-j PSW"
 	insert_rule_before "$ipt_m" "PREROUTING" "PSW" "-p tcp -m socket -j PSW_DIVERT"
 
 	$ipt_m -N PSW_OUTPUT
@@ -932,7 +932,7 @@ add_firewall_rule() {
 	[ ! -z "${WAN6_IP}" ] && $ip6t_m -A PSW $(comment "WAN6_IP_RETURN") -d ${WAN6_IP} -j RETURN
 	unset WAN6_IP
 
-	insert_rule_after "$ip6t_m" "PREROUTING" "mwan3" "-j PSW"
+	insert_rule_before "$ip6t_m" "PREROUTING" "mwan3" "-j PSW"
 	insert_rule_before "$ip6t_m" "PREROUTING" "PSW" "-p tcp -m socket -j PSW_DIVERT"
 
 	$ip6t_m -N PSW_OUTPUT
@@ -1210,7 +1210,7 @@ gen_include() {
 			[ "$accept_icmp" = "1" ] && \$(${MY_PATH} insert_rule_after "$ipt_n" "PREROUTING" "prerouting_rule" "-p icmp -j PSW")
 			[ -z "${is_tproxy}" ] && \$(${MY_PATH} insert_rule_after "$ipt_n" "PREROUTING" "prerouting_rule" "-p tcp -j PSW")
 
-			\$(${MY_PATH} insert_rule_after "$ipt_m" "PREROUTING" "mwan3" "-j PSW")
+			\$(${MY_PATH} insert_rule_before "$ipt_m" "PREROUTING" "mwan3" "-j PSW")
 			\$(${MY_PATH} insert_rule_before "$ipt_m" "PREROUTING" "PSW" "-p tcp -m socket -j PSW_DIVERT")
 
 			WAN_IP=\$(${MY_PATH} get_wan_ip)
@@ -1238,7 +1238,7 @@ gen_include() {
 
 			[ "$accept_icmpv6" = "1" ] && $ip6t_n -A PREROUTING -p ipv6-icmp -j PSW
 
-			\$(${MY_PATH} insert_rule_after "$ip6t_m" "PREROUTING" "mwan3" "-j PSW")
+			\$(${MY_PATH} insert_rule_before "$ip6t_m" "PREROUTING" "mwan3" "-j PSW")
 			\$(${MY_PATH} insert_rule_before "$ip6t_m" "PREROUTING" "PSW" "-p tcp -m socket -j PSW_DIVERT")
 
 			PR_INDEX=\$(${MY_PATH} RULE_LAST_INDEX "$ip6t_m" PSW WAN6_IP_RETURN -1)
