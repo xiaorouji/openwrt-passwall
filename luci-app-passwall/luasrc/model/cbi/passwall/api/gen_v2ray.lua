@@ -35,6 +35,7 @@ local uci = api.uci
 local sys = api.sys
 local jsonc = api.jsonc
 local appname = api.appname
+local fs = api.fs
 local dns = nil
 local fakedns = nil
 local inbounds = {}
@@ -48,6 +49,21 @@ local function get_new_port()
         new_port = tonumber(sys.exec(string.format("echo -n $(/usr/share/%s/app.sh get_new_port auto tcp)", appname)))
     end
     return new_port
+end
+
+local function get_domain_excluded()
+    local path = string.format("/usr/share/%s/rules/domains_excluded", appname)
+    local content = fs.readfile(path)
+    if not content then return nil end
+    local hosts = {}
+    string.gsub(content, '[^' .. "\n" .. ']+', function(w)
+        local s = w:gsub("^%s*(.-)%s*$", "%1") -- Trim
+        if s == "" then return end
+        if s:find("#") and s:find("#") == 1 then return end
+        if not s:find("#") or s:find("#") ~= 1 then table.insert(hosts, s) end
+    end)
+    if #hosts == 0 then hosts = nil end
+    return hosts
 end
 
 function gen_outbound(node, tag, proxy_table)
@@ -280,7 +296,7 @@ if node_id then
             protocol = "dokodemo-door",
             settings = {network = "tcp", followRedirect = true},
             streamSettings = {sockopt = {tproxy = tcp_proxy_way}},
-            sniffing = {enabled = sniffing and true or false, destOverride = {"http", "tls", (dns_fakedns) and "fakedns"}, metadataOnly = false, routeOnly = route_only and true or nil}
+            sniffing = {enabled = sniffing and true or false, destOverride = {"http", "tls", (dns_fakedns) and "fakedns"}, metadataOnly = false, routeOnly = route_only and true or nil, domainsExcluded = (sniffing and not route_only) and get_domain_excluded() or nil}
         })
     end
 
@@ -290,7 +306,7 @@ if node_id then
             protocol = "dokodemo-door",
             settings = {network = "udp", followRedirect = true},
             streamSettings = {sockopt = {tproxy = "tproxy"}},
-            sniffing = {enabled = sniffing and true or false, destOverride = {"http", "tls", (dns_fakedns) and "fakedns"}, metadataOnly = false, routeOnly = route_only and true or nil}
+            sniffing = {enabled = sniffing and true or false, destOverride = {"http", "tls", (dns_fakedns) and "fakedns"}, metadataOnly = false, routeOnly = route_only and true or nil, domainsExcluded = (sniffing and not route_only) and get_domain_excluded() or nil}
         })
     end
 

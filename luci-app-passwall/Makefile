@@ -168,6 +168,7 @@ define Package/$(PKG_NAME)/conffiles
 /usr/share/passwall/rules/block_ip
 /usr/share/passwall/rules/lanlist_ipv4
 /usr/share/passwall/rules/lanlist_ipv6
+/usr/share/passwall/rules/domains_excluded
 endef
 
 include $(TOPDIR)/feeds/luci/luci.mk

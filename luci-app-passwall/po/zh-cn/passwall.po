@@ -1371,3 +1371,9 @@ msgstr "无子连接时的健康检查"
 
 msgid "Initial Windows Size"
 msgstr "初始窗口大小"
+
+msgid "No Sniffing Lists"
+msgstr "不进行流量嗅探的域名列表"
+
+msgid "Hosts added into No Sniffing Lists will not resolve again on server (Xray only)."
+msgstr "加入的域名不会再次在服务器解析（仅适用于Xray）。"
