@@ -1,5 +1,6 @@
 local api = require "luci.model.cbi.passwall.api.api"
 local appname = api.appname
+local fs = api.fs
 
 m = Map(appname)
 
@@ -134,5 +135,14 @@ o.rmempty = false
 o = s:option(Flag, "route_only", translate("Sniffing Route Only (Xray)"), translate("When enabled, the server not will resolve the domain name again."))
 o.default = 0
 o:depends("sniffing", true)
+
+local domains_excluded = string.format("/usr/share/%s/rules/domains_excluded", appname)
+o = s:option(TextValue, "no_sniffing_hosts", translate("No Sniffing Lists"), translate("Hosts added into No Sniffing Lists will not resolve again on server (Xray only)."))
+o.rows = 15
+o.wrap = "off"
+o.cfgvalue = function(self, section) return fs.readfile(domains_excluded) or "" end
+o.write = function(self, section, value) fs.writefile(domains_excluded, value:gsub("\r\n", "\n")) end
+o.remove = function(self, section, value) fs.writefile(domains_excluded, "") end
+o:depends({sniffing = true, route_only = false})
 
 return m
