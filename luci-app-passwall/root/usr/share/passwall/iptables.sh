@@ -408,6 +408,7 @@ load_acl() {
 					}
 				fi
 				udp_node_remark=$(config_n_get $udp_node remarks)
+				udp_flag=1
 			}
 			
 			for i in $(echo -e ${rule_list}); do
@@ -626,6 +627,7 @@ load_acl() {
 			fi
 
 			echolog "${msg}"
+			udp_flag=1
 		}
 	fi
 	$ipt_m -A PSW $(comment "默认") -p udp -j RETURN
@@ -1132,6 +1134,10 @@ add_firewall_rule() {
 
 	# dns_hijack "force"
 
+	[ -n "${is_tproxy}" -o -n "${udp_flag}" ] && {
+		sysctl -w net.bridge.bridge-nf-call-iptables=0 2>/dev/null
+		[ "$PROXY_IPV6" == "1" ] && sysctl -w net.bridge.bridge-nf-call-ip6tables=0 2>/dev/null
+	}
 	echolog "防火墙规则加载完成！"
 }
 
