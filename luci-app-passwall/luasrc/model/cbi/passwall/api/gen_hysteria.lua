@@ -38,6 +38,8 @@ local config = {
     insecure = (node.tls_allowInsecure == "1") and true or false,
     up_mbps = tonumber(node.hysteria_up_mbps) or 10,
     down_mbps = tonumber(node.hysteria_down_mbps) or 50,
+    retry = -1,
+    retry_interval = 5,
     recv_window_conn = (node.hysteria_recv_window_conn) and tonumber(node.hysteria_recv_window_conn) or nil,
     recv_window = (node.hysteria_recv_window) and tonumber(node.hysteria_recv_window) or nil,
     disable_mtu_discovery = (node.hysteria_disable_mtu_discovery) and true or false,
