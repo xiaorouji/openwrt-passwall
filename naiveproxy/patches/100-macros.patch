@@ -1,6 +1,6 @@
 --- a/src/base/allocator/partition_allocator/tagging.cc
 +++ b/src/base/allocator/partition_allocator/tagging.cc
-@@ -17,22 +17,25 @@
+@@ -19,22 +19,25 @@
  #define PR_GET_TAGGED_ADDR_CTRL 56
  #define PR_TAGGED_ADDR_ENABLE (1UL << 0)
 
