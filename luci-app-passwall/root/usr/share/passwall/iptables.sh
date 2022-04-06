@@ -548,6 +548,7 @@ load_acl() {
 	local ipt_tmp=$ipt_n
 	if [ "$TCP_PROXY_MODE" != "disable" ]; then
 		[ "$TCP_NO_REDIR_PORTS" != "disable" ] && {
+			[ -n "${is_tproxy}" ] && ipt_tmp=$ipt_m
 			$ipt_tmp -A PSW $(comment "默认") -p tcp -m multiport --dport $TCP_NO_REDIR_PORTS -j RETURN
 			$ip6t_m -A PSW $(comment "默认") -p tcp -m multiport --dport $TCP_NO_REDIR_PORTS -j RETURN
 		}
