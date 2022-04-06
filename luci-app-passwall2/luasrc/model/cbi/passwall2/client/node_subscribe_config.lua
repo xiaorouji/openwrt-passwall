@@ -1,0 +1,90 @@
+local api = require "luci.model.cbi.passwall2.api.api"
+local appname = api.appname
+local sys = api.sys
+local has_ss = api.is_finded("ss-redir")
+local has_ss_rust = api.is_finded("sslocal")
+local has_v2ray = api.is_finded("v2ray")
+local has_xray = api.is_finded("xray")
+local ss_aead_type = {}
+if has_ss then
+    ss_aead_type[#ss_aead_type + 1] = "shadowsocks-libev"
+end
+if has_ss_rust then
+    ss_aead_type[#ss_aead_type + 1] = "shadowsocks-rust"
+end
+if has_v2ray then
+    ss_aead_type[#ss_aead_type + 1] = "v2ray"
+end
+if has_xray then
+    ss_aead_type[#ss_aead_type + 1] = "xray"
+end
+
+m = Map(appname)
+m.redirect = api.url("node_subscribe")
+
+s = m:section(NamedSection, arg[1])
+s.addremove = false
+s.dynamic = false
+
+o = s:option(Value, "remark", translate("Subscribe Remark"))
+o.rmempty = false
+
+o = s:option(TextValue, "url", translate("Subscribe URL"))
+o.rows = 5
+o.rmempty = false
+
+o = s:option(Flag, "allowInsecure", translate("allowInsecure"), translate("Whether unsafe connections are allowed. When checked, Certificate validation will be skipped."))
+o.default = "1"
+o.rmempty = false
+
+o = s:option(ListValue, "filter_keyword_mode", translate("Filter keyword Mode"))
+o.default = "5"
+o:value("0", translate("Close"))
+o:value("1", translate("Discard List"))
+o:value("2", translate("Keep List"))
+o:value("3", translate("Discard List,But Keep List First"))
+o:value("4", translate("Keep List,But Discard List First"))
+o:value("5", translate("Use global config"))
+
+o = s:option(DynamicList, "filter_discard_list", translate("Discard List"))
+o:depends("filter_keyword_mode", "1")
+o:depends("filter_keyword_mode", "3")
+o:depends("filter_keyword_mode", "4")
+
+o = s:option(DynamicList, "filter_keep_list", translate("Keep List"))
+o:depends("filter_keyword_mode", "2")
+o:depends("filter_keyword_mode", "3")
+o:depends("filter_keyword_mode", "4")
+
+if #ss_aead_type > 0 then
+    o = s:option(ListValue, "ss_aead_type", translate("SS AEAD Node Use Type"))
+    o.default = "global"
+    o:value("global", translate("Use global config"))
+    for key, value in pairs(ss_aead_type) do
+        o:value(value, translate(value:gsub("^%l",string.upper)))
+    end
+end
+
+---- Enable auto update subscribe
+o = s:option(Flag, "auto_update", translate("Enable auto update subscribe"))
+o.default = 0
+o.rmempty = false
+
+---- Week update rules
+o = s:option(ListValue, "week_update", translate("Week update rules"))
+o:value(7, translate("Every day"))
+for e = 1, 6 do o:value(e, translate("Week") .. e) end
+o:value(0, translate("Week") .. translate("day"))
+o.default = 0
+o:depends("auto_update", true)
+
+---- Day update rules
+o = s:option(ListValue, "time_update", translate("Day update rules"))
+for e = 0, 23 do o:value(e, e .. translate("oclock")) end
+o.default = 0
+o:depends("auto_update", true)
+
+o = s:option(Value, "user_agent", translate("User-Agent"))
+o.default = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.122 Safari/537.36"
+
+return m

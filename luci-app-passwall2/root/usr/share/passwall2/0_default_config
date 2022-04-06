@@ -1,0 +1,207 @@
+
+config global
+	option enabled '0'
+	option socks_enabled '0'
+	option node 'myshunt'
+	option dns_protocol 'tcp'
+	option dns_forward '1.1.1.1'
+	option close_log '0'
+	option loglevel 'error'
+
+config global_delay
+	option auto_on '0'
+	option start_daemon '1'
+	option start_delay '1'
+
+config global_forwarding
+	option process '0'
+	option tcp_no_redir_ports 'disable'
+	option udp_no_redir_ports '53'
+	option accept_icmp '0'
+	option tcp_proxy_way 'redirect'
+	option ipv6_tproxy '0'
+	option sniffing '1'
+	option route_only '0'
+
+config global_other
+	option nodes_ping 'auto_ping tcping'
+
+config global_rules
+	option auto_update '0'
+	option geosite_update '1'
+	option geoip_update '1'
+	option v2ray_location_asset '/usr/share/v2ray/'
+
+config global_app
+	option v2ray_file '/usr/bin/v2ray'
+	option xray_file '/usr/bin/xray'
+	option brook_file '/usr/bin/brook'
+	option hysteria_file '/usr/bin/hysteria'
+
+config global_subscribe
+	option subscribe_proxy '0'
+	option filter_keyword_mode '1'
+	list filter_discard_list '过期时间'
+	list filter_discard_list '剩余流量'
+	list filter_discard_list 'QQ群'
+	list filter_discard_list '官网'
+
+config auto_switch
+	option enable '0'
+	option testing_time '1'
+	option connect_timeout '3'
+	option retry_num '3'
+	option shunt_logic '1'
+
+config nodes 'myshunt'
+	option remarks '分流总节点'
+	option type 'Xray'
+	option protocol '_shunt'
+	option LAN '_direct'
+	option Direct '_direct'
+	option AD 'nil'
+	option BT '_direct'
+	option Netflix 'nil'
+	option TVB 'nil'
+	option Proxy '_default'
+	option China '_direct'
+	option QUIC '_blackhole'
+	option UDP 'nil'
+	option default_node 'nil'
+	option domainStrategy 'IPOnDemand'
+	option domainMatcher 'hybrid'
+
+config shunt_rules 'LAN'
+	option remarks 'LAN'
+	option network 'tcp,udp'
+	option ip_list '0.0.0.0/8
+10.0.0.0/8
+100.64.0.0/10
+127.0.0.0/8
+169.254.0.0/16
+172.16.0.0/12
+192.168.0.0/16
+224.0.0.0/4
+240.0.0.0/4
+'
+
+config shunt_rules 'Direct'
+	option network 'tcp,udp'
+	option domain_list 'apple.com
+microsoft.com
+dyndns.com
+douyucdn.cn
+douyucdn2.cn
+
+steamcontent.com
+dl.steam.clngaa.com
+dl.steam.ksyna.com
+st.dl.bscstorage.net
+st.dl.eccdnx.com
+st.dl.pinyuncloud.com
+cdn.mileweb.cs.steampowered.com.8686c.com
+cdn-ws.content.steamchina.com
+cdn-qc.content.steamchina.com
+cdn-ali.content.steamchina.com
+epicgames-download1-1251447533.file.myqcloud.com'
+	option remarks 'Direct'
+	option ip_list '114.114.114.114
+114.114.115.115
+223.5.5.5
+223.6.6.6
+119.29.29.29
+180.76.76.76
+'
+
+config shunt_rules 'AD'
+	option remarks 'AD'
+	option domain_list 'geosite:category-ads'
+	option network 'tcp,udp'
+
+config shunt_rules 'BT'
+	option remarks 'BT'
+	option protocol 'bittorrent'
+	option network 'tcp,udp'
+
+config shunt_rules 'Netflix'
+	option remarks 'Netflix'
+	option network 'tcp,udp'
+	option domain_list 'fast.com
+netflix
+netflix.com
+netflix.net
+nflxso.net
+nflxext.com
+nflximg.com
+nflximg.net
+nflxvideo.net
+netflixdnstest0.com
+netflixdnstest1.com
+netflixdnstest2.com
+netflixdnstest3.com
+netflixdnstest4.com
+netflixdnstest5.com
+netflixdnstest6.com
+netflixdnstest7.com
+netflixdnstest8.com
+netflixdnstest9.com
+geosite:netflix'
+
+config shunt_rules 'TVB'
+	option remarks 'TVB'
+	option network 'tcp,udp'
+	option domain_list 'tvb.com
+mytvsuper.com'
+
+config shunt_rules 'Proxy'
+	option network 'tcp,udp'
+	option domain_list 'bing.com
+sspanel.net
+v2ex.com
+
+googleapis.cn
+googleapis.com
+google.com.tw
+google.com.hk
+gstatic.com
+xn--ngstr-lra8j.com
+
+github.com
+'
+
+option remarks 'Proxy'
+	option ip_list '149.154.160.0/20
+91.108.4.0/22
+91.108.56.0/24
+109.239.140.0/24
+67.198.55.0/24
+8.8.4.4
+8.8.8.8
+208.67.222.222
+208.67.220.220
+1.1.1.1
+1.1.1.2
+1.0.0.1
+9.9.9.9
+149.112.112.112
+2001:67c:4e8::/48
+2001:b28:f23c::/48
+2001:b28:f23d::/48
+2001:b28:f23f::/48
+2001:b28:f242::/48
+'
+
+config shunt_rules 'China'
+	option remarks 'China'
+	option network 'tcp,udp'
+	option ip_list 'geoip:cn'
+	option domain_list 'geosite:cn'
+
+config shunt_rules 'QUIC'
+	option remarks 'QUIC'
+	option port '80,443'
+	option network 'udp'
+
+config shunt_rules 'UDP'
+	option remarks 'UDP'
+	option network 'udp'
