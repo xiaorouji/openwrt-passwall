@@ -7,7 +7,7 @@
 -	github.com/lucas-clemente/quic-go v0.24.0 // indirect
 -	github.com/marten-seemann/qtls-go1-16 v0.1.4 // indirect
 -	github.com/marten-seemann/qtls-go1-17 v0.1.0 // indirect
-+	github.com/lucas-clemente/quic-go v0.25.0 // indirect
++	github.com/lucas-clemente/quic-go v0.26.0 // indirect
 +	github.com/marten-seemann/qtls-go1-16 v0.1.5 // indirect
 +	github.com/marten-seemann/qtls-go1-17 v0.1.1 // indirect
 +	github.com/marten-seemann/qtls-go1-18 v0.1.1 // indirect
@@ -22,8 +22,8 @@
  github.com/leodido/go-urn v1.2.1/go.mod h1:zt4jvISO2HfUBqxjfIshjdMTYS56ZS/qv49ictyFfxY=
 -github.com/lucas-clemente/quic-go v0.24.0 h1:ToR7SIIEdrgOhgVTHvPgdVRJfgVy+N0wQAagH7L4d5g=
  github.com/lucas-clemente/quic-go v0.24.0/go.mod h1:paZuzjXCE5mj6sikVLMvqXk8lJV2AsqtJ6bDhjEfxx0=
-+github.com/lucas-clemente/quic-go v0.25.0 h1:K+X9Gvd7JXsOHtU0N2icZ2Nw3rx82uBej3mP4CLgibc=
-+github.com/lucas-clemente/quic-go v0.25.0/go.mod h1:YtzP8bxRVCBlO77yRanE264+fY/T2U9ZlW1AaHOsMOg=
++github.com/lucas-clemente/quic-go v0.26.0 h1:ALBQXr9UJ8A1LyzvceX4jd9QFsHvlI0RR6BkV16o00A=
++github.com/lucas-clemente/quic-go v0.26.0/go.mod h1:AzgQoPda7N+3IqMMMkywBKggIFo2KT6pfnlrQ2QieeI=
  github.com/lunixbochs/struc v0.0.0-20200707160740-784aaebc1d40 h1:EnfXoSqDfSNJv0VBNqY/88RNnhSGYkrHaO0mmFGbVsc=
  github.com/lunixbochs/struc v0.0.0-20200707160740-784aaebc1d40/go.mod h1:vy1vK6wD6j7xX6O6hXe621WabdtNkou2h7uRtTfRMyg=
  github.com/lunixbochs/vtclean v1.0.0/go.mod h1:pHhQNgMf3btfWnGBVipUOjRYhoOsdGqdm/+2c2E2WMI=
