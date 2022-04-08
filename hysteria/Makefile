@@ -16,17 +16,12 @@ PKG_LICENSE:=MIT
 PKG_LICENSE_FILE:=LICENSE
 PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 
-PKG_CONFIG_DEPENDS:= \
-	CONFIG_HYSTERIA_COMPRESS_GOPROXY \
-	CONFIG_HYSTERIA_COMPRESS_UPX
-
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
 GO_PKG:=github.com/tobyxdd/hysteria
-GO_PKG_BUILD_PKG:=github.com/tobyxdd/hysteria/cmd
-GO_PKG_LDFLAGS:=-s -w
+GO_PKG_BUILD_PKG:=$(GO_PKG)/cmd
 GO_PKG_LDFLAGS_X:=main.appVersion=$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
@@ -45,29 +40,6 @@ define Package/hysteria/description
   of poor quality (e.g. satellite connections, congested public Wi-Fi,
   connecting from China to servers abroad) powered by a custom version
   of QUIC protocol.
-endef
-
-define Package/hysteria/config
-config HYSTERIA_COMPRESS_GOPROXY
-	bool "Compiling with GOPROXY proxy"
-	default n
-
-config HYSTERIA_COMPRESS_UPX
-	bool "Compress executable files with UPX"
-	depends on !mips64
-	default n	
-endef
-
-ifeq ($(CONFIG_HYSTERIA_COMPRESS_GOPROXY),y)
-	export GO111MODULE=on
-	export GOPROXY=https://goproxy.bj.bcebos.com
-endif
-
-define Build/Compile
-	$(call GoPackage/Build/Compile)
-ifeq ($(CONFIG_HYSTERIA_COMPRESS_UPX),y)
-	$(STAGING_DIR_HOST)/bin/upx --lzma --best $(GO_PKG_BUILD_BIN_DIR)/cmd
-endif
 endef
 
 define Package/hysteria/install
