@@ -14,7 +14,7 @@ PKG_HASH:=b6b66ea091f6348c7f213a8f7a3be51be25cea2cdf9ea7fb5bb93e2e04077a6f
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Tianling Shen <cnsztl@project-openwrt.eu.org>
+PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
