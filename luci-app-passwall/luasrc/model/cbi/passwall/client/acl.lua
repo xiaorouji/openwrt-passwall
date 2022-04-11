@@ -18,6 +18,10 @@ function s.create(e, t)
     t = TypedSection.create(e, t)
     luci.http.redirect(e.extedit:format(t))
 end
+function s.remove(e, t)
+    sys.call("rm -rf /tmp/etc/passwall_tmp/dns_" .. t .. "*")
+    TypedSection.remove(e, t)
+end
 
 ---- Enable
 o = s:option(Flag, "enabled", translate("Enable"))

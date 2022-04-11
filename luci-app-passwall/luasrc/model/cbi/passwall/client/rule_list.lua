@@ -1,11 +1,13 @@
 local api = require "luci.model.cbi.passwall.api.api"
 local appname = api.appname
 local fs = api.fs
+local sys = api.sys
 local datatypes = api.datatypes
 local path = string.format("/usr/share/%s/rules/", appname)
 local route_hosts_path = "/etc/"
 
-m = Map(appname)
+m = SimpleForm(appname)
+m.uci = api.uci
 
 -- [[ Rule List Settings ]]--
 s = m:section(TypedSection, "global_rules")
@@ -22,9 +24,17 @@ local direct_host = path .. "direct_host"
 o = s:taboption("direct_list", TextValue, "direct_host", "", "<font color='red'>" .. translate("Join the direct hosts list of domain names will not proxy.") .. "</font>")
 o.rows = 15
 o.wrap = "off"
-o.cfgvalue = function(self, section) return fs.readfile(direct_host) or "" end
-o.write = function(self, section, value) fs.writefile(direct_host, value:gsub("\r\n", "\n")) end
-o.remove = function(self, section, value) fs.writefile(direct_host, "") end
+o.cfgvalue = function(self, section)
+    return fs.readfile(direct_host) or ""
+end
+o.write = function(self, section, value)
+    fs.writefile(direct_host, value:gsub("\r\n", "\n"))
+    sys.call("rm -rf /tmp/etc/passwall_tmp/dns_*")
+end
+o.remove = function(self, section, value)
+    fs.writefile(direct_host, "")
+    sys.call("rm -rf /tmp/etc/passwall_tmp/dns_*")
+end
 o.validate = function(self, value)
     local hosts= {}
     string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(hosts, w) end)
@@ -44,9 +54,15 @@ local direct_ip = path .. "direct_ip"
 o = s:taboption("direct_list", TextValue, "direct_ip", "", "<font color='red'>" .. translate("These had been joined ip addresses will not proxy. Please input the ip address or ip address segment,every line can input only one ip address. For example: 192.168.0.0/24 or 223.5.5.5.") .. "</font>")
 o.rows = 15
 o.wrap = "off"
-o.cfgvalue = function(self, section) return fs.readfile(direct_ip) or "" end
-o.write = function(self, section, value) fs.writefile(direct_ip, value:gsub("\r\n", "\n")) end
-o.remove = function(self, section, value) fs.writefile(direct_ip, "") end
+o.cfgvalue = function(self, section)
+    return fs.readfile(direct_ip) or ""
+end
+o.write = function(self, section, value)
+    fs.writefile(direct_ip, value:gsub("\r\n", "\n"))
+end
+o.remove = function(self, section, value)
+    fs.writefile(direct_ip, "")
+end
 o.validate = function(self, value)
     local ipmasks= {}
     string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(ipmasks, w) end)
@@ -66,9 +82,17 @@ local proxy_host = path .. "proxy_host"
 o = s:taboption("proxy_list", TextValue, "proxy_host", "", "<font color='red'>" .. translate("These had been joined websites will use proxy. Please input the domain names of websites, every line can input only one website domain. For example: google.com.") .. "</font>")
 o.rows = 15
 o.wrap = "off"
-o.cfgvalue = function(self, section) return fs.readfile(proxy_host) or "" end
-o.write = function(self, section, value) fs.writefile(proxy_host, value:gsub("\r\n", "\n")) end
-o.remove = function(self, section, value) fs.writefile(proxy_host, "") end
+o.cfgvalue = function(self, section)
+    return fs.readfile(proxy_host) or ""
+end
+o.write = function(self, section, value)
+    fs.writefile(proxy_host, value:gsub("\r\n", "\n"))
+    sys.call("rm -rf /tmp/etc/passwall_tmp/dns_*")
+end
+o.remove = function(self, section, value)
+    fs.writefile(proxy_host, "")
+    sys.call("rm -rf /tmp/etc/passwall_tmp/dns_*")
+end
 o.validate = function(self, value)
     local hosts= {}
     string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(hosts, w) end)
@@ -88,9 +112,15 @@ local proxy_ip = path .. "proxy_ip"
 o = s:taboption("proxy_list", TextValue, "proxy_ip", "", "<font color='red'>" .. translate("These had been joined ip addresses will use proxy. Please input the ip address or ip address segment, every line can input only one ip address. For example: 35.24.0.0/24 or 8.8.4.4.") .. "</font>")
 o.rows = 15
 o.wrap = "off"
-o.cfgvalue = function(self, section) return fs.readfile(proxy_ip) or "" end
-o.write = function(self, section, value) fs.writefile(proxy_ip, value:gsub("\r\n", "\n")) end
-o.remove = function(self, section, value) fs.writefile(proxy_ip, "") end
+o.cfgvalue = function(self, section)
+    return fs.readfile(proxy_ip) or ""
+end
+o.write = function(self, section, value)
+    fs.writefile(proxy_ip, value:gsub("\r\n", "\n"))
+end
+o.remove = function(self, section, value)
+    fs.writefile(proxy_ip, "")
+end
 o.validate = function(self, value)
     local ipmasks= {}
     string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(ipmasks, w) end)
@@ -110,9 +140,15 @@ local block_host = path .. "block_host"
 o = s:taboption("block_list", TextValue, "block_host", "", "<font color='red'>" .. translate("These had been joined websites will be block. Please input the domain names of websites, every line can input only one website domain. For example: twitter.com.") .. "</font>")
 o.rows = 15
 o.wrap = "off"
-o.cfgvalue = function(self, section) return fs.readfile(block_host) or "" end
-o.write = function(self, section, value) fs.writefile(block_host, value:gsub("\r\n", "\n")) end
-o.remove = function(self, section, value) fs.writefile(block_host, "") end
+o.cfgvalue = function(self, section)
+    return fs.readfile(block_host) or ""
+end
+o.write = function(self, section, value)
+    fs.writefile(block_host, value:gsub("\r\n", "\n"))
+end
+o.remove = function(self, section, value)
+    fs.writefile(block_host, "")
+end
 o.validate = function(self, value)
     local hosts= {}
     string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(hosts, w) end)
@@ -132,9 +168,15 @@ local block_ip = path .. "block_ip"
 o = s:taboption("block_list", TextValue, "block_ip", "", "<font color='red'>" .. translate("These had been joined ip addresses will be block. Please input the ip address or ip address segment, every line can input only one ip address.") .. "</font>")
 o.rows = 15
 o.wrap = "off"
-o.cfgvalue = function(self, section) return fs.readfile(block_ip) or "" end
-o.write = function(self, section, value) fs.writefile(block_ip, value:gsub("\r\n", "\n")) end
-o.remove = function(self, section, value) fs.writefile(block_ip, "") end
+o.cfgvalue = function(self, section)
+    return fs.readfile(block_ip) or ""
+end
+o.write = function(self, section, value)
+    fs.writefile(block_ip, value:gsub("\r\n", "\n"))
+end
+o.remove = function(self, section, value)
+    fs.writefile(block_ip, "")
+end
 o.validate = function(self, value)
     local ipmasks= {}
     string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(ipmasks, w) end)
@@ -154,9 +196,15 @@ local lanlist_ipv4 = path .. "lanlist_ipv4"
 o = s:taboption("lan_ip_list", TextValue, "lanlist_ipv4", "", "<font color='red'>" .. translate("The list is the IPv4 LAN IP list, which represents the direct connection IP of the LAN. If you need the LAN IP in the proxy list, please clear it from the list. Do not modify this list by default.") .. "</font>")
 o.rows = 15
 o.wrap = "off"
-o.cfgvalue = function(self, section) return fs.readfile(lanlist_ipv4) or "" end
-o.write = function(self, section, value) fs.writefile(lanlist_ipv4, value:gsub("\r\n", "\n")) end
-o.remove = function(self, section, value) fs.writefile(lanlist_ipv4, "") end
+o.cfgvalue = function(self, section)
+    return fs.readfile(lanlist_ipv4) or ""
+end
+o.write = function(self, section, value)
+    fs.writefile(lanlist_ipv4, value:gsub("\r\n", "\n"))
+end
+o.remove = function(self, section, value)
+    fs.writefile(lanlist_ipv4, "")
+end
 o.validate = function(self, value)
     local ipmasks= {}
     string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(ipmasks, w) end)
@@ -176,9 +224,15 @@ local lanlist_ipv6 = path .. "lanlist_ipv6"
 o = s:taboption("lan_ip_list", TextValue, "lanlist_ipv6", "", "<font color='red'>" .. translate("The list is the IPv6 LAN IP list, which represents the direct connection IP of the LAN. If you need the LAN IP in the proxy list, please clear it from the list. Do not modify this list by default.") .. "</font>")
 o.rows = 15
 o.wrap = "off"
-o.cfgvalue = function(self, section) return fs.readfile(lanlist_ipv6) or "" end
-o.write = function(self, section, value) fs.writefile(lanlist_ipv6, value:gsub("\r\n", "\n")) end
-o.remove = function(self, section, value) fs.writefile(lanlist_ipv6, "") end
+o.cfgvalue = function(self, section)
+    return fs.readfile(lanlist_ipv6) or ""
+end
+o.write = function(self, section, value)
+    fs.writefile(lanlist_ipv6, value:gsub("\r\n", "\n"))
+end
+o.remove = function(self, section, value)
+    fs.writefile(lanlist_ipv6, "")
+end
 o.validate = function(self, value)
     local ipmasks= {}
     string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(ipmasks, w) end)
@@ -198,8 +252,14 @@ local hosts = route_hosts_path .. "hosts"
 o = s:taboption("route_hosts", TextValue, "hosts", "", "<font color='red'>" .. translate("Configure routing etc/hosts file, if you don't know what you are doing, please don't change the content.") .. "</font>")
 o.rows = 15
 o.wrap = "off"
-o.cfgvalue = function(self, section) return fs.readfile(hosts) or "" end
-o.write = function(self, section, value) fs.writefile(hosts, value:gsub("\r\n", "\n")) end
-o.remove = function(self, section, value) fs.writefile(hosts, "") end
+o.cfgvalue = function(self, section)
+    return fs.readfile(hosts) or ""
+end
+o.write = function(self, section, value)
+    fs.writefile(hosts, value:gsub("\r\n", "\n"))
+end
+o.remove = function(self, section, value)
+    fs.writefile(hosts, "")
+end
 
 return m
