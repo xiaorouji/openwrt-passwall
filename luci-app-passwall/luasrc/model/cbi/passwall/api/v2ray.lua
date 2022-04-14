@@ -7,7 +7,7 @@ local i18n = api.i18n
 
 local pre_release_url = "https://api.github.com/repos/v2fly/v2ray-core/releases?per_page=1"
 local release_url = "https://api.github.com/repos/v2fly/v2ray-core/releases/latest"
-local api_url = release_url
+local api_url = pre_release_url
 local app_path = api.get_v2ray_path() or ""
 
 function check_path()

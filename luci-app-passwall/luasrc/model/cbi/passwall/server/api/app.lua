@@ -123,7 +123,7 @@ local function start()
                 bin = ln_run("/usr/bin/" .. type .. "-server", type .. "-server", "-c " .. config_file .. " " .. udp_param, log_path)
             elseif type == "V2ray" then
                 config = require(require_dir .. "v2ray").gen_config(user)
-                bin = ln_run(api.get_v2ray_path(), "v2ray", "-config=" .. config_file, log_path)
+                bin = ln_run(api.get_v2ray_path(), "v2ray", "run -config=" .. config_file, log_path)
             elseif type == "Xray" then
                 config = require(require_dir .. "v2ray").gen_config(user)
                 bin = ln_run(api.get_xray_path(), "xray", "-config=" .. config_file, log_path)

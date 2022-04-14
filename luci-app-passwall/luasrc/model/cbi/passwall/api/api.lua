@@ -336,8 +336,10 @@ function get_bin_version_cache(file, cmd)
             return sys.exec("echo -n $(cat /tmp/etc/passwall_tmp/%s)" % md5)
         else
             local version = sys.exec(string.format("echo -n $(%s %s)", file, cmd))
-            sys.call("echo '" .. version .. "' > " .. "/tmp/etc/passwall_tmp/" .. md5)
-            return version
+            if version and version ~= "" then
+                sys.call("echo '" .. version .. "' > " .. "/tmp/etc/passwall_tmp/" .. md5)
+                return version
+            end
         end
     end
     return ""
@@ -350,7 +352,7 @@ end
 
 function get_v2ray_version(file)
     if file == nil then file = get_v2ray_path() end
-    local cmd = "-version | awk '{print $2}' | sed -n 1P"
+    local cmd = "version | awk '{print $2}' | sed -n 1P"
     return get_bin_version_cache(file, cmd)
 end
 
