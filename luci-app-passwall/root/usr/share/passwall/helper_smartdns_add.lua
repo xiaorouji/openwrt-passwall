@@ -11,11 +11,12 @@ local TCP_NODE = var["-TCP_NODE"]
 local PROXY_MODE = var["-PROXY_MODE"]
 local NO_PROXY_IPV6 = var["-NO_PROXY_IPV6"]
 local NO_LOGIC_LOG = var["-NO_LOGIC_LOG"]
-local LOG_FILE = "/tmp/log/passwall.log"
-local CACHE_PATH = "/tmp/etc/passwall_tmp"
+local LOG_FILE = api.LOG_FILE
+local CACHE_PATH = api.CACHE_PATH
 local CACHE_FLAG = "dns_" .. FLAG
-local CACHE_DNS_FILE = CACHE_PATH .. "/" .. CACHE_FLAG .. ".conf"
-local CACHE_MD5_FILE = CACHE_PATH .. "/" .. CACHE_FLAG .. ".md5"
+local CACHE_DNS_PATH = CACHE_PATH .. "/" .. CACHE_FLAG
+local CACHE_DNS_FILE = CACHE_DNS_PATH .. ".conf"
+local CACHE_TEXT_FILE = CACHE_DNS_PATH .. ".txt"
 local SMARTDNS_PATH = "/tmp/etc/smartdns"
 
 local uci = api.uci
@@ -143,17 +144,16 @@ local function check_excluded_domain(domain)
     return false
 end
 
-local cache_md5 = ""
-local str = SMARTDNS_CONF .. LOCAL_GROUP .. REMOTE_GROUP .. REMOTE_FAKEDNS .. TUN_DNS .. PROXY_MODE .. NO_PROXY_IPV6
-local md5 = luci.sys.exec("echo -n $(echo '" .. str .. "' | md5sum | awk '{print $1}')")
-if fs.access(CACHE_MD5_FILE) then
-    for line in io.lines(CACHE_MD5_FILE) do
-        cache_md5 = line
+local cache_text = ""
+local new_text = SMARTDNS_CONF .. LOCAL_GROUP .. REMOTE_GROUP .. REMOTE_FAKEDNS .. TUN_DNS .. PROXY_MODE .. NO_PROXY_IPV6
+if fs.access(CACHE_TEXT_FILE) then
+    for line in io.lines(CACHE_TEXT_FILE) do
+        cache_text = line
     end
 end
 
-if cache_md5 ~= md5 then
-    sys.call("rm -rf " .. CACHE_PATH .. "/" .. CACHE_FLAG .. "*")
+if cache_text ~= new_text then
+    api.remove(CACHE_DNS_PATH .. "*")
 end
 
 local global = PROXY_MODE:find("global")
@@ -385,8 +385,8 @@ if not fs.access(CACHE_DNS_FILE) then
     end
     f_out:close()
 
-    f_out = io.open(CACHE_MD5_FILE, "a")
-    f_out:write(md5)
+    f_out = io.open(CACHE_TEXT_FILE, "a")
+    f_out:write(new_text)
     f_out:close()
 end
 fs.symlink(CACHE_DNS_FILE, SMARTDNS_CONF)

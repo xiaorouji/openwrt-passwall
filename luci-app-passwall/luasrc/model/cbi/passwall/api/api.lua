@@ -14,6 +14,9 @@ command_timeout = 300
 LEDE_BOARD = nil
 DISTRIB_TARGET = nil
 
+LOG_FILE = "/tmp/log/" .. appname .. ".log"
+CACHE_PATH = "/tmp/etc/" .. appname .. "_tmp"
+
 function base64Decode(text)
 	local raw = text
 	if not text then return '' end
@@ -64,6 +67,21 @@ function repeat_exist(table, value)
     end
     if count > 1 then
         return true
+    end
+    return false
+end
+
+function remove(...)
+    for index, value in ipairs({...}) do
+        if value and #value > 0 and value ~= "/" then
+            sys.call(string.format("rm -rf %s", value))
+        end
+    end
+end
+
+function is_install(package)
+    if package and #package > 0 then
+        return sys.call(string.format('opkg list-installed | grep "%s" > /dev/null 2>&1', package)) == 0
     end
     return false
 end
@@ -291,7 +309,6 @@ end
 function is_finded(e)
     return luci.sys.exec('type -t -p "/bin/%s" -p "%s" "%s"' % {e, get_customed_path(e), e}) ~= "" and true or false
 end
-
 
 function clone(org)
     local function copy(org, res)

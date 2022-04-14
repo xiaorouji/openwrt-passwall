@@ -13,11 +13,11 @@ local TCP_NODE = var["-TCP_NODE"]
 local PROXY_MODE = var["-PROXY_MODE"]
 local NO_PROXY_IPV6 = var["-NO_PROXY_IPV6"]
 local NO_LOGIC_LOG = var["-NO_LOGIC_LOG"]
-local LOG_FILE = "/tmp/log/passwall.log"
-local CACHE_PATH = "/tmp/etc/passwall_tmp"
+local LOG_FILE = api.LOG_FILE
+local CACHE_PATH = api.CACHE_PATH
 local CACHE_FLAG = "dns_" .. FLAG
 local CACHE_DNS_PATH = CACHE_PATH .. "/" .. CACHE_FLAG
-local CACHE_MD5_FILE = CACHE_DNS_PATH .. ".md5"
+local CACHE_TEXT_FILE = CACHE_DNS_PATH .. ".txt"
 
 local uci = api.uci
 local sys = api.sys
@@ -163,17 +163,16 @@ end
 
 local dnsmasq_default_dns
 
-local cache_md5 = ""
-local str = TMP_DNSMASQ_PATH .. DNSMASQ_CONF_FILE .. DEFAULT_DNS .. LOCAL_DNS .. TUN_DNS .. REMOTE_FAKEDNS .. CHINADNS_DNS .. PROXY_MODE .. NO_PROXY_IPV6
-local md5 = luci.sys.exec("echo -n $(echo '" .. str .. "' | md5sum | awk '{print $1}')")
-if fs.access(CACHE_MD5_FILE) then
-    for line in io.lines(CACHE_MD5_FILE) do
-        cache_md5 = line
+local cache_text = ""
+local new_text = TMP_DNSMASQ_PATH .. DNSMASQ_CONF_FILE .. DEFAULT_DNS .. LOCAL_DNS .. TUN_DNS .. REMOTE_FAKEDNS .. CHINADNS_DNS .. PROXY_MODE .. NO_PROXY_IPV6
+if fs.access(CACHE_TEXT_FILE) then
+    for line in io.lines(CACHE_TEXT_FILE) do
+        cache_text = line
     end
 end
 
-if cache_md5 ~= md5 then
-    sys.call("rm -rf " .. CACHE_PATH .. "/" .. CACHE_FLAG .. "*")
+if cache_text ~= new_text then
+    api.remove(CACHE_DNS_PATH .. "*")
 end
 
 local global = PROXY_MODE:find("global")
@@ -409,11 +408,15 @@ if not fs.access(CACHE_DNS_PATH) then
     server_out:close()
     ipset_out:close()
 
-    local f_out = io.open(CACHE_MD5_FILE, "a")
-    f_out:write(md5)
+    local f_out = io.open(CACHE_TEXT_FILE, "a")
+    f_out:write(new_text)
     f_out:close()
 end
-fs.symlink(CACHE_DNS_PATH, TMP_DNSMASQ_PATH)
+if api.is_install("procd\\-ujail") then
+    fs.copyr(CACHE_DNS_PATH, TMP_DNSMASQ_PATH)
+else
+    fs.symlink(CACHE_DNS_PATH, TMP_DNSMASQ_PATH)
+end
 local conf_out = io.open(DNSMASQ_CONF_FILE, "a")
 conf_out:write(string.format("conf-dir=%s\n", TMP_DNSMASQ_PATH))
 if dnsmasq_default_dns then
