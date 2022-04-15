@@ -351,8 +351,7 @@ run_v2ray() {
 	_extra_param="${_extra_param} -tcp_proxy_way $tcp_proxy_way"
 	_extra_param="${_extra_param} -loglevel $loglevel"
 	lua $API_GEN_V2RAY ${_extra_param} > $config_file
-	[ "$type" = "xray" ] && ln_run "$(first_type $(config_t_get global_app ${type}_file) ${type})" ${type} $log_file -config="$config_file"
-	[ "$type" = "v2ray" ] && ln_run "$(first_type $(config_t_get global_app ${type}_file) ${type})" ${type} $log_file run -config="$config_file"
+	ln_run "$(first_type $(config_t_get global_app ${type}_file) ${type})" ${type} $log_file run -c "$config_file"
 }
 
 run_dns2socks() {
@@ -435,8 +434,7 @@ run_socks() {
 			local _extra_param="-local_http_port $http_port"
 		}
 		lua $API_GEN_V2RAY_PROTO -local_socks_port $socks_port ${_extra_param} -server_proto socks -server_address ${_socks_address} -server_port ${_socks_port} -server_username ${_socks_username} -server_password ${_socks_password} > $config_file
-		[ "$type" = "xray" ] && ln_run "$bin" $type $log_file -config="$config_file"
-		[ "$type" = "v2ray" ] && ln_run "$bin" $type $log_file run -config="$config_file"
+		ln_run "$bin" $type $log_file run -c "$config_file"
 	;;
 	v2ray|\
 	xray)
@@ -513,8 +511,9 @@ run_socks() {
 		fi
 		[ -z "$type" ] && return 1
 		lua $API_GEN_V2RAY_PROTO -local_http_port $http_port -server_proto socks -server_address "127.0.0.1" -server_port $socks_port -server_username $_username -server_password $_password > $http_config_file
-		ln_run "$bin" ${type} /dev/null -config="$http_config_file"
+		ln_run "$bin" ${type} /dev/null run -c "$http_config_file"
 	}
+	unset http_flag
 }
 
 run_redir() {
