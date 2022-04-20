@@ -1377,3 +1377,9 @@ msgstr "不进行流量嗅探的域名列表"
 
 msgid "Hosts added into No Sniffing Lists will not resolve again on server (Xray only)."
 msgstr "加入的域名不会再次在服务器解析（仅适用于Xray）。"
+
+msgid "Buffer Size (Xray)"
+msgstr "缓冲区大小"
+
+msgid "Buffer size for every connection (kB)"
+msgstr "每一个连接的缓冲区大小（kB）"

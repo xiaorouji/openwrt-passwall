@@ -9,6 +9,7 @@ local tcp_redir_port = var["-tcp_redir_port"]
 local udp_redir_port = var["-udp_redir_port"]
 local sniffing = var["-sniffing"]
 local route_only = var["-route_only"]
+local buffer_size = var["-buffer_size"]
 local local_socks_address = var["-local_socks_address"] or "0.0.0.0"
 local local_socks_port = var["-local_socks_port"]
 local local_socks_username = var["-local_socks_username"]
@@ -685,25 +686,23 @@ if inbounds or outbounds then
         -- 路由
         routing = routing,
         -- 本地策略
-        --[[
         policy = {
             levels = {
                 [0] = {
-                    handshake = 4,
-                    connIdle = 300,
-                    uplinkOnly = 2,
-                    downlinkOnly = 5,
-                    bufferSize = 10240,
+                    -- handshake = 4,
+                    -- connIdle = 300,
+                    -- uplinkOnly = 2,
+                    -- downlinkOnly = 5,
+                    bufferSize = buffer_size and tonumber(buffer_size) or nil,
                     statsUserUplink = false,
                     statsUserDownlink = false
                 }
             },
-            system = {
-                statsInboundUplink = false,
-                statsInboundDownlink = false
-            }
+            -- system = {
+            --     statsInboundUplink = false,
+            --     statsInboundDownlink = false
+            -- }
         }
-        ]]--
     }
     print(jsonc.stringify(config, 1))
 end

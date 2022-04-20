@@ -136,6 +136,10 @@ o = s:option(Flag, "route_only", translate("Sniffing Route Only (Xray)"), transl
 o.default = 0
 o:depends("sniffing", true)
 
+o = s:option(Value, "buffer_size", translate("Buffer Size (Xray)"), translate("Buffer size for every connection (kB)"))
+o.rmempty = true
+o.datatype = "uinteger"
+
 local domains_excluded = string.format("/usr/share/%s/rules/domains_excluded", appname)
 o = s:option(TextValue, "no_sniffing_hosts", translate("No Sniffing Lists"), translate("Hosts added into No Sniffing Lists will not resolve again on server (Xray only)."))
 o.rows = 15
