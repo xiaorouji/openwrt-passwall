@@ -330,6 +330,8 @@ run_v2ray() {
 		local route_only=$(config_t_get global_forwarding route_only 0)
 		[ "${route_only}" = "1" ] && _extra_param="${_extra_param} -route_only 1"
 	}
+	local buffer_size=$(config_t_get global_forwarding buffer_size)
+	[ -n "${buffer_size}" ] && _extra_param="${_extra_param} -buffer_size ${buffer_size}"
 	case "$dns_proto" in
 		tcp)
 			local _dns_forward=$(get_first_dns dns_tcp_server 53 | sed 's/#/:/g')
