@@ -152,6 +152,10 @@ if has_v2ray or has_xray then
             end
         end
         o:depends({sniffing = true, route_only = false})
+
+        o = s:option(Value, "buffer_size", translate("Buffer Size (Xray)"), translate("Buffer size for every connection (kB)"))
+        o.rmempty = true
+        o.datatype = "uinteger"
     end
 end
 return m
