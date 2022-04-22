@@ -1182,14 +1182,16 @@ add_firewall_rule() {
 		}
 	fi
 
+	$ipt_m -A PSW -p udp --dport 53 -j RETURN
+	$ip6t_m -A PSW -p udp --dport 53 -j RETURN
 	#  加载ACLS
 	load_acl
 
 	# dns_hijack "force"
 
 	[ -n "${is_tproxy}" -o -n "${udp_flag}" ] && {
-		sysctl -w net.bridge.bridge-nf-call-iptables=0 2>/dev/null
-		[ "$PROXY_IPV6" == "1" ] && sysctl -w net.bridge.bridge-nf-call-ip6tables=0 2>/dev/null
+		sysctl -w net.bridge.bridge-nf-call-iptables=0 >/dev/null 2>&1
+		[ "$PROXY_IPV6" == "1" ] && sysctl -w net.bridge.bridge-nf-call-ip6tables=0 >/dev/null 2>&1
 	}
 	echolog "防火墙规则加载完成！"
 }

@@ -1,6 +1,8 @@
 local api = require "luci.model.cbi.passwall.api.api"
 local appname = api.appname
 local fs = api.fs
+local has_v2ray = api.is_finded("v2ray")
+local has_xray = api.is_finded("xray")
 
 m = Map(appname)
 
@@ -128,25 +130,28 @@ o = s:option(Flag, "accept_icmpv6", translate("Hijacking ICMPv6 (IPv6 PING)"))
 o:depends("ipv6_tproxy", true)
 o.default = 0
 
-o = s:option(Flag, "sniffing", translate("Sniffing (V2Ray/Xray)"), translate("When using the V2ray/Xray shunt, must be enabled, otherwise the shunt will invalid."))
-o.default = 1
-o.rmempty = false
+if has_v2ray or has_xray then
+    o = s:option(Flag, "sniffing", translate("Sniffing (V2Ray/Xray)"), translate("When using the V2ray/Xray shunt, must be enabled, otherwise the shunt will invalid."))
+    o.default = 1
+    o.rmempty = false
 
-o = s:option(Flag, "route_only", translate("Sniffing Route Only (Xray)"), translate("When enabled, the server not will resolve the domain name again."))
-o.default = 0
-o:depends("sniffing", true)
+    if has_xray then
+        route_only = s:option(Flag, "route_only", translate("Sniffing Route Only (Xray)"), translate("When enabled, the server not will resolve the domain name again."))
+        route_only.default = 0
+        route_only:depends("sniffing", true)
 
-o = s:option(Value, "buffer_size", translate("Buffer Size (Xray)"), translate("Buffer size for every connection (kB)"))
-o.rmempty = true
-o.datatype = "uinteger"
-
-local domains_excluded = string.format("/usr/share/%s/rules/domains_excluded", appname)
-o = s:option(TextValue, "no_sniffing_hosts", translate("No Sniffing Lists"), translate("Hosts added into No Sniffing Lists will not resolve again on server (Xray only)."))
-o.rows = 15
-o.wrap = "off"
-o.cfgvalue = function(self, section) return fs.readfile(domains_excluded) or "" end
-o.write = function(self, section, value) fs.writefile(domains_excluded, value:gsub("\r\n", "\n")) end
-o.remove = function(self, section, value) fs.writefile(domains_excluded, "") end
-o:depends({sniffing = true, route_only = false})
-
+        local domains_excluded = string.format("/usr/share/%s/rules/domains_excluded", appname)
+        o = s:option(TextValue, "no_sniffing_hosts", translate("No Sniffing Lists"), translate("Hosts added into No Sniffing Lists will not resolve again on server (Xray only)."))
+        o.rows = 15
+        o.wrap = "off"
+        o.cfgvalue = function(self, section) return fs.readfile(domains_excluded) or "" end
+        o.write = function(self, section, value) fs.writefile(domains_excluded, value:gsub("\r\n", "\n")) end
+        o.remove = function(self, section, value)
+            if route_only:formvalue(section) == "0" then
+                fs.writefile(domains_excluded, "")
+            end
+        end
+        o:depends({sniffing = true, route_only = false})
+    end
+end
 return m
