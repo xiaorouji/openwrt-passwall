@@ -108,7 +108,7 @@ REDIRECT() {
 		[ "$2" == "MARK" ] && s="-j MARK --set-mark $1"
 		[ "$2" == "TPROXY" ] && {
 			local mark="-m mark --mark 1"
-			s="${mark} -j TPROXY --tproxy-mark 0x1/0x1 --on-port $1"
+			s="${mark} -j TPROXY --tproxy-mark 1/1 --on-port $1"
 		}
 	}
 	echo $s
@@ -940,7 +940,7 @@ add_firewall_rule() {
 
 	$ipt_m -N PSW_RULE
 	$ipt_m -A PSW_RULE -j CONNMARK --restore-mark
-	$ipt_m -A PSW_RULE -m mark --mark 0x1 -j RETURN
+	$ipt_m -A PSW_RULE -m mark --mark 1 -j RETURN
 	$ipt_m -A PSW_RULE -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j MARK --set-xmark 1
 	$ipt_m -A PSW_RULE -p udp -m conntrack --ctstate NEW -j MARK --set-xmark 1
 	$ipt_m -A PSW_RULE -j CONNMARK --save-mark
@@ -957,6 +957,7 @@ add_firewall_rule() {
 	insert_rule_before "$ipt_m" "PREROUTING" "mwan3" "-j PSW"
 	insert_rule_before "$ipt_m" "PREROUTING" "PSW" "-p tcp -m socket -j PSW_DIVERT"
 
+	$ipt_m -I OUTPUT $(comment "PSW") -o lo -j RETURN
 	$ipt_m -N PSW_OUTPUT
 	$ipt_m -A PSW_OUTPUT $(dst $IPSET_LANIPLIST) -j RETURN
 	$ipt_m -A PSW_OUTPUT $(dst $IPSET_VPSIPLIST) -j RETURN
@@ -987,7 +988,7 @@ add_firewall_rule() {
 
 	$ip6t_m -N PSW_RULE
 	$ip6t_m -A PSW_RULE -j CONNMARK --restore-mark
-	$ip6t_m -A PSW_RULE -m mark --mark 0x1 -j RETURN
+	$ip6t_m -A PSW_RULE -m mark --mark 1 -j RETURN
 	$ip6t_m -A PSW_RULE -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j MARK --set-xmark 1
 	$ip6t_m -A PSW_RULE -p udp -m conntrack --ctstate NEW -j MARK --set-xmark 1
 	$ip6t_m -A PSW_RULE -j CONNMARK --save-mark
@@ -1083,7 +1084,8 @@ add_firewall_rule() {
 			$ipt_m -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(get_ipset_ipt $LOCALHOST_TCP_PROXY_MODE) -j PSW_RULE
 			$ipt_m -A PSW $(comment "本机") -p tcp -i lo $(REDIRECT $TCP_REDIR_PORT TPROXY)
 			$ipt_m -A PSW $(comment "本机") -p tcp -i lo -j RETURN
-			$ipt_m -A OUTPUT -p tcp -j PSW_OUTPUT
+			insert_rule_before "$ipt_m" "OUTPUT" "mwan3" "$(comment PSW_OUTPUT_TCP) -p tcp -j PSW_OUTPUT"
+			insert_rule_after "$ipt_m" "OUTPUT" "PSW_OUTPUT_TCP" "$(comment PSW) -p tcp -m mark --mark 1 -j RETURN"
 		fi
 
 		[ "$PROXY_IPV6" == "1" ] && {
@@ -1092,7 +1094,8 @@ add_firewall_rule() {
 			$ip6t_m -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(get_ipset_ip6t $LOCALHOST_TCP_PROXY_MODE) -j PSW_RULE
 			$ip6t_m -A PSW $(comment "本机") -p tcp -i lo $(REDIRECT $TCP_REDIR_PORT TPROXY)
 			$ip6t_m -A PSW $(comment "本机") -p tcp -i lo -j RETURN
-			$ip6t_m -A OUTPUT -p tcp -j PSW_OUTPUT
+			insert_rule_before "$ip6t_m" "OUTPUT" "mwan3" "$(comment PSW_OUTPUT_TCP) -p tcp -j PSW_OUTPUT"
+			insert_rule_after "$ip6t_m" "OUTPUT" "PSW_OUTPUT_TCP" "$(comment PSW) -p tcp -m mark --mark 1 -j RETURN"
 		}
 	fi
 
@@ -1170,7 +1173,8 @@ add_firewall_rule() {
 		$ipt_m -A PSW_OUTPUT -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(get_ipset_ipt $LOCALHOST_UDP_PROXY_MODE) -j PSW_RULE
 		$ipt_m -A PSW $(comment "本机") -p udp -i lo $(REDIRECT $UDP_REDIR_PORT TPROXY)
 		$ipt_m -A PSW $(comment "本机") -p udp -i lo -j RETURN
-		$ipt_m -A OUTPUT -p udp -j PSW_OUTPUT
+		insert_rule_before "$ipt_m" "OUTPUT" "mwan3" "$(comment PSW_OUTPUT_UDP) -p udp -j PSW_OUTPUT"
+		insert_rule_after "$ipt_m" "OUTPUT" "PSW_OUTPUT_UDP" "$(comment PSW) -p udp -m mark --mark 1 -j RETURN"
 
 		[ "$PROXY_IPV6" == "1" ] && [ "$PROXY_IPV6_UDP" == "1" ] && {
 			$ip6t_m -A PSW_OUTPUT -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) -j PSW_RULE
@@ -1178,7 +1182,8 @@ add_firewall_rule() {
 			$ip6t_m -A PSW_OUTPUT -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(get_ipset_ip6t $LOCALHOST_UDP_PROXY_MODE) -j PSW_RULE
 			$ip6t_m -A PSW $(comment "本机") -p udp -i lo $(REDIRECT $UDP_REDIR_PORT TPROXY)
 			$ip6t_m -A PSW $(comment "本机") -p udp -i lo -j RETURN
-			$ip6t_m -A OUTPUT -p udp -j PSW_OUTPUT
+			insert_rule_before "$ip6t_m" "OUTPUT" "mwan3" "$(comment PSW_OUTPUT_UDP) -p udp -j PSW_OUTPUT"
+			insert_rule_after "$ip6t_m" "OUTPUT" "PSW_OUTPUT_UDP" "$(comment PSW) -p udp -m mark --mark 1 -j RETURN"
 		}
 	fi
 
