@@ -70,8 +70,17 @@ insert_rule_before() {
 	local chain="${1}"; shift
 	local keyword="${1}"; shift
 	local rule="${1}"; shift
+	local default_index="${1}"; shift
+	default_index=${default_index:-0}
 	local _index=$($ipt_tmp -n -L $chain --line-numbers 2>/dev/null | grep "$keyword" | head -n 1 | awk '{print $1}')
-	$ipt_tmp -I $chain $_index $rule
+	if [ -z "${_index}" ] && [ "${default_index}" = "0" ]; then
+		$ipt_tmp -A $chain $rule
+	else
+		if [ -z "${_index}" ]; then
+			_index=${default_index}
+		fi
+		$ipt_tmp -I $chain $_index $rule
+	fi
 }
 
 insert_rule_after() {
@@ -82,10 +91,19 @@ insert_rule_after() {
 	local chain="${1}"; shift
 	local keyword="${1}"; shift
 	local rule="${1}"; shift
+	local default_index="${1}"; shift
+	default_index=${default_index:-0}
 	local _index=$($ipt_tmp -n -L $chain --line-numbers 2>/dev/null | grep "$keyword" | awk 'END {print}' | awk '{print $1}')
-	_index=${_index:-0}
-	_index=$((_index + 1))
-	$ipt_tmp -I $chain $_index $rule
+	if [ -z "${_index}" ] && [ "${default_index}" = "0" ]; then
+		$ipt_tmp -A $chain $rule
+	else
+		if [ -n "${_index}" ]; then
+			_index=$((_index + 1))
+		else
+			_index=${default_index}
+		fi
+		$ipt_tmp -I $chain $_index $rule
+	fi
 }
 
 RULE_LAST_INDEX() {
@@ -957,7 +975,6 @@ add_firewall_rule() {
 	insert_rule_before "$ipt_m" "PREROUTING" "mwan3" "-j PSW"
 	insert_rule_before "$ipt_m" "PREROUTING" "PSW" "-p tcp -m socket -j PSW_DIVERT"
 
-	$ipt_m -I OUTPUT $(comment "PSW") -o lo -j RETURN
 	$ipt_m -N PSW_OUTPUT
 	$ipt_m -A PSW_OUTPUT $(dst $IPSET_LANIPLIST) -j RETURN
 	$ipt_m -A PSW_OUTPUT $(dst $IPSET_VPSIPLIST) -j RETURN
@@ -1084,8 +1101,7 @@ add_firewall_rule() {
 			$ipt_m -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(get_ipset_ipt $LOCALHOST_TCP_PROXY_MODE) -j PSW_RULE
 			$ipt_m -A PSW $(comment "本机") -p tcp -i lo $(REDIRECT $TCP_REDIR_PORT TPROXY)
 			$ipt_m -A PSW $(comment "本机") -p tcp -i lo -j RETURN
-			insert_rule_before "$ipt_m" "OUTPUT" "mwan3" "$(comment PSW_OUTPUT_TCP) -p tcp -j PSW_OUTPUT"
-			insert_rule_after "$ipt_m" "OUTPUT" "PSW_OUTPUT_TCP" "$(comment PSW) -p tcp -m mark --mark 1 -j RETURN"
+			insert_rule_before "$ipt_m" "OUTPUT" "mwan3" "$(comment mangle-OUTPUT-PSW) -p tcp -j PSW_OUTPUT"
 		fi
 
 		[ "$PROXY_IPV6" == "1" ] && {
@@ -1094,8 +1110,7 @@ add_firewall_rule() {
 			$ip6t_m -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(get_ipset_ip6t $LOCALHOST_TCP_PROXY_MODE) -j PSW_RULE
 			$ip6t_m -A PSW $(comment "本机") -p tcp -i lo $(REDIRECT $TCP_REDIR_PORT TPROXY)
 			$ip6t_m -A PSW $(comment "本机") -p tcp -i lo -j RETURN
-			insert_rule_before "$ip6t_m" "OUTPUT" "mwan3" "$(comment PSW_OUTPUT_TCP) -p tcp -j PSW_OUTPUT"
-			insert_rule_after "$ip6t_m" "OUTPUT" "PSW_OUTPUT_TCP" "$(comment PSW) -p tcp -m mark --mark 1 -j RETURN"
+			insert_rule_before "$ip6t_m" "OUTPUT" "mwan3" "$(comment mangle-OUTPUT-PSW) -p tcp -j PSW_OUTPUT"
 		}
 	fi
 
@@ -1173,8 +1188,7 @@ add_firewall_rule() {
 		$ipt_m -A PSW_OUTPUT -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(get_ipset_ipt $LOCALHOST_UDP_PROXY_MODE) -j PSW_RULE
 		$ipt_m -A PSW $(comment "本机") -p udp -i lo $(REDIRECT $UDP_REDIR_PORT TPROXY)
 		$ipt_m -A PSW $(comment "本机") -p udp -i lo -j RETURN
-		insert_rule_before "$ipt_m" "OUTPUT" "mwan3" "$(comment PSW_OUTPUT_UDP) -p udp -j PSW_OUTPUT"
-		insert_rule_after "$ipt_m" "OUTPUT" "PSW_OUTPUT_UDP" "$(comment PSW) -p udp -m mark --mark 1 -j RETURN"
+		insert_rule_before "$ipt_m" "OUTPUT" "mwan3" "$(comment mangle-OUTPUT-PSW) -p udp -j PSW_OUTPUT"
 
 		[ "$PROXY_IPV6" == "1" ] && [ "$PROXY_IPV6_UDP" == "1" ] && {
 			$ip6t_m -A PSW_OUTPUT -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) -j PSW_RULE
@@ -1182,10 +1196,15 @@ add_firewall_rule() {
 			$ip6t_m -A PSW_OUTPUT -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(get_ipset_ip6t $LOCALHOST_UDP_PROXY_MODE) -j PSW_RULE
 			$ip6t_m -A PSW $(comment "本机") -p udp -i lo $(REDIRECT $UDP_REDIR_PORT TPROXY)
 			$ip6t_m -A PSW $(comment "本机") -p udp -i lo -j RETURN
-			insert_rule_before "$ip6t_m" "OUTPUT" "mwan3" "$(comment PSW_OUTPUT_UDP) -p udp -j PSW_OUTPUT"
-			insert_rule_after "$ip6t_m" "OUTPUT" "PSW_OUTPUT_UDP" "$(comment PSW) -p udp -m mark --mark 1 -j RETURN"
+			insert_rule_before "$ip6t_m" "OUTPUT" "mwan3" "$(comment mangle-OUTPUT-PSW) -p udp -j PSW_OUTPUT"
 		}
 	fi
+
+	$ipt_m -I OUTPUT $(comment "mangle-OUTPUT-PSW") -o lo -j RETURN
+	insert_rule_before "$ipt_m" "OUTPUT" "mwan3" "$(comment mangle-OUTPUT-PSW) -m mark --mark 1 -j RETURN"
+	
+	$ip6t_m -I OUTPUT $(comment "mangle-OUTPUT-PSW") -o lo -j RETURN
+	insert_rule_before "$ip6t_m" "OUTPUT" "mwan3" "$(comment mangle-OUTPUT-PSW) -m mark --mark 1 -j RETURN"
 
 	$ipt_m -A PSW -p udp --dport 53 -j RETURN
 	$ip6t_m -A PSW -p udp --dport 53 -j RETURN
@@ -1263,17 +1282,22 @@ gen_include() {
 		[ -z "${_ipt}" ] && return
 
 		echo "*$2"
-		${_ipt}-save -t $2 | grep "PSW" | grep -v "\-j PSW$" | grep -v "socket \-j PSW_DIVERT$" | sed -e "s/^-A \(OUTPUT\|PREROUTING\)/-I \1 1/"
+		${_ipt}-save -t $2 | grep "PSW" | grep -v "\-j PSW$" | grep -v "mangle\-OUTPUT\-PSW" | grep -v "socket \-j PSW_DIVERT$" | sed -e "s/^-A \(OUTPUT\|PREROUTING\)/-I \1 1/"
 		echo 'COMMIT'
 	}
 	local __ipt=""
 	[ -n "${ipt}" ] && {
 		__ipt=$(cat <<- EOF
+			mangle_output_psw=\$(${ipt}-save -t mangle | grep "PSW" | grep "mangle\-OUTPUT\-PSW" | sed "s#-A OUTPUT ##g")
 			$ipt-save -c | grep -v "PSW" | $ipt-restore -c
 			$ipt-restore -n <<-EOT
 			$(extract_rules 4 nat)
 			$(extract_rules 4 mangle)
 			EOT
+
+			echo "\${mangle_output_psw}" | while read line; do
+				\$(${MY_PATH} insert_rule_before "$ipt_m" "OUTPUT" "mwan3" "\${line}")
+			done
 
 			[ "$accept_icmp" = "1" ] && \$(${MY_PATH} insert_rule_after "$ipt_n" "PREROUTING" "prerouting_rule" "-p icmp -j PSW")
 			[ -z "${is_tproxy}" ] && \$(${MY_PATH} insert_rule_after "$ipt_n" "PREROUTING" "prerouting_rule" "-p tcp -j PSW")
@@ -1298,11 +1322,16 @@ gen_include() {
 	local __ip6t=""
 	[ -n "${ip6t}" ] && {
 		__ip6t=$(cat <<- EOF
+			mangle_output_psw=\$(${ip6t}-save -t mangle | grep "PSW" | grep "mangle\-OUTPUT\-PSW" | sed "s#-A OUTPUT ##g")
 			$ip6t-save -c | grep -v "PSW" | $ip6t-restore -c
 			$ip6t-restore -n <<-EOT
 			$(extract_rules 6 nat)
 			$(extract_rules 6 mangle)
 			EOT
+
+			echo "\${mangle_output_psw}" | while read line; do
+				\$(${MY_PATH} insert_rule_before "$ip6t_m" "OUTPUT" "mwan3" "\${line}")
+			done
 
 			[ "$accept_icmpv6" = "1" ] && $ip6t_n -A PREROUTING -p ipv6-icmp -j PSW
 
