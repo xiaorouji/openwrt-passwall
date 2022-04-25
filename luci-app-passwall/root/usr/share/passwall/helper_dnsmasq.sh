@@ -45,10 +45,10 @@ logic_restart() {
 		for server in $(uci -q get dhcp.@dnsmasq[0].server); do
 			[ -n "$(echo $server | grep '\/')" ] || uci -q del_list dhcp.@dnsmasq[0].server="$server" 
 		done
-		/etc/init.d/dnsmasq restart >/dev/null 2>&1 &
+		/etc/init.d/dnsmasq restart >/dev/null 2>&1
 		restore_servers
 	else
-		/etc/init.d/dnsmasq restart >/dev/null 2>&1 &
+		/etc/init.d/dnsmasq restart >/dev/null 2>&1
 	fi
 	echolog "重启 dnsmasq 服务"
 	LOG_FILE=${_LOG_FILE}
@@ -59,7 +59,7 @@ restart() {
 	eval_set_val $@
 	_LOG_FILE=$LOG_FILE
 	[ -n "$no_log" ] && LOG_FILE="/dev/null"
-	/etc/init.d/dnsmasq restart >/dev/null 2>&1 &
+	/etc/init.d/dnsmasq restart >/dev/null 2>&1
 	echolog "重启 dnsmasq 服务"
 	LOG_FILE=${_LOG_FILE}
 }
