@@ -257,32 +257,6 @@ address:depends({ type = "Xray", protocol = "socks" })
 address:depends({ type = "Xray", protocol = "shadowsocks" })
 address:depends({ type = "Xray", protocol = "trojan" })
 
---[[
-use_ipv6 = s:option(Flag, "use_ipv6", translate("Use IPv6"))
-use_ipv6.default = 0
-use_ipv6:depends("type", "Socks")
-use_ipv6:depends("type", "SS")
-use_ipv6:depends("type", "SS-Rust")
-use_ipv6:depends("type", "SSR")
-use_ipv6:depends("type", "Brook")
-use_ipv6:depends("type", "Trojan")
-use_ipv6:depends("type", "Trojan-Plus")
-use_ipv6:depends("type", "Trojan-Go")
-use_ipv6:depends("type", "Hysteria")
-use_ipv6:depends({ type = "V2ray", protocol = "vmess" })
-use_ipv6:depends({ type = "V2ray", protocol = "vless" })
-use_ipv6:depends({ type = "V2ray", protocol = "http" })
-use_ipv6:depends({ type = "V2ray", protocol = "socks" })
-use_ipv6:depends({ type = "V2ray", protocol = "shadowsocks" })
-use_ipv6:depends({ type = "V2ray", protocol = "trojan" })
-use_ipv6:depends({ type = "Xray", protocol = "vmess" })
-use_ipv6:depends({ type = "Xray", protocol = "vless" })
-use_ipv6:depends({ type = "Xray", protocol = "http" })
-use_ipv6:depends({ type = "Xray", protocol = "socks" })
-use_ipv6:depends({ type = "Xray", protocol = "shadowsocks" })
-use_ipv6:depends({ type = "Xray", protocol = "trojan" })
---]]
-
 port = s:option(Value, "port", translate("Port"))
 port.datatype = "port"
 port.rmempty = false

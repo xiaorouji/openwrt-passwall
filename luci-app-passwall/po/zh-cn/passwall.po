@@ -16,38 +16,11 @@ msgstr "连接正常"
 msgid "Problem detected!"
 msgstr "连接失败"
 
-msgid "Very Fast"
-msgstr "非常快"
-
-msgid "Fast"
-msgstr "很快"
-
-msgid "General"
-msgstr "一般般"
-
-msgid "Slow"
-msgstr "很慢"
-
-msgid "Very Slow"
-msgstr "非常慢"
-
 msgid "Touch Check"
 msgstr "点我检测"
 
 msgid "Kernel Unsupported"
 msgstr "内核不支持"
-
-msgid "Use IPv6"
-msgstr "使用IPv6"
-
-msgid "Parsing IP"
-msgstr "域名解析IP"
-
-msgid "TCP Server"
-msgstr "TCP服务器"
-
-msgid "UDP Server"
-msgstr "UDP服务器"
 
 msgid "Main Settings"
 msgstr "节点选择"
@@ -110,19 +83,19 @@ msgid "Main switch"
 msgstr "主开关"
 
 msgid "TCP Node"
-msgstr "TCP节点"
+msgstr "TCP 节点"
 
 msgid "UDP Node"
-msgstr "UDP节点"
+msgstr "UDP 节点"
 
 msgid "Edit Current Node"
 msgstr "编辑当前节点"
 
 msgid "Socks Config"
-msgstr "Socks配置"
+msgstr "Socks 配置"
 
 msgid "Socks Node"
-msgstr "Socks节点"
+msgstr "Socks 节点"
 
 msgid "Listen Port"
 msgstr "监听端口"
@@ -136,12 +109,6 @@ msgstr "与TCP节点相同"
 msgid "Current node: %s"
 msgstr "当前节点：%s"
 
-msgid "For proxy specific list."
-msgstr "用于代理特定的列表。"
-
-msgid "For proxy game network."
-msgstr "用于代理游戏等。"
-
 msgid "DNS Shunt"
 msgstr "DNS分流"
 
@@ -151,26 +118,17 @@ msgstr "国内分组名"
 msgid "You only need to configure domestic DNS packets in SmartDNS and set it redirect or as Dnsmasq upstream, and fill in the domestic DNS group name here."
 msgstr "你只需要在SmartDNS配置好国内DNS分组，并设置重定向或作为Dnsmasq上游，此处填入国内DNS分组名。"
 
+msgid "Guide"
+msgstr "教程"
+
 msgid "Filter Mode"
 msgstr "过滤模式"
 
 msgid "TCP node must be '%s' type to use FakeDNS."
-msgstr "TCP节点必须是 '%s' 类型才能使用 FakeDNS。"
+msgstr "TCP 节点必须是 '%s' 类型才能使用 FakeDNS。"
 
 msgid "Remote DNS"
-msgstr "远程DNS"
-
-msgid "IP:Port mode acceptable, multi value split with english comma."
-msgstr "接受 IP:Port 形式的输入，多个以英文逗号分隔。"
-
-msgid "If you use dns2socks, only the first one is valid."
-msgstr "如果使用dns2socks，只有第一个生效。"
-
-msgid "Ali"
-msgstr "阿里"
-
-msgid "Baidu"
-msgstr "百度"
+msgstr "远程 DNS"
 
 msgid "Resolver For The List Proxied"
 msgstr "解析被代理的域名列表"
@@ -179,7 +137,7 @@ msgid "Requery DNS By %s"
 msgstr "通过%s请求DNS"
 
 msgid "Socks Server"
-msgstr "Socks服务器"
+msgstr "Socks 服务器"
 
 msgid "Misconfigured"
 msgstr "配置不当"
@@ -190,11 +148,8 @@ msgstr "请确保此Socks服务可用。"
 msgid "Format must be:"
 msgstr "格式必须为："
 
-msgid "DoH request address"
-msgstr "DoH 请求地址"
-
-msgid "China list or gfwlist cannot be used together with outside China list!"
-msgstr "中国列表不能和中国列表外或防火墙表一起使用！"
+msgid "Remote DNS DoH"
+msgstr "远程 DNS DoH"
 
 msgid "Cache Resolved"
 msgstr "缓存解析结果"
@@ -222,9 +177,6 @@ msgstr "清空 IPSET"
 
 msgid "Try this feature if the rule modification does not take effect."
 msgstr "如果修改规则后没有生效，请尝试此功能。"
-
-msgid "The server client can also use this rule to scientifically surf the Internet."
-msgstr "本机服务器的客户端也可以使用这个代理模式上网。"
 
 msgid "About DNS issues:"
 msgstr "关于DNS问题："
@@ -283,11 +235,8 @@ msgstr "单进程"
 msgid "Proxy Mode"
 msgstr "代理模式"
 
-msgid "%s Proxy Mode"
-msgstr "%s 代理模式"
-
-msgid "If not available, try clearing the cache."
-msgstr "如果无法使用，请尝试清除缓存。"
+msgid "Default Proxy Mode"
+msgstr "默认代理模式"
 
 msgid "No Proxy"
 msgstr "不代理"
@@ -314,16 +263,16 @@ msgid "Localhost"
 msgstr "本机"
 
 msgid "Router Localhost"
-msgstr "路由器自身"
-
-msgid "Danger"
-msgstr "危险"
+msgstr "路由器本机"
 
 msgid "Same as the %s default proxy mode"
 msgstr "与 %s 默认代理模式相同"
 
 msgid "Want different devices to use different proxy modes/ports/nodes? Please use access control."
 msgstr "希望不同设备使用不同的代理模式/端口/节点？请使用访问控制。"
+
+msgid "China list or gfwlist cannot be used together with outside China list!"
+msgstr "中国列表不能和中国列表外或防火墙表一起使用！"
 
 msgid "Operation"
 msgstr "操作"
@@ -547,15 +496,6 @@ msgstr "组"
 msgid "Auto Ping"
 msgstr "自动Ping"
 
-msgid "This will automatically ping the node for latency"
-msgstr "选中后保存应用后即自动Ping节点"
-
-msgid "Use TCP Detection delay"
-msgstr "使用TCP检测延迟"
-
-msgid "This will use tcping replace ping detection of node"
-msgstr "选中后保存应用后即使用tcping替换ping检测节点"
-
 msgid "Concise display nodes"
 msgstr "简洁显示节点"
 
@@ -611,25 +551,25 @@ msgid "Forwarding Settings"
 msgstr "转发配置"
 
 msgid "TCP No Redir Ports"
-msgstr "TCP不转发端口"
+msgstr "TCP 不转发端口"
 
 msgid "UDP No Redir Ports"
-msgstr "UDP不转发端口"
+msgstr "UDP 不转发端口"
 
 msgid "Fill in the ports you don't want to be forwarded by the agent, with the highest priority."
 msgstr "填写你不希望被代理转发的端口，优先级最高。"
 
 msgid "TCP Proxy Drop Ports"
-msgstr "TCP转发屏蔽端口"
+msgstr "TCP 转发屏蔽端口"
 
 msgid "UDP Proxy Drop Ports"
-msgstr "UDP转发屏蔽端口"
+msgstr "UDP 转发屏蔽端口"
 
 msgid "TCP Redir Ports"
-msgstr "TCP转发端口"
+msgstr "TCP 转发端口"
 
 msgid "UDP Redir Ports"
-msgstr "UDP转发端口"
+msgstr "UDP 转发端口"
 
 msgid "No patterns are used"
 msgstr "不使用"
@@ -642,12 +582,6 @@ msgstr "常用的"
 
 msgid "Only Web"
 msgstr "仅网页"
-
-msgid "or more"
-msgstr "及以上"
-
-msgid "or less"
-msgstr "及以下"
 
 msgid "Default"
 msgstr "默认"
@@ -674,28 +608,13 @@ msgid "When enabled, the server not will resolve the domain name again."
 msgstr "启用后，服务器不会再次解析域名。"
 
 msgid "TCP Proxy Way"
-msgstr "TCP代理方式"
+msgstr "TCP 代理方式"
 
 msgid "Proxy Settings"
 msgstr "代理配置"
 
-msgid "TCP Redir Port"
-msgstr "TCP透明代理端口"
-
-msgid "UDP Redir Port"
-msgstr "UDP透明代理端口"
-
-msgid "Custom Dnsmasq"
-msgstr "自定义Dnsmasq设置"
-
-msgid "Setting a parameter error will cause dnsmasq fail to start."
-msgstr "参数设置错误将会导致Dnsmasq无法启动。"
-
 msgid "Auto Switch"
 msgstr "自动切换"
-
-msgid "When there is no server, an automatic reconnect scheme is used"
-msgstr "当没有服务器时，则使用自动重连方案"
 
 msgid "How often to test"
 msgstr "多久检测一次"
@@ -705,9 +624,6 @@ msgstr "超时秒数"
 
 msgid "Timeout retry num"
 msgstr "超时重试次数"
-
-msgid "Automatic switching cannot be used when this option is checked"
-msgstr "当勾选此选项时，不能使用自动切换"
 
 msgid "Main node"
 msgstr "主节点"
@@ -1085,7 +1001,7 @@ msgid "Local Port"
 msgstr "本地端口"
 
 msgid "TCP Fast Open"
-msgstr "TCP快速打开"
+msgstr "TCP 快速打开"
 
 msgid "Need node support required"
 msgstr "需要节点支持"
@@ -1172,7 +1088,7 @@ msgid "Auth"
 msgstr "身份认证"
 
 msgid "Socks for authentication"
-msgstr "Socks认证方式"
+msgstr "Socks 认证方式"
 
 msgid "Socks protocol authentication, support anonymous and password."
 msgstr "Socks 协议的认证方式，支持匿名方式和账号密码方式。"
@@ -1298,10 +1214,10 @@ msgid "Not enabled log"
 msgstr "未启用日志"
 
 msgid "UDP Forward"
-msgstr "UDP转发"
+msgstr "UDP 转发"
 
 msgid "DNS Settings"
-msgstr "DNS设置"
+msgstr "DNS 设置"
 
 msgid "Null"
 msgstr "无"

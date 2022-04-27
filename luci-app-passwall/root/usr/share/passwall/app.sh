@@ -20,7 +20,7 @@ LOG_FILE=/tmp/log/$CONFIG.log
 APP_PATH=/usr/share/$CONFIG
 RULES_PATH=/usr/share/${CONFIG}/rules
 DNS_N=dnsmasq
-DNS_PORT=7913
+DNS_PORT=15353
 TUN_DNS="127.0.0.1#${DNS_PORT}"
 LOCAL_DNS=119.29.29.29
 DEFAULT_DNS=
@@ -291,7 +291,9 @@ run_ipt2socks() {
 }
 
 run_v2ray() {
-	local flag type node tcp_redir_port udp_redir_port socks_address socks_port socks_username socks_password http_address http_port http_username http_password dns_socks_address dns_socks_port dns_listen_port dns_proto dns_tcp_server doh dns_client_ip dns_query_strategy dns_cache loglevel log_file config_file
+	local flag type node tcp_redir_port udp_redir_port socks_address socks_port socks_username socks_password http_address http_port http_username http_password
+	local dns_listen_port remote_dns_protocol remote_dns_udp_server remote_dns_tcp_server remote_dns_doh dns_client_ip dns_query_strategy dns_cache dns_socks_address dns_socks_port
+	local loglevel log_file config_file
 	local _extra_param=""
 	eval_set_val $@
 	[ -z "$type" ] && {
@@ -332,22 +334,28 @@ run_v2ray() {
 	}
 	local buffer_size=$(config_t_get global_forwarding buffer_size)
 	[ -n "${buffer_size}" ] && _extra_param="${_extra_param} -buffer_size ${buffer_size}"
-	case "$dns_proto" in
+	case "$remote_dns_protocol" in
 		tcp)
-			local _dns_forward=$(get_first_dns dns_tcp_server 53 | sed 's/#/:/g')
-			local _dns_address=$(echo ${_dns_forward} | awk -F ':' '{print $1}')
-			_extra_param="${_extra_param} -dns_server ${_dns_address} -dns_tcp_server tcp://${_dns_forward}"
+			local _dns=$(get_first_dns remote_dns_tcp_server 53 | sed 's/#/:/g')
+			local _dns_address=$(echo ${_dns} | awk -F ':' '{print $1}')
+			local _dns_port=$(echo ${_dns} | awk -F ':' '{print $2}')
+			_extra_param="${_extra_param} -remote_dns_server ${_dns_address} -remote_dns_port ${_dns_port} -remote_dns_tcp_server tcp://${_dns}"
 		;;
 		doh)
-			local _doh_url=$(echo $doh | awk -F ',' '{print $1}')
-			local _doh_host_port=$(echo $_doh_url | sed "s/https:\/\///g" | awk -F '/' '{print $1}')
+			local _doh_url=$(echo $remote_dns_doh | awk -F ',' '{print $1}')
+			local _doh_host_port=$(lua_api "get_domain_from_url(\"${_doh_url}\")")
+			#local _doh_host_port=$(echo $_doh_url | sed "s/https:\/\///g" | awk -F '/' '{print $1}')
 			local _doh_host=$(echo $_doh_host_port | awk -F ':' '{print $1}')
+			local is_ip=$(lua_api "is_ip(\"${_doh_host}\")")
 			local _doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
-			local _doh_bootstrap=$(echo $doh | cut -d ',' -sf 2-)
-			_extra_param="${_extra_param} -dns_server ${_doh_bootstrap} -doh_url ${_doh_url} -doh_host ${_doh_host}"
+			[ -z "${_doh_port}" ] && _doh_port=443
+			local _doh_bootstrap=$(echo $remote_dns_doh | cut -d ',' -sf 2-)
+			[ "${is_ip}" = "true" ] && _doh_bootstrap=${_doh_host}
+			[ -n "$_doh_bootstrap" ] && _extra_param="${_extra_param} -remote_dns_server ${_doh_bootstrap}"
+			_extra_param="${_extra_param} -remote_dns_port ${_doh_port} -remote_dns_doh_url ${_doh_url} -remote_dns_doh_host ${_doh_host}"
 		;;
 		fakedns)
-			_extra_param="${_extra_param} -dns_fakedns 1"
+			_extra_param="${_extra_param} -remote_dns_fake 1"
 		;;
 	esac
 	_extra_param="${_extra_param} -tcp_proxy_way $tcp_proxy_way"
@@ -666,22 +674,21 @@ run_redir() {
 				[ -n "${_dns_client_ip}" ] && _v2ray_args="${_v2ray_args} dns_client_ip=${_dns_client_ip}"
 				[ "${DNS_CACHE}" == "0" ] && _v2ray_args="${_v2ray_args} dns_cache=0"
 				local v2ray_dns_mode=$(config_t_get global v2ray_dns_mode tcp)
-				_v2ray_args="${_v2ray_args} dns_proto=${v2ray_dns_mode}"
+				_v2ray_args="${_v2ray_args} remote_dns_protocol=${v2ray_dns_mode}"
 				_v2ray_args="${_v2ray_args} dns_listen_port=${dns_listen_port}"
 				case "$v2ray_dns_mode" in
 					tcp)
-						_v2ray_args="${_v2ray_args} dns_tcp_server=${DNS_FORWARD}"
+						_v2ray_args="${_v2ray_args} remote_dns_tcp_server=${REMOTE_DNS}"
 						echolog "  - 域名解析 DNS Over TCP..."
 					;;
 					doh)
-						up_trust_doh=$(config_t_get global up_trust_doh "https://cloudflare-dns.com/dns-query,1.1.1.1")
-						_v2ray_args="${_v2ray_args} doh=${up_trust_doh}"
+						remote_dns_doh=$(config_t_get global remote_dns_doh "https://1.1.1.1/dns-query")
+						_v2ray_args="${_v2ray_args} remote_dns_doh=${remote_dns_doh}"
 						echolog "  - 域名解析 DNS Over HTTPS..."
 					;;
 					fakedns)
 						fakedns=1
 						CHINADNS_NG=0
-						_v2ray_args="${_v2ray_args} dns_fakedns=1"
 						echolog "  - 域名解析 Fake DNS..."
 					;;
 				esac
@@ -1078,7 +1085,7 @@ start_dns() {
 	case "$DNS_MODE" in
 	dns2socks)
 		local dns2socks_socks_server=$(echo $(config_t_get global socks_server 127.0.0.1:1080) | sed "s/#/:/g")
-		local dns2socks_forward=$(get_first_dns DNS_FORWARD 53 | sed 's/#/:/g')
+		local dns2socks_forward=$(get_first_dns REMOTE_DNS 53 | sed 's/#/:/g')
 		run_dns2socks socks=$dns2socks_socks_server listen_address=127.0.0.1 listen_port=${dns_listen_port} dns=$dns2socks_forward cache=$DNS_CACHE
 		echolog "  - 域名解析：dns2socks(127.0.0.1:${dns_listen_port})，${dns2socks_socks_server} -> ${dns2socks_forward}"
 	;;
@@ -1096,30 +1103,26 @@ start_dns() {
 			use_tcp_node_resolve_dns=1
 			local v2ray_dns_mode=$(config_t_get global v2ray_dns_mode tcp)
 			_v2ray_args="${_v2ray_args} dns_listen_port=${dns_listen_port}"
-			_v2ray_args="${_v2ray_args} dns_proto=${v2ray_dns_mode}"
+			_v2ray_args="${_v2ray_args} remote_dns_protocol=${v2ray_dns_mode}"
 			case "$v2ray_dns_mode" in
 				tcp)
-					_v2ray_args="${_v2ray_args} dns_tcp_server=${DNS_FORWARD}"
+					_v2ray_args="${_v2ray_args} remote_dns_tcp_server=${REMOTE_DNS}"
 					echolog "  - 域名解析 DNS Over TCP..."
 				;;
 				doh)
-					up_trust_doh=$(config_t_get global up_trust_doh "https://cloudflare-dns.com/dns-query,1.1.1.1")
-					_v2ray_args="${_v2ray_args} doh=${up_trust_doh}"
+					remote_dns_doh=$(config_t_get global remote_dns_doh "https://1.1.1.1/dns-query")
+					_v2ray_args="${_v2ray_args} remote_dns_doh=${remote_dns_doh}"
 					
-					_doh_url=$(echo $up_trust_doh | awk -F ',' '{print $1}')
-					_doh_host_port=$(echo $_doh_url | sed "s/https:\/\///g" | awk -F '/' '{print $1}')
-					_doh_host=$(echo $_doh_host_port | awk -F ':' '{print $1}')
-					_doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
-					_doh_bootstrap=$(echo $up_trust_doh | cut -d ',' -sf 2-)
-
-					DNS_FORWARD=""
-					_doh_bootstrap_dns=$(echo $_doh_bootstrap | sed "s/,/ /g")
-					for _dns in $_doh_bootstrap_dns; do
-						_dns=$(echo $_dns | awk -F ':' '{print $1}'):${_doh_port:-443}
-						[ -n "$DNS_FORWARD" ] && DNS_FORWARD=${DNS_FORWARD},${_dns} || DNS_FORWARD=${_dns}
-					done
-					unset _dns _doh_bootstrap_dns
-					unset _doh_url _doh_port _doh_bootstrap
+					local _doh_url=$(echo $remote_dns_doh | awk -F ',' '{print $1}')
+					local _doh_host_port=$(lua_api "get_domain_from_url(\"${_doh_url}\")")
+					local _doh_host=$(echo $_doh_host_port | awk -F ':' '{print $1}')
+					local _is_ip=$(lua_api "is_ip(\"${_doh_host}\")")
+					local _doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
+					[ -z "${_doh_port}" ] && _doh_port=443
+					local _doh_bootstrap=$(echo $remote_dns_doh | cut -d ',' -sf 2-)
+					[ "${_is_ip}" = "true" ] && _doh_bootstrap=${_doh_host}
+					[ -n "${_doh_bootstrap}" ] && REMOTE_DNS=${_doh_bootstrap}:${_doh_port}
+					unset _doh_url _doh_host_port _doh_host _is_ip _doh_port _doh_bootstrap
 					echolog "  - 域名解析 DNS Over HTTPS..."
 				;;
 			esac
@@ -1128,13 +1131,13 @@ start_dns() {
 	;;
 	pdnsd)
 		use_tcp_node_resolve_dns=1
-		gen_pdnsd_config "${dns_listen_port}" "${DNS_FORWARD}" "${DNS_CACHE}"
+		gen_pdnsd_config "${dns_listen_port}" "${REMOTE_DNS}" "${DNS_CACHE}"
 		ln_run "$(first_type pdnsd)" pdnsd "/dev/null" --daemon -c "${TMP_PATH}/pdnsd/pdnsd.conf" -d
 		echolog "  - 域名解析：pdnsd + 使用(TCP节点)解析域名..."
 	;;
 	udp)
 		use_udp_node_resolve_dns=1
-		TUN_DNS="$(echo ${DNS_FORWARD} | sed 's/#/:/g' | sed -E 's/\:([^:]+)$/#\1/g')"
+		TUN_DNS="$(echo ${REMOTE_DNS} | sed 's/#/:/g' | sed -E 's/\:([^:]+)$/#\1/g')"
 		echolog "  - 域名解析：使用UDP协议请求DNS（$TUN_DNS）..."
 	;;
 	esac
@@ -1484,8 +1487,8 @@ gfwlist=$(echo "${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}${UDP_PROXY_MODE}${L
 DNS_SHUNT=$(config_t_get global dns_shunt dnsmasq)
 [ -z "$(first_type $DNS_SHUNT)" ] && DNS_SHUNT="dnsmasq"
 DNS_MODE=$(config_t_get global dns_mode pdnsd)
-DNS_FORWARD=$(config_t_get global dns_forward 1.1.1.1:53 | sed 's/#/:/g' | sed -E 's/\:([^:]+)$/#\1/g')
 DNS_CACHE=$(config_t_get global dns_cache 0)
+REMOTE_DNS=$(config_t_get global remote_dns 1.1.1.1:53 | sed 's/#/:/g' | sed -E 's/\:([^:]+)$/#\1/g')
 CHINADNS_NG=$(config_t_get global chinadns_ng 0)
 filter_proxy_ipv6=$(config_t_get global filter_proxy_ipv6 0)
 dns_listen_port=${DNS_PORT}

@@ -271,7 +271,7 @@ load_acl() {
 		dnsmasq_port=11400
 		echolog "访问控制："
 		for item in $items; do
-			local enabled sid remarks sources tcp_proxy_mode udp_proxy_mode tcp_no_redir_ports udp_no_redir_ports tcp_proxy_drop_ports udp_proxy_drop_ports tcp_redir_ports udp_redir_ports tcp_node udp_node dns_mode dns_forward v2ray_dns_mode dns_doh dns_client_ip
+			local enabled sid remarks sources tcp_proxy_mode udp_proxy_mode tcp_no_redir_ports udp_no_redir_ports tcp_proxy_drop_ports udp_proxy_drop_ports tcp_redir_ports udp_redir_ports tcp_node udp_node dns_mode remote_dns v2ray_dns_mode remote_dns_doh dns_client_ip
 			local _ip _mac _iprange _ipset _ip_or_mac rule_list tcp_port udp_port tcp_node_remark udp_node_remark config_file _extra_param
 			sid=$(uci -q show "${CONFIG}.${item}" | grep "=acl_rule" | awk -F '=' '{print $1}' | awk -F '.' '{print $2}')
 			eval $(uci -q show "${CONFIG}.${item}" | cut -d'.' -sf 3-)
@@ -306,9 +306,9 @@ load_acl() {
 			tcp_node=${tcp_node:-default}
 			udp_node=${udp_node:-default}
 			dns_mode=${dns_mode:-dns2socks}
-			dns_forward=${dns_forward:-1.1.1.1}
+			remote_dns=${remote_dns:-1.1.1.1}
 			[ "$dns_mode" = "v2ray" -o "$dns_mode" = "xray" ] && {
-				[ "$v2ray_dns_mode" = "doh" ] && dns_forward=${dns_doh:-https://cloudflare-dns.com/dns-query,1.1.1.1}
+				[ "$v2ray_dns_mode" = "doh" ] && remote_dns=${remote_dns_doh:-https://1.1.1.1/dns-query}
 			}
 			[ "$tcp_proxy_mode" = "default" ] && tcp_proxy_mode=$TCP_PROXY_MODE
 			[ "$udp_proxy_mode" = "default" ] && udp_proxy_mode=$UDP_PROXY_MODE
@@ -331,12 +331,12 @@ load_acl() {
 								dns_port=$(get_new_port $(expr $dns_port + 1))
 								_dns_port=$dns_port
 								if [ "$dns_mode" = "dns2socks" ]; then
-									run_dns2socks flag=acl_${sid} socks_address=127.0.0.1 socks_port=$socks_port listen_address=0.0.0.0 listen_port=${_dns_port} dns=$dns_forward cache=1
+									run_dns2socks flag=acl_${sid} socks_address=127.0.0.1 socks_port=$socks_port listen_address=0.0.0.0 listen_port=${_dns_port} dns=$remote_dns cache=1
 								elif [ "$dns_mode" = "v2ray" -o "$dns_mode" = "xray" ]; then
 									config_file=$TMP_ACL_PATH/${tcp_node}_SOCKS_${socks_port}_DNS.json
-									run_v2ray flag=acl_${sid} type=$dns_mode dns_socks_address=127.0.0.1 dns_socks_port=$socks_port dns_listen_port=${_dns_port} dns_proto=${v2ray_dns_mode} dns_tcp_server=${dns_forward} doh="${dns_forward}" dns_client_ip=${dns_client_ip} dns_query_strategy=${DNS_QUERY_STRATEGY} config_file=$config_file
+									run_v2ray flag=acl_${sid} type=$dns_mode dns_socks_address=127.0.0.1 dns_socks_port=$socks_port dns_listen_port=${_dns_port} remote_dns_protocol=${v2ray_dns_mode} remote_dns_tcp_server=${remote_dns} remote_dns_doh="${remote_dns}" dns_client_ip=${dns_client_ip} dns_query_strategy=${DNS_QUERY_STRATEGY} config_file=$config_file
 								fi
-								eval node_${tcp_node}_$(echo -n "${dns_forward}" | md5sum | cut -d " " -f1)=${_dns_port}
+								eval node_${tcp_node}_$(echo -n "${remote_dns}" | md5sum | cut -d " " -f1)=${_dns_port}
 							}
 
 							dnsmasq_port=$(get_new_port $(expr $dnsmasq_port + 1))
@@ -349,7 +349,7 @@ load_acl() {
 							echo "server=${d_server}" >> $TMP_ACL_PATH/$sid/dnsmasq.conf
 							source $APP_PATH/helper_${DNS_N}.sh add FLAG=${sid} DNS_MODE=$dns_mode TMP_DNSMASQ_PATH=$TMP_ACL_PATH/$sid/dnsmasq.d DNSMASQ_CONF_FILE=/dev/null LOCAL_DNS=$LOCAL_DNS TUN_DNS=127.0.0.1#${_dns_port} TCP_NODE=$tcp_node PROXY_MODE=${tcp_proxy_mode} NO_LOGIC_LOG=1 NO_PROXY_IPV6=${filter_proxy_ipv6}
 							ln_run "$(first_type dnsmasq)" "dnsmasq_${sid}" "/dev/null" -C $TMP_ACL_PATH/$sid/dnsmasq.conf -x $TMP_ACL_PATH/$sid/dnsmasq.pid
-							eval node_${tcp_node}_$(echo -n "${tcp_proxy_mode}${dns_forward}" | md5sum | cut -d " " -f1)=${dnsmasq_port}
+							eval node_${tcp_node}_$(echo -n "${tcp_proxy_mode}${remote_dns}" | md5sum | cut -d " " -f1)=${dnsmasq_port}
 						}
 						if [ "$tcp_node" = "$TCP_NODE" ]; then
 							tcp_port=$TCP_REDIR_PORT
@@ -359,9 +359,9 @@ load_acl() {
 							if [ -n "${_socks_port}" ] && [ -n "${_redir_port}" ]; then
 								socks_port=${_socks_port}
 								tcp_port=${_redir_port}
-								_dnsmasq_port=$(eval echo \${node_${tcp_node}_$(echo -n "${tcp_proxy_mode}${dns_forward}" | md5sum | cut -d " " -f1)})
+								_dnsmasq_port=$(eval echo \${node_${tcp_node}_$(echo -n "${tcp_proxy_mode}${remote_dns}" | md5sum | cut -d " " -f1)})
 								if [ -z "${_dnsmasq_port}" ]; then
-									_dns_port=$(eval echo \${node_${tcp_node}_$(echo -n "${dns_forward}" | md5sum | cut -d " " -f1)})
+									_dns_port=$(eval echo \${node_${tcp_node}_$(echo -n "${remote_dns}" | md5sum | cut -d " " -f1)})
 									run_dns ${_dns_port}
 								else
 									redirect_dns_port=${_dnsmasq_port}
@@ -382,7 +382,7 @@ load_acl() {
 										config_file=$(echo $config_file | sed "s/SOCKS_${socks_port}/DNS/g")
 										dns_port=$(get_new_port $(expr $dns_port + 1))
 										_dns_port=$dns_port
-										_extra_param="dns_listen_port=${_dns_port} dns_proto=${v2ray_dns_mode} dns_tcp_server=${dns_forward} doh=${dns_forward} dns_client_ip=${dns_client_ip} dns_query_strategy=${DNS_QUERY_STRATEGY}"
+										_extra_param="dns_listen_port=${_dns_port} remote_dns_protocol=${v2ray_dns_mode} remote_dns_tcp_server=${remote_dns} remote_dns_doh=${remote_dns} dns_client_ip=${dns_client_ip} dns_query_strategy=${DNS_QUERY_STRATEGY}"
 									fi
 									config_file="$TMP_PATH/$config_file"
 									run_v2ray flag=$tcp_node node=$tcp_node tcp_redir_port=$redir_port ${_extra_param} config_file=$config_file
@@ -585,7 +585,7 @@ load_acl() {
 				$ip6t_m -A PSW $(comment "$remarks") ${_ipt_source} -p udp -j RETURN 2>/dev/null
 				$ipt_m -A PSW $(comment "$remarks") ${_ipt_source} -p udp -j RETURN
 			done
-			unset enabled sid remarks sources tcp_proxy_mode udp_proxy_mode tcp_no_redir_ports udp_no_redir_ports tcp_proxy_drop_ports udp_proxy_drop_ports tcp_redir_ports udp_redir_ports tcp_node udp_node dns_mode dns_forward v2ray_dns_mode dns_doh dns_client_ip
+			unset enabled sid remarks sources tcp_proxy_mode udp_proxy_mode tcp_no_redir_ports udp_no_redir_ports tcp_proxy_drop_ports udp_proxy_drop_ports tcp_redir_ports udp_redir_ports tcp_node udp_node dns_mode remote_dns v2ray_dns_mode remote_dns_doh dns_client_ip
 			unset _ip _mac _iprange _ipset _ip_or_mac rule_list tcp_port udp_port tcp_node_remark udp_node_remark config_file _extra_param
 			unset ipt_tmp msg msg2
 			unset redirect_dns_port
@@ -1074,7 +1074,7 @@ add_firewall_rule() {
 			echolog "  - [$?]将上游 DNS 服务器 ${2}:${3} 加入到路由器自身代理的 TCP 转发链"
 		}
 
-		[ "$use_tcp_node_resolve_dns" == 1 ] && hosts_foreach DNS_FORWARD _proxy_tcp_access 53
+		[ "$use_tcp_node_resolve_dns" == 1 ] && hosts_foreach REMOTE_DNS _proxy_tcp_access 53
 		[ "$TCP_NO_REDIR_PORTS" != "disable" ] && {
 			$ipt_tmp -A PSW_OUTPUT -p tcp -m multiport --dport $TCP_NO_REDIR_PORTS -j RETURN
 			$ip6t_m -A PSW_OUTPUT -p tcp -m multiport --dport $TCP_NO_REDIR_PORTS -j RETURN
@@ -1175,7 +1175,7 @@ add_firewall_rule() {
 			$ipt_m -I PSW $(comment "本机") -p udp -i lo -d ${2} --dport ${3} $(REDIRECT $UDP_REDIR_PORT TPROXY)
 			echolog "  - [$?]将上游 DNS 服务器 ${2}:${3} 加入到路由器自身代理的 UDP 转发链"
 		}
-		[ "$use_udp_node_resolve_dns" == 1 ] && hosts_foreach DNS_FORWARD _proxy_udp_access 53
+		[ "$use_udp_node_resolve_dns" == 1 ] && hosts_foreach REMOTE_DNS _proxy_udp_access 53
 		[ "$UDP_NO_REDIR_PORTS" != "disable" ] && {
 			$ipt_m -A PSW_OUTPUT -p udp -m multiport --dport $UDP_NO_REDIR_PORTS -j RETURN
 			$ip6t_m -A PSW_OUTPUT -p udp -m multiport --dport $UDP_NO_REDIR_PORTS -j RETURN

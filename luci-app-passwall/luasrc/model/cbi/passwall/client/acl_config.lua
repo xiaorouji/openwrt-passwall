@@ -242,51 +242,52 @@ o:depends("dns_mode", "v2ray")
 o:depends("dns_mode", "xray")
 
 ---- DNS Forward
-o = s:option(Value, "dns_forward", translate("Remote DNS"))
+o = s:option(Value, "remote_dns", translate("Remote DNS"))
 o.default = "1.1.1.1"
-o:value("1.1.1.1", "1.1.1.1 (CloudFlare DNS)")
-o:value("1.1.1.2", "1.1.1.2 (CloudFlare DNS)")
-o:value("8.8.8.8", "8.8.8.8 (Google DNS)")
-o:value("8.8.4.4", "8.8.4.4 (Google DNS)")
-o:value("208.67.222.222", "208.67.222.222 (Open DNS)")
-o:value("208.67.220.220", "208.67.220.220 (Open DNS)")
+o:value("1.1.1.1", "1.1.1.1 (CloudFlare)")
+o:value("1.1.1.2", "1.1.1.2 (CloudFlare-Security)")
+o:value("8.8.4.4", "8.8.4.4 (Google)")
+o:value("8.8.8.8", "8.8.8.8 (Google)")
+o:value("9.9.9.9", "9.9.9.9 (Quad9-Recommended)")
+o:value("208.67.220.220", "208.67.220.220 (OpenDNS)")
+o:value("208.67.222.222", "208.67.222.222 (OpenDNS)")
 o:depends("dns_mode", "dns2socks")
 o:depends("v2ray_dns_mode", "tcp")
 
 if has_v2ray or has_xray then
----- DoH
-o = s:option(Value, "dns_doh", translate("DoH request address"))
-o:value("https://cloudflare-dns.com/dns-query,1.1.1.1", "CloudFlare")
-o:value("https://security.cloudflare-dns.com/dns-query,1.1.1.2", "CloudFlare-Security")
-o:value("https://doh.opendns.com/dns-query,208.67.222.222", "OpenDNS")
-o:value("https://dns.google/dns-query,8.8.8.8", "Google")
-o:value("https://doh.libredns.gr/dns-query,116.202.176.26", "LibreDNS")
-o:value("https://doh.libredns.gr/ads,116.202.176.26", "LibreDNS (No Ads)")
-o:value("https://dns.quad9.net/dns-query,9.9.9.9", "Quad9-Recommended")
-o:value("https://dns.adguard.com/dns-query,176.103.130.130", "AdGuard")
-o.default = "https://cloudflare-dns.com/dns-query,1.1.1.1"
-o.validate = function(self, value, t)
-    if value ~= "" then
-        local flag = 0
-        local util = require "luci.util"
-        local val = util.split(value, ",")
-        local url = val[1]
-        val[1] = nil
-        for i = 1, #val do
-            local v = val[i]
-            if v then
-                if not api.datatypes.ipmask4(v) then
-                    flag = 1
+    o = s:option(Value, "remote_dns_doh", translate("Remote DNS DoH"))
+    o:value("https://1.1.1.1/dns-query", "CloudFlare")
+    o:value("https://1.1.1.2/dns-query", "CloudFlare-Security")
+    o:value("https://8.8.4.4/dns-query", "Google 8844")
+    o:value("https://8.8.8.8/dns-query", "Google 8888")
+    o:value("https://9.9.9.9/dns-query", "Quad9-Recommended")
+    o:value("https://208.67.222.222/dns-query", "OpenDNS")
+    o:value("https://dns.adguard.com/dns-query,176.103.130.130", "AdGuard")
+    o:value("https://doh.libredns.gr/dns-query,116.202.176.26", "LibreDNS")
+    o:value("https://doh.libredns.gr/ads,116.202.176.26", "LibreDNS (No Ads)")
+    o.default = "https://1.1.1.1/dns-query"
+    o.validate = function(self, value, t)
+        if value ~= "" then
+            local flag = 0
+            local util = require "luci.util"
+            local val = util.split(value, ",")
+            local url = val[1]
+            val[1] = nil
+            for i = 1, #val do
+                local v = val[i]
+                if v then
+                    if not api.datatypes.ipmask4(v) then
+                        flag = 1
+                    end
                 end
             end
+            if flag == 0 then
+                return value
+            end
         end
-        if flag == 0 then
-            return value
-        end
+        return nil, translate("DoH request address") .. " " .. translate("Format must be:") .. " URL,IP"
     end
-    return nil, translate("DoH request address") .. " " .. translate("Format must be:") .. " URL,IP"
-end
-o:depends("v2ray_dns_mode", "doh")
+    o:depends("v2ray_dns_mode", "doh")
 end
 
 o = s:option(Value, "dns_client_ip", translate("EDNS Client Subnet"))
