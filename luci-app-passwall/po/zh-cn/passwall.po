@@ -235,6 +235,12 @@ msgstr "单进程"
 msgid "Proxy Mode"
 msgstr "代理模式"
 
+msgid "TCP Proxy Mode"
+msgstr "TCP 代理模式"
+
+msgid "UDP Proxy Mode"
+msgstr "UDP 代理模式"
+
 msgid "Default Proxy Mode"
 msgstr "默认代理模式"
 
