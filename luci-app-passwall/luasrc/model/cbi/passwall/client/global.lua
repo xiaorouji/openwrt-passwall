@@ -37,6 +37,7 @@ end)
 
 local doh_validate = function(self, value, t)
     if value ~= "" then
+        value = api.trim(value)
         local flag = 0
         local util = require "luci.util"
         local val = util.split(value, ",")

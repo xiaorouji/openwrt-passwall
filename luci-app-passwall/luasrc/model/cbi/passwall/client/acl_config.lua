@@ -135,36 +135,6 @@ sources.validate = function(self, value, t)
 end
 sources.write = dynamicList_write
 
----- TCP Proxy Mode
-tcp_proxy_mode = s:option(ListValue, "tcp_proxy_mode", translatef("%s Proxy Mode", "TCP"))
-tcp_proxy_mode.default = "default"
-tcp_proxy_mode.rmempty = false
-tcp_proxy_mode:value("default", translate("Default"))
-tcp_proxy_mode:value("disable", translate("No Proxy"))
-tcp_proxy_mode:value("global", translate("Global Proxy"))
-if has_chnlist and global_proxy_mode:find("returnhome") then
-    tcp_proxy_mode:value("returnhome", translate("China List"))
-else
-    tcp_proxy_mode:value("gfwlist", translate("GFW List"))
-    tcp_proxy_mode:value("chnroute", translate("Not China List"))
-end
-tcp_proxy_mode:value("direct/proxy", translate("Only use direct/proxy list"))
-
----- UDP Proxy Mode
-udp_proxy_mode = s:option(ListValue, "udp_proxy_mode", translatef("%s Proxy Mode", "UDP"))
-udp_proxy_mode.default = "default"
-udp_proxy_mode.rmempty = false
-udp_proxy_mode:value("default", translate("Default"))
-udp_proxy_mode:value("disable", translate("No Proxy"))
-udp_proxy_mode:value("global", translate("Global Proxy"))
-if has_chnlist and global_proxy_mode:find("returnhome") then
-    udp_proxy_mode:value("returnhome", translate("China List"))
-else
-    udp_proxy_mode:value("gfwlist", translate("GFW List"))
-    udp_proxy_mode:value("chnroute", translate("Not China List"))
-end
-udp_proxy_mode:value("direct/proxy", translate("Only use direct/proxy list"))
-
 ---- TCP No Redir Ports
 o = s:option(Value, "tcp_no_redir_ports", translate("TCP No Redir Ports"))
 o.default = "default"
@@ -207,6 +177,36 @@ o.default = "default"
 o:value("default", translate("Default"))
 o:value("1:65535", translate("All"))
 o:value("53", "53")
+
+---- TCP Proxy Mode
+tcp_proxy_mode = s:option(ListValue, "tcp_proxy_mode", "TCP " .. translate("Proxy Mode"))
+tcp_proxy_mode.default = "default"
+tcp_proxy_mode.rmempty = false
+tcp_proxy_mode:value("default", translate("Default"))
+tcp_proxy_mode:value("disable", translate("No Proxy"))
+tcp_proxy_mode:value("global", translate("Global Proxy"))
+if has_chnlist and global_proxy_mode:find("returnhome") then
+    tcp_proxy_mode:value("returnhome", translate("China List"))
+else
+    tcp_proxy_mode:value("gfwlist", translate("GFW List"))
+    tcp_proxy_mode:value("chnroute", translate("Not China List"))
+end
+tcp_proxy_mode:value("direct/proxy", translate("Only use direct/proxy list"))
+
+---- UDP Proxy Mode
+udp_proxy_mode = s:option(ListValue, "udp_proxy_mode", "UDP " .. translate("Proxy Mode"))
+udp_proxy_mode.default = "default"
+udp_proxy_mode.rmempty = false
+udp_proxy_mode:value("default", translate("Default"))
+udp_proxy_mode:value("disable", translate("No Proxy"))
+udp_proxy_mode:value("global", translate("Global Proxy"))
+if has_chnlist and global_proxy_mode:find("returnhome") then
+    udp_proxy_mode:value("returnhome", translate("China List"))
+else
+    udp_proxy_mode:value("gfwlist", translate("GFW List"))
+    udp_proxy_mode:value("chnroute", translate("Not China List"))
+end
+udp_proxy_mode:value("direct/proxy", translate("Only use direct/proxy list"))
 
 tcp_node = s:option(ListValue, "tcp_node", "<a style='color: red'>" .. translate("TCP Node") .. "</a>")
 tcp_node.default = "default"
@@ -268,6 +268,7 @@ if has_v2ray or has_xray then
     o.default = "https://1.1.1.1/dns-query"
     o.validate = function(self, value, t)
         if value ~= "" then
+            value = api.trim(value)
             local flag = 0
             local util = require "luci.util"
             local val = util.split(value, ",")

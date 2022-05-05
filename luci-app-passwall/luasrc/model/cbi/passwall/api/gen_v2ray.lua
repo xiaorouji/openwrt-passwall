@@ -523,6 +523,7 @@ end
 if remote_dns_server or remote_dns_doh_url or remote_dns_fake then
     local rules = {}
     local _remote_dns_proto = "tcp"
+    local _remote_dns_host
 
     if not routing then
         routing = {
@@ -554,6 +555,7 @@ if remote_dns_server or remote_dns_doh_url or remote_dns_fake then
     if remote_dns_doh_url and remote_dns_doh_host then
         if remote_dns_server and remote_dns_doh_host ~= remote_dns_server and not api.is_ip(remote_dns_doh_host) then
             dns.hosts[remote_dns_doh_host] = remote_dns_server
+            _remote_dns_host = remote_dns_doh_host
         end
         _remote_dns.address = remote_dns_doh_url
         _remote_dns.port = tonumber(remote_dns_port)
@@ -667,20 +669,25 @@ if remote_dns_server or remote_dns_doh_url or remote_dns_fake then
                 end
             end
         end
-        if dns_outboundTag == "direct" then
-            table.insert(routing.rules, {
-                type = "field",
-                ip = {
-                    remote_dns_server
-                },
-                port = tonumber(remote_dns_port),
-                outboundTag = dns_outboundTag
-            })
-        else
+        table.insert(rules, {
+            type = "field",
+            inboundTag = {
+                "dns-in1"
+            },
+            ip = {
+                remote_dns_server
+            },
+            port = tonumber(remote_dns_port),
+            outboundTag = dns_outboundTag
+        })
+        if _remote_dns_host then
             table.insert(rules, {
                 type = "field",
-                ip = {
-                    remote_dns_server
+                inboundTag = {
+                    "dns-in1"
+                },
+                domain = {
+                    _remote_dns_host
                 },
                 port = tonumber(remote_dns_port),
                 outboundTag = dns_outboundTag
