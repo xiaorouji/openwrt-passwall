@@ -102,12 +102,14 @@ config shunt_rules 'Netflix'
 	option remarks 'Netflix'
 	option domain_list 'fast.com
 netflix
+netflix.ca
 netflix.com
 netflix.net
 nflxso.net
 nflxext.com
 nflximg.com
 nflximg.net
+nflxsearch.net
 nflxvideo.net
 netflixdnstest0.com
 netflixdnstest1.com
@@ -118,7 +120,8 @@ netflixdnstest5.com
 netflixdnstest6.com
 netflixdnstest7.com
 netflixdnstest8.com
-netflixdnstest9.com'
+netflixdnstest9.com
+netflixdnstest10.com'
 
 config shunt_rules 'TVB'
 	option remarks 'TVB'
