@@ -4,7 +4,7 @@ config global
 	option socks_enabled '0'
 	option tcp_node 'nil'
 	option udp_node 'nil'
-	option dns_mode 'pdnsd'
+	option dns_mode 'dns2tcp'
 	option remote_dns '1.1.1.1'
 	option filter_proxy_ipv6 '0'
 	option tcp_proxy_mode 'chnroute'

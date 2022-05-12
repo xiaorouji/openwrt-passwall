@@ -1129,11 +1129,10 @@ start_dns() {
 			run_v2ray ${_v2ray_args}
 		}
 	;;
-	pdnsd)
+	dns2tcp)
 		use_tcp_node_resolve_dns=1
-		gen_pdnsd_config "${dns_listen_port}" "${REMOTE_DNS}" "${DNS_CACHE}"
-		ln_run "$(first_type pdnsd)" pdnsd "/dev/null" --daemon -c "${TMP_PATH}/pdnsd/pdnsd.conf" -d
-		echolog "  - 域名解析：pdnsd + 使用(TCP节点)解析域名..."
+		ln_run "$(first_type dns2tcp)" dns2tcp "/dev/null" -L "${TUN_DNS}" -R "$(get_first_dns REMOTE_DNS 53)" -v
+		echolog "  - 域名解析：dns2tcp + 使用(TCP节点)解析域名..."
 	;;
 	udp)
 		use_udp_node_resolve_dns=1
@@ -1186,71 +1185,6 @@ start_dns() {
 		source $APP_PATH/helper_dnsmasq.sh stretch
 		source $APP_PATH/helper_dnsmasq.sh add FLAG="default" DNS_MODE=$DNS_MODE TMP_DNSMASQ_PATH=$TMP_DNSMASQ_PATH DNSMASQ_CONF_FILE=/tmp/dnsmasq.d/dnsmasq-passwall.conf REMOTE_FAKEDNS=$fakedns DEFAULT_DNS=$DEFAULT_DNS LOCAL_DNS=$LOCAL_DNS TUN_DNS=$TUN_DNS CHINADNS_DNS=$china_ng_listen TCP_NODE=$TCP_NODE PROXY_MODE=${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}${ACL_TCP_PROXY_MODE} NO_PROXY_IPV6=${filter_proxy_ipv6}
 	}
-}
-
-gen_pdnsd_config() {
-	local listen_port=${1}
-	local up_dns=${2}
-	local cache=${3}
-	local pdnsd_dir=${TMP_PATH}/pdnsd
-	local perm_cache=2048
-	local _cache="on"
-	local query_method="tcp_only"
-	local reject_ipv6_dns=
-	[ "${cache}" = "0" ] && _cache="off" && perm_cache=0
-
-	mkdir -p "${pdnsd_dir}"
-	touch "${pdnsd_dir}/pdnsd.cache"
-	chown -R root.nogroup "${pdnsd_dir}"
-	if [ $PROXY_IPV6 == "0" ]; then
-		reject_ipv6_dns=$(cat <<- 'EOF'
-
-				reject = ::/0;
-				reject_policy = negate;
-		EOF
-		)
-	fi
-	cat > "${pdnsd_dir}/pdnsd.conf" <<-EOF
-		global {
-			perm_cache = $perm_cache;
-			cache_dir = "$pdnsd_dir";
-			run_as = "root";
-			server_ip = 127.0.0.1;
-			server_port = ${listen_port};
-			status_ctl = on;
-			query_method = ${query_method};
-			min_ttl = 1h;
-			max_ttl = 1w;
-			timeout = 10;
-			par_queries = 2;
-			neg_domain_pol = off;
-			udpbufsize = 1024;
-			proc_limit = 2;
-			procq_limit = 8;
-		}
-
-	EOF
-	echolog "  + [$?]Pdnsd (127.0.0.1:${listen_port})..."
-
-	append_pdnsd_updns() {
-		[ -z "${2}" ] && echolog "  | - 略过错误 : ${1}" && return 0
-		cat >> $pdnsd_dir/pdnsd.conf <<-EOF
-			server {
-				label = "node-${2}_${3}";
-				ip = ${2};
-				edns_query = on;
-				port = ${3};
-				timeout = 4;
-				interval = 10m;
-				uptest = none;
-				purge_cache = off;
-				proxy_only = on;
-				caching = $_cache;${reject_ipv6_dns}
-			}
-		EOF
-		echolog "  | - [$?]上游DNS：${2}:${3}"
-	}
-	hosts_foreach up_dns append_pdnsd_updns 53
 }
 
 add_ip2route() {
@@ -1486,7 +1420,7 @@ chnlist=$(echo "${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}${UDP_PROXY_MODE}${L
 gfwlist=$(echo "${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}${UDP_PROXY_MODE}${LOCALHOST_UDP_PROXY_MODE}" | grep "gfwlist")
 DNS_SHUNT=$(config_t_get global dns_shunt dnsmasq)
 [ -z "$(first_type $DNS_SHUNT)" ] && DNS_SHUNT="dnsmasq"
-DNS_MODE=$(config_t_get global dns_mode pdnsd)
+DNS_MODE=$(config_t_get global dns_mode dns2tcp)
 DNS_CACHE=$(config_t_get global dns_cache 0)
 REMOTE_DNS=$(config_t_get global remote_dns 1.1.1.1:53 | sed 's/#/:/g' | sed -E 's/\:([^:]+)$/#\1/g')
 CHINADNS_NG=$(config_t_get global chinadns_ng 0)
