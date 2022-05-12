@@ -1,0 +1,31 @@
+From 01fc93331291ea55e8306374f6406c130de951a8 Mon Sep 17 00:00:00 2001
+From: pexcn <i@pexcn.me>
+Date: Sun, 5 Apr 2020 22:30:26 +0800
+Subject: [PATCH] build with gcc -O3 optimizations
+
+---
+ Makefile | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index ae6c171..02b8587 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,12 +1,12 @@
+ CC = gcc
+-CFLAGS = -std=c99 -Wall -Wextra -O2
++CFLAGS = -std=c99 -Wall -Wextra -O3
+ LIBS = -lm
+ SRCS = dns2tcp.c
+ OBJS = $(SRCS:.c=.o)
+ MAIN = dns2tcp
+ DESTDIR = /usr/local/bin
+ 
+-EVCFLAGS = -w -O2
++EVCFLAGS = -w -O3
+ EVSRCFILE = libev/ev.c
+ EVOBJFILE = ev.o
+ 
+-- 
+2.25.1
+
