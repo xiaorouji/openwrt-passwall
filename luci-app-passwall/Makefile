@@ -17,6 +17,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Hysteria \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_IPv6_Nat \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_NaiveProxy \
+	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_PDNSD \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Libev_Client \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Libev_Server \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Rust_Client \
@@ -42,6 +43,7 @@ LUCI_DEPENDS:=+coreutils +coreutils-base64 +coreutils-nohup +curl \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_Hysteria:hysteria \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_IPv6_Nat:ip6tables-mod-nat \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_NaiveProxy:naiveproxy \
+	+PACKAGE_$(PKG_NAME)_INCLUDE_PDNSD:pdnsd-alt \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Libev_Client:shadowsocks-libev-ss-local \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Libev_Client:shadowsocks-libev-ss-redir \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Libev_Server:shadowsocks-libev-ss-server \
@@ -99,6 +101,10 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_NaiveProxy
 	bool "Include NaiveProxy"
 	depends on !(arc||(arm&&TARGET_gemini)||armeb||mips||mips64||powerpc)
 	default n
+
+config PACKAGE_$(PKG_NAME)_INCLUDE_PDNSD
+	bool "Include PDNSD"
+	default y
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Libev_Client
 	bool "Include Shadowsocks Libev Client"
