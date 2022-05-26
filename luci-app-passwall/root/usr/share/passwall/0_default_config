@@ -48,12 +48,12 @@ config global_rules
 	option gfwlist_update '1'
 	option geosite_update '0'
 	option geoip_update '0'
-	list gfwlist_url 'https://cdn.jsdelivr.net/gh/YW5vbnltb3Vz/domain-list-community@release/gfwlist.txt'
+	list gfwlist_url 'https://fastly.jsdelivr.net/gh/YW5vbnltb3Vz/domain-list-community@release/gfwlist.txt'
 	list chnroute_url 'https://ispip.clang.cn/all_cn.txt'
 	list chnroute6_url 'https://ispip.clang.cn/all_cn_ipv6.txt'
-	list chnlist_url 'https://cdn.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/accelerated-domains.china.conf'
-	list chnlist_url 'https://cdn.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/apple.china.conf'
-	list chnlist_url 'https://cdn.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/google.china.conf'
+	list chnlist_url 'https://fastly.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/accelerated-domains.china.conf'
+	list chnlist_url 'https://fastly.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/apple.china.conf'
+	list chnlist_url 'https://fastly.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/google.china.conf'
 	option v2ray_location_asset '/usr/share/v2ray/'
 
 config global_app
