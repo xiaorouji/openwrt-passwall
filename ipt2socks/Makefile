@@ -25,15 +25,16 @@ define Package/ipt2socks
   CATEGORY:=Network
   TITLE:=Convert iptables to socks5
   URL:=https://github.com/zfl9/ipt2socks
+  DEPENDS:=+libpthread
 endef
 
 define Package/ipt2socks/description
   Utility for converting iptables (redirect/tproxy) to socks5.
 endef
 
-TARGET_CFLAGS+= $(FPIC) -flto -pthread
+TARGET_CFLAGS+= $(FPIC) -flto
 MAKE_FLAGS+= \
-	CFLAGS="-std=c99 $(TARGET_CFLAGS)" \
+	CFLAGS="-std=c99 -pthread $(TARGET_CFLAGS)" \
 	EVCFLAGS="$(TARGET_CFLAGS)"
 
 define Package/ipt2socks/install
