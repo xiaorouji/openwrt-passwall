@@ -134,6 +134,16 @@ define Build/Compile
 		+$(NINJA) -C "$(PKG_BUILD_DIR)/src/out/Release" cronet)
 endef
 
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/include
+	$(CP) \
+		$(PKG_BUILD_DIR)/src/components/grpc_support/include/bidirectional_stream_c.h \
+		$(PKG_BUILD_DIR)/src/components/cronet/native/generated/cronet.idl_c.h \
+		$(PKG_BUILD_DIR)/src/components/cronet/native/include/cronet_c.h \
+		$(PKG_BUILD_DIR)/src/components/cronet/native/include/cronet_export.h \
+		$(1)/usr/include/
+endef
+
 define Package/naiveproxy/conffiles
 /etc/config/naiveproxy
 endef
