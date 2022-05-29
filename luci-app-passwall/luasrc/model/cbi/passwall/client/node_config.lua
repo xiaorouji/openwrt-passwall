@@ -42,7 +42,7 @@ local v_ss_encrypt_method_list = {
 }
 
 local x_ss_encrypt_method_list = {
-    "aes-128-gcm", "aes-256-gcm", "chacha20-poly1305", "xchacha20-poly1305"
+    "aes-128-gcm", "aes-256-gcm", "chacha20-poly1305", "xchacha20-poly1305", "2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305"
 }
 
 local security_list = {"none", "auto", "aes-128-gcm", "chacha20-poly1305", "zero"}
