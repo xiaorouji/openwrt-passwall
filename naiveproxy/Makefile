@@ -144,16 +144,9 @@ define Build/InstallDev
 		$(1)/usr/include/
 endef
 
-define Package/naiveproxy/conffiles
-/etc/config/naiveproxy
-endef
-
 define Package/naiveproxy/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/out/Release/naive $(1)/usr/bin/naive
-	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/init.d
-	$(INSTALL_CONF) $(CURDIR)/files/naiveproxy.config $(1)/etc/config/naiveproxy
-	$(INSTALL_BIN) $(CURDIR)/files/naiveproxy.init $(1)/etc/init.d/naiveproxy
 endef
 
 define Package/libcronet/install

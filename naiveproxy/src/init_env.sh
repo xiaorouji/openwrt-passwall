@@ -56,6 +56,7 @@ use_udev=false
 use_aura=false
 use_ozone=false
 use_gio=false
+use_gtk=false
 use_platform_icu_alternatives=true
 use_glib=false
 
