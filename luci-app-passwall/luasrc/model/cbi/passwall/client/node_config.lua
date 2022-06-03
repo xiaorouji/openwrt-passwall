@@ -405,6 +405,9 @@ iv_check = s:option(Flag, "iv_check", translate("IV Check"))
 iv_check:depends({ type = "V2ray", protocol = "shadowsocks" })
 iv_check:depends({ type = "Xray", protocol = "shadowsocks" })
 
+uot = s:option(Flag, "uot", translate("UDP over TCP"), translate("Need Xray server side with Shadowsocks-2022 protocol"))
+uot:depends({ type = "Xray", protocol = "shadowsocks" })
+
 ssr_protocol = s:option(Value, "ssr_protocol", translate("Protocol"))
 for a, t in ipairs(ssr_protocol_list) do ssr_protocol:value(t) end
 ssr_protocol:depends("type", "SSR")
