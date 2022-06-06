@@ -1,6 +1,6 @@
 --- a/completions/bash/ss-redir
 +++ b/completions/bash/ss-redir
-@@ -2,7 +2,7 @@
+@@ -2,7 +2,7 @@ _ss_redir()
  {
      local cur prev opts ciphers
      ciphers='rc4-md5 table rc4 aes-128-cfb aes-192-cfb aes-256-cfb aes-128-ctr aes-192-ctr aes-256-ctr bf-cfb camellia-128-cfb camellia-192-cfb camellia-256-cfb cast5-cfb des-cfb idea-cfb rc2-cfb seed-cfb salsa20 chacha20 and chacha20-ietf'
@@ -11,7 +11,7 @@
      case "$prev" in
 --- a/src/jconf.c
 +++ b/src/jconf.c
-@@ -338,7 +338,11 @@
+@@ -338,7 +338,11 @@ read_jconf(const char *file)
                      check_json_value_type(value, json_boolean,
                                            "invalid config file: option 'ipv6_first' must be a boolean");
                      conf.ipv6_first = value->u.boolean;
@@ -19,18 +19,18 @@
 +                } else if (strcmp(name, "tcp_tproxy") == 0) {
 +                    check_json_value_type(value, json_boolean,
 +                                          "invalid config file: option 'tcp_tproxy' must be a boolean");
-+                    conf.tcp_tproxy = value->u.boolean;
-+                }
++					conf.tcp_tproxy = value->u.boolean;
++				}
              }
          }
      } else {
 --- a/src/jconf.h
 +++ b/src/jconf.h
-@@ -105,6 +105,7 @@
+@@ -105,6 +105,7 @@ typedef struct {
      int mtu;
      int mptcp;
      int ipv6_first;
-+    int tcp_tproxy;
++	int tcp_tproxy;
  } jconf_t;
  
  jconf_t *read_jconf(const char *file);
@@ -51,7 +51,7 @@
  #include "includeobfs.h" // I don't want to modify makefile
  #include "jconf.h"
  
-@@ -101,18 +109,28 @@
+@@ -101,18 +109,28 @@ static struct cork_dllist inactive_profi
  static listen_ctx_t *current_profile;
  static struct cork_dllist all_connections;
  
@@ -86,31 +86,31 @@
      }
      return 0;
  }
-@@ -164,6 +182,23 @@
+@@ -164,6 +182,23 @@ create_and_bind(const char *addr, const
          if (err == 0) {
              LOGI("tcp port reuse enabled");
          }
 +		
-+        if (tcp_tproxy) {
++		if (tcp_tproxy) {
 +            int level = 0, optname = 0;
 +            if (rp->ai_family == AF_INET) {
 +                level = IPPROTO_IP;
 +                optname = IP_TRANSPARENT;
-+        } else {
-+            level = IPPROTO_IPV6;
-+            optname = IPV6_TRANSPARENT;
-+        }
++            } else {
++                level = IPPROTO_IPV6;
++                optname = IPV6_TRANSPARENT;
++            }
 +
-+        if (setsockopt(listen_sock, level, optname, &opt, sizeof(opt)) != 0) {
-+            ERROR("setsockopt IP_TRANSPARENT");
-+            exit(EXIT_FAILURE);
++            if (setsockopt(listen_sock, level, optname, &opt, sizeof(opt)) != 0) {
++                ERROR("setsockopt IP_TRANSPARENT");
++                exit(EXIT_FAILURE);
++            }
++            LOGI("tcp tproxy mode enabled");
 +        }
-+        LOGI("tcp tproxy mode enabled");
-+    }
  
          s = bind(listen_sock, rp->ai_addr, rp->ai_addrlen);
          if (s == 0) {
-@@ -1094,7 +1129,7 @@
+@@ -1094,7 +1129,7 @@ main(int argc, char **argv)
  
      USE_TTY();
  
@@ -119,21 +119,21 @@
                              "O:o:G:g:",
                              long_options, &option_index)) != -1) {
          switch (c) {
-@@ -1169,6 +1204,9 @@
+@@ -1169,6 +1204,9 @@ main(int argc, char **argv)
          case 'U':
              mode = UDP_ONLY;
              break;
-+        case 'T':
++		case 'T':
 +            tcp_tproxy = 1;
 +            break;
          case 'v':
              verbose = 1;
              break;
-@@ -1255,6 +1293,9 @@
+@@ -1255,6 +1293,9 @@ main(int argc, char **argv)
          if (mode == TCP_ONLY) {
              mode = conf->mode;
          }
-+        if (tcp_tproxy == 0) {
++		if (tcp_tproxy == 0) {
 +            tcp_tproxy = conf->tcp_tproxy;
 +        }
          if (mtu == 0) {
@@ -141,7 +141,7 @@
          }
 --- a/src/utils.c
 +++ b/src/utils.c
-@@ -342,6 +342,10 @@
+@@ -342,6 +342,10 @@ usage()
  #endif
      printf(
          "       [-U]                       Enable UDP relay and disable TCP relay.\n");
