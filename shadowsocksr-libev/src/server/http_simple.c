@@ -107,6 +107,7 @@ int get_data_from_http_header(char *data, char **outdata) {
 
         //p_line = strtok(p_line, delim);
     }
+    *outdata = buf;
     return outlength;
 }
 
