@@ -1,3 +1,4 @@
+require "luci.sys"
 local api = require "luci.model.cbi.passwall.api.api"
 
 local var = api.get_args(arg)
@@ -145,7 +146,8 @@ local function check_excluded_domain(domain)
 end
 
 local cache_text = ""
-local new_text = SMARTDNS_CONF .. LOCAL_GROUP .. REMOTE_GROUP .. REMOTE_FAKEDNS .. TUN_DNS .. PROXY_MODE .. NO_PROXY_IPV6
+local new_rules = luci.sys.exec("echo -n $(find /usr/share/passwall/rules -type f | xargs md5sum)")
+local new_text = SMARTDNS_CONF .. LOCAL_GROUP .. REMOTE_GROUP .. REMOTE_FAKEDNS .. TUN_DNS .. PROXY_MODE .. NO_PROXY_IPV6 ..new_rules
 if fs.access(CACHE_TEXT_FILE) then
     for line in io.lines(CACHE_TEXT_FILE) do
         cache_text = line
