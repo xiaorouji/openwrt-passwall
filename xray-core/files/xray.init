@@ -39,6 +39,8 @@ start_service() {
 	procd_set_param env XRAY_LOCATION_ASSET="$datadir"
 	procd_set_param file $conffiles
 
+	procd_set_param limits core="unlimited"
+	procd_set_param limits nofile="1000000 1000000"
 	procd_set_param stdout 1
 	procd_set_param stderr 1
 	procd_set_param respawn

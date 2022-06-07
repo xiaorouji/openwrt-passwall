@@ -5,7 +5,6 @@ START=99
 
 CONF="v2ray"
 PROG="/usr/bin/v2ray"
-CAPA_FILE="/etc/capabilities/v2ray.json"
 
 start_service() {
 	config_load "$CONF"
@@ -39,6 +38,8 @@ start_service() {
 	[ "$memconservative" -eq "1" ] && procd_append_param env V2RAY_CONF_GEOLOADER="memconservative"
 	procd_set_param file $conffiles
 
+	procd_set_param limits core="unlimited"
+	procd_set_param limits nofile="1000000 1000000"
 	procd_set_param stdout 1
 	procd_set_param stderr 1
 	procd_set_param respawn
