@@ -45,7 +45,7 @@ o.rows = 5
 o.rmempty = false
 
 o = s:option(Flag, "allowInsecure", translate("allowInsecure"), translate("Whether unsafe connections are allowed. When checked, Certificate validation will be skipped."))
-o.default = "1"
+o.default = "0"
 o.rmempty = false
 
 o = s:option(ListValue, "filter_keyword_mode", translate("Filter keyword Mode"))
