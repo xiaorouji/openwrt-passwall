@@ -1279,6 +1279,12 @@ msgstr "启用前置数据"
 msgid "Early data length"
 msgstr "前置数据最大长度"
 
+msgid "Early data header name"
+msgstr "前置数据HTTP头名"
+
+msgid "Recommended value: Sec-WebSocket-Protocol"
+msgstr "推荐值：Sec-WebSocket-Protocol"
+
 msgid "Health check"
 msgstr "健康检查"
 
