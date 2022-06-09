@@ -27,7 +27,7 @@ local has_trojan_plus = api.is_finded("trojan-plus")
 local has_v2ray = api.is_finded("v2ray")
 local has_xray = api.is_finded("xray")
 local has_trojan_go = api.is_finded("trojan-go")
-local allowInsecure_default = true
+local allowInsecure_default = nil
 local ss_aead_type_default = uci:get(appname, "@global_subscribe[0]", "ss_aead_type") or "shadowsocks-libev"
 local trojan_type_default = uci:get(appname, "@global_subscribe[0]", "trojan_type") or "trojan-plus"
 -- 判断是否过滤节点关键字
@@ -555,15 +555,11 @@ local function processData(szType, content, add_mode, add_from)
 				result.address = hostInfo and hostInfo[1] or Info[2]
 			end
 			local peer, sni = nil, ""
-			local allowInsecure = allowInsecure_default
 			local query = split(Info[2], "?")
 			local params = {}
 			for _, v in pairs(split(query[2], '&')) do
 				local t = split(v, '=')
 				params[string.lower(t[1])] = UrlDecode(t[2])
-			end
-			if params.allowinsecure then
-				allowInsecure = params.allowinsecure
 			end
 			if params.peer then peer = params.peer end
 			sni = params.sni and params.sni or ""
@@ -586,7 +582,16 @@ local function processData(szType, content, add_mode, add_from)
 			end
 			result.tls = '1'
 			result.tls_serverName = peer and peer or sni
-			result.tls_allowInsecure = allowInsecure and "1" or "0"
+			if params.allowinsecure then
+				if params.allowinsecure == "1" or params.allowinsecure == "0" then
+					result.tls_allowInsecure = params.allowinsecure
+				else
+					result.tls_allowInsecure = string.lower(params.allowinsecure) == "true" and "1" or "0"
+				end
+				log(result.remarks .. ' 使用节点AllowInsecure设定: '.. result.tls_allowInsecure)
+			else
+				result.tls_allowInsecure = allowInsecure_default and "1" or "0"
+			end
 		end
 		if trojan_type_default == "trojan-plus" and has_trojan_plus then
 			result.type = "Trojan-Plus"
@@ -787,8 +792,11 @@ local function processData(szType, content, add_mode, add_from)
 		result.hysteria_auth_type = "string"
 		result.hysteria_auth_password = params.auth
 		result.tls_serverName = params.peer
-		if params.insecure and params.insecure == "1" then
-			result.tls_allowInsecure = "1"
+		if params.insecure and (params.insecure == "1" or params.insecure == "0") then
+			result.tls_allowInsecure = params.insecure
+			log(result.remarks ..' 使用节点AllowInsecure设定: '.. result.tls_allowInsecure)
+		else
+			result.tls_allowInsecure = allowInsecure_default and "1" or "0"
 		end
 		result.hysteria_alpn = params.alpn
 		result.hysteria_up_mbps = params.upmbps
@@ -1138,8 +1146,8 @@ local execute = function()
 			local cfgid = value[".name"]
 			local remark = value.remark
 			local url = value.url
-			if value.allowInsecure and value.allowInsecure ~= "1" then
-				allowInsecure_default = nil
+			if value.allowInsecure and value.allowInsecure == "1" then
+				allowInsecure_default = true
 			end
 			local filter_keyword_mode = value.filter_keyword_mode or "5"
 			if filter_keyword_mode == "0" then
@@ -1180,7 +1188,7 @@ local execute = function()
 			else
 				retry[#retry + 1] = value
 			end
-			allowInsecure_default = true
+			allowInsecure_default = nil
 			filter_keyword_mode_default = uci:get(appname, "@global_subscribe[0]", "filter_keyword_mode") or "0"
 			filter_keyword_discard_list_default = uci:get(appname, "@global_subscribe[0]", "filter_discard_list") or {}
 			filter_keyword_keep_list_default = uci:get(appname, "@global_subscribe[0]", "filter_keep_list") or {}
