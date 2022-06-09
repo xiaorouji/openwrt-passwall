@@ -121,6 +121,9 @@ local function start()
                 end
                 type = type:lower()
                 bin = ln_run("/usr/bin/" .. type .. "-server", type .. "-server", "-c " .. config_file .. " " .. udp_param, log_path)
+            elseif type == "SS-Rust" then
+                config = require(require_dir .. "shadowsocks").gen_config(user)
+                bin = ln_run("/usr/bin/ssserver", "ssserver", "-c " .. config_file, log_path)
             elseif type == "V2ray" then
                 config = require(require_dir .. "v2ray").gen_config(user)
                 bin = ln_run(api.get_v2ray_path(), "v2ray", "run -c " .. config_file, log_path)

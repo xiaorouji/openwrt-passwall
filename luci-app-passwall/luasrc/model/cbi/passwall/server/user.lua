@@ -9,6 +9,12 @@ local ss_encrypt_method_list = {
     "xchacha20-ietf-poly1305"
 }
 
+local ss_rust_encrypt_method_list = {
+    "plain", "none",
+    "aes-128-gcm", "aes-256-gcm", "chacha20-ietf-poly1305",
+    "2022-blake3-aes-128-gcm","2022-blake3-aes-256-gcm","2022-blake3-chacha8-poly1305","2022-blake3-chacha20-poly1305"
+}
+
 local ssr_encrypt_method_list = {
     "none", "table", "rc2-cfb", "rc4", "rc4-md5", "rc4-md5-6", "aes-128-cfb",
     "aes-192-cfb", "aes-256-cfb", "aes-128-ctr", "aes-192-ctr", "aes-256-ctr",
@@ -67,6 +73,9 @@ if api.is_finded("microsocks") then
 end
 if api.is_finded("ss-server") then
     type:value("SS", translate("Shadowsocks"))
+end
+if api.is_finded("ssserver") then
+    type:value("SS-Rust", translate("Shadowsocks Rust"))
 end
 if api.is_finded("ssr-server") then
     type:value("SSR", translate("ShadowsocksR"))
@@ -150,6 +159,7 @@ password = s:option(Value, "password", translate("Password"))
 password.password = true
 password:depends("auth", true)
 password:depends("type", "SS")
+password:depends("type", "SS-Rust")
 password:depends("type", "SSR")
 password:depends("type", "Brook")
 password:depends({ type = "V2ray", protocol = "shadowsocks" })
@@ -245,6 +255,16 @@ function ss_encrypt_method.write(self, section, value)
 	m:set(section, "method", value)
 end
 
+ss_rust_encrypt_method = s:option(ListValue, "ss_rust_encrypt_method", translate("Encrypt Method"))
+for a, t in ipairs(ss_rust_encrypt_method_list) do ss_rust_encrypt_method:value(t) end
+ss_rust_encrypt_method:depends("type", "SS-Rust")
+function ss_rust_encrypt_method.cfgvalue(self, section)
+	return m:get(section, "method")
+end
+function ss_rust_encrypt_method.write(self, section, value)
+	m:set(section, "method", value)
+end
+
 ssr_encrypt_method = s:option(ListValue, "ssr_encrypt_method", translate("Encrypt Method"))
 for a, t in ipairs(ssr_encrypt_method_list) do ssr_encrypt_method:value(t) end
 ssr_encrypt_method:depends("type", "SSR")
@@ -311,6 +331,7 @@ timeout = s:option(Value, "timeout", translate("Connection Timeout"))
 timeout.datatype = "uinteger"
 timeout.default = 300
 timeout:depends("type", "SS")
+timeout:depends("type", "SS-Rust")
 timeout:depends("type", "SSR")
 
 udp_forward = s:option(Flag, "udp_forward", translate("UDP Forward"))
@@ -617,6 +638,7 @@ ss_aead_pwd:depends("ss_aead", true)
 tcp_fast_open = s:option(Flag, "tcp_fast_open", translate("TCP Fast Open"))
 tcp_fast_open.default = "0"
 tcp_fast_open:depends("type", "SS")
+tcp_fast_open:depends("type", "SS-Rust")
 tcp_fast_open:depends("type", "SSR")
 tcp_fast_open:depends("type", "Trojan")
 tcp_fast_open:depends("type", "Trojan-Plus")
