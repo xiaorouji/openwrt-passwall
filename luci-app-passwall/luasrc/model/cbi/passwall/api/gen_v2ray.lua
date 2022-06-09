@@ -224,6 +224,7 @@ function gen_outbound(node, tag, proxy_table)
                         method = node.method or nil,
                         flow = node.flow or nil,
                         ivCheck = (node.protocol == "shadowsocks") and node.iv_check == "1" or nil,
+                        uot = (node.protocol == "shadowsocks") and node.uot == "1" or nil,
                         password = node.password or "",
                         users = (node.username and node.password) and {
                             {
