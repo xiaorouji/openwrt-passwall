@@ -177,7 +177,8 @@ function gen_outbound(node, tag, proxy_table)
                     path = node.ws_path or "",
                     headers = (node.ws_host ~= nil) and
                         {Host = node.ws_host} or nil,
-                    maxEarlyData = tonumber(node.ws_maxEarlyData) or nil
+                    maxEarlyData = tonumber(node.ws_maxEarlyData) or nil,
+                    earlyDataHeaderName = (node.ws_earlyDataHeaderName) and node.ws_earlyDataHeaderName or nil
                 } or nil,
                 httpSettings = (node.transport == "h2") and {
                     path = node.h2_path,
