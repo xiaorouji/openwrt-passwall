@@ -1,0 +1,244 @@
+From 575de280fff4021c613522c477ff8567b782c9c8 Mon Sep 17 00:00:00 2001
+From: Toby <tobyxdd@gmail.com>
+Date: Mon, 6 Jun 2022 18:09:34 -0700
+Subject: [PATCH] feat: TCP redirect implementation
+
+---
+ cmd/client.go             |  33 +++++++++++
+ cmd/config.go             |  10 +++-
+ pkg/redirect/tcp_linux.go | 119 ++++++++++++++++++++++++++++++++++++++
+ pkg/redirect/tcp_stub.go  |  23 ++++++++
+ 4 files changed, 184 insertions(+), 1 deletion(-)
+ create mode 100644 pkg/redirect/tcp_linux.go
+ create mode 100644 pkg/redirect/tcp_stub.go
+
+--- a/cmd/client.go
++++ b/cmd/client.go
+@@ -6,6 +6,7 @@ import (
+ 	"errors"
+ 	"github.com/oschwald/geoip2-golang"
+ 	"github.com/tobyxdd/hysteria/pkg/pmtud_fix"
++	"github.com/tobyxdd/hysteria/pkg/redirect"
+ 	"github.com/yosuke-furukawa/json5/encoding/json5"
+ 	"io"
+ 	"io/ioutil"
+@@ -434,6 +435,38 @@ func client(config *clientConfig) {
+ 			errChan <- rl.ListenAndServe()
+ 		}()
+ 	}
++
++	if len(config.TCPRedirect.Listen) > 0 {
++		go func() {
++			rl, err := redirect.NewTCPRedirect(client, config.TCPRedirect.Listen,
++				time.Duration(config.TCPRedirect.Timeout)*time.Second,
++				func(addr, reqAddr net.Addr) {
++					logrus.WithFields(logrus.Fields{
++						"src": addr.String(),
++						"dst": reqAddr.String(),
++					}).Debug("TCP Redirect request")
++				},
++				func(addr, reqAddr net.Addr, err error) {
++					if err != io.EOF {
++						logrus.WithFields(logrus.Fields{
++							"error": err,
++							"src":   addr.String(),
++							"dst":   reqAddr.String(),
++						}).Info("TCP Redirect error")
++					} else {
++						logrus.WithFields(logrus.Fields{
++							"src": addr.String(),
++							"dst": reqAddr.String(),
++						}).Debug("TCP Redirect EOF")
++					}
++				})
++			if err != nil {
++				logrus.WithField("error", err).Fatal("Failed to initialize TCP Redirect")
++			}
++			logrus.WithField("addr", config.TCPRedirect.Listen).Info("TCP Redirect up and running")
++			errChan <- rl.ListenAndServe()
++		}()
++	}
+ 
+ 	err := <-errChan
+ 	logrus.WithField("error", err).Fatal("Client shutdown")
+--- a/cmd/config.go
++++ b/cmd/config.go
+@@ -175,6 +175,10 @@ type clientConfig struct {
+ 		Listen  string `json:"listen"`
+ 		Timeout int    `json:"timeout"`
+ 	} `json:"tproxy_udp"`
++	TCPRedirect struct {
++		Listen  string `json:"listen"`
++		Timeout int    `json:"timeout"`
++	} `json:"redirect_tcp"`
+ 	ACL                 string `json:"acl"`
+ 	MMDB                string `json:"mmdb"`
+ 	Obfs                string `json:"obfs"`
+@@ -216,7 +220,8 @@ func (c *clientConfig) Check() error {
+ 	if len(c.SOCKS5.Listen) == 0 && len(c.HTTP.Listen) == 0 && len(c.TUN.Name) == 0 &&
+ 		len(c.TCPRelay.Listen) == 0 && len(c.UDPRelay.Listen) == 0 &&
+ 		len(c.TCPRelays) == 0 && len(c.UDPRelays) == 0 &&
+-		len(c.TCPTProxy.Listen) == 0 && len(c.UDPTProxy.Listen) == 0 {
++		len(c.TCPTProxy.Listen) == 0 && len(c.UDPTProxy.Listen) == 0 &&
++		len(c.TCPRedirect.Listen) == 0 {
+ 		return errors.New("please enable at least one mode")
+ 	}
+ 	if c.SOCKS5.Timeout != 0 && c.SOCKS5.Timeout <= 4 {
+@@ -256,6 +261,9 @@ func (c *clientConfig) Check() error {
+ 	if c.UDPTProxy.Timeout != 0 && c.UDPTProxy.Timeout <= 4 {
+ 		return errors.New("invalid UDP TProxy timeout")
+ 	}
++	if c.TCPRedirect.Timeout != 0 && c.TCPRedirect.Timeout <= 4 {
++		return errors.New("invalid TCP Redirect timeout")
++	}
+ 	if len(c.Server) == 0 {
+ 		return errors.New("no server address")
+ 	}
+--- /dev/null
++++ b/pkg/redirect/tcp_linux.go
+@@ -0,0 +1,119 @@
++package redirect
++
++import (
++	"encoding/binary"
++	"errors"
++	"github.com/tobyxdd/hysteria/pkg/core"
++	"github.com/tobyxdd/hysteria/pkg/utils"
++	"net"
++	"syscall"
++	"time"
++	"unsafe"
++)
++
++const (
++	SO_ORIGINAL_DST      = 80
++	IP6T_SO_ORIGINAL_DST = 80
++)
++
++type TCPRedirect struct {
++	HyClient   *core.Client
++	ListenAddr *net.TCPAddr
++	Timeout    time.Duration
++
++	ConnFunc  func(addr, reqAddr net.Addr)
++	ErrorFunc func(addr, reqAddr net.Addr, err error)
++}
++
++func NewTCPRedirect(hyClient *core.Client, listen string, timeout time.Duration,
++	connFunc func(addr, reqAddr net.Addr),
++	errorFunc func(addr, reqAddr net.Addr, err error)) (*TCPRedirect, error) {
++	tAddr, err := net.ResolveTCPAddr("tcp", listen)
++	if err != nil {
++		return nil, err
++	}
++	r := &TCPRedirect{
++		HyClient:   hyClient,
++		ListenAddr: tAddr,
++		Timeout:    timeout,
++		ConnFunc:   connFunc,
++		ErrorFunc:  errorFunc,
++	}
++	return r, nil
++}
++
++func (r *TCPRedirect) ListenAndServe() error {
++	listener, err := net.ListenTCP("tcp", r.ListenAddr)
++	if err != nil {
++		return err
++	}
++	defer listener.Close()
++	for {
++		c, err := listener.Accept()
++		if err != nil {
++			return err
++		}
++		go func() {
++			defer c.Close()
++			dest, err := getDestAddr(c.(*net.TCPConn))
++			if err != nil || dest.IP.IsLoopback() {
++				// Silently drop the connection if we failed to get the destination address,
++				// or if it's a loopback address (not a redirected connection).
++				return
++			}
++			r.ConnFunc(c.RemoteAddr(), dest)
++			rc, err := r.HyClient.DialTCP(dest.String())
++			if err != nil {
++				r.ErrorFunc(c.RemoteAddr(), dest, err)
++				return
++			}
++			defer rc.Close()
++			err = utils.PipePairWithTimeout(c, rc, r.Timeout)
++			r.ErrorFunc(c.RemoteAddr(), dest, err)
++		}()
++	}
++}
++
++type sockAddr struct {
++	family uint16
++	port   [2]byte  // big endian regardless of host byte order
++	data   [24]byte // check sockaddr_in or sockaddr_in6 for more information
++}
++
++func getDestAddr(conn *net.TCPConn) (*net.TCPAddr, error) {
++	rc, err := conn.SyscallConn()
++	if err != nil {
++		return nil, err
++	}
++	var addr sockAddr
++	addrSize := uint32(unsafe.Sizeof(addr))
++	var err2 error
++	err = rc.Control(func(fd uintptr) {
++		// try IPv6 first
++		_, _, err := syscall.Syscall6(syscall.SYS_GETSOCKOPT, fd, syscall.SOL_IPV6, IP6T_SO_ORIGINAL_DST,
++			uintptr(unsafe.Pointer(&addr)), uintptr(unsafe.Pointer(&addrSize)), 0)
++		if err != 0 {
++			// try IPv4
++			_, _, err = syscall.Syscall6(syscall.SYS_GETSOCKOPT, fd, syscall.SOL_IP, SO_ORIGINAL_DST,
++				uintptr(unsafe.Pointer(&addr)), uintptr(unsafe.Pointer(&addrSize)), 0)
++			if err != 0 {
++				// failed
++				err2 = err
++			}
++		}
++	})
++	if err != nil {
++		return nil, err
++	}
++	if err2 != nil {
++		return nil, err2
++	}
++	switch addr.family {
++	case syscall.AF_INET:
++		return &net.TCPAddr{IP: addr.data[:4], Port: int(binary.BigEndian.Uint16(addr.port[:]))}, nil
++	case syscall.AF_INET6:
++		return &net.TCPAddr{IP: addr.data[4:20], Port: int(binary.BigEndian.Uint16(addr.port[:]))}, nil
++	default:
++		return nil, errors.New("unknown address family")
++	}
++}
+--- /dev/null
++++ b/pkg/redirect/tcp_stub.go
+@@ -0,0 +1,23 @@
++//go:build !linux
++// +build !linux
++
++package redirect
++
++import (
++	"errors"
++	"github.com/tobyxdd/hysteria/pkg/core"
++	"net"
++	"time"
++)
++
++type TCPRedirect struct{}
++
++func NewTCPRedirect(hyClient *core.Client, listen string, timeout time.Duration,
++	connFunc func(addr, reqAddr net.Addr),
++	errorFunc func(addr, reqAddr net.Addr, err error)) (*TCPRedirect, error) {
++	return nil, errors.New("not supported on the current system")
++}
++
++func (r *TCPRedirect) ListenAndServe() error {
++	return nil
++}
