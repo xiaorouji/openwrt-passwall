@@ -10,9 +10,9 @@ PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/SagerNet/v2ray-core.git
-PKG_SOURCE_DATE:=2022-06-10
-PKG_SOURCE_VERSION:=f55a069e73bb1d34ed8bd2a149832fb018a07820
-PKG_MIRROR_HASH:=1eade99c74edfd1b1f0103dbc67d8afedc69f186799af4d7ec99e13b883d82a5
+PKG_SOURCE_DATE:=2022-06-14
+PKG_SOURCE_VERSION:=eb9f1a689e37c9577825165d50d562c2e7747f2a
+PKG_MIRROR_HASH:=9cc7b4a5b2830ac72510c519f59e83e902347965fcfa57ed7cad0b43dfd80cab
 PKG_VERSION:=$(BASE_VERSION)-$(PKG_SOURCE_DATE)-$(call version_abbrev,$(PKG_SOURCE_VERSION))
 
 PKG_LICENSE:=GPL-3.0-or-later
@@ -89,6 +89,31 @@ define Package/sagernet-core/conffiles
 /etc/v2ray/
 endef
 
+LIBCORE_NAME:=LibSagerNetCore
+LIBCORE_DATE:=2022-06-10
+LIBCORE_VERSION:=9ef7ab1de7604ab959222d4de8ab6152a402e432
+LIBCORE_FILE:=$(LIBCORE_NAME)-$(LIBCORE_DATE)-$(call version_abbrev,$(LIBCORE_VERSION)).tar.xz
+define Download/libcore
+	PROTO:=git
+	URL:=https://github.com/SagerNet/LibSagerNetCore.git
+	VERSION:=$(LIBCORE_VERSION)
+	FILE:=$(LIBCORE_FILE)
+	SUBDIR:=$(LIBCORE_NAME)
+	MIRROR_HASH:=9420189c45d5fbe682acee1da0b8f727cc5ea8c847ceeff5b026cd71ce60cf0f
+endef
+
+define Build/Prepare
+	$(call Build/Prepare/Default)
+
+	xzcat $(DL_DIR)/$(LIBCORE_FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
+	$(CP) $(PKG_BUILD_DIR)/$(LIBCORE_NAME)/{obfs,ssr}.go \
+		$(PKG_BUILD_DIR)/proxy/shadowsocks/plugin/self/
+	$(SED) '/plugin\/self/d' -e 's/self.ParsePluginOptions/ParsePluginOptions/g' \
+		$(PKG_BUILD_DIR)/proxy/shadowsocks/plugin/self/obfs.go
+	$(SED) 's/package libcore/package self/g' \
+		$(PKG_BUILD_DIR)/proxy/shadowsocks/plugin/self/{obfs,ssr}.go
+endef
+
 define Package/sagernet-core/install
 	$(call GoPackage/Package/Install/Bin,$(PKG_INSTALL_DIR))
 	$(INSTALL_DIR) $(1)/usr/bin/
@@ -115,6 +140,7 @@ define Package/sagernet-extra/install
 	$(CP) $(PKG_BUILD_DIR)/release/extra/* $(1)/usr/share/v2ray/
 endef
 
+$(eval $(call Download,libcore))
 $(eval $(call BuildPackage,sagernet-core))
 $(eval $(call BuildPackage,sagernet-example))
 $(eval $(call BuildPackage,sagernet-extra))
