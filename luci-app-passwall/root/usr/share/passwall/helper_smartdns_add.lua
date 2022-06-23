@@ -146,8 +146,9 @@ local function check_excluded_domain(domain)
 end
 
 local cache_text = ""
+local subscribe_proxy=uci:get(appname, "@global_subscribe[0]", "subscribe_proxy") or "0"
 local new_rules = luci.sys.exec("echo -n $(find /usr/share/passwall/rules -type f | xargs md5sum)")
-local new_text = SMARTDNS_CONF .. LOCAL_GROUP .. REMOTE_GROUP .. REMOTE_FAKEDNS .. TUN_DNS .. PROXY_MODE .. NO_PROXY_IPV6 ..new_rules
+local new_text = SMARTDNS_CONF .. LOCAL_GROUP .. REMOTE_GROUP .. REMOTE_FAKEDNS .. TUN_DNS .. PROXY_MODE .. NO_PROXY_IPV6 .. subscribe_proxy .. new_rules
 if fs.access(CACHE_TEXT_FILE) then
     for line in io.lines(CACHE_TEXT_FILE) do
         cache_text = line
@@ -203,7 +204,7 @@ if not fs.access(CACHE_DNS_FILE) then
     local fwd_group = LOCAL_GROUP
     local ipset_flag = "#4:whitelist,#6:whitelist6"
     local no_ipv6
-    if uci:get(appname, "@global_subscribe[0]", "subscribe_proxy") or "0" == "1" then
+    if subscribe_proxy == "1" then
         fwd_group = REMOTE_GROUP
         ipset_flag = "#4:blacklist,#6:blacklist6"
         if NO_PROXY_IPV6 == "1" then
