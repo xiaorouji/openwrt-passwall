@@ -995,10 +995,10 @@ msgid "IV Check"
 msgstr "IV 检查"
 
 msgid "UDP over TCP"
-msgstr "TCP封装UDP"
+msgstr "TCP 封装 UDP"
 
 msgid "Need Xray server side with Shadowsocks-2022 protocol"
-msgstr "需要Xray作服务器端的Shadowsocks-2022协议"
+msgstr "需要 Xray 作服务器端的 Shadowsocks-2022 协议"
 
 msgid "Connection Timeout"
 msgstr "连接超时时间"
@@ -1280,7 +1280,7 @@ msgid "Early data length"
 msgstr "前置数据最大长度"
 
 msgid "Early data header name"
-msgstr "前置数据HTTP头名"
+msgstr "前置数据 HTTP 头名"
 
 msgid "Recommended value: Sec-WebSocket-Protocol"
 msgstr "推荐值：Sec-WebSocket-Protocol"

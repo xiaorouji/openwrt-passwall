@@ -12,7 +12,7 @@ local ss_encrypt_method_list = {
 local ss_rust_encrypt_method_list = {
     "plain", "none",
     "aes-128-gcm", "aes-256-gcm", "chacha20-ietf-poly1305",
-    "2022-blake3-aes-128-gcm","2022-blake3-aes-256-gcm","2022-blake3-chacha8-poly1305","2022-blake3-chacha20-poly1305"
+    "2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha8-poly1305", "2022-blake3-chacha20-poly1305"
 }
 
 local ssr_encrypt_method_list = {
