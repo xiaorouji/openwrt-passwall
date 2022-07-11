@@ -19,6 +19,7 @@ local local_http_address = var["-local_http_address"] or "0.0.0.0"
 local local_http_port = var["-local_http_port"]
 local local_http_username = var["-local_http_username"]
 local local_http_password = var["-local_http_password"]
+local tcp_proxy_way = var["-tcp_proxy_way"]
 local server_host = var["-server_host"] or node.address
 local server_port = var["-server_port"] or node.port
 
@@ -57,7 +58,11 @@ local config = {
         user = (local_http_username and local_http_password) and local_http_username,
         password = (local_http_username and local_http_password) and local_http_password,
     } or nil,
-    tproxy_tcp = (local_tcp_redir_port) and {
+    redirect_tcp = ("redirect" == tcp_proxy_way and local_tcp_redir_port) and {
+        listen = "0.0.0.0:" .. local_tcp_redir_port,
+        timeout = 300
+    } or nil,
+    tproxy_tcp = ("tproxy" == tcp_proxy_way and local_tcp_redir_port) and {
         listen = "0.0.0.0:" .. local_tcp_redir_port,
         timeout = 300
     } or nil,

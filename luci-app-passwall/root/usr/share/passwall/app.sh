@@ -796,6 +796,7 @@ run_redir() {
 				UDP_NODE="nil"
 				_extra_param="${_extra_param} -local_udp_redir_port $local_port"
 			}
+			_extra_param="${_extra_param} -tcp_proxy_way $tcp_proxy_way"
 			lua $API_GEN_HYSTERIA -node $node ${_extra_param} > $config_file
 			ln_run "$(first_type $(config_t_get global_app hysteria_file))" "hysteria" $log_file -c "$config_file" client
 		;;
@@ -1398,8 +1399,8 @@ TCP_UDP=0
 [ "$TCP_NODE" == "nil" -a "$UDP_NODE" == "nil" ] && NO_PROXY=1
 [ "$(config_get_type $TCP_NODE nil)" == "nil" -a "$(config_get_type $UDP_NODE nil)" == "nil" ] && NO_PROXY=1
 tcp_proxy_way=$(config_t_get global_forwarding tcp_proxy_way redirect)
-REDIRECT_LIST="socks ss ss-rust ssr v2ray xray trojan-plus trojan-go naiveproxy"
-TPROXY_LIST="socks ss ss-rust ssr v2ray xray trojan-plus brook trojan-go hysteria"
+REDIRECT_LIST="socks ss ss-rust ssr v2ray xray trojan-go trojan-plus naiveproxy hysteria"
+TPROXY_LIST="brook socks ss ss-rust ssr v2ray xray trojan-go trojan-plus hysteria"
 RESOLVFILE=/tmp/resolv.conf.d/resolv.conf.auto
 [ -f "${RESOLVFILE}" ] && [ -s "${RESOLVFILE}" ] || RESOLVFILE=/tmp/resolv.conf.auto
 TCP_REDIR_PORTS=$(config_t_get global_forwarding tcp_redir_ports '80,443')
