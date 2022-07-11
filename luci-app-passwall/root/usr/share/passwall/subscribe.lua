@@ -787,7 +787,7 @@ local function processData(szType, content, add_mode, add_from)
 				params[t[1]] = t[2]
 			end
 		end
-		result.hysteria_protocol = params.protocol
+		result.protocol = params.protocol
 		result.hysteria_obfs = params.obfsParam
 		result.hysteria_auth_type = "string"
 		result.hysteria_auth_password = params.auth
