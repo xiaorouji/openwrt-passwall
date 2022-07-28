@@ -19,7 +19,7 @@
 +    printf(
 +        "       -g <obfs-param>            Obfs-Param of your remote server.\n");
 +    printf(
-+        "       -O <protocol>              Protocol of your remote server: orgin,\n");
++        "       -O <protocol>              Protocol of your remote server: origin,\n");
 +    printf(
 +        "                                  auth_sha1, auth_sha1_v2, auth_sha1_v4,\n");
 +    printf(
