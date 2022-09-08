@@ -30,6 +30,8 @@ start_service() {
   procd_set_param command $PROG run -D $RES_DIR -c $CONF
 
   procd_set_param user root
+  procd_set_param limits core="unlimited"
+  procd_set_param limits nofile="1000000 1000000"
   procd_set_param stdout 1
   procd_set_param stderr 1
   procd_set_param respawn "${respawn_threshold:-3600}" "${respawn_timeout:-5}" "${respawn_retry:-5}"
