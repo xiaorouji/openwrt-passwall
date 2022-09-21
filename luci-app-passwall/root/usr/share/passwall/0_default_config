@@ -90,6 +90,10 @@ config nodes 'myshunt'
 	option default_node 'nil'
 	option domainStrategy 'IPOnDemand'
 
+config shunt_rules 'GAME'
+	option remarks 'GAME'
+	option domain_list 'geosite:category-games@cn'
+
 config shunt_rules 'AD'
 	option remarks 'AD'
 	option domain_list 'geosite:category-ads-all'
@@ -97,6 +101,12 @@ config shunt_rules 'AD'
 config shunt_rules 'BT'
 	option remarks 'BT'
 	option protocol 'bittorrent'
+
+config shunt_rules 'YOUTUBE'
+	option remarks 'YOUTUBE'
+	option domain_list 'www.youtube.com
+youtube.com
+fonts.googleapis.com'
 
 config shunt_rules 'Netflix'
 	option remarks 'Netflix'
