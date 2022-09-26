@@ -2,7 +2,6 @@ name: Bug上报
 description: 报告您使用中遇到的Bug以帮助我们改进
 title: "[Bug]: "
 labels: bug
-assignees: ''
 
 body:
   - type: markdown

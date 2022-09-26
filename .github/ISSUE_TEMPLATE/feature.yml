@@ -2,7 +2,6 @@ name: 功能请求
 description: 为此项目提出关于新功能的想法
 title: "[Feature Request]: "
 labels: enhancement
-assignees: ''
 
 body:
   - type: textarea
