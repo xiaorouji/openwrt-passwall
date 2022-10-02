@@ -461,7 +461,7 @@ load_acl() {
 				elif [ -n "$(echo ${i} | grep '^ipset:')" ]; then
 					_ipset=$(echo ${i} | sed 's#ipset:##g')
 					_ipt_source="ip daddr @${_ipset}"
-					msg="备注【$remarks】，IPset【${_ipset}】，"
+					msg="备注【$remarks】，NFTset【${_ipset}】，"
 				elif [ -n "$(echo ${i} | grep '^ip:')" ]; then
 					_ip=$(echo ${i} | sed 's#ip:##g')
 					_ipt_source=$(factor ${_ip} "ip saddr")
@@ -717,13 +717,13 @@ filter_haproxy() {
 		local ip=$(get_host_ip ipv4 $(echo $item | awk -F ":" '{print $1}') 1)
 		insert_nftset $NFTSET_VPSIPLIST $ip
 	done
-	echolog "加入负载均衡的节点到ipset[$NFTSET_VPSIPLIST]直连完成"
+	echolog "加入负载均衡的节点到nftset[$NFTSET_VPSIPLIST]直连完成"
 }
 
 filter_vpsip() {
 	insert_nftset $NFTSET_VPSIPLIST $(uci show $CONFIG | grep ".address=" | cut -d "'" -f 2 | grep -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}" | sed -e "/^$/d" | sed -e 's/$/,/' )
 	insert_nftset $NFTSET_VPSIPLIST6 $(uci show $CONFIG | grep ".address=" | cut -d "'" -f 2 | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "/^$/d" | sed -e 's/$/,/' )
-	echolog "加入所有节点到ipset[$NFTSET_VPSIPLIST]直连完成"
+	echolog "加入所有节点到nftset[$NFTSET_VPSIPLIST]直连完成"
 }
 
 filter_node() {
@@ -1207,9 +1207,12 @@ del_firewall_rule() {
 		done
 	done
 
-	for handle in $(nft -a list chains |grep -E "chain PSW" |awk -F '# handle ' '{print$2}'); do
+	for handle in $(nft -a list chains | grep -E "chain PSW" | grep -v "PSW_RULE" | awk -F '# handle ' '{print$2}'); do
 		nft delete chain inet fw4 handle ${handle} 2>/dev/null
 	done
+
+	# Need to be removed at the end, otherwise it will show "Resource busy"
+	nft delete chain inet fw4 handle $(nft -a list chains | grep -E "PSW_RULE" | awk -F '# handle ' '{print$2}') 2>/dev/null
 
 	ip rule del fwmark 1 lookup 100 2>/dev/null
 	ip route del local 0.0.0.0/0 dev lo table 100 2>/dev/null
@@ -1295,14 +1298,6 @@ gen_include() {
 	return 0
 }
 
-get_ipt_bin() {
-	echo $ipt
-}
-
-get_ip6t_bin() {
-	echo $ip6t
-}
-
 start() {
 	add_firewall_rule
 	gen_include
@@ -1325,7 +1320,7 @@ insert_rule_before)
 insert_rule_after)
 	insert_rule_after "$@"
 	;;
-flush_ipset)
+flush_nftset)
 	flush_nftset
 	;;
 get_wan_ip)
