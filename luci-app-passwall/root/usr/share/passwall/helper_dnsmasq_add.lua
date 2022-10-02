@@ -14,6 +14,7 @@ local TCP_NODE = var["-TCP_NODE"]
 local PROXY_MODE = var["-PROXY_MODE"]
 local NO_PROXY_IPV6 = var["-NO_PROXY_IPV6"]
 local NO_LOGIC_LOG = var["-NO_LOGIC_LOG"]
+local NFTFLAG = var["-NFTFLAG"]
 local LOG_FILE = api.LOG_FILE
 local CACHE_PATH = api.CACHE_PATH
 local CACHE_FLAG = "dns_" .. FLAG
@@ -192,6 +193,8 @@ if global and (not returnhome and not chnlist and not gfwlist) then
     only_global = 1
 end
 
+local setflag= (NFTFLAG == "1") and "inet#fw4#" or ""
+
 if not fs.access(CACHE_DNS_PATH) then
     fs.mkdir("/tmp/dnsmasq.d")
     fs.mkdir(CACHE_DNS_PATH)
@@ -224,13 +227,13 @@ if not fs.access(CACHE_DNS_PATH) then
     log(string.format("  - 域名白名单(whitelist)：%s", LOCAL_DNS or "默认"))
 
     local fwd_dns = LOCAL_DNS
-    local ipset_flag = "whitelist,whitelist6"
+    local ipset_flag = setflag.."whitelist,"..setflag.."whitelist6"
     local no_ipv6
     if subscribe_proxy == "1" then
         fwd_dns = TUN_DNS
-        ipset_flag = "blacklist,blacklist6"
+        ipset_flag = setflag.."blacklist,"..setflag.."blacklist6"
         if NO_PROXY_IPV6 == "1" then
-            ipset_flag = "blacklist"
+            ipset_flag = setflag.."blacklist"
             no_ipv6 = true
         end
         if not only_global then
@@ -255,10 +258,10 @@ if not fs.access(CACHE_DNS_PATH) then
     for line in io.lines("/usr/share/passwall/rules/proxy_host") do
         if line ~= "" and not line:find("#") then
             add_excluded_domain(line)
-            local ipset_flag = "blacklist,blacklist6"
+            local ipset_flag = setflag.."blacklist,"..setflag.."blacklist6"
             if NO_PROXY_IPV6 == "1" then
                 set_domain_address(line, "::")
-                ipset_flag = "blacklist"
+                ipset_flag = setflag.."blacklist"
             end
             if REMOTE_FAKEDNS == "1" then
                 ipset_flag = nil
@@ -286,12 +289,12 @@ if not fs.access(CACHE_DNS_PATH) then
 
                 if _node_id == "_direct" then
                     fwd_dns = LOCAL_DNS
-                    ipset_flag = "whitelist,whitelist6"
+                    ipset_flag = setflag.."whitelist,"..setflag.."whitelist6"
                 else
                     fwd_dns = TUN_DNS
-                    ipset_flag = "shuntlist,shuntlist6"
+                    ipset_flag = setflag.."shuntlist,"..setflag.."shuntlist6"
                     if NO_PROXY_IPV6 == "1" then
-                        ipset_flag = "shuntlist"
+                        ipset_flag = setflag.."shuntlist"
                         no_ipv6 = true
                     end
                     if not only_global then
@@ -329,9 +332,9 @@ if not fs.access(CACHE_DNS_PATH) then
             local gfwlist_str = sys.exec('cat /usr/share/passwall/rules/gfwlist | grep -v -E "^#" | grep -v -E "' .. excluded_domain_str .. '"')
             for line in string.gmatch(gfwlist_str, "[^\r\n]+") do
                 if line ~= "" then
-                    local ipset_flag = "gfwlist,gfwlist6"
+                    local ipset_flag = setflag.."gfwlist,"..setflag.."gfwlist6"
                     if NO_PROXY_IPV6 == "1" then
-                        ipset_flag = "gfwlist"
+                        ipset_flag = setflag.."gfwlist"
                         set_domain_address(line, "::")
                     end
                     if not only_global then
@@ -368,9 +371,9 @@ if not fs.access(CACHE_DNS_PATH) then
             local chnlist_str = sys.exec('cat /usr/share/passwall/rules/chnlist | grep -v -E "^#" | grep -v -E "' .. excluded_domain_str .. '"')
             for line in string.gmatch(chnlist_str, "[^\r\n]+") do
                 if line ~= "" then
-                    local ipset_flag = "chnroute,chnroute6"
+                    local ipset_flag = setflag.."chnroute,"..setflag.."chnroute6"
                     if NO_PROXY_IPV6 == "1" then
-                        ipset_flag = "chnroute"
+                        ipset_flag = setflag.."chnroute"
                         set_domain_address(line, "::")
                     end
                     if not only_global then
@@ -389,6 +392,10 @@ if not fs.access(CACHE_DNS_PATH) then
     local address_out = io.open(CACHE_DNS_PATH .. "/000-address.conf", "a")
     local server_out = io.open(CACHE_DNS_PATH .. "/001-server.conf", "a")
     local ipset_out = io.open(CACHE_DNS_PATH .. "/ipset.conf", "a")
+    local set_name = "ipset"
+    if NFTFLAG == "1" then
+        set_name = "nftset"
+    end
     for key, value in pairs(list1) do
         if value.address and #value.address > 0 then
             address_out:write(string.format("address=/.%s/%s\n", key, value.address))
@@ -404,7 +411,7 @@ if not fs.access(CACHE_DNS_PATH) then
                 ipsets_str = ipsets_str .. ipset .. ","
             end
             ipsets_str = ipsets_str:sub(1, #ipsets_str - 1)
-            ipset_out:write(string.format("ipset=/.%s/%s\n", key, ipsets_str))
+            ipset_out:write(string.format("%s=/.%s/%s\n", set_name, key, ipsets_str))
         end
     end
     address_out:close()
