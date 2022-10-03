@@ -38,7 +38,7 @@ LUCI_DEPENDS:=+coreutils +coreutils-base64 +coreutils-nohup +curl \
 	+microsocks +resolveip +tcping +unzip
 
 define Package/$(PKG_NAME)/config
-	if Package/$(PKG_NAME)
+	if Package_$(PKG_NAME)
 		menu "PassWall Configuration"
 			config PACKAGE_$(PKG_NAME)_Iptables_Transparent_Proxy
 				bool "Iptables Transparent Proxy"
