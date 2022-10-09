@@ -56,10 +56,13 @@ local function trim(text)
 end
 
 -- curl
-local function curl(url, file)
+local function curl(url, file, valifile)
 	local cmd = "curl -skL -w %{http_code} --retry 3 --connect-timeout 3 '" .. url .. "'"
 	if file then
 		cmd = cmd .. " -o " .. file
+	end
+	if valifile then
+		cmd = cmd .. " --dump-header " .. valifile
 	end
 	local stdout = luci.sys.exec(cmd)
 
@@ -87,9 +90,19 @@ local function line_count(file_path)
 	return num;
 end
 
-local function non_file_check(file_path)
+local function non_file_check(file_path, vali_file)
 	if nixio.fs.readfile(file_path, 1000) then
-		return nil;
+		local remote_file_size = luci.sys.exec("cat " .. vali_file .. " | grep -i Content-Length | awk '{print $2}'")
+		local local_file_size = luci.sys.exec("ls -l " .. file_path .. "| awk '{print $5}'")
+		if remote_file_size then
+			if tonumber(remote_file_size) == tonumber(local_file_size) then
+				return nil;
+			else
+				return true;
+			end
+		else
+			return nil;
+		end
 	else
 		return true;
 	end
@@ -101,16 +114,26 @@ local function fetch_rule(rule_name,rule_type,url,exclude_domain)
 	local sret_tmp = 0
 	local domains = {}
 	local file_tmp = "/tmp/" ..rule_name.. "_tmp"
+	local vali_file = "/tmp/" ..rule_name.. "_vali"
 	local download_file_tmp = "/tmp/" ..rule_name.. "_dl"
 	local unsort_file_tmp = "/tmp/" ..rule_name.. "_unsort"
 
 	log(rule_name.. " 开始更新...")
 	for k,v in ipairs(url) do
-		sret_tmp = curl(v, download_file_tmp..k)
-		if sret_tmp == 200 and non_file_check(download_file_tmp..k) then
-			sret = 0
-			log(rule_name.. " 第" ..k.. "条规则:" ..v.. "下载文件读取出错，请检查网络或下载链接后重试！")
-		elseif sret_tmp == 200 then
+		sret_tmp = curl(v, download_file_tmp..k, vali_file..k)
+		if sret_tmp == 200 and non_file_check(download_file_tmp..k, vali_file..k) then
+			log(rule_name.. " 第" ..k.. "条规则:" ..v.. "下载文件读取出错，尝试重新下载。")
+			os.remove(download_file_tmp..k)
+			os.remove(vali_file..k)
+			sret_tmp = curl(v, download_file_tmp..k, vali_file..k)
+			if sret_tmp == 200 and non_file_check(download_file_tmp..k, vali_file..k) then
+				sret = 0
+				sret_tmp = 0
+				log(rule_name.. " 第" ..k.. "条规则:" ..v.. "下载文件读取出错，请检查网络或下载链接后重试！")
+			end
+		end
+
+		if sret_tmp == 200 then
 			if rule_name == "gfwlist" then
 				local domains = {}
 				local gfwlist = io.open(download_file_tmp..k, "r")
@@ -168,6 +191,7 @@ local function fetch_rule(rule_name,rule_type,url,exclude_domain)
 			log(rule_name.. " 第" ..k.. "条规则:" ..v.. "下载失败，请检查网络或下载链接后重试！")
 		end
 		os.remove(download_file_tmp..k)
+		os.remove(vali_file..k)
 	end
 
 	if sret == 200 then
