@@ -420,6 +420,7 @@ local function processData(szType, content, add_mode, add_from)
 			result.mkcp_downlinkCapacity = 20
 			result.mkcp_readBufferSize = 2
 			result.mkcp_writeBufferSize = 2
+			result.mkcp_seed = info.seed
 		end
 		if info.net == 'quic' then
 			result.quic_guise = info.type
@@ -739,6 +740,7 @@ local function processData(szType, content, add_mode, add_from)
 				result.mkcp_downlinkCapacity = 20
 				result.mkcp_readBufferSize = 2
 				result.mkcp_writeBufferSize = 2
+				result.mkcp_seed = params.seed
 			end
 			if params.type == 'quic' then
 				result.quic_guise = params.headerType or "none"
