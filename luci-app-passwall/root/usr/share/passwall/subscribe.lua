@@ -525,6 +525,21 @@ local function processData(szType, content, add_mode, add_from)
 				end
 			end
 		end
+		local aead2022 = false
+		for k, v in ipairs({"2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha8-poly1305", "2022-blake3-chacha20-poly1305"}) do
+			if method:lower() == v:lower() then
+				aead2022 = true
+			end
+		end
+		if aead2022 then
+			if ss_aead_type_default == "xray" and has_xray and not result.plugin then
+				result.type = 'Xray'
+				result.protocol = 'shadowsocks'
+				result.transport = 'tcp'
+			elseif has_ss_rust then
+				result.type = 'SS-Rust'
+			end
+		end
 	elseif szType == "trojan" then
 		local alias = ""
 		if content:find("#") then
