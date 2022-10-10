@@ -149,12 +149,41 @@ local has_xray = api.is_finded("xray")
 				}
 				var v_plugin_opts = opt.get("ss_plugin_opts").value;
 				if (v_plugin_opts && v_plugin_opts != "") {
-					v_plugin += encodeURI(";" + v_plugin_opts);
+					v_plugin += ";" + v_plugin_opts;
 				}
-				params += "&plugin=" + encodeURI(v_plugin);
+				params += "&plugin=" + encodeURIComponent(v_plugin);
 			}
 			params += "&group="
-			params += "#" + encodeURI(v_alias.value);
+			params += "#" + encodeURIComponent(v_alias.value);
+			if (params[0] == "&") {
+				params = params.substring(1);
+			}
+			url += params;
+		} else if (v_type === "SS-Rust") {
+			v_type = "SS"
+			var v_server = opt.get("address");
+			var v_port = opt.get("port");
+			var v_method = opt.get("ss_rust_encrypt_method");
+			var v_password = opt.get("password");
+			
+			url = btoa(v_method.value + ":" + v_password.value) + "@" +
+				v_server.value + ":" +
+				v_port.value + "/?";
+			
+			var params = "";
+			var v_plugin = opt.get("ss_plugin").value;
+			if (v_plugin && v_plugin != "none") {
+				if (v_plugin == "simple-obfs" || v_plugin == "obfs-local") {
+					v_plugin = "obfs-local";
+				}
+				var v_plugin_opts = opt.get("ss_plugin_opts").value;
+				if (v_plugin_opts && v_plugin_opts != "") {
+					v_plugin += ";" + v_plugin_opts;
+				}
+				params += "&plugin=" + encodeURIComponent(v_plugin);
+			}
+			params += "&group="
+			params += "#" + encodeURIComponent(v_alias.value);
 			if (params[0] == "&") {
 				params = params.substring(1);
 			}
@@ -552,18 +581,23 @@ local has_xray = api.is_finded("xray")
 					var pluginIndex = pluginInfo.indexOf(";");
 					var pluginNameInfo = pluginInfo.substr(0, pluginIndex);
 					plugin = pluginNameInfo.substr(pluginNameInfo.indexOf("=") + 1)
-					pluginOpts = pluginInfo.substr(pluginIndex + 1);
+					pluginOpts = pluginInfo.substr(pluginIndex + 1).split("&")[0];
 				}
 				var userInfoSplitIndex = userInfo.indexOf(":");
 				if (userInfoSplitIndex !== -1) {
 					method = userInfo.substr(0, userInfoSplitIndex);
 					password = userInfo.substr(userInfoSplitIndex + 1);
 				}
-				opt.set('type', "SS");
+				if (["2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha8-poly1305", "2022-blake3-chacha20-poly1305"].includes(method)) {
+					opt.set('type', "SS-Rust");
+					opt.set('ss_rust_encrypt_method', method || "");
+				} else {
+					opt.set('type', "SS");
+					opt.set('ss_encrypt_method', method || "");
+				}
 				opt.set('address', server);
 				opt.set('port', port);
 				opt.set('password', password || "");
-				opt.set('ss_encrypt_method', method || "");
 				opt.set('ss_plugin', plugin || "none");
 				if (plugin && plugin != "none") {
 					opt.set('ss_plugin_opts', pluginOpts || "");
