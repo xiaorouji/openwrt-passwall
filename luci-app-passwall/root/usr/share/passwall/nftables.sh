@@ -10,7 +10,7 @@ NFTSET_CHN="chnroute"
 NFTSET_BLACKLIST="blacklist"
 NFTSET_WHITELIST="whitelist"
 NFTSET_BLOCKLIST="blocklist"
- 
+
 NFTSET_LANIPLIST6="laniplist6"
 NFTSET_VPSIPLIST6="vpsiplist6"
 NFTSET_SHUNTLIST6="shuntlist6"
@@ -19,11 +19,11 @@ NFTSET_CHN6="chnroute6"
 NFTSET_BLACKLIST6="blacklist6"
 NFTSET_WHITELIST6="whitelist6"
 NFTSET_BLOCKLIST6="blocklist6"
- 
+
 FORCE_INDEX=2
- 
+
 . /lib/functions/network.sh
- 
+
 FWI=$(uci -q get firewall.passwall.path 2>/dev/null)
 FAKE_IP="198.18.0.0/16"
 
@@ -950,7 +950,7 @@ add_firewall_rule() {
 	nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip daddr @$NFTSET_BLOCKLIST counter drop"
 
 	# jump chains
-	nft "add rule inet fw4 mangle_prerouting counter jump PSW_MANGLE"
+	nft "add rule inet fw4 mangle_prerouting meta nfproto {ipv4} counter jump PSW_MANGLE"
 	insert_rule_before "inet fw4" "mangle_prerouting" "PSW_MANGLE" "counter jump PSW_DIVERT"
 
 	#ipv4 tcp redirect mode
@@ -990,7 +990,9 @@ add_firewall_rule() {
 	fi
 
 	WAN_IP=$(get_wan_ip)
-	[ -n "${WAN_IP}" ] && nft "add rule inet fw4 PSW_MANGLE ip daddr ${WAN_IP} counter return comment \"WAN_IP_RETURN\"" || nft "add rule inet fw4 PSW ip daddr ${WAN_IP} counter return comment \"WAN_IP_RETURN\""
+	if [ -n "${WAN_IP}" ]; then
+		[ -n "${is_tproxy}" ] && nft "add rule inet fw4 PSW_MANGLE ip daddr ${WAN_IP} counter return comment \"WAN_IP_RETURN\"" || nft "add rule inet fw4 PSW ip daddr ${WAN_IP} counter return comment \"WAN_IP_RETURN\""
+	fi
 	unset WAN_IP
 
 	ip rule add fwmark 1 lookup 100
@@ -1057,7 +1059,7 @@ add_firewall_rule() {
 				nft add rule inet fw4 PSW_OUTPUT ip protocol tcp ip daddr ${2} tcp dport ${3} $(REDIRECT $TCP_REDIR_PORT)
 			else
 				nft add rule inet fw4 PSW_OUTPUT_MANGLE ip protocol tcp ip daddr ${2} tcp dport ${3} counter jump PSW_RULE
-				nft add rule inet fw4 PSW_MANGLE iifname lo tcp dport ${3} ip daddr ${2} $(REDIRECT $TCP_REDIR_PORT TPROXY4) comment \"本机\"
+				nft add rule inet fw4 PSW_MANGLE iif lo tcp dport ${3} ip daddr ${2} $(REDIRECT $TCP_REDIR_PORT TPROXY4) comment \"本机\"
 			fi
 			echolog "  - [$?]将上游 DNS 服务器 ${2}:${3} 加入到路由器自身代理的 TCP 转发链"
 		}
@@ -1087,8 +1089,8 @@ add_firewall_rule() {
 			nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip protocol tcp ip daddr @$NFTSET_SHUNTLIST $(factor $TCP_REDIR_PORTS "tcp dport") counter jump PSW_RULE"
 			nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip protocol tcp ip daddr @$NFTSET_BLACKLIST $(factor $TCP_REDIR_PORTS "tcp dport") counter jump PSW_RULE"
 			nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip protocol tcp $(factor $TCP_REDIR_PORTS "tcp dport") $(get_nftset_ipv4 $LOCALHOST_TCP_PROXY_MODE) jump PSW_RULE"
-			nft "add rule inet fw4 PSW_OUTPUT_MANGLE meta l4proto tcp iifname lo $(REDIRECT $TCP_REDIR_PORT TPROXY) comment \"本机\""
-			nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip protocol tcp iifname lo counter return comment \"本机\""
+			nft "add rule inet fw4 PSW_MANGLE meta l4proto tcp iif lo $(REDIRECT $TCP_REDIR_PORT TPROXY) comment \"本机\""
+			nft "add rule inet fw4 PSW_MANGLE ip protocol tcp iif lo counter return comment \"本机\""
 			nft "add rule inet fw4 mangle_output meta nfproto {ipv4} meta l4proto tcp counter jump PSW_OUTPUT_MANGLE comment \"mangle-OUTPUT-PSW\""
 		fi
 
@@ -1096,8 +1098,8 @@ add_firewall_rule() {
 			nft "add rule inet fw4 PSW_OUTPUT_MANGLE_V6 meta l4proto tcp ip6 daddr @$NFTSET_SHUNTLIST6 $(factor $TCP_REDIR_PORTS "tcp dport") counter jump PSW_RULE"
 			nft "add rule inet fw4 PSW_OUTPUT_MANGLE_V6 meta l4proto tcp ip6 daddr @$NFTSET_BLACKLIST6 $(factor $TCP_REDIR_PORTS "tcp dport") counter jump PSW_RULE"
 			nft "add rule inet fw4 PSW_OUTPUT_MANGLE_V6 meta l4proto tcp $(factor $TCP_REDIR_PORTS "tcp dport") $(get_nftset_ipv6 $LOCALHOST_TCP_PROXY_MODE) jump PSW_RULE"
-			nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto tcp iifname lo $(REDIRECT $TCP_REDIR_PORT TPROXY) comment \"本机\""
-			nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto tcp iifname lo counter return comment \"本机\""
+			nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto tcp iif lo $(REDIRECT $TCP_REDIR_PORT TPROXY) comment \"本机\""
+			nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto tcp iif lo counter return comment \"本机\""
 		}
 	fi
 
@@ -1159,7 +1161,7 @@ add_firewall_rule() {
 				return 0
 			}
 			nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip protocol udp ip daddr ${2} udp dport ${3} counter jump PSW_RULE"
-			nft "add rule inet fw4 PSW_MANGLE iifname lo meta l4proto udp ip daddr ${2} $(REDIRECT $UDP_REDIR_PORT TPROXY4) comment \"本机\""
+			nft "add rule inet fw4 PSW_MANGLE iif lo meta l4proto udp ip daddr ${2} $(REDIRECT $UDP_REDIR_PORT TPROXY4) comment \"本机\""
 			echolog "  - [$?]将上游 DNS 服务器 ${2}:${3} 加入到路由器自身代理的 UDP 转发链"
 		}
 		[ "$use_udp_node_resolve_dns" == 1 ] && hosts_foreach REMOTE_DNS _proxy_udp_access 53
@@ -1173,24 +1175,24 @@ add_firewall_rule() {
 		nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip protocol udp ip daddr @$NFTSET_SHUNTLIST $(factor $UDP_REDIR_PORTS "udp dport") counter jump PSW_RULE"
 		nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip protocol udp ip daddr @$NFTSET_BLACKLIST $(factor $UDP_REDIR_PORTS "udp dport") counter jump PSW_RULE"
 		nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip protocol udp $(factor $UDP_REDIR_PORTS "udp dport") $(get_nftset_ipv4 $LOCALHOST_UDP_PROXY_MODE) jump PSW_RULE"
-		nft "add rule inet fw4 PSW_MANGLE meta l4proto udp iifname lo $(REDIRECT $UDP_REDIR_PORT TPROXY) comment \"本机\""
-		nft "add rule inet fw4 PSW_MANGLE ip protocol udp iifname lo counter return comment \"本机\""
+		nft "add rule inet fw4 PSW_MANGLE meta l4proto udp iif lo $(REDIRECT $UDP_REDIR_PORT TPROXY) comment \"本机\""
+		nft "add rule inet fw4 PSW_MANGLE ip protocol udp iif lo counter return comment \"本机\""
 		nft "add rule inet fw4 mangle_output meta nfproto {ipv4} meta l4proto udp counter jump PSW_OUTPUT_MANGLE"
 
 		[ "$PROXY_IPV6" == "1" ] && [ "$PROXY_IPV6_UDP" == "1" ] && {
 			nft "add rule inet fw4 PSW_OUTPUT_MANGLE_V6 meta l4proto udp ip6 daddr @$NFTSET_SHUNTLIST6 $(factor $UDP_REDIR_PORTS "udp dport") counter jump PSW_RULE"
 			nft "add rule inet fw4 PSW_OUTPUT_MANGLE_V6 meta l4proto udp ip6 daddr @$NFTSET_BLACKLIST6 $(factor $UDP_REDIR_PORTS "udp dport") counter jump PSW_RULE"
 			nft "add rule inet fw4 PSW_OUTPUT_MANGLE_V6 meta l4proto udp $(factor $UDP_REDIR_PORTS "udp dport") $(get_nftset_ipv6 $LOCALHOST_PROXY_MODE) jump PSW_RULE"
-			nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp iifname lo $(REDIRECT $UDP_REDIR_PORT TPROXY) comment \"本机\""
-			nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp iifname lo counter return comment \"本机\""
+			nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp iif lo $(REDIRECT $UDP_REDIR_PORT TPROXY) comment \"本机\""
+			nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp iif lo counter return comment \"本机\""
 		}
 	fi
 
-	nft "add rule inet fw4 mangle_output oifname lo counter return comment \"mangle-OUTPUT-PSW\""
+	nft "add rule inet fw4 mangle_output oif lo counter return comment \"mangle-OUTPUT-PSW\""
 	nft "add rule inet fw4 mangle_output meta mark 1 counter return comment \"mangle-OUTPUT-PSW\""
 
-	nft "add rule inet fw4 PSW_MANGLE counter ip protocol udp udp dport 53 counter return"
-	nft "add rule inet fw4 PSW_MANGLE_V6 counter meta l4proto udp udp dport 53 counter return"
+	nft "add rule inet fw4 PSW_MANGLE ip protocol udp udp dport 53 counter return"
+	nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp udp dport 53 counter return"
 	#  加载ACLS
 	load_acl
 
@@ -1277,7 +1279,7 @@ gen_include() {
 				nft "add rule inet fw4 nat_output ip protocol tcp counter jump PSW_OUTPUT"
 			}
 
-			nft "add rule inet fw4 mangle_prerouting counter jump PSW_MANGLE"
+			nft "add rule inet fw4 mangle_prerouting meta nfproto {ipv4} counter jump PSW_MANGLE"
 			[ -n "${is_tproxy}" ] && nft "add rule inet fw4 mangle_output meta nfproto {ipv4} meta l4proto tcp counter jump PSW_OUTPUT_MANGLE comment \"mangle-OUTPUT-PSW\""
 			nft "add rule inet fw4 mangle_output meta nfproto {ipv4} meta l4proto udp counter jump PSW_OUTPUT_MANGLE"
 			\$(${MY_PATH} insert_rule_before "inet fw4" "mangle_prerouting" "PSW_MANGLE" "counter jump PSW_DIVERT")
@@ -1287,7 +1289,7 @@ gen_include() {
 				nft "add rule inet fw4 mangle_output meta nfproto {ipv6} counter jump PSW_OUTPUT_MANGLE_V6 comment \"mangle-OUTPUT-PSW\""
 			}
 
-			nft "add rule inet fw4 mangle_output oifname lo counter return comment \"mangle-OUTPUT-PSW\""
+			nft "add rule inet fw4 mangle_output oif lo counter return comment \"mangle-OUTPUT-PSW\""
 			nft "add rule inet fw4 mangle_output meta mark 1 counter return comment \"mangle-OUTPUT-PSW\""
 		EOF
 		)

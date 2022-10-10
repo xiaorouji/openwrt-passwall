@@ -91,19 +91,21 @@ local function line_count(file_path)
 end
 
 local function non_file_check(file_path, vali_file)
-	if nixio.fs.readfile(file_path, 1000) then
-		local remote_file_size = luci.sys.exec("cat " .. vali_file .. " | grep -i Content-Length | awk '{print $2}'")
-		local local_file_size = luci.sys.exec("ls -l " .. file_path .. "| awk '{print $5}'")
-		if remote_file_size then
+	if nixio.fs.readfile(file_path, 10) then
+		local remote_file_size = luci.sys.exec("cat " .. vali_file .. " | grep -i 'Content-Length' | awk '{print $2}'")
+		local local_file_size = nixio.fs.stat(file_path, "size")
+		if remote_file_size and local_file_size then
 			if tonumber(remote_file_size) == tonumber(local_file_size) then
 				return nil;
 			else
+				log("下载文件大小校验出错，原始文件大小" .. remote_file_size .. "B，下载文件大小：" .. local_file_size .. "B。")
 				return true;
 			end
 		else
 			return nil;
 		end
 	else
+		log("下载文件读取出错。")
 		return true;
 	end
 end
@@ -122,14 +124,14 @@ local function fetch_rule(rule_name,rule_type,url,exclude_domain)
 	for k,v in ipairs(url) do
 		sret_tmp = curl(v, download_file_tmp..k, vali_file..k)
 		if sret_tmp == 200 and non_file_check(download_file_tmp..k, vali_file..k) then
-			log(rule_name.. " 第" ..k.. "条规则:" ..v.. "下载文件读取出错，尝试重新下载。")
+			log(rule_name.. " 第" ..k.. "条规则:" ..v.. "下载文件过程出错，尝试重新下载。")
 			os.remove(download_file_tmp..k)
 			os.remove(vali_file..k)
 			sret_tmp = curl(v, download_file_tmp..k, vali_file..k)
 			if sret_tmp == 200 and non_file_check(download_file_tmp..k, vali_file..k) then
 				sret = 0
 				sret_tmp = 0
-				log(rule_name.. " 第" ..k.. "条规则:" ..v.. "下载文件读取出错，请检查网络或下载链接后重试！")
+				log(rule_name.. " 第" ..k.. "条规则:" ..v.. "下载文件过程出错，请检查网络或下载链接后重试！")
 			end
 		end
 
