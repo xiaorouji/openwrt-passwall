@@ -92,10 +92,10 @@ end
 
 local function non_file_check(file_path, vali_file)
 	if nixio.fs.readfile(file_path, 10) then
-		local remote_file_size = luci.sys.exec("cat " .. vali_file .. " | grep -i 'Content-Length' | awk '{print $2}'")
-		local local_file_size = nixio.fs.stat(file_path, "size")
+		local remote_file_size = tonumber(luci.sys.exec("cat " .. vali_file .. " | grep -i 'Content-Length' | awk '{print $2}'"))
+		local local_file_size = tonumber(nixio.fs.stat(file_path, "size"))
 		if remote_file_size and local_file_size then
-			if tonumber(remote_file_size) == tonumber(local_file_size) then
+			if remote_file_size == local_file_size then
 				return nil;
 			else
 				log("下载文件大小校验出错，原始文件大小" .. remote_file_size .. "B，下载文件大小：" .. local_file_size .. "B。")
