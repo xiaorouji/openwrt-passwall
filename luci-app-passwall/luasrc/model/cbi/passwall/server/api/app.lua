@@ -15,7 +15,7 @@ local require_dir = "luci.model.cbi.passwall.server.api."
 local ipt_bin = sys.exec("echo -n $(/usr/share/passwall/iptables.sh get_ipt_bin)")
 local ip6t_bin = sys.exec("echo -n $(/usr/share/passwall/iptables.sh get_ip6t_bin)")
 
-local nft_flag = sys.exec("command -v fw4") and "1" or "0"
+local nft_flag = api.is_finded("fw4") and "1" or "0"
 
 local function log(...)
 	local f, err = io.open(LOG_APP_FILE, "a")

@@ -93,7 +93,7 @@ end
 
 -- 额外传出连接
 table.insert(outbounds, {
-    protocol = "freedom", tag = "direct", settings = {keep = ""}
+    protocol = "freedom", tag = "direct", settings = {keep = ""}, sockopt = {mark = 255}
 })
 
 local config = {
