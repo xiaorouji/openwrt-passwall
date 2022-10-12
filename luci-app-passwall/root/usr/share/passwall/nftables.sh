@@ -32,8 +32,11 @@ factor() {
 		echo ""
 	elif [ "$1" == "1:65535" ]; then
 		echo ""
-	else
+	# acl mac address
+	elif [ -n "$(echo $1 | grep -E '([A-Fa-f0-9]{2}:){5}[A-Fa-f0-9]{2}')" ]; then
 		echo "$2 {$1}"
+	else
+		echo "$2 {$(echo $1 | sed 's/:/-/g')}"
 	fi
 }
 
@@ -451,6 +454,7 @@ load_acl() {
 					}
 				fi
 				udp_node_remark=$(config_n_get $udp_node remarks)
+				udp_flag=1
 			}
 			
 			for i in $(echo -e ${rule_list}); do
@@ -492,9 +496,9 @@ load_acl() {
 						}
 
 						[ "$accept_icmpv6" = "1" ] && [ "$PROXY_IPV6" == "1" ] && {
-							nft "add rule inet fw4 PSW_ICMP_REDIRECT meta l4proto icmpv6 ${_ipt_source} ip6 daddr @$NFTSET_SHUNTLIST6 $(REDIRECT) comment \"$remarks\""
-							nft "add rule inet fw4 PSW_ICMP_REDIRECT meta l4proto icmpv6 ${_ipt_source} ip6 daddr @$NFTSET_BLACKLIST6 $(REDIRECT) comment \"$remarks\""
-							nft "add rule inet fw4 PSW_ICMP_REDIRECT meta l4proto icmpv6 ${_ipt_source} $(get_redirect_ipv6 $tcp_proxy_mode) comment \"$remarks\""
+							nft "add rule inet fw4 PSW_ICMP_REDIRECT meta l4proto icmpv6 ${_ipt_source} ip6 daddr @$NFTSET_SHUNTLIST6 $(REDIRECT) comment \"$remarks\"" 2>/dev/null
+							nft "add rule inet fw4 PSW_ICMP_REDIRECT meta l4proto icmpv6 ${_ipt_source} ip6 daddr @$NFTSET_BLACKLIST6 $(REDIRECT) comment \"$remarks\"" 2>/dev/null
+							nft "add rule inet fw4 PSW_ICMP_REDIRECT meta l4proto icmpv6 ${_ipt_source} $(get_redirect_ipv6 $tcp_proxy_mode) comment \"$remarks\"" 2>/dev/null
 						}
 
 						[ "$tcp_no_redir_ports" != "disable" ] && {
@@ -506,9 +510,9 @@ load_acl() {
 
 						[ "$tcp_proxy_drop_ports" != "disable" ] && {
 							[ "$PROXY_IPV6" == "1" ] && {
-								nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto tcp ${_ipt_source} $(factor $tcp_proxy_drop_ports "tcp dport") ip6 daddr @$NFTSET_SHUNTLIST6 counter drop comment \"$remarks\""
-								nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto tcp ${_ipt_source} $(factor $tcp_proxy_drop_ports "tcp dport") ip6 daddr @$NFTSET_BLACKLIST6 counter drop comment \"$remarks\""
-								[ "$tcp_proxy_mode" != "direct/proxy" ] && nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto tcp $(factor $tcp_proxy_drop_ports "tcp dport") $(get_nftset_ipv6 $tcp_proxy_mode) counter drop comment \"$remarks\""
+								nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto tcp ${_ipt_source} $(factor $tcp_proxy_drop_ports "tcp dport") ip6 daddr @$NFTSET_SHUNTLIST6 counter drop comment \"$remarks\"" 2>/dev/null
+								nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto tcp ${_ipt_source} $(factor $tcp_proxy_drop_ports "tcp dport") ip6 daddr @$NFTSET_BLACKLIST6 counter drop comment \"$remarks\"" 2>/dev/null
+								[ "$tcp_proxy_mode" != "direct/proxy" ] && nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto tcp ${_ipt_source} $(factor $tcp_proxy_drop_ports "tcp dport") $(get_nftset_ipv6 $tcp_proxy_mode) counter drop comment \"$remarks\"" 2>/dev/null
 							}
 							nft "add rule inet fw4 $nft_prerouting_chain ip protocol tcp ${_ipt_source} $(factor $tcp_proxy_drop_ports "tcp dport") ip daddr $FAKE_IP counter drop comment \"$remarks\""
 							nft "add rule inet fw4 $nft_prerouting_chain ip protocol tcp ${_ipt_source} $(factor $tcp_proxy_drop_ports "tcp dport") ip daddr @$NFTSET_SHUNTLIST counter drop comment \"$remarks\""
@@ -532,11 +536,11 @@ load_acl() {
 						nft "add rule inet fw4 $nft_prerouting_chain ip protocol tcp ${_ipt_source} counter return comment \"$remarks\""
 
 						[ "$PROXY_IPV6" == "1" ] && {
-							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto tcp ${_ipt_source} $(factor $tcp_redir_ports "tcp dport") ip6 daddr @$NFTSET_SHUNTLIST6 counter jump PSW_RULE comment \"$remarks\""
-							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto tcp ${_ipt_source} $(factor $tcp_redir_ports "tcp dport") ip6 daddr @$NFTSET_BLACKLIST6 counter jump PSW_RULE comment \"$remarks\""
-							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto tcp ${_ipt_source} $(factor $tcp_redir_ports "tcp dport") $(get_nftset_ipv6 $tcp_proxy_mode) jump PSW_RULE comment \"$remarks\""
-							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto tcp ${_ipt_source} $(REDIRECT $tcp_port TPROXY) comment \"$remarks\""
-							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto tcp ${_ipt_source} return comment \"$remarks\""
+							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto tcp ${_ipt_source} $(factor $tcp_redir_ports "tcp dport") ip6 daddr @$NFTSET_SHUNTLIST6 counter jump PSW_RULE comment \"$remarks\"" 2>/dev/null
+							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto tcp ${_ipt_source} $(factor $tcp_redir_ports "tcp dport") ip6 daddr @$NFTSET_BLACKLIST6 counter jump PSW_RULE comment \"$remarks\"" 2>/dev/null
+							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto tcp ${_ipt_source} $(factor $tcp_redir_ports "tcp dport") $(get_nftset_ipv6 $tcp_proxy_mode) jump PSW_RULE comment \"$remarks\"" 2>/dev/null
+							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto tcp ${_ipt_source} $(REDIRECT $tcp_port TPROXY) comment \"$remarks\"" 2>/dev/null
+							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto tcp ${_ipt_source} return comment \"$remarks\"" 2>/dev/null
 						}
 					else
 						msg2="${msg}不代理TCP"
@@ -546,14 +550,14 @@ load_acl() {
 
 				[ "$udp_proxy_drop_ports" != "disable" ] && {
 					[ "$PROXY_IPV6" == "1" ] && {
-						nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} $(factor $udp_proxy_drop_ports "udp dport") ip6 daddr @$NFTSET_SHUNTLIST6 counter drop comment \"$remarks\""
-						nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} $(factor $udp_proxy_drop_ports "udp dport") ip6 daddr @$NFTSET_BLACKLIST6 counter drop comment \"$remarks\""
-						[ "$udp_proxy_mode" != "direct/proxy" ] && nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp $(factor $udp_proxy_drop_ports "udp dport") $(get_nftset_ipv6 $udp_proxy_mode) counter drop comment \"$remarks\""
+						nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} $(factor $udp_proxy_drop_ports "udp dport") ip6 daddr @$NFTSET_SHUNTLIST6 counter drop comment \"$remarks\"" 2>/dev/null
+						nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} $(factor $udp_proxy_drop_ports "udp dport") ip6 daddr @$NFTSET_BLACKLIST6 counter drop comment \"$remarks\"" 2>/dev/null
+						[ "$udp_proxy_mode" != "direct/proxy" ] && nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} $(factor $udp_proxy_drop_ports "udp dport") $(get_nftset_ipv6 $udp_proxy_mode) counter drop comment \"$remarks\"" 2>/dev/null
 					}
-					nft "add rule inet fw4 PSW_MANGLE ip protocol udp ${_ipt_source} $(factor $udp_proxy_drop_ports "udp dport") ip daddr $FAKE_IP counter drop comment \"$remarks\""
-					nft "add rule inet fw4 PSW_MANGLE ip protocol udp ${_ipt_source} $(factor $udp_proxy_drop_ports "udp dport") ip daddr @$NFTSET_SHUNTLIST counter drop comment \"$remarks\""
-					nft "add rule inet fw4 PSW_MANGLE ip protocol udp ${_ipt_source} $(factor $udp_proxy_drop_ports "udp dport") ip daddr @$NFTSET_BLACKLIST counter drop comment \"$remarks\""
-					[ "$udp_proxy_mode" != "direct/proxy" ] && nft "add rule inet fw4 PSW_MANGLE ip protocol udp ${_ipt_source} $(factor $udp_proxy_drop_ports "udp dport") $(get_nftset_ipv4 $udp_proxy_mode) counter drop comment \"$remarks\""
+					nft "add rule inet fw4 PSW_MANGLE ip protocol udp ${_ipt_source} $(factor $udp_proxy_drop_ports "udp dport") ip daddr $FAKE_IP counter drop comment \"$remarks\"" 2>/dev/null
+					nft "add rule inet fw4 PSW_MANGLE ip protocol udp ${_ipt_source} $(factor $udp_proxy_drop_ports "udp dport") ip daddr @$NFTSET_SHUNTLIST counter drop comment \"$remarks\"" 2>/dev/null
+					nft "add rule inet fw4 PSW_MANGLE ip protocol udp ${_ipt_source} $(factor $udp_proxy_drop_ports "udp dport") ip daddr @$NFTSET_BLACKLIST counter drop comment \"$remarks\"" 2>/dev/null
+					[ "$udp_proxy_mode" != "direct/proxy" ] && nft "add rule inet fw4 PSW_MANGLE ip protocol udp ${_ipt_source} $(factor $udp_proxy_drop_ports "udp dport") $(get_nftset_ipv4 $udp_proxy_mode) counter drop comment \"$remarks\"" 2>/dev/null
 					msg2="${msg2}[$?]，屏蔽代理UDP 端口：${udp_proxy_drop_ports}"
 				}
 
@@ -563,7 +567,7 @@ load_acl() {
 						msg2="${msg2}(TPROXY:${udp_port})代理"
 						[ "$udp_no_redir_ports" != "disable" ] && {
 							nft add rule inet fw4 PSW_MANGLE meta l4proto udp ${_ipt_source} $(factor $udp_no_redir_ports "udp dport") counter return
-							nft add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} $(factor $udp_no_redir_ports "udp dport") counter return
+							nft add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} $(factor $udp_no_redir_ports "udp dport") counter return 2>/dev/null
 							msg2="${msg2}[$?]除${udp_no_redir_ports}外的"
 						}
 						msg2="${msg2}所有端口"
@@ -576,11 +580,11 @@ load_acl() {
 						nft "add rule inet fw4 PSW_MANGLE ip protocol udp ${_ipt_source} return comment \"$remarks\""
 
 						[ "$PROXY_IPV6" == "1" ] && [ "$PROXY_IPV6_UDP" == "1" ] && {
-							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} $(factor $udp_redir_ports "tcp dport") ip6 daddr @$NFTSET_SHUNTLIST6 counter jump PSW_RULE comment \"$remarks\""
-							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} $(factor $udp_redir_ports "tcp dport") ip6 daddr @$NFTSET_BLACKLIST6 counter jump PSW_RULE comment \"$remarks\""
-							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} $(factor $udp_redir_ports "tcp dport") $(get_nftset_ipv6 $udp_proxy_mode) counter jump PSW_RULE comment \"$remarks\""
-							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} $(REDIRECT $udp_port TPROXY) comment \"$remarks\""
-							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} counter return comment \"$remarks\""
+							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} $(factor $udp_redir_ports "tcp dport") ip6 daddr @$NFTSET_SHUNTLIST6 counter jump PSW_RULE comment \"$remarks\"" 2>/dev/null
+							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} $(factor $udp_redir_ports "tcp dport") ip6 daddr @$NFTSET_BLACKLIST6 counter jump PSW_RULE comment \"$remarks\"" 2>/dev/null
+							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} $(factor $udp_redir_ports "tcp dport") $(get_nftset_ipv6 $udp_proxy_mode) counter jump PSW_RULE comment \"$remarks\"" 2>/dev/null
+							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} $(REDIRECT $udp_port TPROXY) comment \"$remarks\"" 2>/dev/null
+							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} counter return comment \"$remarks\"" 2>/dev/null
 						}
 					else
 						msg2="${msg}不代理UDP"
@@ -708,6 +712,7 @@ load_acl() {
 			}
 
 			echolog "${msg}"
+			udp_flag=1
 		}
 	fi
 }
@@ -718,6 +723,15 @@ filter_haproxy() {
 		insert_nftset $NFTSET_VPSIPLIST $ip
 	done
 	echolog "加入负载均衡的节点到nftset[$NFTSET_VPSIPLIST]直连完成"
+}
+
+filter_vps_addr() {
+	for server_host in $@; do
+		local vps_ip4=$(get_host_ip "ipv4" ${server_host})
+		local vps_ip6=$(get_host_ip "ipv6" ${server_host})
+		[ -n "$vps_ip4" ] && insert_nftset $NFTSET_VPSIPLIST $vps_ip4
+		[ -n "$vps_ip6" ] && insert_nftset $NFTSET_VPSIPLIST6 $vps_ip6
+	done
 }
 
 filter_vpsip() {
@@ -756,9 +770,9 @@ filter_node() {
 
 		local ADD_INDEX=$FORCE_INDEX
 		for _ipt in 4 6; do
-			[ "$_ipt" == "4" ] && _ip_type=ip6
-			[ "$_ipt" == "6" ] && _ip_type=ip
-			nft "list chain inet fw4 PSW_OUTPUT" | grep -q "${address}:${port}"
+			[ "$_ipt" == "4" ] && _ip_type=ip4 && _set_name=$NFTSET_VPSIPLIST
+			[ "$_ipt" == "6" ] && _ip_type=ip6 && _set_name=$NFTSET_VPSIPLIST6
+			nft "list chain inet fw4 $nft_output_chain" | grep -q "${address}:${port}"
 			if [ $? -ne 0 ]; then
 				unset dst_rule
 				local dst_rule="jump PSW_RULE"
@@ -768,12 +782,12 @@ filter_node() {
 					msg2="套娃使用(${msg}:${port} -> ${_port})"
 				}
 				[ -n "$_proxy" ] && [ "$_proxy" == "1" ] && [ -n "$_port" ] || {
-					ADD_INDEX=$(RULE_LAST_INDEX "inet fw4" PSW_OUTPUT "$NFTSET_VPSIPLIST" $FORCE_INDEX)
+					ADD_INDEX=$(RULE_LAST_INDEX "inet fw4" $nft_output_chain $_set_name $FORCE_INDEX)
 					dst_rule="return"
 					msg2="直连代理"
 				}
-				nft "insert rule inet fw4 PSW_OUTPUT position $ADD_INDEX comment \"${address}:${port}\" meta l4proto $stream $_ip_type daddr $address tcp dport $port $dst_rule" 2>/dev/null
-				nft "insert rule inet fw4 PSW_OUTPUT position $ADD_INDEX comment \"${address}:${port}\" meta l4proto $stream $_ip_type daddr $address udp dport $port $dst_rule" 2>/dev/null
+				nft "insert rule inet fw4 $nft_output_chain position $ADD_INDEX comment \"${address}:${port}\" meta l4proto $stream $_ip_type daddr $address tcp dport $port $dst_rule" 2>/dev/null
+				nft "insert rule inet fw4 $nft_output_chain position $ADD_INDEX comment \"${address}:${port}\" meta l4proto $stream $_ip_type daddr $address udp dport $port $dst_rule" 2>/dev/null
 			else
 				msg2="已配置过的节点，"
 			fi
@@ -836,18 +850,18 @@ dns_hijack() {
 
 add_firewall_rule() {
 	echolog "开始加载防火墙规则..."
-	gen_nftset $NFTSET_LANIPLIST ipv4_addr $(gen_laniplist | sed -e 's/$/,/')
 	gen_nftset $NFTSET_VPSIPLIST ipv4_addr
 	gen_nftset $NFTSET_GFW ipv4_addr
+	gen_nftset $NFTSET_LANIPLIST ipv4_addr $(gen_laniplist | sed -e 's/$/,/')
 	gen_nftset $NFTSET_CHN ipv4_addr $(cat $RULES_PATH/chnroute | tr -s '\n' | grep -v "^#" | sed -e 's/$/,/')
 	gen_nftset $NFTSET_BLACKLIST ipv4_addr $(cat $RULES_PATH/proxy_ip | tr -s '\n' | grep -v "^#" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e 's/$/,/')
 	gen_nftset $NFTSET_WHITELIST ipv4_addr $(cat $RULES_PATH/direct_ip | tr -s '\n' | grep -v "^#" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e 's/$/,/')
 	gen_nftset $NFTSET_BLOCKLIST ipv4_addr $(cat $RULES_PATH/block_ip | tr -s '\n' | grep -v "^#" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e 's/$/,/')
 	gen_nftset $NFTSET_SHUNTLIST ipv4_addr
 
-	gen_nftset $NFTSET_LANIPLIST6 ipv6_addr $(gen_laniplist_6 | sed -e 's/$/,/')
 	gen_nftset $NFTSET_VPSIPLIST6 ipv6_addr
 	gen_nftset $NFTSET_GFW6 ipv6_addr
+	gen_nftset $NFTSET_LANIPLIST6 ipv6_addr $(gen_laniplist_6 | sed -e 's/$/,/')
 	gen_nftset $NFTSET_CHN6 ipv6_addr $(cat $RULES_PATH/chnroute6 | tr -s '\n' | grep -v "^#" | sed -e 's/$/,/' )
 	gen_nftset $NFTSET_BLACKLIST6 ipv6_addr $(cat $RULES_PATH/proxy_ip | tr -s '\n' | grep -v "^#" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e 's/$/,/')
 	gen_nftset $NFTSET_WHITELIST6 ipv6_addr $(cat $RULES_PATH/direct_ip | tr -s '\n' | grep -v "^#" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e 's/$/,/')
@@ -898,6 +912,8 @@ add_firewall_rule() {
 	#  过滤所有节点IP
 	filter_vpsip > /dev/null 2>&1 &
 	filter_haproxy > /dev/null 2>&1 &
+	# Prevent some conditions
+	filter_vps_addr $(config_n_get $TCP_NODE address) $(config_n_get $UDP_NODE address) > /dev/null 2>&1 &
 
 	accept_icmp=$(config_t_get global_forwarding accept_icmp 0)
 	accept_icmpv6=$(config_t_get global_forwarding accept_icmpv6 0)
@@ -928,14 +944,13 @@ add_firewall_rule() {
 	nft "flush chain inet fw4 PSW_RULE"
 	nft "add rule inet fw4 PSW_RULE meta mark set ct mark counter"
 	nft "add rule inet fw4 PSW_RULE meta mark 1 counter return"
-	nft "add rule inet fw4 PSW_RULE tcp flags &(fin|syn|rst|ack) == syn meta mark set 1 counter"
-	nft "add rule inet fw4 PSW_RULE meta l4proto udp ct state new meta mark set 1 counter"
+	nft "add rule inet fw4 PSW_RULE tcp flags &(fin|syn|rst|ack) == syn meta mark set mark and 0x0 xor 0x1 counter"
+	nft "add rule inet fw4 PSW_RULE meta l4proto udp ct state new meta mark set mark and 0x0 xor 0x1 counter"
 	nft "add rule inet fw4 PSW_RULE ct mark set mark counter"
 
 	#ipv4 tproxy mode and udp
 	nft "add chain inet fw4 PSW_MANGLE"
 	nft "flush chain inet fw4 PSW_MANGLE"
-	nft "add rule inet fw4 PSW_MANGLE meta mark 0xff counter return"
 	nft "add rule inet fw4 PSW_MANGLE ip daddr @$NFTSET_LANIPLIST counter return"
 	nft "add rule inet fw4 PSW_MANGLE ip daddr @$NFTSET_VPSIPLIST counter return"
 	nft "add rule inet fw4 PSW_MANGLE ip daddr @$NFTSET_WHITELIST counter return"
@@ -943,10 +958,10 @@ add_firewall_rule() {
 
 	nft "add chain inet fw4 PSW_OUTPUT_MANGLE"
 	nft "flush chain inet fw4 PSW_OUTPUT_MANGLE"
-	nft "add rule inet fw4 PSW_OUTPUT_MANGLE meta mark 0xff counter return"
 	nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip daddr @$NFTSET_LANIPLIST counter return"
 	nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip daddr @$NFTSET_VPSIPLIST counter return"
 	nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip daddr @$NFTSET_WHITELIST counter return"
+	nft "add rule inet fw4 PSW_OUTPUT_MANGLE meta mark 0xff counter return"
 	nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip daddr @$NFTSET_BLOCKLIST counter drop"
 
 	# jump chains
@@ -968,6 +983,7 @@ add_firewall_rule() {
 		nft "add rule inet fw4 PSW_OUTPUT ip daddr @$NFTSET_LANIPLIST counter return"
 		nft "add rule inet fw4 PSW_OUTPUT ip daddr @$NFTSET_VPSIPLIST counter return"
 		nft "add rule inet fw4 PSW_OUTPUT ip daddr @$NFTSET_WHITELIST counter return"
+		nft "add rule inet fw4 PSW_OUTPUT meta mark 0xff counter return"
 		nft "add rule inet fw4 PSW_OUTPUT ip daddr @$NFTSET_BLOCKLIST counter drop"
 	}
 
@@ -1008,10 +1024,10 @@ add_firewall_rule() {
 
 	nft "add chain inet fw4 PSW_OUTPUT_MANGLE_V6"
 	nft "flush chain inet fw4 PSW_OUTPUT_MANGLE_V6"
-	nft "add rule inet fw4 PSW_OUTPUT_MANGLE_V6 meta mark 0xff return"
 	nft "add rule inet fw4 PSW_OUTPUT_MANGLE_V6 ip6 daddr @$NFTSET_LANIPLIST6 counter return"
 	nft "add rule inet fw4 PSW_OUTPUT_MANGLE_V6 ip6 daddr @$NFTSET_VPSIPLIST6 counter return"
 	nft "add rule inet fw4 PSW_OUTPUT_MANGLE_V6 ip6 daddr @$NFTSET_WHITELIST6 counter return"
+	nft "add rule inet fw4 PSW_OUTPUT_MANGLE_V6 meta mark 0xff counter return"
 	nft "add rule inet fw4 PSW_OUTPUT_MANGLE_V6 ip6 daddr @$NFTSET_BLOCKLIST6 counter drop"
 
 	# jump chains
@@ -1177,7 +1193,7 @@ add_firewall_rule() {
 		nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip protocol udp $(factor $UDP_REDIR_PORTS "udp dport") $(get_nftset_ipv4 $LOCALHOST_UDP_PROXY_MODE) jump PSW_RULE"
 		nft "add rule inet fw4 PSW_MANGLE meta l4proto udp iif lo $(REDIRECT $UDP_REDIR_PORT TPROXY) comment \"本机\""
 		nft "add rule inet fw4 PSW_MANGLE ip protocol udp iif lo counter return comment \"本机\""
-		nft "add rule inet fw4 mangle_output meta nfproto {ipv4} meta l4proto udp counter jump PSW_OUTPUT_MANGLE"
+		nft "add rule inet fw4 mangle_output meta nfproto {ipv4} meta l4proto udp counter jump PSW_OUTPUT_MANGLE comment \"mangle-OUTPUT-PSW\""
 
 		[ "$PROXY_IPV6" == "1" ] && [ "$PROXY_IPV6_UDP" == "1" ] && {
 			nft "add rule inet fw4 PSW_OUTPUT_MANGLE_V6 meta l4proto udp ip6 daddr @$NFTSET_SHUNTLIST6 $(factor $UDP_REDIR_PORTS "udp dport") counter jump PSW_RULE"
@@ -1198,6 +1214,10 @@ add_firewall_rule() {
 
 	# dns_hijack "force"
 
+	[ -n "${is_tproxy}" -o -n "${udp_flag}" ] && {
+		sysctl -w net.bridge.bridge-nf-call-iptables=0 >/dev/null 2>&1
+		[ "$PROXY_IPV6" == "1" ] && sysctl -w net.bridge.bridge-nf-call-ip6tables=0 >/dev/null 2>&1
+	}
 	echolog "防火墙规则加载完成！"
 }
 
@@ -1257,15 +1277,16 @@ flush_include() {
 }
 
 gen_include() {
-	echo "" > $TMP_PATH2/passwall.nft
+	local nft_chain_file=$TMP_PATH/PSW.nft
+	echo "" > $nft_chain_file
 	for chain in $(nft -a list chains |grep -E "chain PSW" |awk -F ' ' '{print$2}'); do
-		nft list chain inet fw4 ${chain} >> $TMP_PATH2/passwall.nft
+		nft list chain inet fw4 ${chain} >> $nft_chain_file
 	done
 
 	local __nft=" "
 	[ -z "${nft}" ] && {
 		__nft=$(cat <<- EOF
-			nft -f ${TMP_PATH2}/passwall.nft
+			nft -f ${nft_chain_file}
 
 			nft "add rule inet fw4 dstnat jump PSW_REDIRECT"
 
@@ -1279,10 +1300,13 @@ gen_include() {
 				nft "add rule inet fw4 nat_output ip protocol tcp counter jump PSW_OUTPUT"
 			}
 
-			nft "add rule inet fw4 mangle_prerouting meta nfproto {ipv4} counter jump PSW_MANGLE"
-			[ -n "${is_tproxy}" ] && nft "add rule inet fw4 mangle_output meta nfproto {ipv4} meta l4proto tcp counter jump PSW_OUTPUT_MANGLE comment \"mangle-OUTPUT-PSW\""
-			nft "add rule inet fw4 mangle_output meta nfproto {ipv4} meta l4proto udp counter jump PSW_OUTPUT_MANGLE"
+			[ -n "${is_tproxy}" ] && {
+				nft "add rule inet fw4 mangle_prerouting meta nfproto {ipv4} counter jump PSW_MANGLE"
+				nft "add rule inet fw4 mangle_output meta nfproto {ipv4} meta l4proto tcp counter jump PSW_OUTPUT_MANGLE comment \"mangle-OUTPUT-PSW\""
+			}
 			\$(${MY_PATH} insert_rule_before "inet fw4" "mangle_prerouting" "PSW_MANGLE" "counter jump PSW_DIVERT")
+
+			[ "$UDP_NODE" != "nil" -o "$TCP_UDP" = "1" ] && nft "add rule inet fw4 mangle_output meta nfproto {ipv4} meta l4proto udp counter jump PSW_OUTPUT_MANGLE comment \"mangle-OUTPUT-PSW\""
 
 			[ "$PROXY_IPV6" == "1" ] && {
 				nft "add rule inet fw4 mangle_prerouting meta nfproto {ipv6} counter jump PSW_MANGLE_V6"

@@ -140,6 +140,9 @@ function gen_outbound(node, tag, proxy_table)
             } or nil,
             -- 底层传输配置
             streamSettings = (node.protocol == "vmess" or node.protocol == "vless" or node.protocol == "socks" or node.protocol == "shadowsocks" or node.protocol == "trojan") and {
+                sockopt = {
+                    mark = 255
+                },
                 network = node.transport,
                 security = node.stream_security,
                 xtlsSettings = (node.stream_security == "xtls") and {
@@ -651,7 +654,10 @@ if remote_dns_server or remote_dns_doh_url or remote_dns_fake then
                 protocol = "socks",
                 streamSettings = {
                     network = "tcp",
-                    security = "none"
+                    security = "none",
+                    sockopt = {
+                        mark = 255
+                    }
                 },
                 settings = {
                     servers = {
