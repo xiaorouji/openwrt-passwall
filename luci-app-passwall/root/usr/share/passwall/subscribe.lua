@@ -420,6 +420,7 @@ local function processData(szType, content, add_mode, add_from)
 			result.mkcp_downlinkCapacity = 20
 			result.mkcp_readBufferSize = 2
 			result.mkcp_writeBufferSize = 2
+			result.mkcp_seed = info.seed
 		end
 		if info.net == 'quic' then
 			result.quic_guise = info.type
@@ -522,6 +523,21 @@ local function processData(szType, content, add_mode, add_from)
 				if method:lower() == "chacha20-ietf-poly1305" then
 					result.method = "chacha20-poly1305"
 				end
+			end
+		end
+		local aead2022 = false
+		for k, v in ipairs({"2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha8-poly1305", "2022-blake3-chacha20-poly1305"}) do
+			if method:lower() == v:lower() then
+				aead2022 = true
+			end
+		end
+		if aead2022 then
+			if ss_aead_type_default == "xray" and has_xray and not result.plugin then
+				result.type = 'Xray'
+				result.protocol = 'shadowsocks'
+				result.transport = 'tcp'
+			elseif has_ss_rust then
+				result.type = 'SS-Rust'
 			end
 		end
 	elseif szType == "trojan" then
@@ -739,6 +755,7 @@ local function processData(szType, content, add_mode, add_from)
 				result.mkcp_downlinkCapacity = 20
 				result.mkcp_readBufferSize = 2
 				result.mkcp_writeBufferSize = 2
+				result.mkcp_seed = params.seed
 			end
 			if params.type == 'quic' then
 				result.quic_guise = params.headerType or "none"
