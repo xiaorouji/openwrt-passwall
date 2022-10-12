@@ -83,17 +83,13 @@ config nodes 'myshunt'
 	option remarks '分流总节点'
 	option type 'Xray'
 	option protocol '_shunt'
-	option AD 'nil'
+	option AD '_blackhole'
 	option BT '_direct'
-	option Netflix 'nil'
-	option TVB 'nil'
-	option China 'nil'
+	option Proxy '_default'
+	option Netflix '_default'
+	option Direct '_direct'
 	option default_node 'nil'
 	option domainStrategy 'IPOnDemand'
-
-config shunt_rules 'GAME'
-	option remarks 'GAME'
-	option domain_list 'geosite:category-games@cn'
 
 config shunt_rules 'AD'
 	option remarks 'AD'
@@ -103,43 +99,44 @@ config shunt_rules 'BT'
 	option remarks 'BT'
 	option protocol 'bittorrent'
 
-config shunt_rules 'YOUTUBE'
-	option remarks 'YOUTUBE'
-	option domain_list 'www.youtube.com
-youtube.com
-fonts.googleapis.com'
+config shunt_rules 'Proxy'
+	option remarks 'Proxy'
+	option domain_list 'geosite:geolocation-!cn'
+	option ip_list '149.154.160.0/20
+91.108.4.0/22
+91.108.56.0/24
+109.239.140.0/24
+67.198.55.0/24
+8.8.4.4
+8.8.8.8
+208.67.222.222
+208.67.220.220
+1.1.1.1
+1.1.1.2
+1.0.0.1
+9.9.9.9
+149.112.112.112
+2001:67c:4e8::/48
+2001:b28:f23c::/48
+2001:b28:f23d::/48
+2001:b28:f23f::/48
+2001:b28:f242::/48
+2001:4860:4860::8888
+2001:4860:4860::8844
+2606:4700:4700::1111
+2606:4700:4700::1001'
 
 config shunt_rules 'Netflix'
 	option remarks 'Netflix'
-	option domain_list 'fast.com
-netflix
-netflix.ca
-netflix.com
-netflix.net
-nflxso.net
-nflxext.com
-nflximg.com
-nflximg.net
-nflxsearch.net
-nflxvideo.net
-netflixdnstest0.com
-netflixdnstest1.com
-netflixdnstest2.com
-netflixdnstest3.com
-netflixdnstest4.com
-netflixdnstest5.com
-netflixdnstest6.com
-netflixdnstest7.com
-netflixdnstest8.com
-netflixdnstest9.com
-netflixdnstest10.com'
+	option domain_list 'geosite:netflix'
 
-config shunt_rules 'TVB'
-	option remarks 'TVB'
-	option domain_list 'tvb.com
-mytvsuper.com'
-
-config shunt_rules 'China'
-	option remarks 'China'
-	option domain_list 'geosite:cn'
-	option ip_list 'geoip:cn'
+config shunt_rules 'Direct'
+	option remarks 'Direct'
+	option domain_list 'geosite:category-games@cn
+geosite:cn'
+	option ip_list '223.5.5.5/32
+119.29.29.29/32
+180.76.76.76/32
+114.114.114.114/32
+geoip:cn
+geoip:private'
