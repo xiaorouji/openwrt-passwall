@@ -341,7 +341,7 @@ load_acl() {
 
 							dnsmasq_port=$(get_new_port $(expr $dnsmasq_port + 1))
 							redirect_dns_port=$dnsmasq_port
-							mkdir -p $TMP_ACL_PATH/$sid
+							mkdir -p $TMP_ACL_PATH/$sid/dnsmasq.d
 							echo "port=${dnsmasq_port}" >> $TMP_ACL_PATH/$sid/dnsmasq.conf
 							echo "conf-dir=${TMP_ACL_PATH}/${sid}/dnsmasq.d" >> $TMP_ACL_PATH/$sid/dnsmasq.conf
 							d_server=127.0.0.1
