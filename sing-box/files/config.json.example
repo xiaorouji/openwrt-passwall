@@ -1,4 +1,21 @@
 {
+  "log": {
+    "disabled": false,
+    "level": "info",
+    "output": "/tmp/sing-box.log",
+    "timestamp": true
+  },
+  "experimental": {
+    "clash_api": {
+      "external_controller": "0.0.0.0:9090",
+      "external_ui": "",
+      "secret": "********",
+      "direct_io": true,
+      "default_mode": "rule",
+      "store_selected": true,
+      "cache_file": "cache.db"
+    }
+  },
   "dns": {
     "servers": [
       {
@@ -7,7 +24,7 @@
       },
       {
         "tag": "local",
-        "address": "223.5.5.5",
+        "address": "tls://1.12.12.12",
         "detour": "direct"
       }
     ],
@@ -25,30 +42,151 @@
       "type": "tun",
       "inet4_address": "172.19.0.1/30",
       "auto_route": true,
-      "endpoint_independent_nat": false,
+      "endpoint_independent_nat": true,
+      "stack": "system",
       "sniff": true
+    },
+    {
+      "type": "mixed",
+      "tag": "SOCKS-in",
+      "listen": "::",
+      "listen_port": *****
+    },
+    {
+      "type": "shadowsocks",
+      "tag": "SS-in",
+      "listen": "::",
+      "listen_port": *****,
+      "sniff": true,
+      "method": "2022-blake3-aes-128-gcm",
+      "password": "bZzjl2DAXUs02L2Sosgu7A==",
+      "users": [
+        {
+          "name": "User1",
+          "password": "SGEFjWc+VgNGBXe1JhoRfg=="
+        },
+        {
+          "name": "User2",
+          "password": "XoXhbj4V9cMXfuUXF/C+cg=="
+        }
+      ]
     }
   ],
   "outbounds": [
     {
+      "type": "selector",
+      "tag": "Proxy-out",
+      "outbounds": [
+        "URL-Test",
+        "direct",
+        "Shadowsocks-ShadowTLS-out",
+        "Trojan-GRPC-out",
+        "Trojan-WebSocket-out",
+        "Hysteria-out"
+      ],
+      "default": "URL-Test"
+    },
+    {
+      "type": "urltest",
+      "tag": "URL-Test",
+      "outbounds": [
+        "Shadowsocks-ShadowTLS-out",
+        "Trojan-GRPC-out",
+        "Trojan-WebSocket-out",
+        "Hysteria-out"
+      ],
+      "url": "http://www.gstatic.com/generate_204",
+      "interval": "1m",
+      "tolerance": 50
+    },
+    {
       "type": "shadowsocks",
-      "detour": "shadowtls-out",
+      "tag": "Shadowsocks-ShadowTLS-out",
+      "detour": "Shadowsocks-ShadowTLS",
       "method": "2022-blake3-aes-128-gcm",
-      "password": "E0DUv25MROVey0ilkvgfvw==",
+      "password": "F7cx1ASHX/eqQwed+pISzw==:CB8sXcYLzf1P5dUizIzYVg==",
       "multiplex": {
         "enabled": true,
         "max_connections": 4,
-        "min_streams": 4
+        "min_streams": 4,
+        "max_streams": 0
       }
     },
     {
       "type": "shadowtls",
-      "tag": "shadowtls-out",
-      "server": "88.88.88.88",
-      "server_port": 8888,
+      "tag": "Shadowsocks-ShadowTLS",
+      "server": "***.***.***.***",
+      "server_port": *****,
+      "version": 2,
+      "password": "************",
       "tls": {
         "enabled": true,
-        "server_name": "www.yahoo.com"
+        "server_name": "something.example.org"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "Trojan-GRPC-out",
+      "server": "***.***.***.***",
+      "server_port": *****,
+      "password": "************",
+      "transport": {
+        "type": "grpc",
+        "service_name": "************"
+      },
+      "tls": {
+        "enabled": true,
+        "disable_sni": false,
+        "server_name": "yours.example.org",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        }
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "WebSocket-out",
+      "server": "***.***.***.***",
+      "server_port": *****,
+      "password": "************",
+      "transport": {
+        "type": "ws",
+        "path": "/************",
+        "early_data_header_name": "Sec-WebSocket-Protocol"
+      },
+      "tls": {
+        "enabled": true,
+        "disable_sni": false,
+        "server_name": "yours.example.org",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        }
+      },
+      "multiplex": {
+        "enabled": true,
+        "max_connections": 4,
+        "min_streams": 4,
+        "max_streams": 0
+      }
+    },
+    {
+      "type": "hysteria",
+      "tag": "Hysteria-out",
+      "server": "***.***.***.***",
+      "server_port": *****,
+      "up_mbps": 100,
+      "down_mbps": ,
+      "obfs": "************",
+      "auth_str": "************",
+      "tls": {
+        "enabled": true,
+        "disable_sni": false,
+        "server_name": "yours.example.org",
+        "alpn": [
+          "h3"
+        ]
       }
     },
     {
@@ -67,6 +205,12 @@
   "route": {
     "rules": [
       {
+        "inbound": [
+          "SOCKS-in"
+        ],
+        "outbound": "Proxy-out"
+      },
+      {
         "protocol": "dns",
         "outbound": "dns-out"
       },
@@ -76,11 +220,17 @@
       },
       {
         "geosite": "cn",
-        "geoip": "cn",
+        "geoip": [
+          "cn",
+          "private"
+        ],
         "outbound": "direct"
+      },
+      {
+        "protocol": "quic",
+        "outbound": "block"
       }
     ],
     "auto_detect_interface": true
   }
 }
-

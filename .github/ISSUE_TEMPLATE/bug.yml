@@ -1,0 +1,75 @@
+name: Bug上报
+description: 报告您使用中遇到的Bug以帮助我们改进
+title: "[Bug]: "
+labels: bug
+
+body:
+  - type: markdown
+    id: tips
+    attributes:
+      value: |
+        请按此规范填写，有效的反馈能让我们更好地解决您的问题
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 描述您遇到的bug
+      description: 请尽可能简单清晰地描述问题
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现此Bug的步骤
+      placeholder: |
+        1. 选择菜单'...'
+        2. 点击按钮'....'
+        3. 然后...
+        4. 出现Bug：
+    validations:
+      required: true
+
+  - type: textarea
+    id: purpose
+    attributes:
+      label: 您想要实现的目的
+      description: 请尽可能简单清晰地描述您期望发生的事
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志信息
+      description: 提交包括问题相关的所有系统日志信息（这个很重要）
+    validations:
+      required: true
+
+  - type: textarea
+    id: pics
+    attributes:
+      label: 截图
+      description: 如果适用，您可以添加屏幕截图以便更好地解释您的问题
+    validations:
+      required: false
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: 系统相关信息
+      description: 填写相关信息以便更好的确定问题
+      placeholder: |
+        - Passwall版本：
+        - 浏览器版本（如Chrome 96.0.4664.45 64位 正式版）：
+        - 其他：
+    validations:
+      required: true
+
+  - type: textarea
+    id: supplements
+    attributes:
+      label: 其他信息
+      description: 与此Bug相关的其他信息
+    validations:
+      required: false
