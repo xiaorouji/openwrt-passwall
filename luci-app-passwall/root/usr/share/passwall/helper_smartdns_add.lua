@@ -12,6 +12,7 @@ local TCP_NODE = var["-TCP_NODE"]
 local PROXY_MODE = var["-PROXY_MODE"]
 local NO_PROXY_IPV6 = var["-NO_PROXY_IPV6"]
 local NO_LOGIC_LOG = var["-NO_LOGIC_LOG"]
+local NFTFLAG = var["-NFTFLAG"]
 local LOG_FILE = api.LOG_FILE
 local CACHE_PATH = api.CACHE_PATH
 local CACHE_FLAG = "dns_" .. FLAG
@@ -172,6 +173,8 @@ if not REMOTE_GROUP or REMOTE_GROUP == "nil" then
     sys.call('sed -i "/passwall/d" /etc/smartdns/custom.conf >/dev/null 2>&1')
 end
 
+local setflag= (NFTFLAG == "1") and "inet#fw4#" or ""
+
 if not fs.access(CACHE_DNS_FILE) then
     sys.call(string.format('echo "server %s  -group %s -exclude-default-group" >> %s', TUN_DNS, REMOTE_GROUP, CACHE_DNS_FILE))
     --屏蔽列表
@@ -186,7 +189,7 @@ if not fs.access(CACHE_DNS_FILE) then
         local address = t.address
         if datatypes.hostname(address) then
             set_domain_group(address, LOCAL_GROUP)
-            set_domain_ipset(address, "#4:vpsiplist,#6:vpsiplist6")
+            set_domain_ipset(address, "#4:" .. setflag .. "vpsiplist,#6:" .. setflag .. "vpsiplist6")
         end
     end)
     log(string.format("  - 节点列表中的域名(vpsiplist)使用分组：%s", LOCAL_GROUP or "默认"))
@@ -196,19 +199,19 @@ if not fs.access(CACHE_DNS_FILE) then
         if line ~= "" and not line:find("#") then
             add_excluded_domain(line)
             set_domain_group(line, LOCAL_GROUP)
-            set_domain_ipset(line, "#4:whitelist,#6:whitelist6")
+            set_domain_ipset(line, "#4:" .. setflag .. "whitelist,#6:" .. setflag .. "whitelist6")
         end
     end
     log(string.format("  - 域名白名单(whitelist)使用分组：%s", LOCAL_GROUP or "默认"))
 
     local fwd_group = LOCAL_GROUP
-    local ipset_flag = "#4:whitelist,#6:whitelist6"
+    local ipset_flag = "#4:" .. setflag .. "whitelist,#6:" .. setflag .. "whitelist6"
     local no_ipv6
     if subscribe_proxy == "1" then
         fwd_group = REMOTE_GROUP
-        ipset_flag = "#4:blacklist,#6:blacklist6"
+        ipset_flag = "#4:" .. setflag .. "blacklist,#6:" .. setflag .. "blacklist6"
         if NO_PROXY_IPV6 == "1" then
-            ipset_flag = "#4:blacklist"
+            ipset_flag = "#4:" .. setflag .. "blacklist"
             no_ipv6 = true
         end
         if REMOTE_FAKEDNS == "1" then
@@ -231,10 +234,10 @@ if not fs.access(CACHE_DNS_FILE) then
     for line in io.lines("/usr/share/passwall/rules/proxy_host") do
         if line ~= "" and not line:find("#") then
             add_excluded_domain(line)
-            local ipset_flag = "#4:blacklist,#6:blacklist6"
+            local ipset_flag = "#4:" .. setflag .. "blacklist,#6:" .. setflag .. "blacklist6"
             if NO_PROXY_IPV6 == "1" then
                 set_domain_address(line, "#6")
-                ipset_flag = "#4:blacklist"
+                ipset_flag = "#4:" .. setflag .. "blacklist"
             end
             if REMOTE_FAKEDNS == "1" then
                 ipset_flag = nil
@@ -262,12 +265,12 @@ if not fs.access(CACHE_DNS_FILE) then
 
                 if _node_id == "_direct" then
                     fwd_group = LOCAL_GROUP
-                    ipset_flag = "#4:whitelist,#6:whitelist6"
+                    ipset_flag = "#4:" .. setflag .. "whitelist,#6:" .. setflag .. "whitelist6"
                 else
                     fwd_group = REMOTE_GROUP
-                    ipset_flag = "#4:shuntlist,#6:shuntlist6"
+                    ipset_flag = "#4:" .. setflag .. "shuntlist,#6:" .. setflag .. "shuntlist6"
                     if NO_PROXY_IPV6 == "1" then
-                        ipset_flag = "shuntlist"
+                        ipset_flag = "#4:" .. setflag .. "shuntlist"
                         no_ipv6 = true
                     end
                     if REMOTE_FAKEDNS == "1" then
@@ -303,9 +306,9 @@ if not fs.access(CACHE_DNS_FILE) then
             local gfwlist_str = sys.exec('cat /usr/share/passwall/rules/gfwlist | grep -v -E "^#" | grep -v -E "' .. excluded_domain_str .. '"')
             for line in string.gmatch(gfwlist_str, "[^\r\n]+") do
                 if line ~= "" then
-                    local ipset_flag = "#4:gfwlist,#6:gfwlist6"
+                    local ipset_flag = "#4:" .. setflag .. "gfwlist,#6:" .. setflag .. "gfwlist6"
                     if NO_PROXY_IPV6 == "1" then
-                        ipset_flag = "#4:gfwlist"
+                        ipset_flag = "#4:" .. setflag .. "gfwlist"
                         set_domain_address(line, "#6")
                     end
                     fwd_group = REMOTE_GROUP
@@ -324,7 +327,7 @@ if not fs.access(CACHE_DNS_FILE) then
             for line in string.gmatch(chnlist_str, "[^\r\n]+") do
                 if line ~= "" then
                     set_domain_group(line, LOCAL_GROUP)
-                    set_domain_ipset(line, "#4:chnroute,#6:chnroute6")
+                    set_domain_ipset(line, "#4:" .. setflag .. "chnroute,#6:" .. setflag .. "chnroute6")
                 end
             end
         end
@@ -334,9 +337,9 @@ if not fs.access(CACHE_DNS_FILE) then
             local chnlist_str = sys.exec('cat /usr/share/passwall/rules/chnlist | grep -v -E "^#" | grep -v -E "' .. excluded_domain_str .. '"')
             for line in string.gmatch(chnlist_str, "[^\r\n]+") do
                 if line ~= "" then
-                    local ipset_flag = "#4:chnroute,#6:chnroute6"
+                    local ipset_flag = "#4:" .. setflag .. "chnroute,#6:" .. setflag .. "chnroute6"
                     if NO_PROXY_IPV6 == "1" then
-                        ipset_flag = "#4:chnroute"
+                        ipset_flag = "#4:" .. setflag .. "chnroute"
                         set_domain_address(line, "#6")
                     end
                     set_domain_group(line, REMOTE_GROUP)
