@@ -1353,7 +1353,7 @@ start() {
 		if [ "$use_nft" == 1 ] && [ -z "$(dnsmasq --version | grep 'Compile time options:.* nftset')" ]; then
 			echolog "Dnsmasq软件包不满足nftables透明代理要求，如需使用请确保dnsmasq版本在2.87以上并开启nftset支持。"
 		elif [ "$use_nft" == 1 ] && [ -n "$(dnsmasq --version | grep 'Compile time options:.* nftset')" ]; then
-			echolog "使用nftables进行透明代理，一些不支持nftables的组件如smartdns分流等将不可用。"
+			echolog "使用nftables进行透明代理，一些不支持nftables的组件如chinadns-ng等可能不会正常工作。"
 			nftflag=1
 			start_redir TCP
 			start_redir UDP
