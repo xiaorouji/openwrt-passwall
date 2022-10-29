@@ -1,0 +1,37 @@
+name: 功能请求
+description: 为此项目提出关于新功能的想法
+title: "[Feature Request]: "
+labels: enhancement
+
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: 描述你想要的新功能
+      description: 尽可能简单清晰地描述你想要的新功能或是希望解决的问题
+    validations:
+      required: true
+
+  - type: textarea
+    id: ideal-solution
+    attributes:
+      label: 描述你想要的解决方案
+      description: 尽可能简单清晰地描述你想要的新功能
+    validations:
+      required: true
+
+  - type: textarea
+    id: other-solutions
+    attributes:
+      label: 描述你考虑过的替代方案
+      description: 尽可能简单清晰地描述你考虑过的任何替代解决方案或功能
+    validations:
+      required: false
+
+  - type: textarea
+    id: supplements
+    attributes:
+      label: 其他信息
+      description: 在此处添加有关功能请求的任何其他信息或屏幕截图
+    validations:
+      required: false
