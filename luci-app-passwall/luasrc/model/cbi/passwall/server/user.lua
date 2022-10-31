@@ -387,6 +387,11 @@ tls:depends("type", "Trojan")
 tls:depends("type", "Trojan-Plus")
 tls:depends("type", "Trojan-Go")
 
+tlsflow = s:option(Value, "tlsflow", translate("tlsflow"))
+tlsflow.default = "xtls-rprx-vision"
+tlsflow:value("xtls-rprx-vision")
+tlsflow:depends("tls", true)
+
 xtls = s:option(Flag, "xtls", translate("XTLS"))
 xtls.default = 0
 xtls:depends({ type = "Xray", protocol = "vless", tls = true })
@@ -405,6 +410,11 @@ alpn:value("h2")
 alpn:value("http/1.1")
 alpn:depends({ type = "V2ray", tls = true })
 alpn:depends({ type = "Xray", tls = true })
+
+minversion = s:option(Value, "minversion", translate("minversion"))
+minversion.default = "1.3"
+minversion:value("1.3")
+minversion:depends("tls", true)
 
 -- [[ TLS部分 ]] --
 

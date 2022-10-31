@@ -773,6 +773,7 @@ local function processData(szType, content, add_mode, add_from)
 			result.tls = "0"
 			if params.security == "tls" or params.security == "xtls" then
 				result.tls = "1"
+				result.flow = params.flow or "xtls-rprx-vision"
 				if params.security == "xtls" then
 					result.xtls = "1"
 					result.flow = params.flow or "xtls-rprx-direct"
