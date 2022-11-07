@@ -532,10 +532,10 @@ alpn:value("http/1.1")
 alpn:depends({ type = "V2ray", tls = true })
 alpn:depends({ type = "Xray", tls = true })
 
-minversion = s:option(Value, "minversion", translate("minversion"))
-minversion.default = "1.3"
-minversion:value("1.3")
-minversion:depends("tls", true)
+-- minversion = s:option(Value, "minversion", translate("minversion"))
+-- minversion.default = "1.3"
+-- minversion:value("1.3")
+-- minversion:depends("tls", true)
 
 -- [[ TLS部分 ]] --
 tls_sessionTicket = s:option(Flag, "tls_sessionTicket", translate("Session Ticket"))

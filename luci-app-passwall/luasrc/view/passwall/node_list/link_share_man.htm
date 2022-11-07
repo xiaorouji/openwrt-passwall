@@ -285,24 +285,32 @@ local has_xray = api.is_finded("xray")
 			params += "&type=" + v_transport;
 			
 			params += opt.query("encryption", "encryption");
+
 			if (opt.get("tls").checked) {
+				opt.get("xtls").checked = false;
 				var v_security = "tls";
 				var v_flow = "xtls-rprx-vision";
 				if (opt.get("tlsflow").value) {
 					v_flow = opt.get("tlsflow").value;
 				}
 				params += "&flow=" + v_flow;
-				if (opt.get("xtls").checked) {
+				params += "&security=" + v_security;
+				params += opt.query("sni", "tls_serverName");
+			}
+
+			if (opt.get("xtls").checked) {
+				opt.get("tls").checked = false;
 					v_security = "xtls";
 					var v_flow = "xtls-rprx-direct";
 					if (opt.get("flow").value) {
 						v_flow = opt.get("flow").value;
 					}
 					params += "&flow=" + v_flow;
-				}
-				params += "&security=" + v_security;
-				params += opt.query("sni", "tls_serverName");
+					params += "&security=" + v_security;
+					params += opt.query("sni", "tls_serverName");
 			}
+
+
 			params += "#" + encodeURI(v_alias.value);
 			if (params[0] == "&") {
 				params = params.substring(1);
