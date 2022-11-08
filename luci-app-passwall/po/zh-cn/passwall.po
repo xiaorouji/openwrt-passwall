@@ -1314,3 +1314,15 @@ msgstr "缓冲区大小（Xray）"
 
 msgid "Buffer size for every connection (kB)"
 msgstr "每一个连接的缓冲区大小（kB）"
+
+msgid "Handshake Timeout"
+msgstr "握手超时 "
+
+msgid "Idle Timeout"
+msgstr "空闲超时 "
+
+msgid "Hop Interval"
+msgstr "端口跳跃时间 "
+
+msgid "Additional ports for hysteria hop"
+msgstr "端口跳跃额外端口"
