@@ -28,6 +28,10 @@ if api.is_ipv6(server_host) then
 end
 local server = server_host .. ":" .. server_port
 
+if (node.hysteria_hop) then
+    server = server .. "," .. node.hysteria_hop
+end
+
 local config = {
     server = server,
     protocol = node.protocol or "udp",
@@ -43,6 +47,9 @@ local config = {
     retry_interval = 5,
     recv_window_conn = (node.hysteria_recv_window_conn) and tonumber(node.hysteria_recv_window_conn) or nil,
     recv_window = (node.hysteria_recv_window) and tonumber(node.hysteria_recv_window) or nil,
+    handshake_timeout = (node.hysteria_handshake_timeout) and tonumber(node.hysteria_handshake_timeout) or nil,
+    idle_timeout = (node.hysteria_idle_timeout) and tonumber(node.hysteria_idle_timeout) or nil,
+    hop_interval = (node.hysteria_hop_interval) and tonumber(node.hysteria_hop_interval) or nil,
     disable_mtu_discovery = (node.hysteria_disable_mtu_discovery) and true or false,
     socks5 = (local_socks_address and local_socks_port) and {
         listen = local_socks_address .. ":" .. local_socks_port,
