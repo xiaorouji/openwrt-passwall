@@ -40,7 +40,7 @@ export naive_flags="
 is_official_build=true
 exclude_unwind_tables=true
 enable_resource_allowlist_generation=false
-symbol_level=0
+symbol_level=1
 is_clang=true
 use_sysroot=false
 
@@ -92,7 +92,7 @@ case "${target_arch}" in
 	esac
 	;;
 "mipsel"|"mips64el")
-	naive_flags+=" use_gold=false use_thin_lto=false use_lld=false chrome_pgo_phase=0 mips_arch_variant=\"r2\""
-	[ "${target_arch}" == "mipsel" ] && naive_flags+=" mips_float_abi=\"soft\" mips_tune=\"${cpu_type}\""
+	naive_flags+=" use_thin_lto=false chrome_pgo_phase=0 mips_arch_variant=\"r2\""
+	[ "${target_arch}" == "mipsel" ] && naive_flags+=" mips_float_abi=\"soft\""
 	;;
 esac
