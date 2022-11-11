@@ -390,6 +390,7 @@ tls:depends("type", "Trojan-Go")
 tlsflow = s:option(Value, "tlsflow", translate("tlsflow"))
 tlsflow.default = "xtls-rprx-vision"
 tlsflow:value("xtls-rprx-vision")
+tlsflow:value("xtls-rprx-vision-udp443")
 tlsflow:depends("tls", true)
 
 xtls = s:option(Flag, "xtls", translate("XTLS"))
