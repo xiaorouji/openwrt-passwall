@@ -776,6 +776,8 @@ local function processData(szType, content, add_mode, add_from)
 				if params.security == "xtls" then
 					result.xtls = "1"
 					result.flow = params.flow or "xtls-rprx-direct"
+				else
+					result.tlsflow = params.flow or nil
 				end
 				result.tls_serverName = (params.sni and params.sni ~= "") and params.sni or params.host
 			end
