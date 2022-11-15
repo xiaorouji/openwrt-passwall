@@ -121,9 +121,9 @@ function gen_outbound(node, tag, proxy_table)
         else
             if node.tls and node.tls == "1" then
                 node.stream_security = "tls"
-                if node.type == "Xray" and node.xtls and node.xtls == "1" then
-                    node.stream_security = "xtls"
-                end
+            end
+            if node.type == "Xray" and node.xtls and node.xtls == "1" then
+                node.stream_security = "xtls"
             end
         end
 
