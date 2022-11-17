@@ -147,7 +147,8 @@ function gen_outbound(node, tag, proxy_table)
                 security = node.stream_security,
                 xtlsSettings = (node.stream_security == "xtls") and {
                     serverName = node.tls_serverName,
-                    allowInsecure = (node.tls_allowInsecure == "1") and true or false
+                    allowInsecure = (node.tls_allowInsecure == "1") and true or false,
+                    fingerprint = (node.type == "Xray" and node.fingerprint and node.fingerprint ~= "disable") and node.fingerprint or nil
                 } or nil,
                 tlsSettings = (node.stream_security == "tls") and {
                     serverName = node.tls_serverName,
@@ -216,7 +217,7 @@ function gen_outbound(node, tag, proxy_table)
                                 level = 0,
                                 security = (node.protocol == "vmess") and node.security or nil,
                                 encryption = node.encryption or "none",
-                                flow = node.flow or nil
+                                flow = node.flow or (node.tls == '1' and node.xtls ~= '1' and node.tlsflow) and node.tlsflow or nil
                             }
                         }
                     }
@@ -226,7 +227,7 @@ function gen_outbound(node, tag, proxy_table)
                         address = node.address,
                         port = tonumber(node.port),
                         method = node.method or nil,
-                        flow = node.flow or nil,
+                        flow = node.flow or (node.tls == '1' and node.xtls ~= '1' and node.tlsflow) and node.tlsflow or nil,
                         ivCheck = (node.protocol == "shadowsocks") and node.iv_check == "1" or nil,
                         uot = (node.protocol == "shadowsocks") and node.uot == "1" or nil,
                         password = node.password or "",

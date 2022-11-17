@@ -285,19 +285,30 @@ local has_xray = api.is_finded("xray")
 			params += "&type=" + v_transport;
 			
 			params += opt.query("encryption", "encryption");
+
 			if (opt.get("tls").checked) {
-				var v_security = "tls";
-				if (opt.get("xtls").checked) {
-					v_security = "xtls";
+					var v_security = "tls";
+					var v_flow = "xtls-rprx-vision";
+					if (opt.get("tlsflow").value) {
+						v_flow = opt.get("tlsflow").value;
+					}
+					params += "&flow=" + v_flow;
+					params += "&security=" + v_security;
+					params += opt.query("sni", "tls_serverName");
+			}
+
+			if (opt.get("xtls").checked) {
+					var v_security = "xtls";
 					var v_flow = "xtls-rprx-direct";
 					if (opt.get("flow").value) {
 						v_flow = opt.get("flow").value;
 					}
 					params += "&flow=" + v_flow;
-				}
-				params += "&security=" + v_security;
-				params += opt.query("sni", "tls_serverName");
+					params += "&security=" + v_security;
+					params += opt.query("sni", "tls_serverName");
 			}
+
+
 			params += "#" + encodeURI(v_alias.value);
 			if (params[0] == "&") {
 				params = params.substring(1);
@@ -850,14 +861,22 @@ local has_xray = api.is_finded("xray")
 			
 			opt.set('encryption', queryParam.encryption);
 			if (queryParam.security) {
-				if (queryParam.security == "tls" || queryParam.security == "xtls") {
+				if (queryParam.security == "tls") {
 					opt.set('tls', true);
-					if (queryParam.security == "xtls") {
-						opt.set('xtls', true);
-						opt.set('flow', queryParam.flow || "xtls-rprx-direct");
-					}
+					opt.set('xtls',false);
+					opt.set('tlsflow', queryParam.flow || '');
 					opt.set('tls_serverName', queryParam.sni || '');
-					
+					opt.set('tls_allowInsecure', true);
+					if (queryParam.allowinsecure === '0') {
+						opt.set('tls_allowInsecure', false);
+					}
+				}
+
+				if (queryParam.security == "xtls") {
+					opt.set('tls', true);
+					opt.set('xtls',true);
+					opt.set('flow', queryParam.flow || "xtls-rprx-direct");
+					opt.set('tls_serverName', queryParam.sni || '');
 					opt.set('tls_allowInsecure', true);
 					if (queryParam.allowinsecure === '0') {
 						opt.set('tls_allowInsecure', false);
