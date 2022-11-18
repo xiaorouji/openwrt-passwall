@@ -1,0 +1,35 @@
+From 82282323abc1883949c63d35b59f26aa7adc42e3 Mon Sep 17 00:00:00 2001
+From: Tianling Shen <i@cnsztl.eu.org>
+Date: Thu, 10 Nov 2022 22:59:58 +0800
+Subject: [PATCH] chore(deps): update iploc to fix build with mips
+
+Signed-off-by: Tianling Shen <i@cnsztl.eu.org>
+---
+ go.mod | 2 +-
+ go.sum | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+--- a/go.mod
++++ b/go.mod
+@@ -8,7 +8,7 @@ require (
+ 	github.com/mdp/qrterminal v1.0.1
+ 	github.com/miekg/dns v1.1.43
+ 	github.com/patrickmn/go-cache v2.1.0+incompatible
+-	github.com/phuslu/iploc v1.0.20220930
++	github.com/phuslu/iploc v1.0.20221110
+ 	github.com/tdewolff/minify v2.3.6+incompatible
+ 	github.com/txthinking/crypto v0.0.0-20210716135230-de9624a415a4
+ 	github.com/txthinking/runnergroup v0.0.0-20210608031112-152c7c4432bf
+--- a/go.sum
++++ b/go.sum
+@@ -10,8 +10,8 @@ github.com/miekg/dns v1.1.43 h1:JKfpVSCB
+ github.com/miekg/dns v1.1.43/go.mod h1:+evo5L0630/F6ca/Z9+GAqzhjGyn8/c+TBaOyfEl0V4=
+ github.com/patrickmn/go-cache v2.1.0+incompatible h1:HRMgzkcYKYpi3C8ajMPV8OFXaaRUnok+kx1WdO15EQc=
+ github.com/patrickmn/go-cache v2.1.0+incompatible/go.mod h1:3Qf8kWWT7OJRJbdiICTKqZju1ZixQ/KpMGzzAfe6+WQ=
+-github.com/phuslu/iploc v1.0.20220930 h1:Cx8cGRjQ87iYUUOEduaJt2CfTIv6RL58mnn6UtH/bao=
+-github.com/phuslu/iploc v1.0.20220930/go.mod h1:gsgExGWldwv1AEzZm+Ki9/vGfyjkL33pbSr9HGpt2Xg=
++github.com/phuslu/iploc v1.0.20221110 h1:XB8F6N3NyD0iKB4hQ/y1LuQyqSJD8g+xEPWTUNJHR80=
++github.com/phuslu/iploc v1.0.20221110/go.mod h1:gsgExGWldwv1AEzZm+Ki9/vGfyjkL33pbSr9HGpt2Xg=
+ github.com/russross/blackfriday/v2 v2.1.0 h1:JIOH55/0cWyOuilr9/qlrm0BSXldqnqwMsf35Ld67mk=
+ github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
+ github.com/tdewolff/minify v2.3.6+incompatible h1:2hw5/9ZvxhWLvBUnHE06gElGYz+Jv9R4Eys0XUzItYo=
