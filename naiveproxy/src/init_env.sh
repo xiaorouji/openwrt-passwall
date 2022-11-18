@@ -44,10 +44,6 @@ symbol_level=1
 is_clang=true
 use_sysroot=false
 
-use_allocator=\"none\"
-use_allocator_shim=false
-use_partition_alloc=false
-
 fatal_linker_warnings=false
 treat_warnings_as_errors=false
 
@@ -93,6 +89,12 @@ case "${target_arch}" in
 	;;
 "mipsel"|"mips64el")
 	naive_flags+=" use_thin_lto=false chrome_pgo_phase=0 mips_arch_variant=\"r2\""
-	[ "${target_arch}" == "mipsel" ] && naive_flags+=" mips_float_abi=\"soft\""
+	if [ "${target_arch}" == "mipsel" ]; then
+		if [ "${cpu_subtype}" == "24kf" ]; then
+			naive_flags+=" mips_float_abi=\"hard\""
+		else
+			naive_flags+=" mips_float_abi=\"soft\""
+		fi
+	fi
 	;;
 esac
