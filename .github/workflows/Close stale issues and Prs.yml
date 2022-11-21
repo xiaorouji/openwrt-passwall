@@ -12,9 +12,9 @@ jobs:
           stale-issue-message: "Stale Issue"
           stale-pr-message: "Stale PR"
           stale-issue-label: "no-issue-activity"
-          exempt-issue-labels: "awaiting-approval,work-in-progress"
+          exempt-issue-labels: "awaiting-approval,awaiting,work-in-progress"
           stale-pr-label: "no-pr-activity"
-          exempt-pr-labels: "awaiting-approval,work-in-progress"
+          exempt-pr-labels: "awaiting-approval,awaiting,work-in-progress"
           # only-labels: 'bug,enhancement'
           days-before-issue-stale: 10
           days-before-pr-stale: 10
