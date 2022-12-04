@@ -45,8 +45,8 @@ logic_restart() {
 		for server in $(uci -q get dhcp.@dnsmasq[0].server); do
 			[ -n "$(echo $server | grep '\/')" ] || uci -q del_list dhcp.@dnsmasq[0].server="$server" 
 		done
-		restore_servers
 		/etc/init.d/dnsmasq restart >/dev/null 2>&1
+		restore_servers
 	else
 		/etc/init.d/dnsmasq restart >/dev/null 2>&1
 	fi
