@@ -21,7 +21,10 @@ jobs:
           days-before-issue-close: 5
           days-before-pr-close: -1
 
-      - uses: GitRML/delete-workflow-runs@main
+      - name: Delete workflow runs
+        uses: Mattraks/delete-workflow-runs@v2.0.3
         with:
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
           retain_days: 1
           keep_minimum_runs: 0
