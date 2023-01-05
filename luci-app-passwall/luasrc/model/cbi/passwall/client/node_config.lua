@@ -120,6 +120,7 @@ protocol:value("http", translate("HTTP"))
 protocol:value("socks", translate("Socks"))
 protocol:value("shadowsocks", translate("Shadowsocks"))
 protocol:value("trojan", translate("Trojan"))
+protocol:value("wireguard", translate("WireGuard"))
 protocol:value("_balancing", translate("Balancing"))
 protocol:value("_shunt", translate("Shunt"))
 protocol:depends("type", "V2ray")
@@ -257,6 +258,7 @@ address:depends({ type = "Xray", protocol = "http" })
 address:depends({ type = "Xray", protocol = "socks" })
 address:depends({ type = "Xray", protocol = "shadowsocks" })
 address:depends({ type = "Xray", protocol = "trojan" })
+address:depends({ type = "Xray", protocol = "wireguard" })
 
 port = s:option(Value, "port", translate("Port"))
 port.datatype = "port"
@@ -283,6 +285,7 @@ port:depends({ type = "Xray", protocol = "http" })
 port:depends({ type = "Xray", protocol = "socks" })
 port:depends({ type = "Xray", protocol = "shadowsocks" })
 port:depends({ type = "Xray", protocol = "trojan" })
+port:depends({ type = "Xray", protocol = "wireguard" })
 
 hysteria_hop = s:option(Value, "hysteria_hop", translate("Additional ports for hysteria hop"))
 hysteria_hop:depends("type", "Hysteria")
@@ -643,6 +646,26 @@ ss_transport:value("h2+ws", "HTTP/2 & WebSocket")
 ss_transport:depends({ type = "V2ray", protocol = "shadowsocks" })
 ss_transport:depends({ type = "Xray", protocol = "shadowsocks" })
 ]]--
+
+wireguard_public_key = s:option(Value, "wireguard_public_key", translate("Public Key"))
+wireguard_public_key:depends({ type = "Xray", protocol = "wireguard" })
+
+wireguard_secret_key = s:option(Value, "wireguard_secret_key", translate("Private Key"))
+wireguard_secret_key:depends({ type = "Xray", protocol = "wireguard" })
+
+wireguard_preSharedKey = s:option(Value, "wireguard_preSharedKey", translate("Pre shared key"))
+wireguard_preSharedKey:depends({ type = "Xray", protocol = "wireguard" })
+
+wireguard_local_address = s:option(DynamicList, "wireguard_local_address", translate("Local Address"))
+wireguard_local_address:depends({ type = "Xray", protocol = "wireguard" })
+
+wireguard_mtu = s:option(Value, "wireguard_mtu", translate("MTU"))
+wireguard_mtu.default = "1420"
+wireguard_mtu:depends({ type = "Xray", protocol = "wireguard" })
+
+wireguard_keepAlive = s:option(Value, "wireguard_keepAlive", translate("Keep Alive"))
+wireguard_keepAlive.default = "0"
+wireguard_keepAlive:depends({ type = "Xray", protocol = "wireguard" })
 
 -- [[ TCP部分 ]]--
 

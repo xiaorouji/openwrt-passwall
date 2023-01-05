@@ -1042,6 +1042,18 @@ msgstr "用户等级(level)"
 msgid "Transport"
 msgstr "传输方式"
 
+msgid "Public Key"
+msgstr "公钥"
+
+msgid "Private Key"
+msgstr "私钥"
+
+msgid "Pre shared key"
+msgstr "额外的对称加密密钥"
+
+msgid "Local Address"
+msgstr "本地地址"
+
 msgid "Camouflage Type"
 msgstr "伪装类型"
 

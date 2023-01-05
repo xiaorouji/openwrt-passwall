@@ -238,7 +238,18 @@ function gen_outbound(node, tag, proxy_table)
                             }
                         } or nil
                     }
-                } or nil
+                } or nil,
+                address = (node.protocol == "wireguard" and node.wireguard_local_address) and node.wireguard_local_address or nil,
+                secretKey = (node.protocol == "wireguard") and node.wireguard_secret_key or nil,
+                peers = (node.protocol == "wireguard") and {
+                    {
+                        publicKey = node.wireguard_public_key,
+                        endpoint = node.address .. ":" .. node.port,
+                        preSharedKey = node.wireguard_preSharedKey,
+                        keepAlive = node.wireguard_keepAlive and tonumber(node.wireguard_keepAlive) or nil
+                    }
+                } or nil,
+                mtu = (node.protocol == "wireguard" and node.wireguard_mtu) and tonumber(node.wireguard_mtu) or nil
             }
         }
         local alpn = {}
