@@ -23,16 +23,18 @@ o.default = "https://fastly.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release
 
 ----chnroute  URL
 o = s:option(DynamicList, "chnroute_url", translate("China IPs(chnroute) Update URL"))
+o:value("https://fastly.jsdelivr.net/gh/gaoyifan/china-operator-ip@ip-lists/china.txt", translate("gaoyifan/china-operator-ip/china"))
 o:value("https://ispip.clang.cn/all_cn.txt", translate("Clang.CN"))
 o:value("https://ispip.clang.cn/all_cn_cidr.txt", translate("Clang.CN.CIDR"))
 o:value("https://fastly.jsdelivr.net/gh/soffchen/GeoIP2-CN@release/CN-ip-cidr.txt", translate("soffchen/GeoIP2-CN"))
 o:value("https://fastly.jsdelivr.net/gh/Hackl0us/GeoIP2-CN@release/CN-ip-cidr.txt", translate("Hackl0us/GeoIP2-CN"))
-o.default = "https://ispip.clang.cn/all_cn.txt"
+o.default = "https://fastly.jsdelivr.net/gh/gaoyifan/china-operator-ip@ip-lists/china.txt"
 
 ----chnroute6 URL
 o = s:option(DynamicList, "chnroute6_url", translate("China IPv6s(chnroute6) Update URL"))
+o:value("https://fastly.jsdelivr.net/gh/gaoyifan/china-operator-ip@ip-lists/china6.txt", translate("gaoyifan/china-operator-ip/china6"))
 o:value("https://ispip.clang.cn/all_cn_ipv6.txt", translate("Clang.CN.IPv6"))
-o.default = "https://ispip.clang.cn/all_cn_ipv6.txt"
+o.default = "https://fastly.jsdelivr.net/gh/gaoyifan/china-operator-ip@ip-lists/china6.txt"
 
 ----chnlist URL
 o = s:option(DynamicList, "chnlist_url", translate("China List(Chnlist) Update URL"))
