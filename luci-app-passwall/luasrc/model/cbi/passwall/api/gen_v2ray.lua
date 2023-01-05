@@ -71,9 +71,11 @@ end
 function gen_outbound(node, tag, proxy_table)
     local proxy = 0
     local proxy_tag = "nil"
+    local dialerProxy = nil
     if proxy_table ~= nil and type(proxy_table) == "table" then
         proxy = proxy_table.proxy or 0
         proxy_tag = proxy_table.tag or "nil"
+        dialerProxy = proxy_table.dialerProxy
     end
     local result = nil
     if node and node ~= "nil" then
@@ -85,10 +87,18 @@ function gen_outbound(node, tag, proxy_table)
         if node.type == "V2ray" or node.type == "Xray" then
             proxy = 0
             if proxy_tag ~= "nil" then
-                node.proxySettings = {
-                    tag = proxy_tag,
-                    transportLayer = true
-                }
+                if dialerProxy and dialerProxy == "1" then
+                    node.streamSettings = {
+                        sockopt = {
+                            dialerProxy = proxy_tag
+                        }
+                    }
+                else
+                    node.proxySettings = {
+                        tag = proxy_tag,
+                        transportLayer = true
+                    }
+                end
             end
         end
 
@@ -107,7 +117,7 @@ function gen_outbound(node, tag, proxy_table)
                         "127.0.0.1", --bind
                         new_port, --socks port
                         string.format("%s_%s_%s_%s.json", flag, tag, node_id, new_port), --config file
-                        (proxy == 1 and proxy_tag ~= "nil" and relay_port) and tostring(relay_port) or "" --relay port
+                        (proxy == 1 and relay_port) and tostring(relay_port) or "" --relay port
                         )
                     )
                 )
@@ -139,9 +149,10 @@ function gen_outbound(node, tag, proxy_table)
                 concurrency = (node.mux_concurrency) and tonumber(node.mux_concurrency) or 8
             } or nil,
             -- 底层传输配置
-            streamSettings = (node.protocol == "vmess" or node.protocol == "vless" or node.protocol == "socks" or node.protocol == "shadowsocks" or node.protocol == "trojan") and {
+            streamSettings = (node.streamSettings or node.protocol == "vmess" or node.protocol == "vless" or node.protocol == "socks" or node.protocol == "shadowsocks" or node.protocol == "trojan") and {
                 sockopt = {
-                    mark = 255
+                    mark = 255,
+                    dialerProxy = (node.streamSettings and dialerProxy and dialerProxy == "1") and node.streamSettings.sockopt.dialerProxy or nil
                 },
                 network = node.transport,
                 security = node.stream_security,
@@ -382,7 +393,7 @@ if node_id then
                 end
             end
             if default_node and api.is_normal_node(default_node) then
-                local default_outbound = gen_outbound(default_node, "default", { proxy = proxy, tag = proxy_tag })
+                local default_outbound = gen_outbound(default_node, "default", { proxy = proxy, tag = proxy_tag, dialerProxy = node.dialerProxy })
                 if default_outbound then
                     table.insert(outbounds, default_outbound)
                     default_outboundTag = "default"
@@ -440,7 +451,7 @@ if node_id then
                                         })
                                     end
                                 end
-                                local _outbound = gen_outbound(_node, name, { proxy = (proxy_tag ~= "nil") and 1 or 0, tag = (proxy_tag ~= "nil") and proxy_tag or nil })
+                                local _outbound = gen_outbound(_node, name, { proxy = (proxy_tag ~= "nil") and 1 or 0, tag = (proxy_tag ~= "nil") and proxy_tag or nil, dialerProxy = node.dialerProxy })
                                 if _outbound then
                                     table.insert(outbounds, _outbound)
                                     outboundTag = name

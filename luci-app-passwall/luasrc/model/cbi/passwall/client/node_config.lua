@@ -188,6 +188,9 @@ if #nodes_table > 0 then
     end
 end
 
+dialerProxy = s:option(Flag, "dialerProxy", translate("dialerProxy"))
+dialerProxy:depends({ type = "Xray", protocol = "_shunt"})
+
 domainStrategy = s:option(ListValue, "domainStrategy", translate("Domain Strategy"))
 domainStrategy:value("AsIs")
 domainStrategy:value("IPIfNonMatch")
