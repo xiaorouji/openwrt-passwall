@@ -1276,7 +1276,6 @@ flush_nftset() {
 	del_firewall_rule
 	destroy_nftset $NFTSET_VPSIPLIST $NFTSET_SHUNTLIST $NFTSET_GFW $NFTSET_CHN $NFTSET_BLACKLIST $NFTSET_BLOCKLIST $NFTSET_WHITELIST $NFTSET_LANIPLIST
 	destroy_nftset $NFTSET_VPSIPLIST6 $NFTSET_SHUNTLIST6 $NFTSET_GFW6 $NFTSET_CHN6 $NFTSET_BLACKLIST6 $NFTSET_BLOCKLIST6 $NFTSET_WHITELIST6 $NFTSET_LANIPLIST6
-	rm -rf /tmp/etc/passwall_tmp/smartdns*
 	rm -rf /tmp/etc/passwall_tmp/dnsmasq*
 	/etc/init.d/passwall reload
 }

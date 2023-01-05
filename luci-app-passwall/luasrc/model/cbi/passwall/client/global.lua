@@ -171,18 +171,6 @@ udp_node:value("tcp", translate("Same as the tcp node"))
 
 s:tab("DNS", translate("DNS"))
 
-if api.is_finded("smartdns") then
-    dns_shunt = s:taboption("DNS", ListValue, "dns_shunt", translate("DNS Shunt"))
-    dns_shunt:value("dnsmasq", "Dnsmasq")
-    dns_shunt:value("smartdns", "SmartDNS")
-
-    group_domestic = s:taboption("DNS", Value, "group_domestic", translate("Domestic group name"))
-    group_domestic.placeholder = "local"
-    group_domestic:depends("dns_shunt", "smartdns")
-    group_domestic.description = translate("You only need to configure domestic DNS packets in SmartDNS and set it redirect or as Dnsmasq upstream, and fill in the domestic DNS group name here.")
-    group_domestic.description = group_domestic.description .. string.format('<a href="%s" target="_blank">%s</a>', "https://github.com/luckyyyyy/blog/issues/57", translate("Guide"))
-end
-
 o = s:taboption("DNS", Flag, "filter_proxy_ipv6", translate("Filter Proxy Host IPv6"), translate("Experimental feature."))
 o.default = "0"
 
@@ -281,23 +269,13 @@ o.rmempty = false
 if has_chnlist and api.is_finded("chinadns-ng") then
     o = s:taboption("DNS", Flag, "chinadns_ng", translate("ChinaDNS-NG"), translate("The effect is better, but will increase the memory."))
     o.default = "0"
-    if api.is_finded("smartdns") then
-        o:depends({dns_shunt = "dnsmasq", dns_mode = "dns2socks"})
-        o:depends({dns_shunt = "dnsmasq", dns_mode = "dns2tcp"})
-        o:depends({dns_shunt = "dnsmasq", dns_mode = "v2ray", v2ray_dns_mode = "tcp"})
-        o:depends({dns_shunt = "dnsmasq", dns_mode = "v2ray", v2ray_dns_mode = "doh"})
-        o:depends({dns_shunt = "dnsmasq", dns_mode = "xray", v2ray_dns_mode = "tcp"})
-        o:depends({dns_shunt = "dnsmasq", dns_mode = "xray", v2ray_dns_mode = "doh"})
-        o:depends({dns_shunt = "dnsmasq", dns_mode = "udp"})
-    else
-        o:depends({dns_mode = "dns2socks"})
-        o:depends({dns_mode = "dns2tcp"})
-        o:depends({dns_mode = "v2ray", v2ray_dns_mode = "tcp"})
-        o:depends({dns_mode = "v2ray", v2ray_dns_mode = "doh"})
-        o:depends({dns_mode = "xray", v2ray_dns_mode = "tcp"})
-        o:depends({dns_mode = "xray", v2ray_dns_mode = "doh"})
-        o:depends({dns_mode = "udp"})
-    end
+	o:depends({dns_mode = "dns2socks"})
+	o:depends({dns_mode = "dns2tcp"})
+	o:depends({dns_mode = "v2ray", v2ray_dns_mode = "tcp"})
+	o:depends({dns_mode = "v2ray", v2ray_dns_mode = "doh"})
+	o:depends({dns_mode = "xray", v2ray_dns_mode = "tcp"})
+	o:depends({dns_mode = "xray", v2ray_dns_mode = "doh"})
+	o:depends({dns_mode = "udp"})
 end
 
 o = s:taboption("DNS", Button, "clear_ipset", translate("Clear IPSET"), translate("Try this feature if the rule modification does not take effect."))
