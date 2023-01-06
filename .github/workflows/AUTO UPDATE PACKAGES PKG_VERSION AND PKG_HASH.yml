@@ -260,13 +260,13 @@ jobs:
           cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
           
           New_PKG_VERSION_geoip=$(curl --silent "https://api.github.com/repos/v2fly/geoip/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
-          sed -i "15c PKG_VERSION:=$New_PKG_VERSION_geoip" Makefile
+          sed -i "15c GEOIP_VER:=$New_PKG_VERSION_geoip" Makefile
 
           cd && cd packages && mkdir v2ray-geoip && cd v2ray-geoip
           wget -P / https://github.com/v2fly/geoip/releases/download/$New_PKG_VERSION_geoip/geoip.dat
           PKG_HASH=$(sha256sum geoip.dat) && PKG_HASH=${PKG_HASH%% *}
           cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
-          sed -i "21c PKG_HASH:=$PKG_HASH" Makefile
+          sed -i "21c HASH:=$PKG_HASH" Makefile
           
           echo "已更新 geoip 版本到：$New_PKG_VERSION_geoip"
           echo "geoip Hash:$PKG_HASH"
@@ -274,13 +274,13 @@ jobs:
 
           cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
           New_PKG_VERSION_geosite=$(curl --silent "https://api.github.com/repos/v2fly/domain-list-community/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
-          sed -i "24c PKG_VERSION:=$New_PKG_VERSION_geosite" Makefile
+          sed -i "24c GEOSITE_VER:=$New_PKG_VERSION_geosite" Makefile
 
           cd && cd packages && mkdir v2ray-geosite && cd v2ray-geosite
           wget -P / https://github.com/v2fly/domain-list-community/releases/download/$New_PKG_VERSION_geosite/dlc.dat
           PKG_HASH=$(sha256sum dlc.dat) && PKG_HASH=${PKG_HASH%% *}
           cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
-          sed -i "30c PKG_HASH:=$PKG_HASH" Makefile
+          sed -i "30c HASH:=$PKG_HASH" Makefile
           
           echo "已更新 geosite 版本到：$New_PKG_VERSION_geosite"
           echo "geosite Hash:$PKG_HASH"
