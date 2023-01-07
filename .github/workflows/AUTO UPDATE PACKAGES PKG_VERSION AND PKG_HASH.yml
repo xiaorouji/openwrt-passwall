@@ -370,7 +370,6 @@ jobs:
       - name: Git Auto Commit
         uses: stefanzweifel/git-auto-commit-action@v4.16.0
         id: commit
-        if: ${{ env.IS_UPDATE == 'true' }} && !cancelled()
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
