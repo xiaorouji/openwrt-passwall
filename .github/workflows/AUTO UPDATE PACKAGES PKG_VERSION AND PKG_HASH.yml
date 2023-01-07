@@ -13,7 +13,7 @@ on:
         required: false
         default: 'false'
   schedule:
-    - cron: "0 3 * * *"
+    - cron: "0 */4 * * *"
 
 jobs:
   stale:
@@ -25,8 +25,9 @@ jobs:
 
       - name: Initialization environment
         run: |
-          cd && mkdir packages && cd packages
-          echo "IS_UPDATE=false" >> $GITHUB_ENV;
+          cd && mkdir -p packages
+          sudo timedatectl set-timezone "$TZ"
+
 
       - name: Check brook
         id: brook
@@ -34,7 +35,7 @@ jobs:
           cd && cd work/openwrt-passwall/openwrt-passwall/brook 
           Old_PKG_VERSION=$(sed -n '8p' Makefile | awk -F '=' '{print $2}')
           New_PKG_VERSION=$(curl --silent "https://api.github.com/repos/txthinking/brook/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
-          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; echo "IS_UPDATE=true" >> $GITHUB_ENV; fi;
+          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; fi;
 
       - name: Update brook
         if: steps.brook.outputs.status == 'success' && !cancelled()
@@ -43,7 +44,7 @@ jobs:
           New_PKG_VERSION=$(curl --silent "https://api.github.com/repos/txthinking/brook/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
           sed -i "8c PKG_VERSION:=$New_PKG_VERSION" Makefile
 
-          cd && cd packages && mkdir brook && cd brook
+          cd && cd packages && mkdir -p brook && cd brook
           wget -P / https://codeload.github.com/txthinking/brook/tar.gz/v$New_PKG_VERSION
           PKG_HASH=$(sha256sum v$New_PKG_VERSION) && PKG_HASH=${PKG_HASH%% *}
           cd && cd work/openwrt-passwall/openwrt-passwall/brook 
@@ -59,7 +60,7 @@ jobs:
           cd && cd work/openwrt-passwall/openwrt-passwall/hysteria
           Old_PKG_VERSION=$(sed -n '8p' Makefile | awk -F '=' '{print $2}')
           New_PKG_VERSION=$(curl --silent "https://api.github.com/repos/apernet/hysteria/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
-          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; echo "IS_UPDATE=true" >> $GITHUB_ENV; fi;
+          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; fi;
 
       - name: Update hysteria
         if: steps.hysteria.outputs.status == 'success' && !cancelled()
@@ -69,7 +70,7 @@ jobs:
           New_PKG_VERSION=$(curl --silent "https://api.github.com/repos/apernet/hysteria/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
           sed -i "8c PKG_VERSION:=$New_PKG_VERSION" Makefile
 
-          cd && cd packages && mkdir hysteria && cd hysteria
+          cd && cd packages && mkdir -p hysteria && cd hysteria
           wget -P / https://codeload.github.com/apernet/hysteria/tar.gz/v$New_PKG_VERSION
           PKG_HASH=$(sha256sum v$New_PKG_VERSION) && PKG_HASH=${PKG_HASH%% *}
           cd && cd work/openwrt-passwall/openwrt-passwall/hysteria
@@ -86,7 +87,7 @@ jobs:
           cd && cd work/openwrt-passwall/openwrt-passwall/ipt2socks
           Old_PKG_VERSION=$(sed -n '8p' Makefile | awk -F '=' '{print $2}')
           New_PKG_VERSION=$(curl --silent "https://api.github.com/repos/zfl9/ipt2socks/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
-          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; echo "IS_UPDATE=true" >> $GITHUB_ENV; fi;
+          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; fi;
 
       - name: Update ipt2socks
         if: steps.ipt2socks.outputs.status == 'success' && !cancelled()
@@ -96,7 +97,7 @@ jobs:
           New_PKG_VERSION=$(curl --silent "https://api.github.com/repos/zfl9/ipt2socks/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
           sed -i "8c PKG_VERSION:=$New_PKG_VERSION" Makefile
 
-          cd && cd packages && mkdir ipt2socks && cd ipt2socks
+          cd && cd packages && mkdir -p ipt2socks && cd ipt2socks
           wget -P / https://codeload.github.com/zfl9/ipt2socks/tar.gz/v$New_PKG_VERSION
           PKG_HASH=$(sha256sum v$New_PKG_VERSION) && PKG_HASH=${PKG_HASH%% *}
           cd && cd work/openwrt-passwall/openwrt-passwall/ipt2socks
@@ -114,7 +115,7 @@ jobs:
           
           Old_PKG_VERSION=$(sed -n '8p' Makefile | awk -F '=' '{print $2}')
           New_PKG_VERSION=$(curl --silent "https://api.github.com/repos/rofl0r/microsocks/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
-          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; echo "IS_UPDATE=true" >> $GITHUB_ENV; fi;
+          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; fi;
           
 
       - name: Update microsocks
@@ -125,7 +126,7 @@ jobs:
           New_PKG_VERSION=$(curl --silent "https://api.github.com/repos/rofl0r/microsocks/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
           sed -i "8c PKG_VERSION:=$New_PKG_VERSION" Makefile
 
-          cd && cd packages && mkdir microsocks && cd microsocks
+          cd && cd packages && mkdir -p microsocks && cd microsocks
           wget -P / https://codeload.github.com/rofl0r/microsocks/tar.gz/v$New_PKG_VERSION
           PKG_HASH=$(sha256sum v$New_PKG_VERSION) && PKG_HASH=${PKG_HASH%% *}
           cd && cd work/openwrt-passwall/openwrt-passwall/microsocks
@@ -142,7 +143,7 @@ jobs:
           cd && cd work/openwrt-passwall/openwrt-passwall/sing-box
           Old_PKG_VERSION=$(sed -n '9p' Makefile | awk -F '=' '{print $2}')
           New_PKG_VERSION=$(curl --silent "https://api.github.com/repos/SagerNet/sing-box/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
-          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; echo "IS_UPDATE=true" >> $GITHUB_ENV; fi;
+          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; fi;
 
       - name: Update sing-box
         if: steps.sing-box.outputs.status == 'success' && !cancelled()
@@ -152,7 +153,7 @@ jobs:
           New_PKG_VERSION=$(curl --silent "https://api.github.com/repos/SagerNet/sing-box/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
           sed -i "9c PKG_VERSION:=$New_PKG_VERSION" Makefile
 
-          cd && cd packages && mkdir sing-box && cd sing-box
+          cd && cd packages && mkdir -p sing-box && cd sing-box
           wget -P / https://codeload.github.com/SagerNet/sing-box/tar.gz/v$New_PKG_VERSION
           PKG_HASH=$(sha256sum v$New_PKG_VERSION) && PKG_HASH=${PKG_HASH%% *}
           cd && cd work/openwrt-passwall/openwrt-passwall/sing-box
@@ -169,7 +170,7 @@ jobs:
           cd && cd work/openwrt-passwall/openwrt-passwall/trojan
           Old_PKG_VERSION=$(sed -n '10p' Makefile | awk -F '=' '{print $2}')
           New_PKG_VERSION=$(curl --silent "https://api.github.com/repos/trojan-gfw/trojan/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
-          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; echo "IS_UPDATE=true" >> $GITHUB_ENV; fi;
+          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; fi;
 
       - name: Update trojan
         if: steps.trojan.outputs.status == 'success' && !cancelled()
@@ -179,7 +180,7 @@ jobs:
           New_PKG_VERSION=$(curl --silent "https://api.github.com/repos/trojan-gfw/trojan/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
           sed -i "10c PKG_VERSION:=$New_PKG_VERSION" Makefile
 
-          cd && cd packages && mkdir trojan && cd trojan
+          cd && cd packages && mkdir -p trojan && cd trojan
           wget -P / https://codeload.github.com/trojan-gfw/trojan/tar.gz/v$New_PKG_VERSION
           PKG_HASH=$(sha256sum v$New_PKG_VERSION) && PKG_HASH=${PKG_HASH%% *}
           cd && cd work/openwrt-passwall/openwrt-passwall/trojan
@@ -196,7 +197,7 @@ jobs:
           cd && cd work/openwrt-passwall/openwrt-passwall/trojan-go
           Old_PKG_VERSION=$(sed -n '8p' Makefile | awk -F '=' '{print $2}')
           New_PKG_VERSION=$(curl --silent "https://api.github.com/repos/p4gefau1t/trojan-go/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
-          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; echo "IS_UPDATE=true" >> $GITHUB_ENV; fi;
+          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; fi;
 
       - name: Update trojan-go
         if: steps.trojan-go.outputs.status == 'success' && !cancelled()
@@ -206,7 +207,7 @@ jobs:
           New_PKG_VERSION=$(curl --silent "https://api.github.com/repos/p4gefau1t/trojan-go/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
           sed -i "8c PKG_VERSION:=$New_PKG_VERSION" Makefile
 
-          cd && cd packages && mkdir trojan-go && cd trojan-go
+          cd && cd packages && mkdir -p trojan-go && cd trojan-go
           wget -P / https://codeload.github.com/p4gefau1t/trojan-go/tar.gz/v$New_PKG_VERSION
           PKG_HASH=$(sha256sum v$New_PKG_VERSION) && PKG_HASH=${PKG_HASH%% *}
           cd && cd work/openwrt-passwall/openwrt-passwall/trojan-go
@@ -223,7 +224,7 @@ jobs:
           cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-core
           Old_PKG_VERSION=$(sed -n '8p' Makefile | awk -F '=' '{print $2}')
           New_PKG_VERSION=$(curl --silent "https://api.github.com/repos/v2fly/v2ray-core/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
-          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; echo "IS_UPDATE=true" >> $GITHUB_ENV; fi;
+          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; fi;
 
       - name: Update v2ray-core
         if: steps.v2ray-core.outputs.status == 'success' && !cancelled()
@@ -233,7 +234,7 @@ jobs:
           New_PKG_VERSION=$(curl --silent "https://api.github.com/repos/v2fly/v2ray-core/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
           sed -i "8c PKG_VERSION:=$New_PKG_VERSION" Makefile
 
-          cd && cd packages && mkdir v2ray-core && cd v2ray-core
+          cd && cd packages && mkdir -p v2ray-core && cd v2ray-core
           wget -P / https://codeload.github.com/v2fly/v2ray-core/tar.gz/v$New_PKG_VERSION
           PKG_HASH=$(sha256sum v$New_PKG_VERSION) && PKG_HASH=${PKG_HASH%% *}
           cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-core
@@ -252,7 +253,7 @@ jobs:
           New_PKG_VERSION_geoip=$(curl --silent "https://api.github.com/repos/v2fly/geoip/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
           Old_PKG_VERSION_geosite=$(sed -n '24p' Makefile | awk -F '=' '{print $2}')
           New_PKG_VERSION_geosite=$(curl --silent "https://api.github.com/repos/v2fly/domain-list-community/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
-          if [ "$Old_PKG_VERSION_geoip" = "$New_PKG_VERSION_geoip" ] || [ "$Old_PKG_VERSION_geosite" = "$New_PKG_VERSION_geosite" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; echo "IS_UPDATE=true" >> $GITHUB_ENV; fi;
+          if [ "$Old_PKG_VERSION_geoip" = "$New_PKG_VERSION_geoip" ] || [ "$Old_PKG_VERSION_geosite" = "$New_PKG_VERSION_geosite" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; fi;
 
       - name: Update v2ray-geodata
         if: steps.v2ray-geodata.outputs.status == 'success' && !cancelled()
@@ -262,7 +263,7 @@ jobs:
           New_PKG_VERSION_geoip=$(curl --silent "https://api.github.com/repos/v2fly/geoip/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
           sed -i "15c GEOIP_VER:=$New_PKG_VERSION_geoip" Makefile
 
-          cd && cd packages && mkdir v2ray-geoip && cd v2ray-geoip
+          cd && cd packages && mkdir -p v2ray-geoip && cd v2ray-geoip
           wget -P / https://github.com/v2fly/geoip/releases/download/$New_PKG_VERSION_geoip/geoip.dat
           PKG_HASH=$(sha256sum geoip.dat) && PKG_HASH=${PKG_HASH%% *}
           cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
@@ -276,7 +277,7 @@ jobs:
           New_PKG_VERSION_geosite=$(curl --silent "https://api.github.com/repos/v2fly/domain-list-community/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
           sed -i "24c GEOSITE_VER:=$New_PKG_VERSION_geosite" Makefile
 
-          cd && cd packages && mkdir v2ray-geosite && cd v2ray-geosite
+          cd && cd packages && mkdir -p v2ray-geosite && cd v2ray-geosite
           wget -P / https://github.com/v2fly/domain-list-community/releases/download/$New_PKG_VERSION_geosite/dlc.dat
           PKG_HASH=$(sha256sum dlc.dat) && PKG_HASH=${PKG_HASH%% *}
           cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
@@ -293,7 +294,7 @@ jobs:
           cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-plugin
           Old_PKG_VERSION=$(sed -n '9p' Makefile | awk -F '=' '{print $2}')
           New_PKG_VERSION=$(curl --silent "https://api.github.com/repos/teddysun/v2ray-plugin/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
-          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; echo "IS_UPDATE=true" >> $GITHUB_ENV; fi;
+          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; fi;
 
       - name: Update v2ray-plugin
         if: steps.v2ray-plugin.outputs.status == 'success' && !cancelled()
@@ -303,7 +304,7 @@ jobs:
           New_PKG_VERSION=$(curl --silent "https://api.github.com/repos/teddysun/v2ray-plugin/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
           sed -i "9c PKG_VERSION:=$New_PKG_VERSION" Makefile
 
-          cd && cd packages && mkdir v2ray-plugin && cd v2ray-plugin
+          cd && cd packages && mkdir -p v2ray-plugin && cd v2ray-plugin
           wget -P / https://codeload.github.com/teddysun/v2ray-plugin/tar.gz/v$New_PKG_VERSION
           PKG_HASH=$(sha256sum v$New_PKG_VERSION) && PKG_HASH=${PKG_HASH%% *}
           cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-plugin
@@ -319,7 +320,7 @@ jobs:
           cd && cd work/openwrt-passwall/openwrt-passwall/xray-core
           Old_PKG_VERSION=$(sed -n '4p' Makefile | awk -F '=' '{print $2}')
           New_PKG_VERSION=$(curl --silent "https://api.github.com/repos/XTLS/Xray-core/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
-          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; echo "IS_UPDATE=true" >> $GITHUB_ENV; fi;
+          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; fi;
 
       - name: Update xray-core
         if: steps.xray-core.outputs.status == 'success' && !cancelled()
@@ -329,7 +330,7 @@ jobs:
           New_PKG_VERSION=$(curl --silent "https://api.github.com/repos/XTLS/Xray-core/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
           sed -i "4c PKG_VERSION:=$New_PKG_VERSION" Makefile
 
-          cd && cd packages && mkdir xray-core && cd xray-core
+          cd && cd packages && mkdir -p xray-core && cd xray-core
           wget -P / https://codeload.github.com/XTLS/Xray-core/tar.gz/v$New_PKG_VERSION
           PKG_HASH=$(sha256sum v$New_PKG_VERSION) && PKG_HASH=${PKG_HASH%% *}
           cd && cd work/openwrt-passwall/openwrt-passwall/xray-core
@@ -346,7 +347,7 @@ jobs:
           cd && cd work/openwrt-passwall/openwrt-passwall/xray-plugin
           Old_PKG_VERSION=$(sed -n '8p' Makefile | awk -F '=' '{print $2}')
           New_PKG_VERSION=$(curl --silent "https://api.github.com/repos/teddysun/xray-plugin/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
-          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; echo "IS_UPDATE=true" >> $GITHUB_ENV; fi;
+          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; fi;
 
       - name: Update xray-plugin
         if: steps.xray-plugin.outputs.status == 'success' && !cancelled()
@@ -356,7 +357,7 @@ jobs:
           New_PKG_VERSION=$(curl --silent "https://api.github.com/repos/teddysun/xray-plugin/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
           sed -i "8c PKG_VERSION:=$New_PKG_VERSION" Makefile
 
-          cd && cd packages && mkdir xray-plugin && cd xray-plugin
+          cd && cd packages && mkdir -p xray-plugin && cd xray-plugin
           wget -P / https://codeload.github.com/teddysun/xray-plugin/tar.gz/v$New_PKG_VERSION
           PKG_HASH=$(sha256sum v$New_PKG_VERSION) && PKG_HASH=${PKG_HASH%% *}
           cd && cd work/openwrt-passwall/openwrt-passwall/xray-plugin
