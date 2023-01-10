@@ -347,6 +347,7 @@ load_acl() {
 								cp -r /tmp/etc/dnsmasq.conf.${default_dnsmasq_cfgid} $TMP_ACL_PATH/$sid/dnsmasq.conf
 								sed -i "/ubus/d" $TMP_ACL_PATH/$sid/dnsmasq.conf
 								sed -i "/dhcp/d" $TMP_ACL_PATH/$sid/dnsmasq.conf
+								sed -i "/port=/d" $TMP_ACL_PATH/$sid/dnsmasq.conf
 								sed -i "/conf-dir/d" $TMP_ACL_PATH/$sid/dnsmasq.conf
 							}
 							echo "port=${dnsmasq_port}" >> $TMP_ACL_PATH/$sid/dnsmasq.conf
