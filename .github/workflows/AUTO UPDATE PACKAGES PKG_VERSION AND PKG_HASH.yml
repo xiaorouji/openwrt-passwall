@@ -330,7 +330,7 @@ jobs:
           wget -P / https://github.com/v2fly/geoip/releases/download/$New_PKG_VERSION_geoip/geoip.dat
           PKG_HASH=$(sha256sum geoip.dat) && PKG_HASH=${PKG_HASH%% *}
           cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
-          sed -i "21c HASH:=$PKG_HASH" Makefile
+          sed -i "21c \  HASH:=$PKG_HASH" Makefile
           
           echo "已更新 geoip 版本到：$New_PKG_VERSION_geoip"
           echo "geoip Hash:$PKG_HASH"
@@ -346,7 +346,7 @@ jobs:
           wget -P / https://github.com/v2fly/domain-list-community/releases/download/$New_PKG_VERSION_geosite/dlc.dat
           PKG_HASH=$(sha256sum dlc.dat) && PKG_HASH=${PKG_HASH%% *}
           cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
-          sed -i "30c HASH:=$PKG_HASH" Makefile
+          sed -i "30c \  HASH:=$PKG_HASH" Makefile
           
           echo "已更新 geosite 版本到：$New_PKG_VERSION_geosite"
           echo "geosite Hash:$PKG_HASH"
