@@ -29,8 +29,7 @@ jobs:
       - name: Initialization environment
         run: |
           cd && mkdir -p packages && cd packages
-          echo "<<EOF" >> commit_messages.txt
-          echo "auto update packages" >> commit_messages.txt
+          echo ":rocket: auto update packages" >> commit_messages.txt
           sudo timedatectl set-timezone "$TZ"
 
 
@@ -62,7 +61,7 @@ jobs:
           echo "已更新brook版本到：$New_PKG_VERSION"
           echo "brook Hash:$PKG_HASH"
           cd && cd packages
-          echo "brook: update to $New_PKG_VERSION" >> commit_messages.txt
+          echo ":white_check_mark: brook: update to $New_PKG_VERSION" >> commit_messages.txt
 
 
       - name: Check hysteria
@@ -94,7 +93,7 @@ jobs:
           echo "已更新 hysteria 版本到：$New_PKG_VERSION"
           echo "hysteria Hash:$PKG_HASH"
           cd && cd packages
-          echo "hysteria: update to $New_PKG_VERSION" >> commit_messages.txt
+          echo ":white_check_mark: hysteria: update to $New_PKG_VERSION" >> commit_messages.txt
 
           
 
@@ -127,7 +126,7 @@ jobs:
           echo "已更新 ipt2socks 版本到：$New_PKG_VERSION"
           echo "ipt2socks Hash:$PKG_HASH"
           cd && cd packages
-          echo "ipt2socks: update to $New_PKG_VERSION" >> commit_messages.txt
+          echo ":white_check_mark: ipt2socks: update to $New_PKG_VERSION" >> commit_messages.txt
 
           
 
@@ -163,7 +162,7 @@ jobs:
           echo "已更新 microsocks 版本到：$New_PKG_VERSION"
           echo "microsocks Hash:$PKG_HASH"
           cd && cd packages
-          echo "microsocks: update to $New_PKG_VERSION" >> commit_messages.txt
+          echo ":white_check_mark: microsocks: update to $New_PKG_VERSION" >> commit_messages.txt
 
           
 
@@ -196,7 +195,7 @@ jobs:
           echo "已更新 sing-box 版本到：$New_PKG_VERSION"
           echo "sing-box Hash:$PKG_HASH"
           cd && cd packages
-          echo "sing-box: update to $New_PKG_VERSION" >> commit_messages.txt
+          echo ":white_check_mark: sing-box: update to $New_PKG_VERSION" >> commit_messages.txt
 
           
 
@@ -229,7 +228,7 @@ jobs:
           echo "已更新 trojan 版本到：$New_PKG_VERSION"
           echo "trojan Hash:$PKG_HASH"
           cd && cd packages
-          echo "trojan: update to $New_PKG_VERSION" >> commit_messages.txt
+          echo ":white_check_mark: trojan: update to $New_PKG_VERSION" >> commit_messages.txt
 
           
 
@@ -262,7 +261,7 @@ jobs:
           echo "已更新 trojan-go 版本到：$New_PKG_VERSION"
           echo "trojan-go Hash:$PKG_HASH"
           cd && cd packages
-          echo "trojan-go: update to $New_PKG_VERSION" >> commit_messages.txt
+          echo ":white_check_mark: trojan-go: update to $New_PKG_VERSION" >> commit_messages.txt
 
           
 
@@ -295,7 +294,7 @@ jobs:
           echo "已更新 v2ray-core 版本到：$New_PKG_VERSION"
           echo "v2ray-core Hash:$PKG_HASH"
           cd && cd packages
-          echo "v2ray-core: update to $New_PKG_VERSION" >> commit_messages.txt
+          echo ":white_check_mark: v2ray-core: update to $New_PKG_VERSION" >> commit_messages.txt
 
           
 
@@ -335,7 +334,7 @@ jobs:
           echo "已更新 geoip 版本到：$New_PKG_VERSION_geoip"
           echo "geoip Hash:$PKG_HASH"
           cd && cd packages
-          echo "geoip: update to $New_PKG_VERSION_geoip" >> commit_messages.txt
+          echo ":white_check_mark: geoip: update to $New_PKG_VERSION_geoip" >> commit_messages.txt
 
 
           cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
@@ -351,7 +350,7 @@ jobs:
           echo "已更新 geosite 版本到：$New_PKG_VERSION_geosite"
           echo "geosite Hash:$PKG_HASH"
           cd && cd packages
-          echo "geosite: update to $New_PKG_VERSION_geosite" >> commit_messages.txt
+          echo ":white_check_mark: geosite: update to $New_PKG_VERSION_geosite" >> commit_messages.txt
 
           
 
@@ -384,7 +383,7 @@ jobs:
           echo "已更新 v2ray-plugin 版本到：$New_PKG_VERSION"
           echo "v2ray-plugin Hash:$PKG_HASH"
           cd && cd packages
-          echo "v2ray-plugin: update to $New_PKG_VERSION" >> commit_messages.txt
+          echo ":white_check_mark: v2ray-plugin: update to $New_PKG_VERSION" >> commit_messages.txt
           
 
       - name: Check xray-core
@@ -416,7 +415,7 @@ jobs:
           echo "已更新 xray-core 版本到：$New_PKG_VERSION"
           echo "xray-core Hash:$PKG_HASH"
           cd && cd packages
-          echo "xray-core: update to $New_PKG_VERSION" >> commit_messages.txt
+          echo ":white_check_mark: xray-core: update to $New_PKG_VERSION" >> commit_messages.txt
 
           
 
@@ -449,19 +448,16 @@ jobs:
           echo "已更新 xray-plugin 版本到：$New_PKG_VERSION"
           echo "xray-plugin Hash:$PKG_HASH"
           cd && cd packages
-          echo "xray-plugin: update to $New_PKG_VERSION" >> commit_messages.txt
+          echo ":white_check_mark: xray-plugin: update to $New_PKG_VERSION" >> commit_messages.txt
 
 
       - name: Read Commit Message
         id: commit_message_step
         run: |
           cd && cd packages
-          cm=$(cat commit_messages.txt)
-          cm="${cm//'%'/'%25'}"
-          cm="${cm//$'\n'/'%0A'}"
-          cm="${cm//$'\r'/'%0D'}"         
-          echo -e "commit_message=$cm" >> $GITHUB_OUTPUT;
-          echo $(cat commit_messages.txt)
+          echo 'commit_message<<EOF' >> $GITHUB_OUTPUT
+          cat commit_messages.txt >> $GITHUB_OUTPUT
+          echo 'EOF' >> $GITHUB_OUTPUT
 
       - name: Git Auto Commit
         uses: stefanzweifel/git-auto-commit-action@v4.16.0
@@ -469,7 +465,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          commit_message: auto update packages
+          commit_message: ${{ steps.commit_message_step.outputs.commit_message }}
           branch: packages   
 
       - name: SSH connection to Actions
