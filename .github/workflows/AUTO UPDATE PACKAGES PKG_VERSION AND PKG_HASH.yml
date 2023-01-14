@@ -39,7 +39,7 @@ jobs:
         run: |
           cd && cd work/openwrt-passwall/openwrt-passwall/brook 
           Old_PKG_VERSION=$(sed -n '8p' Makefile | awk -F '=' '{print $2}')
-          New_PKG_VERSION=$(wget -qO- -t1 -T2 "https://api.github.com/repos/txthinking/brook/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/txthinking/brook/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
 
           echo "目前版本：$Old_PKG_VERSION"
           echo "最新版本：$New_PKG_VERSION"
@@ -50,7 +50,7 @@ jobs:
         if: steps.brook.outputs.status == 'success' && !cancelled()
         run: |
           cd && cd work/openwrt-passwall/openwrt-passwall/brook 
-          New_PKG_VERSION=$(wget -qO- -t1 -T2 "https://api.github.com/repos/txthinking/brook/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/txthinking/brook/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
           sed -i "8c PKG_VERSION:=$New_PKG_VERSION" Makefile
 
           cd && cd packages && mkdir -p brook && cd brook
@@ -70,7 +70,7 @@ jobs:
         run: |
           cd && cd work/openwrt-passwall/openwrt-passwall/hysteria
           Old_PKG_VERSION=$(sed -n '8p' Makefile | awk -F '=' '{print $2}')
-          New_PKG_VERSION=$(wget -qO- -t1 -T2 "https://api.github.com/repos/apernet/hysteria/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/apernet/hysteria/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
 
           echo "目前版本：$Old_PKG_VERSION"
           echo "最新版本：$New_PKG_VERSION"
@@ -82,7 +82,7 @@ jobs:
         run: |
           cd && cd work/openwrt-passwall/openwrt-passwall/hysteria
           
-          New_PKG_VERSION=$(wget -qO- -t1 -T2 "https://api.github.com/repos/apernet/hysteria/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/apernet/hysteria/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
           sed -i "8c PKG_VERSION:=$New_PKG_VERSION" Makefile
 
           cd && cd packages && mkdir -p hysteria && cd hysteria
@@ -103,7 +103,7 @@ jobs:
         run: |
           cd && cd work/openwrt-passwall/openwrt-passwall/ipt2socks
           Old_PKG_VERSION=$(sed -n '8p' Makefile | awk -F '=' '{print $2}')
-          New_PKG_VERSION=$(wget -qO- -t1 -T2 "https://api.github.com/repos/zfl9/ipt2socks/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/zfl9/ipt2socks/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
 
           echo "目前版本：$Old_PKG_VERSION"
           echo "最新版本：$New_PKG_VERSION"
@@ -115,7 +115,7 @@ jobs:
         run: |
           cd && cd work/openwrt-passwall/openwrt-passwall/ipt2socks
           
-          New_PKG_VERSION=$(wget -qO- -t1 -T2 "https://api.github.com/repos/zfl9/ipt2socks/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/zfl9/ipt2socks/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
           sed -i "8c PKG_VERSION:=$New_PKG_VERSION" Makefile
 
           cd && cd packages && mkdir -p ipt2socks && cd ipt2socks
@@ -137,7 +137,7 @@ jobs:
           cd && cd work/openwrt-passwall/openwrt-passwall/microsocks
           
           Old_PKG_VERSION=$(sed -n '8p' Makefile | awk -F '=' '{print $2}')
-          New_PKG_VERSION=$(wget -qO- -t1 -T2 "https://api.github.com/repos/rofl0r/microsocks/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/rofl0r/microsocks/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
 
           echo "目前版本：$Old_PKG_VERSION"
           echo "最新版本：$New_PKG_VERSION"
@@ -151,7 +151,7 @@ jobs:
         run: |
           cd && cd work/openwrt-passwall/openwrt-passwall/microsocks
           
-          New_PKG_VERSION=$(wget -qO- -t1 -T2 "https://api.github.com/repos/rofl0r/microsocks/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/rofl0r/microsocks/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
           sed -i "8c PKG_VERSION:=$New_PKG_VERSION" Makefile
 
           cd && cd packages && mkdir -p microsocks && cd microsocks
@@ -172,7 +172,7 @@ jobs:
         run: |
           cd && cd work/openwrt-passwall/openwrt-passwall/sing-box
           Old_PKG_VERSION=$(sed -n '9p' Makefile | awk -F '=' '{print $2}')
-          New_PKG_VERSION=$(wget -qO- -t1 -T2 "https://api.github.com/repos/SagerNet/sing-box/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/SagerNet/sing-box/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
 
           echo "目前版本：$Old_PKG_VERSION"
           echo "最新版本：$New_PKG_VERSION"
@@ -184,7 +184,7 @@ jobs:
         run: |
           cd && cd work/openwrt-passwall/openwrt-passwall/sing-box
           
-          New_PKG_VERSION=$(wget -qO- -t1 -T2 "https://api.github.com/repos/SagerNet/sing-box/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/SagerNet/sing-box/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
           sed -i "9c PKG_VERSION:=$New_PKG_VERSION" Makefile
 
           cd && cd packages && mkdir -p sing-box && cd sing-box
@@ -205,7 +205,7 @@ jobs:
         run: |
           cd && cd work/openwrt-passwall/openwrt-passwall/trojan
           Old_PKG_VERSION=$(sed -n '10p' Makefile | awk -F '=' '{print $2}')
-          New_PKG_VERSION=$(wget -qO- -t1 -T2 "https://api.github.com/repos/trojan-gfw/trojan/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/trojan-gfw/trojan/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
 
           echo "目前版本：$Old_PKG_VERSION"
           echo "最新版本：$New_PKG_VERSION"
@@ -217,7 +217,7 @@ jobs:
         run: |
           cd && cd work/openwrt-passwall/openwrt-passwall/trojan
           
-          New_PKG_VERSION=$(wget -qO- -t1 -T2 "https://api.github.com/repos/trojan-gfw/trojan/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/trojan-gfw/trojan/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
           sed -i "10c PKG_VERSION:=$New_PKG_VERSION" Makefile
 
           cd && cd packages && mkdir -p trojan && cd trojan
@@ -238,7 +238,7 @@ jobs:
         run: |
           cd && cd work/openwrt-passwall/openwrt-passwall/trojan-go
           Old_PKG_VERSION=$(sed -n '8p' Makefile | awk -F '=' '{print $2}')
-          New_PKG_VERSION=$(wget -qO- -t1 -T2 "https://api.github.com/repos/p4gefau1t/trojan-go/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/p4gefau1t/trojan-go/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
 
           echo "目前版本：$Old_PKG_VERSION"
           echo "最新版本：$New_PKG_VERSION"
@@ -250,7 +250,7 @@ jobs:
         run: |
           cd && cd work/openwrt-passwall/openwrt-passwall/trojan-go
           
-          New_PKG_VERSION=$(wget -qO- -t1 -T2 "https://api.github.com/repos/p4gefau1t/trojan-go/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/p4gefau1t/trojan-go/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
           sed -i "8c PKG_VERSION:=$New_PKG_VERSION" Makefile
 
           cd && cd packages && mkdir -p trojan-go && cd trojan-go
@@ -271,7 +271,7 @@ jobs:
         run: |
           cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-core
           Old_PKG_VERSION=$(sed -n '8p' Makefile | awk -F '=' '{print $2}')
-          New_PKG_VERSION=$(wget -qO- -t1 -T2 "https://api.github.com/repos/v2fly/v2ray-core/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/v2fly/v2ray-core/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
 
           echo "目前版本：$Old_PKG_VERSION"
           echo "最新版本：$New_PKG_VERSION"
@@ -283,7 +283,7 @@ jobs:
         run: |
           cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-core
           
-          New_PKG_VERSION=$(wget -qO- -t1 -T2 "https://api.github.com/repos/v2fly/v2ray-core/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/v2fly/v2ray-core/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
           sed -i "8c PKG_VERSION:=$New_PKG_VERSION" Makefile
 
           cd && cd packages && mkdir -p v2ray-core && cd v2ray-core
@@ -304,13 +304,13 @@ jobs:
         run: |
           cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
           Old_PKG_VERSION_geoip=$(sed -n '15p' Makefile | awk -F '=' '{print $2}')
-          New_PKG_VERSION_geoip=$(wget -qO- -t1 -T2 "https://api.github.com/repos/v2fly/geoip/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
+          New_PKG_VERSION_geoip=$(wget -qO- -t5 -T5 "https://api.github.com/repos/v2fly/geoip/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
 
           echo "目前版本：$Old_PKG_VERSION_geoip"
           echo "最新版本：$New_PKG_VERSION_geoip"
           
           Old_PKG_VERSION_geosite=$(sed -n '24p' Makefile | awk -F '=' '{print $2}')
-          New_PKG_VERSION_geosite=$(wget -qO- -t1 -T2 "https://api.github.com/repos/v2fly/domain-list-community/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
+          New_PKG_VERSION_geosite=$(wget -qO- -t5 -T5 "https://api.github.com/repos/v2fly/domain-list-community/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
           
           echo "目前版本：$Old_PKG_VERSION_geosite"
           echo "最新版本：$New_PKG_VERSION_geosite"
@@ -323,7 +323,7 @@ jobs:
         run: |
           cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
           
-          New_PKG_VERSION_geoip=$(wget -qO- -t1 -T2 "https://api.github.com/repos/v2fly/geoip/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
+          New_PKG_VERSION_geoip=$(wget -qO- -t5 -T5 "https://api.github.com/repos/v2fly/geoip/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
           sed -i "15c GEOIP_VER:=$New_PKG_VERSION_geoip" Makefile
 
           cd && cd packages && mkdir -p v2ray-geoip && cd v2ray-geoip
@@ -339,7 +339,7 @@ jobs:
 
 
           cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
-          New_PKG_VERSION_geosite=$(wget -qO- -t1 -T2 "https://api.github.com/repos/v2fly/domain-list-community/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
+          New_PKG_VERSION_geosite=$(wget -qO- -t5 -T5 "https://api.github.com/repos/v2fly/domain-list-community/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
           sed -i "24c GEOSITE_VER:=$New_PKG_VERSION_geosite" Makefile
 
           cd && cd packages && mkdir -p v2ray-geosite && cd v2ray-geosite
@@ -360,7 +360,7 @@ jobs:
         run: |
           cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-plugin
           Old_PKG_VERSION=$(sed -n '9p' Makefile | awk -F '=' '{print $2}')
-          New_PKG_VERSION=$(wget -qO- -t1 -T2 "https://api.github.com/repos/teddysun/v2ray-plugin/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/teddysun/v2ray-plugin/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
 
           echo "目前版本：$Old_PKG_VERSION"
           echo "最新版本：$New_PKG_VERSION"
@@ -372,7 +372,7 @@ jobs:
         run: |
           cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-plugin
           
-          New_PKG_VERSION=$(wget -qO- -t1 -T2 "https://api.github.com/repos/teddysun/v2ray-plugin/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/teddysun/v2ray-plugin/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
           sed -i "9c PKG_VERSION:=$New_PKG_VERSION" Makefile
 
           cd && cd packages && mkdir -p v2ray-plugin && cd v2ray-plugin
@@ -392,7 +392,7 @@ jobs:
         run: |
           cd && cd work/openwrt-passwall/openwrt-passwall/xray-core
           Old_PKG_VERSION=$(sed -n '4p' Makefile | awk -F '=' '{print $2}')
-          New_PKG_VERSION=$(wget -qO- -t1 -T2 "https://api.github.com/repos/XTLS/Xray-core/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/XTLS/Xray-core/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
 
           echo "目前版本：$Old_PKG_VERSION"
           echo "最新版本：$New_PKG_VERSION"
@@ -404,7 +404,7 @@ jobs:
         run: |
           cd && cd work/openwrt-passwall/openwrt-passwall/xray-core
           
-          New_PKG_VERSION=$(wget -qO- -t1 -T2 "https://api.github.com/repos/XTLS/Xray-core/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/XTLS/Xray-core/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
           sed -i "4c PKG_VERSION:=$New_PKG_VERSION" Makefile
 
           cd && cd packages && mkdir -p xray-core && cd xray-core
@@ -425,7 +425,7 @@ jobs:
         run: |
           cd && cd work/openwrt-passwall/openwrt-passwall/xray-plugin
           Old_PKG_VERSION=$(sed -n '8p' Makefile | awk -F '=' '{print $2}')
-          New_PKG_VERSION=$(wget -qO- -t1 -T2 "https://api.github.com/repos/teddysun/xray-plugin/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/teddysun/xray-plugin/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
 
           echo "目前版本：$Old_PKG_VERSION"
           echo "最新版本：$New_PKG_VERSION"
@@ -437,7 +437,7 @@ jobs:
         run: |
           cd && cd work/openwrt-passwall/openwrt-passwall/xray-plugin
           
-          New_PKG_VERSION=$(wget -qO- -t1 -T2 "https://api.github.com/repos/teddysun/xray-plugin/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/teddysun/xray-plugin/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
           sed -i "8c PKG_VERSION:=$New_PKG_VERSION" Makefile
 
           cd && cd packages && mkdir -p xray-plugin && cd xray-plugin
