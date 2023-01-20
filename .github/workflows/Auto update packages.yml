@@ -1,0 +1,661 @@
+#
+# Copyright (c) 2022-2023 SMALLPROGRAM <https://github.com/smallprogram>
+# Description: Auto update packages
+#
+name: "Auto update packages"
+on:
+  repository_dispatch:
+  workflow_dispatch:
+    inputs:
+      ssh:
+        description: 'SSH connection to Actions'
+        required: false
+        default: 'false'
+  schedule:
+    - cron: "0 */4 * * *"
+env:
+  TZ: Asia/Shanghai
+
+
+jobs:
+  job_init:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete workflow runs
+        uses: Mattraks/delete-workflow-runs@main
+        with:
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          retain_days: 1
+          keep_minimum_runs: 0
+
+      - name: SSH connection to Actions
+        uses: mxschmitt/action-tmate@v3.13
+        if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
+
+  job_brook:
+    needs: job_init
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          ref: 'packages'
+
+      - name: Initialization environment
+        run: |
+          cd && mkdir -p packages && cd packages
+          sudo timedatectl set-timezone "$TZ"
+
+      - name: Check brook
+        id: brook
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/brook 
+          Old_PKG_VERSION=$(sed -n '8p' Makefile | awk -F '=' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/txthinking/brook/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          echo "目前版本: $Old_PKG_VERSION"
+          echo "最新版本: $New_PKG_VERSION"
+          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; fi;
+
+      - name: Update brook
+        id: update
+        if: steps.brook.outputs.status == 'success' && !cancelled()
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/brook 
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/txthinking/brook/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          sed -i "8c PKG_VERSION:=$New_PKG_VERSION" Makefile
+          cd && cd packages && mkdir -p brook && cd brook
+          wget -P / https://codeload.github.com/txthinking/brook/tar.gz/v$New_PKG_VERSION
+          PKG_HASH=$(sha256sum v$New_PKG_VERSION) && PKG_HASH=${PKG_HASH%% *}
+          cd && cd work/openwrt-passwall/openwrt-passwall/brook 
+          sed -i "13c PKG_HASH:=$PKG_HASH" Makefile
+          echo "已更新brook版本到: $New_PKG_VERSION"
+          echo "brook Hash:$PKG_HASH"
+          cd && cd packages
+          echo ":white_check_mark: brook: update to $New_PKG_VERSION" >> commit_messages.txt
+          echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Git Auto Commit
+        uses: stefanzweifel/git-auto-commit-action@v4.16.0
+        id: commit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          commit_message: "brook: update to ${{ steps.update.outputs.version }}"
+          branch: packages
+
+  job_hysteria:
+    needs: job_brook
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          ref: 'packages'
+
+      - name: Initialization environment
+        run: |
+          cd && mkdir -p packages && cd packages
+          sudo timedatectl set-timezone "$TZ"
+
+      - name: Check hysteria
+        id: hysteria
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/hysteria
+          Old_PKG_VERSION=$(sed -n '8p' Makefile | awk -F '=' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/apernet/hysteria/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          echo "目前版本: $Old_PKG_VERSION"
+          echo "最新版本: $New_PKG_VERSION"
+          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; fi;
+
+      - name: Update hysteria
+        id: update
+        if: steps.hysteria.outputs.status == 'success' && !cancelled()
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/hysteria
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/apernet/hysteria/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          sed -i "8c PKG_VERSION:=$New_PKG_VERSION" Makefile
+          cd && cd packages && mkdir -p hysteria && cd hysteria
+          wget -P / https://codeload.github.com/apernet/hysteria/tar.gz/v$New_PKG_VERSION
+          PKG_HASH=$(sha256sum v$New_PKG_VERSION) && PKG_HASH=${PKG_HASH%% *}
+          cd && cd work/openwrt-passwall/openwrt-passwall/hysteria
+          sed -i "13c PKG_HASH:=$PKG_HASH" Makefile
+          echo "已更新 hysteria 版本到: $New_PKG_VERSION"
+          echo "hysteria Hash:$PKG_HASH"
+          cd && cd packages
+          echo ":white_check_mark: hysteria: update to $New_PKG_VERSION" >> commit_messages.txt
+          echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Git Auto Commit
+        uses: stefanzweifel/git-auto-commit-action@v4.16.0
+        id: commit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          commit_message: "hysteria: update to ${{ steps.update.outputs.version }}"
+          branch: packages
+
+  job_ipt2socks:
+    needs: job_hysteria
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          ref: 'packages'
+
+      - name: Initialization environment
+        run: |
+          cd && mkdir -p packages && cd packages
+          sudo timedatectl set-timezone "$TZ"
+
+      - name: Check ipt2socks
+        id: ipt2socks
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/ipt2socks
+          Old_PKG_VERSION=$(sed -n '8p' Makefile | awk -F '=' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/zfl9/ipt2socks/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          echo "目前版本: $Old_PKG_VERSION"
+          echo "最新版本: $New_PKG_VERSION"
+          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; fi;
+
+      - name: Update ipt2socks
+        id: update
+        if: steps.ipt2socks.outputs.status == 'success' && !cancelled()
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/ipt2socks
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/zfl9/ipt2socks/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          sed -i "8c PKG_VERSION:=$New_PKG_VERSION" Makefile
+          cd && cd packages && mkdir -p ipt2socks && cd ipt2socks
+          wget -P / https://codeload.github.com/zfl9/ipt2socks/tar.gz/v$New_PKG_VERSION
+          PKG_HASH=$(sha256sum v$New_PKG_VERSION) && PKG_HASH=${PKG_HASH%% *}
+          cd && cd work/openwrt-passwall/openwrt-passwall/ipt2socks
+          sed -i "13c PKG_HASH:=$PKG_HASH" Makefile
+          echo "已更新 ipt2socks 版本到: $New_PKG_VERSION"
+          echo "ipt2socks Hash:$PKG_HASH"
+          cd && cd packages
+          echo ":white_check_mark: ipt2socks: update to $New_PKG_VERSION" >> commit_messages.txt
+          echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Git Auto Commit
+        uses: stefanzweifel/git-auto-commit-action@v4.16.0
+        id: commit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          commit_message: "ipt2socks: update to ${{ steps.update.outputs.version }}"
+          branch: packages
+
+  job_microsocks:
+    needs: job_ipt2socks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          ref: 'packages'
+
+      - name: Initialization environment
+        run: |
+          cd && mkdir -p packages && cd packages
+          sudo timedatectl set-timezone "$TZ"
+
+      - name: Check microsocks
+        id: microsocks
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/microsocks
+          Old_PKG_VERSION=$(sed -n '8p' Makefile | awk -F '=' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/rofl0r/microsocks/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          echo "目前版本: $Old_PKG_VERSION"
+          echo "最新版本: $New_PKG_VERSION"
+          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; fi;
+
+      - name: Update microsocks
+        id: update
+        if: steps.microsocks.outputs.status == 'success' && !cancelled()
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/microsocks
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/rofl0r/microsocks/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          sed -i "8c PKG_VERSION:=$New_PKG_VERSION" Makefile
+          cd && cd packages && mkdir -p microsocks && cd microsocks
+          wget -P / https://codeload.github.com/rofl0r/microsocks/tar.gz/v$New_PKG_VERSION
+          PKG_HASH=$(sha256sum v$New_PKG_VERSION) && PKG_HASH=${PKG_HASH%% *}
+          cd && cd work/openwrt-passwall/openwrt-passwall/microsocks
+          sed -i "13c PKG_HASH:=$PKG_HASH" Makefile
+          echo "已更新 microsocks 版本到: $New_PKG_VERSION"
+          echo "microsocks Hash:$PKG_HASH"
+          cd && cd packages
+          echo ":white_check_mark: microsocks: update to $New_PKG_VERSION" >> commit_messages.txt
+          echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Git Auto Commit
+        uses: stefanzweifel/git-auto-commit-action@v4.16.0
+        id: commit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          commit_message: "microsocks: update to ${{ steps.update.outputs.version }}"
+          branch: packages
+
+  job_sing-box:
+    needs: job_microsocks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          ref: 'packages'
+
+      - name: Initialization environment
+        run: |
+          cd && mkdir -p packages && cd packages
+          sudo timedatectl set-timezone "$TZ"
+
+      - name: Check sing-box
+        id: sing-box
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/sing-box
+          Old_PKG_VERSION=$(sed -n '9p' Makefile | awk -F '=' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/SagerNet/sing-box/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          echo "目前版本: $Old_PKG_VERSION"
+          echo "最新版本: $New_PKG_VERSION"
+          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; fi;
+
+      - name: Update sing-box
+        id: update
+        if: steps.sing-box.outputs.status == 'success' && !cancelled()
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/sing-box
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/SagerNet/sing-box/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          sed -i "9c PKG_VERSION:=$New_PKG_VERSION" Makefile
+          cd && cd packages && mkdir -p sing-box && cd sing-box
+          wget -P / https://codeload.github.com/SagerNet/sing-box/tar.gz/v$New_PKG_VERSION
+          PKG_HASH=$(sha256sum v$New_PKG_VERSION) && PKG_HASH=${PKG_HASH%% *}
+          cd && cd work/openwrt-passwall/openwrt-passwall/sing-box
+          sed -i "14c PKG_HASH:=$PKG_HASH" Makefile
+          echo "已更新 sing-box 版本到: $New_PKG_VERSION"
+          echo "sing-box Hash:$PKG_HASH"
+          cd && cd packages
+          echo ":white_check_mark: sing-box: update to $New_PKG_VERSION" >> commit_messages.txt
+          echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Git Auto Commit
+        uses: stefanzweifel/git-auto-commit-action@v4.16.0
+        id: commit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          commit_message: "sing-box: update to ${{ steps.update.outputs.version }}"
+          branch: packages
+
+  job_trojan:
+    needs: job_sing-box
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          ref: 'packages'
+
+      - name: Initialization environment
+        run: |
+          cd && mkdir -p packages && cd packages
+          sudo timedatectl set-timezone "$TZ"
+
+      - name: Check trojan
+        id: trojan
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/trojan
+          Old_PKG_VERSION=$(sed -n '10p' Makefile | awk -F '=' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/trojan-gfw/trojan/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          echo "目前版本: $Old_PKG_VERSION"
+          echo "最新版本: $New_PKG_VERSION"
+          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; fi;
+
+      - name: Update trojan
+        id: update
+        if: steps.trojan.outputs.status == 'success' && !cancelled()
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/trojan
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/trojan-gfw/trojan/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          sed -i "10c PKG_VERSION:=$New_PKG_VERSION" Makefile
+          cd && cd packages && mkdir -p trojan && cd trojan
+          wget -P / https://codeload.github.com/trojan-gfw/trojan/tar.gz/v$New_PKG_VERSION
+          PKG_HASH=$(sha256sum v$New_PKG_VERSION) && PKG_HASH=${PKG_HASH%% *}
+          cd && cd work/openwrt-passwall/openwrt-passwall/trojan
+          sed -i "15c PKG_HASH:=$PKG_HASH" Makefile
+          echo "已更新 trojan 版本到: $New_PKG_VERSION"
+          echo "trojan Hash:$PKG_HASH"
+          cd && cd packages
+          echo ":white_check_mark: trojan: update to $New_PKG_VERSION" >> commit_messages.txt
+          echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Git Auto Commit
+        uses: stefanzweifel/git-auto-commit-action@v4.16.0
+        id: commit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          commit_message: "trojan: update to ${{ steps.update.outputs.version }}"
+          branch: packages
+
+  job_trojan-go:
+    needs: job_trojan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          ref: 'packages'
+
+      - name: Initialization environment
+        run: |
+          cd && mkdir -p packages && cd packages
+          sudo timedatectl set-timezone "$TZ"
+
+      - name: Check trojan-go
+        id: trojan-go
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/trojan-go
+          Old_PKG_VERSION=$(sed -n '8p' Makefile | awk -F '=' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/p4gefau1t/trojan-go/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          echo "目前版本: $Old_PKG_VERSION"
+          echo "最新版本: $New_PKG_VERSION"
+          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; fi;
+
+      - name: Update trojan-go
+        id: update
+        if: steps.trojan-go.outputs.status == 'success' && !cancelled()
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/trojan-go
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/p4gefau1t/trojan-go/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          sed -i "8c PKG_VERSION:=$New_PKG_VERSION" Makefile
+          cd && cd packages && mkdir -p trojan-go && cd trojan-go
+          wget -P / https://codeload.github.com/p4gefau1t/trojan-go/tar.gz/v$New_PKG_VERSION
+          PKG_HASH=$(sha256sum v$New_PKG_VERSION) && PKG_HASH=${PKG_HASH%% *}
+          cd && cd work/openwrt-passwall/openwrt-passwall/trojan-go
+          sed -i "13c PKG_HASH:=$PKG_HASH" Makefile
+          echo "已更新 trojan-go 版本到: $New_PKG_VERSION"
+          echo "trojan-go Hash:$PKG_HASH"
+          cd && cd packages
+          echo ":white_check_mark: trojan-go: update to $New_PKG_VERSION" >> commit_messages.txt
+          echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Git Auto Commit
+        uses: stefanzweifel/git-auto-commit-action@v4.16.0
+        id: commit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          commit_message: "trojan-go: update to ${{ steps.update.outputs.version }}"
+          branch: packages
+
+  job_v2ray-core:
+    needs: job_trojan-go
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          ref: 'packages'
+      
+      - name: Initialization environment
+        run: |
+          cd && mkdir -p packages && cd packages
+          sudo timedatectl set-timezone "$TZ"
+      
+      - name: Check v2ray-core
+        id: v2ray-core
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-core
+          Old_PKG_VERSION=$(sed -n '8p' Makefile | awk -F '=' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/v2fly/v2ray-core/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          echo "目前版本: $Old_PKG_VERSION"
+          echo "最新版本: $New_PKG_VERSION"
+          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; fi;
+      
+      - name: Update v2ray-core
+        id: update
+        if: steps.v2ray-core.outputs.status == 'success' && !cancelled()
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-core
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/v2fly/v2ray-core/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          sed -i "8c PKG_VERSION:=$New_PKG_VERSION" Makefile
+          cd && cd packages && mkdir -p v2ray-core && cd v2ray-core
+          wget -P / https://codeload.github.com/v2fly/v2ray-core/tar.gz/v$New_PKG_VERSION
+          PKG_HASH=$(sha256sum v$New_PKG_VERSION) && PKG_HASH=${PKG_HASH%% *}
+          cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-core
+          sed -i "13c PKG_HASH:=$PKG_HASH" Makefile
+          echo "已更新 v2ray-core 版本到: $New_PKG_VERSION"
+          echo "v2ray-core Hash:$PKG_HASH"
+          cd && cd packages
+          echo ":white_check_mark: v2ray-core: update to $New_PKG_VERSION" >> commit_messages.txt
+          echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Git Auto Commit
+        uses: stefanzweifel/git-auto-commit-action@v4.16.0
+        id: commit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          commit_message: "v2ray-core: update to ${{ steps.update.outputs.version }}"
+          branch: packages
+
+  job_v2ray-geodata:
+    needs: job_v2ray-core
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          ref: 'packages'
+      
+      - name: Initialization environment
+        run: |
+          cd && mkdir -p packages && cd packages
+          sudo timedatectl set-timezone "$TZ"
+      
+      - name: Check v2ray-geodata
+        id: v2ray-geodata
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
+          Old_PKG_VERSION_geoip=$(sed -n '15p' Makefile | awk -F '=' '{print $2}')
+          New_PKG_VERSION_geoip=$(wget -qO- -t5 -T5 "https://api.github.com/repos/v2fly/geoip/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
+          echo "目前版本: $Old_PKG_VERSION_geoip"
+          echo "最新版本: $New_PKG_VERSION_geoip"
+          Old_PKG_VERSION_geosite=$(sed -n '24p' Makefile | awk -F '=' '{print $2}')
+          New_PKG_VERSION_geosite=$(wget -qO- -t5 -T5 "https://api.github.com/repos/v2fly/domain-list-community/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
+          echo "目前版本: $Old_PKG_VERSION_geosite"
+          echo "最新版本: $New_PKG_VERSION_geosite"
+          if [ "$Old_PKG_VERSION_geoip" = "$New_PKG_VERSION_geoip" ] || [ "$Old_PKG_VERSION_geosite" = "$New_PKG_VERSION_geosite" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; fi;
+      
+      - name: Update v2ray-geodata
+        id: update
+        if: steps.v2ray-geodata.outputs.status == 'success' && !cancelled()
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
+          New_PKG_VERSION_geoip=$(wget -qO- -t5 -T5 "https://api.github.com/repos/v2fly/geoip/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
+          sed -i "15c GEOIP_VER:=$New_PKG_VERSION_geoip" Makefile
+          cd && cd packages && mkdir -p v2ray-geoip && cd v2ray-geoip
+          wget -P / https://github.com/v2fly/geoip/releases/download/$New_PKG_VERSION_geoip/geoip.dat
+          PKG_HASH=$(sha256sum geoip.dat) && PKG_HASH=${PKG_HASH%% *}
+          cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
+          sed -i "21c \  HASH:=$PKG_HASH" Makefile
+          echo "已更新 geoip 版本到: $New_PKG_VERSION_geoip"
+          echo "geoip Hash:$PKG_HASH"
+          cd && cd packages
+          echo ":white_check_mark: geoip: update to $New_PKG_VERSION_geoip" >> commit_messages.txt
+          cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
+          New_PKG_VERSION_geosite=$(wget -qO- -t5 -T5 "https://api.github.com/repos/v2fly/domain-list-community/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
+          sed -i "24c GEOSITE_VER:=$New_PKG_VERSION_geosite" Makefile
+          cd && cd packages && mkdir -p v2ray-geosite && cd v2ray-geosite
+          wget -P / https://github.com/v2fly/domain-list-community/releases/download/$New_PKG_VERSION_geosite/dlc.dat
+          PKG_HASH=$(sha256sum dlc.dat) && PKG_HASH=${PKG_HASH%% *}
+          cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
+          sed -i "30c \  HASH:=$PKG_HASH" Makefile
+          echo "已更新 geosite 版本到: $New_PKG_VERSION_geosite"
+          echo "geosite Hash:$PKG_HASH"
+          cd && cd packages
+          echo ":white_check_mark: geosite: update to $New_PKG_VERSION_geosite" >> commit_messages.txt
+      
+      - name: Git Auto Commit
+        uses: stefanzweifel/git-auto-commit-action@v4.16.0
+        id: commit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          commit_message: "v2ray-geodata: update to latest"
+          branch: packages
+
+  job_v2ray-plugin:
+    needs: job_v2ray-geodata
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          ref: 'packages'
+      
+      - name: Initialization environment
+        run: |
+          cd && mkdir -p packages && cd packages
+          sudo timedatectl set-timezone "$TZ"
+      
+      - name: Check v2ray-plugin
+        id: v2ray-plugin
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-plugin
+          Old_PKG_VERSION=$(sed -n '9p' Makefile | awk -F '=' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/teddysun/v2ray-plugin/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          echo "目前版本: $Old_PKG_VERSION"
+          echo "最新版本: $New_PKG_VERSION"
+          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; fi;
+      
+      - name: Update v2ray-plugin
+        id: update
+        if: steps.v2ray-plugin.outputs.status == 'success' && !cancelled()
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-plugin
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/teddysun/v2ray-plugin/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          sed -i "9c PKG_VERSION:=$New_PKG_VERSION" Makefile
+          cd && cd packages && mkdir -p v2ray-plugin && cd v2ray-plugin
+          wget -P / https://codeload.github.com/teddysun/v2ray-plugin/tar.gz/v$New_PKG_VERSION
+          PKG_HASH=$(sha256sum v$New_PKG_VERSION) && PKG_HASH=${PKG_HASH%% *}
+          cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-plugin
+          sed -i "14c PKG_HASH:=$PKG_HASH" Makefile
+          echo "已更新 v2ray-plugin 版本到: $New_PKG_VERSION"
+          echo "v2ray-plugin Hash:$PKG_HASH"
+          cd && cd packages
+          echo ":white_check_mark: v2ray-plugin: update to $New_PKG_VERSION" >> commit_messages.txt
+          echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Git Auto Commit
+        uses: stefanzweifel/git-auto-commit-action@v4.16.0
+        id: commit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          commit_message: "v2ray-plugin: update to ${{ steps.update.outputs.version }}"
+          branch: packages
+
+  job_xray-core:
+    needs: job_v2ray-plugin
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          ref: 'packages'
+      
+      - name: Initialization environment
+        run: |
+          cd && mkdir -p packages && cd packages
+          sudo timedatectl set-timezone "$TZ"
+      
+      - name: Check xray-core
+        id: xray-core
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/xray-core
+          Old_PKG_VERSION=$(sed -n '4p' Makefile | awk -F '=' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/XTLS/Xray-core/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          echo "目前版本: $Old_PKG_VERSION"
+          echo "最新版本: $New_PKG_VERSION"
+          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; fi;
+      
+      - name: Update xray-core
+        id: update
+        if: steps.xray-core.outputs.status == 'success' && !cancelled()
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/xray-core
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/XTLS/Xray-core/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          sed -i "4c PKG_VERSION:=$New_PKG_VERSION" Makefile
+          cd && cd packages && mkdir -p xray-core && cd xray-core
+          wget -P / https://codeload.github.com/XTLS/Xray-core/tar.gz/v$New_PKG_VERSION
+          PKG_HASH=$(sha256sum v$New_PKG_VERSION) && PKG_HASH=${PKG_HASH%% *}
+          cd && cd work/openwrt-passwall/openwrt-passwall/xray-core
+          sed -i "9c PKG_HASH:=$PKG_HASH" Makefile
+          echo "已更新 xray-core 版本到: $New_PKG_VERSION"
+          echo "xray-core Hash:$PKG_HASH"
+          cd && cd packages
+          echo ":white_check_mark: xray-core: update to $New_PKG_VERSION" >> commit_messages.txt
+          echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Git Auto Commit
+        uses: stefanzweifel/git-auto-commit-action@v4.16.0
+        id: commit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          commit_message: "xray-core: update to ${{ steps.update.outputs.version }}"
+          branch: packages
+
+  job_xray-plugin:
+    needs: job_xray-core
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          ref: 'packages'
+      
+      - name: Initialization environment
+        run: |
+          cd && mkdir -p packages && cd packages
+          sudo timedatectl set-timezone "$TZ"
+      
+      - name: Check xray-plugin
+        id: xray-plugin
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/xray-plugin
+          Old_PKG_VERSION=$(sed -n '8p' Makefile | awk -F '=' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/teddysun/xray-plugin/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          echo "目前版本: $Old_PKG_VERSION"
+          echo "最新版本: $New_PKG_VERSION"
+          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "status=success" >> $GITHUB_OUTPUT; fi;
+      
+      - name: Update xray-plugin
+        id: update
+        if: steps.xray-plugin.outputs.status == 'success' && !cancelled()
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/xray-plugin
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/teddysun/xray-plugin/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}')
+          sed -i "8c PKG_VERSION:=$New_PKG_VERSION" Makefile
+          cd && cd packages && mkdir -p xray-plugin && cd xray-plugin
+          wget -P / https://codeload.github.com/teddysun/xray-plugin/tar.gz/v$New_PKG_VERSION
+          PKG_HASH=$(sha256sum v$New_PKG_VERSION) && PKG_HASH=${PKG_HASH%% *}
+          cd && cd work/openwrt-passwall/openwrt-passwall/xray-plugin
+          sed -i "13c PKG_HASH:=$PKG_HASH" Makefile
+          echo "已更新 xray-plugin 版本到: $New_PKG_VERSION"
+          echo "xray-plugin Hash:$PKG_HASH"
+          cd && cd packages
+          echo ":white_check_mark: xray-plugin: update to $New_PKG_VERSION" >> commit_messages.txt
+          echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Git Auto Commit
+        uses: stefanzweifel/git-auto-commit-action@v4.16.0
+        id: commit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          commit_message: "xray-plugin: update to ${{ steps.update.outputs.version }}"
+          branch: packages

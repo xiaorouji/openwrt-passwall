@@ -3,7 +3,7 @@
 # Description: AUTO UPDATE PACKAGES PKG_VERSION AND PKG_HASH
 #
 
-name: "AUTO UPDATE PACKAGES PKG_VERSION AND PKG_HASH"
+name: "Auto update packages (old)"
 on:
   repository_dispatch:
   workflow_dispatch:
@@ -13,7 +13,7 @@ on:
         required: false
         default: 'false'
   schedule:
-    - cron: "0 */4 * * *"
+    # - cron: "0 */4 * * *"
 
 env:
   TZ: Asia/Shanghai
