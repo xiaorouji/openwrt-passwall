@@ -288,12 +288,12 @@ local has_xray = api.is_finded("xray")
 
 			if (opt.get("tls").checked) {
 					var v_security = "tls";
-					var v_flow = "xtls-rprx-vision";
+					var v_flow = null;
+					params += "&security=" + v_security;
 					if (opt.get("tlsflow").value) {
 						v_flow = opt.get("tlsflow").value;
+						params += "&flow=" + v_flow;
 					}
-					params += "&flow=" + v_flow;
-					params += "&security=" + v_security;
 					params += opt.query("sni", "tls_serverName");
 			}
 

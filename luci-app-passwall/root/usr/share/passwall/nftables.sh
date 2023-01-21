@@ -543,20 +543,21 @@ load_acl() {
 							nft "add rule inet fw4 PSW_MANGLE ip protocol tcp ${_ipt_source} $(factor $tcp_redir_ports "tcp dport") $(get_nftset_ipv4 $tcp_proxy_mode) counter jump PSW_RULE comment \"$remarks\""
 							nft "add rule inet fw4 PSW_MANGLE meta nfproto {ipv4} meta l4proto tcp ${_ipt_source} $(REDIRECT $tcp_port TPROXY4) comment \"$remarks\""
 						fi
-						nft "add rule inet fw4 $nft_prerouting_chain ip protocol tcp ${_ipt_source} counter return comment \"$remarks\""
 
 						[ "$PROXY_IPV6" == "1" ] && {
 							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto tcp ${_ipt_source} $(factor $tcp_redir_ports "tcp dport") ip6 daddr @$NFTSET_SHUNTLIST6 counter jump PSW_RULE comment \"$remarks\"" 2>/dev/null
 							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto tcp ${_ipt_source} $(factor $tcp_redir_ports "tcp dport") ip6 daddr @$NFTSET_BLACKLIST6 counter jump PSW_RULE comment \"$remarks\"" 2>/dev/null
 							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto tcp ${_ipt_source} $(factor $tcp_redir_ports "tcp dport") $(get_nftset_ipv6 $tcp_proxy_mode) jump PSW_RULE comment \"$remarks\"" 2>/dev/null
 							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto tcp ${_ipt_source} $(REDIRECT $tcp_port TPROXY) comment \"$remarks\"" 2>/dev/null
-							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto tcp ${_ipt_source} return comment \"$remarks\"" 2>/dev/null
 						}
 					else
 						msg2="${msg}不代理TCP"
 					fi
 					echolog "  - ${msg2}"
 				}
+
+				nft "add rule inet fw4 $nft_prerouting_chain ip protocol tcp ${_ipt_source} counter return comment \"$remarks\""
+				nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto tcp ${_ipt_source} counter return comment \"$remarks\"" 2>/dev/null
 
 				[ "$udp_proxy_drop_ports" != "disable" ] && {
 					[ "$PROXY_IPV6" == "1" ] && {
@@ -587,20 +588,20 @@ load_acl() {
 						nft "add rule inet fw4 PSW_MANGLE ip protocol udp ${_ipt_source} $(factor $udp_redir_ports "udp dport") ip daddr @$NFTSET_BLACKLIST counter jump PSW_RULE comment \"$remarks\""
 						nft "add rule inet fw4 PSW_MANGLE ip protocol udp ${_ipt_source} $(factor $udp_redir_ports "udp dport") $(get_nftset_ipv4 $udp_proxy_mode) jump PSW_RULE comment \"$remarks\""
 						nft "add rule inet fw4 PSW_MANGLE ip protocol udp ${_ipt_source} $(REDIRECT $udp_port TPROXY4) comment \"$remarks\""
-						nft "add rule inet fw4 PSW_MANGLE ip protocol udp ${_ipt_source} return comment \"$remarks\""
 
 						[ "$PROXY_IPV6" == "1" ] && [ "$PROXY_IPV6_UDP" == "1" ] && {
 							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} $(factor $udp_redir_ports "tcp dport") ip6 daddr @$NFTSET_SHUNTLIST6 counter jump PSW_RULE comment \"$remarks\"" 2>/dev/null
 							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} $(factor $udp_redir_ports "tcp dport") ip6 daddr @$NFTSET_BLACKLIST6 counter jump PSW_RULE comment \"$remarks\"" 2>/dev/null
 							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} $(factor $udp_redir_ports "tcp dport") $(get_nftset_ipv6 $udp_proxy_mode) counter jump PSW_RULE comment \"$remarks\"" 2>/dev/null
 							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} $(REDIRECT $udp_port TPROXY) comment \"$remarks\"" 2>/dev/null
-							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} counter return comment \"$remarks\"" 2>/dev/null
 						}
 					else
 						msg2="${msg}不代理UDP"
 					fi
 					echolog "  - ${msg2}"
 				}
+				nft "add rule inet fw4 PSW_MANGLE ip protocol udp ${_ipt_source} counter return comment \"$remarks\""
+				nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} counter return comment \"$remarks\"" 2>/dev/null
 			done
 			unset enabled sid remarks sources tcp_proxy_mode udp_proxy_mode tcp_no_redir_ports udp_no_redir_ports tcp_proxy_drop_ports udp_proxy_drop_ports tcp_redir_ports udp_redir_ports tcp_node udp_node dns_mode remote_dns v2ray_dns_mode remote_dns_doh dns_client_ip
 			unset _ip _mac _iprange _ipset _ip_or_mac rule_list tcp_port udp_port tcp_node_remark udp_node_remark config_file _extra_param
