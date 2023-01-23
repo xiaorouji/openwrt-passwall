@@ -34,6 +34,7 @@ jobs:
         if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
 
   job_brook:
+    if: ${{ always() }}
     needs: job_init
     runs-on: ubuntu-latest
     steps:
@@ -85,6 +86,7 @@ jobs:
           branch: packages
 
   job_hysteria:
+    if: ${{ always() }}
     needs: job_brook
     runs-on: ubuntu-latest
     steps:
@@ -136,6 +138,7 @@ jobs:
           branch: packages
 
   job_ipt2socks:
+    if: ${{ always() }}
     needs: job_hysteria
     runs-on: ubuntu-latest
     steps:
@@ -187,6 +190,7 @@ jobs:
           branch: packages
 
   job_microsocks:
+    if: ${{ always() }}
     needs: job_ipt2socks
     runs-on: ubuntu-latest
     steps:
@@ -238,6 +242,7 @@ jobs:
           branch: packages
 
   job_sing-box:
+    if: ${{ always() }}
     needs: job_microsocks
     runs-on: ubuntu-latest
     steps:
@@ -289,6 +294,7 @@ jobs:
           branch: packages
 
   job_trojan:
+    if: ${{ always() }}
     needs: job_sing-box
     runs-on: ubuntu-latest
     steps:
@@ -340,6 +346,7 @@ jobs:
           branch: packages
 
   job_trojan-go:
+    if: ${{ always() }}
     needs: job_trojan
     runs-on: ubuntu-latest
     steps:
@@ -391,6 +398,7 @@ jobs:
           branch: packages
 
   job_v2ray-core:
+    if: ${{ always() }}
     needs: job_trojan-go
     runs-on: ubuntu-latest
     steps:
@@ -442,6 +450,7 @@ jobs:
           branch: packages
 
   job_v2ray-geodata:
+    if: ${{ always() }}
     needs: job_v2ray-core
     runs-on: ubuntu-latest
     steps:
@@ -508,6 +517,7 @@ jobs:
           branch: packages
 
   job_v2ray-plugin:
+    if: ${{ always() }}
     needs: job_v2ray-geodata
     runs-on: ubuntu-latest
     steps:
@@ -559,6 +569,7 @@ jobs:
           branch: packages
 
   job_xray-core:
+    if: ${{ always() }}
     needs: job_v2ray-plugin
     runs-on: ubuntu-latest
     steps:
@@ -610,6 +621,7 @@ jobs:
           branch: packages
 
   job_xray-plugin:
+    if: ${{ always() }}
     needs: job_xray-core
     runs-on: ubuntu-latest
     steps:
