@@ -123,24 +123,23 @@ destroy_nftset() {
 
 insert_nftset() {
 	local nftset_name="${1}"; shift
-	for nft_element in $@
+	local nftset_elements
+	for element in $@
 	do
-		nft add element inet fw4 $nftset_name { $nft_element }
+		nftset_elements="$element,$nftset_elements"
 	done
+	nft "add element inet fw4 $nftset_name { $nftset_elements }"
 }
 
 gen_nftset() {
 	local nftset_name="${1}"; shift
 	local ip_type="${1}"; shift
-	mkdir -p $TMP_PATH2/nftset
 
-	cat > "$TMP_PATH2/nftset/$nftset_name" <<-EOF
-		define $nftset_name = {$@}
-		add set inet fw4 $nftset_name { type $ip_type; flags interval; auto-merge; }	
-		add element inet fw4 $nftset_name \$$nftset_name
-	EOF
-	nft -f "$TMP_PATH2/nftset/$nftset_name"
-	rm "$TMP_PATH2/nftset/$nftset_name"
+	nft "list set inet fw4 $nftset_name" &>/dev/null
+	if [ $? -ne 0 ]; then
+		nft "add set inet fw4 $nftset_name { type $ip_type; flags interval; auto-merge; }"
+	fi
+	[ -n "${1}" ] && insert_nftset $nftset_name $@
 }
 
 get_redirect_ipv4() {
@@ -579,8 +578,8 @@ filter_vps_addr() {
 }
 
 filter_vpsip() {
-	insert_nftset $NFTSET_VPSIPLIST $(uci show $CONFIG | grep ".address=" | cut -d "'" -f 2 | grep -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}" | sed -e "/^$/d" | sed -e 's/$/,/' )
-	insert_nftset $NFTSET_VPSIPLIST6 $(uci show $CONFIG | grep ".address=" | cut -d "'" -f 2 | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "/^$/d" | sed -e 's/$/,/' )
+	insert_nftset $NFTSET_VPSIPLIST $(uci show $CONFIG | grep ".address=" | cut -d "'" -f 2 | grep -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}" | sed -e "/^$/d")
+	insert_nftset $NFTSET_VPSIPLIST6 $(uci show $CONFIG | grep ".address=" | cut -d "'" -f 2 | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "/^$/d")
 	echolog "加入所有节点到nftset[$NFTSET_VPSIPLIST]直连完成"
 }
 
@@ -696,20 +695,20 @@ add_firewall_rule() {
 	echolog "开始加载防火墙规则..."
 	gen_nftset $NFTSET_VPSIPLIST ipv4_addr
 	gen_nftset $NFTSET_GFW ipv4_addr
-	gen_nftset $NFTSET_LANIPLIST ipv4_addr $(gen_laniplist | sed -e 's/$/,/')
-	gen_nftset $NFTSET_CHN ipv4_addr $(cat $RULES_PATH/chnroute | tr -s '\n' | grep -v "^#" | sed -e 's/$/,/')
-	gen_nftset $NFTSET_BLACKLIST ipv4_addr $(cat $RULES_PATH/proxy_ip | tr -s '\n' | grep -v "^#" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e 's/$/,/')
-	gen_nftset $NFTSET_WHITELIST ipv4_addr $(cat $RULES_PATH/direct_ip | tr -s '\n' | grep -v "^#" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e 's/$/,/')
-	gen_nftset $NFTSET_BLOCKLIST ipv4_addr $(cat $RULES_PATH/block_ip | tr -s '\n' | grep -v "^#" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e 's/$/,/')
+	gen_nftset $NFTSET_LANIPLIST ipv4_addr $(gen_laniplist)
+	gen_nftset $NFTSET_CHN ipv4_addr $(cat $RULES_PATH/chnroute | tr -s '\n' | grep -v "^#")
+	gen_nftset $NFTSET_BLACKLIST ipv4_addr $(cat $RULES_PATH/proxy_ip | tr -s '\n' | grep -v "^#" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
+	gen_nftset $NFTSET_WHITELIST ipv4_addr $(cat $RULES_PATH/direct_ip | tr -s '\n' | grep -v "^#" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
+	gen_nftset $NFTSET_BLOCKLIST ipv4_addr $(cat $RULES_PATH/block_ip | tr -s '\n' | grep -v "^#" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
 	gen_nftset $NFTSET_SHUNTLIST ipv4_addr
 
 	gen_nftset $NFTSET_VPSIPLIST6 ipv6_addr
 	gen_nftset $NFTSET_GFW6 ipv6_addr
-	gen_nftset $NFTSET_LANIPLIST6 ipv6_addr $(gen_laniplist_6 | sed -e 's/$/,/')
-	gen_nftset $NFTSET_CHN6 ipv6_addr $(cat $RULES_PATH/chnroute6 | tr -s '\n' | grep -v "^#" | sed -e 's/$/,/' )
-	gen_nftset $NFTSET_BLACKLIST6 ipv6_addr $(cat $RULES_PATH/proxy_ip | tr -s '\n' | grep -v "^#" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e 's/$/,/')
-	gen_nftset $NFTSET_WHITELIST6 ipv6_addr $(cat $RULES_PATH/direct_ip | tr -s '\n' | grep -v "^#" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e 's/$/,/')
-	gen_nftset $NFTSET_BLOCKLIST6 ipv6_addr $(cat $RULES_PATH/block_ip | tr -s '\n' | grep -v "^#" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e 's/$/,/')
+	gen_nftset $NFTSET_LANIPLIST6 ipv6_addr $(gen_laniplist_6)
+	gen_nftset $NFTSET_CHN6 ipv6_addr $(cat $RULES_PATH/chnroute6 | tr -s '\n' | grep -v "^#")
+	gen_nftset $NFTSET_BLACKLIST6 ipv6_addr $(cat $RULES_PATH/proxy_ip | tr -s '\n' | grep -v "^#" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
+	gen_nftset $NFTSET_WHITELIST6 ipv6_addr $(cat $RULES_PATH/direct_ip | tr -s '\n' | grep -v "^#" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
+	gen_nftset $NFTSET_BLOCKLIST6 ipv6_addr $(cat $RULES_PATH/block_ip | tr -s '\n' | grep -v "^#" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
 	gen_nftset $NFTSET_SHUNTLIST6 ipv6_addr
 
 	local shunt_ids=$(uci show $CONFIG | grep "=shunt_rules" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}')
@@ -731,8 +730,8 @@ add_firewall_rule() {
 		#echolog "本机IPv4网段互访直连：${lan_ip}"
 		#echolog "本机IPv6网段互访直连：${lan_ip6}"
 
-		[ -n "$lan_ip" ] && insert_nftset $NFTSET_LANIPLIST $(echo $lan_ip | sed -e "s/ /\n/g" | sed -e 's/$/,/' )
-		[ -n "$lan_ip6" ] && insert_nftset $NFTSET_LANIPLIST6 $(echo $lan_ip6 | sed -e "s/ /\n/g" | sed -e 's/$/,/' )
+		[ -n "$lan_ip" ] && insert_nftset $NFTSET_LANIPLIST $(echo $lan_ip | sed -e "s/ /\n/g")
+		[ -n "$lan_ip6" ] && insert_nftset $NFTSET_LANIPLIST6 $(echo $lan_ip6 | sed -e "s/ /\n/g")
 	}
 
 	[ -n "$ISP_DNS" ] && {
