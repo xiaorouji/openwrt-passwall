@@ -1224,8 +1224,14 @@ add_firewall_rule() {
 	# dns_hijack "force"
 
 	[ -n "${is_tproxy}" -o -n "${udp_flag}" ] && {
+		bridge_nf_ipt=$(sysctl -e -n net.bridge.bridge-nf-call-iptables)
+		echo -n $bridge_nf_ipt > $TMP_PATH/bridge_nf_ipt
 		sysctl -w net.bridge.bridge-nf-call-iptables=0 >/dev/null 2>&1
-		[ "$PROXY_IPV6" == "1" ] && sysctl -w net.bridge.bridge-nf-call-ip6tables=0 >/dev/null 2>&1
+		[ "$PROXY_IPV6" == "1" ] && {
+			bridge_nf_ip6t=$(sysctl -e -n net.bridge.bridge-nf-call-ip6tables)
+			echo -n $bridge_nf_ip6t > $TMP_PATH/bridge_nf_ip6t
+			sysctl -w net.bridge.bridge-nf-call-ip6tables=0 >/dev/null 2>&1
+		}
 	}
 	echolog "防火墙规则加载完成！"
 }

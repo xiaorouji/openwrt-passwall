@@ -1377,10 +1377,11 @@ stop() {
 	stop_crontab
 	source $APP_PATH/helper_dnsmasq.sh del
 	source $APP_PATH/helper_dnsmasq.sh restart no_log=1
+	[ -s "$TMP_PATH/bridge_nf_ipt" ] && sysctl -w net.bridge.bridge-nf-call-iptables=$(cat $TMP_PATH/bridge_nf_ipt) >/dev/null 2>&1
+	[ -s "$TMP_PATH/bridge_nf_ip6t" ] && sysctl -w net.bridge.bridge-nf-call-ip6tables=$(cat $TMP_PATH/bridge_nf_ip6t) >/dev/null 2>&1
 	rm -rf ${TMP_PATH}
 	rm -rf /tmp/lock/${CONFIG}_script.lock
 	echolog "清空并关闭相关程序和缓存完成。"
-	/etc/init.d/sysctl restart
 	exit 0
 }
 
