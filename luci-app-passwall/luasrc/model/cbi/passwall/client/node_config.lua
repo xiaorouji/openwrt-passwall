@@ -578,11 +578,17 @@ tls_allowInsecure.default = "0"
 tls_allowInsecure:depends("tls", true)
 tls_allowInsecure:depends("type", "Hysteria")
 
-xray_fingerprint = s:option(ListValue, "xray_fingerprint", translate("Finger Print"))
+xray_fingerprint = s:option(Value, "xray_fingerprint", translate("Finger Print"))
 xray_fingerprint:value("disable", translate("Disable"))
 xray_fingerprint:value("chrome")
 xray_fingerprint:value("firefox")
 xray_fingerprint:value("safari")
+xray_fingerprint:value("ios")
+xray_fingerprint:value("android")
+xray_fingerprint:value("edge")
+xray_fingerprint:value("360")
+xray_fingerprint:value("qq")
+xray_fingerprint:value("random")
 xray_fingerprint:value("randomized")
 xray_fingerprint.default = "disable"
 xray_fingerprint:depends({ type = "Xray", tls = true, xtls = false })
