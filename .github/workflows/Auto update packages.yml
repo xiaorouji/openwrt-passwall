@@ -20,7 +20,19 @@ env:
 jobs:
   job_init:
     runs-on: ubuntu-latest
+    outputs:
+      v2ray_geodata_difference_commit_time: ${{ steps.difference_time.outputs.difference_time }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          ref: 'packages'
+
+      - name: Initialization environment
+        run: |
+          sudo timedatectl set-timezone "$TZ"
+
+
       - name: Delete workflow runs
         uses: Mattraks/delete-workflow-runs@main
         with:
@@ -29,6 +41,23 @@ jobs:
           retain_days: 1
           keep_minimum_runs: 0
 
+      # - name: Calculate time difference
+      #   id: difference_time
+      #   run: |
+      #     cd && cd work/openwrt-passwall/openwrt-passwall
+          
+      #     v2ray_geodata_commit_time=$(date -d "$(git log -1 --format=%ci v2ray-geodata/Makefile)" "+%s")
+      #     now_time=$(date -d "$(date -R)" "+%s")
+      #     difference_time=$((now_time-v2ray_geodata_commit_time))
+      #     echo "difference_time=$((now_time-v2ray_geodata_commit_time))" >> $GITHUB_OUTPUT;
+
+      #     echo "commit time: $(git log -1 --format=%ci v2ray-geodata/Makefile)"
+      #     echo "now time: $(date -R)"
+
+      #     echo "Unix timestamp commit: $v2ray_geodata_commit_time"
+      #     echo "Unix timestamp now: $now_time"
+      #     echo "Unix timestamp diff: $difference_time"
+          
       - name: SSH connection to Actions
         uses: mxschmitt/action-tmate@v3.13
         if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
@@ -77,14 +106,33 @@ jobs:
           echo ":white_check_mark: brook: update to $New_PKG_VERSION" >> commit_messages.txt
           echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Git Auto Commit
-        uses: stefanzweifel/git-auto-commit-action@v4.16.0
-        id: commit
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Git Auto Commit
+      #   uses: stefanzweifel/git-auto-commit-action@v4.16.0
+      #   id: commit
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     commit_message: "brook: update to ${{ steps.update.outputs.version }}"
+      #     branch: packages
+
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v4.2.3
         with:
-          commit_message: "brook: update to ${{ steps.update.outputs.version }}"
-          branch: packages
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "brook: update to ${{ steps.update.outputs.version }}"
+          committer: smallprogram <smallprogram@foxmail.com>
+          author: smallprogram <smallprogram@foxmail.com>
+          signoff: false
+          branch: brook-patches-${{ github.run_id }}
+          base: packages
+          delete-branch: true
+          body: |
+            brook: update to ${{ steps.update.outputs.version }}
+          title: "brook: update to ${{ steps.update.outputs.version }}"
+          labels: |
+            automated pr
+          draft: false
 
   job_hysteria:
     if: ${{ always() }}
@@ -130,14 +178,33 @@ jobs:
           echo ":white_check_mark: hysteria: update to $New_PKG_VERSION" >> commit_messages.txt
           echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Git Auto Commit
-        uses: stefanzweifel/git-auto-commit-action@v4.16.0
-        id: commit
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Git Auto Commit
+      #   uses: stefanzweifel/git-auto-commit-action@v4.16.0
+      #   id: commit
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     commit_message: "hysteria: update to ${{ steps.update.outputs.version }}"
+      #     branch: packages
+
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v4.2.3
         with:
-          commit_message: "hysteria: update to ${{ steps.update.outputs.version }}"
-          branch: packages
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "hysteria: update to ${{ steps.update.outputs.version }}"
+          committer: smallprogram <smallprogram@foxmail.com>
+          author: smallprogram <smallprogram@foxmail.com>
+          signoff: false
+          branch: hysteria-patches-${{ github.run_id }}
+          base: packages
+          delete-branch: true
+          body: |
+            hysteria: update to ${{ steps.update.outputs.version }}
+          title: "hysteria: update to ${{ steps.update.outputs.version }}"
+          labels: |
+            automated pr
+          draft: false      
 
   job_ipt2socks:
     if: ${{ always() }}
@@ -183,14 +250,33 @@ jobs:
           echo ":white_check_mark: ipt2socks: update to $New_PKG_VERSION" >> commit_messages.txt
           echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Git Auto Commit
-        uses: stefanzweifel/git-auto-commit-action@v4.16.0
-        id: commit
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Git Auto Commit
+      #   uses: stefanzweifel/git-auto-commit-action@v4.16.0
+      #   id: commit
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     commit_message: "ipt2socks: update to ${{ steps.update.outputs.version }}"
+      #     branch: packages
+      
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v4.2.3
         with:
-          commit_message: "ipt2socks: update to ${{ steps.update.outputs.version }}"
-          branch: packages
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "ipt2socks: update to ${{ steps.update.outputs.version }}"
+          committer: smallprogram <smallprogram@foxmail.com>
+          author: smallprogram <smallprogram@foxmail.com>
+          signoff: false
+          branch: ipt2socks-patches-${{ github.run_id }}
+          base: packages
+          delete-branch: true
+          body: |
+            ipt2socks: update to ${{ steps.update.outputs.version }}
+          title: "ipt2socks: update to ${{ steps.update.outputs.version }}"
+          labels: |
+            automated pr
+          draft: false
 
   job_microsocks:
     if: ${{ always() }}
@@ -236,14 +322,33 @@ jobs:
           echo ":white_check_mark: microsocks: update to $New_PKG_VERSION" >> commit_messages.txt
           echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Git Auto Commit
-        uses: stefanzweifel/git-auto-commit-action@v4.16.0
-        id: commit
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Git Auto Commit
+      #   uses: stefanzweifel/git-auto-commit-action@v4.16.0
+      #   id: commit
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     commit_message: "microsocks: update to ${{ steps.update.outputs.version }}"
+      #     branch: packages
+
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v4.2.3
         with:
-          commit_message: "microsocks: update to ${{ steps.update.outputs.version }}"
-          branch: packages
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "microsocks: update to ${{ steps.update.outputs.version }}"
+          committer: smallprogram <smallprogram@foxmail.com>
+          author: smallprogram <smallprogram@foxmail.com>
+          signoff: false
+          branch: microsocks-patches-${{ github.run_id }}
+          base: packages
+          delete-branch: true
+          body: |
+            microsocks: update to ${{ steps.update.outputs.version }}
+          title: "microsocks: update to ${{ steps.update.outputs.version }}"
+          labels: |
+            automated pr
+          draft: false
 
   job_sing-box:
     if: ${{ always() }}
@@ -289,14 +394,33 @@ jobs:
           echo ":white_check_mark: sing-box: update to $New_PKG_VERSION" >> commit_messages.txt
           echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Git Auto Commit
-        uses: stefanzweifel/git-auto-commit-action@v4.16.0
-        id: commit
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Git Auto Commit
+      #   uses: stefanzweifel/git-auto-commit-action@v4.16.0
+      #   id: commit
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     commit_message: "sing-box: update to ${{ steps.update.outputs.version }}"
+      #     branch: packages
+
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v4.2.3
         with:
-          commit_message: "sing-box: update to ${{ steps.update.outputs.version }}"
-          branch: packages
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "sing-box: update to ${{ steps.update.outputs.version }}"
+          committer: smallprogram <smallprogram@foxmail.com>
+          author: smallprogram <smallprogram@foxmail.com>
+          signoff: false
+          branch: sing-box-patches-${{ github.run_id }}
+          base: packages
+          delete-branch: true
+          body: |
+            sing-box: update to ${{ steps.update.outputs.version }}
+          title: "sing-box: update to ${{ steps.update.outputs.version }}"
+          labels: |
+            automated pr
+          draft: false
 
   job_trojan:
     if: ${{ always() }}
@@ -342,14 +466,33 @@ jobs:
           echo ":white_check_mark: trojan: update to $New_PKG_VERSION" >> commit_messages.txt
           echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Git Auto Commit
-        uses: stefanzweifel/git-auto-commit-action@v4.16.0
-        id: commit
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Git Auto Commit
+      #   uses: stefanzweifel/git-auto-commit-action@v4.16.0
+      #   id: commit
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     commit_message: "trojan: update to ${{ steps.update.outputs.version }}"
+      #     branch: packages
+
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v4.2.3
         with:
-          commit_message: "trojan: update to ${{ steps.update.outputs.version }}"
-          branch: packages
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "trojan: update to ${{ steps.update.outputs.version }}"
+          committer: smallprogram <smallprogram@foxmail.com>
+          author: smallprogram <smallprogram@foxmail.com>
+          signoff: false
+          branch: trojan-patches-${{ github.run_id }}
+          base: packages
+          delete-branch: true
+          body: |
+            trojan: update to ${{ steps.update.outputs.version }}
+          title: "trojan: update to ${{ steps.update.outputs.version }}"
+          labels: |
+            automated pr
+          draft: false
 
   job_trojan-go:
     if: ${{ always() }}
@@ -395,14 +538,33 @@ jobs:
           echo ":white_check_mark: trojan-go: update to $New_PKG_VERSION" >> commit_messages.txt
           echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Git Auto Commit
-        uses: stefanzweifel/git-auto-commit-action@v4.16.0
-        id: commit
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Git Auto Commit
+      #   uses: stefanzweifel/git-auto-commit-action@v4.16.0
+      #   id: commit
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     commit_message: "trojan-go: update to ${{ steps.update.outputs.version }}"
+      #     branch: packages
+
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v4.2.3
         with:
-          commit_message: "trojan-go: update to ${{ steps.update.outputs.version }}"
-          branch: packages
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "trojan-go: update to ${{ steps.update.outputs.version }}"
+          committer: smallprogram <smallprogram@foxmail.com>
+          author: smallprogram <smallprogram@foxmail.com>
+          signoff: false
+          branch: trojan-go-patches-${{ github.run_id }}
+          base: packages
+          delete-branch: true
+          body: |
+            trojan-go: update to ${{ steps.update.outputs.version }}
+          title: "trojan-go: update to ${{ steps.update.outputs.version }}"
+          labels: |
+            automated pr
+          draft: false
 
   job_v2ray-core:
     if: ${{ always() }}
@@ -448,125 +610,37 @@ jobs:
           echo ":white_check_mark: v2ray-core: update to $New_PKG_VERSION" >> commit_messages.txt
           echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
       
-      - name: Git Auto Commit
-        uses: stefanzweifel/git-auto-commit-action@v4.16.0
-        id: commit
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Git Auto Commit
+      #   uses: stefanzweifel/git-auto-commit-action@v4.16.0
+      #   id: commit
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     commit_message: "v2ray-core: update to ${{ steps.update.outputs.version }}"
+      #     branch: packages
+
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v4.2.3
         with:
-          commit_message: "v2ray-core: update to ${{ steps.update.outputs.version }}"
-          branch: packages
-
-  job_v2ray-geoip:
-    if: ${{ always() }}
-    needs: job_v2ray-core
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@main
-        with:
-          ref: 'packages'
-      
-      - name: Initialization environment
-        run: |
-          cd && mkdir -p packages && cd packages
-          sudo timedatectl set-timezone "$TZ"
-      
-      - name: Check v2ray-geoip
-        id: check
-        run: |
-          cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
-          Old_PKG_VERSION=$(sed -n '15p' Makefile | awk -F '=' '{print $2}')
-          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/v2fly/geoip/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
-          echo "目前版本: $Old_PKG_VERSION"
-          echo "最新版本: $New_PKG_VERSION"
-          
-          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "New_PKG_VERSION=$New_PKG_VERSION" >> $GITHUB_OUTPUT;  echo "status=success" >> $GITHUB_OUTPUT; fi;
-
-
-      - name: Update v2ray-geoip
-        id: update
-        if: steps.check.outputs.status == 'success' && steps.check.outputs.New_PKG_VERSION != '' && !cancelled()
-        run: |
-          cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
-          New_PKG_VERSION=${{ steps.check.outputs.New_PKG_VERSION }}
-          sed -i "15c GEOIP_VER:=$New_PKG_VERSION" Makefile
-          cd && cd packages && mkdir -p v2ray-geoip && cd v2ray-geoip
-          wget -P / https://github.com/v2fly/geoip/releases/download/$New_PKG_VERSION/geoip.dat
-          PKG_HASH=$(sha256sum geoip.dat) && PKG_HASH=${PKG_HASH%% *}
-          cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
-          sed -i "21c \  HASH:=$PKG_HASH" Makefile
-          echo "已更新 geoip 版本到: $New_PKG_VERSION"
-          echo "geoip Hash:$PKG_HASH"
-          cd && cd packages
-          echo ":white_check_mark: geoip: update to $New_PKG_VERSION" >> commit_messages.txt
-          echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
-      
-      - name: Git Auto Commit
-        uses: stefanzweifel/git-auto-commit-action@v4.16.0
-        id: commit
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          commit_message: "v2ray-geoip: update to ${{ steps.update.outputs.version }}"
-          branch: packages
-
-  job_v2ray-geosite:
-    if: ${{ always() }}
-    needs: job_v2ray-geoip
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@main
-        with:
-          ref: 'packages'
-      
-      - name: Initialization environment
-        run: |
-          cd && mkdir -p packages && cd packages
-          sudo timedatectl set-timezone "$TZ"
-      
-      - name: Check v2ray-geosite
-        id: check
-        run: |
-          cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
-          Old_PKG_VERSION=$(sed -n '24p' Makefile | awk -F '=' '{print $2}')
-          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/v2fly/domain-list-community/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
-          echo "目前版本: $Old_PKG_VERSION"
-          echo "最新版本: $New_PKG_VERSION"
-          
-          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "New_PKG_VERSION=$New_PKG_VERSION" >> $GITHUB_OUTPUT;  echo "status=success" >> $GITHUB_OUTPUT; fi;
-
-      - name: Update v2ray-geosite
-        id: update
-        if: steps.check.outputs.status == 'success' && steps.check.outputs.New_PKG_VERSION != '' && !cancelled()
-        run: |
-          cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
-          New_PKG_VERSION=${{ steps.check.outputs.New_PKG_VERSION }}
-          sed -i "24c GEOSITE_VER:=$New_PKG_VERSION" Makefile
-          cd && cd packages && mkdir -p v2ray-geosite && cd v2ray-geosite
-          wget -P / https://github.com/v2fly/domain-list-community/releases/download/$New_PKG_VERSION/dlc.dat
-          PKG_HASH=$(sha256sum dlc.dat) && PKG_HASH=${PKG_HASH%% *}
-          cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
-          sed -i "30c \  HASH:=$PKG_HASH" Makefile
-          echo "已更新 geosite 版本到: $New_PKG_VERSION"
-          echo "geosite Hash:$PKG_HASH"
-          cd && cd packages
-          echo ":white_check_mark: geosite: update to $New_PKG_VERSION" >> commit_messages.txt
-          echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
-
-      - name: Git Auto Commit
-        uses: stefanzweifel/git-auto-commit-action@v4.16.0
-        id: commit
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          commit_message: "v2ray-geosite: update to ${{ steps.update.outputs.version }}"
-          branch: packages
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "v2ray-core: update to ${{ steps.update.outputs.version }}"
+          committer: smallprogram <smallprogram@foxmail.com>
+          author: smallprogram <smallprogram@foxmail.com>
+          signoff: false
+          branch: v2ray-core-patches-${{ github.run_id }}
+          base: packages
+          delete-branch: true
+          body: |
+            v2ray-core: update to ${{ steps.update.outputs.version }}
+          title: "v2ray-core: update to ${{ steps.update.outputs.version }}"
+          labels: |
+            automated pr
+          draft: false
 
   job_v2ray-plugin:
     if: ${{ always() }}
-    needs: job_v2ray-geosite
+    needs: job_v2ray-core
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -608,14 +682,33 @@ jobs:
           echo ":white_check_mark: v2ray-plugin: update to $New_PKG_VERSION" >> commit_messages.txt
           echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
       
-      - name: Git Auto Commit
-        uses: stefanzweifel/git-auto-commit-action@v4.16.0
-        id: commit
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Git Auto Commit
+      #   uses: stefanzweifel/git-auto-commit-action@v4.16.0
+      #   id: commit
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     commit_message: "v2ray-plugin: update to ${{ steps.update.outputs.version }}"
+      #     branch: packages
+
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v4.2.3
         with:
-          commit_message: "v2ray-plugin: update to ${{ steps.update.outputs.version }}"
-          branch: packages
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "v2ray-plugin: update to ${{ steps.update.outputs.version }}"
+          committer: smallprogram <smallprogram@foxmail.com>
+          author: smallprogram <smallprogram@foxmail.com>
+          signoff: false
+          branch: v2ray-plugin-patches-${{ github.run_id }}
+          base: packages
+          delete-branch: true
+          body: |
+            v2ray-plugin: update to ${{ steps.update.outputs.version }}
+          title: "v2ray-plugin: update to ${{ steps.update.outputs.version }}"
+          labels: |
+            automated pr
+          draft: false
 
   job_xray-core:
     if: ${{ always() }}
@@ -661,14 +754,33 @@ jobs:
           echo ":white_check_mark: xray-core: update to $New_PKG_VERSION" >> commit_messages.txt
           echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
       
-      - name: Git Auto Commit
-        uses: stefanzweifel/git-auto-commit-action@v4.16.0
-        id: commit
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Git Auto Commit
+      #   uses: stefanzweifel/git-auto-commit-action@v4.16.0
+      #   id: commit
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     commit_message: "xray-core: update to ${{ steps.update.outputs.version }}"
+      #     branch: packages
+
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v4.2.3
         with:
-          commit_message: "xray-core: update to ${{ steps.update.outputs.version }}"
-          branch: packages
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "xray-core: update to ${{ steps.update.outputs.version }}"
+          committer: smallprogram <smallprogram@foxmail.com>
+          author: smallprogram <smallprogram@foxmail.com>
+          signoff: false
+          branch: xray-core-patches-${{ github.run_id }}
+          base: packages
+          delete-branch: true
+          body: |
+            xray-core: update to ${{ steps.update.outputs.version }}
+          title: "xray-core: update to ${{ steps.update.outputs.version }}"
+          labels: |
+            automated pr
+          draft: false
 
   job_xray-plugin:
     if: ${{ always() }}
@@ -714,11 +826,175 @@ jobs:
           echo ":white_check_mark: xray-plugin: update to $New_PKG_VERSION" >> commit_messages.txt
           echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
       
-      - name: Git Auto Commit
-        uses: stefanzweifel/git-auto-commit-action@v4.16.0
-        id: commit
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Git Auto Commit
+      #   uses: stefanzweifel/git-auto-commit-action@v4.16.0
+      #   id: commit
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     commit_message: "xray-plugin: update to ${{ steps.update.outputs.version }}"
+      #     branch: packages
+      
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v4.2.3
         with:
-          commit_message: "xray-plugin: update to ${{ steps.update.outputs.version }}"
-          branch: packages
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "xray-plugin: update to ${{ steps.update.outputs.version }}"
+          committer: smallprogram <smallprogram@foxmail.com>
+          author: smallprogram <smallprogram@foxmail.com>
+          signoff: false
+          branch: xray-plugin-patches-${{ github.run_id }}
+          base: packages
+          delete-branch: true
+          body: |
+            xray-plugin: update to ${{ steps.update.outputs.version }}
+          title: "xray-plugin: update to ${{ steps.update.outputs.version }}"
+          labels: |
+            automated pr
+          draft: false
+
+  job_v2ray-geoip:
+    if: ${{ always() }}
+    needs: job_xray-plugin
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          ref: 'packages'
+      
+      - name: Initialization environment
+        run: |
+          cd && mkdir -p packages && cd packages
+          sudo timedatectl set-timezone "$TZ"
+      
+      - name: Check v2ray-geoip
+        id: check
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
+          Old_PKG_VERSION=$(sed -n '15p' Makefile | awk -F '=' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/v2fly/geoip/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
+          echo "目前版本: $Old_PKG_VERSION"
+          echo "最新版本: $New_PKG_VERSION"
+          
+          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "New_PKG_VERSION=$New_PKG_VERSION" >> $GITHUB_OUTPUT;  echo "status=success" >> $GITHUB_OUTPUT; fi;
+          echo "${{ needs.job_init.outputs.v2ray_geodata_difference_commit_time }}"
+
+      - name: Update v2ray-geoip
+        id: update
+        if: steps.check.outputs.status == 'success' && steps.check.outputs.New_PKG_VERSION != '' && !cancelled()
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
+          New_PKG_VERSION=${{ steps.check.outputs.New_PKG_VERSION }}
+          sed -i "15c GEOIP_VER:=$New_PKG_VERSION" Makefile
+          cd && cd packages && mkdir -p v2ray-geoip && cd v2ray-geoip
+          wget -P / https://github.com/v2fly/geoip/releases/download/$New_PKG_VERSION/geoip.dat
+          PKG_HASH=$(sha256sum geoip.dat) && PKG_HASH=${PKG_HASH%% *}
+          cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
+          sed -i "21c \  HASH:=$PKG_HASH" Makefile
+          echo "已更新 geoip 版本到: $New_PKG_VERSION"
+          echo "geoip Hash:$PKG_HASH"
+          cd && cd packages
+          echo ":white_check_mark: geoip: update to $New_PKG_VERSION" >> commit_messages.txt
+          echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
+      
+      # - name: Git Auto Commit
+      #   uses: stefanzweifel/git-auto-commit-action@v4.16.0
+      #   id: commit
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     commit_message: "v2ray-geoip: update to ${{ steps.update.outputs.version }}"
+      #     branch: packages
+
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v4.2.3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "v2ray-geoip: update to ${{ steps.update.outputs.version }}"
+          committer: smallprogram <smallprogram@foxmail.com>
+          author: smallprogram <smallprogram@foxmail.com>
+          signoff: false
+          branch: v2ray-geoip-patches-${{ github.run_id }}
+          base: packages
+          delete-branch: true
+          body: |
+            v2ray-geoip: update to ${{ steps.update.outputs.version }}
+          title: "v2ray-geoip: update to ${{ steps.update.outputs.version }}"
+          labels: |
+            automated pr
+          draft: false
+
+  job_v2ray-geosite:
+    if: ${{ always() }}
+    needs: job_v2ray-geoip
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          ref: 'packages'
+      
+      - name: Initialization environment
+        run: |
+          cd && mkdir -p packages && cd packages
+          sudo timedatectl set-timezone "$TZ"
+      
+      - name: Check v2ray-geosite
+        id: check
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
+          Old_PKG_VERSION=$(sed -n '24p' Makefile | awk -F '=' '{print $2}')
+          New_PKG_VERSION=$(wget -qO- -t5 -T5 "https://api.github.com/repos/v2fly/domain-list-community/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
+          echo "目前版本: $Old_PKG_VERSION"
+          echo "最新版本: $New_PKG_VERSION"
+          
+          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "版本为最新版本$New_PKG_VERSION,无需更新"; else echo "New_PKG_VERSION=$New_PKG_VERSION" >> $GITHUB_OUTPUT;  echo "status=success" >> $GITHUB_OUTPUT; fi;
+          echo "${{ needs.job_init.outputs.v2ray_geodata_difference_commit_time }}"
+      - name: Update v2ray-geosite
+        id: update
+        if: steps.check.outputs.status == 'success' && steps.check.outputs.New_PKG_VERSION != '' && !cancelled()
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
+          New_PKG_VERSION=${{ steps.check.outputs.New_PKG_VERSION }}
+          sed -i "24c GEOSITE_VER:=$New_PKG_VERSION" Makefile
+          cd && cd packages && mkdir -p v2ray-geosite && cd v2ray-geosite
+          wget -P / https://github.com/v2fly/domain-list-community/releases/download/$New_PKG_VERSION/dlc.dat
+          PKG_HASH=$(sha256sum dlc.dat) && PKG_HASH=${PKG_HASH%% *}
+          cd && cd work/openwrt-passwall/openwrt-passwall/v2ray-geodata
+          sed -i "30c \  HASH:=$PKG_HASH" Makefile
+          echo "已更新 geosite 版本到: $New_PKG_VERSION"
+          echo "geosite Hash:$PKG_HASH"
+          cd && cd packages
+          echo ":white_check_mark: geosite: update to $New_PKG_VERSION" >> commit_messages.txt
+          echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
+
+      # - name: Git Auto Commit
+      #   uses: stefanzweifel/git-auto-commit-action@v4.16.0
+      #   id: commit
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     commit_message: "v2ray-geosite: update to ${{ steps.update.outputs.version }}"
+      #     branch: packages
+
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v4.2.3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "v2ray-geosite: update to ${{ steps.update.outputs.version }}"
+          committer: smallprogram <smallprogram@foxmail.com>
+          author: smallprogram <smallprogram@foxmail.com>
+          signoff: false
+          branch: v2ray-geosite-patches-${{ github.run_id }}
+          base: packages
+          delete-branch: true
+          body: |
+            v2ray-geosite: update to ${{ steps.update.outputs.version }}
+          title: "v2ray-geosite: update to ${{ steps.update.outputs.version }}"
+          labels: |
+            automated pr
+          draft: false
