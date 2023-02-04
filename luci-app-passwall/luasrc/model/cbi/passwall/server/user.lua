@@ -702,32 +702,32 @@ for k, e in ipairs(api.get_valid_nodes()) do
     end
 end
 
-transit_node = s:option(ListValue, "transit_node", translate("transit node"))
-transit_node:value("nil", translate("Close"))
-transit_node:value("_socks", translate("Custom Socks"))
-transit_node:value("_http", translate("Custom HTTP"))
-for k, v in pairs(nodes_table) do transit_node:value(v.id, v.remarks) end
-transit_node.default = "nil"
-transit_node:depends("type", "V2ray")
-transit_node:depends("type", "Xray")
+outbound_node = s:option(ListValue, "outbound_node", translate("outbound node"))
+outbound_node:value("nil", translate("Close"))
+outbound_node:value("_socks", translate("Custom Socks"))
+outbound_node:value("_http", translate("Custom HTTP"))
+for k, v in pairs(nodes_table) do outbound_node:value(v.id, v.remarks) end
+outbound_node.default = "nil"
+outbound_node:depends("type", "V2ray")
+outbound_node:depends("type", "Xray")
 
-transit_node_address = s:option(Value, "transit_node_address", translate("Address (Support Domain Name)"))
-transit_node_address:depends("transit_node", "_socks")
-transit_node_address:depends("transit_node", "_http")
+outbound_node_address = s:option(Value, "outbound_node_address", translate("Address (Support Domain Name)"))
+outbound_node_address:depends("outbound_node", "_socks")
+outbound_node_address:depends("outbound_node", "_http")
 
-transit_node_port = s:option(Value, "transit_node_port", translate("Port"))
-transit_node_port.datatype = "port"
-transit_node_port:depends("transit_node", "_socks")
-transit_node_port:depends("transit_node", "_http")
+outbound_node_port = s:option(Value, "outbound_node_port", translate("Port"))
+outbound_node_port.datatype = "port"
+outbound_node_port:depends("outbound_node", "_socks")
+outbound_node_port:depends("outbound_node", "_http")
 
-transit_node_username = s:option(Value, "transit_node_username", translate("Username"))
-transit_node_username:depends("transit_node", "_socks")
-transit_node_username:depends("transit_node", "_http")
+outbound_node_username = s:option(Value, "outbound_node_username", translate("Username"))
+outbound_node_username:depends("outbound_node", "_socks")
+outbound_node_username:depends("outbound_node", "_http")
 
-transit_node_password = s:option(Value, "transit_node_password", translate("Password"))
-transit_node_password.password = true
-transit_node_password:depends("transit_node", "_socks")
-transit_node_password:depends("transit_node", "_http")
+outbound_node_password = s:option(Value, "outbound_node_password", translate("Password"))
+outbound_node_password.password = true
+outbound_node_password:depends("outbound_node", "_socks")
+outbound_node_password:depends("outbound_node", "_http")
 
 log = s:option(Flag, "log", translate("Log"))
 log.default = "1"

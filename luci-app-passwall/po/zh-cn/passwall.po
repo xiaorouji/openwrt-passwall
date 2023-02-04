@@ -1153,8 +1153,8 @@ msgstr "目标端口"
 msgid "Whether to receive PROXY protocol, when this node want to be fallback or forwarded by proxy, it must be enable, otherwise it cannot be used."
 msgstr "是否接收 PROXY protocol，当该节点要被回落或被代理转发时，必须启用，否则不能使用。"
 
-msgid "transit node"
-msgstr "中转到此节点"
+msgid "outbound node"
+msgstr "出站节点"
 
 msgid "Custom Socks"
 msgstr "自定义 Socks"

@@ -117,20 +117,20 @@ function gen_config(user)
         }
     }
 
-    if user.transit_node and user.transit_node ~= "nil" then
-        local transit_node_t = uci:get_all("passwall", user.transit_node)
-        if user.transit_node == "_socks" or user.transit_node == "_http" then
-            transit_node_t = {
+    if user.outbound_node and user.outbound_node ~= "nil" then
+        local outbound_node_t = uci:get_all("passwall", user.outbound_node)
+        if user.outbound_node == "_socks" or user.outbound_node == "_http" then
+            outbound_node_t = {
                 type = user.type,
-                protocol = user.transit_node:gsub("_", ""),
+                protocol = user.outbound_node:gsub("_", ""),
                 transport = "tcp",
-                address = user.transit_node_address,
-                port = user.transit_node_port,
-                username = (user.transit_node_username and user.transit_node_username ~= "") and user.transit_node_username or nil,
-                password = (user.transit_node_password and user.transit_node_password ~= "") and user.transit_node_password or nil,
+                address = user.outbound_node_address,
+                port = user.outbound_node_port,
+                username = (user.outbound_node_username and user.outbound_node_username ~= "") and user.outbound_node_username or nil,
+                password = (user.outbound_node_password and user.outbound_node_password ~= "") and user.outbound_node_password or nil,
             }
         end
-        local outbound = require("luci.model.cbi.passwall.api.gen_v2ray").gen_outbound(transit_node_t, "transit")
+        local outbound = require("luci.model.cbi.passwall.api.gen_v2ray").gen_outbound(outbound_node_t, "outbound")
         if outbound then
             table.insert(outbounds, 1, outbound)
         end
