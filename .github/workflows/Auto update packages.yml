@@ -20,8 +20,8 @@ env:
 jobs:
   job_init:
     runs-on: ubuntu-latest
-    outputs:
-      v2ray_geodata_difference_commit_time: ${{ steps.difference_time.outputs.difference_time }}
+    # outputs:
+    #   v2ray_geodata_difference_commit_time: ${{ steps.difference_time.outputs.difference_time }}
     steps:
       - name: Checkout
         uses: actions/checkout@main
@@ -106,6 +106,9 @@ jobs:
           echo ":white_check_mark: brook: update to $New_PKG_VERSION" >> commit_messages.txt
           echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
 
+          cd && cd work/openwrt-passwall/openwrt-passwall
+          echo "branch_exists=$(git ls-remote --heads origin brook-patches-$New_PKG_VERSION | tr -d '\n')" >> $GITHUB_OUTPUT
+
       # - name: Git Auto Commit
       #   uses: stefanzweifel/git-auto-commit-action@v4.16.0
       #   id: commit
@@ -117,6 +120,7 @@ jobs:
 
       - name: Create Pull Request
         id: cpr
+        if: steps.check.outputs.status == 'success' && steps.check.outputs.New_PKG_VERSION != '' && steps.update.outputs.branch_exists == '' && !cancelled()
         uses: peter-evans/create-pull-request@v4.2.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -124,14 +128,14 @@ jobs:
           committer: smallprogram <smallprogram@foxmail.com>
           author: smallprogram <smallprogram@foxmail.com>
           signoff: false
-          branch: brook-patches-${{ github.run_id }}
+          branch: brook-patches-${{ steps.update.outputs.version }}
           base: packages
           delete-branch: true
           body: |
             brook: update to ${{ steps.update.outputs.version }}
           title: "brook: update to ${{ steps.update.outputs.version }}"
           labels: |
-            automated pr
+            automated-pr
           draft: false
 
   job_hysteria:
@@ -178,6 +182,9 @@ jobs:
           echo ":white_check_mark: hysteria: update to $New_PKG_VERSION" >> commit_messages.txt
           echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
 
+          cd && cd work/openwrt-passwall/openwrt-passwall
+          echo "branch_exists=$(git ls-remote --heads origin hysteria-patches-$New_PKG_VERSION | tr -d '\n')" >> $GITHUB_OUTPUT
+
       # - name: Git Auto Commit
       #   uses: stefanzweifel/git-auto-commit-action@v4.16.0
       #   id: commit
@@ -189,6 +196,7 @@ jobs:
 
       - name: Create Pull Request
         id: cpr
+        if: steps.check.outputs.status == 'success' && steps.check.outputs.New_PKG_VERSION != '' && steps.update.outputs.branch_exists == '' && !cancelled()
         uses: peter-evans/create-pull-request@v4.2.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -196,14 +204,14 @@ jobs:
           committer: smallprogram <smallprogram@foxmail.com>
           author: smallprogram <smallprogram@foxmail.com>
           signoff: false
-          branch: hysteria-patches-${{ github.run_id }}
+          branch: hysteria-patches-${{ steps.update.outputs.version }}
           base: packages
           delete-branch: true
           body: |
             hysteria: update to ${{ steps.update.outputs.version }}
           title: "hysteria: update to ${{ steps.update.outputs.version }}"
           labels: |
-            automated pr
+            automated-pr
           draft: false      
 
   job_ipt2socks:
@@ -250,6 +258,9 @@ jobs:
           echo ":white_check_mark: ipt2socks: update to $New_PKG_VERSION" >> commit_messages.txt
           echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
 
+          cd && cd work/openwrt-passwall/openwrt-passwall
+          echo "branch_exists=$(git ls-remote --heads origin ipt2socks-patches-$New_PKG_VERSION | tr -d '\n')" >> $GITHUB_OUTPUT
+
       # - name: Git Auto Commit
       #   uses: stefanzweifel/git-auto-commit-action@v4.16.0
       #   id: commit
@@ -261,6 +272,7 @@ jobs:
       
       - name: Create Pull Request
         id: cpr
+        if: steps.check.outputs.status == 'success' && steps.check.outputs.New_PKG_VERSION != '' && steps.update.outputs.branch_exists == '' && !cancelled()
         uses: peter-evans/create-pull-request@v4.2.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -268,14 +280,14 @@ jobs:
           committer: smallprogram <smallprogram@foxmail.com>
           author: smallprogram <smallprogram@foxmail.com>
           signoff: false
-          branch: ipt2socks-patches-${{ github.run_id }}
+          branch: ipt2socks-patches-${{ steps.update.outputs.version }}
           base: packages
           delete-branch: true
           body: |
             ipt2socks: update to ${{ steps.update.outputs.version }}
           title: "ipt2socks: update to ${{ steps.update.outputs.version }}"
           labels: |
-            automated pr
+            automated-pr
           draft: false
 
   job_microsocks:
@@ -322,6 +334,9 @@ jobs:
           echo ":white_check_mark: microsocks: update to $New_PKG_VERSION" >> commit_messages.txt
           echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
 
+          cd && cd work/openwrt-passwall/openwrt-passwall
+          echo "branch_exists=$(git ls-remote --heads origin microsocks-patches-$New_PKG_VERSION | tr -d '\n')" >> $GITHUB_OUTPUT
+
       # - name: Git Auto Commit
       #   uses: stefanzweifel/git-auto-commit-action@v4.16.0
       #   id: commit
@@ -333,6 +348,7 @@ jobs:
 
       - name: Create Pull Request
         id: cpr
+        if: steps.check.outputs.status == 'success' && steps.check.outputs.New_PKG_VERSION != '' && steps.update.outputs.branch_exists == '' && !cancelled()
         uses: peter-evans/create-pull-request@v4.2.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -340,14 +356,14 @@ jobs:
           committer: smallprogram <smallprogram@foxmail.com>
           author: smallprogram <smallprogram@foxmail.com>
           signoff: false
-          branch: microsocks-patches-${{ github.run_id }}
+          branch: microsocks-patches-${{ steps.update.outputs.version }}
           base: packages
           delete-branch: true
           body: |
             microsocks: update to ${{ steps.update.outputs.version }}
           title: "microsocks: update to ${{ steps.update.outputs.version }}"
           labels: |
-            automated pr
+            automated-pr
           draft: false
 
   job_sing-box:
@@ -394,6 +410,9 @@ jobs:
           echo ":white_check_mark: sing-box: update to $New_PKG_VERSION" >> commit_messages.txt
           echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
 
+          cd && cd work/openwrt-passwall/openwrt-passwall
+          echo "branch_exists=$(git ls-remote --heads origin sing-box-patches-$New_PKG_VERSION | tr -d '\n')" >> $GITHUB_OUTPUT
+
       # - name: Git Auto Commit
       #   uses: stefanzweifel/git-auto-commit-action@v4.16.0
       #   id: commit
@@ -405,6 +424,7 @@ jobs:
 
       - name: Create Pull Request
         id: cpr
+        if: steps.check.outputs.status == 'success' && steps.check.outputs.New_PKG_VERSION != '' && steps.update.outputs.branch_exists == '' && !cancelled()
         uses: peter-evans/create-pull-request@v4.2.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -412,14 +432,14 @@ jobs:
           committer: smallprogram <smallprogram@foxmail.com>
           author: smallprogram <smallprogram@foxmail.com>
           signoff: false
-          branch: sing-box-patches-${{ github.run_id }}
+          branch: sing-box-patches-${{ steps.update.outputs.version }}
           base: packages
           delete-branch: true
           body: |
             sing-box: update to ${{ steps.update.outputs.version }}
           title: "sing-box: update to ${{ steps.update.outputs.version }}"
           labels: |
-            automated pr
+            automated-pr
           draft: false
 
   job_trojan:
@@ -466,6 +486,9 @@ jobs:
           echo ":white_check_mark: trojan: update to $New_PKG_VERSION" >> commit_messages.txt
           echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
 
+          cd && cd work/openwrt-passwall/openwrt-passwall
+          echo "branch_exists=$(git ls-remote --heads origin trojan-patches-$New_PKG_VERSION | tr -d '\n')" >> $GITHUB_OUTPUT
+
       # - name: Git Auto Commit
       #   uses: stefanzweifel/git-auto-commit-action@v4.16.0
       #   id: commit
@@ -477,6 +500,7 @@ jobs:
 
       - name: Create Pull Request
         id: cpr
+        if: steps.check.outputs.status == 'success' && steps.check.outputs.New_PKG_VERSION != '' && steps.update.outputs.branch_exists == '' && !cancelled()
         uses: peter-evans/create-pull-request@v4.2.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -484,14 +508,14 @@ jobs:
           committer: smallprogram <smallprogram@foxmail.com>
           author: smallprogram <smallprogram@foxmail.com>
           signoff: false
-          branch: trojan-patches-${{ github.run_id }}
+          branch: trojan-patches-${{ steps.update.outputs.version }}
           base: packages
           delete-branch: true
           body: |
             trojan: update to ${{ steps.update.outputs.version }}
           title: "trojan: update to ${{ steps.update.outputs.version }}"
           labels: |
-            automated pr
+            automated-pr
           draft: false
 
   job_trojan-go:
@@ -538,6 +562,9 @@ jobs:
           echo ":white_check_mark: trojan-go: update to $New_PKG_VERSION" >> commit_messages.txt
           echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
 
+          cd && cd work/openwrt-passwall/openwrt-passwall
+          echo "branch_exists=$(git ls-remote --heads origin trojan-go-patches-$New_PKG_VERSION | tr -d '\n')" >> $GITHUB_OUTPUT
+
       # - name: Git Auto Commit
       #   uses: stefanzweifel/git-auto-commit-action@v4.16.0
       #   id: commit
@@ -549,6 +576,7 @@ jobs:
 
       - name: Create Pull Request
         id: cpr
+        if: steps.check.outputs.status == 'success' && steps.check.outputs.New_PKG_VERSION != '' && steps.update.outputs.branch_exists == '' && !cancelled()
         uses: peter-evans/create-pull-request@v4.2.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -556,14 +584,14 @@ jobs:
           committer: smallprogram <smallprogram@foxmail.com>
           author: smallprogram <smallprogram@foxmail.com>
           signoff: false
-          branch: trojan-go-patches-${{ github.run_id }}
+          branch: trojan-go-patches-${{ steps.update.outputs.version }}
           base: packages
           delete-branch: true
           body: |
             trojan-go: update to ${{ steps.update.outputs.version }}
           title: "trojan-go: update to ${{ steps.update.outputs.version }}"
           labels: |
-            automated pr
+            automated-pr
           draft: false
 
   job_v2ray-core:
@@ -609,6 +637,9 @@ jobs:
           cd && cd packages
           echo ":white_check_mark: v2ray-core: update to $New_PKG_VERSION" >> commit_messages.txt
           echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
+
+          cd && cd work/openwrt-passwall/openwrt-passwall
+          echo "branch_exists=$(git ls-remote --heads origin v2ray-core-patches-$New_PKG_VERSION | tr -d '\n')" >> $GITHUB_OUTPUT
       
       # - name: Git Auto Commit
       #   uses: stefanzweifel/git-auto-commit-action@v4.16.0
@@ -621,6 +652,7 @@ jobs:
 
       - name: Create Pull Request
         id: cpr
+        if: steps.check.outputs.status == 'success' && steps.check.outputs.New_PKG_VERSION != '' && steps.update.outputs.branch_exists == '' && !cancelled()
         uses: peter-evans/create-pull-request@v4.2.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -628,14 +660,14 @@ jobs:
           committer: smallprogram <smallprogram@foxmail.com>
           author: smallprogram <smallprogram@foxmail.com>
           signoff: false
-          branch: v2ray-core-patches-${{ github.run_id }}
+          branch: v2ray-core-patches-${{ steps.update.outputs.version }}
           base: packages
           delete-branch: true
           body: |
             v2ray-core: update to ${{ steps.update.outputs.version }}
           title: "v2ray-core: update to ${{ steps.update.outputs.version }}"
           labels: |
-            automated pr
+            automated-pr
           draft: false
 
   job_v2ray-plugin:
@@ -681,6 +713,9 @@ jobs:
           cd && cd packages
           echo ":white_check_mark: v2ray-plugin: update to $New_PKG_VERSION" >> commit_messages.txt
           echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
+
+          cd && cd work/openwrt-passwall/openwrt-passwall
+          echo "branch_exists=$(git ls-remote --heads origin v2ray-plugin-patches-$New_PKG_VERSION | tr -d '\n')" >> $GITHUB_OUTPUT
       
       # - name: Git Auto Commit
       #   uses: stefanzweifel/git-auto-commit-action@v4.16.0
@@ -693,6 +728,7 @@ jobs:
 
       - name: Create Pull Request
         id: cpr
+        if: steps.check.outputs.status == 'success' && steps.check.outputs.New_PKG_VERSION != '' && steps.update.outputs.branch_exists == '' && !cancelled()
         uses: peter-evans/create-pull-request@v4.2.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -700,14 +736,14 @@ jobs:
           committer: smallprogram <smallprogram@foxmail.com>
           author: smallprogram <smallprogram@foxmail.com>
           signoff: false
-          branch: v2ray-plugin-patches-${{ github.run_id }}
+          branch: v2ray-plugin-patches-${{ steps.update.outputs.version }}
           base: packages
           delete-branch: true
           body: |
             v2ray-plugin: update to ${{ steps.update.outputs.version }}
           title: "v2ray-plugin: update to ${{ steps.update.outputs.version }}"
           labels: |
-            automated pr
+            automated-pr
           draft: false
 
   job_xray-core:
@@ -753,6 +789,9 @@ jobs:
           cd && cd packages
           echo ":white_check_mark: xray-core: update to $New_PKG_VERSION" >> commit_messages.txt
           echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
+
+          cd && cd work/openwrt-passwall/openwrt-passwall
+          echo "branch_exists=$(git ls-remote --heads origin xray-core-patches-$New_PKG_VERSION | tr -d '\n')" >> $GITHUB_OUTPUT
       
       # - name: Git Auto Commit
       #   uses: stefanzweifel/git-auto-commit-action@v4.16.0
@@ -765,6 +804,7 @@ jobs:
 
       - name: Create Pull Request
         id: cpr
+        if: steps.check.outputs.status == 'success' && steps.check.outputs.New_PKG_VERSION != '' && steps.update.outputs.branch_exists == '' && !cancelled()
         uses: peter-evans/create-pull-request@v4.2.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -772,14 +812,14 @@ jobs:
           committer: smallprogram <smallprogram@foxmail.com>
           author: smallprogram <smallprogram@foxmail.com>
           signoff: false
-          branch: xray-core-patches-${{ github.run_id }}
+          branch: xray-core-patches-${{ steps.update.outputs.version }}
           base: packages
           delete-branch: true
           body: |
             xray-core: update to ${{ steps.update.outputs.version }}
           title: "xray-core: update to ${{ steps.update.outputs.version }}"
           labels: |
-            automated pr
+            automated-pr
           draft: false
 
   job_xray-plugin:
@@ -825,6 +865,9 @@ jobs:
           cd && cd packages
           echo ":white_check_mark: xray-plugin: update to $New_PKG_VERSION" >> commit_messages.txt
           echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
+
+          cd && cd work/openwrt-passwall/openwrt-passwall
+          echo "branch_exists=$(git ls-remote --heads origin xray-plugin-patches-$New_PKG_VERSION | tr -d '\n')" >> $GITHUB_OUTPUT
       
       # - name: Git Auto Commit
       #   uses: stefanzweifel/git-auto-commit-action@v4.16.0
@@ -837,6 +880,7 @@ jobs:
       
       - name: Create Pull Request
         id: cpr
+        if: steps.check.outputs.status == 'success' && steps.check.outputs.New_PKG_VERSION != '' && steps.update.outputs.branch_exists == '' && !cancelled()
         uses: peter-evans/create-pull-request@v4.2.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -844,14 +888,14 @@ jobs:
           committer: smallprogram <smallprogram@foxmail.com>
           author: smallprogram <smallprogram@foxmail.com>
           signoff: false
-          branch: xray-plugin-patches-${{ github.run_id }}
+          branch: xray-plugin-patches-${{ steps.update.outputs.version }}
           base: packages
           delete-branch: true
           body: |
             xray-plugin: update to ${{ steps.update.outputs.version }}
           title: "xray-plugin: update to ${{ steps.update.outputs.version }}"
           labels: |
-            automated pr
+            automated-pr
           draft: false
 
   job_v2ray-geoip:
@@ -898,6 +942,9 @@ jobs:
           cd && cd packages
           echo ":white_check_mark: geoip: update to $New_PKG_VERSION" >> commit_messages.txt
           echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
+
+          cd && cd work/openwrt-passwall/openwrt-passwall
+          echo "branch_exists=$(git ls-remote --heads origin v2ray-geoip-patches-$New_PKG_VERSION | tr -d '\n')" >> $GITHUB_OUTPUT
       
       # - name: Git Auto Commit
       #   uses: stefanzweifel/git-auto-commit-action@v4.16.0
@@ -910,6 +957,7 @@ jobs:
 
       - name: Create Pull Request
         id: cpr
+        if: steps.check.outputs.status == 'success' && steps.check.outputs.New_PKG_VERSION != '' && steps.update.outputs.branch_exists == '' && !cancelled()
         uses: peter-evans/create-pull-request@v4.2.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -917,14 +965,14 @@ jobs:
           committer: smallprogram <smallprogram@foxmail.com>
           author: smallprogram <smallprogram@foxmail.com>
           signoff: false
-          branch: v2ray-geoip-patches-${{ github.run_id }}
+          branch: v2ray-geoip-patches-${{ steps.update.outputs.version }}
           base: packages
           delete-branch: true
           body: |
             v2ray-geoip: update to ${{ steps.update.outputs.version }}
           title: "v2ray-geoip: update to ${{ steps.update.outputs.version }}"
           labels: |
-            automated pr
+            automated-pr
           draft: false
 
   job_v2ray-geosite:
@@ -971,6 +1019,9 @@ jobs:
           echo ":white_check_mark: geosite: update to $New_PKG_VERSION" >> commit_messages.txt
           echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
 
+          cd && cd work/openwrt-passwall/openwrt-passwall
+          echo "branch_exists=$(git ls-remote --heads origin v2ray-geosite-patches-$New_PKG_VERSION | tr -d '\n')" >> $GITHUB_OUTPUT
+
       # - name: Git Auto Commit
       #   uses: stefanzweifel/git-auto-commit-action@v4.16.0
       #   id: commit
@@ -982,6 +1033,7 @@ jobs:
 
       - name: Create Pull Request
         id: cpr
+        if: steps.check.outputs.status == 'success' && steps.check.outputs.New_PKG_VERSION != '' && steps.update.outputs.branch_exists == '' && !cancelled()
         uses: peter-evans/create-pull-request@v4.2.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -989,12 +1041,12 @@ jobs:
           committer: smallprogram <smallprogram@foxmail.com>
           author: smallprogram <smallprogram@foxmail.com>
           signoff: false
-          branch: v2ray-geosite-patches-${{ github.run_id }}
+          branch: v2ray-geosite-patches-${{ steps.update.outputs.version }}
           base: packages
           delete-branch: true
           body: |
             v2ray-geosite: update to ${{ steps.update.outputs.version }}
           title: "v2ray-geosite: update to ${{ steps.update.outputs.version }}"
           labels: |
-            automated pr
+            automated-pr
           draft: false
