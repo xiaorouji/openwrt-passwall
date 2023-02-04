@@ -984,6 +984,10 @@ local has_xray = api.is_finded("xray")
 			s.innerHTML = "<font color='red'><%:Invalid Share URL Format%></font>: " + ssu[0];
 			return false;
 		}
+		if (opt.get('port').value) {
+			opt.get('port').focus();
+			opt.get('port').blur();
+		}
 		s.innerHTML = "<font color='green'><%:Import Finished %></font>";
 		return false;
 	}
