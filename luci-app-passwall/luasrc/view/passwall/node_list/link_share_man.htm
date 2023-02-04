@@ -297,18 +297,6 @@ local has_xray = api.is_finded("xray")
 					params += opt.query("sni", "tls_serverName");
 			}
 
-			if (opt.get("xtls").checked) {
-					var v_security = "xtls";
-					var v_flow = "xtls-rprx-direct";
-					if (opt.get("flow").value) {
-						v_flow = opt.get("flow").value;
-					}
-					params += "&flow=" + v_flow;
-					params += "&security=" + v_security;
-					params += opt.query("sni", "tls_serverName");
-			}
-
-
 			params += "#" + encodeURI(v_alias.value);
 			if (params[0] == "&") {
 				params = params.substring(1);
@@ -863,19 +851,7 @@ local has_xray = api.is_finded("xray")
 			if (queryParam.security) {
 				if (queryParam.security == "tls") {
 					opt.set('tls', true);
-					opt.set('xtls',false);
 					opt.set('tlsflow', queryParam.flow || '');
-					opt.set('tls_serverName', queryParam.sni || '');
-					opt.set('tls_allowInsecure', true);
-					if (queryParam.allowinsecure === '0') {
-						opt.set('tls_allowInsecure', false);
-					}
-				}
-
-				if (queryParam.security == "xtls") {
-					opt.set('tls', true);
-					opt.set('xtls',true);
-					opt.set('flow', queryParam.flow || "xtls-rprx-direct");
 					opt.set('tls_serverName', queryParam.sni || '');
 					opt.set('tls_allowInsecure', true);
 					if (queryParam.allowinsecure === '0') {

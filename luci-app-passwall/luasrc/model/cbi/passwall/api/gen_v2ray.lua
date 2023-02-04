@@ -131,9 +131,6 @@ function gen_outbound(node, tag, proxy_table)
         else
             if node.tls and node.tls == "1" then
                 node.stream_security = "tls"
-                if node.type == "Xray" and node.xtls and node.xtls == "1" then
-                    node.stream_security = "xtls"
-                end
             end
         end
 
@@ -144,7 +141,7 @@ function gen_outbound(node, tag, proxy_table)
             tag = tag,
             proxySettings = node.proxySettings or nil,
             protocol = node.protocol,
-            mux = (node.stream_security ~= "xtls") and {
+            mux = {
                 enabled = (node.mux == "1") and true or false,
                 concurrency = (node.mux_concurrency) and tonumber(node.mux_concurrency) or 8
             } or nil,
@@ -156,11 +153,6 @@ function gen_outbound(node, tag, proxy_table)
                 },
                 network = node.transport,
                 security = node.stream_security,
-                xtlsSettings = (node.stream_security == "xtls") and {
-                    serverName = node.tls_serverName,
-                    allowInsecure = (node.tls_allowInsecure == "1") and true or false,
-                    fingerprint = (node.type == "Xray" and node.fingerprint and node.fingerprint ~= "disable") and node.fingerprint or nil
-                } or nil,
                 tlsSettings = (node.stream_security == "tls") and {
                     serverName = node.tls_serverName,
                     allowInsecure = (node.tls_allowInsecure == "1") and true or false,
@@ -228,7 +220,7 @@ function gen_outbound(node, tag, proxy_table)
                                 level = 0,
                                 security = (node.protocol == "vmess") and node.security or nil,
                                 encryption = node.encryption or "none",
-                                flow = node.flow or (node.tls == '1' and node.xtls ~= '1' and node.tlsflow) and node.tlsflow or nil
+                                flow = (node.protocol == "vless" and node.tls == '1' and node.tlsflow) and node.tlsflow or nil
                             }
                         }
                     }
@@ -238,7 +230,6 @@ function gen_outbound(node, tag, proxy_table)
                         address = node.address,
                         port = tonumber(node.port),
                         method = node.method or nil,
-                        flow = node.flow or (node.tls == '1' and node.xtls ~= '1' and node.tlsflow) and node.tlsflow or nil,
                         ivCheck = (node.protocol == "shadowsocks") and node.iv_check == "1" or nil,
                         uot = (node.protocol == "shadowsocks") and node.uot == "1" or nil,
                         password = node.password or "",
@@ -272,9 +263,6 @@ function gen_outbound(node, tag, proxy_table)
         if alpn and #alpn > 0 then
             if result.streamSettings.tlsSettings then
                 result.streamSettings.tlsSettings.alpn = alpn
-            end
-            if result.streamSettings.xtlsSettings then
-                result.streamSettings.xtlsSettings.alpn = alpn
             end
         end
     end

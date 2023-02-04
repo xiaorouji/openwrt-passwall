@@ -512,27 +512,12 @@ tls:depends("type", "Trojan")
 tls:depends("type", "Trojan-Plus")
 tls:depends("type", "Trojan-Go")
 
-xtls = s:option(Flag, "xtls", translate("XTLS"))
-xtls.default = 0
-xtls:depends({ type = "Xray", protocol = "vless", tls = true })
-xtls:depends({ type = "Xray", protocol = "trojan", tls = true })
-
 tlsflow = s:option(Value, "tlsflow", translate("flow"))
 tlsflow.default = ""
 tlsflow:value("", translate("Disable"))
 tlsflow:value("xtls-rprx-vision")
 tlsflow:value("xtls-rprx-vision-udp443")
-tlsflow:depends({ type = "Xray", protocol = "vless", tls = true , xtls = false })
-
-flow = s:option(Value, "flow", translate("flow"))
-flow.default = "xtls-rprx-direct"
-flow:value("xtls-rprx-origin")
-flow:value("xtls-rprx-origin-udp443")
-flow:value("xtls-rprx-direct")
-flow:value("xtls-rprx-direct-udp443")
-flow:value("xtls-rprx-splice")
-flow:value("xtls-rprx-splice-udp443")
-flow:depends("xtls", true)
+tlsflow:depends({ type = "Xray", protocol = "vless", tls = true })
 
 alpn = s:option(ListValue, "alpn", translate("alpn"))
 alpn.default = "default"
@@ -591,8 +576,7 @@ xray_fingerprint:value("qq")
 xray_fingerprint:value("random")
 xray_fingerprint:value("randomized")
 xray_fingerprint.default = "disable"
-xray_fingerprint:depends({ type = "Xray", tls = true, xtls = false })
-xray_fingerprint:depends({ type = "Xray", tls = true, xtls = true })
+xray_fingerprint:depends({ type = "Xray", tls = true })
 function xray_fingerprint.cfgvalue(self, section)
 	return m:get(section, "fingerprint")
 end
@@ -837,13 +821,13 @@ mux:depends("type", "Trojan-Go")
 -- [[ Mux ]]--
 mux = s:option(Flag, "mux", translate("Mux"))
 mux:depends({ type = "V2ray", protocol = "vmess" })
-mux:depends({ type = "V2ray", protocol = "vless", xtls = false })
+mux:depends({ type = "V2ray", protocol = "vless" })
 mux:depends({ type = "V2ray", protocol = "http" })
 mux:depends({ type = "V2ray", protocol = "socks" })
 mux:depends({ type = "V2ray", protocol = "shadowsocks" })
 mux:depends({ type = "V2ray", protocol = "trojan" })
 mux:depends({ type = "Xray", protocol = "vmess" })
-mux:depends({ type = "Xray", protocol = "vless", xtls = false })
+mux:depends({ type = "Xray", protocol = "vless" })
 mux:depends({ type = "Xray", protocol = "http" })
 mux:depends({ type = "Xray", protocol = "socks" })
 mux:depends({ type = "Xray", protocol = "shadowsocks" })

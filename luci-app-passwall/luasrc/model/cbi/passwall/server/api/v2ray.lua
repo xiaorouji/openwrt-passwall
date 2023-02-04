@@ -14,7 +14,7 @@ function gen_config(user)
             for i = 1, #user.uuid do
                 clients[i] = {
                     id = user.uuid[i],
-                    flow = ("1" == user.xtls) and user.flow or ("1" == user.tls and "1" ~= user.xtls and user.tlsflow) and user.tlsflow or nil
+                    flow = ("vless" == user.protocol and "1" == user.tls and user.tlsflow) and user.tlsflow or nil
                 }
             end
             settings = {
@@ -57,7 +57,6 @@ function gen_config(user)
             local clients = {}
             for i = 1, #user.uuid do
                 clients[i] = {
-                    flow = ("1" == user.xtls) and user.flow or ("1" == user.tls and "1" ~= user.xtls and user.tlsflow) and user.tlsflow or nil,
                     password = user.uuid[i],
                 }
             end
@@ -151,15 +150,6 @@ function gen_config(user)
                 streamSettings = {
                     network = user.transport,
                     security = "none",
-                    xtlsSettings = ("1" == user.tls and "1" == user.xtls) and {
-                        disableSystemRoot = false,
-                        certificates = {
-                            {
-                                certificateFile = user.tls_certificateFile,
-                                keyFile = user.tls_keyFile
-                            }
-                        }
-                    } or nil,
                     tlsSettings = ("1" == user.tls) and {
                         disableSystemRoot = false,
                         certificates = {
@@ -229,17 +219,10 @@ function gen_config(user)
         if config.inbounds[1].streamSettings.tlsSettings then
             config.inbounds[1].streamSettings.tlsSettings.alpn = alpn
         end
-        if config.inbounds[1].streamSettings.xtlsSettings then
-            config.inbounds[1].streamSettings.xtlsSettings.alpn = alpn
-        end
     end
 
     if "1" == user.tls then
         config.inbounds[1].streamSettings.security = "tls"
-        if user.type == "Xray" and user.xtls and user.xtls == "1" then
-            config.inbounds[1].streamSettings.security = "xtls"
-            config.inbounds[1].streamSettings.tlsSettings = nil
-        end
     end
 
     return config
