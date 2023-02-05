@@ -1,0 +1,223 @@
+#
+# Copyright (c) 2022-2023 SMALLPROGRAM <https://github.com/smallprogram>
+# Description: Auto update packages v2
+#
+name: "Auto update packages v2"
+on:
+  repository_dispatch:
+  workflow_dispatch:
+    inputs:
+      ssh:
+        description: 'SSH connection to Actions'
+        required: false
+        default: 'false'
+  schedule:
+    - cron: "0 */4 * * *"
+env:
+  TZ: Asia/Shanghai
+
+
+jobs:
+  job_init:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          ref: 'packages'
+
+      - name: Initialization environment
+        run: |
+          sudo timedatectl set-timezone "$TZ"
+
+
+      - name: Delete workflow runs
+        uses: Mattraks/delete-workflow-runs@main
+        with:
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          retain_days: 1
+          keep_minimum_runs: 0
+        
+      - name: SSH connection to Actions
+        uses: mxschmitt/action-tmate@v3.13
+        if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
+
+  job_auto_update_packages:
+    if: ${{ always() }}
+    needs: job_init
+    runs-on: ubuntu-latest
+    name: Auto-update-${{ matrix.pakcages }} 
+    strategy:
+      fail-fast: false
+      matrix:
+        pakcages: [brook, hysteria, ipt2socks, microsocks, sing-box, trojan, trojan-go, v2ray-core, v2ray-plugin, xray-core, xray-plugin, v2ray-geoip, v2ray-geosite]
+        include:
+          - pakcages: brook
+            folder: brook
+            version_line: 8
+            hash_line: 13
+            release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/txthinking/brook/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}'
+            release_download_url: https://codeload.github.com/txthinking/brook/tar.gz/v
+            file_name:
+
+          - pakcages: hysteria
+            folder: hysteria
+            version_line: 8
+            hash_line: 13
+            release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/apernet/hysteria/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}'
+            release_download_url: https://codeload.github.com/apernet/hysteria/tar.gz/v
+            file_name:
+
+          - pakcages: ipt2socks
+            folder: ipt2socks
+            version_line: 8
+            hash_line: 13
+            release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/zfl9/ipt2socks/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}'
+            release_download_url: https://codeload.github.com/zfl9/ipt2socks/tar.gz/v
+            file_name:
+
+          - pakcages: microsocks
+            folder: microsocks
+            version_line: 8
+            hash_line: 13
+            release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/rofl0r/microsocks/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}'
+            release_download_url: https://codeload.github.com/rofl0r/microsocks/tar.gz/v
+            file_name:
+
+          - pakcages: sing-box
+            folder: sing-box
+            version_line: 9
+            hash_line: 14
+            release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/SagerNet/sing-box/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}'
+            release_download_url: https://codeload.github.com/SagerNet/sing-box/tar.gz/v
+            file_name:
+
+          - pakcages: trojan
+            folder: trojan
+            version_line: 10
+            hash_line: 15
+            release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/trojan-gfw/trojan/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}'
+            release_download_url: https://codeload.github.com/trojan-gfw/trojan/tar.gz/v
+            file_name:
+
+          - pakcages: trojan-go
+            folder: trojan-go
+            version_line: 8
+            hash_line: 13
+            release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/p4gefau1t/trojan-go/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}'
+            release_download_url: https://codeload.github.com/p4gefau1t/trojan-go/tar.gz/v
+            file_name:
+
+          - pakcages: v2ray-core
+            folder: v2ray-core
+            version_line: 8
+            hash_line: 13
+            release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/v2fly/v2ray-core/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}'
+            release_download_url: https://codeload.github.com/v2fly/v2ray-core/tar.gz/v
+            file_name:
+
+          - pakcages: v2ray-plugin
+            folder: v2ray-plugin
+            version_line: 9
+            hash_line: 14
+            release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/teddysun/v2ray-plugin/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}'
+            release_download_url: https://codeload.github.com/teddysun/v2ray-plugin/tar.gz/v
+            file_name:
+
+          - pakcages: xray-core
+            folder: xray-core
+            version_line: 4
+            hash_line: 9
+            release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/XTLS/Xray-core/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}'
+            release_download_url: https://codeload.github.com/XTLS/Xray-core/tar.gz/v
+            file_name:
+
+          - pakcages: xray-plugin
+            folder: xray-plugin
+            version_line: 8
+            hash_line: 13
+            release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/teddysun/xray-plugin/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}'
+            release_download_url: https://codeload.github.com/teddysun/xray-plugin/tar.gz/v
+            file_name: 
+
+          - pakcages: v2ray-geoip
+            folder: v2ray-geodata
+            version_line: 15
+            hash_line: 21
+            release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/v2fly/geoip/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g'
+            release_download_url: https://github.com/v2fly/geoip/releases/download/
+            file_name: /geoip.dat
+
+
+          - pakcages: v2ray-geosite
+            folder: v2ray-geodata
+            version_line: 24
+            hash_line: 30
+            release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/v2fly/domain-list-community/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g'
+            release_download_url: https://github.com/v2fly/domain-list-community/releases/download/
+            file_name: /dlc.dat
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          ref: 'packages'
+
+      - name: Initialization environment
+        run: |
+          cd && mkdir -p packages && cd packages
+          sudo timedatectl set-timezone "$TZ"
+
+      - name: Check ${{ matrix.pakcages }}
+        id: check
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/${{ matrix.folder }} 
+          Old_PKG_VERSION=$(sed -n '${{ matrix.version_line }}p' Makefile | awk -F '=' '{print $2}')
+          New_PKG_VERSION=$(${{ matrix.release_api_command }})
+          echo "${{ matrix.pakcages }}目前版本: $Old_PKG_VERSION"
+          echo "${{ matrix.pakcages }}最新版本: $New_PKG_VERSION"
+              
+          if [ "$Old_PKG_VERSION" = "$New_PKG_VERSION" ];then echo "status=failure" >> $GITHUB_OUTPUT; echo "${{ matrix.pakcages }}版本为最新版本$New_PKG_VERSION,无需更新"; else echo "New_PKG_VERSION=$New_PKG_VERSION" >> $GITHUB_OUTPUT;  echo "status=success" >> $GITHUB_OUTPUT; fi;
+
+      - name: Update ${{ matrix.pakcages }}
+        id: update
+        if: steps.check.outputs.status == 'success' && steps.check.outputs.New_PKG_VERSION != '' && !cancelled()
+        run: |
+          cd && cd work/openwrt-passwall/openwrt-passwall/${{ matrix.folder }}
+          New_PKG_VERSION=${{ steps.check.outputs.New_PKG_VERSION }}
+          sed -i "${{ matrix.version_line }}c PKG_VERSION:=$New_PKG_VERSION" Makefile
+          cd && cd packages && mkdir -p ${{ matrix.pakcages }} && cd ${{ matrix.pakcages }}
+          wget -P / ${{ matrix.release_download_url }}$New_PKG_VERSION${{ matrix.file_name }}
+          PKG_HASH=$(sha256sum v$New_PKG_VERSION) && PKG_HASH=${PKG_HASH%% *}
+          cd && cd work/openwrt-passwall/openwrt-passwall/${{ matrix.folder }} 
+          sed -i "${{ matrix.hash_line }}c PKG_HASH:=$PKG_HASH" Makefile
+          echo "已更新${{ matrix.pakcages }}版本到: $New_PKG_VERSION"
+          echo "${{ matrix.pakcages }} Hash:$PKG_HASH"
+          cd && cd packages
+          echo ":white_check_mark: ${{ matrix.pakcages }}: update to $New_PKG_VERSION" >> commit_messages.txt
+          echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
+
+          cd && cd work/openwrt-passwall/openwrt-passwall
+          echo "branch_exists=$(git ls-remote --heads origin ${{ matrix.pakcages }}-patches-$New_PKG_VERSION | tr -d '\n')" >> $GITHUB_OUTPUT
+
+      - name: Create Pull Request
+        id: cpr
+        if: steps.check.outputs.status == 'success' && steps.check.outputs.New_PKG_VERSION != '' && steps.update.outputs.branch_exists == '' && !cancelled()
+        uses: peter-evans/create-pull-request@v4.2.3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "${{ matrix.pakcages }}: update to ${{ steps.update.outputs.version }}"
+          committer: smallprogram <smallprogram@foxmail.com>
+          author: smallprogram <smallprogram@foxmail.com>
+          signoff: false
+          branch: ${{ matrix.pakcages }}-patches-${{ steps.update.outputs.version }}
+          base: packages
+          delete-branch: true
+          body: |
+            ${{ matrix.pakcages }}: update to ${{ steps.update.outputs.version }}
+          title: "${{ matrix.pakcages }}: update to ${{ steps.update.outputs.version }}"
+          labels: |
+            automated-pr
+          draft: false
+
