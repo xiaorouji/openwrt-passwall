@@ -57,6 +57,8 @@ jobs:
             folder: brook
             version_line: 8
             hash_line: 13
+            version_head: PKG_VERSION:=
+            hash_head: PKG_HASH:=
             release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/txthinking/brook/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}'
             release_download_url: https://codeload.github.com/txthinking/brook/tar.gz/v
             file_name:
@@ -65,6 +67,8 @@ jobs:
             folder: hysteria
             version_line: 8
             hash_line: 13
+            version_head: PKG_VERSION:=
+            hash_head: PKG_HASH:=
             release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/apernet/hysteria/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}'
             release_download_url: https://codeload.github.com/apernet/hysteria/tar.gz/v
             file_name:
@@ -73,6 +77,8 @@ jobs:
             folder: ipt2socks
             version_line: 8
             hash_line: 13
+            version_head: PKG_VERSION:=
+            hash_head: PKG_HASH:=
             release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/zfl9/ipt2socks/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}'
             release_download_url: https://codeload.github.com/zfl9/ipt2socks/tar.gz/v
             file_name:
@@ -81,6 +87,8 @@ jobs:
             folder: microsocks
             version_line: 8
             hash_line: 13
+            version_head: PKG_VERSION:=
+            hash_head: PKG_HASH:=
             release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/rofl0r/microsocks/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}'
             release_download_url: https://codeload.github.com/rofl0r/microsocks/tar.gz/v
             file_name:
@@ -89,6 +97,8 @@ jobs:
             folder: sing-box
             version_line: 9
             hash_line: 14
+            version_head: PKG_VERSION:=
+            hash_head: PKG_HASH:=
             release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/SagerNet/sing-box/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}'
             release_download_url: https://codeload.github.com/SagerNet/sing-box/tar.gz/v
             file_name:
@@ -97,6 +107,8 @@ jobs:
             folder: trojan
             version_line: 10
             hash_line: 15
+            version_head: PKG_VERSION:=
+            hash_head: PKG_HASH:=
             release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/trojan-gfw/trojan/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}'
             release_download_url: https://codeload.github.com/trojan-gfw/trojan/tar.gz/v
             file_name:
@@ -105,6 +117,8 @@ jobs:
             folder: trojan-go
             version_line: 8
             hash_line: 13
+            version_head: PKG_VERSION:=
+            hash_head: PKG_HASH:=
             release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/p4gefau1t/trojan-go/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}'
             release_download_url: https://codeload.github.com/p4gefau1t/trojan-go/tar.gz/v
             file_name:
@@ -113,6 +127,8 @@ jobs:
             folder: v2ray-core
             version_line: 8
             hash_line: 13
+            version_head: PKG_VERSION:=
+            hash_head: PKG_HASH:=
             release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/v2fly/v2ray-core/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}'
             release_download_url: https://codeload.github.com/v2fly/v2ray-core/tar.gz/v
             file_name:
@@ -121,6 +137,8 @@ jobs:
             folder: v2ray-plugin
             version_line: 9
             hash_line: 14
+            version_head: PKG_VERSION:=
+            hash_head: PKG_HASH:=
             release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/teddysun/v2ray-plugin/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}'
             release_download_url: https://codeload.github.com/teddysun/v2ray-plugin/tar.gz/v
             file_name:
@@ -129,6 +147,8 @@ jobs:
             folder: xray-core
             version_line: 4
             hash_line: 9
+            version_head: PKG_VERSION:=
+            hash_head: PKG_HASH:=
             release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/XTLS/Xray-core/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}'
             release_download_url: https://codeload.github.com/XTLS/Xray-core/tar.gz/v
             file_name:
@@ -137,6 +157,8 @@ jobs:
             folder: xray-plugin
             version_line: 8
             hash_line: 13
+            version_head: PKG_VERSION:=
+            hash_head: PKG_HASH:=
             release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/teddysun/xray-plugin/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}'
             release_download_url: https://codeload.github.com/teddysun/xray-plugin/tar.gz/v
             file_name: 
@@ -145,6 +167,8 @@ jobs:
             folder: v2ray-geodata
             version_line: 15
             hash_line: 21
+            version_head: GEOIP_VER:=
+            hash_head: \  HASH:=
             release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/v2fly/geoip/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g'
             release_download_url: https://github.com/v2fly/geoip/releases/download/
             file_name: /geoip.dat
@@ -154,6 +178,8 @@ jobs:
             folder: v2ray-geodata
             version_line: 24
             hash_line: 30
+            version_head: GEOSITE_VER:=
+            hash_head: \  HASH:=
             release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/v2fly/domain-list-community/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g'
             release_download_url: https://github.com/v2fly/domain-list-community/releases/download/
             file_name: /dlc.dat
@@ -186,12 +212,13 @@ jobs:
         run: |
           cd && cd work/openwrt-passwall/openwrt-passwall/${{ matrix.folder }}
           New_PKG_VERSION=${{ steps.check.outputs.New_PKG_VERSION }}
-          sed -i "${{ matrix.version_line }}c PKG_VERSION:=$New_PKG_VERSION" Makefile
+          sed -i "${{ matrix.version_line }}c ${{ matrix.version_head }}$New_PKG_VERSION" Makefile
           cd && cd packages && mkdir -p ${{ matrix.pakcages }} && cd ${{ matrix.pakcages }}
           wget -P / ${{ matrix.release_download_url }}$New_PKG_VERSION${{ matrix.file_name }}
-          PKG_HASH=$(sha256sum v$New_PKG_VERSION) && PKG_HASH=${PKG_HASH%% *}
+          file_name=${{ matrix.file_name }}
+          if [ ! -n "${{ matrix.file_name }}" ]; then PKG_HASH=$(sha256sum v$New_PKG_VERSION) && PKG_HASH=${PKG_HASH%% *}; else PKG_HASH=$(sha256sum ${file_name##*/}) && PKG_HASH=${PKG_HASH%% *}; fi;
           cd && cd work/openwrt-passwall/openwrt-passwall/${{ matrix.folder }} 
-          sed -i "${{ matrix.hash_line }}c PKG_HASH:=$PKG_HASH" Makefile
+          sed -i "${{ matrix.hash_line }}c ${{ matrix.hash_head }}$PKG_HASH" Makefile
           echo "已更新${{ matrix.pakcages }}版本到: $New_PKG_VERSION"
           echo "${{ matrix.pakcages }} Hash:$PKG_HASH"
           cd && cd packages
@@ -199,7 +226,7 @@ jobs:
           echo "version=$New_PKG_VERSION" >> $GITHUB_OUTPUT
 
           cd && cd work/openwrt-passwall/openwrt-passwall
-          echo "branch_exists=$(git ls-remote --heads origin ${{ matrix.pakcages }}-patches-$New_PKG_VERSION | tr -d '\n')" >> $GITHUB_OUTPUT
+          echo "branch_exists=$(git ls-remote --heads origin patches-${{ matrix.pakcages }}-$New_PKG_VERSION | tr -d '\n')" >> $GITHUB_OUTPUT
 
       - name: Create Pull Request
         id: cpr
@@ -211,7 +238,7 @@ jobs:
           committer: smallprogram <smallprogram@foxmail.com>
           author: smallprogram <smallprogram@foxmail.com>
           signoff: false
-          branch: ${{ matrix.pakcages }}-patches-${{ steps.update.outputs.version }}
+          branch: patches-${{ matrix.pakcages }}-${{ steps.update.outputs.version }}
           base: packages
           delete-branch: true
           body: |
