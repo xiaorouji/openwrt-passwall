@@ -668,18 +668,8 @@ bind_local:depends("type", "Xray")
 
 accept_lan = s:option(Flag, "accept_lan", translate("Accept LAN Access"), translate("When selected, it can accessed lan , this will not be safe!"))
 accept_lan.default = "0"
-accept_lan:depends({ type = "V2ray", protocol = "vmess" })
-accept_lan:depends({ type = "V2ray", protocol = "vless" })
-accept_lan:depends({ type = "V2ray", protocol = "http" })
-accept_lan:depends({ type = "V2ray", protocol = "socks" })
-accept_lan:depends({ type = "V2ray", protocol = "shadowsocks" })
-accept_lan:depends({ type = "V2ray", protocol = "trojan" })
-accept_lan:depends({ type = "Xray", protocol = "vmess" })
-accept_lan:depends({ type = "Xray", protocol = "vless" })
-accept_lan:depends({ type = "Xray", protocol = "http" })
-accept_lan:depends({ type = "Xray", protocol = "socks" })
-accept_lan:depends({ type = "Xray", protocol = "shadowsocks" })
-accept_lan:depends({ type = "Xray", protocol = "trojan" })
+accept_lan:depends("type", "V2ray")
+accept_lan:depends("type", "Xray")
 
 local nodes_table = {}
 for k, e in ipairs(api.get_valid_nodes()) do
