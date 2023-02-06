@@ -450,7 +450,7 @@ timeout:depends("type", "SS")
 timeout:depends("type", "SS-Rust")
 timeout:depends("type", "SSR")
 
-tcp_fast_open = s:option(ListValue, "tcp_fast_open", translate("TCP Fast Open"), translate("Need node support required"))
+tcp_fast_open = s:option(ListValue, "tcp_fast_open", "TCP " .. translate("Fast Open"), translate("Need node support required"))
 tcp_fast_open:value("false")
 tcp_fast_open:value("true")
 tcp_fast_open:depends("type", "SS")
@@ -459,6 +459,10 @@ tcp_fast_open:depends("type", "SSR")
 tcp_fast_open:depends("type", "Trojan")
 tcp_fast_open:depends("type", "Trojan-Plus")
 tcp_fast_open:depends("type", "Trojan-Go")
+
+fast_open = s:option(Flag, "fast_open", translate("Fast Open"))
+fast_open.default = "0"
+fast_open:depends("type", "Hysteria")
 
 ss_plugin = s:option(ListValue, "ss_plugin", translate("plugin"))
 ss_plugin:value("none", translate("none"))

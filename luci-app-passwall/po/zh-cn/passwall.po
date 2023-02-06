@@ -997,8 +997,8 @@ msgstr "连接超时时间"
 msgid "Local Port"
 msgstr "本地端口"
 
-msgid "TCP Fast Open"
-msgstr "TCP 快速打开"
+msgid "Fast Open"
+msgstr "快速打开"
 
 msgid "Need node support required"
 msgstr "需要节点支持"
