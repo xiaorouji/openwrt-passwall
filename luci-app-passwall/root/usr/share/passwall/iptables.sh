@@ -1137,10 +1137,6 @@ add_firewall_rule() {
 			msg="Socks 服务 [:${port}]"
 			if [ "$node" == "nil" ] || [ "$port" == "0" ]; then
 				msg="${msg} 未配置完全，略过"
-			elif [ "$(echo $node | grep ^tcp)" ]; then
-				#eval "node=\${TCP_NODE}"
-				#msg="${msg} 使用与 TCP 代理自动切换${num} 相同的节点，延后处理"
-				continue
 			else
 				filter_node $node TCP > /dev/null 2>&1 &
 				filter_node $node UDP > /dev/null 2>&1 &
@@ -1155,7 +1151,7 @@ add_firewall_rule() {
 		eval "node=\${${stream}_NODE}"
 		eval "port=\${${stream}_REDIR_PORT}"
 		#echolog "分析 $stream 代理自动切换..."
-		[ "$node" == "tcp" ] && [ "$stream" == "UDP" ] && {
+		[ "$stream" == "UDP" ] && [ "$node" == "tcp" ] && {
 			eval "node=\${TCP_NODE}"
 			eval "port=\${TCP_REDIR_PORT}"
 		}
