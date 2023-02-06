@@ -1222,6 +1222,11 @@ add_firewall_rule() {
 	load_acl
 
 	# dns_hijack "force"
+	
+	for iface in $IFACES; do
+		$ipt_n -I PSW_OUTPUT -o $iface -j RETURN
+		$ipt_m -I PSW_OUTPUT -o $iface -j RETURN
+	done
 
 	[ -n "${is_tproxy}" -o -n "${udp_flag}" ] && {
 		bridge_nf_ipt=$(sysctl -e -n net.bridge.bridge-nf-call-iptables)

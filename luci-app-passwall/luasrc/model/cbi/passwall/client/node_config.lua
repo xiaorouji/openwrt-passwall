@@ -123,8 +123,13 @@ protocol:value("trojan", translate("Trojan"))
 protocol:value("wireguard", translate("WireGuard"))
 protocol:value("_balancing", translate("Balancing"))
 protocol:value("_shunt", translate("Shunt"))
+protocol:value("_iface", translate("Custom Interface") .. " (Only Support Xray)")
 protocol:depends("type", "V2ray")
 protocol:depends("type", "Xray")
+
+iface = s:option(Value, "iface", translate("Interface"))
+iface.default = "eth1"
+iface:depends("protocol", "_iface")
 
 local nodes_table = {}
 for k, e in ipairs(api.get_valid_nodes()) do

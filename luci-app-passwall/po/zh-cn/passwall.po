@@ -1162,6 +1162,12 @@ msgstr "自定义 Socks"
 msgid "Custom HTTP"
 msgstr "自定义 HTTP"
 
+msgid "Custom Interface"
+msgstr "自定义接口"
+
+msgid "Interface"
+msgstr "接口"
+
 msgid "Bind Local"
 msgstr "本机监听"
 

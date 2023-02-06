@@ -24,6 +24,7 @@ DNS_PORT=15353
 TUN_DNS="127.0.0.1#${DNS_PORT}"
 LOCAL_DNS=119.29.29.29
 DEFAULT_DNS=
+IFACES=
 NO_PROXY=0
 PROXY_IPV6=0
 PROXY_IPV6_UDP=0
@@ -360,6 +361,10 @@ run_v2ray() {
 	_extra_param="${_extra_param} -loglevel $loglevel"
 	lua $API_GEN_V2RAY ${_extra_param} > $config_file
 	ln_run "$(first_type $(config_t_get global_app ${type}_file) ${type})" ${type} $log_file run -c "$config_file"
+	local protocol=$(config_n_get $node protocol)
+	[ "$protocol" == "_iface" ] && {
+		IFACES="$IFACES $(config_n_get $node iface)"
+	}
 }
 
 run_dns2socks() {
@@ -412,8 +417,11 @@ run_socks() {
 		error_msg="某种原因，此 Socks 服务的相关配置已失联，启动中止！"
 	fi
 
-	if ([ "$type" == "v2ray" ] || [ "$type" == "xray" ]) && ([ -n "$(config_n_get $node balancing_node)" ] || [ "$(config_n_get $node default_node)" != "_direct" -a "$(config_n_get $node default_node)" != "_blackhole" ]); then
-		unset error_msg
+	if [ "$type" == "v2ray" ] || [ "$type" == "xray" ]; then
+		local protocol=$(config_n_get $node protocol)
+		if [ "$protocol" == "_balancing" ] || [ "$protocol" == "_shunt" ] || [ "$protocol" == "_iface" ]; then
+			unset error_msg
+		fi
 	fi
 
 	[ -n "${error_msg}" ] && {

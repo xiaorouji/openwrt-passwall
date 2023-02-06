@@ -526,7 +526,22 @@ if node_id then
             }
         end
     else
-        local outbound = gen_outbound(node)
+        local outbound = nil
+        if node.protocol == "_iface" then
+            if node.iface then
+                outbound = {
+                    protocol = "freedom",
+                    tag = "outbound",
+                    streamSettings = {
+                        sockopt = {
+                            interface = node.iface
+                        }
+                    }
+                }
+            end
+        else
+            outbound = gen_outbound(node)
+        end
         if outbound then table.insert(outbounds, outbound) end
         routing = {
             domainStrategy = "AsIs",

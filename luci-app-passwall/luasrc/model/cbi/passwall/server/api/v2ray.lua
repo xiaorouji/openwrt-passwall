@@ -117,19 +117,32 @@ function gen_config(user)
     }
 
     if user.outbound_node and user.outbound_node ~= "nil" then
-        local outbound_node_t = uci:get_all("passwall", user.outbound_node)
-        if user.outbound_node == "_socks" or user.outbound_node == "_http" then
-            outbound_node_t = {
-                type = user.type,
-                protocol = user.outbound_node:gsub("_", ""),
-                transport = "tcp",
-                address = user.outbound_node_address,
-                port = user.outbound_node_port,
-                username = (user.outbound_node_username and user.outbound_node_username ~= "") and user.outbound_node_username or nil,
-                password = (user.outbound_node_password and user.outbound_node_password ~= "") and user.outbound_node_password or nil,
+        local outbound = nil
+        if user.outbound_node == "_iface" and user.outbound_node_iface then
+            outbound = {
+                protocol = "freedom",
+                tag = "outbound",
+                streamSettings = {
+                    sockopt = {
+                        interface = user.outbound_node_iface
+                    }
+                }
             }
+        else
+            local outbound_node_t = uci:get_all("passwall", user.outbound_node)
+            if user.outbound_node == "_socks" or user.outbound_node == "_http" then
+                outbound_node_t = {
+                    type = user.type,
+                    protocol = user.outbound_node:gsub("_", ""),
+                    transport = "tcp",
+                    address = user.outbound_node_address,
+                    port = user.outbound_node_port,
+                    username = (user.outbound_node_username and user.outbound_node_username ~= "") and user.outbound_node_username or nil,
+                    password = (user.outbound_node_password and user.outbound_node_password ~= "") and user.outbound_node_password or nil,
+                }
+            end
+            outbound = require("luci.model.cbi.passwall.api.gen_v2ray").gen_outbound(outbound_node_t, "outbound")
         end
-        local outbound = require("luci.model.cbi.passwall.api.gen_v2ray").gen_outbound(outbound_node_t, "outbound")
         if outbound then
             table.insert(outbounds, 1, outbound)
         end
