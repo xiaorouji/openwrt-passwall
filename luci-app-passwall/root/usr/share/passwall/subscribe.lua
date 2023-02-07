@@ -775,7 +775,7 @@ local function processData(szType, content, add_mode, add_from)
 				result.tls = "1"
 				result.tlsflow = params.flow or nil
 				result.tls_serverName = (params.sni and params.sni ~= "") and params.sni or params.host
-				result.fingerprint = (params.fp and params.fp ~= "") and params.fp or nil
+				result.fingerprint = (params.fp and params.fp ~= "") and params.fp or "chrome"
 			end
 
 			result.port = port
