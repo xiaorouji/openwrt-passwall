@@ -68,7 +68,6 @@ config global_app
 	option hysteria_file '/usr/bin/hysteria'
 
 config global_subscribe
-	option subscribe_proxy '0'
 	option filter_keyword_mode '1'
 	list filter_discard_list '过期时间'
 	list filter_discard_list '剩余流量'

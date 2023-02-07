@@ -57,19 +57,21 @@ end
 
 -- curl
 local function curl(url, file, valifile)
-	local cmd = "curl -skL -w %{http_code} --retry 3 --connect-timeout 3 '" .. url .. "'"
+	local args = {
+		"-sKL", "-w %{http_code}", "--retry 3", "--connect-timeout 3"
+	}
 	if file then
-		cmd = cmd .. " -o " .. file
+		args[#args + 1] = "-o " .. file
 	end
 	if valifile then
-		cmd = cmd .. " --dump-header " .. valifile
+		args[#args + 1] = "--dump-header " .. valifile
 	end
-	local stdout = luci.sys.exec(cmd)
+	local result = api.curl_logic(url, nil, args)
 
 	if file then
-		return tonumber(trim(stdout))
+		return tonumber(trim(result))
 	else
-		return trim(stdout)
+		return trim(result)
 	end
 end
 

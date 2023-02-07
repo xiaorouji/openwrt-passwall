@@ -830,30 +830,15 @@ local function processData(szType, content, add_mode, add_from)
 	return result
 end
 
--- curl
 local function curl(url, file, ua)
 	if not ua or ua == "" then
 		ua = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.122 Safari/537.36"
 	end
-	local stdout = ""
-	local cmd = string.format('curl -skL --user-agent "%s" --retry 3 --connect-timeout 3 "%s"', ua, url)
-	if file then
-		cmd = cmd .. " -o " .. file
-		stdout = luci.sys.call(cmd .. " > /dev/null")
-		return stdout
-	else
-		stdout = luci.sys.exec(cmd)
-		return trim(stdout)
-	end
-
-	if not stdout or #stdout <= 0 then
-		if uci:get(appname, "@global_subscribe[0]", "subscribe_proxy") or "0" == "1" and uci:get(appname, "@global[0]", "enabled") or "0" == "1" then
-			log('通过代理订阅失败，尝试关闭代理订阅。')
-			luci.sys.call("/etc/init.d/" .. appname .. " stop > /dev/null")
-			stdout = luci.sys.exec(string.format('curl -skL --user-agent "%s" -k --retry 3 --connect-timeout 3 "%s"', ua, url))
-		end
-	end
-	return trim(stdout)
+	local args = {
+		"-skL", "--retry 3", "--connect-timeout 3", '--user-agent "' .. ua .. '"'
+	}
+	local result = api.curl_logic(url, file, args)
+    return result
 end
 
 local function truncate_nodes(add_from)
@@ -1146,7 +1131,7 @@ end
 local execute = function()
 	do
 		local subscribe_list = {}
-		local retry = {}
+		local fail_list = {}
 		if arg[2] then
 			string.gsub(arg[2], '[^' .. "," .. ']+', function(w)
 				subscribe_list[#subscribe_list + 1] = uci:get_all(appname, w) or {}
@@ -1201,7 +1186,7 @@ local execute = function()
 				os.remove("/tmp/" .. cfgid)
 				parse_link(raw, "2", remark)
 			else
-				retry[#retry + 1] = value
+				fail_list[#fail_list + 1] = value
 			end
 			allowInsecure_default = nil
 			filter_keyword_mode_default = uci:get(appname, "@global_subscribe[0]", "filter_keyword_mode") or "0"
@@ -1211,13 +1196,9 @@ local execute = function()
 			trojan_type_default = uci:get(appname, "@global_subscribe[0]", "trojan_type") or "trojan-plus"
 		end
 
-		if #retry > 0 then
-			for index, value in ipairs(retry) do
-				if (uci:get(appname, "@global_subscribe[0]", "subscribe_proxy") or "0") == "1" and (uci:get(appname, "@global[0]", "enabled") or "0") == "1" then
-					log(value.remark .. '订阅失败，请尝试关闭代理后再订阅。')
-				else
-					log(value.remark .. '订阅失败，可能是订阅地址失效，或是网络问题，请诊断！')
-				end
+		if #fail_list > 0 then
+			for index, value in ipairs(fail_list) do
+				log(value.remark .. '订阅失败，可能是订阅地址失效，或是网络问题，请诊断！')
 			end
 		end
 		update_node(0)
