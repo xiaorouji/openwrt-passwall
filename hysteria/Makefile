@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hysteria
-PKG_VERSION:=1.3.2
+PKG_VERSION:=1.3.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/apernet/hysteria/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=1014287f6cca7cb3fa0e4ad36b33cf8f28c800fb9f99d431997036baef8240fa
+PKG_HASH:=11ca9df98a8a17a348dcdac92a19fef0e25dde8e536a9778705f765ac208a202
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILE:=LICENSE
