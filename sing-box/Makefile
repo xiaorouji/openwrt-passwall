@@ -19,6 +19,7 @@ PKG_LICENSE_FILE:=LICENSE
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_SING_BOX_BUILD_ACME \
 	CONFIG_SING_BOX_BUILD_CLASH_API \
+	CONFIG_SING_BOX_BUILD_DHCP \
 	CONFIG_SING_BOX_BUILD_ECH \
 	CONFIG_SING_BOX_BUILD_GVISOR \
 	CONFIG_SING_BOX_BUILD_GRPC \
@@ -63,6 +64,10 @@ define Package/$(PKG_NAME)/config
 
     config SING_BOX_BUILD_CLASH_API
       bool "Build with Clash API support (EXPERIMENTAL!!!)"
+      default y
+
+    config SING_BOX_BUILD_DHCP
+      bool "Build with DHCP support"
       default y
 
     config SING_BOX_BUILD_ECH
@@ -112,6 +117,9 @@ ifneq ($(CONFIG_SING_BOX_BUILD_ACME),)
 endif
 ifneq ($(CONFIG_SING_BOX_BUILD_CLASH_API),)
   PKG_BUILD_TAGS+=with_clash_api
+endif
+ifneq ($(CONFIG_SING_BOX_BUILD_DHCP),)
+  PKG_BUILD_TAGS+=with_dhcp
 endif
 ifneq ($(CONFIG_SING_BOX_BUILD_ECH),)
   PKG_BUILD_TAGS+=with_ech
