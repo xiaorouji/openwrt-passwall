@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sing-box
-PKG_VERSION:=1.1.5
+PKG_VERSION:=1.2-beta1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/SagerNet/sing-box/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=a1e642362f41bd0e362cd9c8d2f0d29d2eca6a55a948677f6f03cfb81c4f0657
+PKG_HASH:=dcf36bc8cacea19a2e47bcfc691059680d6691898327b2317085711e88ff45cb
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILE:=LICENSE
@@ -19,6 +19,7 @@ PKG_LICENSE_FILE:=LICENSE
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_SING_BOX_BUILD_ACME \
 	CONFIG_SING_BOX_BUILD_CLASH_API \
+	CONFIG_SING_BOX_BUILD_DHCP \
 	CONFIG_SING_BOX_BUILD_ECH \
 	CONFIG_SING_BOX_BUILD_GVISOR \
 	CONFIG_SING_BOX_BUILD_GRPC \
@@ -63,6 +64,10 @@ define Package/$(PKG_NAME)/config
 
     config SING_BOX_BUILD_CLASH_API
       bool "Build with Clash API support (EXPERIMENTAL!!!)"
+      default y
+
+    config SING_BOX_BUILD_DHCP
+      bool "Build with DHCP support"
       default y
 
     config SING_BOX_BUILD_ECH
@@ -112,6 +117,9 @@ ifneq ($(CONFIG_SING_BOX_BUILD_ACME),)
 endif
 ifneq ($(CONFIG_SING_BOX_BUILD_CLASH_API),)
   PKG_BUILD_TAGS+=with_clash_api
+endif
+ifneq ($(CONFIG_SING_BOX_BUILD_DHCP),)
+  PKG_BUILD_TAGS+=with_dhcp
 endif
 ifneq ($(CONFIG_SING_BOX_BUILD_ECH),)
   PKG_BUILD_TAGS+=with_ech
