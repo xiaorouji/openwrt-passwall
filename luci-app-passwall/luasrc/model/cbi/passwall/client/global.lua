@@ -197,9 +197,6 @@ end
 if api.is_finded("dns2socks") then
     dns_mode:value("dns2socks", "dns2socks")
 end
-if has_v2ray then
-    dns_mode:value("v2ray", "V2ray")
-end
 if has_xray then
     dns_mode:value("xray", "Xray")
 end
@@ -209,7 +206,6 @@ o = s:taboption("DNS", ListValue, "v2ray_dns_mode", " ")
 o:value("tcp", "TCP")
 o:value("doh", "DoH")
 o:value("fakedns", "FakeDNS")
-o:depends("dns_mode", "v2ray")
 o:depends("dns_mode", "xray")
 o.validate = function(self, value, t)
     if value == "fakedns" then
@@ -274,8 +270,6 @@ o:depends("v2ray_dns_mode", "doh")
 o = s:taboption("DNS", Flag, "dns_cache", translate("Cache Resolved"))
 o.default = "1"
 o:depends({dns_mode = "dns2socks"})
-o:depends({dns_mode = "v2ray", v2ray_dns_mode = "tcp"})
-o:depends({dns_mode = "v2ray", v2ray_dns_mode = "doh"})
 o:depends({dns_mode = "xray", v2ray_dns_mode = "tcp"})
 o:depends({dns_mode = "xray", v2ray_dns_mode = "doh"})
 o.rmempty = false
@@ -285,8 +279,6 @@ if has_chnlist and api.is_finded("chinadns-ng") then
     o.default = "0"
 	o:depends({dns_mode = "dns2socks"})
 	o:depends({dns_mode = "dns2tcp"})
-	o:depends({dns_mode = "v2ray", v2ray_dns_mode = "tcp"})
-	o:depends({dns_mode = "v2ray", v2ray_dns_mode = "doh"})
 	o:depends({dns_mode = "xray", v2ray_dns_mode = "tcp"})
 	o:depends({dns_mode = "xray", v2ray_dns_mode = "doh"})
 	o:depends({dns_mode = "udp"})
