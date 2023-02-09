@@ -924,7 +924,7 @@ start_redir() {
 
 start_socks() {
 	tcp_node_socks=1
-	tcp_node_socks_port=$(config_t_get global tcp_node_socks_port 1070)
+	tcp_node_socks_port=$(get_new_port $(config_t_get global tcp_node_socks_port 1070))
 	tcp_node_http_port=$(config_t_get global tcp_node_http_port 0)
 	[ "$tcp_node_http_port" != "0" ] && tcp_node_http=1
 	[ "$SOCKS_ENABLED" = "1" ] && {

@@ -69,7 +69,8 @@ function to_download(url, size)
         end
     end
 
-    result = api.curl_logic(url, tmp_file, api.curl_args) == 0
+    local return_code, result = api.curl_logic(url, tmp_file, api.curl_args)
+    result = return_code == 0
 
     if not result then
         api.exec("/bin/rm", {"-f", tmp_file})

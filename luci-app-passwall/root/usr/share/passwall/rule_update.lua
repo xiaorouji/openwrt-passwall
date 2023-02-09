@@ -66,13 +66,8 @@ local function curl(url, file, valifile)
 	if valifile then
 		args[#args + 1] = "--dump-header " .. valifile
 	end
-	local result = api.curl_logic(url, nil, args)
-
-	if file then
-		return tonumber(trim(result))
-	else
-		return trim(result)
-	end
+	local return_code, result = api.curl_logic(url, nil, args)
+	return tonumber(result)
 end
 
 --check excluded domain
@@ -246,7 +241,7 @@ end
 local function fetch_geoip()
 	--请求geoip
 	xpcall(function()
-		local json_str = curl(geoip_api)
+		local json_str = api.curl_logic(geoip_api)
 		local json = jsonc.parse(json_str)
 		if json.tag_name and json.assets then
 			for _, v in ipairs(json.assets) do
@@ -297,7 +292,7 @@ end
 local function fetch_geosite()
 	--请求geosite
 	xpcall(function()
-		local json_str = curl(geosite_api)
+		local json_str = api.curl_logic(geosite_api)
 		local json = jsonc.parse(json_str)
 		if json.tag_name and json.assets then
 			for _, v in ipairs(json.assets) do

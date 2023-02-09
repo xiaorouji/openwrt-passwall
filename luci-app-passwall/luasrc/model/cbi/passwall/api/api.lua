@@ -16,6 +16,24 @@ DISTRIB_TARGET = nil
 LOG_FILE = "/tmp/log/" .. appname .. ".log"
 CACHE_PATH = "/tmp/etc/" .. appname .. "_tmp"
 
+function exec_call(cmd)
+    local process = io.popen(cmd .. '; echo -e "\n$?"')
+    local lines = {}
+    local result = ""
+    local return_code
+    for line in process:lines() do
+        lines[#lines + 1] = line
+    end
+    process:close()
+    if #lines > 0 then
+        return_code = lines[#lines]
+        for i = 1, #lines - 1 do
+            result = result .. lines[i] .. ((i == #lines - 1) and "" or "\n")
+        end
+    end
+    return tonumber(return_code), trim(result)
+end
+
 function base64Decode(text)
 	local raw = text
 	if not text then return '' end
@@ -39,11 +57,7 @@ function curl_base(url, file, args)
         args[#args + 1] = "-o " .. file
     end
 	local cmd = string.format('curl %s "%s"', table_join(args), url)
-    if file then
-        return luci.sys.call(cmd .. " > /dev/null")
-    else
-        return trim(luci.sys.exec(cmd))
-    end
+    return exec_call(cmd)
 end
 
 function curl_proxy(url, file, args)
@@ -55,15 +69,15 @@ function curl_proxy(url, file, args)
         tmp_args[#tmp_args + 1] = "-x socks5h://" .. socks_server
         return curl_base(url, file, tmp_args)
     end
-    return nil
+    return nil, nil
 end
 
 function curl_logic(url, file, args)
-    local result = curl_proxy(url, file, args)
-    if not result then
-        result = curl_base(url, file, args)
+    local return_code, result = curl_proxy(url, file, args)
+    if not return_code or return_code ~= 0 then
+        return_code, result = curl_base(url, file, args)
     end
-    return result
+    return return_code, result
 end
 
 function url(...)
@@ -628,9 +642,9 @@ end
 
 function get_api_json(url)
     local jsonc = require "luci.jsonc"
-    local json_content = curl_logic(url, nil, curl_args)
-    if json_content == "" then return {} end
-    return jsonc.parse(json_content) or {}
+    local return_code, content = curl_logic(url, nil, curl_args)
+    if return_code ~= 0 or content == "" then return {} end
+    return jsonc.parse(content) or {}
 end
 
 function common_to_check(api_url, local_version, match_file_name)

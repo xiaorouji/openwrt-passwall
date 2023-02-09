@@ -837,8 +837,8 @@ local function curl(url, file, ua)
 	local args = {
 		"-skL", "--retry 3", "--connect-timeout 3", '--user-agent "' .. ua .. '"'
 	}
-	local result = api.curl_logic(url, file, args)
-    return result
+	local return_code, result = api.curl_logic(url, file, args)
+	return return_code
 end
 
 local function truncate_nodes(add_from)
