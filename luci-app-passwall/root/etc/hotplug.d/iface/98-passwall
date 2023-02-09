@@ -1,0 +1,6 @@
+#!/bin/sh
+
+[[ "$ACTION" == "ifup" && $(uci get "passwall.@global[0].enabled") == "1" ]] && {
+    /etc/init.d/passwall restart
+    echo "passwall: restart when $INTERFACE ifup" > /dev/kmsg
+}
