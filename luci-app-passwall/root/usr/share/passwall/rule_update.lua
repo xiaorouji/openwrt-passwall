@@ -340,24 +340,26 @@ local function fetch_geosite()
 end
 
 if arg[2] then
-	if arg[2]:find("gfwlist") then
-		gfwlist_update = 1
-    end
-	if arg[2]:find("chnroute") then
-		chnroute_update = 1
-    end
-	if arg[2]:find("chnroute6") then
-		chnroute6_update = 1
-    end
-	if arg[2]:find("chnlist") then
-		chnlist_update = 1
-	end
-	if arg[2]:find("geoip") then
-		geoip_update = 1
-	end
-	if arg[2]:find("geosite") then
-		geosite_update = 1
-	end
+	string.gsub(arg[2], '[^' .. "," .. ']+', function(w)
+		if w == "gfwlist" then
+			gfwlist_update = 1
+		end
+		if w == "chnroute" then
+			chnroute_update = 1
+		end
+		if w == "chnroute6" then
+			chnroute6_update = 1
+		end
+		if w == "chnlist" then
+			chnlist_update = 1
+		end
+		if w == "geoip" then
+			geoip_update = 1
+		end
+		if w == "geosite" then
+			geosite_update = 1
+		end
+	end)
 else
 	gfwlist_update = ucic:get_first(name, 'global_rules', "gfwlist_update", 1)
 	chnroute_update = ucic:get_first(name, 'global_rules', "chnroute_update", 1)
