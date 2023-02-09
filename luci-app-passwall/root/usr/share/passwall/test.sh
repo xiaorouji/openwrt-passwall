@@ -44,11 +44,11 @@ test_url() {
 
 test_proxy() {
 	result=0
-	status=$(test_url "https://www.google.com/generate_204" ${retry_num} ${connect_timeout})
+	status=$(test_url "https://www.mfa.gov.cn/web/system/cac_report.shtml" ${retry_num} ${connect_timeout})
 	if [ "$status" = "200" ]; then
 		result=0
 	else
-		status2=$(test_url "https://www.baidu.com" ${retry_num} ${connect_timeout})
+		status2=$(test_url "http://www.cac.gov.cn/cms/cmsadmin/infopub/counter.jsp?c=OffendersReport" ${retry_num} ${connect_timeout})
 		if [ "$status2" = "200" ]; then
 			result=1
 		else
