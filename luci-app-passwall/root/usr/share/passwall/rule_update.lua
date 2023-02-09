@@ -49,16 +49,10 @@ local log = function(...)
     end
 end
 
--- trim
-local function trim(text)
-    if not text or text == "" then return "" end
-    return (string.gsub(text, "^%s*(.-)%s*$", "%1"))
-end
-
 -- curl
 local function curl(url, file, valifile)
 	local args = {
-		"-sKL", "-w %{http_code}", "--retry 3", "--connect-timeout 3"
+		"-skL", "-w %{http_code}", "--retry 3", "--connect-timeout 3"
 	}
 	if file then
 		args[#args + 1] = "-o " .. file
@@ -241,8 +235,8 @@ end
 local function fetch_geoip()
 	--请求geoip
 	xpcall(function()
-		local json_str = api.curl_logic(geoip_api)
-		local json = jsonc.parse(json_str)
+		local return_code, content = api.curl_logic(geoip_api)
+		local json = jsonc.parse(content)
 		if json.tag_name and json.assets then
 			for _, v in ipairs(json.assets) do
 				if v.name and v.name == "geoip.dat.sha256sum" then
@@ -292,8 +286,8 @@ end
 local function fetch_geosite()
 	--请求geosite
 	xpcall(function()
-		local json_str = api.curl_logic(geosite_api)
-		local json = jsonc.parse(json_str)
+		local return_code, content = api.curl_logic(geosite_api)
+		local json = jsonc.parse(content)
 		if json.tag_name and json.assets then
 			for _, v in ipairs(json.assets) do
 				if v.name and v.name == "geosite.dat.sha256sum" then
