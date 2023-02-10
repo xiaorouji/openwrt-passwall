@@ -1,6 +1,9 @@
 #!/bin/sh
 
 [[ "$ACTION" == "ifup" && $(uci get "passwall.@global[0].enabled") == "1" ]] && {
-    /etc/init.d/passwall restart
-    echo "passwall: restart when $INTERFACE ifup" > /dev/kmsg
+	default_device=$(ip route | grep default | awk -F 'dev ' '{print $2}' | awk '{print $1}')
+	[ "$default_device" == "$DEVICE" ] && {
+		/etc/init.d/passwall restart
+		echo "passwall: restart when $INTERFACE ifup" > /dev/kmsg
+	}
 }
