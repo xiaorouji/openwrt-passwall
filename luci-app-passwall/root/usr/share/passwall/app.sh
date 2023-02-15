@@ -1,6 +1,6 @@
 #!/bin/sh
 # Copyright (C) 2018-2020 L-WRT Team
-# Copyright (C) 2021-2022 xiaorouji
+# Copyright (C) 2021-2023 xiaorouji
 
 . $IPKG_INSTROOT/lib/functions.sh
 . $IPKG_INSTROOT/lib/functions/service.sh

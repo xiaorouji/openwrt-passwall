@@ -1,13 +1,13 @@
 # Copyright (C) 2018-2020 L-WRT Team
-# Copyright (C) 2021-2022 xiaorouji
+# Copyright (C) 2021-2023 xiaorouji
 #
 # This is free software, licensed under the GNU General Public License v3.
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
-PKG_VERSION:=4.58
-PKG_RELEASE:=3
+PKG_VERSION:=4.59
+PKG_RELEASE:=1
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_$(PKG_NAME)_Iptables_Transparent_Proxy \
