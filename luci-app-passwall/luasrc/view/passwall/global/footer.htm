@@ -1,5 +1,5 @@
 <%
-local api = require "luci.model.cbi.passwall.api.api"
+local api = require "luci.passwall.api"
 local auto_switch = api.uci_get_type("auto_switch", "enable", 0)
 -%>
 <script type="text/javascript">

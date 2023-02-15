@@ -1,5 +1,5 @@
 <%
-local api = require "luci.model.cbi.passwall.api.api"
+local api = require "luci.passwall.api"
 
 local gfwlist_update = api.uci_get_type("global_rules", "gfwlist_update", "1") == "1" and "checked='checked'" or ""
 local chnroute_update = api.uci_get_type("global_rules", "chnroute_update", "1") == "1" and "checked='checked'" or ""

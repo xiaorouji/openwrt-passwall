@@ -9,7 +9,7 @@ require 'luci.util'
 require 'luci.jsonc'
 require 'luci.sys'
 local appname = 'passwall'
-local api = require ("luci.model.cbi." .. appname .. ".api.api")
+local api = require ("luci.passwall.api")
 local datatypes = require "luci.cbi.datatypes"
 
 -- these global functions are accessed all the time by the event handler

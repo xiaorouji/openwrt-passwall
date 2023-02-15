@@ -1,7 +1,32 @@
-module("luci.model.cbi.passwall.api.util_shadowsocks", package.seeall)
-local api = require "luci.model.cbi.passwall.api.api"
+module("luci.passwall.util_shadowsocks", package.seeall)
+local api = require "luci.passwall.api"
 local uci = api.uci
 local jsonc = api.jsonc
+
+function gen_config_server(node)
+    local config = {}
+    config.server_port = tonumber(node.port)
+    config.password = node.password
+    config.timeout = tonumber(node.timeout)
+    config.fast_open = (node.tcp_fast_open and node.tcp_fast_open == "1") and true or false
+    config.method = node.method
+
+    if node.type == "SS-Rust" then
+        config.server = "::"
+        config.mode = "tcp_and_udp"
+    else
+        config.server = {"[::0]", "0.0.0.0"}
+    end
+
+    if node.type == "SSR" then
+        config.protocol = node.protocol
+        config.protocol_param = node.protocol_param
+        config.obfs = node.obfs
+        config.obfs_param = node.obfs_param
+    end
+
+    return config
+end
 
 function gen_config(var)
     local node_id = var["-node"]

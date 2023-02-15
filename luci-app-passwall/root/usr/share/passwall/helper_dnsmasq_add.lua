@@ -1,5 +1,5 @@
 require "luci.sys"
-local api = require "luci.model.cbi.passwall.api.api"
+local api = require "luci.passwall.api"
 
 local var = api.get_args(arg)
 local FLAG = var["-FLAG"]

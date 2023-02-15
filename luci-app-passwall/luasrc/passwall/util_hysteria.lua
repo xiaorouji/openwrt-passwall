@@ -1,7 +1,32 @@
-module("luci.model.cbi.passwall.api.util_hysteria", package.seeall)
-local api = require "luci.model.cbi.passwall.api.api"
+module("luci.passwall.util_hysteria", package.seeall)
+local api = require "luci.passwall.api"
 local uci = api.uci
 local jsonc = api.jsonc
+
+function gen_config_server(node)
+    local config = {
+        listen = ":" .. node.port,
+        protocol = node.protocol or "udp",
+        obfs = node.hysteria_obfs,
+        cert = node.tls_certificateFile,
+        key = node.tls_keyFile,
+        auth = (node.hysteria_auth_type == "string") and {
+            mode = "password",
+            config = {
+                password = node.hysteria_auth_password
+            }
+        } or nil,
+        disable_udp = (node.hysteria_udp == "0") and true or false,
+        alpn = node.hysteria_alpn or nil,
+        up_mbps = tonumber(node.hysteria_up_mbps) or 10,
+        down_mbps = tonumber(node.hysteria_down_mbps) or 50,
+        recv_window_conn = (node.hysteria_recv_window_conn) and tonumber(node.hysteria_recv_window_conn) or nil,
+        recv_window = (node.hysteria_recv_window) and tonumber(node.hysteria_recv_window) or nil,
+        disable_mtu_discovery = (node.hysteria_disable_mtu_discovery) and true or false
+    }
+    return config
+end
+
 
 function gen_config(var)
     local node_id = var["-node"]

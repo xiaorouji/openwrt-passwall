@@ -1,4 +1,4 @@
-local api = require "luci.model.cbi.passwall.api.api"
+local api = require "luci.passwall.api"
 local appname = api.appname
 local sys = api.sys
 local has_chnlist = api.fs.access("/usr/share/passwall/rules/chnlist")

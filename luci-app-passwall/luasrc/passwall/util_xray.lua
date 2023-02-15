@@ -1,5 +1,5 @@
-module("luci.model.cbi.passwall.api.util_xray", package.seeall)
-local api = require "luci.model.cbi.passwall.api.api"
+module("luci.passwall.util_xray", package.seeall)
+local api = require "luci.passwall.api"
 local uci = api.uci
 local sys = api.sys
 local jsonc = api.jsonc
@@ -235,6 +235,246 @@ function gen_outbound(flag, node, tag, proxy_table)
         end
     end
     return result
+end
+
+function gen_config_server(node)
+    local settings = nil
+    local routing = nil
+    local outbounds = {
+        {protocol = "freedom", tag = "direct"}, {protocol = "blackhole", tag = "blocked"}
+    }
+
+    if node.protocol == "vmess" or node.protocol == "vless" then
+        if node.uuid then
+            local clients = {}
+            for i = 1, #node.uuid do
+                clients[i] = {
+                    id = node.uuid[i],
+                    flow = ("vless" == node.protocol and "1" == node.tls and node.tlsflow) and node.tlsflow or nil
+                }
+            end
+            settings = {
+                clients = clients,
+                decryption = node.decryption or "none"
+            }
+        end
+    elseif node.protocol == "socks" then
+        settings = {
+            udp = ("1" == node.udp_forward) and true or false,
+            auth = ("1" == node.auth) and "password" or "noauth",
+            accounts = ("1" == node.auth) and {
+                {
+                    user = node.username,
+                    pass = node.password
+                }
+            } or nil
+        }
+    elseif node.protocol == "http" then
+        settings = {
+            allowTransparent = false,
+            accounts = ("1" == node.auth) and {
+                {
+                    user = node.username,
+                    pass = node.password
+                }
+            } or nil
+        }
+        node.transport = "tcp"
+        node.tcp_guise = "none"
+    elseif node.protocol == "shadowsocks" then
+        settings = {
+            method = node.method,
+            password = node.password,
+            ivCheck = ("1" == node.iv_check) and true or false,
+            network = node.ss_network or "TCP,UDP"
+        }
+    elseif node.protocol == "trojan" then
+        if node.uuid then
+            local clients = {}
+            for i = 1, #node.uuid do
+                clients[i] = {
+                    password = node.uuid[i],
+                }
+            end
+            settings = {
+                clients = clients
+            }
+        end
+    elseif node.protocol == "mtproto" then
+        settings = {
+            users = {
+                {
+                    secret = (node.password == nil) and "" or node.password
+                }
+            }
+        }
+    elseif node.protocol == "dokodemo-door" then
+        settings = {
+            network = node.d_protocol,
+            address = node.d_address,
+            port = tonumber(node.d_port)
+        }
+    end
+
+    if node.fallback and node.fallback == "1" then
+        local fallbacks = {}
+        for i = 1, #node.fallback_list do
+            local fallbackStr = node.fallback_list[i]
+            if fallbackStr then
+                local tmp = {}
+                string.gsub(fallbackStr, '[^' .. "," .. ']+', function(w)
+                    table.insert(tmp, w)
+                end)
+                local dest = tmp[1] or ""
+                local path = tmp[2]
+                if dest:find("%.") then
+                else
+                    dest = tonumber(dest)
+                end
+                fallbacks[i] = {
+                    path = path,
+                    dest = dest,
+                    xver = 1
+                }
+            end
+        end
+        settings.fallbacks = fallbacks
+    end
+
+    routing = {
+        domainStrategy = "IPOnDemand",
+        rules = {
+            {
+                type = "field",
+                ip = {"10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"},
+                outboundTag = (node.accept_lan == nil or node.accept_lan == "0") and "blocked" or "direct"
+            }
+        }
+    }
+
+    if node.outbound_node and node.outbound_node ~= "nil" then
+        local outbound = nil
+        if node.outbound_node == "_iface" and node.outbound_node_iface then
+            outbound = {
+                protocol = "freedom",
+                tag = "outbound",
+                streamSettings = {
+                    sockopt = {
+                        interface = node.outbound_node_iface
+                    }
+                }
+            }
+        else
+            local outbound_node_t = uci:get_all("passwall", node.outbound_node)
+            if node.outbound_node == "_socks" or node.outbound_node == "_http" then
+                outbound_node_t = {
+                    type = node.type,
+                    protocol = node.outbound_node:gsub("_", ""),
+                    transport = "tcp",
+                    address = node.outbound_node_address,
+                    port = node.outbound_node_port,
+                    username = (node.outbound_node_username and node.outbound_node_username ~= "") and node.outbound_node_username or nil,
+                    password = (node.outbound_node_password and node.outbound_node_password ~= "") and node.outbound_node_password or nil,
+                }
+            end
+            outbound = require("luci.passwall.util_xray").gen_outbound(nil, outbound_node_t, "outbound")
+        end
+        if outbound then
+            table.insert(outbounds, 1, outbound)
+        end
+    end
+
+    local config = {
+        log = {
+            -- error = "/tmp/etc/passwall_server/log/" .. user[".name"] .. ".log",
+            loglevel = ("1" == node.log) and node.loglevel or "none"
+        },
+        -- 传入连接
+        inbounds = {
+            {
+                listen = (node.bind_local == "1") and "127.0.0.1" or nil,
+                port = tonumber(node.port),
+                protocol = node.protocol,
+                settings = settings,
+                streamSettings = {
+                    network = node.transport,
+                    security = "none",
+                    tlsSettings = ("1" == node.tls) and {
+                        disableSystemRoot = false,
+                        certificates = {
+                            {
+                                certificateFile = node.tls_certificateFile,
+                                keyFile = node.tls_keyFile
+                            }
+                        }
+                    } or nil,
+                    tcpSettings = (node.transport == "tcp") and {
+                        acceptProxyProtocol = (node.acceptProxyProtocol and node.acceptProxyProtocol == "1") and true or false,
+                        header = {
+                            type = node.tcp_guise,
+                            request = (node.tcp_guise == "http") and {
+                                path = node.tcp_guise_http_path or {"/"},
+                                headers = {
+                                    Host = node.tcp_guise_http_host or {}
+                                }
+                            } or nil
+                        }
+                    } or nil,
+                    kcpSettings = (node.transport == "mkcp") and {
+                        mtu = tonumber(node.mkcp_mtu),
+                        tti = tonumber(node.mkcp_tti),
+                        uplinkCapacity = tonumber(node.mkcp_uplinkCapacity),
+                        downlinkCapacity = tonumber(node.mkcp_downlinkCapacity),
+                        congestion = (node.mkcp_congestion == "1") and true or false,
+                        readBufferSize = tonumber(node.mkcp_readBufferSize),
+                        writeBufferSize = tonumber(node.mkcp_writeBufferSize),
+                        seed = (node.mkcp_seed and node.mkcp_seed ~= "") and node.mkcp_seed or nil,
+                        header = {type = node.mkcp_guise}
+                    } or nil,
+                    wsSettings = (node.transport == "ws") and {
+                        acceptProxyProtocol = (node.acceptProxyProtocol and node.acceptProxyProtocol == "1") and true or false,
+                        headers = (node.ws_host) and {Host = node.ws_host} or nil,
+                        path = node.ws_path
+                    } or nil,
+                    httpSettings = (node.transport == "h2") and {
+                        path = node.h2_path, host = node.h2_host
+                    } or nil,
+                    dsSettings = (node.transport == "ds") and {
+                        path = node.ds_path
+                    } or nil,
+                    quicSettings = (node.transport == "quic") and {
+                        security = node.quic_security,
+                        key = node.quic_key,
+                        header = {type = node.quic_guise}
+                    } or nil,
+                    grpcSettings = (node.transport == "grpc") and {
+                        serviceName = node.grpc_serviceName
+                    } or nil
+                }
+            }
+        },
+        -- 传出连接
+        outbounds = outbounds,
+        routing = routing
+    }
+
+    local alpn = {}
+    if node.alpn then
+        string.gsub(node.alpn, '[^' .. "," .. ']+', function(w)
+            table.insert(alpn, w)
+        end)
+    end
+    if alpn and #alpn > 0 then
+        if config.inbounds[1].streamSettings.tlsSettings then
+            config.inbounds[1].streamSettings.tlsSettings.alpn = alpn
+        end
+    end
+
+    if "1" == node.tls then
+        config.inbounds[1].streamSettings.security = "tls"
+    end
+
+    return config
 end
 
 function gen_config(var)

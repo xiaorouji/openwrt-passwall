@@ -1,5 +1,5 @@
-module("luci.model.cbi.passwall.api.util_naiveproxy", package.seeall)
-local api = require "luci.model.cbi.passwall.api.api"
+module("luci.passwall.util_naiveproxy", package.seeall)
+local api = require "luci.passwall.api"
 local uci = api.uci
 local jsonc = api.jsonc
 

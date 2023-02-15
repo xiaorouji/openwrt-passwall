@@ -1,4 +1,4 @@
-local api = require "luci.model.cbi.passwall.api.api"
+local api = require "luci.passwall.api"
 
 m = Map("passwall_server", translate("Server-Side"))
 

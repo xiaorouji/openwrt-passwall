@@ -1,4 +1,4 @@
-local api = require "luci.model.cbi.passwall.api.api"
+local api = require "luci.passwall.api"
 local appname = api.appname
 local uci = api.uci
 local datatypes = api.datatypes

@@ -31,12 +31,12 @@ PROXY_IPV6_UDP=0
 resolve_dns=0
 use_tcp_node_resolve_dns=0
 use_udp_node_resolve_dns=0
-LUA_API_PATH=/usr/lib/lua/luci/model/cbi/$CONFIG/api
-UTIL_SS=$LUA_API_PATH/util_shadowsocks.lua
-UTIL_XRAY=$LUA_API_PATH/util_xray.lua
-UTIL_TROJAN=$LUA_API_PATH/util_trojan.lua
-UTIL_NAIVE=$LUA_API_PATH/util_naiveproxy.lua
-UTIL_HYSTERIA=$LUA_API_PATH/util_hysteria.lua
+LUA_UTIL_PATH=/usr/lib/lua/luci/passwall
+UTIL_SS=$LUA_UTIL_PATH/util_shadowsocks.lua
+UTIL_XRAY=$LUA_UTIL_PATH/util_xray.lua
+UTIL_TROJAN=$LUA_UTIL_PATH/util_trojan.lua
+UTIL_NAIVE=$LUA_UTIL_PATH/util_naiveproxy.lua
+UTIL_HYSTERIA=$LUA_UTIL_PATH/util_hysteria.lua
 
 echolog() {
 	local d="$(date "+%Y-%m-%d %H:%M:%S")"
@@ -263,7 +263,7 @@ lua_api() {
 		echo "nil"
 		return
 	}
-	echo $(lua -e "local api = require 'luci.model.cbi.passwall.api.api' print(api.${func})")
+	echo $(lua -e "local api = require 'luci.passwall.api' print(api.${func})")
 }
 
 run_ipt2socks() {

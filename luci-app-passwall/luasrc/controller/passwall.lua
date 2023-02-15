@@ -2,20 +2,20 @@
 -- Copyright (C) 2021-2022 xiaorouji
 
 module("luci.controller.passwall", package.seeall)
-local api = require "luci.model.cbi.passwall.api.api"
+local api = require "luci.passwall.api"
 local appname = api.appname
 local ucic = luci.model.uci.cursor()
 local http = require "luci.http"
 local util = require "luci.util"
 local i18n = require "luci.i18n"
-local brook = require("luci.model.cbi." .. appname ..".api.brook")
-local v2ray = require("luci.model.cbi." .. appname ..".api.v2ray")
-local xray = require("luci.model.cbi." .. appname ..".api.xray")
-local trojan_go = require("luci.model.cbi." .. appname ..".api.trojan_go")
-local hysteria = require("luci.model.cbi." .. appname ..".api.hysteria")
+local brook = require("luci.passwall.brook")
+local v2ray = require("luci.passwall.v2ray")
+local xray = require("luci.passwall.xray")
+local trojan_go = require("luci.passwall.trojan_go")
+local hysteria = require("luci.passwall.hysteria")
 
 function index()
-	appname = require "luci.model.cbi.passwall.api.api".appname
+	appname = require "luci.passwall.api".appname
 	entry({"admin", "services", appname}).dependent = true
 	entry({"admin", "services", appname, "reset_config"}, call("reset_config")).leaf = true
 	entry({"admin", "services", appname, "show"}, call("show_menu")).leaf = true

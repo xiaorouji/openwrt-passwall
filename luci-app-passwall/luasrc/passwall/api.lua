@@ -1,4 +1,4 @@
-module("luci.model.cbi.passwall.api.api", package.seeall)
+module("luci.passwall.api", package.seeall)
 fs = require "nixio.fs"
 sys = require "luci.sys"
 uci = require"luci.model.uci".cursor()

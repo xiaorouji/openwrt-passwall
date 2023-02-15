@@ -1,4 +1,4 @@
-local api = require "luci.model.cbi.passwall.api.api"
+local api = require "luci.passwall.api"
 
 local ss_encrypt_method_list = {
     "rc4-md5", "aes-128-cfb", "aes-192-cfb", "aes-256-cfb", "aes-128-ctr",

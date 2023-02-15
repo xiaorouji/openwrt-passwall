@@ -1,5 +1,5 @@
-module("luci.model.cbi.passwall.api.v2ray", package.seeall)
-local api = require "luci.model.cbi.passwall.api.api"
+module("luci.passwall.v2ray", package.seeall)
+local api = require "luci.passwall.api"
 local fs = api.fs
 local sys = api.sys
 local util = api.util

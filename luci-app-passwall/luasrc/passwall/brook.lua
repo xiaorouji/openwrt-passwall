@@ -1,20 +1,20 @@
-module("luci.model.cbi.passwall.api.hysteria", package.seeall)
-local api = require "luci.model.cbi.passwall.api.api"
+module("luci.passwall.brook", package.seeall)
+local api = require "luci.passwall.api"
 local fs = api.fs
 local sys = api.sys
 local util = api.util
 local i18n = api.i18n
 
-local pre_release_url = "https://api.github.com/repos/HyNetwork/hysteria/releases?per_page=1"
-local release_url = "https://api.github.com/repos/HyNetwork/hysteria/releases/latest"
+local pre_release_url = "https://api.github.com/repos/txthinking/brook/releases?per_page=1"
+local release_url = "https://api.github.com/repos/txthinking/brook/releases/latest"
 local api_url = release_url
-local app_path = api.get_hysteria_path() or ""
+local app_path = api.get_brook_path() or ""
 
 function check_path()
     if app_path == "" then
         return {
             code = 1,
-            error = i18n.translatef("You did not fill in the %s path. Please save and apply then update manually.", "hysteria")
+            error = i18n.translatef("You did not fill in the %s path. Please save and apply then update manually.", "Brook")
         }
     end
     return {
@@ -39,7 +39,7 @@ function to_check(arch)
         }
     end
 
-    return api.common_to_check(api_url, api.get_hysteria_version(), "linux%-" .. file_tree .. sub_version)
+    return api.common_to_check(api_url, api.get_brook_version(), "linux_" .. file_tree .. sub_version)
 end
 
 function to_download(url, size)
@@ -52,9 +52,9 @@ function to_download(url, size)
         return {code = 1, error = i18n.translate("Download url is required.")}
     end
 
-    sys.call("/bin/rm -f /tmp/hysteria_download.*")
+    sys.call("/bin/rm -f /tmp/brook_download.*")
 
-    local tmp_file = util.trim(util.exec("mktemp -u -t hysteria_download.XXXXXX"))
+    local tmp_file = util.trim(util.exec("mktemp -u -t brook_download.XXXXXX"))
 
     if size then
         local kb1 = api.get_free_space("/tmp")
@@ -84,20 +84,20 @@ function to_move(file)
     end
 
     if not file or file == "" or not fs.access(file) then
-        sys.call("/bin/rm -rf /tmp/hysteria_download.*")
+        sys.call("/bin/rm -rf /tmp/brook_download.*")
         return {code = 1, error = i18n.translate("Client file is required.")}
     end
 
-    local new_version = api.get_hysteria_version(file)
+    local new_version = api.get_brook_version(file)
     if new_version == "" then
-        sys.call("/bin/rm -rf /tmp/hysteria_download.*")
+        sys.call("/bin/rm -rf /tmp/brook_download.*")
         return {
             code = 1,
             error = i18n.translate("The client file is not suitable for current device.")
         }
     end
 
-    local flag = sys.call('pgrep -af "passwall/.*hysteria" >/dev/null')
+    local flag = sys.call('pgrep -af "passwall/.*brook" >/dev/null')
     if flag == 0 then
         sys.call("/etc/init.d/passwall stop")
     end
@@ -112,14 +112,14 @@ function to_move(file)
     if final_dir_free_size > 0 then
         final_dir_free_size = final_dir_free_size + old_app_size
         if new_app_size > final_dir_free_size then
-            sys.call("/bin/rm -rf /tmp/hysteria_download.*")
+            sys.call("/bin/rm -rf /tmp/brook_download.*")
             return {code = 1, error = i18n.translatef("%s not enough space.", final_dir)}
         end
     end
 
     result = api.exec("/bin/mv", {"-f", file, app_path}, nil, api.command_timeout) == 0
 
-    sys.call("/bin/rm -rf /tmp/hysteria_download.*")
+    sys.call("/bin/rm -rf /tmp/brook_download.*")
     if flag == 0 then
         sys.call("/etc/init.d/passwall restart >/dev/null 2>&1 &")
     end

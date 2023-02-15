@@ -6,7 +6,7 @@ local luci = luci
 local ucic = luci.model.uci.cursor()
 local jsonc = require "luci.jsonc"
 local name = 'passwall'
-local api = require ("luci.model.cbi." .. name .. ".api.api")
+local api = require ("luci.passwall.api")
 local arg1 = arg[1]
 
 local rule_path = "/usr/share/" .. name .. "/rules"
