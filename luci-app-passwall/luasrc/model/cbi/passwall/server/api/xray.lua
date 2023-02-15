@@ -1,4 +1,4 @@
-module("luci.model.cbi.passwall.server.api.v2ray", package.seeall)
+module("luci.model.cbi.passwall.server.api.xray", package.seeall)
 local uci = require"luci.model.uci".cursor()
 
 function gen_config(user)
@@ -141,7 +141,7 @@ function gen_config(user)
                     password = (user.outbound_node_password and user.outbound_node_password ~= "") and user.outbound_node_password or nil,
                 }
             end
-            outbound = require("luci.model.cbi.passwall.api.gen_v2ray").gen_outbound(outbound_node_t, "outbound")
+            outbound = require("luci.model.cbi.passwall.api.util_xray").gen_outbound(nil, outbound_node_t, "outbound")
         end
         if outbound then
             table.insert(outbounds, 1, outbound)

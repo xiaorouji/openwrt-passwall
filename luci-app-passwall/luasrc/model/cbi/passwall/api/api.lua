@@ -147,6 +147,18 @@ function get_args(arg)
     return var
 end
 
+function get_function_args(arg)
+    local var = nil
+    if arg and #arg > 1 then
+        local param = {}
+        for i = 2, #arg do
+            param[#param + 1] = arg[i]
+        end
+        var = get_args(param)
+    end
+    return var
+end
+
 function strToTable(str)
     if str == nil or type(str) ~= "string" then
         return {}
