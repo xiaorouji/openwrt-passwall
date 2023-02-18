@@ -186,9 +186,14 @@ function clear_log()
 end
 
 function status()
-	-- local dns_mode = ucic:get(appname, "@global[0]", "dns_mode")
 	local e = {}
-	e.dns_mode_status = luci.sys.call("netstat -apn | grep ':15353 ' >/dev/null") == 0
+
+	local dns_shunt = ucic:get(appname, "@global[0]", "dns_shunt") or "dnsmasq"
+	if dns_shunt == "smartdns" then
+		e.dns_mode_status = luci.sys.call("pidof smartdns >/dev/null") == 0
+	else
+		e.dns_mode_status = luci.sys.call("netstat -apn | grep ':15353 ' >/dev/null") == 0
+	end
 	e.haproxy_status = luci.sys.call(string.format("top -bn1 | grep -v grep | grep '%s/bin/' | grep haproxy >/dev/null", appname)) == 0
 	e["tcp_node_status"] = luci.sys.call(string.format("top -bn1 | grep -v -E 'grep|acl/|acl_' | grep '%s/bin/' | grep -i 'TCP' >/dev/null", appname)) == 0
 
