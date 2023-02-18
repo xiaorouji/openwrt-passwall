@@ -9,6 +9,7 @@ config global
 	option dns_shunt 'chinadns-ng'
 	option dns_mode 'tcp'
 	option remote_dns '1.1.1.1'
+	list smartdns_remote_dns 'https://1.1.1.1/dns-query'
 	option use_default_dns 'direct'
 	option chinadns_ng_default_tag 'none'
 	option use_direct_list '1'
