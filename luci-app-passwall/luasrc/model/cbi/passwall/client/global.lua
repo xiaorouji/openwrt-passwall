@@ -258,6 +258,18 @@ end
 
 s:tab("DNS", translate("DNS"))
 
+if api.is_finded("smartdns") then
+    dns_shunt = s:taboption("DNS", ListValue, "dns_shunt", translate("DNS Shunt"))
+    dns_shunt:value("dnsmasq", "Dnsmasq")
+    dns_shunt:value("smartdns", "SmartDNS")
+
+    group_domestic = s:taboption("DNS", Value, "group_domestic", translate("Domestic group name"))
+    group_domestic.placeholder = "local"
+    group_domestic:depends("dns_shunt", "smartdns")
+    group_domestic.description = translate("You only need to configure domestic DNS packets in SmartDNS and set it redirect or as Dnsmasq upstream, and fill in the domestic DNS group name here.")
+    group_domestic.description = group_domestic.description .. string.format('<a href="%s" target="_blank">%s</a>', "https://github.com/luckyyyyy/blog/issues/57", translate("Guide"))
+end
+
 o = s:taboption("DNS", Flag, "filter_proxy_ipv6", translate("Filter Proxy Host IPv6"), translate("Experimental feature."))
 o.default = "0"
 
