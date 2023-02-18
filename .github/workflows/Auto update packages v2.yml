@@ -51,7 +51,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        pakcages: [brook, hysteria, ipt2socks, microsocks, sing-box, trojan, trojan-go, v2ray-core, v2ray-plugin, xray-core, xray-plugin, v2ray-geoip, v2ray-geosite]
+        pakcages: [brook, hysteria, ipt2socks, microsocks, sing-box, trojan, trojan-go, v2ray-core, v2ray-plugin, xray-core, xray-plugin]
         include:
           - pakcages: brook
             folder: brook
@@ -163,26 +163,26 @@ jobs:
             release_download_url: https://codeload.github.com/teddysun/xray-plugin/tar.gz/v
             file_name: 
 
-          - pakcages: v2ray-geoip
-            folder: v2ray-geodata
-            version_line: 15
-            hash_line: 21
-            version_head: GEOIP_VER:=
-            hash_head: \  HASH:=
-            release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/v2fly/geoip/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g'
-            release_download_url: https://github.com/v2fly/geoip/releases/download/
-            file_name: /geoip.dat
+          # - pakcages: v2ray-geoip
+          #   folder: v2ray-geodata
+          #   version_line: 15
+          #   hash_line: 21
+          #   version_head: GEOIP_VER:=
+          #   hash_head: \  HASH:=
+          #   release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/v2fly/geoip/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g'
+          #   release_download_url: https://github.com/v2fly/geoip/releases/download/
+          #   file_name: /geoip.dat
 
 
-          - pakcages: v2ray-geosite
-            folder: v2ray-geodata
-            version_line: 24
-            hash_line: 30
-            version_head: GEOSITE_VER:=
-            hash_head: \  HASH:=
-            release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/v2fly/domain-list-community/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g'
-            release_download_url: https://github.com/v2fly/domain-list-community/releases/download/
-            file_name: /dlc.dat
+          # - pakcages: v2ray-geosite
+          #   folder: v2ray-geodata
+          #   version_line: 24
+          #   hash_line: 30
+          #   version_head: GEOSITE_VER:=
+          #   hash_head: \  HASH:=
+          #   release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/v2fly/domain-list-community/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g'
+          #   release_download_url: https://github.com/v2fly/domain-list-community/releases/download/
+          #   file_name: /dlc.dat
 
     steps:
       - name: Checkout
