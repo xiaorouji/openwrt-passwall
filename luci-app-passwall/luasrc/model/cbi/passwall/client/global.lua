@@ -259,24 +259,58 @@ end
 s:tab("DNS", translate("DNS"))
 
 if api.is_finded("smartdns") then
-    dns_shunt = s:taboption("DNS", ListValue, "dns_shunt", translate("DNS Shunt"))
-    dns_shunt:value("dnsmasq", "Dnsmasq")
-    dns_shunt:value("smartdns", "SmartDNS")
+	dns_shunt = s:taboption("DNS", ListValue, "dns_shunt", translate("DNS Shunt"))
+	dns_shunt:value("dnsmasq", "Dnsmasq")
+	dns_shunt:value("smartdns", "SmartDNS")
 
-    group_domestic = s:taboption("DNS", Value, "group_domestic", translate("Domestic group name"))
-    group_domestic.placeholder = "local"
-    group_domestic:depends("dns_shunt", "smartdns")
-    group_domestic.description = translate("You only need to configure domestic DNS packets in SmartDNS and set it redirect or as Dnsmasq upstream, and fill in the domestic DNS group name here.")
-    group_domestic.description = group_domestic.description .. string.format('<a href="%s" target="_blank">%s</a>', "https://github.com/luckyyyyy/blog/issues/57", translate("Guide"))
+	group_domestic = s:taboption("DNS", Value, "group_domestic", translate("Domestic group name"))
+	group_domestic.placeholder = "local"
+	group_domestic:depends("dns_shunt", "smartdns")
+	group_domestic.description = translate("You only need to configure domestic DNS packets in SmartDNS and set it redirect or as Dnsmasq upstream, and fill in the domestic DNS group name here.")
 end
 
 o = s:taboption("DNS", Flag, "filter_proxy_ipv6", translate("Filter Proxy Host IPv6"), translate("Experimental feature."))
 o.default = "0"
 
+if api.is_finded("smartdns") then
+	smartdns_mode = s:taboption("DNS", ListValue, "smartdns_mode", translate("Filter Mode"))
+	smartdns_mode:value("tcp", translatef("Requery DNS By %s", "TCP"))
+	smartdns_mode:value("https", translatef("Requery DNS By %s", "HTTPS"))
+	smartdns_mode:value("tls", translatef("Requery DNS By %s", "TLS"))
+	smartdns_mode:value("udp", translatef("Requery DNS By %s", "UDP"))
+	smartdns_mode:depends("dns_shunt", "smartdns")
+
+	o = s:taboption("DNS", Value, "smartdns_remote_dns", translate("Remote DNS"))
+	o.datatype = "or(ipaddr,ipaddrport)"
+	o.default = "1.1.1.1"
+	o:value("1.1.1.1", "1.1.1.1 (CloudFlare)")
+	o:value("1.1.1.2", "1.1.1.2 (CloudFlare-Security)")
+	o:value("8.8.4.4", "8.8.4.4 (Google)")
+	o:value("8.8.8.8", "8.8.8.8 (Google)")
+	o:value("9.9.9.9", "9.9.9.9 (Quad9-Recommended)")
+	o:value("208.67.220.220", "208.67.220.220 (OpenDNS)")
+	o:value("208.67.222.222", "208.67.222.222 (OpenDNS)")
+	o:depends("smartdns_mode", "tcp")
+	o:depends("smartdns_mode", "udp")
+	o:depends("smartdns_mode", "tls")
+
+	o = s:taboption("DNS", Value, "smartdns_remote_dns_doh", translate("Remote DNS DoH"))
+	o.default = "https://1.1.1.1/dns-query"
+	o:value("https://1.1.1.1/dns-query", "CloudFlare")
+	o:value("https://1.1.1.2/dns-query", "CloudFlare-Security")
+	o:value("https://8.8.4.4/dns-query", "Google 8844")
+	o:value("https://8.8.8.8/dns-query", "Google 8888")
+	o:value("https://9.9.9.9/dns-query", "Quad9-Recommended")
+	o:value("https://208.67.222.222/dns-query", "OpenDNS")
+	o:value("https://dns.adguard.com/dns-query,176.103.130.130", "AdGuard")
+	o:value("https://doh.libredns.gr/dns-query,116.202.176.26", "LibreDNS")
+	o:value("https://doh.libredns.gr/ads,116.202.176.26", "LibreDNS (No Ads)")
+	o.validate = doh_validate
+	o:depends("smartdns_mode", "https")
+end
+
 ---- DNS Forward Mode
 dns_mode = s:taboption("DNS", ListValue, "dns_mode", translate("Filter Mode"))
-dns_mode.rmempty = false
-dns_mode:reset_values()
 if api.is_finded("dns2tcp") then
 	dns_mode:value("dns2tcp", translatef("Requery DNS By %s", "TCP"))
 end
@@ -290,6 +324,9 @@ if has_xray then
 	dns_mode:value("xray", "Xray")
 end
 dns_mode:value("udp", translatef("Requery DNS By %s", "UDP"))
+if api.is_finded("smartdns") then
+	dns_mode:depends("dns_shunt", "dnsmasq")
+end
 
 o = s:taboption("DNS", ListValue, "xray_dns_mode", " ")
 o:value("tcp", "TCP")
@@ -421,9 +458,14 @@ if has_chnlist then
 	.. "<li>" .. translate("Remote DNS can avoid more DNS leaks, but some domestic domain names maybe to proxy!") .. "</li>"
 	.. "<li>" .. translate("Direct DNS Internet experience may be better, but DNS will be leaked!") .. "</li>"
 	.. "</ul>"
-	if api.is_finded("chinadns-ng") then
-		when_chnroute_default_dns:depends("chinadns_ng", false)
+	local _depends = {}
+	if api.is_finded("smartdns") then
+		_depends["dns_shunt"] = "dnsmasq"
 	end
+	if api.is_finded("chinadns-ng") then
+		_depends["chinadns_ng"] = false
+	end
+	when_chnroute_default_dns:depends(_depends)
 end
 
 o = s:taboption("DNS", Button, "clear_ipset", translate("Clear IPSET"), translate("Try this feature if the rule modification does not take effect."))

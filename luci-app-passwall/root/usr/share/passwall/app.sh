@@ -1235,117 +1235,108 @@ start_dns() {
 		}
 	}
 
-	case "$DNS_MODE" in
-	dns2socks)
-		local dns2socks_socks_server=$(echo $(config_t_get global socks_server 127.0.0.1:1080) | sed "s/#/:/g")
-		local dns2socks_forward=$(get_first_dns REMOTE_DNS 53 | sed 's/#/:/g')
-		run_dns2socks socks=$dns2socks_socks_server listen_address=127.0.0.1 listen_port=${dns_listen_port} dns=$dns2socks_forward cache=$DNS_CACHE
-		echolog "  - 域名解析：dns2socks(127.0.0.1:${dns_listen_port})，${dns2socks_socks_server} -> ${dns2socks_forward}"
-	;;
-	sing-box)
-		[ "${resolve_dns}" == "0" ] && {
-			local config_file=$TMP_PATH/DNS.json
-			local log_file=$TMP_PATH/DNS.log
-			local log_file=/dev/null
-			local _args="type=$DNS_MODE config_file=$config_file log_file=$log_file"
-			[ "${DNS_CACHE}" == "0" ] && _args="${_args} dns_cache=0"
-			_args="${_args} remote_dns_query_strategy=${DNS_QUERY_STRATEGY}"
-			use_tcp_node_resolve_dns=1
-			local v2ray_dns_mode=$(config_t_get global v2ray_dns_mode tcp)
-			_args="${_args} dns_listen_port=${dns_listen_port}"
-			_args="${_args} remote_dns_protocol=${v2ray_dns_mode}"
-			case "$v2ray_dns_mode" in
-				tcp)
-					_args="${_args} remote_dns_tcp_server=${REMOTE_DNS}"
-					echolog "  - 域名解析 DNS Over TCP..."
-				;;
-				doh)
+	case "$DNS_SHUNT" in
+	dnsmasq)
+		rm -rf $TMP_PATH2/smartdns_default*
+		case "$DNS_MODE" in
+		dns2socks)
+			local dns2socks_socks_server=$(echo $(config_t_get global socks_server 127.0.0.1:1080) | sed "s/#/:/g")
+			local dns2socks_forward=$(get_first_dns REMOTE_DNS 53 | sed 's/#/:/g')
+			run_dns2socks socks=$dns2socks_socks_server listen_address=127.0.0.1 listen_port=${dns_listen_port} dns=$dns2socks_forward cache=$DNS_CACHE
+			echolog "  - 域名解析：dns2socks(127.0.0.1:${dns_listen_port})，${dns2socks_socks_server} -> ${dns2socks_forward}"
+		;;
+		sing-box)
+			[ "${resolve_dns}" == "0" ] && {
+				local config_file=$TMP_PATH/DNS.json
+				local log_file=$TMP_PATH/DNS.log
+				local log_file=/dev/null
+				local _args="type=$DNS_MODE config_file=$config_file log_file=$log_file"
+				[ "${DNS_CACHE}" == "0" ] && _args="${_args} dns_cache=0"
+				_args="${_args} remote_dns_query_strategy=${DNS_QUERY_STRATEGY}"
+				use_tcp_node_resolve_dns=1
+				local v2ray_dns_mode=$(config_t_get global v2ray_dns_mode tcp)
+				_args="${_args} dns_listen_port=${dns_listen_port}"
+				_args="${_args} remote_dns_protocol=${v2ray_dns_mode}"
+				case "$v2ray_dns_mode" in
+					tcp)
+						_args="${_args} remote_dns_tcp_server=${REMOTE_DNS}"
+						echolog "  - 域名解析 DNS Over TCP..."
+					;;
+					doh)
+						remote_dns_doh=$(config_t_get global remote_dns_doh "https://1.1.1.1/dns-query")
+						_args="${_args} remote_dns_doh=${remote_dns_doh}"
+
+						local _doh_url=$(echo $remote_dns_doh | awk -F ',' '{print $1}')
+						local _doh_host_port=$(lua_api "get_domain_from_url(\"${_doh_url}\")")
+						local _doh_host=$(echo $_doh_host_port | awk -F ':' '{print $1}')
+						local _is_ip=$(lua_api "is_ip(\"${_doh_host}\")")
+						local _doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
+						[ -z "${_doh_port}" ] && _doh_port=443
+						local _doh_bootstrap=$(echo $remote_dns_doh | cut -d ',' -sf 2-)
+						[ "${_is_ip}" = "true" ] && _doh_bootstrap=${_doh_host}
+						[ -n "${_doh_bootstrap}" ] && REMOTE_DNS=${_doh_bootstrap}:${_doh_port}
+						unset _doh_url _doh_host_port _doh_host _is_ip _doh_port _doh_bootstrap
+						echolog "  - 域名解析 DNS Over HTTPS..."
+					;;
+				esac
+				_args="${_args} dns_socks_address=127.0.0.1 dns_socks_port=${tcp_node_socks_port}"
+				run_singbox ${_args}
+			}
+		;;
+		xray)
+			[ "${resolve_dns}" == "0" ] && {
+				local config_file=$TMP_PATH/DNS.json
+				local log_file=$TMP_PATH/DNS.log
+				local log_file=/dev/null
+				local _args="type=$DNS_MODE config_file=$config_file log_file=$log_file"
+				[ "${DNS_CACHE}" == "0" ] && _args="${_args} dns_cache=0"
+				_args="${_args} dns_query_strategy=${DNS_QUERY_STRATEGY}"
+				local _dns_client_ip=$(config_t_get global dns_client_ip)
+				[ -n "${_dns_client_ip}" ] && _args="${_args} dns_client_ip=${_dns_client_ip}"
+				use_tcp_node_resolve_dns=1
+				_args="${_args} dns_listen_port=${dns_listen_port}"
+				_args="${_args} remote_dns_tcp_server=${REMOTE_DNS}"
+				local v2ray_dns_mode=$(config_t_get global v2ray_dns_mode tcp)
+				[ "$v2ray_dns_mode" = "tcp+doh" ] && {
 					remote_dns_doh=$(config_t_get global remote_dns_doh "https://1.1.1.1/dns-query")
 					_args="${_args} remote_dns_doh=${remote_dns_doh}"
-
-					local _doh_url=$(echo $remote_dns_doh | awk -F ',' '{print $1}')
-					local _doh_host_port=$(lua_api "get_domain_from_url(\"${_doh_url}\")")
-					local _doh_host=$(echo $_doh_host_port | awk -F ':' '{print $1}')
-					local _is_ip=$(lua_api "is_ip(\"${_doh_host}\")")
-					local _doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
-					[ -z "${_doh_port}" ] && _doh_port=443
-					local _doh_bootstrap=$(echo $remote_dns_doh | cut -d ',' -sf 2-)
-					[ "${_is_ip}" = "true" ] && _doh_bootstrap=${_doh_host}
-					[ -n "${_doh_bootstrap}" ] && REMOTE_DNS=${_doh_bootstrap}:${_doh_port}
-					unset _doh_url _doh_host_port _doh_host _is_ip _doh_port _doh_bootstrap
-					echolog "  - 域名解析 DNS Over HTTPS..."
-				;;
-			esac
-			_args="${_args} dns_socks_address=127.0.0.1 dns_socks_port=${tcp_node_socks_port}"
-			run_singbox ${_args}
-		}
-	;;
-	xray)
-		[ "${resolve_dns}" == "0" ] && {
-			local config_file=$TMP_PATH/DNS.json
-			local log_file=$TMP_PATH/DNS.log
-			local log_file=/dev/null
-			local _args="type=$DNS_MODE config_file=$config_file log_file=$log_file"
-			[ "${DNS_CACHE}" == "0" ] && _args="${_args} dns_cache=0"
-			_args="${_args} dns_query_strategy=${DNS_QUERY_STRATEGY}"
-			local _dns_client_ip=$(config_t_get global dns_client_ip)
-			[ -n "${_dns_client_ip}" ] && _args="${_args} dns_client_ip=${_dns_client_ip}"
-			use_tcp_node_resolve_dns=1
-			_args="${_args} dns_listen_port=${dns_listen_port}"
-			_args="${_args} remote_dns_tcp_server=${REMOTE_DNS}"
-			local v2ray_dns_mode=$(config_t_get global v2ray_dns_mode tcp)
-			[ "$v2ray_dns_mode" = "tcp+doh" ] && {
-				remote_dns_doh=$(config_t_get global remote_dns_doh "https://1.1.1.1/dns-query")
-				_args="${_args} remote_dns_doh=${remote_dns_doh}"
+				}
+				_args="${_args} dns_socks_address=127.0.0.1 dns_socks_port=${tcp_node_socks_port}"
+				run_xray ${_args}
 			}
-			_args="${_args} dns_socks_address=127.0.0.1 dns_socks_port=${tcp_node_socks_port}"
-			run_xray ${_args}
+		;;
+		dns2tcp)
+			use_tcp_node_resolve_dns=1
+			ln_run "$(first_type dns2tcp)" dns2tcp "/dev/null" -L "${TUN_DNS}" -R "$(get_first_dns REMOTE_DNS 53)" -v
+			echolog "  - 域名解析：dns2tcp + 使用(TCP节点)解析域名..."
+		;;
+		udp)
+			use_udp_node_resolve_dns=1
+			TUN_DNS="$(echo ${REMOTE_DNS} | sed 's/#/:/g' | sed -E 's/\:([^:]+)$/#\1/g')"
+			echolog "  - 域名解析：使用UDP协议请求DNS（$TUN_DNS）..."
+		;;
+		esac
+
+		[ "${use_tcp_node_resolve_dns}" = "1" ] && echolog "  * 请确认上游 DNS 支持 TCP 查询，如非直连地址，确保 TCP 代理打开，并且已经正确转发！"
+		[ "${use_udp_node_resolve_dns}" = "1" ] && echolog "  * 要求代理 DNS 请求，如上游 DNS 非直连地址，确保 UDP 代理打开，并且已经正确转发！"
+
+		[ "$CHINADNS_NG" = "1" ] && [ -n "$(first_type chinadns-ng)" ] && ([ -n "$chnlist" ] || [ -n "$gfwlist" ]) && {
+			[ "$FILTER_PROXY_IPV6" = "1" ] && {
+				local _no_ipv6_rules="gt"
+			}
+			local china_ng_listen_port=$(expr $dns_listen_port + 1)
+			local china_ng_listen="127.0.0.1#${china_ng_listen_port}"
+			run_chinadns_ng \
+				_listen_port=${china_ng_listen_port} \
+				_dns_china=$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2) | tr " " ",") \
+				_dns_trust="${TUN_DNS}" \
+				_chnlist="${chnlist}" \
+				_gfwlist="${gfwlist}" \
+				_no_ipv6_rules="${_no_ipv6_rules}" \
+				_log_path="${TMP_PATH}/chinadns-ng.log"
+
+			WHEN_CHNROUTE_DEFAULT_DNS="chinadns_ng"
 		}
-	;;
-	dns2tcp)
-		use_tcp_node_resolve_dns=1
-		ln_run "$(first_type dns2tcp)" dns2tcp "/dev/null" -L "${TUN_DNS}" -R "$(get_first_dns REMOTE_DNS 53)" -v
-		echolog "  - 域名解析：dns2tcp + 使用(TCP节点)解析域名..."
-	;;
-	udp)
-		use_udp_node_resolve_dns=1
-		TUN_DNS="$(echo ${REMOTE_DNS} | sed 's/#/:/g' | sed -E 's/\:([^:]+)$/#\1/g')"
-		echolog "  - 域名解析：使用UDP协议请求DNS（$TUN_DNS）..."
-	;;
-	esac
-
-	[ "${use_tcp_node_resolve_dns}" = "1" ] && echolog "  * 请确认上游 DNS 支持 TCP 查询，如非直连地址，确保 TCP 代理打开，并且已经正确转发！"
-	[ "${use_udp_node_resolve_dns}" = "1" ] && echolog "  * 要求代理 DNS 请求，如上游 DNS 非直连地址，确保 UDP 代理打开，并且已经正确转发！"
-	
-	case "$DNS_SHUNT" in
-	smartdns)
-		local group_domestic=$(config_t_get global group_domestic)
-		CHINADNS_NG=0
-		source $APP_PATH/helper_smartdns.sh add FLAG="default" DNS_MODE=$DNS_MODE SMARTDNS_CONF=/tmp/etc/smartdns/$CONFIG.conf REMOTE_FAKEDNS=$fakedns DEFAULT_DNS=$DEFAULT_DNS LOCAL_GROUP=$group_domestic TUN_DNS=$TUN_DNS TCP_NODE=$TCP_NODE PROXY_MODE=${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}${ACL_TCP_PROXY_MODE} NO_PROXY_IPV6=${filter_proxy_ipv6} NFTFLAG=${nftflag}
-		source $APP_PATH/helper_smartdns.sh restart
-		echolog "  - 域名解析：使用SmartDNS，请确保配置正常。"
-	;;
-	esac
-
-	[ "$CHINADNS_NG" = "1" ] && [ -n "$(first_type chinadns-ng)" ] && ([ -n "$chnlist" ] || [ -n "$gfwlist" ]) && {
-		[ "$FILTER_PROXY_IPV6" = "1" ] && {
-			local _no_ipv6_rules="gt"
-		}
-		local china_ng_listen_port=$(expr $dns_listen_port + 1)
-		local china_ng_listen="127.0.0.1#${china_ng_listen_port}"
-		run_chinadns_ng \
-			_listen_port=${china_ng_listen_port} \
-			_dns_china=$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2) | tr " " ",") \
-			_dns_trust="${TUN_DNS}" \
-			_chnlist="${chnlist}" \
-			_gfwlist="${gfwlist}" \
-			_no_ipv6_rules="${_no_ipv6_rules}" \
-			_log_path="${TMP_PATH}/chinadns-ng.log"
-
-		WHEN_CHNROUTE_DEFAULT_DNS="chinadns_ng"
-	}
-
-	[ "$DNS_SHUNT" = "dnsmasq" ] && {
 		[ "$WHEN_CHNROUTE_DEFAULT_DNS" = "remote" ] && {
 			dnsmasq_version=$(dnsmasq -v | grep -i "Dnsmasq version " | awk '{print $3}')
 			[ "$(expr $dnsmasq_version \>= 2.87)" == 0 ] && echolog "Dnsmasq版本低于2.87，有可能无法正常使用！！！"
@@ -1356,7 +1347,53 @@ start_dns() {
 			-TUN_DNS ${TUN_DNS} -REMOTE_FAKEDNS ${fakedns:-0} -CHNROUTE_MODE_DEFAULT_DNS "${WHEN_CHNROUTE_DEFAULT_DNS:-direct}" -CHINADNS_DNS ${china_ng_listen:-0} \
 			-TCP_NODE ${TCP_NODE} -PROXY_MODE "${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}${ACL_TCP_PROXY_MODE}" -NO_PROXY_IPV6 ${FILTER_PROXY_IPV6:-0} -NFTFLAG ${nftflag:-0} \
 			-NO_LOGIC_LOG ${NO_LOGIC_LOG:-0}
-	}
+	;;
+	smartdns)
+		rm -rf $TMP_PATH2/dnsmasq_default*
+		local SMARTDNS_TUN_DNS=
+		local SMARTDNS_TUN_DNS_PROTO=
+		local group_domestic=$(config_t_get global group_domestic)
+		local smartdns_mode=$(config_t_get global smartdns_mode)
+		case "$smartdns_mode" in
+		tcp)
+			SMARTDNS_TUN_DNS_PROTO="tcp"
+			SMARTDNS_TUN_DNS=$(config_t_get global smartdns_remote_dns 1.1.1.1)
+		;;
+		udp)
+			SMARTDNS_TUN_DNS_PROTO="udp"
+			SMARTDNS_TUN_DNS=$(config_t_get global smartdns_remote_dns 1.1.1.1)
+		;;
+		tls)
+			SMARTDNS_TUN_DNS_PROTO="tls"
+			SMARTDNS_TUN_DNS=$(config_t_get global smartdns_remote_dns 1.1.1.1)
+		;;
+		https)
+			SMARTDNS_TUN_DNS_PROTO="https"
+			SMARTDNS_TUN_DNS=$(config_t_get global smartdns_remote_dns_doh https://1.1.1.1/dns-query)
+			
+			local _doh_url=$(echo $SMARTDNS_TUN_DNS | awk -F ',' '{print $1}')
+			local _doh_host_port=$(lua_api "get_domain_from_url(\"${_doh_url}\")")
+			local _doh_host=$(echo $_doh_host_port | awk -F ':' '{print $1}')
+			local _is_ip=$(lua_api "is_ip(\"${_doh_host}\")")
+			local _doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
+			[ -z "${_doh_port}" ] && _doh_port=443
+			local _doh_bootstrap=$(echo $SMARTDNS_TUN_DNS | cut -d ',' -sf 2-)
+			SMARTDNS_TUN_DNS=${_doh_url}
+			[ -n "${_doh_bootstrap}" ] && {
+				SMARTDNS_TUN_DNS=$(echo "$_doh_url" | sed "s#${_doh_host}#${_doh_bootstrap}#g")
+				SMARTDNS_TUN_HTTP_HOST=${_doh_host}
+			}
+		;;
+		esac
+		lua $APP_PATH/helper_smartdns_add.lua -FLAG "default" -SMARTDNS_CONF "/tmp/etc/smartdns/$CONFIG.conf" \
+			-LOCAL_GROUP ${group_domestic:-nil} -REMOTE_GROUP "passwall_proxy" -REMOTE_PROXY_SERVER $(cat $TMP_PATH/TCP_SOCKS_server) \
+			-TUN_DNS_PROTO $SMARTDNS_TUN_DNS_PROTO -TUN_DNS $SMARTDNS_TUN_DNS -TUN_HTTP_HOST ${SMARTDNS_TUN_HTTP_HOST:-nil} \
+			-TCP_NODE $TCP_NODE -PROXY_MODE "${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}${ACL_TCP_PROXY_MODE}" -NO_PROXY_IPV6 ${FILTER_PROXY_IPV6:-0} -NFTFLAG ${nftflag:-0} \
+			-NO_LOGIC_LOG ${NO_LOGIC_LOG:-0}
+		source $APP_PATH/helper_smartdns.sh restart
+		echolog "  - 域名解析：使用SmartDNS，请确保配置正常。"
+	;;
+	esac
 }
 
 add_ip2route() {
