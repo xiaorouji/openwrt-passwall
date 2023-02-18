@@ -8,6 +8,7 @@ config global
 	option filter_proxy_ipv6 '0'
 	option dns_mode 'dns2tcp'
 	option remote_dns '1.1.1.1'
+	list smartdns_remote_dns 'https://1.1.1.1/dns-query'
 	option use_default_dns 'direct'
 	option use_direct_list '1'
 	option use_proxy_list '1'
