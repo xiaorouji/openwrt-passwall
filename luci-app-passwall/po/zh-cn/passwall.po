@@ -112,6 +112,21 @@ msgstr "与TCP节点相同"
 msgid "Current node: %s"
 msgstr "当前节点：%s"
 
+msgid "DNS Shunt"
+msgstr "DNS分流"
+
+msgid "Domestic group name"
+msgstr "国内分组名"
+
+msgid "You only need to configure domestic DNS packets in SmartDNS and set it redirect or as Dnsmasq upstream, and fill in the domestic DNS group name here."
+msgstr "您只需要在SmartDNS配置好国内DNS分组，并设置重定向或作为Dnsmasq上游，此处填入国内DNS分组名。"
+
+msgid "Exclude Default Group"
+msgstr "从默认服务器组排除"
+
+msgid "Exclude DNS Server from default group."
+msgstr "从default默认服务器组中排除"
+
 msgid "Filter Mode"
 msgstr "过滤模式"
 
