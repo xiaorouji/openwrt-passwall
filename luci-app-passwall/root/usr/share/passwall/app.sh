@@ -1166,6 +1166,28 @@ start_dns() {
 		}
 	}
 
+	[ "${DNS_SHUNT}" = "smartdns" ] && {
+		rm -rf $TMP_PATH2/dnsmasq_default*
+		local group_domestic=$(config_t_get global group_domestic)
+		local smartdns_remote_dns=$(config_t_get global smartdns_remote_dns)
+		if [ -n "${smartdns_remote_dns}" -a "${smartdns_remote_dns}" != "nil" ]; then
+			smartdns_remote_dns=$(echo ${smartdns_remote_dns} | tr -s ' ' '|')
+		else
+			smartdns_remote_dns="tcp://1.1.1.1"
+		fi
+		local smartdns_exclude_default_group=$(config_t_get global smartdns_exclude_default_group 0)
+		lua $APP_PATH/helper_smartdns_add.lua -FLAG "default" -SMARTDNS_CONF "/tmp/etc/smartdns/$CONFIG.conf" \
+			-LOCAL_GROUP ${group_domestic:-nil} -REMOTE_GROUP "passwall_proxy" -REMOTE_PROXY_SERVER ${TCP_SOCKS_server} -REMOTE_EXCLUDE "${smartdns_exclude_default_group}" \
+			-TUN_DNS ${smartdns_remote_dns} \
+			-USE_DIRECT_LIST "${USE_BLOCK_LIST}" -USE_PROXY_LIST "${USE_PROXY_LIST}" -USE_BLOCK_LIST "${USE_BLOCK_LIST}" -USE_GFW_LIST "${USE_GFW_LIST}" -CHN_LIST "${CHN_LIST}" \
+			-TCP_NODE ${TCP_NODE} -DEFAULT_PROXY_MODE "${TCP_PROXY_MODE}" -NO_PROXY_IPV6 ${FILTER_PROXY_IPV6:-0} -NFTFLAG ${nftflag:-0} \
+			-NO_LOGIC_LOG ${NO_LOGIC_LOG:-0}
+		source $APP_PATH/helper_smartdns.sh restart
+		echolog "  - 域名解析：使用SmartDNS，请确保配置正常。"
+		return
+	}
+
+	rm -rf $TMP_PATH2/smartdns_default*
 	case "$DNS_MODE" in
 	dns2socks)
 		local dns2socks_socks_server=$(echo $(config_t_get global socks_server 127.0.0.1:1080) | sed "s/#/:/g")
@@ -1636,6 +1658,7 @@ stop() {
 	unset V2RAY_LOCATION_ASSET
 	unset XRAY_LOCATION_ASSET
 	stop_crontab
+	source $APP_PATH/helper_smartdns.sh del
 	source $APP_PATH/helper_dnsmasq.sh del
 	source $APP_PATH/helper_dnsmasq.sh restart no_log=1
 	[ -s "$TMP_PATH/bridge_nf_ipt" ] && sysctl -w net.bridge.bridge-nf-call-iptables=$(cat $TMP_PATH/bridge_nf_ipt) >/dev/null 2>&1
@@ -1688,6 +1711,8 @@ LOCALHOST_PROXY=$(config_t_get global localhost_proxy 1)
 	LOCALHOST_UDP_PROXY_MODE=$UDP_PROXY_MODE
 }
 CLIENT_PROXY=$(config_t_get global client_proxy 1)
+DNS_SHUNT=$(config_t_get global dns_shunt dnsmasq)
+[ -z "$(first_type $DNS_SHUNT)" ] && DNS_SHUNT="dnsmasq"
 DNS_MODE=$(config_t_get global dns_mode dns2tcp)
 DNS_CACHE=$(config_t_get global dns_cache 0)
 REMOTE_DNS=$(config_t_get global remote_dns 1.1.1.1:53 | sed 's/#/:/g' | sed -E 's/\:([^:]+)$/#\1/g')
