@@ -99,6 +99,9 @@ function gen_outbound(flag, node, tag, proxy_table)
         else
             if node.tls and node.tls == "1" then
                 node.stream_security = "tls"
+                if node.type == "Xray" and node.reality and node.reality == "1" then
+                    node.stream_security = "reality"
+                end
             end
         end
 
@@ -126,6 +129,13 @@ function gen_outbound(flag, node, tag, proxy_table)
                     allowInsecure = (node.tls_allowInsecure == "1") and true or false,
                     fingerprint = (node.type == "Xray" and node.fingerprint and node.fingerprint ~= "") and node.fingerprint or nil
                 } or nil,
+                realitySettings = (node.stream_security == "reality") and {
+                    serverName = node.tls_serverName,
+                    publicKey = node.reality_publicKey,
+                    shortId = node.reality_shortId or "",
+                    spiderX = node.reality_spiderX or "",
+                    fingerprint = (node.type == "Xray" and node.fingerprint and node.fingerprint ~= "") and node.fingerprint or "chrome"
+                } or "nil",
                 tcpSettings = (node.transport == "tcp" and node.protocol ~= "socks") and {
                     header = {
                         type = node.tcp_guise or "none",
