@@ -1350,44 +1350,17 @@ start_dns() {
 	;;
 	smartdns)
 		rm -rf $TMP_PATH2/dnsmasq_default*
-		local SMARTDNS_TUN_DNS=
-		local SMARTDNS_TUN_DNS_PROTO=
 		local group_domestic=$(config_t_get global group_domestic)
-		local smartdns_mode=$(config_t_get global smartdns_mode)
-		case "$smartdns_mode" in
-		tcp)
-			SMARTDNS_TUN_DNS_PROTO="tcp"
-			SMARTDNS_TUN_DNS=$(config_t_get global smartdns_remote_dns 1.1.1.1)
-		;;
-		udp)
-			SMARTDNS_TUN_DNS_PROTO="udp"
-			SMARTDNS_TUN_DNS=$(config_t_get global smartdns_remote_dns 1.1.1.1)
-		;;
-		tls)
-			SMARTDNS_TUN_DNS_PROTO="tls"
-			SMARTDNS_TUN_DNS=$(config_t_get global smartdns_remote_dns 1.1.1.1)
-		;;
-		https)
-			SMARTDNS_TUN_DNS_PROTO="https"
-			SMARTDNS_TUN_DNS=$(config_t_get global smartdns_remote_dns_doh https://1.1.1.1/dns-query)
-			
-			local _doh_url=$(echo $SMARTDNS_TUN_DNS | awk -F ',' '{print $1}')
-			local _doh_host_port=$(lua_api "get_domain_from_url(\"${_doh_url}\")")
-			local _doh_host=$(echo $_doh_host_port | awk -F ':' '{print $1}')
-			local _is_ip=$(lua_api "is_ip(\"${_doh_host}\")")
-			local _doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
-			[ -z "${_doh_port}" ] && _doh_port=443
-			local _doh_bootstrap=$(echo $SMARTDNS_TUN_DNS | cut -d ',' -sf 2-)
-			SMARTDNS_TUN_DNS=${_doh_url}
-			[ -n "${_doh_bootstrap}" ] && {
-				SMARTDNS_TUN_DNS=$(echo "$_doh_url" | sed "s#${_doh_host}#${_doh_bootstrap}#g")
-				SMARTDNS_TUN_HTTP_HOST=${_doh_host}
-			}
-		;;
-		esac
+		local smartdns_remote_dns=$(config_t_get global smartdns_remote_dns)
+		if [ -n "$smartdns_remote_dns" -a "$smartdns_remote_dns" != "nil" ]; then
+			smartdns_remote_dns=$(echo $smartdns_remote_dns | tr -s ' ' '|')
+		else
+			smartdns_remote_dns="tcp://1.1.1.1"
+		fi
+		local SMARTDNS_TUN_DNS=$smartdns_remote_dns
 		lua $APP_PATH/helper_smartdns_add.lua -FLAG "default" -SMARTDNS_CONF "/tmp/etc/smartdns/$CONFIG.conf" \
 			-LOCAL_GROUP ${group_domestic:-nil} -REMOTE_GROUP "passwall_proxy" -REMOTE_PROXY_SERVER $(cat $TMP_PATH/TCP_SOCKS_server) \
-			-TUN_DNS_PROTO $SMARTDNS_TUN_DNS_PROTO -TUN_DNS $SMARTDNS_TUN_DNS -TUN_HTTP_HOST ${SMARTDNS_TUN_HTTP_HOST:-nil} \
+			-TUN_DNS $SMARTDNS_TUN_DNS \
 			-TCP_NODE $TCP_NODE -PROXY_MODE "${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}${ACL_TCP_PROXY_MODE}" -NO_PROXY_IPV6 ${FILTER_PROXY_IPV6:-0} -NFTFLAG ${nftflag:-0} \
 			-NO_LOGIC_LOG ${NO_LOGIC_LOG:-0}
 		source $APP_PATH/helper_smartdns.sh restart
