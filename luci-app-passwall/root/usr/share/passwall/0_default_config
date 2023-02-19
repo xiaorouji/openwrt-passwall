@@ -7,6 +7,7 @@ config global
 	option tcp_node_socks_port '1070'
 	option dns_mode 'dns2tcp'
 	option remote_dns '1.1.1.1'
+	list smartdns_remote_dns 'https://1.1.1.1/dns-query'
 	option filter_proxy_ipv6 '0'
 	option when_chnroute_default_dns 'direct'
 	option tcp_proxy_mode 'chnroute'

@@ -273,40 +273,47 @@ o = s:taboption("DNS", Flag, "filter_proxy_ipv6", translate("Filter Proxy Host I
 o.default = "0"
 
 if api.is_finded("smartdns") then
-	smartdns_mode = s:taboption("DNS", ListValue, "smartdns_mode", translate("Filter Mode"))
-	smartdns_mode:value("tcp", translatef("Requery DNS By %s", "TCP"))
-	smartdns_mode:value("https", translatef("Requery DNS By %s", "HTTPS"))
-	smartdns_mode:value("tls", translatef("Requery DNS By %s", "TLS"))
-	smartdns_mode:value("udp", translatef("Requery DNS By %s", "UDP"))
-	smartdns_mode:depends("dns_shunt", "smartdns")
-
-	o = s:taboption("DNS", Value, "smartdns_remote_dns", translate("Remote DNS"))
-	o.datatype = "or(ipaddr,ipaddrport)"
-	o.default = "1.1.1.1"
-	o:value("1.1.1.1", "1.1.1.1 (CloudFlare)")
-	o:value("1.1.1.2", "1.1.1.2 (CloudFlare-Security)")
-	o:value("8.8.4.4", "8.8.4.4 (Google)")
-	o:value("8.8.8.8", "8.8.8.8 (Google)")
-	o:value("9.9.9.9", "9.9.9.9 (Quad9-Recommended)")
-	o:value("208.67.220.220", "208.67.220.220 (OpenDNS)")
-	o:value("208.67.222.222", "208.67.222.222 (OpenDNS)")
-	o:depends("smartdns_mode", "tcp")
-	o:depends("smartdns_mode", "udp")
-	o:depends("smartdns_mode", "tls")
-
-	o = s:taboption("DNS", Value, "smartdns_remote_dns_doh", translate("Remote DNS DoH"))
-	o.default = "https://1.1.1.1/dns-query"
-	o:value("https://1.1.1.1/dns-query", "CloudFlare")
-	o:value("https://1.1.1.2/dns-query", "CloudFlare-Security")
-	o:value("https://8.8.4.4/dns-query", "Google 8844")
-	o:value("https://8.8.8.8/dns-query", "Google 8888")
-	o:value("https://9.9.9.9/dns-query", "Quad9-Recommended")
-	o:value("https://208.67.222.222/dns-query", "OpenDNS")
-	o:value("https://dns.adguard.com/dns-query,176.103.130.130", "AdGuard")
-	o:value("https://doh.libredns.gr/dns-query,116.202.176.26", "LibreDNS")
-	o:value("https://doh.libredns.gr/ads,116.202.176.26", "LibreDNS (No Ads)")
-	o.validate = doh_validate
-	o:depends("smartdns_mode", "https")
+	o = s:taboption("DNS", DynamicList, "smartdns_remote_dns", translate("Remote DNS"))
+	o:value("tcp://1.1.1.1")
+	o:value("tcp://8.8.4.4")
+	o:value("tcp://8.8.8.8")
+	o:value("tcp://9.9.9.9")
+	o:value("tcp://208.67.222.222")
+	o:value("tls://1.1.1.1")
+	o:value("tls://8.8.4.4")
+	o:value("tls://8.8.8.8")
+	o:value("tls://9.9.9.9")
+	o:value("tls://208.67.222.222")
+	o:value("https://1.1.1.1/dns-query")
+	o:value("https://8.8.4.4/dns-query")
+	o:value("https://8.8.8.8/dns-query")
+	o:value("https://9.9.9.9/dns-query")
+	o:value("https://208.67.222.222/dns-query")
+	o:value("https://dns.adguard.com/dns-query,176.103.130.130")
+	o:value("https://doh.libredns.gr/dns-query,116.202.176.26")
+	o:value("https://doh.libredns.gr/ads,116.202.176.26")
+	o:depends("dns_shunt", "smartdns")
+	o.cfgvalue = function(self, section)
+		return m:get(section, self.option) or {"tcp://1.1.1.1"}
+	end
+	function o.write(self, section, value)
+		local t = {}
+		local t2 = {}
+		if type(value) == "table" then
+			local x
+			for _, x in ipairs(value) do
+				if x and #x > 0 then
+					if not t2[x] then
+						t2[x] = x
+						t[#t+1] = x
+					end
+				end
+			end
+		else
+			t = { value }
+		end
+		return DynamicList.write(self, section, t)
+	end
 end
 
 ---- DNS Forward Mode

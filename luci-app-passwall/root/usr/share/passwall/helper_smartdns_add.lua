@@ -7,9 +7,7 @@ local SMARTDNS_CONF = var["-SMARTDNS_CONF"]
 local LOCAL_GROUP = var["-LOCAL_GROUP"]
 local REMOTE_GROUP = var["-REMOTE_GROUP"]
 local REMOTE_PROXY_SERVER = var["-REMOTE_PROXY_SERVER"]
-local TUN_DNS_PROTO = var["-TUN_DNS_PROTO"]
 local TUN_DNS = var["-TUN_DNS"]
-local TUN_HTTP_HOST = var["-TUN_HTTP_HOST"]
 local TCP_NODE = var["-TCP_NODE"]
 local PROXY_MODE = var["-PROXY_MODE"]
 local NO_PROXY_IPV6 = var["-NO_PROXY_IPV6"]
@@ -142,9 +140,31 @@ local function check_excluded_domain(domain)
 	return false
 end
 
+local function split(full, sep)
+	if full then
+		full = full:gsub("%z", "")
+		local off, result = 1, {}
+		while true do
+			local nStart, nEnd = full:find(sep, off)
+			if not nEnd then
+				local res = string.sub(full, off, string.len(full))
+				if #res > 0 then
+					table.insert(result, res)
+				end
+				break
+			else
+				table.insert(result, string.sub(full, off, nStart - 1))
+				off = nEnd + 1
+			end
+		end
+		return result
+	end
+	return {}
+end
+
 local cache_text = ""
 local new_rules = luci.sys.exec("echo -n $(find /usr/share/passwall/rules -type f | xargs md5sum)")
-local new_text = SMARTDNS_CONF .. LOCAL_GROUP .. REMOTE_GROUP .. REMOTE_PROXY_SERVER .. TUN_DNS_PROTO .. TUN_DNS .. PROXY_MODE .. NO_PROXY_IPV6 .. new_rules
+local new_text = SMARTDNS_CONF .. LOCAL_GROUP .. REMOTE_GROUP .. REMOTE_PROXY_SERVER .. TUN_DNS .. PROXY_MODE .. NO_PROXY_IPV6 .. new_rules
 if fs.access(CACHE_TEXT_FILE) then
 	for line in io.lines(CACHE_TEXT_FILE) do
 		cache_text = line
@@ -172,26 +192,42 @@ if not REMOTE_GROUP or REMOTE_GROUP == "nil" then
 	sys.call('sed -i "/passwall/d" /etc/smartdns/custom.conf >/dev/null 2>&1')
 end
 
-local setflag= (NFTFLAG == "1") and "inet#fw4#" or ""
-
 if not fs.access(CACHE_DNS_FILE) then
 	local proxy_server_name = "passwall-proxy-server"
 	sys.call(string.format('echo "proxy-server socks5://%s -name %s" >> %s', REMOTE_PROXY_SERVER, proxy_server_name, CACHE_DNS_FILE))
 	if true then
-		local server_param = string.format("server%s %s -group %s -exclude-default-group -proxy %s", "%s", TUN_DNS, REMOTE_GROUP, proxy_server_name)
-		if TUN_DNS_PROTO == "tcp" then
-			server_param = string.format(server_param, "-tcp")
-		elseif TUN_DNS_PROTO == "udp" then
-			server_param = string.format(server_param, "")
-		elseif TUN_DNS_PROTO == "tls" then
-			server_param = string.format(server_param, "-tls")
-		elseif TUN_DNS_PROTO == "https" then
-			server_param = string.format(server_param, "-https")
-			if TUN_HTTP_HOST and TUN_HTTP_HOST ~= "nil" then
-				server_param = server_param .. " -http-host " .. TUN_HTTP_HOST
+		string.gsub(TUN_DNS, '[^' .. "|" .. ']+', function(w)
+			local server_dns = w
+			local server_param = string.format("server %s -group %s -exclude-default-group -proxy %s", "%s", REMOTE_GROUP, proxy_server_name)
+
+			local isHTTPS = w:find("https://")
+			if isHTTPS and isHTTPS == 1 then
+				local http_host = nil
+				local url = w
+				local port = 443
+				local s = split(w, ",")
+				if s and #s > 1 then
+					url = s[1]
+					local dns_ip = s[2]
+					local host_port = api.get_domain_from_url(s[1])
+					if host_port and #host_port > 0 then
+						http_host = host_port
+						local s2 = split(host_port, ":")
+						if s2 and #s2 > 1 then
+							http_host = s2[1]
+							port = s2[2]
+						end 
+						url = url:gsub(http_host, dns_ip)
+					end
+				end
+				server_dns = url
+				if http_host then
+					server_dns = server_dns .. " -http-host " .. http_host
+				end
 			end
-		end
-		sys.exec(string.format('echo "%s" >> %s', server_param, CACHE_DNS_FILE))
+			server_param = string.format(server_param, server_dns)
+			sys.exec(string.format('echo "%s" >> %s', server_param, CACHE_DNS_FILE))
+		end)
 	end
 
 	local setflag= (NFTFLAG == "1") and "inet#fw4#" or ""
