@@ -1156,7 +1156,11 @@ start_dns() {
 	
 	[ "$DNS_SHUNT" = "dnsmasq" ] && {
 		source $APP_PATH/helper_dnsmasq.sh stretch
-		source $APP_PATH/helper_dnsmasq.sh add FLAG="default" DNS_MODE=$DNS_MODE TMP_DNSMASQ_PATH=$TMP_DNSMASQ_PATH DNSMASQ_CONF_FILE=/tmp/dnsmasq.d/dnsmasq-passwall.conf REMOTE_FAKEDNS=$fakedns DEFAULT_DNS=$DEFAULT_DNS LOCAL_DNS=$LOCAL_DNS TUN_DNS=$TUN_DNS CHINADNS_DNS=$china_ng_listen TCP_NODE=$TCP_NODE PROXY_MODE=${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}${ACL_TCP_PROXY_MODE} NO_PROXY_IPV6=${filter_proxy_ipv6} NFTFLAG=${nftflag}
+		lua $APP_PATH/helper_dnsmasq_add.lua -FLAG "default" -TMP_DNSMASQ_PATH ${TMP_DNSMASQ_PATH} \
+			-DNSMASQ_CONF_FILE "/tmp/dnsmasq.d/dnsmasq-passwall.conf" -DEFAULT_DNS ${DEFAULT_DNS} -LOCAL_DNS ${LOCAL_DNS} \
+			-TUN_DNS ${TUN_DNS} -REMOTE_FAKEDNS ${fakedns:-0} -CHINADNS_DNS ${china_ng_listen:-0} \
+			-TCP_NODE ${TCP_NODE} -PROXY_MODE "${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}${ACL_TCP_PROXY_MODE}" -NO_PROXY_IPV6 ${filter_proxy_ipv6:-0} -NFTFLAG ${nftflag:-0} \
+			-NO_LOGIC_LOG ${NO_LOGIC_LOG:-0}
 	}
 }
 

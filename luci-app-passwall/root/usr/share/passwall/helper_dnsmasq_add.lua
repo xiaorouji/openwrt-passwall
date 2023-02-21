@@ -17,13 +17,12 @@ local NO_LOGIC_LOG = var["-NO_LOGIC_LOG"]
 local NFTFLAG = var["-NFTFLAG"]
 local LOG_FILE = api.LOG_FILE
 local CACHE_PATH = api.CACHE_PATH
-local CACHE_FLAG = "dns_" .. FLAG
+local CACHE_FLAG = "dnsmasq_" .. FLAG
 local CACHE_DNS_PATH = CACHE_PATH .. "/" .. CACHE_FLAG
 local CACHE_TEXT_FILE = CACHE_DNS_PATH .. ".txt"
 
 local uci = api.uci
 local sys = api.sys
-local jsonc = api.jsonc
 local appname = api.appname
 local fs = api.fs
 local datatypes = api.datatypes
@@ -42,20 +41,6 @@ local function log(...)
         f:write(str .. "\n")
         f:close()
     end
-end
-
---从url获取域名
-local function get_domain_from_url(url)
-    if url then
-        if datatypes.hostname(url) then
-            return url
-        end
-        local domain = url:match("//([^/]+)")
-        if domain then
-            return domain
-        end
-    end
-    return ""
 end
 
 local function check_dns(domain, dns)
@@ -398,23 +383,28 @@ if not fs.access(CACHE_DNS_PATH) then
     f_out:write(new_text)
     f_out:close()
 end
+
 if api.is_install("procd\\-ujail") then
     fs.copyr(CACHE_DNS_PATH, TMP_DNSMASQ_PATH)
 else
     api.remove(TMP_DNSMASQ_PATH)
     fs.symlink(CACHE_DNS_PATH, TMP_DNSMASQ_PATH)
 end
-local conf_out = io.open(DNSMASQ_CONF_FILE, "a")
-conf_out:write(string.format("conf-dir=%s\n", TMP_DNSMASQ_PATH))
-if dnsmasq_default_dns then
-    local f_out = io.open("/tmp/etc/passwall/default_DNS", "a")
-    f_out:write(DEFAULT_DNS)
-    f_out:close()
-    conf_out:write(string.format("server=%s\n", dnsmasq_default_dns))
-    conf_out:write("all-servers\n")
-    conf_out:write("no-poll\n")
-    conf_out:write("no-resolv\n")
-    log(string.format("  - 以上所列以外及默认：%s", dnsmasq_default_dns))
+
+if FLAG == "default" and DNSMASQ_CONF_FILE ~= "nil" then
+    local conf_out = io.open(DNSMASQ_CONF_FILE, "a")
+    conf_out:write(string.format("conf-dir=%s\n", TMP_DNSMASQ_PATH))
+    if dnsmasq_default_dns then
+        local f_out = io.open("/tmp/etc/passwall/default_DNS", "a")
+        f_out:write(DEFAULT_DNS)
+        f_out:close()
+        conf_out:write(string.format("server=%s\n", dnsmasq_default_dns))
+        conf_out:write("all-servers\n")
+        conf_out:write("no-poll\n")
+        conf_out:write("no-resolv\n")
+        log(string.format("  - 以上所列以外及默认：%s", dnsmasq_default_dns))
+    end
+    conf_out:close()
 end
-conf_out:close()
+
 log("  - PassWall必须依赖于Dnsmasq，如果你自行配置了错误的DNS流程，将会导致域名(直连/代理域名)分流失效！！！")

@@ -366,9 +366,17 @@ load_acl() {
 							d_server=127.0.0.1
 							[ "$tcp_proxy_mode" = "global" ] && {
 								d_server=${d_server}#${_dns_port}
+								sed -i "/no-poll/d" $TMP_ACL_PATH/$sid/dnsmasq.conf
+								sed -i "/no-resolv/d" $TMP_ACL_PATH/$sid/dnsmasq.conf
 								echo "server=${d_server}" >> $TMP_ACL_PATH/$sid/dnsmasq.conf
+								echo "no-poll" >> $TMP_ACL_PATH/$sid/dnsmasq.conf
+								echo "no-resolv" >> $TMP_ACL_PATH/$sid/dnsmasq.conf
 							}
-							source $APP_PATH/helper_${DNS_N}.sh add FLAG=${sid} DNS_MODE=$dns_mode TMP_DNSMASQ_PATH=$TMP_ACL_PATH/$sid/dnsmasq.d DNSMASQ_CONF_FILE=/dev/null LOCAL_DNS=$LOCAL_DNS TUN_DNS=127.0.0.1#${_dns_port} TCP_NODE=$tcp_node PROXY_MODE=${tcp_proxy_mode} NO_LOGIC_LOG=1 NO_PROXY_IPV6=${filter_proxy_ipv6} NFTFLAG=${nftflag}
+							lua $APP_PATH/helper_dnsmasq_add.lua -FLAG ${sid} -TMP_DNSMASQ_PATH $TMP_ACL_PATH/$sid/dnsmasq.d \
+								-DNSMASQ_CONF_FILE "nil" -DEFAULT_DNS $DEFAULT_DNS -LOCAL_DNS $LOCAL_DNS \
+								-TUN_DNS "127.0.0.1#${_dns_port}" -REMOTE_FAKEDNS 0 -CHINADNS_DNS 0 \
+								-TCP_NODE $tcp_node -PROXY_MODE ${tcp_proxy_mode} -NO_PROXY_IPV6 ${filter_proxy_ipv6:-0} -NFTFLAG 1 \
+								-NO_LOGIC_LOG 1
 							ln_run "$(first_type dnsmasq)" "dnsmasq_${sid}" "/dev/null" -C $TMP_ACL_PATH/$sid/dnsmasq.conf -x $TMP_ACL_PATH/$sid/dnsmasq.pid
 							eval node_${tcp_node}_$(echo -n "${tcp_proxy_mode}${remote_dns}" | md5sum | cut -d " " -f1)=${dnsmasq_port}
 						}
