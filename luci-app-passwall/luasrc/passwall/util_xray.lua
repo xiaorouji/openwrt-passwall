@@ -135,7 +135,7 @@ function gen_outbound(flag, node, tag, proxy_table)
                     shortId = node.reality_shortId or "",
                     spiderX = node.reality_spiderX or "",
                     fingerprint = (node.type == "Xray" and node.fingerprint and node.fingerprint ~= "") and node.fingerprint or "chrome"
-                } or "nil",
+                } or nil,
                 tcpSettings = (node.transport == "tcp" and node.protocol ~= "socks") and {
                     header = {
                         type = node.tcp_guise or "none",
