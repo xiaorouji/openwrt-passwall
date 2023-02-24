@@ -418,10 +418,15 @@ end
 
 iv_check = s:option(Flag, "iv_check", translate("IV Check"))
 iv_check:depends({ type = "V2ray", protocol = "shadowsocks" })
-iv_check:depends({ type = "Xray", protocol = "shadowsocks" })
+iv_check:depends({ type = "Xray", protocol = "shadowsocks", x_ss_encrypt_method = "aes-128-gcm" })
+iv_check:depends({ type = "Xray", protocol = "shadowsocks", x_ss_encrypt_method = "aes-256-gcm" })
+iv_check:depends({ type = "Xray", protocol = "shadowsocks", x_ss_encrypt_method = "chacha20-poly1305" })
+iv_check:depends({ type = "Xray", protocol = "shadowsocks", x_ss_encrypt_method = "xchacha20-poly1305" })
 
-uot = s:option(Flag, "uot", translate("UDP over TCP"), translate("Need Xray server side with Shadowsocks-2022 protocol"))
-uot:depends({ type = "Xray", protocol = "shadowsocks" })
+uot = s:option(Flag, "uot", translate("UDP over TCP"), translate("Need Xray-core or sing-box as server side."))
+uot:depends({ type = "Xray", protocol = "shadowsocks", x_ss_encrypt_method = "2022-blake3-aes-128-gcm" })
+uot:depends({ type = "Xray", protocol = "shadowsocks", x_ss_encrypt_method = "2022-blake3-aes-256-gcm" })
+uot:depends({ type = "Xray", protocol = "shadowsocks", x_ss_encrypt_method = "2022-blake3-chacha20-poly1305" })
 
 ssr_protocol = s:option(Value, "ssr_protocol", translate("Protocol"))
 for a, t in ipairs(ssr_protocol_list) do ssr_protocol:value(t) end

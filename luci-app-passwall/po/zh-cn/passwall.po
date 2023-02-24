@@ -988,8 +988,8 @@ msgstr "IV 检查"
 msgid "UDP over TCP"
 msgstr "TCP 封装 UDP"
 
-msgid "Need Xray server side with Shadowsocks-2022 protocol"
-msgstr "需要 Xray 作服务器端的 Shadowsocks-2022 协议"
+msgid "Need Xray-core or sing-box as server side."
+msgstr "需要 Xray-core 或者 sing-box 作为服务器端。"
 
 msgid "Connection Timeout"
 msgstr "连接超时时间"
