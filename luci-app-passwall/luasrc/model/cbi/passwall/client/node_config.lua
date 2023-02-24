@@ -531,11 +531,12 @@ tlsflow.default = ""
 tlsflow:value("", translate("Disable"))
 tlsflow:value("xtls-rprx-vision")
 tlsflow:value("xtls-rprx-vision-udp443")
-tlsflow:depends({ type = "Xray", protocol = "vless", tls = true })
+tlsflow:depends({ type = "Xray", protocol = "vless", tls = true, transport = "tcp" })
 
-reality = s:option(Flag, "reality", translate("REALITY"))
+reality = s:option(Flag, "reality", translate("REALITY"), translate("Only recommend to use with VLESS-TCP-XTLS-Vision."))
 reality.default = 0
-reality:depends({ type = "Xray", tls = true })
+reality:depends({ type = "Xray", tls = true, transport = "tcp" })
+reality:depends({ type = "Xray", tls = true, transport = "h2" })
 
 alpn = s:option(ListValue, "alpn", translate("alpn"))
 alpn.default = "default"
@@ -607,13 +608,13 @@ end
 
 -- [[ REALITY部分 ]] --
 reality_publicKey = s:option(Value, "reality_publicKey", translate("Public Key"))
-reality_publicKey:depends({ type = "Xray", protocol = "vless", tls = true, reality = true })
+reality_publicKey:depends({ type = "Xray", tls = true, reality = true })
 
 reality_shortId = s:option(Value, "reality_shortId", translate("Short Id"))
-reality_shortId:depends({ type = "Xray", protocol = "vless", tls = true, reality = true })
+reality_shortId:depends({ type = "Xray", tls = true, reality = true })
 
 reality_spiderX = s:option(Value, "reality_spiderX", translate("Spider X"))
-reality_spiderX:depends({ type = "Xray", protocol = "vless", tls = true, reality = true })
+reality_spiderX:depends({ type = "Xray", tls = true, reality = true })
 
 reality_fingerprint = s:option(Value, "reality_fingerprint", translate("Finger Print"))
 reality_fingerprint:value("chrome")
