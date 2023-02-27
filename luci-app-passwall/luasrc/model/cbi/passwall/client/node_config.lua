@@ -532,6 +532,7 @@ reality = s:option(Flag, "reality", translate("REALITY"), translate("Only recomm
 reality.default = 0
 reality:depends({ type = "Xray", tls = true, transport = "tcp" })
 reality:depends({ type = "Xray", tls = true, transport = "h2" })
+reality:depends({ type = "Xray", tls = true, transport = "grpc" })
 
 alpn = s:option(ListValue, "alpn", translate("alpn"))
 alpn.default = "default"
