@@ -307,6 +307,7 @@ load_acl() {
 			udp_node=${udp_node:-default}
 			dns_mode=${dns_mode:-dns2socks}
 			remote_dns=${remote_dns:-1.1.1.1}
+			filter_proxy_ipv6=${FILTER_PROXY_IPV6}
 			[ "$dns_mode" = "v2ray" -o "$dns_mode" = "xray" ] && {
 				[ "$v2ray_dns_mode" = "doh" ] && remote_dns=${remote_dns_doh:-https://1.1.1.1/dns-query}
 			}
