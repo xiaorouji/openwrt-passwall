@@ -222,6 +222,10 @@ for k, v in pairs(nodes_table) do
     udp_node:value(v.id, v["remark"])
 end
 
+o = s:option(Flag, "filter_proxy_ipv6", translate("Filter Proxy Host IPv6"), translate("Experimental feature."))
+o.default = "0"
+o:depends({ tcp_node = "default",  ['!reverse'] = true })
+
 ---- DNS Forward Mode
 o = s:option(ListValue, "dns_mode", translate("Filter Mode"))
 o:depends({ tcp_node = "default",  ['!reverse'] = true })

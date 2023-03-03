@@ -282,7 +282,7 @@ load_acl() {
 		dnsmasq_port=11400
 		echolog "访问控制："
 		for item in $items; do
-			local enabled sid remarks sources tcp_proxy_mode udp_proxy_mode tcp_no_redir_ports udp_no_redir_ports tcp_proxy_drop_ports udp_proxy_drop_ports tcp_redir_ports udp_redir_ports tcp_node udp_node dns_mode remote_dns v2ray_dns_mode remote_dns_doh dns_client_ip
+			local enabled sid remarks sources tcp_proxy_mode udp_proxy_mode tcp_no_redir_ports udp_no_redir_ports tcp_proxy_drop_ports udp_proxy_drop_ports tcp_redir_ports udp_redir_ports tcp_node udp_node filter_proxy_ipv6 dns_mode remote_dns v2ray_dns_mode remote_dns_doh dns_client_ip
 			local _ip _mac _iprange _ipset _ip_or_mac rule_list tcp_port udp_port tcp_node_remark udp_node_remark config_file _extra_param
 			sid=$(uci -q show "${CONFIG}.${item}" | grep "=acl_rule" | awk -F '=' '{print $1}' | awk -F '.' '{print $2}')
 			eval $(uci -q show "${CONFIG}.${item}" | cut -d'.' -sf 3-)
@@ -316,6 +316,7 @@ load_acl() {
 			udp_redir_ports=${udp_redir_ports:-default}
 			tcp_node=${tcp_node:-default}
 			udp_node=${udp_node:-default}
+			filter_proxy_ipv6=${filter_proxy_ipv6:-0}
 			dns_mode=${dns_mode:-dns2socks}
 			remote_dns=${remote_dns:-1.1.1.1}
 			[ "$dns_mode" = "v2ray" -o "$dns_mode" = "xray" ] && {
@@ -611,7 +612,7 @@ load_acl() {
 				nft "add rule inet fw4 PSW_MANGLE ip protocol udp ${_ipt_source} counter return comment \"$remarks\""
 				nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} counter return comment \"$remarks\"" 2>/dev/null
 			done
-			unset enabled sid remarks sources tcp_proxy_mode udp_proxy_mode tcp_no_redir_ports udp_no_redir_ports tcp_proxy_drop_ports udp_proxy_drop_ports tcp_redir_ports udp_redir_ports tcp_node udp_node dns_mode remote_dns v2ray_dns_mode remote_dns_doh dns_client_ip
+			unset enabled sid remarks sources tcp_proxy_mode udp_proxy_mode tcp_no_redir_ports udp_no_redir_ports tcp_proxy_drop_ports udp_proxy_drop_ports tcp_redir_ports udp_redir_ports tcp_node udp_node filter_proxy_ipv6 dns_mode remote_dns v2ray_dns_mode remote_dns_doh dns_client_ip
 			unset _ip _mac _iprange _ipset _ip_or_mac rule_list tcp_port udp_port tcp_node_remark udp_node_remark config_file _extra_param
 			unset ipt_tmp msg msg2
 			unset redirect_dns_port
