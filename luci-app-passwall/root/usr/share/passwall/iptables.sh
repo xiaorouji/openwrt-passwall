@@ -263,12 +263,13 @@ load_acl() {
 	local items=$(uci show ${CONFIG} | grep "=acl_rule" | cut -d '.' -sf 2 | cut -d '=' -sf 1)
 	[ -n "$items" ] && {
 		local item
-		local socks_port redir_port dns_port dnsmasq_port
+		local socks_port redir_port dns_port dnsmasq_port chinadns_port
 		local ipt_tmp msg msg2
 		socks_port=11100
 		redir_port=11200
 		dns_port=11300
 		dnsmasq_port=11400
+		chinadns_port=11500
 		echolog "访问控制："
 		for item in $items; do
 			local enabled sid remarks sources tcp_proxy_mode udp_proxy_mode tcp_no_redir_ports udp_no_redir_ports tcp_proxy_drop_ports udp_proxy_drop_ports tcp_redir_ports udp_redir_ports tcp_node udp_node filter_proxy_ipv6 dns_mode remote_dns v2ray_dns_mode remote_dns_doh dns_client_ip
@@ -308,6 +309,7 @@ load_acl() {
 			filter_proxy_ipv6=${filter_proxy_ipv6:-0}
 			dns_mode=${dns_mode:-dns2socks}
 			remote_dns=${remote_dns:-1.1.1.1}
+			chinadns_ng=${chinadns_ng:-0}
 			[ "$dns_mode" = "v2ray" -o "$dns_mode" = "xray" ] && {
 				[ "$v2ray_dns_mode" = "doh" ] && remote_dns=${remote_dns_doh:-https://1.1.1.1/dns-query}
 			}
@@ -340,6 +342,37 @@ load_acl() {
 								eval node_${tcp_node}_$(echo -n "${remote_dns}" | md5sum | cut -d " " -f1)=${_dns_port}
 							}
 
+							local _dnsmasq_filter_ipv6=$filter_proxy_ipv6
+							[ "$tcp_proxy_mode" = "chnroute" ] && [ "$chinadns_ng" = "1" ] && [ -n "$(first_type chinadns-ng)" ] && [ -s "${RULES_PATH}/chnlist" ] && {
+								chinadns_port=$(expr $chinadns_port + 1)
+								_china_ng_listen="127.0.0.1#${chinadns_port}"
+								local _china_ng_chn=$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2) | tr " " ",")
+								local _china_ng_gfw="127.0.0.1#${_dns_port}"
+
+								local gfwlist_param="${TMP_PATH}/chinadns_gfwlist"
+								[ ! -s "${gfwlist_param}" ] && {
+									[ -s "${RULES_PATH}/gfwlist" ] && cp -a "${RULES_PATH}/gfwlist" "${gfwlist_param}"
+									[ -s "${RULES_PATH}/proxy_host" ] && {
+										cat "${RULES_PATH}/proxy_host" | tr -s '\n' | grep -v "^#" | sort -u >> "${gfwlist_param}"
+									}
+								}
+								local chnlist_param="${TMP_PATH}/chinadns_chnlist"
+								[ ! -s "${chnlist_param}" ] && {
+									[ -s "${RULES_PATH}/chnlist" ] && cp -a "${RULES_PATH}/chnlist" "${chnlist_param}"
+									[ -s "${RULES_PATH}/direct_host" ] && {
+										cat "${RULES_PATH}/direct_host" | tr -s '\n' | grep -v "^#" | sort -u >> "${chnlist_param}"
+									}
+								}
+								chnlist_param=${chnlist_param:+-m "${chnlist_param}" -M}
+								local log_path="${TMP_ACL_PATH}/${sid}/chinadns-ng.log"
+								log_path="/dev/null"
+								[ "$filter_proxy_ipv6" = "1" ] && {
+									local noipv6="-N=gt"
+									_dnsmasq_filter_ipv6=0
+								}
+								ln_run "$(first_type chinadns-ng)" chinadns-ng "$log_path" -v -b 0.0.0.0 -l "${chinadns_port}" ${_china_ng_chn:+-c "${_china_ng_chn}"} ${chnlist_param} ${_china_ng_gfw:+-t "${_china_ng_gfw}"} ${gfwlist_param:+-g "${gfwlist_param}"} -f ${noipv6}
+							}
+
 							dnsmasq_port=$(get_new_port $(expr $dnsmasq_port + 1))
 							redirect_dns_port=$dnsmasq_port
 							mkdir -p $TMP_ACL_PATH/$sid/dnsmasq.d
@@ -352,7 +385,6 @@ load_acl() {
 								sed -i "/conf-dir/d" $TMP_ACL_PATH/$sid/dnsmasq.conf
 							}
 							echo "port=${dnsmasq_port}" >> $TMP_ACL_PATH/$sid/dnsmasq.conf
-							echo "conf-dir=${TMP_ACL_PATH}/${sid}/dnsmasq.d" >> $TMP_ACL_PATH/$sid/dnsmasq.conf
 							d_server=127.0.0.1
 							[ "$tcp_proxy_mode" = "global" ] && {
 								d_server=${d_server}#${_dns_port}
@@ -363,9 +395,9 @@ load_acl() {
 								echo "no-resolv" >> $TMP_ACL_PATH/$sid/dnsmasq.conf
 							}
 							lua $APP_PATH/helper_dnsmasq_add.lua -FLAG ${sid} -TMP_DNSMASQ_PATH $TMP_ACL_PATH/$sid/dnsmasq.d \
-								-DNSMASQ_CONF_FILE "nil" -DEFAULT_DNS $DEFAULT_DNS -LOCAL_DNS $LOCAL_DNS \
-								-TUN_DNS "127.0.0.1#${_dns_port}" -REMOTE_FAKEDNS 0 -CHINADNS_DNS 0 \
-								-TCP_NODE $tcp_node -PROXY_MODE ${tcp_proxy_mode} -NO_PROXY_IPV6 ${filter_proxy_ipv6:-0} -NFTFLAG 0 \
+								-DNSMASQ_CONF_FILE $TMP_ACL_PATH/$sid/dnsmasq.conf -DEFAULT_DNS $DEFAULT_DNS -LOCAL_DNS $LOCAL_DNS \
+								-TUN_DNS "127.0.0.1#${_dns_port}" -REMOTE_FAKEDNS 0 -CHINADNS_DNS ${_china_ng_listen:-0} \
+								-TCP_NODE $tcp_node -PROXY_MODE ${tcp_proxy_mode} -NO_PROXY_IPV6 ${_dnsmasq_filter_ipv6:-0} -NFTFLAG 0 \
 								-NO_LOGIC_LOG 1
 							ln_run "$(first_type dnsmasq)" "dnsmasq_${sid}" "/dev/null" -C $TMP_ACL_PATH/$sid/dnsmasq.conf -x $TMP_ACL_PATH/$sid/dnsmasq.pid
 							eval node_${tcp_node}_$(echo -n "${tcp_proxy_mode}${remote_dns}" | md5sum | cut -d " " -f1)=${dnsmasq_port}
@@ -609,7 +641,7 @@ load_acl() {
 			unset ipt_tmp msg msg2
 			unset redirect_dns_port
 		done
-		unset socks_port redir_port dns_port dnsmasq_port
+		unset socks_port redir_port dns_port dnsmasq_port chinadns_port
 		unset ipt_tmp msg msg2
 	}
 

@@ -391,20 +391,23 @@ else
     fs.symlink(CACHE_DNS_PATH, TMP_DNSMASQ_PATH)
 end
 
-if FLAG == "default" and DNSMASQ_CONF_FILE ~= "nil" then
+if DNSMASQ_CONF_FILE ~= "nil" then
     local conf_out = io.open(DNSMASQ_CONF_FILE, "a")
     conf_out:write(string.format("conf-dir=%s\n", TMP_DNSMASQ_PATH))
     if dnsmasq_default_dns then
-        local f_out = io.open("/tmp/etc/passwall/default_DNS", "a")
-        f_out:write(DEFAULT_DNS)
-        f_out:close()
         conf_out:write(string.format("server=%s\n", dnsmasq_default_dns))
         conf_out:write("all-servers\n")
         conf_out:write("no-poll\n")
         conf_out:write("no-resolv\n")
+        conf_out:close()
         log(string.format("  - 以上所列以外及默认：%s", dnsmasq_default_dns))
+
+        if FLAG == "default" then
+            local f_out = io.open("/tmp/etc/passwall/default_DNS", "a")
+            f_out:write(DEFAULT_DNS)
+            f_out:close()
+        end
     end
-    conf_out:close()
 end
 
 log("  - PassWall必须依赖于Dnsmasq，如果你自行配置了错误的DNS流程，将会导致域名(直连/代理域名)分流失效！！！")
