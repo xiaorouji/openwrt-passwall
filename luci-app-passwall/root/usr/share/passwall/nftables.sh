@@ -295,12 +295,14 @@ load_acl() {
 		[ "$tcp_redir_ports" = "default" ] && tcp_redir_ports=$TCP_REDIR_PORTS
 		[ "$udp_redir_ports" = "default" ] && udp_redir_ports=$UDP_REDIR_PORTS
 		
+		tcp_node_remark=$(config_n_get $TCP_NODE remarks)
+		udp_node_remark=$(config_n_get $UDP_NODE remarks)
 		[ -s "${TMP_ACL_PATH}/${sid}/var_tcp_node" ] && tcp_node=$(cat ${TMP_ACL_PATH}/${sid}/var_tcp_node)
 		[ -s "${TMP_ACL_PATH}/${sid}/var_udp_node" ] && udp_node=$(cat ${TMP_ACL_PATH}/${sid}/var_udp_node)
 		[ -s "${TMP_ACL_PATH}/${sid}/var_tcp_port" ] && tcp_port=$(cat ${TMP_ACL_PATH}/${sid}/var_tcp_port)
 		[ -s "${TMP_ACL_PATH}/${sid}/var_udp_port" ] && udp_port=$(cat ${TMP_ACL_PATH}/${sid}/var_udp_port)
-		[ -n $tcp_node ] && tcp_node_remark=$(config_n_get $tcp_node remarks)
-		[ -n $udp_node ] && udp_node_remark=$(config_n_get $udp_node remarks)
+		[ -n "$tcp_node" ] && [ "$tcp_node" != "default" ] && tcp_node_remark=$(config_n_get $tcp_node remarks)
+		[ -n "$udp_node" ] && [ "$udp_node" != "default" ] && udp_node_remark=$(config_n_get $udp_node remarks)
 		
 		for i in $(cat ${TMP_ACL_PATH}/${sid}/rule_list); do
 			if [ -n "$(echo ${i} | grep '^iprange:')" ]; then
