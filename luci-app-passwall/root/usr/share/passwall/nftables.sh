@@ -307,19 +307,19 @@ load_acl() {
 		for i in $(cat ${TMP_ACL_PATH}/${sid}/rule_list); do
 			if [ -n "$(echo ${i} | grep '^iprange:')" ]; then
 				_iprange=$(echo ${i} | sed 's#iprange:##g')
-				_ipt_source=$(factor ${_iprange} "-m iprange --src-range")
+				_ipt_source=$(factor ${_iprange} "ip saddr")
 				msg="备注【$remarks】，IP range【${_iprange}】，"
 			elif [ -n "$(echo ${i} | grep '^ipset:')" ]; then
 				_ipset=$(echo ${i} | sed 's#ipset:##g')
-				_ipt_source="-m set --match-set ${_ipset} src"
-				msg="备注【$remarks】，IPset【${_ipset}】，"
+				_ipt_source="ip daddr @${_ipset}"
+				msg="备注【$remarks】，NFTset【${_ipset}】，"
 			elif [ -n "$(echo ${i} | grep '^ip:')" ]; then
 				_ip=$(echo ${i} | sed 's#ip:##g')
-				_ipt_source=$(factor ${_ip} "-s")
+				_ipt_source=$(factor ${_ip} "ip saddr")
 				msg="备注【$remarks】，IP【${_ip}】，"
 			elif [ -n "$(echo ${i} | grep '^mac:')" ]; then
 				_mac=$(echo ${i} | sed 's#mac:##g')
-				_ipt_source=$(factor ${_mac} "-m mac --mac-source")
+				_ipt_source=$(factor ${_mac} "ether saddr")
 				msg="备注【$remarks】，MAC【${_mac}】，"
 			else
 				continue
@@ -327,7 +327,7 @@ load_acl() {
 
 			[ -n "$tcp_port" ] && {
 				if [ "$tcp_proxy_mode" != "disable" ]; then
-					[ -n "$redirect_dns_port" ] && nft "add rule inet fw4 PSW_REDIRECT ip protocol udp ${_ipt_source} udp dport 53 counter redirect to $redirect_dns_port comment \"$remarks\""
+					[ -s "${TMP_ACL_PATH}/${sid}/var_redirect_dns_port" ] && nft "add rule inet fw4 PSW_REDIRECT ip protocol udp ${_ipt_source} udp dport 53 counter redirect to $(cat ${TMP_ACL_PATH}/${sid}/var_redirect_dns_port) comment \"$remarks\""
 					msg2="${msg}使用TCP节点[$tcp_node_remark] [$(get_action_chain_name $tcp_proxy_mode)]"
 					if [ -n "${is_tproxy}" ]; then
 						msg2="${msg2}(TPROXY:${tcp_port})代理"
