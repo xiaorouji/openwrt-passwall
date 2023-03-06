@@ -25,7 +25,7 @@ TUN_DNS="127.0.0.1#${DNS_PORT}"
 LOCAL_DNS=119.29.29.29
 DEFAULT_DNS=
 IFACES=
-NO_PROXY=0
+ENABLED_DEFAULT_ACL=0
 PROXY_IPV6=0
 PROXY_IPV6_UDP=0
 resolve_dns=0
@@ -1023,7 +1023,7 @@ start_crontab() {
 		rm -rf $TMP_SUB_PATH
 	}
 
-	if [ "$NO_PROXY" == 0 ]; then
+	if [ "$ENABLED_DEFAULT_ACL" == 1 ] || [ "$ENABLED_ACLS" == 1 ]; then
 		start_daemon=$(config_t_get global_delay start_daemon 0)
 		[ "$start_daemon" = "1" ] && $APP_PATH/monitor.sh > /dev/null 2>&1 &
 
@@ -1563,28 +1563,26 @@ start() {
 	start_socks
 	nftflag=0
 	local use_nft=$(config_t_get global_forwarding use_nft 0)
-
-	[ "$NO_PROXY" == 1 ] || {
-		if [ "$use_nft" == 1 ] && [ -z "$(dnsmasq --version | grep 'Compile time options:.* nftset')" ]; then
-			echolog "Dnsmasq软件包不满足nftables透明代理要求，如需使用请确保dnsmasq版本在2.87以上并开启nftset支持。"
-		elif [ "$use_nft" == 1 ] && [ -n "$(dnsmasq --version | grep 'Compile time options:.* nftset')" ]; then
-			echolog "使用nftables进行透明代理，一些不支持nftables的组件如chinadns-ng等可能不会正常工作。"
-			nftflag=1
-			start_redir TCP
-			start_redir UDP
-			start_dns
-			source $APP_PATH/nftables.sh start
-			source $APP_PATH/helper_${DNS_N}.sh logic_restart
-		elif [ -z "$(command -v iptables-legacy || command -v iptables)" ] || [ -z "$(command -v ipset)" ]; then
-			echolog "系统未安装iptables或ipset，无法透明代理！"
-		else
-			start_redir TCP
-			start_redir UDP
-			start_dns
-			source $APP_PATH/iptables.sh start
-			source $APP_PATH/helper_${DNS_N}.sh logic_restart
-		fi
+	local USE_TABLES
+	if [ "$use_nft" == 1 ] && [ -z "$(dnsmasq --version | grep 'Compile time options:.* nftset')" ]; then
+		echolog "Dnsmasq软件包不满足nftables透明代理要求，如需使用请确保dnsmasq版本在2.87以上并开启nftset支持。"
+	elif [ "$use_nft" == 1 ] && [ -n "$(dnsmasq --version | grep 'Compile time options:.* nftset')" ]; then
+		echolog "使用nftables进行透明代理，一些不支持nftables的组件如chinadns-ng等可能不会正常工作。"
+		USE_TABLES="nftables"
+		nftflag=1
+	elif [ -z "$(command -v iptables-legacy || command -v iptables)" ] || [ -z "$(command -v ipset)" ]; then
+		echolog "系统未安装iptables或ipset，无法透明代理！"
+	else
+		USE_TABLES="iptables"
+	fi
+	
+	[ "$ENABLED_DEFAULT_ACL" == 1 ] && {
+		start_redir TCP
+		start_redir UDP
+		start_dns
 	}
+	[ -n "$USE_TABLES" ] && source $APP_PATH/${USE_TABLES}.sh start
+	[ "$ENABLED_DEFAULT_ACL" == 1 ] && source $APP_PATH/helper_${DNS_N}.sh logic_restart
 	start_crontab
 	echolog "运行完成！\n"
 }
@@ -1621,14 +1619,16 @@ TCP_UDP=0
 	UDP_NODE=$TCP_NODE
 	TCP_UDP=1
 }
-[ "$ENABLED" != 1 ] && NO_PROXY=1
-[ "$TCP_NODE" == "nil" -a "$UDP_NODE" == "nil" ] && NO_PROXY=1
-[ "$(config_get_type $TCP_NODE nil)" == "nil" -a "$(config_get_type $UDP_NODE nil)" == "nil" ] && NO_PROXY=1
+[ "$ENABLED" == 1 ] && {
+	[ "$TCP_NODE" != "nil" ] && [ "$(config_get_type $TCP_NODE nil)" != "nil" ] && ENABLED_DEFAULT_ACL=1
+	[ "$UDP_NODE" != "nil" ] && [ "$(config_get_type $UDP_NODE nil)" != "nil" ] && ENABLED_DEFAULT_ACL=1
+}
+ENABLED_ACLS=$(config_t_get global acl_enable 0)
+[ "$ENABLED_ACLS" == 1 ] && {
+	[ "$(uci show ${CONFIG} | grep "@acl_rule" | grep "enabled='1'" | wc -l)" == 0 ] && ENABLED_ACLS=0
+}
+
 tcp_proxy_way=$(config_t_get global_forwarding tcp_proxy_way redirect)
-REDIRECT_LIST="socks ss ss-rust ssr v2ray xray trojan-go trojan-plus naiveproxy hysteria"
-TPROXY_LIST="brook socks ss ss-rust ssr v2ray xray trojan-go trojan-plus hysteria"
-RESOLVFILE=/tmp/resolv.conf.d/resolv.conf.auto
-[ -f "${RESOLVFILE}" ] && [ -s "${RESOLVFILE}" ] || RESOLVFILE=/tmp/resolv.conf.auto
 TCP_REDIR_PORTS=$(config_t_get global_forwarding tcp_redir_ports '80,443')
 UDP_REDIR_PORTS=$(config_t_get global_forwarding udp_redir_ports '1:65535')
 TCP_NO_REDIR_PORTS=$(config_t_get global_forwarding tcp_no_redir_ports 'disable')
@@ -1653,8 +1653,16 @@ CHINADNS_NG=$(config_t_get global chinadns_ng 0)
 FILTER_PROXY_IPV6=$(config_t_get global filter_proxy_ipv6 0)
 dns_listen_port=${DNS_PORT}
 
+REDIRECT_LIST="socks ss ss-rust ssr v2ray xray trojan-go trojan-plus naiveproxy hysteria"
+TPROXY_LIST="brook socks ss ss-rust ssr v2ray xray trojan-go trojan-plus hysteria"
+RESOLVFILE=/tmp/resolv.conf.d/resolv.conf.auto
+[ -f "${RESOLVFILE}" ] && [ -s "${RESOLVFILE}" ] || RESOLVFILE=/tmp/resolv.conf.auto
+
+ISP_DNS=$(cat $RESOLVFILE 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | sort -u | grep -v 0.0.0.0 | grep -v 127.0.0.1)
+ISP_DNS6=$(cat $RESOLVFILE 2>/dev/null | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | awk -F % '{print $1}' | awk -F " " '{print $2}'| sort -u | grep -v -Fx ::1 | grep -v -Fx ::)
+
 DEFAULT_DNS=$(uci show dhcp | grep "@dnsmasq" | grep "\.server=" | awk -F '=' '{print $2}' | sed "s/'//g" | tr ' ' '\n' | grep -v "\/" | head -2 | sed ':label;N;s/\n/,/;b label')
-[ -z "${DEFAULT_DNS}" ] && DEFAULT_DNS=$(echo -n $(sed -n 's/^nameserver[ \t]*\([^ ]*\)$/\1/p' "${RESOLVFILE}" | grep -v -E "0.0.0.0|127.0.0.1|::" | head -2) | tr ' ' ',')
+[ -z "${DEFAULT_DNS}" ] && DEFAULT_DNS=$(echo -n $ISP_DNS | tr ' ' '\n' | head -2 | tr '\n' ',')
 LOCAL_DNS="${DEFAULT_DNS:-119.29.29.29}"
 
 PROXY_IPV6=$(config_t_get global_forwarding ipv6_tproxy 0)
