@@ -772,6 +772,7 @@ ws_host:depends("ss_transport", "ws")
 ws_host:depends("trojan_transport", "ws")
 
 ws_path = s:option(Value, "ws_path", translate("WebSocket Path"))
+ws_path.placeholder = "/"
 ws_path:depends("transport", "ws")
 ws_path:depends("ss_transport", "ws")
 ws_path:depends("trojan_transport", "ws")
@@ -793,6 +794,7 @@ h2_host:depends("transport", "h2")
 h2_host:depends("ss_transport", "h2")
 
 h2_path = s:option(Value, "h2_path", translate("HTTP/2 Path"))
+h2_path.placeholder = "/"
 h2_path:depends("transport", "h2")
 h2_path:depends("ss_transport", "h2")
 
