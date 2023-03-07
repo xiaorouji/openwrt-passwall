@@ -615,6 +615,7 @@ reality_shortId = s:option(Value, "reality_shortId", translate("Short Id"))
 reality_shortId:depends({ type = "Xray", tls = true, reality = true })
 
 reality_spiderX = s:option(Value, "reality_spiderX", translate("Spider X"))
+reality_spiderX.placeholder = "/"
 reality_spiderX:depends({ type = "Xray", tls = true, reality = true })
 
 reality_fingerprint = s:option(Value, "reality_fingerprint", translate("Finger Print"))
@@ -727,6 +728,7 @@ tcp_guise_http_host:depends("tcp_guise", "http")
 
 -- HTTP路径
 tcp_guise_http_path = s:option(DynamicList, "tcp_guise_http_path", translate("HTTP Path"))
+tcp_guise_http_path.placeholder = "/"
 tcp_guise_http_path:depends("tcp_guise", "http")
 
 -- [[ mKCP部分 ]]--
