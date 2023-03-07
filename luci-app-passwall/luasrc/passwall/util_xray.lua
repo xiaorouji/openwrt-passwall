@@ -159,14 +159,14 @@ function gen_outbound(flag, node, tag, proxy_table)
                     header = {type = node.mkcp_guise}
                 } or nil,
                 wsSettings = (node.transport == "ws") and {
-                    path = node.ws_path or "",
+                    path = node.ws_path or "/",
                     headers = (node.ws_host ~= nil) and
                         {Host = node.ws_host} or nil,
                     maxEarlyData = tonumber(node.ws_maxEarlyData) or nil,
                     earlyDataHeaderName = (node.ws_earlyDataHeaderName) and node.ws_earlyDataHeaderName or nil
                 } or nil,
                 httpSettings = (node.transport == "h2") and {
-                    path = node.h2_path,
+                    path = node.h2_path or "/",
                     host = node.h2_host,
                     read_idle_timeout = tonumber(node.h2_read_idle_timeout) or nil,
                     health_check_timeout = tonumber(node.h2_health_check_timeout) or nil
