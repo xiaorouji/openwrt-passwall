@@ -9,6 +9,7 @@ local DEFAULT_DNS = var["-DEFAULT_DNS"]
 local LOCAL_DNS = var["-LOCAL_DNS"]
 local TUN_DNS = var["-TUN_DNS"]
 local REMOTE_FAKEDNS = var["-REMOTE_FAKEDNS"]
+local CHNROUTE_MODE_DEFAULT_DNS = var["-CHNROUTE_MODE_DEFAULT_DNS"]
 local CHINADNS_DNS = var["-CHINADNS_DNS"]
 local TCP_NODE = var["-TCP_NODE"]
 local PROXY_MODE = var["-PROXY_MODE"]
@@ -148,11 +149,9 @@ local function check_excluded_domain(domain)
     return false
 end
 
-local dnsmasq_default_dns
-
 local cache_text = ""
 local new_rules = luci.sys.exec("echo -n $(find /usr/share/passwall/rules -type f | xargs md5sum)")
-local new_text = TMP_DNSMASQ_PATH .. DNSMASQ_CONF_FILE .. DEFAULT_DNS .. LOCAL_DNS .. TUN_DNS .. REMOTE_FAKEDNS .. CHINADNS_DNS .. PROXY_MODE .. NO_PROXY_IPV6 .. new_rules .. NFTFLAG
+local new_text = TMP_DNSMASQ_PATH .. DNSMASQ_CONF_FILE .. DEFAULT_DNS .. LOCAL_DNS .. TUN_DNS .. REMOTE_FAKEDNS .. CHNROUTE_MODE_DEFAULT_DNS .. CHINADNS_DNS .. PROXY_MODE .. NO_PROXY_IPV6 .. new_rules .. NFTFLAG
 if fs.access(CACHE_TEXT_FILE) then
     for line in io.lines(CACHE_TEXT_FILE) do
         cache_text = line
@@ -169,10 +168,18 @@ local chnlist = PROXY_MODE:find("chnroute")
 local gfwlist = PROXY_MODE:find("gfwlist")
 local only_global
 
-if CHINADNS_DNS ~= "0" then
-    dnsmasq_default_dns = CHINADNS_DNS
+local dnsmasq_default_dns
+if CHNROUTE_MODE_DEFAULT_DNS ~= "nil" and chnlist then
+    if CHNROUTE_MODE_DEFAULT_DNS == "remote" then
+        dnsmasq_default_dns = TUN_DNS
+    end
+    if CHNROUTE_MODE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" then
+        dnsmasq_default_dns = CHINADNS_DNS
+    end
 end
+
 if global and (not returnhome and not chnlist and not gfwlist) then
+    --只有全局模式时
     dnsmasq_default_dns = TUN_DNS
     only_global = 1
 end
@@ -300,7 +307,7 @@ if not fs.access(CACHE_DNS_PATH) then
                     end
                     if not only_global then
                         fwd_dns = TUN_DNS
-                        if CHINADNS_DNS ~= "0" then
+                        if CHNROUTE_MODE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" then
                             fwd_dns = nil
                         end
                         if REMOTE_FAKEDNS == "1" then
@@ -314,15 +321,16 @@ if not fs.access(CACHE_DNS_PATH) then
             log(string.format("  - 防火墙域名表(gfwlist)：%s", fwd_dns or "默认"))
         end
 
-        if CHINADNS_DNS ~= "0" then
-            if fs.access("/usr/share/passwall/rules/chnlist") then
-                fwd_dns = nil
-                local chnlist_str = sys.exec('cat /usr/share/passwall/rules/chnlist | grep -v -E "^#" | grep -v -E "' .. excluded_domain_str .. '"')
-                for line in string.gmatch(chnlist_str, "[^\r\n]+") do
-                    if line ~= "" then
-                        set_domain_dns(line, fwd_dns)
-                        set_domain_ipset(line, setflag_4 .. "chnroute," .. setflag_6 .. "chnroute6")
+        if chnlist and fs.access("/usr/share/passwall/rules/chnlist") and (CHNROUTE_MODE_DEFAULT_DNS == "remote" or (CHNROUTE_MODE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0")) then
+            fwd_dns = LOCAL_DNS
+            local chnlist_str = sys.exec('cat /usr/share/passwall/rules/chnlist | grep -v -E "^#" | grep -v -E "' .. excluded_domain_str .. '"')
+            for line in string.gmatch(chnlist_str, "[^\r\n]+") do
+                if line ~= "" then
+                    if CHNROUTE_MODE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" then
+                        fwd_dns = nil
                     end
+                    set_domain_dns(line, fwd_dns)
+                    set_domain_ipset(line, setflag_4 .. "chnroute," .. setflag_6 .. "chnroute6")
                 end
             end
             log(string.format("  - 中国域名表(chnroute)：%s", fwd_dns or "默认"))

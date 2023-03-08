@@ -8,6 +8,7 @@ config global
 	option dns_mode 'dns2tcp'
 	option remote_dns '1.1.1.1'
 	option filter_proxy_ipv6 '0'
+	option when_chnroute_default_dns 'direct'
 	option tcp_proxy_mode 'chnroute'
 	option udp_proxy_mode 'chnroute'
 	option localhost_tcp_proxy_mode 'default'

@@ -697,7 +697,6 @@ run_redir() {
 					;;
 					fakedns)
 						fakedns=1
-						CHINADNS_NG=0
 						echolog "  - 域名解析 Fake DNS..."
 					;;
 				esac
@@ -1051,16 +1050,22 @@ start_dns() {
 	[ -n "$items" ] && {
 		for item in $items; do
 			[ "$(config_n_get $item enabled)" = "1" ] || continue
-			[ "$(config_n_get $item tcp_node)" = "default" -o "$(config_n_get $item udp_node)" = "default" ] && {
+			[ "$(config_n_get $item tcp_node)" = "default" ] && [ "$TCP_NODE" != "nil" ] && {
 				local item_tcp_proxy_mode=$(config_n_get $item tcp_proxy_mode default)
-				local item_udp_proxy_mode=$(config_n_get $item udp_proxy_mode default)
 				[ "$item_tcp_proxy_mode" = "default" ] && item_tcp_proxy_mode=$TCP_PROXY_MODE
-				[ "$item_udp_proxy_mode" = "default" ] && item_udp_proxy_mode=$UDP_PROXY_MODE
-				global=$(echo "${global}${item_tcp_proxy_mode}${item_udp_proxy_mode}" | grep "global")
-				returnhome=$(echo "${returnhome}${item_tcp_proxy_mode}${item_udp_proxy_mode}" | grep "returnhome")
-				chnlist=$(echo "${chnlist}${item_tcp_proxy_mode}${item_udp_proxy_mode}" | grep "chnroute")
-				gfwlist=$(echo "${gfwlist}${item_tcp_proxy_mode}${item_udp_proxy_mode}" | grep "gfwlist")
+				global=$(echo "${global}${item_tcp_proxy_mode}" | grep "global")
+				returnhome=$(echo "${returnhome}${item_tcp_proxy_mode}" | grep "returnhome")
+				chnlist=$(echo "${chnlist}${item_tcp_proxy_mode}" | grep "chnroute")
+				gfwlist=$(echo "${gfwlist}${item_tcp_proxy_mode}" | grep "gfwlist")
 				ACL_TCP_PROXY_MODE=${ACL_TCP_PROXY_MODE}${item_tcp_proxy_mode}
+			}
+			[ "$(config_n_get $item udp_node)" = "default" ] && [ "$UDP_NODE" != "nil" ] && {
+				local item_udp_proxy_mode=$(config_n_get $item udp_proxy_mode default)
+				[ "$item_udp_proxy_mode" = "default" ] && item_udp_proxy_mode=$UDP_PROXY_MODE
+				global=$(echo "${global}${item_udp_proxy_mode}" | grep "global")
+				returnhome=$(echo "${returnhome}${item_udp_proxy_mode}" | grep "returnhome")
+				chnlist=$(echo "${chnlist}${item_udp_proxy_mode}" | grep "chnroute")
+				gfwlist=$(echo "${gfwlist}${item_udp_proxy_mode}" | grep "gfwlist")
 				ACL_UDP_PROXY_MODE=${ACL_UDP_PROXY_MODE}${item_udp_proxy_mode}
 			}
 		done
@@ -1128,7 +1133,7 @@ start_dns() {
 	[ "${use_tcp_node_resolve_dns}" = "1" ] && echolog "  * 请确认上游 DNS 支持 TCP 查询，如非直连地址，确保 TCP 代理打开，并且已经正确转发！"
 	[ "${use_udp_node_resolve_dns}" = "1" ] && echolog "  * 要求代理 DNS 请求，如上游 DNS 非直连地址，确保 UDP 代理打开，并且已经正确转发！"
 
-	[ -n "$chnlist" ] && [ "$CHINADNS_NG" = "1" ] && [ -n "$(first_type chinadns-ng)" ] && [ -s "${RULES_PATH}/chnlist" ] && {
+	[ -n "$chnlist" ] && [ "$WHEN_CHNROUTE_DEFAULT_DNS" = "chinadns_ng" ] && [ -n "$(first_type chinadns-ng)" ] && [ -s "${RULES_PATH}/chnlist" ] && {
 		china_ng_listen_port=$(expr $dns_listen_port + 1)
 		china_ng_listen="127.0.0.1#${china_ng_listen_port}"
 		china_ng_chn=$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2) | tr " " ",")
@@ -1163,7 +1168,7 @@ start_dns() {
 		source $APP_PATH/helper_dnsmasq.sh stretch
 		lua $APP_PATH/helper_dnsmasq_add.lua -FLAG "default" -TMP_DNSMASQ_PATH ${TMP_DNSMASQ_PATH} \
 			-DNSMASQ_CONF_FILE "/tmp/dnsmasq.d/dnsmasq-passwall.conf" -DEFAULT_DNS ${DEFAULT_DNS} -LOCAL_DNS ${LOCAL_DNS} \
-			-TUN_DNS ${TUN_DNS} -REMOTE_FAKEDNS ${fakedns:-0} -CHINADNS_DNS ${china_ng_listen:-0} \
+			-TUN_DNS ${TUN_DNS} -REMOTE_FAKEDNS ${fakedns:-0} -CHNROUTE_MODE_DEFAULT_DNS "${WHEN_CHNROUTE_DEFAULT_DNS:-direct}" -CHINADNS_DNS ${china_ng_listen:-0} \
 			-TCP_NODE ${TCP_NODE} -PROXY_MODE "${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}${ACL_TCP_PROXY_MODE}" -NO_PROXY_IPV6 ${DNSMASQ_FILTER_IPV6:-0} -NFTFLAG ${nftflag:-0} \
 			-NO_LOGIC_LOG ${NO_LOGIC_LOG:-0}
 	}
@@ -1358,6 +1363,7 @@ acl_app() {
 			dns_mode=${dns_mode:-dns2socks}
 			remote_dns=${remote_dns:-1.1.1.1}
 			chinadns_ng=${chinadns_ng:-0}
+			when_chnroute_default_dns=${when_chnroute_default_dns:-direct}
 			[ "$dns_mode" = "v2ray" -o "$dns_mode" = "xray" ] && {
 				[ "$v2ray_dns_mode" = "doh" ] && remote_dns=${remote_dns_doh:-https://1.1.1.1/dns-query}
 			}
@@ -1386,7 +1392,7 @@ acl_app() {
 							}
 
 							local _dnsmasq_filter_ipv6=$filter_proxy_ipv6
-							[ "$tcp_proxy_mode" = "chnroute" ] && [ "$chinadns_ng" = "1" ] && [ -n "$(first_type chinadns-ng)" ] && [ -s "${RULES_PATH}/chnlist" ] && {
+							[ "$tcp_proxy_mode" = "chnroute" ] && [ "$when_chnroute_default_dns" = "chinadns_ng" ] && [ -n "$(first_type chinadns-ng)" ] && [ -s "${RULES_PATH}/chnlist" ] && {
 								chinadns_port=$(expr $chinadns_port + 1)
 								_china_ng_listen="127.0.0.1#${chinadns_port}"
 								local _china_ng_chn=$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2) | tr " " ",")
@@ -1439,7 +1445,7 @@ acl_app() {
 							}
 							lua $APP_PATH/helper_dnsmasq_add.lua -FLAG ${sid} -TMP_DNSMASQ_PATH $TMP_ACL_PATH/$sid/dnsmasq.d \
 								-DNSMASQ_CONF_FILE $TMP_ACL_PATH/$sid/dnsmasq.conf -DEFAULT_DNS $DEFAULT_DNS -LOCAL_DNS $LOCAL_DNS \
-								-TUN_DNS "127.0.0.1#${_dns_port}" -REMOTE_FAKEDNS 0 -CHINADNS_DNS ${_china_ng_listen:-0} \
+								-TUN_DNS "127.0.0.1#${_dns_port}" -REMOTE_FAKEDNS 0 -CHNROUTE_MODE_DEFAULT_DNS "${when_chnroute_default_dns:-direct}" -CHINADNS_DNS ${_china_ng_listen:-0} \
 								-TCP_NODE $tcp_node -PROXY_MODE ${tcp_proxy_mode} -NO_PROXY_IPV6 ${_dnsmasq_filter_ipv6:-0} -NFTFLAG 0 \
 								-NO_LOGIC_LOG 1
 							ln_run "$(first_type dnsmasq)" "dnsmasq_${sid}" "/dev/null" -C $TMP_ACL_PATH/$sid/dnsmasq.conf -x $TMP_ACL_PATH/$sid/dnsmasq.pid
@@ -1649,7 +1655,7 @@ DNS_SHUNT="dnsmasq"
 DNS_MODE=$(config_t_get global dns_mode dns2tcp)
 DNS_CACHE=$(config_t_get global dns_cache 0)
 REMOTE_DNS=$(config_t_get global remote_dns 1.1.1.1:53 | sed 's/#/:/g' | sed -E 's/\:([^:]+)$/#\1/g')
-CHINADNS_NG=$(config_t_get global chinadns_ng 0)
+WHEN_CHNROUTE_DEFAULT_DNS=$(config_t_get global when_chnroute_default_dns direct)
 FILTER_PROXY_IPV6=$(config_t_get global filter_proxy_ipv6 0)
 dns_listen_port=${DNS_PORT}
 

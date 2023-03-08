@@ -274,14 +274,19 @@ o:depends({dns_mode = "xray", v2ray_dns_mode = "tcp"})
 o:depends({dns_mode = "xray", v2ray_dns_mode = "doh"})
 o.rmempty = false
 
-if has_chnlist and api.is_finded("chinadns-ng") then
-    o = s:taboption("DNS", Flag, "chinadns_ng", translate("ChinaDNS-NG"), translate("The effect is better, but will increase the memory."))
-    o.default = "0"
-	o:depends({dns_mode = "dns2socks"})
-	o:depends({dns_mode = "dns2tcp"})
-	o:depends({dns_mode = "xray", v2ray_dns_mode = "tcp"})
-	o:depends({dns_mode = "xray", v2ray_dns_mode = "doh"})
-	o:depends({dns_mode = "udp"})
+if has_chnlist then
+    when_chnroute_default_dns = s:taboption("DNS", ListValue, "when_chnroute_default_dns", translate("When using the chnroute list the default DNS"))
+    when_chnroute_default_dns.default = "direct"
+    when_chnroute_default_dns:value("remote", translate("Remote DNS"))
+    when_chnroute_default_dns:value("direct", translate("Direct DNS"))
+    when_chnroute_default_dns.description = "<ul>"
+    .. "<li>" .. translate("Remote DNS can avoid more DNS leaks, but some domestic domain names maybe to proxy!") .. "</li>"
+    .. "<li>" .. translate("Direct DNS Internet experience may be better, but DNS will be leaked!") .. "</li>"
+    if api.is_finded("chinadns-ng") then
+        when_chnroute_default_dns:value("chinadns_ng", translate("ChinaDNS-NG"))
+        when_chnroute_default_dns.default = "chinadns_ng"
+    end
+    when_chnroute_default_dns.description = when_chnroute_default_dns.description .. "</li></ul>"
 end
 
 o = s:taboption("DNS", Button, "clear_ipset", translate("Clear IPSET"), translate("Try this feature if the rule modification does not take effect."))

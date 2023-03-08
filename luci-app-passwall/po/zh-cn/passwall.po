@@ -148,11 +148,14 @@ msgstr "用于 DNS 查询时通知 DNS 服务器，客户端所在的地理位�
 msgid "This feature requires the DNS server to support the Edns Client Subnet (RFC7871)."
 msgstr "此功能需要 DNS 服务器支持 EDNS Client Subnet（RFC7871）。"
 
-msgid "When the accessed domain name does not exist in the rule list, the default DNS used."
-msgstr "当访问的域名不存在规则列表中，使用的默认DNS。"
+msgid "When using the chnroute list the default DNS"
+msgstr "当使用中国列表外时的默认DNS"
 
-msgid "The effect is better, but will increase the memory."
-msgstr "效果更好，但会增加内存使用。"
+msgid "Remote DNS can avoid more DNS leaks, but some domestic domain names maybe to proxy!"
+msgstr "远程DNS可以避免更多的DNS泄露，但会导致规则列表外的某些国内域名可能会走代理！"
+
+msgid "Direct DNS Internet experience may be better, but DNS will be leaked!"
+msgstr "直连DNS上网体验可能会更佳，但是会泄露DNS！"
 
 msgid "Filter Proxy Host IPv6"
 msgstr "过滤代理域名 IPv6"
