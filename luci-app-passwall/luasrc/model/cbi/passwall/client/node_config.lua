@@ -583,7 +583,7 @@ tls_allowInsecure.default = "0"
 tls_allowInsecure:depends({ tls = true, reality = false })
 tls_allowInsecure:depends("type", "Hysteria")
 
-xray_fingerprint = s:option(Value, "xray_fingerprint", translate("Finger Print"))
+xray_fingerprint = s:option(Value, "xray_fingerprint", translate("Finger Print"), translate("Avoid using randomized, unless you have to."))
 xray_fingerprint:value("", translate("Disable"))
 xray_fingerprint:value("chrome")
 xray_fingerprint:value("firefox")
@@ -618,7 +618,7 @@ reality_spiderX = s:option(Value, "reality_spiderX", translate("Spider X"))
 reality_spiderX.placeholder = "/"
 reality_spiderX:depends({ type = "Xray", tls = true, reality = true })
 
-reality_fingerprint = s:option(Value, "reality_fingerprint", translate("Finger Print"))
+reality_fingerprint = s:option(Value, "reality_fingerprint", translate("Finger Print"), translate("Avoid using randomized, unless you have to."))
 reality_fingerprint:value("chrome")
 reality_fingerprint:value("firefox")
 reality_fingerprint:value("safari")

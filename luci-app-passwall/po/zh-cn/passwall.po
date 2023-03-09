@@ -439,6 +439,9 @@ msgstr "证书路径"
 msgid "Finger Print"
 msgstr "指纹伪造"
 
+msgid "Avoid using randomized, unless you have to."
+msgstr "避免使用 randomized , 除非你必须要。"
+
 msgid "Original"
 msgstr "原版"
 
@@ -980,7 +983,7 @@ msgid "Clear logs"
 msgstr "清空日志"
 
 msgid "Only recommend to use with VLESS-TCP-XTLS-Vision."
-msgstr "只推荐与VLESS-TCP-XTLS-Vision搭配使用。"
+msgstr "只推荐与 VLESS-TCP-XTLS-Vision 搭配使用。"
 
 msgid "Password"
 msgstr "密码"
