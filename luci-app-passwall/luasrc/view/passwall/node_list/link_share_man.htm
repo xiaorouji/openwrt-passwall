@@ -226,8 +226,10 @@ local has_xray = api.is_finded("xray")
 				info.path = opt.get("h2_path").value;
 			} else if (v_transport === "tcp") {
 				info.type = opt.get("tcp_guise").value;
-				info.host = opt.get("tcp_guise_http_host").value;
-				info.path = opt.get("tcp_guise_http_path").value;
+				if (info.type === "http") {
+					info.host = opt.get("tcp_guise_http_host").value;
+					info.path = opt.get("tcp_guise_http_path").value;
+				}
 			} else if (v_transport === "mkcp") {
 				v_transport = "kcp";
 				info.type = opt.get("mkcp_guise").value;
@@ -265,6 +267,7 @@ local has_xray = api.is_finded("xray")
 				params += opt.query("host", "ws_host");
 				params += opt.query("path", "ws_path");
 			} else if (v_transport === "h2") {
+				v_transport = "http";
 				params += opt.query("host", "h2_host");
 				params += opt.query("path", "h2_path");
 			} else if (v_transport === "tcp") {
@@ -282,6 +285,7 @@ local has_xray = api.is_finded("xray")
 				//不知道是用path还是serviceName，这里先这样吧
 				params += opt.query("path", "grpc_serviceName");
 				params += opt.query("serviceName", "grpc_serviceName");
+				params += opt.query("mode", "grpc_mode");
 			}
 			params += "&type=" + v_transport;
 
@@ -289,15 +293,25 @@ local has_xray = api.is_finded("xray")
 
 			if (opt.get("tls").checked) {
 				var v_security = "tls";
-				params += "&security=" + v_security;
-				if (opt.get("tlsflow").value) {
+				if (opt.get("xray_fingerprint") && opt.get("xray_fingerprint").value != "") {
+					let v_fp = opt.get("xray_fingerprint").value;
+					params += "&fp=" + v_fp;
+				}
+				if(opt.get("reality") && opt.get("reality").checked) {
+					v_security = "reality";
+					if (opt.get("reality_fingerprint") && opt.get("reality_fingerprint").value != "") {
+						let v_fp = opt.get("reality_fingerprint").value;
+						params += "&fp=" + v_fp;
+					}
+					params += opt.query("pbk", "reality_publicKey");
+					params += opt.query("sid", "reality_shortId");
+					params += opt.query("spx", "reality_spiderX");
+				}
+				if (opt.get("tlsflow") && opt.get("tlsflow").value) {
 					let v_flow = opt.get("tlsflow").value;
 					params += "&flow=" + v_flow;
 				}
-				if (opt.get("xray_fingerprint").value && opt.get("xray_fingerprint").value != "") {
-					let v_fp = opt.get("xray_fingerprint").value
-					params += "&fp=" + v_fp;
-				}
+				params += "&security=" + v_security;
 				params += opt.query("sni", "tls_serverName");
 			}
 
@@ -855,6 +869,7 @@ local has_xray = api.is_finded("xray")
 			if (queryParam.security) {
 				if (queryParam.security == "tls") {
 					opt.set('tls', true);
+					opt.set('reality', false)
 					opt.set('tlsflow', queryParam.flow || '');
 					opt.set('tls_serverName', queryParam.sni || '');
 					opt.set('tls_allowInsecure', true);
@@ -865,11 +880,27 @@ local has_xray = api.is_finded("xray")
 						opt.set('xray_fingerprint', queryParam.fp);
 					}
 				}
+				
+				if (queryParam.security == "reality") {
+					opt.set('tls', true);
+					opt.set('reality', true)
+					opt.set('tlsflow', queryParam.flow || '');
+					opt.set('tls_serverName', queryParam.sni || '');
+					if (queryParam.fp && queryParam.fp.trim() != "") {
+						opt.set('reality_fingerprint', queryParam.fp);
+					}
+					opt.set('reality_publicKey', queryParam.pbk || '');
+					opt.set('reality_shortId', queryParam.sid || '');
+					opt.set('reality_spiderX', queryParam.spx || '');
+				}
+
 			}
 
 			queryParam.type = queryParam.type.toLowerCase();
 			if (queryParam.type === "kcp" || queryParam.type === "mkcp")
 				queryParam.type = "mkcp"
+			if (queryParam.type === "h2" || queryParam.type === "http")
+				queryParam.type = "h2"
 			opt.set('transport', queryParam.type);
 			if (queryParam.type === "tcp") {
 				opt.set('tcp_guise', queryParam.headerType || "none");
@@ -880,7 +911,7 @@ local has_xray = api.is_finded("xray")
 			} else if (queryParam.type === "ws") {
 				opt.set('ws_host', queryParam.host || "");
 				opt.set('ws_path', queryParam.path || "");
-			} else if (queryParam.type === "h2") {
+			} else if (queryParam.type === "h2" || queryParam.type === "http") {
 				opt.set('h2_host', queryParam.host || "");
 				opt.set('h2_path', queryParam.path || "");
 			} else if (queryParam.type === "quic") {
@@ -891,6 +922,7 @@ local has_xray = api.is_finded("xray")
 				opt.set('mkcp_guise', queryParam.headerType || "none");
 			} else if (queryParam.type === "grpc") {
 				opt.set('grpc_serviceName', (queryParam.serviceName || queryParam.path) || "");
+				opt.set('grpc_mode', queryParam.mode);
 			}
 
 			if (m.hash) {
