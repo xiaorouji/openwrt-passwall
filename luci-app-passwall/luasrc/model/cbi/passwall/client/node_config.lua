@@ -531,7 +531,13 @@ tlsflow.default = ""
 tlsflow:value("", translate("Disable"))
 tlsflow:value("xtls-rprx-vision")
 tlsflow:value("xtls-rprx-vision-udp443")
-tlsflow:depends({ type = "Xray", protocol = "vless", tls = true })
+tlsflow:depends({ type = "Xray", protocol = "vless", tls = true, transport = "tcp" })
+
+reality = s:option(Flag, "reality", translate("REALITY"), translate("Only recommend to use with VLESS-TCP-XTLS-Vision."))
+reality.default = 0
+reality:depends({ type = "Xray", tls = true, transport = "tcp" })
+reality:depends({ type = "Xray", tls = true, transport = "h2" })
+reality:depends({ type = "Xray", tls = true, transport = "grpc" })
 
 alpn = s:option(ListValue, "alpn", translate("alpn"))
 alpn.default = "default"
@@ -540,7 +546,7 @@ alpn:value("h2,http/1.1")
 alpn:value("h2")
 alpn:value("http/1.1")
 alpn:depends({ type = "V2ray", tls = true })
-alpn:depends({ type = "Xray", tls = true })
+alpn:depends({ type = "Xray", tls = true, reality = false })
 
 -- minversion = s:option(Value, "minversion", translate("minversion"))
 -- minversion.default = "1.3"
@@ -574,10 +580,10 @@ tls_serverName:depends("type", "Hysteria")
 
 tls_allowInsecure = s:option(Flag, "tls_allowInsecure", translate("allowInsecure"), translate("Whether unsafe connections are allowed. When checked, Certificate validation will be skipped."))
 tls_allowInsecure.default = "0"
-tls_allowInsecure:depends("tls", true)
+tls_allowInsecure:depends({ tls = true, reality = false })
 tls_allowInsecure:depends("type", "Hysteria")
 
-xray_fingerprint = s:option(Value, "xray_fingerprint", translate("Finger Print"))
+xray_fingerprint = s:option(Value, "xray_fingerprint", translate("Finger Print"), translate("Avoid using randomized, unless you have to."))
 xray_fingerprint:value("", translate("Disable"))
 xray_fingerprint:value("chrome")
 xray_fingerprint:value("firefox")
@@ -590,7 +596,7 @@ xray_fingerprint:value("qq")
 xray_fingerprint:value("random")
 xray_fingerprint:value("randomized")
 xray_fingerprint.default = ""
-xray_fingerprint:depends({ type = "Xray", tls = true })
+xray_fingerprint:depends({ type = "Xray", tls = true, reality = false })
 function xray_fingerprint.cfgvalue(self, section)
 	return m:get(section, "fingerprint")
 end
@@ -599,6 +605,37 @@ function xray_fingerprint.write(self, section, value)
 end
 function xray_fingerprint.remove(self, section)
 	m:del(section, "fingerprint")
+end
+
+-- [[ REALITY部分 ]] --
+reality_publicKey = s:option(Value, "reality_publicKey", translate("Public Key"))
+reality_publicKey:depends({ type = "Xray", tls = true, reality = true })
+
+reality_shortId = s:option(Value, "reality_shortId", translate("Short Id"))
+reality_shortId:depends({ type = "Xray", tls = true, reality = true })
+
+reality_spiderX = s:option(Value, "reality_spiderX", translate("Spider X"))
+reality_spiderX.placeholder = "/"
+reality_spiderX:depends({ type = "Xray", tls = true, reality = true })
+
+reality_fingerprint = s:option(Value, "reality_fingerprint", translate("Finger Print"), translate("Avoid using randomized, unless you have to."))
+reality_fingerprint:value("chrome")
+reality_fingerprint:value("firefox")
+reality_fingerprint:value("safari")
+reality_fingerprint:value("ios")
+reality_fingerprint:value("android")
+reality_fingerprint:value("edge")
+reality_fingerprint:value("360")
+reality_fingerprint:value("qq")
+reality_fingerprint:value("random")
+reality_fingerprint:value("randomized")
+reality_fingerprint.default = "chrome"
+reality_fingerprint:depends({ type = "Xray", tls = true, reality = true })
+function reality_fingerprint.cfgvalue(self, section)
+	return m:get(section, "fingerprint")
+end
+function reality_fingerprint.write(self, section, value)
+	m:set(section, "fingerprint", value)
 end
 
 trojan_transport = s:option(ListValue, "trojan_transport", translate("Transport"))
@@ -691,6 +728,7 @@ tcp_guise_http_host:depends("tcp_guise", "http")
 
 -- HTTP路径
 tcp_guise_http_path = s:option(DynamicList, "tcp_guise_http_path", translate("HTTP Path"))
+tcp_guise_http_path.placeholder = "/"
 tcp_guise_http_path:depends("tcp_guise", "http")
 
 -- [[ mKCP部分 ]]--
@@ -736,6 +774,7 @@ ws_host:depends("ss_transport", "ws")
 ws_host:depends("trojan_transport", "ws")
 
 ws_path = s:option(Value, "ws_path", translate("WebSocket Path"))
+ws_path.placeholder = "/"
 ws_path:depends("transport", "ws")
 ws_path:depends("ss_transport", "ws")
 ws_path:depends("trojan_transport", "ws")
@@ -757,6 +796,7 @@ h2_host:depends("transport", "h2")
 h2_host:depends("ss_transport", "h2")
 
 h2_path = s:option(Value, "h2_path", translate("HTTP/2 Path"))
+h2_path.placeholder = "/"
 h2_path:depends("transport", "h2")
 h2_path:depends("ss_transport", "h2")
 
@@ -844,7 +884,7 @@ mux:depends({ type = "V2ray", protocol = "socks" })
 mux:depends({ type = "V2ray", protocol = "shadowsocks" })
 mux:depends({ type = "V2ray", protocol = "trojan" })
 mux:depends({ type = "Xray", protocol = "vmess" })
-mux:depends({ type = "Xray", protocol = "vless" })
+mux:depends({ type = "Xray", protocol = "vless", tlsflow = "" })
 mux:depends({ type = "Xray", protocol = "http" })
 mux:depends({ type = "Xray", protocol = "socks" })
 mux:depends({ type = "Xray", protocol = "shadowsocks" })

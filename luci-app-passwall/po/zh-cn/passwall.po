@@ -439,6 +439,9 @@ msgstr "证书路径"
 msgid "Finger Print"
 msgstr "指纹伪造"
 
+msgid "Avoid using randomized, unless you have to."
+msgstr "避免使用 randomized , 除非你必须要。"
+
 msgid "Original"
 msgstr "原版"
 
@@ -979,8 +982,8 @@ msgstr "从文件中加载 IP: 形如'ext:file:tag'，必须以ext:（小写）�
 msgid "Clear logs"
 msgstr "清空日志"
 
-msgid "Need node support required"
-msgstr "需要节点支持"
+msgid "Only recommend to use with VLESS-TCP-XTLS-Vision."
+msgstr "只推荐与 VLESS-TCP-XTLS-Vision 搭配使用。"
 
 msgid "Password"
 msgstr "密码"

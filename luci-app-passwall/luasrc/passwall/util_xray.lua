@@ -99,6 +99,9 @@ function gen_outbound(flag, node, tag, proxy_table)
         else
             if node.tls and node.tls == "1" then
                 node.stream_security = "tls"
+                if node.type == "Xray" and node.reality and node.reality == "1" then
+                    node.stream_security = "reality"
+                end
             end
         end
 
@@ -126,6 +129,13 @@ function gen_outbound(flag, node, tag, proxy_table)
                     allowInsecure = (node.tls_allowInsecure == "1") and true or false,
                     fingerprint = (node.type == "Xray" and node.fingerprint and node.fingerprint ~= "") and node.fingerprint or nil
                 } or nil,
+                realitySettings = (node.stream_security == "reality") and {
+                    serverName = node.tls_serverName,
+                    publicKey = node.reality_publicKey,
+                    shortId = node.reality_shortId or "",
+                    spiderX = node.reality_spiderX or "/",
+                    fingerprint = (node.type == "Xray" and node.fingerprint and node.fingerprint ~= "") and node.fingerprint or "chrome"
+                } or nil,
                 tcpSettings = (node.transport == "tcp" and node.protocol ~= "socks") and {
                     header = {
                         type = node.tcp_guise or "none",
@@ -149,14 +159,14 @@ function gen_outbound(flag, node, tag, proxy_table)
                     header = {type = node.mkcp_guise}
                 } or nil,
                 wsSettings = (node.transport == "ws") and {
-                    path = node.ws_path or "",
+                    path = node.ws_path or "/",
                     headers = (node.ws_host ~= nil) and
                         {Host = node.ws_host} or nil,
                     maxEarlyData = tonumber(node.ws_maxEarlyData) or nil,
                     earlyDataHeaderName = (node.ws_earlyDataHeaderName) and node.ws_earlyDataHeaderName or nil
                 } or nil,
                 httpSettings = (node.transport == "h2") and {
-                    path = node.h2_path,
+                    path = node.h2_path or "/",
                     host = node.h2_host,
                     read_idle_timeout = tonumber(node.h2_read_idle_timeout) or nil,
                     health_check_timeout = tonumber(node.h2_health_check_timeout) or nil
