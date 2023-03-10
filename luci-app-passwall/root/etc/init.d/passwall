@@ -33,7 +33,12 @@ unlock() {
 }
 
 boot() {
-	$APP_FILE boot
+	local delay=$(uci -q get ${CONFIG}.@global_delay[0].start_delay || echo 1)
+	if [ "$delay" -gt 0 ]; then
+		echolog "执行启动延时 $delay 秒后再启动!"
+		sleep $delay
+	fi
+	restart
 }
 
 start() {
