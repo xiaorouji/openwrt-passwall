@@ -1,4 +1,5 @@
 module("luci.passwall.api", package.seeall)
+local com = require "luci.passwall.com"
 fs = require "nixio.fs"
 sys = require "luci.sys"
 uci = require"luci.model.uci".cursor()
@@ -35,20 +36,20 @@ function exec_call(cmd)
 end
 
 function base64Decode(text)
-	local raw = text
-	if not text then return '' end
-	text = text:gsub("%z", "")
-	text = text:gsub("%c", "")
-	text = text:gsub("_", "/")
-	text = text:gsub("-", "+")
-	local mod4 = #text % 4
-	text = text .. string.sub('====', mod4 + 1)
-	local result = nixio.bin.b64decode(text)
-	if result then
-		return result:gsub("%z", "")
-	else
-		return raw
-	end
+    local raw = text
+    if not text then return '' end
+    text = text:gsub("%z", "")
+    text = text:gsub("%c", "")
+    text = text:gsub("_", "/")
+    text = text:gsub("-", "+")
+    local mod4 = #text % 4
+    text = text .. string.sub('====', mod4 + 1)
+    local result = nixio.bin.b64decode(text)
+    if result then
+        return result:gsub("%z", "")
+    else
+        return raw
+    end
 end
 
 function curl_base(url, file, args)
@@ -56,7 +57,7 @@ function curl_base(url, file, args)
     if file then
         args[#args + 1] = "-o " .. file
     end
-	local cmd = string.format('curl %s "%s"', table_join(args), url)
+    local cmd = string.format('curl %s "%s"', table_join(args), url)
     return exec_call(cmd)
 end
 
@@ -163,7 +164,7 @@ function strToTable(str)
     if str == nil or type(str) ~= "string" then
         return {}
     end
-    
+
     return loadstring("return " .. str)()
 end
 
@@ -387,7 +388,7 @@ function clone(org)
             end
         end
     end
- 
+
     local res = {}
     copy(org, res)
     return res
@@ -411,59 +412,14 @@ function get_bin_version_cache(file, cmd)
     return ""
 end
 
-function get_v2ray_path()
-    local path = uci_get_type("global_app", "v2ray_file")
+function get_app_path(app_name)
+    local path = uci_get_type("global_app", app_name:gsub("%-","_") .. "_file")
     return path
 end
 
-function get_v2ray_version(file)
-    if file == nil then file = get_v2ray_path() end
-    local cmd = "version | awk '{print $2}' | sed -n 1P"
-    return get_bin_version_cache(file, cmd)
-end
-
-function get_xray_path()
-    local path = uci_get_type("global_app", "xray_file")
-    return path
-end
-
-function get_xray_version(file)
-    if file == nil then file = get_xray_path() end
-    local cmd = "-version | awk '{print $2}' | sed -n 1P"
-    return get_bin_version_cache(file, cmd)
-end
-
-function get_trojan_go_path()
-    local path = uci_get_type("global_app", "trojan_go_file")
-    return path
-end
-
-function get_trojan_go_version(file)
-    if file == nil then file = get_trojan_go_path() end
-    local cmd = "-version | awk '{print $2}' | sed -n 1P"
-    return get_bin_version_cache(file, cmd)
-end
-
-function get_brook_path()
-    local path = uci_get_type("global_app", "brook_file")
-    return path
-end
-
-function get_brook_version(file)
-    if file == nil then file = get_brook_path() end
-    local cmd = "-v | awk '{print $3}'"
-    return get_bin_version_cache(file, cmd)
-end
-
-function get_hysteria_path()
-    local path = uci_get_type("global_app", "hysteria_file")
-    return path
-end
-
-function get_hysteria_version(file)
-    if file == nil then file = get_hysteria_path() end
-    local cmd = "-v | awk '{print $3}'"
-    return get_bin_version_cache(file, cmd)
+function get_app_version(app_name, file)
+    if file == nil then file = get_app_path(app_name) end
+    return get_bin_version_cache(file, com[app_name].cmd_version)
 end
 
 function is_file(path)
@@ -659,7 +615,40 @@ function get_api_json(url)
     return jsonc.parse(content) or {}
 end
 
-function common_to_check(api_url, local_version, match_file_name)
+local function check_path(app_name)
+    local path = get_app_path(app_name) or ""
+    if path == "" then
+        return {
+            code = 1,
+            error = i18n.translatef("You did not fill in the %s path. Please save and apply then update manually.", app_name)
+        }
+    end
+    return {
+        code = 0,
+        app_path = path
+    }
+end
+
+function to_check(arch, app_name)
+    local result = check_path(app_name)
+    if result.code ~= 0 then
+        return result
+    end
+
+    if not arch or arch == "" then arch = auto_get_arch() end
+
+    local file_tree, sub_version = get_file_info(arch)
+
+    if file_tree == "" then
+        return {
+            code = 1,
+            error = i18n.translate("Can't determine ARCH, or ARCH not supported.")
+        }
+    end
+
+    local api_url = com[app_name].api_url
+    local local_version = get_app_version(app_name)
+    local match_file_name = com[app_name].get_match_name(file_tree, sub_version)
     local json = get_api_json(api_url)
 
     if #json > 0 then
@@ -710,4 +699,143 @@ function common_to_check(api_url, local_version, match_file_name)
         html_url = json.html_url,
         data = asset
     }
+end
+
+function to_download(app_name, url, size)
+    local result = check_path(app_name)
+    if result.code ~= 0 then
+        return result
+    end
+
+    if not url or url == "" then
+        return {code = 1, error = i18n.translate("Download url is required.")}
+    end
+
+    sys.call("/bin/rm -f /tmp/".. app_name .."_download.*")
+
+    local tmp_file = util.trim(util.exec("mktemp -u -t ".. app_name .."_download.XXXXXX"))
+
+    if size then
+        local kb1 = get_free_space("/tmp")
+        if tonumber(size) > tonumber(kb1) then
+            return {code = 1, error = i18n.translatef("%s not enough space.", "/tmp")}
+        end
+    end
+
+    local return_code, result = curl_logic(url, tmp_file, curl_args)
+    result = return_code == 0
+
+    if not result then
+        exec("/bin/rm", {"-f", tmp_file})
+        return {
+            code = 1,
+            error = i18n.translatef("File download failed or timed out: %s", url)
+        }
+    end
+
+    return {code = 0, file = tmp_file, zip = com[app_name].zipped }
+end
+
+function to_extract(app_name, file, subfix)
+    local result = check_path(app_name)
+    if result.code ~= 0 then
+        return result
+    end
+
+    if not file or file == "" or not fs.access(file) then
+        return {code = 1, error = i18n.translate("File path required.")}
+    end
+
+    if sys.exec("echo -n $(opkg list-installed | grep -c unzip)") ~= "1" then
+        exec("/bin/rm", {"-f", file})
+        return {
+            code = 1,
+            error = i18n.translate("Not installed unzip, Can't unzip!")
+        }
+    end
+
+    sys.call("/bin/rm -rf /tmp/".. app_name .."_extract.*")
+
+    local new_file_size = get_file_space(file)
+    local tmp_free_size = get_free_space("/tmp")
+    if tmp_free_size <= 0 or tmp_free_size <= new_file_size then
+        return {code = 1, error = i18n.translatef("%s not enough space.", "/tmp")}
+    end
+
+    local tmp_dir = util.trim(util.exec("mktemp -d -t ".. app_name .."_extract.XXXXXX"))
+
+    local output = {}
+    exec("/usr/bin/unzip", {"-o", file, app_name, "-d", tmp_dir},
+             function(chunk) output[#output + 1] = chunk end)
+
+    local files = util.split(table.concat(output))
+
+    exec("/bin/rm", {"-f", file})
+
+    return {code = 0, file = tmp_dir}
+end
+
+function to_move(app_name,file)
+    local result = check_path(app_name)
+    if result.code ~= 0 then
+        return result
+    end
+
+    local app_path = result.app_path
+    local bin_path = file
+    local cmd_rm_tmp = "/bin/rm -rf /tmp/" .. app_name .. "_download.*"
+    if fs.stat(file, "type") == "dir" then
+        bin_path = file .. "/" .. app_name
+        cmd_rm_tmp = "/bin/rm -rf /tmp/" .. app_name .. "_extract.*"
+    end
+
+    if not file or file == "" then
+        sys.call(cmd_rm_tmp)
+        return {code = 1, error = i18n.translate("Client file is required.")}
+    end
+
+    local new_version = get_app_version(app_name, bin_path)
+    if new_version == "" then
+        sys.call(cmd_rm_tmp)
+        return {
+            code = 1,
+            error = i18n.translate("The client file is not suitable for current device.")..app_name.."__"..bin_path
+        }
+    end
+
+    local flag = sys.call('pgrep -af "passwall/.*'.. app_name ..'" >/dev/null')
+    if flag == 0 then
+        sys.call("/etc/init.d/passwall stop")
+    end
+
+    local old_app_size = 0
+    if fs.access(app_path) then
+        old_app_size = get_file_space(app_path)
+    end
+    local new_app_size = get_file_space(bin_path)
+    local final_dir = get_final_dir(app_path)
+    local final_dir_free_size = get_free_space(final_dir)
+    if final_dir_free_size > 0 then
+        final_dir_free_size = final_dir_free_size + old_app_size
+        if new_app_size > final_dir_free_size then
+            sys.call(cmd_rm_tmp)
+            return {code = 1, error = i18n.translatef("%s not enough space.", final_dir)}
+        end
+    end
+
+    result = exec("/bin/mv", { "-f", bin_path, app_path }, nil, command_timeout) == 0
+
+    sys.call(cmd_rm_tmp)
+    if flag == 0 then
+        sys.call("/etc/init.d/passwall restart >/dev/null 2>&1 &")
+    end
+
+    if not result or not fs.access(app_path) then
+        return {
+            code = 1,
+            error = i18n.translatef("Can't move new file to path: %s", app_path)
+        }
+    end
+
+    return {code = 0}
 end

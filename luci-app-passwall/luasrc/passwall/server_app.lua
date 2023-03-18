@@ -18,7 +18,7 @@ local ip6t_bin = sys.exec("echo -n $(/usr/share/passwall/iptables.sh get_ip6t_bi
 local nft_flag = api.is_finded("fw4") and "1" or "0"
 
 local function log(...)
-	local f, err = io.open(LOG_APP_FILE, "a")
+    local f, err = io.open(LOG_APP_FILE, "a")
     if f and err == nil then
         local str = os.date("%Y-%m-%d %H:%M:%S: ") .. table.concat({...}, " ")
         f:write(str .. "\n")
@@ -91,12 +91,12 @@ local function start()
     end
     cmd(string.format("mkdir -p %s %s", CONFIG_PATH, TMP_BIN_PATH))
     cmd(string.format("touch %s", LOG_APP_FILE))
-	if nft_flag == "0" then
+    if nft_flag == "0" then
         ipt("-N PSW-SERVER")
         ipt("-I INPUT -j PSW-SERVER")
         ip6t("-N PSW-SERVER")
         ip6t("-I INPUT -j PSW-SERVER")
-	else
+    else
         cmd("nft add chain inet fw4 PSW-SERVER\n")
         cmd("nft insert rule inet fw4 input position 0 counter jump PSW-SERVER")
     end
@@ -144,10 +144,10 @@ local function start()
                 bin = ln_run("/usr/bin/ssserver", "ssserver", "-c " .. config_file, log_path)
             elseif type == "V2ray" then
                 config = require(require_dir .. "util_xray").gen_config_server(user)
-                bin = ln_run(api.get_v2ray_path(), "v2ray", "run -c " .. config_file, log_path)
+                bin = ln_run(api.get_app_path("v2ray"), "v2ray", "run -c " .. config_file, log_path)
             elseif type == "Xray" then
                 config = require(require_dir .. "util_xray").gen_config_server(user)
-                bin = ln_run(api.get_xray_path(), "xray", "run -c " .. config_file, log_path)
+                bin = ln_run(api.get_app_path("xray"), "xray", "run -c " .. config_file, log_path)
             elseif type == "Trojan" then
                 config = require(require_dir .. "util_trojan").gen_config_server(user)
                 bin = ln_run("/usr/sbin/trojan", "trojan", "-c " .. config_file, log_path)
@@ -156,7 +156,7 @@ local function start()
                 bin = ln_run("/usr/sbin/trojan-plus", "trojan-plus", "-c " .. config_file, log_path)
             elseif type == "Trojan-Go" then
                 config = require(require_dir .. "util_trojan").gen_config_server(user)
-                bin = ln_run(api.get_trojan_go_path(), "trojan-go", "-config " .. config_file, log_path)
+                bin = ln_run(api.get_app_path("trojan-go"), "trojan-go", "-config " .. config_file, log_path)
             elseif type == "Brook" then
                 local brook_protocol = user.protocol
                 local brook_password = user.password
@@ -165,10 +165,10 @@ local function start()
                 if brook_protocol == "wsserver" and brook_path then
                     brook_path_arg = " --path " .. brook_path
                 end
-                bin = ln_run(api.get_brook_path(), "brook_" .. id, string.format("--debug %s -l :%s -p %s%s", brook_protocol, port, brook_password, brook_path_arg), log_path)
+                bin = ln_run(api.get_app_path("brook"), "brook_" .. id, string.format("--debug %s -l :%s -p %s%s", brook_protocol, port, brook_password, brook_path_arg), log_path)
             elseif type == "Hysteria" then
                 config = require(require_dir .. "util_hysteria").gen_config_server(user)
-                bin = ln_run(api.get_hysteria_path(), "hysteria", "-c " .. config_file .. " server", log_path)
+                bin = ln_run(api.get_app_path("hysteria"), "hysteria", "-c " .. config_file .. " server", log_path)
             end
 
             if next(config) then
@@ -193,7 +193,7 @@ local function start()
                         ipt(string.format('-A PSW-SERVER -p udp --dport %s -m comment --comment "%s" -j ACCEPT', port, remarks))
                         ip6t(string.format('-A PSW-SERVER -p udp --dport %s -m comment --comment "%s" -j ACCEPT', port, remarks))
                     end
-                else	
+                else
                     cmd(string.format('nft add rule inet fw4 PSW-SERVER meta l4proto tcp tcp dport {%s} accept', port))
                     if udp_forward == 1 then
                         cmd(string.format('nft add rule inet fw4 PSW-SERVER meta l4proto udp udp dport {%s} accept', port))
@@ -214,7 +214,7 @@ local function stop()
         ip6t("-D INPUT -j PSW-SERVER 2>/dev/null")
         ip6t("-F PSW-SERVER 2>/dev/null")
         ip6t("-X PSW-SERVER 2>/dev/null")
-	else
+    else
         nft_cmd="handles=$(nft -a list chain inet fw4 input | grep -E \"PSW-SERVER\" | awk -F '# handle ' '{print$2}')\n for handle in $handles; do\n nft delete rule inet fw4 input handle ${handle} 2>/dev/null\n done"
         cmd(nft_cmd)
         cmd("nft flush chain inet fw4 PSW-SERVER 2>/dev/null")
@@ -226,7 +226,7 @@ end
 if action then
     if action == "start" then
         start()
-	elseif action == "stop" then
+    elseif action == "stop" then
         stop()
-	end
+    end
 end
