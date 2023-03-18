@@ -25,7 +25,8 @@ _M.hysteria = {
     zipped = false,
     default_path = "/usr/bin/hysteria",
     get_match_name = function(file_tree, sub_version)
-        return "linux%-" .. file_tree .. sub_version
+        if file_tree=="arm" and sub_version=="5" then file_tree = "armv5" end
+        return "linux%-" .. file_tree .. "$"
     end
 }
 _M["trojan-go"] = {
@@ -66,6 +67,26 @@ _M.xray = {
     zipped = true,
     default_path = "/usr/bin/xray",
     get_match_name = _M.v2ray.get_match_name
+}
+_M["chinadns-ng"] = {
+    name = "ChinaDNS-NG",
+    api_url = gh_pre_release_url("zfl9/chinadns-ng"),
+    cmd_version = "-V | awk '{print $2}'",
+    zipped = no,
+    default_path = "/usr/bin/chinadns-ng",
+    get_match_name = function(file_tree, sub_version)
+        if file_tree == "amd64" then file_tree = "x86_64"
+        elseif file_tree == "386" then file_tree = "i686"
+        elseif file_tree == "mipsle" then file_tree = "mipsel"
+        elseif file_tree == "arm64" then file_tree = "aarch64"
+        elseif file_tree == "arm" then
+            file_tree = "arm%-eabi"
+            if sub_version and sub_version:match("^[6-7]$") then
+				file_tree = "arm%-eabihf"
+			end
+        end
+        return file_tree .. "$"
+    end
 }
 
 return _M
