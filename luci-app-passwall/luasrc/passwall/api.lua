@@ -11,8 +11,8 @@ i18n = require "luci.i18n"
 appname = "passwall"
 curl_args = { "-skfL", "--connect-timeout 3", "--retry 3", "-m 60" }
 command_timeout = 300
-LEDE_BOARD = nil
-DISTRIB_TARGET = nil
+OPENWRT_ARCH = nil
+DISTRIB_ARCH = nil
 
 LOG_FILE = "/tmp/log/" .. appname .. ".log"
 CACHE_PATH = "/tmp/etc/" .. appname .. "_tmp"
@@ -361,7 +361,7 @@ function uci_get_type_id(id, config, default)
     return value
 end
 
-function chmod_755(file)
+local function chmod_755(file)
     if file and file ~= "" then
         if not fs.access(file, "rwx", "rx", "rx") then
             fs.chmod(file, 755)
@@ -394,7 +394,7 @@ function clone(org)
     return res
 end
 
-function get_bin_version_cache(file, cmd)
+local function get_bin_version_cache(file, cmd)
     sys.call("mkdir -p /tmp/etc/passwall_tmp")
     if fs.access(file) then
         chmod_755(file)
@@ -422,7 +422,7 @@ function get_app_version(app_name, file)
     return get_bin_version_cache(file, com[app_name].cmd_version)
 end
 
-function is_file(path)
+local function is_file(path)
     if path and #path > 1 then
         if sys.exec('[ -f "%s" ] && echo -n 1' % path) == "1" then
             return true
@@ -431,7 +431,7 @@ function is_file(path)
     return nil
 end
 
-function is_dir(path)
+local function is_dir(path)
     if path and #path > 1 then
         if sys.exec('[ -d "%s" ] && echo -n 1' % path) == "1" then
             return true
@@ -440,7 +440,7 @@ function is_dir(path)
     return nil
 end
 
-function get_final_dir(path)
+local function get_final_dir(path)
     if is_dir(path) then
         return path
     else
@@ -448,7 +448,7 @@ function get_final_dir(path)
     end
 end
 
-function get_free_space(dir)
+local function get_free_space(dir)
     if dir == nil then dir = "/" end
     if sys.call("df -k " .. dir .. " >/dev/null 2>&1") == 0 then
         return tonumber(sys.exec("echo -n $(df -k " .. dir .. " | awk 'NR>1' | awk '{print $4}')"))
@@ -456,7 +456,7 @@ function get_free_space(dir)
     return 0
 end
 
-function get_file_space(file)
+local function get_file_space(file)
     if file == nil then return 0 end
     if fs.access(file) then
         return tonumber(sys.exec("echo -n $(du -k " .. file .. " | awk '{print $1}')"))
@@ -480,7 +480,7 @@ function table_join(t, s)
     return str
 end
 
-function exec(cmd, args, writer, timeout)
+local function exec(cmd, args, writer, timeout)
     local os = require "os"
     local nixio = require "nixio"
 
@@ -525,7 +525,7 @@ function exec(cmd, args, writer, timeout)
     end
 end
 
-function compare_versions(ver1, comp, ver2)
+local function compare_versions(ver1, comp, ver2)
     local table = table
 
     if not ver1 then ver1 = "" end
@@ -551,27 +551,37 @@ function compare_versions(ver1, comp, ver2)
     return not (comp == "<" or comp == ">")
 end
 
-function auto_get_arch()
+local function auto_get_arch()
     local arch = nixio.uname().machine or ""
-    if fs.access("/usr/lib/os-release") then
-        LEDE_BOARD = sys.exec("echo -n $(grep 'LEDE_BOARD' /usr/lib/os-release | awk -F '[\\042\\047]' '{print $2}')")
+    if not OPENWRT_ARCH and fs.access("/usr/lib/os-release") then
+        OPENWRT_ARCH = sys.exec("echo -n $(grep 'OPENWRT_ARCH' /usr/lib/os-release | awk -F '[\\042\\047]' '{print $2}')")
+        if OPENWRT_ARCH == "" then OPENWRT_ARCH = nil end
     end
-    if fs.access("/etc/openwrt_release") then
-        DISTRIB_TARGET = sys.exec("echo -n $(grep 'DISTRIB_TARGET' /etc/openwrt_release | awk -F '[\\042\\047]' '{print $2}')")
+    if not DISTRIB_ARCH and fs.access("/etc/openwrt_release") then
+        DISTRIB_ARCH = sys.exec("echo -n $(grep 'DISTRIB_ARCH' /etc/openwrt_release | awk -F '[\\042\\047]' '{print $2}')")
+        if DISTRIB_ARCH == "" then DISTRIB_ARCH = nil end
     end
 
-    if arch == "mips" then
-        if LEDE_BOARD and LEDE_BOARD ~= "" then
-            if string.match(LEDE_BOARD, "ramips") == "ramips" then
-                arch = "ramips"
-            else
-                arch = sys.exec("echo '" .. LEDE_BOARD .. "' | grep -oE 'ramips|ar71xx'")
+    if arch:match("^i[%d]86$") then
+        arch = "x86"
+    elseif arch:match("armv5") then  -- armv5l
+        arch = "armv5"
+    elseif arch:match("armv6") then
+        arch = "armv6"
+    elseif arch:match("armv7") then  -- armv7l
+        arch = "armv7"
+    end
+
+    if OPENWRT_ARCH or DISTRIB_ARCH then
+        if arch == "mips" then
+            if OPENWRT_ARCH and OPENWRT_ARCH:match("mipsel") == "mipsel"
+            or DISTRIB_ARCH and DISTRIB_ARCH:match("mipsel") == "mipsel" then
+                arch = "mipsel"
             end
-        elseif DISTRIB_TARGET and DISTRIB_TARGET ~= "" then
-            if string.match(DISTRIB_TARGET, "ramips") == "ramips" then
-                arch = "ramips"
-            else
-                arch = sys.exec("echo '" .. DISTRIB_TARGET .. "' | grep -oE 'ramips|ar71xx'")
+        elseif arch == "armv7" then
+            if OPENWRT_ARCH and not OPENWRT_ARCH:match("vfp") and not OPENWRT_ARCH:match("neon")
+            or DISTRIB_ARCH and not DISTRIB_ARCH:match("vfp") and not DISTRIB_ARCH:match("neon") then
+                arch = "armv5"
             end
         end
     end
@@ -579,36 +589,19 @@ function auto_get_arch()
     return util.trim(arch)
 end
 
-function get_file_info(arch)
-    local file_tree = ""
-    local sub_version = ""
+local default_file_tree = {
+    x86_64  = "amd64",
+    x86     = "386",
+    aarch64 = "arm64",
+    mips    = "mips",
+    mipsel  = "mipsle",
+    armv5   = "arm.*5",
+    armv6   = "arm.*6[^4]*",
+    armv7   = "arm.*7",
+    armv8   = "arm64"
+}
 
-    if arch == "x86_64" then
-        file_tree = "amd64"
-    elseif arch == "aarch64" then
-        file_tree = "arm64"
-    elseif arch == "ramips" then
-        file_tree = "mipsle"
-    elseif arch == "ar71xx" then
-        file_tree = "mips"
-    elseif arch:match("^i[%d]86$") then
-        file_tree = "386"
-    elseif arch:match("^armv[5-8]") then
-        file_tree = "arm"
-        sub_version = arch:match("[5-8]")
-        if LEDE_BOARD and string.match(LEDE_BOARD, "bcm53xx") == "bcm53xx" then
-            sub_version = "5"
-        elseif DISTRIB_TARGET and string.match(DISTRIB_TARGET, "bcm53xx") ==
-            "bcm53xx" then
-            sub_version = "5"
-        end
-        sub_version = "5"
-    end
-
-    return file_tree, sub_version
-end
-
-function get_api_json(url)
+local function get_api_json(url)
     local jsonc = require "luci.jsonc"
     local return_code, content = curl_logic(url, nil, curl_args)
     if return_code ~= 0 or content == "" then return {} end
@@ -637,7 +630,7 @@ function to_check(arch, app_name)
 
     if not arch or arch == "" then arch = auto_get_arch() end
 
-    local file_tree, sub_version = get_file_info(arch)
+    local file_tree = com[app_name].file_tree[arch] or default_file_tree[arch] or ""
 
     if file_tree == "" then
         return {
@@ -646,10 +639,9 @@ function to_check(arch, app_name)
         }
     end
 
-    local api_url = com[app_name].api_url
     local local_version = get_app_version(app_name)
-    local match_file_name = com[app_name].get_match_name(file_tree, sub_version)
-    local json = get_api_json(api_url)
+    local match_file_name = string.format(com[app_name].match_fmt_str, file_tree)
+    local json = get_api_json(com[app_name]:get_url())
 
     if #json > 0 then
         json = json[1]
