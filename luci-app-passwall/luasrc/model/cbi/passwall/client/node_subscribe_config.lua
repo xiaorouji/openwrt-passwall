@@ -10,24 +10,24 @@ local has_trojan_go = api.is_finded("trojan-go")
 local ss_aead_type = {}
 local trojan_type = {}
 if has_ss then
-    ss_aead_type[#ss_aead_type + 1] = "shadowsocks-libev"
+	ss_aead_type[#ss_aead_type + 1] = "shadowsocks-libev"
 end
 if has_ss_rust then
-    ss_aead_type[#ss_aead_type + 1] = "shadowsocks-rust"
+	ss_aead_type[#ss_aead_type + 1] = "shadowsocks-rust"
 end
 if has_trojan_plus then
-    trojan_type[#trojan_type + 1] = "trojan-plus"
+	trojan_type[#trojan_type + 1] = "trojan-plus"
 end
 if has_v2ray then
-    trojan_type[#trojan_type + 1] = "v2ray"
-    ss_aead_type[#ss_aead_type + 1] = "v2ray"
+	trojan_type[#trojan_type + 1] = "v2ray"
+	ss_aead_type[#ss_aead_type + 1] = "v2ray"
 end
 if has_xray then
-    trojan_type[#trojan_type + 1] = "xray"
-    ss_aead_type[#ss_aead_type + 1] = "xray"
+	trojan_type[#trojan_type + 1] = "xray"
+	ss_aead_type[#ss_aead_type + 1] = "xray"
 end
 if has_trojan_go then
-    trojan_type[#trojan_type + 1] = "trojan-go"
+	trojan_type[#trojan_type + 1] = "trojan-go"
 end
 
 m = Map(appname)
@@ -68,21 +68,21 @@ o:depends("filter_keyword_mode", "3")
 o:depends("filter_keyword_mode", "4")
 
 if #ss_aead_type > 0 then
-    o = s:option(ListValue, "ss_aead_type", translate("SS AEAD Node Use Type"))
-    o.default = "global"
-    o:value("global", translate("Use global config"))
-    for key, value in pairs(ss_aead_type) do
-        o:value(value, translate(value:gsub("^%l",string.upper)))
-    end
+	o = s:option(ListValue, "ss_aead_type", translate("SS AEAD Node Use Type"))
+	o.default = "global"
+	o:value("global", translate("Use global config"))
+	for key, value in pairs(ss_aead_type) do
+		o:value(value, translate(value:gsub("^%l",string.upper)))
+	end
 end
 
 if #trojan_type > 0 then
-    o = s:option(ListValue, "trojan_type", translate("Trojan Node Use Type"))
-    o.default = "global"
-    o:value("global", translate("Use global config"))
-    for key, value in pairs(trojan_type) do
-        o:value(value, translate(value:gsub("^%l",string.upper)))
-    end
+	o = s:option(ListValue, "trojan_type", translate("Trojan Node Use Type"))
+	o.default = "global"
+	o:value("global", translate("Use global config"))
+	for key, value in pairs(trojan_type) do
+		o:value(value, translate(value:gsub("^%l",string.upper)))
+	end
 end
 
 ---- Enable auto update subscribe

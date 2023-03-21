@@ -35,18 +35,18 @@ local geosite_api =  "https://api.github.com/repos/Loyalsoldier/v2ray-rules-dat/
 local v2ray_asset_location = ucic:get_first(name, 'global_rules', "v2ray_location_asset", "/usr/share/v2ray/")
 
 local log = function(...)
-    if arg1 then
-        local result = os.date("%Y-%m-%d %H:%M:%S: ") .. table.concat({...}, " ")
-        if arg1 == "log" then
-            local f, err = io.open("/tmp/log/passwall.log", "a")
-            if f and err == nil then
-                f:write(result .. "\n")
-                f:close()
-            end
-        elseif arg1 == "print" then
-            print(result)
-        end
-    end
+	if arg1 then
+		local result = os.date("%Y-%m-%d %H:%M:%S: ") .. table.concat({...}, " ")
+		if arg1 == "log" then
+			local f, err = io.open("/tmp/log/passwall.log", "a")
+			if f and err == nil then
+				f:write(result .. "\n")
+				f:close()
+			end
+		elseif arg1 == "print" then
+			print(result)
+		end
+	end
 end
 
 -- curl
