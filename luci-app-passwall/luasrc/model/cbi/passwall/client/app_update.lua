@@ -9,31 +9,15 @@ s = m:section(TypedSection, "global_app", translate("App Update"),
                   translate("Please confirm that your firmware supports FPU.") ..
                   "</font>")
 s.anonymous = true
-s:append(Template(appname .. "/app_update/v2ray_version"))
-s:append(Template(appname .. "/app_update/xray_version"))
-s:append(Template(appname .. "/app_update/trojan_go_version"))
-s:append(Template(appname .. "/app_update/brook_version"))
-s:append(Template(appname .. "/app_update/hysteria_version"))
+s:append(Template(appname .. "/app_update/app_version"))
 
-o = s:option(Value, "v2ray_file", translatef("%s App Path", "V2ray"))
-o.default = "/usr/bin/v2ray"
-o.rmempty = false
-
-o = s:option(Value, "xray_file", translatef("%s App Path", "Xray"))
-o.default = "/usr/bin/xray"
-o.rmempty = false
-
-o = s:option(Value, "trojan_go_file", translatef("%s App Path", "Trojan-Go"))
-o.default = "/usr/bin/trojan-go"
-o.rmempty = false
-
-o = s:option(Value, "brook_file", translatef("%s App Path", "Brook"))
-o.default = "/usr/bin/brook"
-o.rmempty = false
-
-o = s:option(Value, "hysteria_file", translatef("%s App Path", "Hysteria"))
-o.default = "/usr/bin/hysteria"
-o.rmempty = false
+local k, v
+local com = require "luci.passwall.com"
+for k, v in pairs(com) do
+    o = s:option(Value, k:gsub("%-","_") .. "_file", translatef("%s App Path", v.name))
+    o.default = v.default_path or ("/usr/bin/"..k)
+    o.rmempty = false
+end
 
 o = s:option(DummyValue, "tips", " ")
 o.rawhtml = true

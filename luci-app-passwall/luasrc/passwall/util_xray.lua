@@ -568,7 +568,7 @@ function gen_config(var)
             end
             table.insert(inbounds, inbound)
         end
-    
+
         if tcp_redir_port or udp_redir_port then
             local inbound = {
                 protocol = "dokodemo-door",
@@ -576,7 +576,7 @@ function gen_config(var)
                 streamSettings = {sockopt = {tproxy = "tproxy"}},
                 sniffing = {enabled = sniffing and true or false, destOverride = {"http", "tls", (remote_dns_fake) and "fakedns"}, metadataOnly = false, routeOnly = route_only and true or nil, domainsExcluded = (sniffing and not route_only) and get_domain_excluded() or nil}
             }
-        
+
             if tcp_redir_port then
                 local tcp_inbound = api.clone(inbound)
                 tcp_inbound.tag = "tcp_redir"
@@ -585,7 +585,7 @@ function gen_config(var)
                 tcp_inbound.streamSettings.sockopt.tproxy = tcp_proxy_way
                 table.insert(inbounds, tcp_inbound)
             end
-    
+
             if udp_redir_port then
                 local udp_inbound = api.clone(inbound)
                 udp_inbound.tag = "udp_redir"
@@ -594,10 +594,10 @@ function gen_config(var)
                 table.insert(inbounds, udp_inbound)
             end
         end
-    
+
         if node.protocol == "_shunt" then
             local rules = {}
-    
+
             local default_node_id = node.default_node or "_direct"
             local default_outboundTag
             if default_node_id == "_direct" then
@@ -656,7 +656,7 @@ function gen_config(var)
                     end
                 end
             end
-    
+
             uci:foreach(appname, "shunt_rules", function(e)
                 local name = e[".name"]
                 if name and e.remarks then
@@ -724,7 +724,7 @@ function gen_config(var)
                         end
                     end
                     if outboundTag then
-                        if outboundTag == "default" then 
+                        if outboundTag == "default" then
                             outboundTag = default_outboundTag
                         end
                         local protocols = nil
@@ -768,15 +768,15 @@ function gen_config(var)
                     end
                 end
             end)
-    
-            if default_outboundTag then 
+
+            if default_outboundTag then
                 table.insert(rules, {
                     type = "field",
                     outboundTag = default_outboundTag,
                     network = "tcp,udp"
                 })
             end
-    
+
             routing = {
                 domainStrategy = node.domainStrategy or "AsIs",
                 domainMatcher = node.domainMatcher or "hybrid",
@@ -825,19 +825,19 @@ function gen_config(var)
             }
         end
     end
-    
+
     if remote_dns_server or remote_dns_doh_url or remote_dns_fake then
         local rules = {}
         local _remote_dns_proto = "tcp"
         local _remote_dns_host
-    
+
         if not routing then
             routing = {
                 domainStrategy = "IPOnDemand",
                 rules = {}
             }
         end
-    
+
         dns = {
             tag = "dns-in1",
             hosts = {},
@@ -848,16 +848,16 @@ function gen_config(var)
             clientIp = (dns_client_ip and dns_client_ip ~= "") and dns_client_ip or nil,
             queryStrategy = (dns_query_strategy and dns_query_strategy ~= "") and dns_query_strategy or "UseIPv4"
         }
-    
+
         local _remote_dns = {
             --_flag = "remote"
         }
-    
+
         if remote_dns_tcp_server then
             _remote_dns.address = remote_dns_tcp_server
             _remote_dns.port = tonumber(remote_dns_port)
         end
-    
+
         if remote_dns_doh_url and remote_dns_doh_host then
             if remote_dns_server and remote_dns_doh_host ~= remote_dns_server and not api.is_ip(remote_dns_doh_host) then
                 dns.hosts[remote_dns_doh_host] = remote_dns_server
@@ -867,7 +867,7 @@ function gen_config(var)
             _remote_dns.port = tonumber(remote_dns_port)
             _remote_dns_proto = "doh"
         end
-    
+
         if remote_dns_fake then
             remote_dns_server = "1.1.1.1"
             fakedns = {}
@@ -883,9 +883,9 @@ function gen_config(var)
             end
             _remote_dns.address = "fakedns"
         end
-    
+
         table.insert(dns.servers, _remote_dns)
-    
+
         if dns_listen_port then
             table.insert(inbounds, {
                 listen = "127.0.0.1",
@@ -898,7 +898,7 @@ function gen_config(var)
                     network = "tcp,udp"
                 }
             })
-    
+
             table.insert(outbounds, {
                 tag = "dns-out",
                 protocol = "dns",
@@ -908,7 +908,7 @@ function gen_config(var)
                     network = "tcp",
                 }
             })
-    
+
             table.insert(routing.rules, 1, {
                 type = "field",
                 inboundTag = {
@@ -917,7 +917,7 @@ function gen_config(var)
                 outboundTag = "dns-out"
             })
         end
-    
+
     --[[
         local default_dns_flag = "remote"
         if node_id and tcp_redir_port then
@@ -928,7 +928,7 @@ function gen_config(var)
                 end
             end
         end
-    
+
         if dns.servers and #dns.servers > 0 then
             local dns_servers = nil
             for index, value in ipairs(dns.servers) do
@@ -1003,7 +1003,7 @@ function gen_config(var)
                 })
             end
         end
-    
+
         local default_rule_index = #routing.rules > 0 and #routing.rules or 1
         for index, value in ipairs(routing.rules) do
             if value["_flag"] == "default" then
@@ -1015,17 +1015,17 @@ function gen_config(var)
             local t = rules[#rules + 1 - index]
             table.insert(routing.rules, default_rule_index, t)
         end
-    
+
         local dns_hosts_len = 0
         for key, value in pairs(dns.hosts) do
             dns_hosts_len = dns_hosts_len + 1
         end
-    
+
         if dns_hosts_len == 0 then
             dns.hosts = nil
         end
     end
-    
+
     if inbounds or outbounds then
         local config = {
             log = {
@@ -1077,7 +1077,7 @@ function gen_config(var)
             tag = "blackhole"
         })
         return jsonc.stringify(config, 1)
-    end    
+    end
 end
 
 function gen_proto_config(var)
@@ -1120,7 +1120,7 @@ function gen_proto_config(var)
         end
         table.insert(inbounds, inbound)
     end
-    
+
     if local_http_address and local_http_port then
         local inbound = {
             listen = local_http_address,
@@ -1140,7 +1140,7 @@ function gen_proto_config(var)
         end
         table.insert(inbounds, inbound)
     end
-    
+
     if server_proto ~= "nil" and server_address ~= "nil" and server_port ~= "nil" then
         local outbound = {
             protocol = server_proto,
@@ -1165,12 +1165,12 @@ function gen_proto_config(var)
         }
         if outbound then table.insert(outbounds, outbound) end
     end
-    
+
     -- 额外传出连接
     table.insert(outbounds, {
         protocol = "freedom", tag = "direct", settings = {keep = ""}, sockopt = {mark = 255}
     })
-    
+
     local config = {
         log = {
             loglevel = "warning"
