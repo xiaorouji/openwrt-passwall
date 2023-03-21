@@ -47,9 +47,9 @@ local header_type_list = {
 }
 
 local encrypt_methods_ss_aead = {
-	"chacha20-ietf-poly1305",
-	"aes-128-gcm",
-	"aes-256-gcm",
+    "chacha20-ietf-poly1305",
+    "aes-128-gcm",
+    "aes-256-gcm",
 }
 
 m = Map("passwall_server", translate("Server Config"))
@@ -122,10 +122,10 @@ brook_protocol:value("server", "Brook")
 brook_protocol:value("wsserver", "WebSocket")
 brook_protocol:depends("type", "Brook")
 function brook_protocol.cfgvalue(self, section)
-	return m:get(section, "protocol")
+    return m:get(section, "protocol")
 end
 function brook_protocol.write(self, section, value)
-	m:set(section, "protocol", value)
+    m:set(section, "protocol", value)
 end
 
 --brook_tls = s:option(Flag, "brook_tls", translate("Use TLS"))
@@ -170,10 +170,10 @@ mtproto_password:depends({ type = "V2ray", protocol = "mtproto" })
 mtproto_password:depends({ type = "Xray", protocol = "mtproto" })
 mtproto_password.default = arg[1]
 function mtproto_password.cfgvalue(self, section)
-	return m:get(section, "password")
+    return m:get(section, "password")
 end
 function mtproto_password.write(self, section, value)
-	m:set(section, "password", value)
+    m:set(section, "password", value)
 end
 
 d_protocol = s:option(ListValue, "d_protocol", translate("Destination protocol"))
@@ -203,10 +203,10 @@ hysteria_protocol:value("faketcp", "faketcp")
 hysteria_protocol:value("wechat-video", "wechat-video")
 hysteria_protocol:depends("type", "Hysteria")
 function hysteria_protocol.cfgvalue(self, section)
-	return m:get(section, "protocol")
+    return m:get(section, "protocol")
 end
 function hysteria_protocol.write(self, section, value)
-	m:set(section, "protocol", value)
+    m:set(section, "protocol", value)
 end
 
 hysteria_obfs = s:option(Value, "hysteria_obfs", translate("Obfs Password"))
@@ -249,50 +249,50 @@ ss_encrypt_method = s:option(ListValue, "ss_encrypt_method", translate("Encrypt 
 for a, t in ipairs(ss_encrypt_method_list) do ss_encrypt_method:value(t) end
 ss_encrypt_method:depends("type", "SS")
 function ss_encrypt_method.cfgvalue(self, section)
-	return m:get(section, "method")
+    return m:get(section, "method")
 end
 function ss_encrypt_method.write(self, section, value)
-	m:set(section, "method", value)
+    m:set(section, "method", value)
 end
 
 ss_rust_encrypt_method = s:option(ListValue, "ss_rust_encrypt_method", translate("Encrypt Method"))
 for a, t in ipairs(ss_rust_encrypt_method_list) do ss_rust_encrypt_method:value(t) end
 ss_rust_encrypt_method:depends("type", "SS-Rust")
 function ss_rust_encrypt_method.cfgvalue(self, section)
-	return m:get(section, "method")
+    return m:get(section, "method")
 end
 function ss_rust_encrypt_method.write(self, section, value)
-	m:set(section, "method", value)
+    m:set(section, "method", value)
 end
 
 ssr_encrypt_method = s:option(ListValue, "ssr_encrypt_method", translate("Encrypt Method"))
 for a, t in ipairs(ssr_encrypt_method_list) do ssr_encrypt_method:value(t) end
 ssr_encrypt_method:depends("type", "SSR")
 function ssr_encrypt_method.cfgvalue(self, section)
-	return m:get(section, "method")
+    return m:get(section, "method")
 end
 function ssr_encrypt_method.write(self, section, value)
-	m:set(section, "method", value)
+    m:set(section, "method", value)
 end
 
 v_ss_encrypt_method = s:option(ListValue, "v_ss_encrypt_method", translate("Encrypt Method"))
 for a, t in ipairs(v_ss_encrypt_method_list) do v_ss_encrypt_method:value(t) end
 v_ss_encrypt_method:depends({ type = "V2ray", protocol = "shadowsocks" })
 function v_ss_encrypt_method.cfgvalue(self, section)
-	return m:get(section, "method")
+    return m:get(section, "method")
 end
 function v_ss_encrypt_method.write(self, section, value)
-	m:set(section, "method", value)
+    m:set(section, "method", value)
 end
 
 x_ss_encrypt_method = s:option(ListValue, "x_ss_encrypt_method", translate("Encrypt Method"))
 for a, t in ipairs(x_ss_encrypt_method_list) do x_ss_encrypt_method:value(t) end
 x_ss_encrypt_method:depends({ type = "Xray", protocol = "shadowsocks" })
 function x_ss_encrypt_method.cfgvalue(self, section)
-	return m:get(section, "method")
+    return m:get(section, "method")
 end
 function x_ss_encrypt_method.write(self, section, value)
-	m:set(section, "method", value)
+    m:set(section, "method", value)
 end
 
 iv_check = s:option(Flag, "iv_check", translate("IV Check"))
@@ -311,10 +311,10 @@ ssr_protocol = s:option(ListValue, "ssr_protocol", translate("Protocol"))
 for a, t in ipairs(ssr_protocol_list) do ssr_protocol:value(t) end
 ssr_protocol:depends("type", "SSR")
 function ssr_protocol.cfgvalue(self, section)
-	return m:get(section, "protocol")
+    return m:get(section, "protocol")
 end
 function ssr_protocol.write(self, section, value)
-	m:set(section, "protocol", value)
+    m:set(section, "protocol", value)
 end
 
 protocol_param = s:option(Value, "protocol_param", translate("Protocol_param"))
@@ -734,10 +734,10 @@ trojan_loglevel:value("2", "warn")
 trojan_loglevel:value("3", "error")
 trojan_loglevel:value("4", "fatal")
 function trojan_loglevel.cfgvalue(self, section)
-	return m:get(section, "loglevel")
+    return m:get(section, "loglevel")
 end
 function trojan_loglevel.write(self, section, value)
-	m:set(section, "loglevel", value)
+    m:set(section, "loglevel", value)
 end
 trojan_loglevel:depends({ type = "Trojan", log = true })
 trojan_loglevel:depends({ type = "Trojan-Plus", log = true })

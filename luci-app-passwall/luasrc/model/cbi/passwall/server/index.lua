@@ -70,4 +70,3 @@ m:append(Template("passwall/server/log"))
 
 m:append(Template("passwall/server/users_list_status"))
 return m
-

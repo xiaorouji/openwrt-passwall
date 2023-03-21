@@ -18,20 +18,20 @@ local dynamicList_write = function(self, section, value)
     local t = {}
     local t2 = {}
     if type(value) == "table" then
-		local x
-		for _, x in ipairs(value) do
-			if x and #x > 0 then
+        local x
+        for _, x in ipairs(value) do
+            if x and #x > 0 then
                 if not t2[x] then
                     t2[x] = x
                     t[#t+1] = x
                 end
-			end
-		end
-	else
-		t = { value }
-	end
+            end
+        end
+    else
+        t = { value }
+    end
     t = table.concat(t, " ")
-	return DynamicList.write(self, section, t)
+    return DynamicList.write(self, section, t)
 end
 
 -- [[ ACLs Settings ]]--
@@ -84,16 +84,16 @@ for _, key in pairs(mac_t) do
 end
 sources.cfgvalue = function(self, section)
     local value
-	if self.tag_error[section] then
-		value = self:formvalue(section)
-	else
-		value = self.map:get(section, self.option)
+    if self.tag_error[section] then
+        value = self:formvalue(section)
+    else
+        value = self.map:get(section, self.option)
         if type(value) == "string" then
             local value2 = {}
             string.gsub(value, '[^' .. " " .. ']+', function(w) table.insert(value2, w) end)
             value = value2
         end
-	end
+    end
     return value
 end
 sources.validate = function(self, value, t)

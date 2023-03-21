@@ -148,7 +148,7 @@ if (has_v2ray or has_xray) and #nodes_table > 0 then
         o.write = function(self, section, value)
             m:set(v.id, id, value)
         end
-        
+
         local id = "main_node"
         o = s:taboption("Main", ListValue, v.id .. "." .. id, string.format('* <a style="color:red">%s</a>', translate("Default Preproxy")), translate("When using, localhost will connect this node first and then use this node to connect the default node."))
         o:depends("tcp_node", v.id)

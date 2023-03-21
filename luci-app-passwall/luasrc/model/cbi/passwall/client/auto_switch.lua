@@ -28,7 +28,7 @@ o.default = 3
 o = s:option(Value, "retry_num", translate("Timeout retry num"))
 o.datatype = "uinteger"
 o.default = 3
-    
+
 o = s:option(DynamicList, "tcp_node", "TCP " .. translate("List of backup nodes"))
 for k, v in pairs(nodes_table) do
     if v.node_type == "normal" then
@@ -39,19 +39,19 @@ function o.write(self, section, value)
     local t = {}
     local t2 = {}
     if type(value) == "table" then
-		local x
-		for _, x in ipairs(value) do
-			if x and #x > 0 then
+        local x
+        for _, x in ipairs(value) do
+            if x and #x > 0 then
                 if not t2[x] then
                     t2[x] = x
                     t[#t+1] = x
                 end
-			end
-		end
-	else
-		t = { value }
-	end
-	return DynamicList.write(self, section, t)
+            end
+        end
+    else
+        t = { value }
+    end
+    return DynamicList.write(self, section, t)
 end
 
 o = s:option(Flag, "restore_switch", "TCP " .. translate("Restore Switch"), translate("When detects main node is available, switch back to the main node."))

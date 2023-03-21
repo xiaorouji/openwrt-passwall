@@ -18,19 +18,19 @@ local api = require "luci.passwall.api"
 	var reset_url = origin + "<%=api.url("reset_config")%>";
 	var hide_url = origin + "<%=api.url("hide")%>";
 	var show_url = origin + "<%=api.url("show")%>";
-	
+
 	function reset(url) {
 		if (confirm('<%:Are you sure to reset?%>') == true) {
 			window.location.href = reset_url;
 		}
 	}
-	
+
 	function hide(url) {
 		if (confirm('<%:Are you sure to hide?%>') == true) {
 			window.location.href = hide_url;
 		}
 	}
-	
+
 	var dom = document.getElementById("div2");
 	if (dom) {
 		var li = "";

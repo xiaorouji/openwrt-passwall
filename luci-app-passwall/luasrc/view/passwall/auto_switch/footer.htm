@@ -10,6 +10,7 @@ local api = require "luci.passwall.api"
 			window.location.href = '<%=api.url("autoswitch_add_node")%>' + "?key=" + key;
 		}
 	}
+
 	function remove_node_by_key() {
 		var key = prompt("<%:Please enter the node keyword, pay attention to distinguish between spaces, uppercase and lowercase.%>", "");
 		if (key) {

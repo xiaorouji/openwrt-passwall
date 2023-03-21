@@ -27,7 +27,6 @@ function gen_config_server(node)
     return config
 end
 
-
 function gen_config(var)
     local node_id = var["-node"]
     if not node_id then

@@ -123,7 +123,7 @@ o.rmempty = false
 o = s:option(Button, "_remove", translate("Delete the subscribed node"))
 o.inputstyle = "remove"
 function o.write(t, n)
-    local remark = m:get(n, "remark") or "" 
+    local remark = m:get(n, "remark") or ""
     luci.sys.call("lua /usr/share/" .. appname .. "/subscribe.lua truncate " .. remark .. " > /dev/null 2>&1")
 end
 

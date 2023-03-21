@@ -52,9 +52,9 @@ local header_type_list = {
     "none", "srtp", "utp", "wechat-video", "dtls", "wireguard"
 }
 local encrypt_methods_ss_aead = {
-	"chacha20-ietf-poly1305",
-	"aes-128-gcm",
-	"aes-256-gcm",
+    "chacha20-ietf-poly1305",
+    "aes-128-gcm",
+    "aes-256-gcm",
 }
 
 m = Map(appname, translate("Node Config"))
@@ -221,10 +221,10 @@ brook_protocol:value("client", translate("Brook"))
 brook_protocol:value("wsclient", translate("WebSocket"))
 brook_protocol:depends("type", "Brook")
 function brook_protocol.cfgvalue(self, section)
-	return m:get(section, "protocol")
+    return m:get(section, "protocol")
 end
 function brook_protocol.write(self, section, value)
-	m:set(section, "protocol", value)
+    m:set(section, "protocol", value)
 end
 
 brook_tls = s:option(Flag, "brook_tls", translate("Use TLS"))
@@ -236,10 +236,10 @@ naiveproxy_protocol:value("https", translate("HTTPS"))
 naiveproxy_protocol:value("quic", translate("QUIC"))
 naiveproxy_protocol:depends("type", "Naiveproxy")
 function naiveproxy_protocol.cfgvalue(self, section)
-	return m:get(section, "protocol")
+    return m:get(section, "protocol")
 end
 function naiveproxy_protocol.write(self, section, value)
-	m:set(section, "protocol", value)
+    m:set(section, "protocol", value)
 end
 
 address = s:option(Value, "address", translate("Address (Support Domain Name)"))
@@ -332,10 +332,10 @@ hysteria_protocol:value("faketcp", "faketcp")
 hysteria_protocol:value("wechat-video", "wechat-video")
 hysteria_protocol:depends("type", "Hysteria")
 function hysteria_protocol.cfgvalue(self, section)
-	return m:get(section, "protocol")
+    return m:get(section, "protocol")
 end
 function hysteria_protocol.write(self, section, value)
-	m:set(section, "protocol", value)
+    m:set(section, "protocol", value)
 end
 
 hysteria_obfs = s:option(Value, "hysteria_obfs", translate("Obfs Password"))
@@ -359,30 +359,30 @@ ss_encrypt_method = s:option(Value, "ss_encrypt_method", translate("Encrypt Meth
 for a, t in ipairs(ss_encrypt_method_list) do ss_encrypt_method:value(t) end
 ss_encrypt_method:depends("type", "SS")
 function ss_encrypt_method.cfgvalue(self, section)
-	return m:get(section, "method")
+    return m:get(section, "method")
 end
 function ss_encrypt_method.write(self, section, value)
-	m:set(section, "method", value)
+    m:set(section, "method", value)
 end
 
 ss_rust_encrypt_method = s:option(Value, "ss_rust_encrypt_method", translate("Encrypt Method"))
 for a, t in ipairs(ss_rust_encrypt_method_list) do ss_rust_encrypt_method:value(t) end
 ss_rust_encrypt_method:depends("type", "SS-Rust")
 function ss_rust_encrypt_method.cfgvalue(self, section)
-	return m:get(section, "method")
+    return m:get(section, "method")
 end
 function ss_rust_encrypt_method.write(self, section, value)
-	m:set(section, "method", value)
+    m:set(section, "method", value)
 end
 
 ssr_encrypt_method = s:option(Value, "ssr_encrypt_method", translate("Encrypt Method"))
 for a, t in ipairs(ssr_encrypt_method_list) do ssr_encrypt_method:value(t) end
 ssr_encrypt_method:depends("type", "SSR")
 function ssr_encrypt_method.cfgvalue(self, section)
-	return m:get(section, "method")
+    return m:get(section, "method")
 end
 function ssr_encrypt_method.write(self, section, value)
-	m:set(section, "method", value)
+    m:set(section, "method", value)
 end
 
 security = s:option(ListValue, "security", translate("Encrypt Method"))
@@ -400,20 +400,20 @@ v_ss_encrypt_method = s:option(ListValue, "v_ss_encrypt_method", translate("Encr
 for a, t in ipairs(v_ss_encrypt_method_list) do v_ss_encrypt_method:value(t) end
 v_ss_encrypt_method:depends({ type = "V2ray", protocol = "shadowsocks" })
 function v_ss_encrypt_method.cfgvalue(self, section)
-	return m:get(section, "method")
+    return m:get(section, "method")
 end
 function v_ss_encrypt_method.write(self, section, value)
-	m:set(section, "method", value)
+    m:set(section, "method", value)
 end
 
 x_ss_encrypt_method = s:option(ListValue, "x_ss_encrypt_method", translate("Encrypt Method"))
 for a, t in ipairs(x_ss_encrypt_method_list) do x_ss_encrypt_method:value(t) end
 x_ss_encrypt_method:depends({ type = "Xray", protocol = "shadowsocks" })
 function x_ss_encrypt_method.cfgvalue(self, section)
-	return m:get(section, "method")
+    return m:get(section, "method")
 end
 function x_ss_encrypt_method.write(self, section, value)
-	m:set(section, "method", value)
+    m:set(section, "method", value)
 end
 
 iv_check = s:option(Flag, "iv_check", translate("IV Check"))
@@ -432,10 +432,10 @@ ssr_protocol = s:option(Value, "ssr_protocol", translate("Protocol"))
 for a, t in ipairs(ssr_protocol_list) do ssr_protocol:value(t) end
 ssr_protocol:depends("type", "SSR")
 function ssr_protocol.cfgvalue(self, section)
-	return m:get(section, "protocol")
+    return m:get(section, "protocol")
 end
 function ssr_protocol.write(self, section, value)
-	m:set(section, "protocol", value)
+    m:set(section, "protocol", value)
 end
 
 protocol_param = s:option(Value, "protocol_param", translate("Protocol_param"))
@@ -477,10 +477,10 @@ if api.is_finded("obfs-local") then ss_plugin:value("obfs-local") end
 ss_plugin:depends("type", "SS")
 ss_plugin:depends("type", "SS-Rust")
 function ss_plugin.cfgvalue(self, section)
-	return m:get(section, "plugin")
+    return m:get(section, "plugin")
 end
 function ss_plugin.write(self, section, value)
-	m:set(section, "plugin", value)
+    m:set(section, "plugin", value)
 end
 
 ss_plugin_opts = s:option(Value, "ss_plugin_opts", translate("opts"))
@@ -488,10 +488,10 @@ ss_plugin_opts:depends("ss_plugin", "xray-plugin")
 ss_plugin_opts:depends("ss_plugin", "v2ray-plugin")
 ss_plugin_opts:depends("ss_plugin", "obfs-local")
 function ss_plugin_opts.cfgvalue(self, section)
-	return m:get(section, "plugin_opts")
+    return m:get(section, "plugin_opts")
 end
 function ss_plugin_opts.write(self, section, value)
-	m:set(section, "plugin_opts", value)
+    m:set(section, "plugin_opts", value)
 end
 
 uuid = s:option(Value, "uuid", translate("ID"))
@@ -568,10 +568,10 @@ trojan_go_fingerprint:value("ios")
 trojan_go_fingerprint.default = "disable"
 trojan_go_fingerprint:depends({ type = "Trojan-Go", tls = true })
 function trojan_go_fingerprint.cfgvalue(self, section)
-	return m:get(section, "fingerprint")
+    return m:get(section, "fingerprint")
 end
 function trojan_go_fingerprint.write(self, section, value)
-	m:set(section, "fingerprint", value)
+    m:set(section, "fingerprint", value)
 end
 
 tls_serverName = s:option(Value, "tls_serverName", translate("Domain"))
@@ -598,13 +598,13 @@ xray_fingerprint:value("randomized")
 xray_fingerprint.default = ""
 xray_fingerprint:depends({ type = "Xray", tls = true, reality = false })
 function xray_fingerprint.cfgvalue(self, section)
-	return m:get(section, "fingerprint")
+    return m:get(section, "fingerprint")
 end
 function xray_fingerprint.write(self, section, value)
-	m:set(section, "fingerprint", value)
+    m:set(section, "fingerprint", value)
 end
 function xray_fingerprint.remove(self, section)
-	m:del(section, "fingerprint")
+    m:del(section, "fingerprint")
 end
 
 -- [[ REALITY部分 ]] --
@@ -632,10 +632,10 @@ reality_fingerprint:value("randomized")
 reality_fingerprint.default = "chrome"
 reality_fingerprint:depends({ type = "Xray", tls = true, reality = true })
 function reality_fingerprint.cfgvalue(self, section)
-	return m:get(section, "fingerprint")
+    return m:get(section, "fingerprint")
 end
 function reality_fingerprint.write(self, section, value)
-	m:set(section, "fingerprint", value)
+    m:set(section, "fingerprint", value)
 end
 
 trojan_transport = s:option(ListValue, "trojan_transport", translate("Transport"))
