@@ -68,6 +68,7 @@ config global_app
 	option trojan_go_file '/usr/bin/trojan-go'
 	option brook_file '/usr/bin/brook'
 	option hysteria_file '/usr/bin/hysteria'
+	option chinadns_ng '/usr/bin/chinadns-ng'
 
 config global_subscribe
 	option filter_keyword_mode '1'
