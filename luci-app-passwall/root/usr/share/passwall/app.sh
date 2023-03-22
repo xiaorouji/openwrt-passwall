@@ -1476,14 +1476,18 @@ acl_app() {
 
 								local type=$(echo $(config_n_get $tcp_node type) | tr 'A-Z' 'a-z')
 								if [ -n "${type}" ] && ([ "${type}" = "v2ray" ] || [ "${type}" = "xray" ]); then
-									config_file=$(echo $config_file | sed "s/SOCKS/TCP_UDP_SOCKS/g")
+									config_file=$(echo $config_file | sed "s/SOCKS/TCP_SOCKS/g")
 									_extra_param="socks_address=127.0.0.1 socks_port=$socks_port"
 									if [ "$dns_mode" = "v2ray" -o "$dns_mode" = "xray" ]; then
-										config_file=$(echo $config_file | sed "s/SOCKS_${socks_port}/DNS/g")
+										config_file=$(echo $config_file | sed "s/TCP_/DNS_TCP_/g")
 										dns_port=$(get_new_port $(expr $dns_port + 1))
 										_dns_port=$dns_port
 										_extra_param="dns_listen_port=${_dns_port} remote_dns_protocol=${v2ray_dns_mode} remote_dns_tcp_server=${remote_dns} remote_dns_doh=${remote_dns} dns_client_ip=${dns_client_ip} dns_query_strategy=${DNS_QUERY_STRATEGY}"
 									fi
+									[ "$udp_node" != "nil" ] && [ "$udp_node" = "tcp" ] && {
+										config_file=$(echo $config_file | sed "s/TCP_/TCP_UDP_/g")
+										_extra_param="${_extra_param} udp_redir_port=$redir_port"
+									}
 									config_file="$TMP_PATH/$config_file"
 									run_v2ray flag=$tcp_node node=$tcp_node tcp_redir_port=$redir_port ${_extra_param} config_file=$config_file
 								else
@@ -1503,9 +1507,16 @@ acl_app() {
 			[ "$udp_node" != "nil" ] && {
 				[ "$udp_node" = "tcp" ] && udp_node=$tcp_node
 				if [ "$udp_node" = "default" ]; then
-					udp_node=$UDP_NODE
-					[ "$TCP_UDP" = "1" ] && [ "$udp_node" = "nil" ] && udp_node=$TCP_NODE
-					udp_port=$UDP_REDIR_PORT
+					if [ "$TCP_UDP" = "0" ] && [ "$UDP_NODE" = "nil" ]; then
+						udp_node="nil"
+						unset udp_port
+					elif [ "$TCP_UDP" = "1" ] && [ "$udp_node" = "nil" ]; then
+						udp_node=$TCP_NODE
+						udp_port=$TCP_REDIR_PORT
+					else
+						udp_node=$UDP_NODE
+						udp_port=$UDP_REDIR_PORT
+					fi
 				else
 					[ "$(config_get_type $udp_node nil)" = "nodes" ] && {
 						if [ "$udp_node" = "$UDP_NODE" ]; then
