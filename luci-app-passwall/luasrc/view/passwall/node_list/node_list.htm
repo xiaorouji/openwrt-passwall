@@ -9,8 +9,8 @@ table th, .table .th {
 
 table td, .table .td {
 	text-align: center;
-    /* white-space: nowrap; */
-    word-break: keep-all;
+	/* white-space: nowrap; */
+	word-break: keep-all;
 }
 
 #set_node_div {
@@ -22,7 +22,7 @@ table td, .table .td {
 	z-index: 99;
 	text-align: center;
 	background: white;
-    box-shadow: darkgrey 10px 10px 30px 5px;
+	box-shadow: darkgrey 10px 10px 30px 5px;
 }
 
 ._now_use {
@@ -38,14 +38,14 @@ table td, .table .td {
 	//<![CDATA[
 	var node_list = {};
 	var node_count = 0;
-	
+
 	var ajax = {
 		post: function(url, data, fn_success, timeout, fn_timeout) {
 			var xhr = new XMLHttpRequest();
 			var code = ajax.encode(data);
 			xhr.open("POST", url, true);
 			xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-			
+
 			if (timeout && timeout > 1000) {
 				xhr.timeout = timeout;
 			}
@@ -89,11 +89,11 @@ table td, .table .td {
 			return obj;
 		}
 	}
-	
+
 	function copy_node(cbi_id) {
 		window.location.href = '<%=api.url("copy_node")%>' + "?section=" + cbi_id;
 	}
-	
+
 	var section = "";
 	function open_set_node_div(cbi_id) {
 		section = cbi_id;
@@ -101,12 +101,12 @@ table td, .table .td {
 		var node_name = document.getElementById("cbid.passwall." + cbi_id + ".remarks").value;
 		document.getElementById("set_node_name").innerHTML = node_name;
 	}
-	
+
 	function close_set_node_div() {
 		document.getElementById("set_node_div").style.display="none";
 		document.getElementById("set_node_name").innerHTML = "";
 	}
-	
+
 	function _cbi_row_top(id) {
 		var dom = document.getElementById("cbi-passwall-" + id);
 		if (dom) {
@@ -121,7 +121,7 @@ table td, .table .td {
 			}
 		}
 	}
-	
+
 	function checked_all_node(btn) {
 		var doms = document.getElementById("cbi-passwall-nodes").getElementsByClassName("nodes_select");
 		if (doms && doms.length > 0) {
@@ -132,7 +132,7 @@ table td, .table .td {
 			btn.setAttribute("onclick", "dechecked_all_node(this)");
 		}
 	}
-	
+
 	function dechecked_all_node(btn) {
 		var doms = document.getElementById("cbi-passwall-nodes").getElementsByClassName("nodes_select");
 		if (doms && doms.length > 0) {
@@ -143,7 +143,7 @@ table td, .table .td {
 			btn.setAttribute("onclick", "checked_all_node(this)");
 		}
 	}
-	
+
 	function delete_select_nodes() {
 		var ids = [];
 		var doms = document.getElementById("cbi-passwall-nodes").getElementsByClassName("nodes_select");
@@ -179,13 +179,13 @@ table td, .table .td {
 			alert("<%:You no select nodes !%>");
 		}
 	}
-	
+
 	function set_node(protocol) {
 		if (confirm('<%:Are you sure set to%> ' + protocol.toUpperCase() + '<%:the server?%>')==true){
 			window.location.href = '<%=api.url("set_node")%>?protocol=' + protocol + '&section=' + section;
 		}
 	}
-	
+
 	function get_address_full(id) {
 		try {
 			var address = document.getElementById("cbid.passwall." + id + ".address").value;
@@ -200,7 +200,7 @@ table td, .table .td {
 			return null;
 		}
 	}
-	
+
 	//获取当前使用的节点
 	function get_now_use_node() {
 		XHR.get('<%=api.url("get_now_use_node")%>', null,
@@ -226,7 +226,7 @@ table td, .table .td {
 			}
 		);
 	}
-	
+
 	function urltest_node(cbi_id, dom) {
 		if (cbi_id != null) {
 			dom.disabled = true;
@@ -255,7 +255,7 @@ table td, .table .td {
 			);
 		}
 	}
-	
+
 	function ping_node(cbi_id, dom) {
 		var full = get_address_full(cbi_id);
 		if (full != null) {
@@ -281,7 +281,7 @@ table td, .table .td {
 			);
 		}
 	}
-	
+
 	/* 自动Ping */
 	var nodes = [];
 	const ping_value = document.getElementsByClassName('ping_value');
@@ -307,9 +307,9 @@ table td, .table .td {
 			});
 		}
 	}
-	
+
 	get_now_use_node();
-	
+
 	const _xhr = (index) => {
 		return new Promise((res) => {
 			const dom = nodes[index];
@@ -349,7 +349,7 @@ table td, .table .td {
 			);
 		})
 	}
-	
+
 	let task = -1;
 	const thread = () => {
 		task = task + 1
@@ -360,7 +360,7 @@ table td, .table .td {
 	for (let i = 0; i < 20; i++) {
 		thread()
 	}
-	
+
 	/* 递归单请求方法
 	var index = 0;
 	function auto_ping() {
@@ -407,7 +407,7 @@ table td, .table .td {
 	}
 	auto_ping();
 	*/
-	
+
 	var edit_btn = document.getElementById("cbi-passwall-nodes").getElementsByClassName("cbi-button cbi-button-edit");
 	for (var i = 0; i < edit_btn.length; i++) {
 		try {
@@ -424,7 +424,7 @@ table td, .table .td {
 			//添加"复制"按钮
 			new_div += '<input class="btn cbi-button cbi-button-add" type="button" value="<%:Copy%>" onclick="copy_node(\'' + id + '\')"/>&nbsp;&nbsp;';
 			td.innerHTML = new_div + td.innerHTML;
-			
+
 			var obj = {};
 			obj.id = id;
 			obj.type = document.getElementById("cbid.passwall." + id + ".type").value;
@@ -434,20 +434,20 @@ table td, .table .td {
 				obj.address = address_dom.value;
 				obj.port = port_dom.value;
 			}
-			
+
 			node_count++;
 			var add_from = document.getElementById("cbid.passwall." + id + ".add_from").value;
 			if (node_list[add_from])
 				node_list[add_from].push(obj);
 			else
 				node_list[add_from] = [];
-			
+
 		}
 		catch(err) {
 			console.error(err);
 		}
 	}
-	
+
 	if (true) {
 		var str = "";
 		for (var add_from in node_list) {
@@ -459,7 +459,7 @@ table td, .table .td {
 		}
 		document.getElementById("div_node_count").innerHTML = "<div style='margin-top:5px'>" + str + "</div>";
 	}
-	
+
 	//]]>
 </script>
 

@@ -9,28 +9,28 @@ m = Map(appname)
 
 local nodes_table = {}
 for k, e in ipairs(api.get_valid_nodes()) do
-    nodes_table[#nodes_table + 1] = e
+	nodes_table[#nodes_table + 1] = e
 end
 
 local global_proxy_mode = (m:get("@global[0]", "tcp_proxy_mode") or "") .. (m:get("@global[0]", "udp_proxy_mode") or "")
 
 local dynamicList_write = function(self, section, value)
-    local t = {}
-    local t2 = {}
-    if type(value) == "table" then
+	local t = {}
+	local t2 = {}
+	if type(value) == "table" then
 		local x
 		for _, x in ipairs(value) do
 			if x and #x > 0 then
-                if not t2[x] then
-                    t2[x] = x
-                    t[#t+1] = x
-                end
+				if not t2[x] then
+					t2[x] = x
+					t[#t+1] = x
+				end
 			end
 		end
 	else
 		t = { value }
 	end
-    t = table.concat(t, " ")
+	t = table.concat(t, " ")
 	return DynamicList.write(self, section, t)
 end
 
@@ -51,22 +51,22 @@ o.rmempty = true
 
 local mac_t = {}
 sys.net.mac_hints(function(e, t)
-    mac_t[#mac_t + 1] = {
-        ip = t,
-        mac = e
-    }
+	mac_t[#mac_t + 1] = {
+		ip = t,
+		mac = e
+	}
 end)
 table.sort(mac_t, function(a,b)
-    if #a.ip < #b.ip then
-        return true
-    elseif #a.ip == #b.ip then
-        if a.ip < b.ip then
-            return true
-        else
-            return #a.ip < #b.ip
-        end
-    end
-    return false
+	if #a.ip < #b.ip then
+		return true
+	elseif #a.ip == #b.ip then
+		if a.ip < b.ip then
+			return true
+		else
+			return #a.ip < #b.ip
+		end
+	end
+	return false
 end)
 
 ---- Source
@@ -80,58 +80,58 @@ sources.description = "<ul><li>" .. translate("Example:")
 .. "</li></ul>"
 sources.cast = "string"
 for _, key in pairs(mac_t) do
-    sources:value(key.mac, "%s (%s)" % {key.mac, key.ip})
+	sources:value(key.mac, "%s (%s)" % {key.mac, key.ip})
 end
 sources.cfgvalue = function(self, section)
-    local value
+	local value
 	if self.tag_error[section] then
 		value = self:formvalue(section)
 	else
 		value = self.map:get(section, self.option)
-        if type(value) == "string" then
-            local value2 = {}
-            string.gsub(value, '[^' .. " " .. ']+', function(w) table.insert(value2, w) end)
-            value = value2
-        end
+		if type(value) == "string" then
+			local value2 = {}
+			string.gsub(value, '[^' .. " " .. ']+', function(w) table.insert(value2, w) end)
+			value = value2
+		end
 	end
-    return value
+	return value
 end
 sources.validate = function(self, value, t)
-    local err = {}
-    for _, v in ipairs(value) do
-        local flag = false
-        if v:find("ipset:") and v:find("ipset:") == 1 then
-            local ipset = v:gsub("ipset:", "")
-            if ipset and ipset ~= "" then
-                flag = true
-            end
-        end
+	local err = {}
+	for _, v in ipairs(value) do
+		local flag = false
+		if v:find("ipset:") and v:find("ipset:") == 1 then
+			local ipset = v:gsub("ipset:", "")
+			if ipset and ipset ~= "" then
+				flag = true
+			end
+		end
 
-        if flag == false and datatypes.macaddr(v) then
-            flag = true
-        end
+		if flag == false and datatypes.macaddr(v) then
+			flag = true
+		end
 
-        if flag == false and datatypes.ip4addr(v) then
-            flag = true
-        end
+		if flag == false and datatypes.ip4addr(v) then
+			flag = true
+		end
 
-        if flag == false and api.iprange(v) then
-            flag = true
-        end
+		if flag == false and api.iprange(v) then
+			flag = true
+		end
 
-        if flag == false then
-            err[#err + 1] = v
-        end
-    end
+		if flag == false then
+			err[#err + 1] = v
+		end
+	end
 
-    if #err > 0 then
-        self:add_error(t, "invalid", translate("Not true format, please re-enter!"))
-        for _, v in ipairs(err) do
-            self:add_error(t, "invalid", v)
-        end
-    end
+	if #err > 0 then
+		self:add_error(t, "invalid", translate("Not true format, please re-enter!"))
+		for _, v in ipairs(err) do
+			self:add_error(t, "invalid", v)
+		end
+	end
 
-    return value
+	return value
 end
 sources.write = dynamicList_write
 
@@ -186,10 +186,10 @@ tcp_proxy_mode:value("default", translate("Default"))
 tcp_proxy_mode:value("disable", translate("No Proxy"))
 tcp_proxy_mode:value("global", translate("Global Proxy"))
 if has_chnlist and global_proxy_mode:find("returnhome") then
-    tcp_proxy_mode:value("returnhome", translate("China List"))
+	tcp_proxy_mode:value("returnhome", translate("China List"))
 else
-    tcp_proxy_mode:value("gfwlist", translate("GFW List"))
-    tcp_proxy_mode:value("chnroute", translate("Not China List"))
+	tcp_proxy_mode:value("gfwlist", translate("GFW List"))
+	tcp_proxy_mode:value("chnroute", translate("Not China List"))
 end
 tcp_proxy_mode:value("direct/proxy", translate("Only use direct/proxy list"))
 
@@ -201,10 +201,10 @@ udp_proxy_mode:value("default", translate("Default"))
 udp_proxy_mode:value("disable", translate("No Proxy"))
 udp_proxy_mode:value("global", translate("Global Proxy"))
 if has_chnlist and global_proxy_mode:find("returnhome") then
-    udp_proxy_mode:value("returnhome", translate("China List"))
+	udp_proxy_mode:value("returnhome", translate("China List"))
 else
-    udp_proxy_mode:value("gfwlist", translate("GFW List"))
-    udp_proxy_mode:value("chnroute", translate("Not China List"))
+	udp_proxy_mode:value("gfwlist", translate("GFW List"))
+	udp_proxy_mode:value("chnroute", translate("Not China List"))
 end
 udp_proxy_mode:value("direct/proxy", translate("Only use direct/proxy list"))
 
@@ -218,8 +218,8 @@ udp_node:value("default", translate("Default"))
 udp_node:value("tcp", translate("Same as the tcp node"))
 
 for k, v in pairs(nodes_table) do
-    tcp_node:value(v.id, v["remark"])
-    udp_node:value(v.id, v["remark"])
+	tcp_node:value(v.id, v["remark"])
+	udp_node:value(v.id, v["remark"])
 end
 
 o = s:option(Flag, "filter_proxy_ipv6", translate("Filter Proxy Host IPv6"), translate("Experimental feature."))
@@ -230,10 +230,10 @@ o:depends({ tcp_node = "default",  ['!reverse'] = true })
 o = s:option(ListValue, "dns_mode", translate("Filter Mode"))
 o:depends({ tcp_node = "default",  ['!reverse'] = true })
 if api.is_finded("dns2socks") then
-    o:value("dns2socks", "dns2socks")
+	o:value("dns2socks", "dns2socks")
 end
 if has_xray then
-    o:value("xray", "Xray")
+	o:value("xray", "Xray")
 end
 
 o = s:option(ListValue, "v2ray_dns_mode", " ")
@@ -255,40 +255,40 @@ o:depends("dns_mode", "dns2socks")
 o:depends("v2ray_dns_mode", "tcp")
 
 if has_v2ray or has_xray then
-    o = s:option(Value, "remote_dns_doh", translate("Remote DNS DoH"))
-    o:value("https://1.1.1.1/dns-query", "CloudFlare")
-    o:value("https://1.1.1.2/dns-query", "CloudFlare-Security")
-    o:value("https://8.8.4.4/dns-query", "Google 8844")
-    o:value("https://8.8.8.8/dns-query", "Google 8888")
-    o:value("https://9.9.9.9/dns-query", "Quad9-Recommended")
-    o:value("https://208.67.222.222/dns-query", "OpenDNS")
-    o:value("https://dns.adguard.com/dns-query,176.103.130.130", "AdGuard")
-    o:value("https://doh.libredns.gr/dns-query,116.202.176.26", "LibreDNS")
-    o:value("https://doh.libredns.gr/ads,116.202.176.26", "LibreDNS (No Ads)")
-    o.default = "https://1.1.1.1/dns-query"
-    o.validate = function(self, value, t)
-        if value ~= "" then
-            value = api.trim(value)
-            local flag = 0
-            local util = require "luci.util"
-            local val = util.split(value, ",")
-            local url = val[1]
-            val[1] = nil
-            for i = 1, #val do
-                local v = val[i]
-                if v then
-                    if not api.datatypes.ipmask4(v) then
-                        flag = 1
-                    end
-                end
-            end
-            if flag == 0 then
-                return value
-            end
-        end
-        return nil, translate("DoH request address") .. " " .. translate("Format must be:") .. " URL,IP"
-    end
-    o:depends("v2ray_dns_mode", "doh")
+	o = s:option(Value, "remote_dns_doh", translate("Remote DNS DoH"))
+	o:value("https://1.1.1.1/dns-query", "CloudFlare")
+	o:value("https://1.1.1.2/dns-query", "CloudFlare-Security")
+	o:value("https://8.8.4.4/dns-query", "Google 8844")
+	o:value("https://8.8.8.8/dns-query", "Google 8888")
+	o:value("https://9.9.9.9/dns-query", "Quad9-Recommended")
+	o:value("https://208.67.222.222/dns-query", "OpenDNS")
+	o:value("https://dns.adguard.com/dns-query,176.103.130.130", "AdGuard")
+	o:value("https://doh.libredns.gr/dns-query,116.202.176.26", "LibreDNS")
+	o:value("https://doh.libredns.gr/ads,116.202.176.26", "LibreDNS (No Ads)")
+	o.default = "https://1.1.1.1/dns-query"
+	o.validate = function(self, value, t)
+		if value ~= "" then
+			value = api.trim(value)
+			local flag = 0
+			local util = require "luci.util"
+			local val = util.split(value, ",")
+			local url = val[1]
+			val[1] = nil
+			for i = 1, #val do
+				local v = val[i]
+				if v then
+					if not api.datatypes.ipmask4(v) then
+						flag = 1
+					end
+				end
+			end
+			if flag == 0 then
+				return value
+			end
+		end
+		return nil, translate("DoH request address") .. " " .. translate("Format must be:") .. " URL,IP"
+	end
+	o:depends("v2ray_dns_mode", "doh")
 end
 
 o = s:option(Value, "dns_client_ip", translate("EDNS Client Subnet"))
@@ -296,20 +296,20 @@ o.datatype = "ipaddr"
 o:depends("v2ray_dns_mode", "doh")
 
 if has_chnlist then
-    when_chnroute_default_dns = s:option(ListValue, "when_chnroute_default_dns", translate("When using the chnroute list the default DNS"))
-    when_chnroute_default_dns.default = "direct"
-    when_chnroute_default_dns:value("remote", translate("Remote DNS"))
-    when_chnroute_default_dns:value("direct", translate("Direct DNS"))
-    when_chnroute_default_dns.description = "<ul>"
-    .. "<li>" .. translate("Remote DNS can avoid more DNS leaks, but some domestic domain names maybe to proxy!") .. "</li>"
-    .. "<li>" .. translate("Direct DNS Internet experience may be better, but DNS will be leaked!") .. "</li>"
-    if api.is_finded("chinadns-ng") then
-        when_chnroute_default_dns:value("chinadns_ng", translate("ChinaDNS-NG"))
-        when_chnroute_default_dns.default = "chinadns_ng"
-    end
-    when_chnroute_default_dns.description = when_chnroute_default_dns.description .. "</li></ul>"
-    when_chnroute_default_dns:depends("tcp_proxy_mode", "chnroute")
-    when_chnroute_default_dns:depends("udp_proxy_mode", "chnroute")
+	when_chnroute_default_dns = s:option(ListValue, "when_chnroute_default_dns", translate("When using the chnroute list the default DNS"))
+	when_chnroute_default_dns.default = "direct"
+	when_chnroute_default_dns:value("remote", translate("Remote DNS"))
+	when_chnroute_default_dns:value("direct", translate("Direct DNS"))
+	when_chnroute_default_dns.description = "<ul>"
+	.. "<li>" .. translate("Remote DNS can avoid more DNS leaks, but some domestic domain names maybe to proxy!") .. "</li>"
+	.. "<li>" .. translate("Direct DNS Internet experience may be better, but DNS will be leaked!") .. "</li>"
+	if api.is_finded("chinadns-ng") then
+		when_chnroute_default_dns:value("chinadns_ng", translate("ChinaDNS-NG"))
+		when_chnroute_default_dns.default = "chinadns_ng"
+	end
+	when_chnroute_default_dns.description = when_chnroute_default_dns.description .. "</li></ul>"
+	when_chnroute_default_dns:depends("tcp_proxy_mode", "chnroute")
+	when_chnroute_default_dns:depends("udp_proxy_mode", "chnroute")
 end
 
 return m

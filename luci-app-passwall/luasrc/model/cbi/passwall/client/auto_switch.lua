@@ -3,7 +3,7 @@ local appname = api.appname
 
 local nodes_table = {}
 for k, e in ipairs(api.get_valid_nodes()) do
-    nodes_table[#nodes_table + 1] = e
+	nodes_table[#nodes_table + 1] = e
 end
 
 m = Map(appname)
@@ -28,24 +28,24 @@ o.default = 3
 o = s:option(Value, "retry_num", translate("Timeout retry num"))
 o.datatype = "uinteger"
 o.default = 3
-    
+
 o = s:option(DynamicList, "tcp_node", "TCP " .. translate("List of backup nodes"))
 for k, v in pairs(nodes_table) do
-    if v.node_type == "normal" then
-        o:value(v.id, v["remark"])
-    end
+	if v.node_type == "normal" then
+		o:value(v.id, v["remark"])
+	end
 end
 function o.write(self, section, value)
-    local t = {}
-    local t2 = {}
-    if type(value) == "table" then
+	local t = {}
+	local t2 = {}
+	if type(value) == "table" then
 		local x
 		for _, x in ipairs(value) do
 			if x and #x > 0 then
-                if not t2[x] then
-                    t2[x] = x
-                    t[#t+1] = x
-                end
+				if not t2[x] then
+					t2[x] = x
+					t[#t+1] = x
+				end
 			end
 		end
 	else

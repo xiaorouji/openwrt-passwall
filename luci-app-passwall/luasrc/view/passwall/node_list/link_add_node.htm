@@ -13,7 +13,7 @@ local api = require "luci.passwall.api"
 	z-index: 99;
 	text-align: center;
 	background: white;
-    box-shadow: darkgrey 10px 10px 30px 5px;
+	box-shadow: darkgrey 10px 10px 30px 5px;
 	padding: 30px 15px;
 }
 </style>
@@ -35,16 +35,16 @@ local api = require "luci.passwall.api"
 			});
 		}
 	}
-	
+
 	function open_add_link_div() {
 		document.getElementById("add_link_div").style.display = "block";
 		document.getElementById("nodes_link").focus();
 	}
-	
+
 	function close_add_link_div() {
 		document.getElementById("add_link_div").style.display = "none";
 	}
-	
+
 	function add_node() {
 		var nodes_link = document.getElementById("nodes_link").value;
 		if (nodes_link.trim() != "") {
@@ -61,7 +61,7 @@ local api = require "luci.passwall.api"
 			document.getElementById("nodes_link").focus();
 		}
 	}
-	
+
 	function clear_all_nodes() {
 		if (confirm('<%:Are you sure to clear all nodes?%>') == true){
 			XHR.get('<%=api.url("clear_all_nodes")%>', null,
@@ -75,7 +75,7 @@ local api = require "luci.passwall.api"
 			});
 		}
 	}
-	
+
 	//]]>
 </script>
 

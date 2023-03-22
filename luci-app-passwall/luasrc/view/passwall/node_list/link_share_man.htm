@@ -8,23 +8,23 @@ local has_xray = api.is_finded("xray")
 	function padright(str, cnt, pad) {
 		return str + Array(cnt + 1).join(pad);
 	}
-	
+
 	function b64EncodeUnicode(str) {
 		return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
 			return String.fromCharCode('0x' + p1);
 		}));
 	}
-	
+
 	function b64encutf8safe(str) {
 		return b64EncodeUnicode(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, '');
 	}
-	
+
 	function b64DecodeUnicode(str) {
 		return decodeURIComponent(Array.prototype.map.call(atob(str), function(c) {
 			return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
 		}).join(''));
 	}
-	
+
 	function b64decutf8safe(str) {
 		var l;
 		str = str.replace(/-/g, "+").replace(/_/g, "/");
@@ -34,11 +34,11 @@ local has_xray = api.is_finded("xray")
 			str = padright(str, l, "=");
 		return b64DecodeUnicode(str);
 	}
-	
+
 	function b64encsafe(str) {
 		return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, '')
 	}
-	
+
 	function b64decsafe(str) {
 		var l;
 		str = str.replace(/-/g, "+").replace(/_/g, "/");
@@ -48,13 +48,14 @@ local has_xray = api.is_finded("xray")
 			str = padright(str, l, "=");
 		return atob(str);
 	}
-	
+
 	function dictvalue(d, key) {
 		var v = d[key];
 		if (typeof(v) === 'undefined' || v === '')
 			return '';
 		return b64decsafe(v);
 	}
+
 	function parseNodeUrl(url) {
 		var m = url.match(/^(([^:\/?#]+:)?(?:\/\/((?:([^\/?#:]*)([^\/?#:]*)@)?([^\/?#:]*)(?::([^\/?#:]*))?)))?([^?#]*)(\?[^#]*)?(#.*)?$/),
 			r = {
@@ -120,7 +121,7 @@ local has_xray = api.is_finded("xray")
 				return ""
 			}
 		}
-		
+
 		var s = document.getElementById(urlname + "-status");
 		if (!s) {
 			alert("Never");
@@ -136,11 +137,11 @@ local has_xray = api.is_finded("xray")
 			var v_port = opt.get("port");
 			var v_method = opt.get("ss_encrypt_method");
 			var v_password = opt.get("password");
-			
+
 			url = b64encsafe(v_method.value + ":" + v_password.value) + "@" +
 				v_server.value + ":" +
 				v_port.value + "/?";
-			
+
 			var params = "";
 			var v_plugin = opt.get("ss_plugin").value;
 			if (v_plugin && v_plugin != "none") {
@@ -165,11 +166,11 @@ local has_xray = api.is_finded("xray")
 			var v_port = opt.get("port");
 			var v_method = opt.get("ss_rust_encrypt_method");
 			var v_password = opt.get("password");
-			
+
 			url = btoa(v_method.value + ":" + v_password.value) + "@" +
 				v_server.value + ":" +
 				v_port.value + "/?";
-			
+
 			var params = "";
 			var v_plugin = opt.get("ss_plugin").value;
 			if (v_plugin && v_plugin != "none") {
@@ -215,7 +216,7 @@ local has_xray = api.is_finded("xray")
 			info.add = opt.get("address").value;
 			info.port = opt.get("port").value;
 			info.id = opt.get("uuid").value;
-			
+
 			var v_transport = opt.get("transport").value;
 			if (v_transport === "ws") {
 				info.host = opt.get("ws_host").value;
@@ -241,7 +242,7 @@ local has_xray = api.is_finded("xray")
 				info.path = encodeURI(info.path);
 			}
 			info.net = v_transport;
-			
+
 			info.security = opt.get("security").value || "auto";
 			if (opt.get("tls").checked) {
 				var v_security = "tls";
@@ -257,7 +258,7 @@ local has_xray = api.is_finded("xray")
 			url = encodeURIComponent(v_password.value) +
 				"@" + v_server.value +
 				":" + v_port.value + "?";
-			
+
 			var params = "";
 			var v_transport = opt.get("transport").value;
 			if (v_transport === "ws") {
@@ -283,7 +284,7 @@ local has_xray = api.is_finded("xray")
 				params += opt.query("serviceName", "grpc_serviceName");
 			}
 			params += "&type=" + v_transport;
-			
+
 			params += opt.query("encryption", "encryption");
 
 			if (opt.get("tls").checked) {
@@ -365,7 +366,7 @@ local has_xray = api.is_finded("xray")
 			var v_port = opt.get("port");
 			var v_password = opt.get("password");
 			var b_protocol_value = v_protocol.value.split('client').join('server');
-			
+
 			var url_protocol = b_protocol_value;
 			params += opt.query("password", "password");
 			if (b_protocol_value == "wsserver") {
@@ -425,7 +426,7 @@ local has_xray = api.is_finded("xray")
 		}
 		return false;
 	}
-	
+
 	function fromUrl(btn, urlname, sid) {
 		var opt = {
 			base: 'cbid.passwall',
@@ -461,7 +462,7 @@ local has_xray = api.is_finded("xray")
 						if (obj.combobox) {
 							obj.combobox.value = val;
 						}
-						
+
 						var list = obj.getElementsByTagName("li");
 						if (list.length > 0) {
 							for (var i = 0; i < list.length; i++) {
@@ -508,7 +509,7 @@ local has_xray = api.is_finded("xray")
 				}
 			}
 		}
-		
+
 		var s = document.getElementById(urlname + '-status');
 		if (!s) {
 			alert("Never");
@@ -659,7 +660,7 @@ local has_xray = api.is_finded("xray")
 				opt.set('tls_serverName', queryParam.peer || queryParam.sni || '');
 				opt.set('tls_allowInsecure', queryParam.allowinsecure === '1');
 			}
-			
+
 			if (stype === "Trojan-Go") {
 				var tran = 'original';
 				var ws = null;
@@ -849,7 +850,7 @@ local has_xray = api.is_finded("xray")
 					queryParam[decodeURIComponent(params[0])] = decodeURIComponent(params[1] || '');
 				}
 			}
-			
+
 			opt.set('encryption', queryParam.encryption);
 			if (queryParam.security) {
 				if (queryParam.security == "tls") {
@@ -865,7 +866,7 @@ local has_xray = api.is_finded("xray")
 					}
 				}
 			}
-			
+
 			queryParam.type = queryParam.type.toLowerCase();
 			if (queryParam.type === "kcp" || queryParam.type === "mkcp")
 				queryParam.type = "mkcp"
@@ -891,17 +892,17 @@ local has_xray = api.is_finded("xray")
 			} else if (queryParam.type === "grpc") {
 				opt.set('grpc_serviceName', (queryParam.serviceName || queryParam.path) || "");
 			}
-			
+
 			if (m.hash) {
 				opt.set('remarks', decodeURI(m.hash.substr(1)));
 			}
 		} else if (ssu[0] === "brook") {
 			var stype = "Brook";
 			var m = parseNodeUrl(ssrurl);
-			
+
 			var from_protocol = m.host;
 			var protocol = from_protocol.split('server').join('client');
-			
+
 			var queryParam = {};
 			if (m.search.length > 1) {
 				var query = m.search.split('?');
@@ -913,17 +914,17 @@ local has_xray = api.is_finded("xray")
 					queryParam[decodeURIComponent(params[0])] = decodeURIComponent(params[1] || '');
 				}
 			}
-			
+
 			var password = queryParam.password;
 			if (password === "") {
 				s.innerHTML = "<font color='red'><%:Invalid Share URL Format%></font>";
 				return false;
 			}
-			
+
 			opt.set('type', stype);
 			opt.set('brook_protocol', protocol);
 			opt.set('password', password);
-			
+
 			if (protocol == 'wsclient' || protocol == 'wssclient') {
 				opt.set('brook_protocol', 'wsclient');
 				var wsserver = queryParam[from_protocol].split('://');
@@ -945,7 +946,7 @@ local has_xray = api.is_finded("xray")
 				opt.set('address', server[0]);
 				opt.set('port', server[1]);
 			}
-			
+
 			if (m.hash) {
 				opt.set('remarks', decodeURI(m.hash.substr(1)));
 			}
