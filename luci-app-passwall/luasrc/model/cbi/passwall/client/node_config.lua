@@ -153,6 +153,7 @@ balancingStrategy.default = "random"
 local probeInterval = s:option(Value, "probeInterval", translate("Probe Interval"))
 probeInterval:depends("balancingStrategy", "leastPing")
 probeInterval.default = "1m"
+probeInterval.description = translate("The interval between initiating probes. Every time this time elapses, a server status check is performed on a server. The time format is numbers + units, such as '10s', '2h45m', and the supported time units are <code>ns</code>, <code>us</code>, <code>ms</code>, <code>s</code>, <code>m</code>, <code>h</code>, which correspond to nanoseconds, microseconds, milliseconds, seconds, minutes, and hours, respectively.")
 
 -- 分流
 uci:foreach(appname, "shunt_rules", function(e)
