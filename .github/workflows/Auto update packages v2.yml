@@ -69,7 +69,7 @@ jobs:
             hash_line: 13
             version_head: PKG_VERSION:=
             hash_head: PKG_HASH:=
-            release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/zfl9/chinadns-ng/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}'
+            release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/zfl9/chinadns-ng/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g'
             release_download_url: https://codeload.github.com/zfl9/chinadns-ng/tar.gz/
             file_name:
 
