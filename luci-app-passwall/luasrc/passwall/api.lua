@@ -769,7 +769,36 @@ function to_extract(app_name, file, subfix)
 	return {code = 0, file = tmp_dir}
 end
 
-function to_move(app_name,file)
+function compress_with_upx(bin_path)
+	local upx_path = com.upx.default_path or "/usr/bin/upx"
+	local output_path = bin_path .. ".upx"
+	if get_app_version("upx",upx_path) == "" then
+		local arch = auto_get_arch()
+		local url = com.upx:get_dl_url(arch)
+		local upx_tmp_path = util.trim(util.exec("mktemp -u -t upx_dl.XXXXXX"))
+		local return_code, result = curl_logic(url, upx_tmp_path, curl_args)
+		result = return_code == 0
+		if not result then
+			exec("/bin/rm", {"-f", upx_tmp_path})
+			return {
+				code = 1,
+				error = string.format("UPX "..i18n.translatef("File download failed or timed out: %s"), url)
+			}
+		end
+		result = exec("/bin/mv", { "-f", upx_tmp_path, upx_path }) == 0
+		if not result then
+			upx_path = upx_tmp_path
+		end
+		sys.call("chmod +x " .. upx_path)
+	end
+	exec(upx_path,{"--output="..output_path, "-3", bin_path})
+	return {
+		code = 0,
+		path = fs.access(output_path) and output_path or bin_path
+	}
+end
+
+function to_move(app_name, file)
 	local result = check_path(app_name)
 	if result.code ~= 0 then
 		return result
@@ -801,6 +830,10 @@ function to_move(app_name,file)
 	if flag == 0 then
 		sys.call("/etc/init.d/passwall stop")
 	end
+
+	upx_res = compress_with_upx(bin_path)
+	if upx_res.code == 1 then return upx_res end
+	bin_path = upx_res.path
 
 	local old_app_size = 0
 	if fs.access(app_path) then

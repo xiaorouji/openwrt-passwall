@@ -71,10 +71,12 @@ function index()
 	--[[Components update]]
 	entry({"admin", "services", appname, "check_passwall"}, call("app_check")).leaf = true
 	local coms = require "luci.passwall.com"
-	local com
-	for com, _ in pairs(coms) do
-		entry({"admin", "services", appname, "check_" .. com}, call("com_check", com)).leaf = true
-		entry({"admin", "services", appname, "update_" .. com}, call("com_update", com)).leaf = true
+	local k, v
+	for k, v in pairs(coms) do
+		if not v.hide then
+			entry({"admin", "services", appname, "check_" .. k}, call("com_check", k)).leaf = true
+			entry({"admin", "services", appname, "update_" .. k}, call("com_update", k)).leaf = true
+		end
 	end
 end
 

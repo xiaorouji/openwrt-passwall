@@ -8,6 +8,33 @@ local function gh_pre_release_url(self)
 	return "https://api.github.com/repos/" .. self.repo .. "/releases?per_page=1"
 end
 
+local function gh_file_url(self, arch)
+	return "https://raw.githubusercontent.com/".. self.repo .. string.format(self.path_fmt_str, self.file_tree[arch])
+end
+
+--Supported arch name: x86_64, x86, mips, mipsel, aarch64, armv5, armv6, armv7
+
+_M.upx = {
+	name = "UPX",
+	repo = "nftbty/op-tools-dl",
+	get_dl_url = gh_file_url,
+	cmd_version = "-V | sed -n 1P | awk '{print $2}'",
+	zipped = false,
+	hide = false,
+	default_path = "/usr/bin/upx",
+	path_fmt_str = "/main/upx/upx_%s",
+	file_tree = {
+		x86_64 = "amd64",
+		x86 = "i386",
+		mips = "mips",
+		mipsel = "mipsel",
+		aarch64 = "arm64",
+		armv5 = "arm",
+		armv6 = "arm",
+		armv7 = "arm"
+	}
+}
+
 _M.brook = {
 	name = "Brook",
 	repo = "txthinking/brook",
