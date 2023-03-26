@@ -142,9 +142,18 @@ for k, e in ipairs(api.get_valid_nodes()) do
 end
 
 -- 负载均衡列表
-balancing_node = s:option(DynamicList, "balancing_node", translate("Load balancing node list"), translate("Load balancing node list, <a target='_blank' href='https://toutyrater.github.io/routing/balance2.html'>document</a>"))
+local balancing_node = s:option(DynamicList, "balancing_node", translate("Load balancing node list"), translate("Load balancing node list, <a target='_blank' href='https://toutyrater.github.io/routing/balance2.html'>document</a>"))
 for k, v in pairs(nodes_table) do balancing_node:value(v.id, v.remarks) end
 balancing_node:depends("protocol", "_balancing")
+local balancingStrategy = s:option(ListValue, "balancingStrategy", translate("Balancing Strategy"))
+balancingStrategy:depends("protocol", "_balancing")
+balancingStrategy:value("random")
+balancingStrategy:value("leastPing")
+balancingStrategy.default = "random"
+local probeInterval = s:option(Value, "probeInterval", translate("Probe Interval"))
+probeInterval:depends("balancingStrategy", "leastPing")
+probeInterval.default = "1m"
+probeInterval.description = translate("The interval between initiating probes. Every time this time elapses, a server status check is performed on a server. The time format is numbers + units, such as '10s', '2h45m', and the supported time units are <code>ns</code>, <code>us</code>, <code>ms</code>, <code>s</code>, <code>m</code>, <code>h</code>, which correspond to nanoseconds, microseconds, milliseconds, seconds, minutes, and hours, respectively.")
 
 -- 分流
 uci:foreach(appname, "shunt_rules", function(e)
@@ -205,13 +214,11 @@ domainStrategy.description = "<br /><ul><li>" .. translate("'AsIs': Only use dom
 .. "</li><li>" .. translate("'IPIfNonMatch': When no rule matches current domain, resolves it into IP addresses (A or AAAA records) and try all rules again.")
 .. "</li><li>" .. translate("'IPOnDemand': As long as there is a IP-based rule, resolves the domain into IP immediately.")
 .. "</li></ul>"
-domainStrategy:depends("protocol", "_balancing")
 domainStrategy:depends("protocol", "_shunt")
 
 domainMatcher = s:option(ListValue, "domainMatcher", translate("Domain matcher"))
 domainMatcher:value("hybrid")
 domainMatcher:value("linear")
-domainMatcher:depends("protocol", "_balancing")
 domainMatcher:depends("protocol", "_shunt")
 
 

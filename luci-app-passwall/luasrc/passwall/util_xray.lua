@@ -527,6 +527,7 @@ function gen_config(var)
 	local dns = nil
 	local fakedns = nil
 	local routing = nil
+	local observatory = nil
 	local inbounds = {}
 	local outbounds = {}
 
@@ -791,10 +792,18 @@ function gen_config(var)
 					local outbound = gen_outbound(flag, node)
 					if outbound then table.insert(outbounds, outbound) end
 				end
+				if node.balancingStrategy == "leastPing" then
+					observatory = {
+						subjectSelector = nodes,
+						probeInterval = node.probeInterval or "1m"
+					}
+				end
 				routing = {
-					domainStrategy = node.domainStrategy or "AsIs",
-					domainMatcher = node.domainMatcher or "hybrid",
-					balancers = {{tag = "balancer", selector = nodes}},
+					balancers = {{
+						tag = "balancer",
+						selector = nodes,
+						strategy = {type = node.balancingStrategy or "random"}
+					}},
 					rules = {
 						{type = "field", network = "tcp,udp", balancerTag = "balancer"}
 					}
@@ -1039,6 +1048,8 @@ function gen_config(var)
 			inbounds = inbounds,
 			-- 传出连接
 			outbounds = outbounds,
+			-- 连接观测
+			observatory = observatory,
 			-- 路由
 			routing = routing,
 			-- 本地策略
