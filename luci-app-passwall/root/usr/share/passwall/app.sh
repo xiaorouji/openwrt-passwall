@@ -555,8 +555,8 @@ run_redir() {
 			echolog "${PROTO}节点：[$remarks]${server_host} 是非法的服务器地址，无法启动！"
 			return 1
 		}
-		[ "$bind" != "127.0.0.1" ] && echolog "${PROTO}节点：[$remarks]${server_host}:${port}，监听端口：$local_port"
 	}
+	[ "$bind" != "127.0.0.1" ] && echolog "${PROTO}节点：[$remarks]，监听端口：$local_port"
 	eval ${PROTO}_NODE_PORT=$port
 
 	case "$PROTO" in
@@ -1165,6 +1165,10 @@ start_dns() {
 	}
 	
 	[ "$DNS_SHUNT" = "dnsmasq" ] && {
+		[ "$WHEN_CHNROUTE_DEFAULT_DNS" = "remote" ] && {
+			dnsmasq_version=$(dnsmasq -v | grep -i "Dnsmasq version " | awk '{print $3}')
+			[ "$(expr $dnsmasq_version \>= 2.87)" == 0 ] && echolog "Dnsmasq版本低于2.87，有可能无法正常使用！！！"
+		}
 		source $APP_PATH/helper_dnsmasq.sh stretch
 		lua $APP_PATH/helper_dnsmasq_add.lua -FLAG "default" -TMP_DNSMASQ_PATH ${TMP_DNSMASQ_PATH} \
 			-DNSMASQ_CONF_FILE "/tmp/dnsmasq.d/dnsmasq-passwall.conf" -DEFAULT_DNS ${DEFAULT_DNS} -LOCAL_DNS ${LOCAL_DNS} \
@@ -1442,6 +1446,10 @@ acl_app() {
 								echo "server=${d_server}" >> $TMP_ACL_PATH/$sid/dnsmasq.conf
 								echo "no-poll" >> $TMP_ACL_PATH/$sid/dnsmasq.conf
 								echo "no-resolv" >> $TMP_ACL_PATH/$sid/dnsmasq.conf
+							}
+							[ "$when_chnroute_default_dns" = "remote" ] && {
+								dnsmasq_version=$(dnsmasq -v | grep -i "Dnsmasq version " | awk '{print $3}')
+								[ "$(expr $dnsmasq_version \>= 2.87)" == 0 ] && echolog "Dnsmasq版本低于2.87，有可能无法正常使用！！！"
 							}
 							lua $APP_PATH/helper_dnsmasq_add.lua -FLAG ${sid} -TMP_DNSMASQ_PATH $TMP_ACL_PATH/$sid/dnsmasq.d \
 								-DNSMASQ_CONF_FILE $TMP_ACL_PATH/$sid/dnsmasq.conf -DEFAULT_DNS $DEFAULT_DNS -LOCAL_DNS $LOCAL_DNS \
