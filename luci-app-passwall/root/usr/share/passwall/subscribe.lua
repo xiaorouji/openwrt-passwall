@@ -737,7 +737,8 @@ local function processData(szType, content, add_mode, add_from)
 				result.ws_host = params.host
 				result.ws_path = params.path
 			end
-			if params.type == 'h2' then
+			if params.type == 'h2' or params.type == 'http' then
+				params.type = "h2"
 				result.h2_host = params.host
 				result.h2_path = params.path
 			end
@@ -765,17 +766,24 @@ local function processData(szType, content, add_mode, add_from)
 			if params.type == 'grpc' then
 				if params.path then result.grpc_serviceName = params.path end
 				if params.serviceName then result.grpc_serviceName = params.serviceName end
+				result.grpc_mode = params.mode
 			end
 			result.transport = params.type
 			
 			result.encryption = params.encryption or "none"
 
 			result.tls = "0"
-			if params.security == "tls" then
+			if params.security == "tls" or params.security == "reality" then
 				result.tls = "1"
 				result.tlsflow = params.flow or nil
 				result.tls_serverName = (params.sni and params.sni ~= "") and params.sni or params.host
 				result.fingerprint = (params.fp and params.fp ~= "") and params.fp or "chrome"
+				if params.security == "reality" then
+					result.reality = "1"
+					result.reality_publicKey = params.pbk or nil
+					result.reality_shortId = params.sid or nil
+					result.reality_spiderX = params.spx or nil
+				end
 			end
 
 			result.port = port
