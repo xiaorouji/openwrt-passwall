@@ -1213,108 +1213,10 @@ delete_ip2route() {
 }
 
 start_haproxy() {
-	local haproxy_path haproxy_file item items lport sort_items
-
-	[ "$(config_t_get global_haproxy balancing_enable 0)" != "1" ] && return
-	echolog "HAPROXY 负载均衡..."
-
 	haproxy_path=${TMP_PATH}/haproxy
-	mkdir -p "${haproxy_path}"
-	haproxy_file=${haproxy_path}/config.cfg
-	cat <<-EOF > "${haproxy_file}"
-		global
-		    log         127.0.0.1 local2
-		    chroot      ${haproxy_path}
-		    maxconn     60000
-		    stats socket  ${haproxy_path}/haproxy.sock
-		    daemon
-
-		defaults
-		    mode                    tcp
-		    log                     global
-		    option                  tcplog
-		    option                  dontlognull
-		    option http-server-close
-		    #option forwardfor       except 127.0.0.0/8
-		    option                  redispatch
-		    retries                 2
-		    timeout http-request    10s
-		    timeout queue           1m
-		    timeout connect         10s
-		    timeout client          1m
-		    timeout server          1m
-		    timeout http-keep-alive 10s
-		    timeout check           10s
-		    maxconn                 3000
-
-	EOF
-
-	items=$(uci show ${CONFIG} | grep "=haproxy_config" | cut -d '.' -sf 2 | cut -d '=' -sf 1)
-	for item in $items; do
-		lport=$(config_n_get ${item} haproxy_port 0)
-		[ "${lport}" = "0" ] && echolog "  - 丢弃1个明显无效的节点" && continue
-		sort_items="${sort_items}${IFS}${lport} ${item}"
-	done
-
-	items=$(echo "${sort_items}" | sort -n | cut -d ' ' -sf 2)
-
-	unset lport
-	local haproxy_port lbss lbweight export backup remark
-	local msg bip bport hasvalid bbackup failcount interface
-	for item in ${items}; do
-		unset haproxy_port bbackup
-
-		eval $(uci -q show "${CONFIG}.${item}" | cut -d '.' -sf 3-)
-		[ "$enabled" = "1" ] || continue
-		get_ip_port_from "$lbss" bip bport 1
-
-		[ -z "$haproxy_port" ] || [ -z "$bip" ] && echolog "  - 丢弃1个明显无效的节点" && continue
-		[ "$backup" = "1" ] && bbackup="backup"
-		remark=$(echo $bip | sed "s/\[//g" | sed "s/\]//g")
-
-		[ "$lport" = "${haproxy_port}" ] || {
-			hasvalid="1"
-			lport=${haproxy_port}
-			echolog "  + 入口 0.0.0.0:${lport}..."
-			cat <<-EOF >> "${haproxy_file}"
-				listen $lport
-				    mode tcp
-				    bind 0.0.0.0:$lport
-			EOF
-		}
-
-		cat <<-EOF >> "${haproxy_file}"
-			    server $remark:$bport $bip:$bport weight $lbweight check inter 1500 rise 1 fall 3 $bbackup
-		EOF
-
-		if [ "$export" != "0" ]; then
-			add_ip2route ${bip} ${export} > /dev/null 2>&1 &
-		fi
-
-		haproxy_items="${haproxy_items}${IFS}${bip}:${bport}"
-		echolog "  | - 出口节点：${bip}:${bport}，权重：${lbweight}"
-	done
-
-	# 控制台配置
-	local console_port=$(config_t_get global_haproxy console_port)
-	local console_user=$(config_t_get global_haproxy console_user)
-	local console_password=$(config_t_get global_haproxy console_password)
-	local auth=""
-	[ -n "$console_user" ] && [ -n "$console_password" ] && auth="stats auth $console_user:$console_password"
-	cat <<-EOF >> "${haproxy_file}"
-
-		listen console
-		    bind 0.0.0.0:$console_port
-		    mode http
-		    stats refresh 30s
-		    stats uri /
-		    stats admin if TRUE
-		    $auth
-	EOF
-
-	[ "${hasvalid}" != "1" ] && echolog "  - 没有发现任何有效节点信息，不启动。" && return 0
-	ln_run "$(first_type haproxy)" haproxy "/dev/null" -f "${haproxy_file}"
-	echolog "  * 控制台端口：${console_port}/，${auth:-公开}"
+	haproxy_conf="config.cfg"
+	lua $APP_PATH/haproxy.lua -path ${haproxy_path} -conf ${haproxy_conf}
+	ln_run "$(first_type haproxy)" haproxy "/dev/null" -f "${haproxy_path}/${haproxy_conf}"
 }
 
 kill_all() {
@@ -1691,6 +1593,9 @@ mkdir -p /tmp/etc $TMP_PATH $TMP_BIN_PATH $TMP_SCRIPT_FUNC_PATH $TMP_ID_PATH $TM
 arg1=$1
 shift
 case $arg1 in
+add_ip2route)
+	add_ip2route $@
+	;;
 get_new_port)
 	get_new_port $@
 	;;
