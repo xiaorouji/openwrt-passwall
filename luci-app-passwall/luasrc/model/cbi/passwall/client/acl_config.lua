@@ -295,6 +295,15 @@ o = s:option(Value, "dns_client_ip", translate("EDNS Client Subnet"))
 o.datatype = "ipaddr"
 o:depends("v2ray_dns_mode", "doh")
 
+if api.is_finded("chinadns-ng") then
+	o = s:option(Flag, "chinadns_ng", translate("ChinaDNS-NG"), translate("The effect is better, but will increase the memory."))
+	o.default = "0"
+	o:depends({ tcp_proxy_mode = "gfwlist", dns_mode = "dns2socks"})
+	o:depends({ tcp_proxy_mode = "gfwlist", dns_mode = "xray"})
+	o:depends({ tcp_proxy_mode = "chnroute", dns_mode = "dns2socks"})
+	o:depends({ tcp_proxy_mode = "chnroute", dns_mode = "xray"})
+end
+
 if has_chnlist then
 	when_chnroute_default_dns = s:option(ListValue, "when_chnroute_default_dns", translate("When using the chnroute list the default DNS"))
 	when_chnroute_default_dns.default = "direct"
@@ -303,13 +312,8 @@ if has_chnlist then
 	when_chnroute_default_dns.description = "<ul>"
 	.. "<li>" .. translate("Remote DNS can avoid more DNS leaks, but some domestic domain names maybe to proxy!") .. "</li>"
 	.. "<li>" .. translate("Direct DNS Internet experience may be better, but DNS will be leaked!") .. "</li>"
-	if api.is_finded("chinadns-ng") then
-		when_chnroute_default_dns:value("chinadns_ng", translate("ChinaDNS-NG"))
-		when_chnroute_default_dns.default = "chinadns_ng"
-	end
-	when_chnroute_default_dns.description = when_chnroute_default_dns.description .. "</li></ul>"
+	.. "</ul>"
 	when_chnroute_default_dns:depends("tcp_proxy_mode", "chnroute")
-	when_chnroute_default_dns:depends("udp_proxy_mode", "chnroute")
 end
 
 return m

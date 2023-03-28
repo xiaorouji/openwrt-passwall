@@ -151,6 +151,9 @@ msgstr "用于 DNS 查询时通知 DNS 服务器，客户端所在的地理位�
 msgid "This feature requires the DNS server to support the Edns Client Subnet (RFC7871)."
 msgstr "此功能需要 DNS 服务器支持 EDNS Client Subnet（RFC7871）。"
 
+msgid "The effect is better, but will increase the memory."
+msgstr "效果更好，但会增加内存使用。"
+
 msgid "When using the chnroute list the default DNS"
 msgstr "当使用中国列表外时的默认DNS"
 
