@@ -356,15 +356,17 @@ local function processData(szType, content, add_mode, add_from)
 		add_mode = add_mode, --0为手动配置,1为导入,2为订阅
 		add_from = add_from
 	}
+	--ssr://base64(host:port:protocol:method:obfs:base64pass/?obfsparam=base64param&protoparam=base64param&remarks=base64remarks&group=base64group&udpport=0&uot=0)
 	if szType == 'ssr' then
+		result.type = "SSR"
+
 		local dat = split(content, "/%?")
 		local hostInfo = split(dat[1], ':')
-		result.type = "SSR"
-		result.address = ""
-		for i=1,#hostInfo-5,1 do
-			result.address = result.address .. hostInfo[i] .. ":"
+		if dat[1]:match('%[(.*)%]') then
+			result.address = dat[1]:match('%[(.*)%]')
+		else
+			result.address = hostInfo[#hostInfo-5]
 		end
-		result.address = string.sub(result.address, 0, #result.address-1) 
 		result.port = hostInfo[#hostInfo-4]
 		result.protocol = hostInfo[#hostInfo-3]
 		result.method = hostInfo[#hostInfo-2]
@@ -440,6 +442,15 @@ local function processData(szType, content, add_mode, add_from)
 			result.tls = "0"
 		end
 	elseif szType == "ss" then
+		result.type = "SS"
+
+		--SS-URI = "ss://" userinfo "@" hostname ":" port [ "/" ] [ "?" plugin ] [ "#" tag ]
+		--userinfo = websafe-base64-encode-utf8(method  ":" password)
+		--ss://YWVzLTEyOC1nY206dGVzdA@192.168.100.1:8888#Example1
+		--ss://cmM0LW1kNTpwYXNzd2Q@192.168.100.1:8888/?plugin=obfs-local%3Bobfs%3Dhttp#Example2
+		--ss://2022-blake3-aes-256-gcm:YctPZ6U7xPPcU%2Bgp3u%2B0tx%2FtRizJN9K8y%2BuKlW2qjlI%3D@192.168.100.1:8888#Example3
+		--ss://2022-blake3-aes-256-gcm:YctPZ6U7xPPcU%2Bgp3u%2B0tx%2FtRizJN9K8y%2BuKlW2qjlI%3D@192.168.100.1:8888/?plugin=v2ray-plugin%3Bserver#Example3
+
 		local idx_sp = 0
 		local alias = ""
 		if content:find("#") then
@@ -448,28 +459,9 @@ local function processData(szType, content, add_mode, add_from)
 		end
 		result.remarks = UrlDecode(alias)
 		local info = content:sub(1, idx_sp - 1)
-		local hostInfo = split(base64Decode(info), "@")
-		local hostInfoLen = #hostInfo
-		local host = nil
-		local userinfo = nil
-		if hostInfoLen > 2 then
-			host = split(hostInfo[hostInfoLen], ":")
-			userinfo = {}
-			for i = 1, hostInfoLen - 1 do
-				tinsert(userinfo, hostInfo[i])
-			end
-			userinfo = table.concat(userinfo, '@')
-		else
-			host = split(hostInfo[2], ":")
-			userinfo = base64Decode(hostInfo[1])
-		end
-		local method = userinfo:sub(1, userinfo:find(":") - 1)
-		local password = userinfo:sub(userinfo:find(":") + 1, #userinfo)
-		result.type = "SS"
-		result.address = host[1]
-		if host[2] and host[2]:find("/%?") then
-			local query = split(host[2], "/%?")
-			result.port = query[1]
+		if info:find("/%?") then
+			local find_index = info:find("/%?")
+			local query = split(info, "/%?")
 			local params = {}
 			for _, v in pairs(split(query[2], '&')) do
 				local t = split(v, '=')
@@ -489,55 +481,86 @@ local function processData(szType, content, add_mode, add_from)
 			if result.plugin and result.plugin == "simple-obfs" then
 				result.plugin = "obfs-local"
 			end
-		else
-			result.port = host[2]
+			info = info:sub(1, find_index - 1)
 		end
-		result.method = method
-		result.password = password
 
-		local aead = false
-		for k, v in ipairs({"aes-128-gcm", "aes-256-gcm", "chacha20-poly1305", "chacha20-ietf-poly1305"}) do
-			if method:lower() == v:lower() then
-				aead = true
-			end
-		end
-		if aead then
-			if ss_aead_type_default == "shadowsocks-libev" and has_ss then
-				result.type = "SS"
-			elseif ss_aead_type_default == "shadowsocks-rust" and has_ss_rust then
-				result.type = 'SS-Rust'
-				if method:lower() == "chacha20-poly1305" then
-					result.method = "chacha20-ietf-poly1305"
+		local hostInfo = split(base64Decode(info), "@")
+		if hostInfo and #hostInfo > 0 then
+			local host_port = hostInfo[#hostInfo]
+			-- [2001:4860:4860::8888]:443
+			-- 8.8.8.8:443
+			if host_port:find(":") then
+				local sp = split(host_port, ":")
+				result.port = sp[#sp]
+				if api.is_ipv6addrport(host_port) then
+					result.address = api.get_ipv6_only(host_port)
+				else
+					result.address = sp[1]
 				end
-			elseif ss_aead_type_default == "v2ray" and has_v2ray and not result.plugin then
-				result.type = 'V2ray'
-				result.protocol = 'shadowsocks'
-				result.transport = 'tcp'
-				if method:lower() == "chacha20-ietf-poly1305" then
-					result.method = "chacha20-poly1305"
+			else
+				result.address = host_port
+			end
+
+			local userinfo = nil
+			if #hostInfo > 2 then
+				userinfo = {}
+				for i = 1, #hostInfo - 1 do
+					tinsert(userinfo, hostInfo[i])
 				end
-			elseif ss_aead_type_default == "xray" and has_xray and not result.plugin then
-				result.type = 'Xray'
-				result.protocol = 'shadowsocks'
-				result.transport = 'tcp'
-				if method:lower() == "chacha20-ietf-poly1305" then
-					result.method = "chacha20-poly1305"
+				userinfo = table.concat(userinfo, '@')
+			else
+				userinfo = base64Decode(hostInfo[1])
+			end
+
+			local method = userinfo:sub(1, userinfo:find(":") - 1)
+			local password = userinfo:sub(userinfo:find(":") + 1, #userinfo)
+			result.method = method
+			result.password = password
+
+			local aead = false
+			for k, v in ipairs({"aes-128-gcm", "aes-256-gcm", "chacha20-poly1305", "chacha20-ietf-poly1305"}) do
+				if method:lower() == v:lower() then
+					aead = true
 				end
 			end
-		end
-		local aead2022 = false
-		for k, v in ipairs({"2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha8-poly1305", "2022-blake3-chacha20-poly1305"}) do
-			if method:lower() == v:lower() then
-				aead2022 = true
+			if aead then
+				if ss_aead_type_default == "shadowsocks-libev" and has_ss then
+					result.type = "SS"
+				elseif ss_aead_type_default == "shadowsocks-rust" and has_ss_rust then
+					result.type = 'SS-Rust'
+					if method:lower() == "chacha20-poly1305" then
+						result.method = "chacha20-ietf-poly1305"
+					end
+				elseif ss_aead_type_default == "v2ray" and has_v2ray and not result.plugin then
+					result.type = 'V2ray'
+					result.protocol = 'shadowsocks'
+					result.transport = 'tcp'
+					if method:lower() == "chacha20-ietf-poly1305" then
+						result.method = "chacha20-poly1305"
+					end
+				elseif ss_aead_type_default == "xray" and has_xray and not result.plugin then
+					result.type = 'Xray'
+					result.protocol = 'shadowsocks'
+					result.transport = 'tcp'
+					if method:lower() == "chacha20-ietf-poly1305" then
+						result.method = "chacha20-poly1305"
+					end
+				end
 			end
-		end
-		if aead2022 then
-			if ss_aead_type_default == "xray" and has_xray and not result.plugin then
-				result.type = 'Xray'
-				result.protocol = 'shadowsocks'
-				result.transport = 'tcp'
-			elseif has_ss_rust then
-				result.type = 'SS-Rust'
+			local aead2022 = false
+			for k, v in ipairs({"2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha8-poly1305", "2022-blake3-chacha20-poly1305"}) do
+				if method:lower() == v:lower() then
+					aead2022 = true
+				end
+			end
+			if aead2022 then
+				if ss_aead_type_default == "xray" and has_xray and not result.plugin then
+					result.type = 'Xray'
+					result.protocol = 'shadowsocks'
+					result.transport = 'tcp'
+				elseif has_ss_rust then
+					result.type = 'SS-Rust'
+				end
 			end
 		end
 	elseif szType == "trojan" then
@@ -554,29 +577,28 @@ local function processData(szType, content, add_mode, add_from)
 			result.password = UrlDecode(Info[1])
 			local port = "443"
 			Info[2] = (Info[2] or ""):gsub("/%?", "?")
-			local hostInfo = nil
-			if Info[2]:find(":") then
-				hostInfo = split(Info[2], ":")
-				result.address = hostInfo[1]
-				local idx_port = 2
-				if hostInfo[2]:find("?") then
-					hostInfo = split(hostInfo[2], "?")
-					idx_port = 1
-				end
-				if hostInfo[idx_port] ~= "" then port = hostInfo[idx_port] end
-			else
-				if Info[2]:find("?") then
-					hostInfo = split(Info[2], "?")
-				end
-				result.address = hostInfo and hostInfo[1] or Info[2]
-			end
-			local peer, sni = nil, ""
 			local query = split(Info[2], "?")
+			local host_port = query[1]
 			local params = {}
 			for _, v in pairs(split(query[2], '&')) do
 				local t = split(v, '=')
 				params[string.lower(t[1])] = UrlDecode(t[2])
 			end
+			-- [2001:4860:4860::8888]:443
+			-- 8.8.8.8:443
+			if host_port:find(":") then
+				local sp = split(host_port, ":")
+				port = sp[#sp]
+				if api.is_ipv6addrport(host_port) then
+					result.address = api.get_ipv6_only(host_port)
+				else
+					result.address = sp[1]
+				end
+			else
+				result.address = host_port
+			end
+
+			local peer, sni = nil, ""
 			if params.peer then peer = params.peer end
 			sni = params.sni and params.sni or ""
 			if params.ws and params.ws == "1" then
@@ -636,29 +658,27 @@ local function processData(szType, content, add_mode, add_from)
 			result.password = UrlDecode(Info[1])
 			local port = "443"
 			Info[2] = (Info[2] or ""):gsub("/%?", "?")
-			local hostInfo = nil
-			if Info[2]:find(":") then
-				hostInfo = split(Info[2], ":")
-				result.address = hostInfo[1]
-				local idx_port = 2
-				if hostInfo[2]:find("?") then
-					hostInfo = split(hostInfo[2], "?")
-					idx_port = 1
-				end
-				if hostInfo[idx_port] ~= "" then port = hostInfo[idx_port] end
-			else
-				if Info[2]:find("?") then
-					hostInfo = split(Info[2], "?")
-				end
-				result.address = hostInfo and hostInfo[1] or Info[2]
-			end
-			local peer, sni = nil, ""
 			local query = split(Info[2], "?")
+			local host_port = query[1]
 			local params = {}
 			for _, v in pairs(split(query[2], '&')) do
 				local t = split(v, '=')
 				params[string.lower(t[1])] = UrlDecode(t[2])
 			end
+			-- [2001:4860:4860::8888]:443
+			-- 8.8.8.8:443
+			if host_port:find(":") then
+				local sp = split(host_port, ":")
+				port = sp[#sp]
+				if api.is_ipv6addrport(host_port) then
+					result.address = api.get_ipv6_only(host_port)
+				else
+					result.address = sp[1]
+				end
+			else
+				result.address = host_port
+			end
+			local peer, sni = nil, ""
 			if params.peer then peer = params.peer end
 			sni = params.sni and params.sni or ""
 			if params.type and params.type == "ws" then
@@ -708,28 +728,25 @@ local function processData(szType, content, add_mode, add_from)
 			result.uuid = UrlDecode(Info[1])
 			local port = "443"
 			Info[2] = (Info[2] or ""):gsub("/%?", "?")
-			local hostInfo = nil
-			if Info[2]:find(":") then
-				hostInfo = split(Info[2], ":")
-				result.address = hostInfo[1]
-				local idx_port = 2
-				if hostInfo[2]:find("?") then
-					hostInfo = split(hostInfo[2], "?")
-					idx_port = 1
-				end
-				if hostInfo[idx_port] ~= "" then port = hostInfo[idx_port] end
-			else
-				if Info[2]:find("?") then
-					hostInfo = split(Info[2], "?")
-				end
-				result.address = hostInfo and hostInfo[1] or Info[2]
-			end
-			
 			local query = split(Info[2], "?")
+			local host_port = query[1]
 			local params = {}
 			for _, v in pairs(split(query[2], '&')) do
 				local t = split(v, '=')
 				params[t[1]] = UrlDecode(t[2])
+			end
+			-- [2001:4860:4860::8888]:443
+			-- 8.8.8.8:443
+			if host_port:find(":") then
+				local sp = split(host_port, ":")
+				port = sp[#sp]
+				if api.is_ipv6addrport(host_port) then
+					result.address = api.get_ipv6_only(host_port)
+				else
+					result.address = sp[1]
+				end
+			else
+				result.address = host_port
 			end
 
 			params.type = string.lower(params.type)
@@ -800,15 +817,26 @@ local function processData(szType, content, add_mode, add_from)
 		result.type = "Hysteria"
 		
 		local dat = split(content, '%?')
-		local hostInfo = split(dat[1], ':')
-		result.address = hostInfo[1]
-		result.port = hostInfo[2]
+		local host_port = dat[1]
 		local params = {}
 		for _, v in pairs(split(dat[2], '&')) do
 			local t = split(v, '=')
 			if #t > 0 then
 				params[t[1]] = t[2]
 			end
+		end
+		-- [2001:4860:4860::8888]:443
+		-- 8.8.8.8:443
+		if host_port:find(":") then
+			local sp = split(host_port, ":")
+			result.port = sp[#sp]
+			if api.is_ipv6addrport(host_port) then
+				result.address = api.get_ipv6_only(host_port)
+			else
+				result.address = sp[1]
+			end
+		else
+			result.address = host_port
 		end
 		result.protocol = params.protocol
 		result.hysteria_obfs = params.obfsParam
@@ -1129,8 +1157,8 @@ local function parse_link(raw, add_mode, add_from)
 				if result then
 					if not result.type then
 						log('丢弃节点:' .. result.remarks .. ",找不到可使用二进制.")
-					elseif (add_mode == "2" and is_filter_keyword(result.remarks)) or not result.address or result.remarks == "NULL" or result.address=="127.0.0.1" or
-							(not datatypes.hostname(result.address) and not (datatypes.ipmask4(result.address) or datatypes.ipmask6(result.address))) then
+					elseif (add_mode == "2" and is_filter_keyword(result.remarks)) or not result.address or result.remarks == "NULL" or result.address == "127.0.0.1" or
+							(not datatypes.hostname(result.address) and not (api.is_ip(result.address))) then
 						log('丢弃过滤节点: ' .. result.type .. ' 节点, ' .. result.remarks)
 					else
 						tinsert(node_list, result)
