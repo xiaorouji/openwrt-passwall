@@ -8,12 +8,7 @@ local uci = api.uci
 local sys = api.sys
 
 local log = function(...)
-    local result = os.date("%Y-%m-%d %H:%M:%S: ") .. table.concat({...}, " ")
-    local f, err = io.open("/tmp/log/passwall.log", "a")
-    if f and err == nil then
-        f:write(result .. "\n")
-        f:close()
-    end
+    api.log(...)
 end
 
 function get_ip_port_from(str)

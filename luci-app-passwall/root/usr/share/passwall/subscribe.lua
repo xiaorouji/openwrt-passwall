@@ -83,15 +83,11 @@ local nodeResult = {} -- update result
 local debug = false
 
 local log = function(...)
-	local result = os.date("%Y-%m-%d %H:%M:%S: ") .. table.concat({...}, " ")
 	if debug == true then
+		local result = os.date("%Y-%m-%d %H:%M:%S: ") .. table.concat({...}, " ")
 		print(result)
 	else
-		local f, err = io.open("/tmp/log/" .. appname .. ".log", "a")
-		if f and err == nil then
-			f:write(result .. "\n")
-			f:close()
-		end
+		api.log(...)
 	end
 end
 
