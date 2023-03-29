@@ -7,10 +7,6 @@ local jsonc = api.jsonc
 local uci = api.uci
 local sys = api.sys
 
-if uci:get_first(appname, 'global_haproxy', "balancing_enable", 0) ~= 1 then
-    return
-end
-
 local log = function(...)
     local result = os.date("%Y-%m-%d %H:%M:%S: ") .. table.concat({...}, " ")
     local f, err = io.open("/tmp/log/passwall.log", "a")
