@@ -57,26 +57,18 @@ local has_xray = api.is_finded("xray")
 	}
 
 	function parseNodeUrl(url) {
-		var m = url.match(/^(([^:\/?#]+:)?(?:\/\/((?:([^\/?#:]*)([^\/?#:]*)@)?([^\/?#:]*)(?::([^\/?#:]*))?)))?([^?#]*)(\?[^#]*)?(#.*)?$/),
-			r = {
-				hash: m[10] || "", // #asd
-				host: m[3] || "", // localhost:257
-				hostname: m[6] || "", // localhost
-				href: m[0] || "", // http://username:password@localhost:257/deploy/?asd=asd#asd
-				origin: m[1] || "", // http://username:password@localhost:257
-				pathname: m[8] || (m[1] ? "/" : ""), // /deploy/
-				port: m[7] || "", // 257
-				protocol: m[2] || "", // http:
-				search: m[9] || "", // ?asd=asd
-				passwd: m[4] || "", // username
-				removed: m[5] || "" // password
-			};
-		if (r.protocol.length === 2) {
-			r.protocol = "file:///" + r.protocol.toUpperCase();
-			r.origin = r.protocol + "//" + r.host;
-		}
-		r.href = r.origin + r.pathname + r.search + r.hash;
-		return m && r;
+		let protocol = url.substring(0, url.indexOf("://")) + ":"
+		let str = "http" + url.substring(url.indexOf("://"))
+		const parsedUrl = new URL(str);
+		var r = {
+			hash: parsedUrl.hash, // #asd
+			host: parsedUrl.host, // localhost:257
+			hostname: parsedUrl.hostname, // localhost
+			port: parsedUrl.port, // 257
+			search: parsedUrl.search, // ?asd=asd
+			passwd: parsedUrl.username || parsedUrl.password // username
+		};
+		return r;
 	}
 
 	function buildUrl(btn, urlname, sid) {
@@ -131,15 +123,25 @@ local has_xray = api.is_finded("xray")
 		opt.client = urlname.indexOf("server") === -1;
 		var v_type = opt.get("type").value;
 		var v_alias = opt.get("remarks");
+		var _address = ""
+		try {
+			var v_server = opt.get("address");
+			const ipv6Regex = /^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/;
+			if (ipv6Regex.test(v_server.value)) {
+				_address = "[" + v_server.value + "]"
+			} else {
+				_address = v_server.value
+			}
+		} catch(e) {
+		}
 		var url = null;
 		if (v_type === "SS") {
-			var v_server = opt.get("address");
 			var v_port = opt.get("port");
 			var v_method = opt.get("ss_encrypt_method");
 			var v_password = opt.get("password");
 
 			url = b64encsafe(v_method.value + ":" + v_password.value) + "@" +
-				v_server.value + ":" +
+				_address + ":" +
 				v_port.value + "/?";
 
 			var params = "";
@@ -162,13 +164,12 @@ local has_xray = api.is_finded("xray")
 			url += params;
 		} else if (v_type === "SS-Rust") {
 			v_type = "SS"
-			var v_server = opt.get("address");
 			var v_port = opt.get("port");
 			var v_method = opt.get("ss_rust_encrypt_method");
 			var v_password = opt.get("password");
 
 			url = btoa(v_method.value + ":" + v_password.value) + "@" +
-				v_server.value + ":" +
+				_address + ":" +
 				v_port.value + "/?";
 
 			var params = "";
@@ -190,7 +191,6 @@ local has_xray = api.is_finded("xray")
 			}
 			url += params;
 		} else if (v_type === "SSR") {
-			var v_server = opt.get("address");
 			var v_port = opt.get("port");
 			var v_protocol = opt.get("ssr_protocol");
 			var v_method = opt.get("ssr_encrypt_method");
@@ -198,7 +198,7 @@ local has_xray = api.is_finded("xray")
 			var v_password = opt.get("password");
 			var v_obfs_param = opt.get("obfs_param");
 			var v_protocol_param = opt.get("protocol_param");
-			var ssr_str = v_server.value + ":" +
+			var ssr_str = _address + ":" +
 				v_port.value + ":" +
 				v_protocol.value + ":" +
 				v_method.value + ":" +
@@ -214,6 +214,7 @@ local has_xray = api.is_finded("xray")
 			info.v = "2";
 			info.ps = v_alias.value;
 			info.add = opt.get("address").value;
+			//info.add = _address;
 			info.port = opt.get("port").value;
 			info.id = opt.get("uuid").value;
 
@@ -255,10 +256,9 @@ local has_xray = api.is_finded("xray")
 		} else if ((v_type === "V2ray" || v_type === "Xray") && opt.get("protocol").value === "vless") {
 			v_type = "vless";
 			var v_password = opt.get("uuid");
-			var v_server = opt.get("address");
 			var v_port = opt.get("port");
 			url = encodeURIComponent(v_password.value) +
-				"@" + v_server.value +
+				"@" + _address +
 				":" + v_port.value + "?";
 
 			var params = "";
@@ -325,10 +325,9 @@ local has_xray = api.is_finded("xray")
 				v_type = "trojan";
 			}
 			var v_password = opt.get(!opt.client && v_type === "Trojan-Go"  ? "passwords" : "password");
-			var v_server = opt.get("address");
 			var v_port = opt.get("port");
 			url = encodeURIComponent(v_password.value) +
-				"@" + v_server.value +
+				"@" + _address +
 				":" + v_port.value + "/?";
 			var params = "";
 			if (opt.get("tls").checked) {
@@ -376,7 +375,6 @@ local has_xray = api.is_finded("xray")
 			var url = "";
 			var params = "?";
 			var v_protocol = opt.get("brook_protocol");
-			var v_server = opt.get("address");
 			var v_port = opt.get("port");
 			var v_password = opt.get("password");
 			var b_protocol_value = v_protocol.value.split('client').join('server');
@@ -395,14 +393,13 @@ local has_xray = api.is_finded("xray")
 				if (v_path_value.length > 1 && v_path_value.indexOf('/') < 0) {
 					v_path_value = '/' + v_path_value;
 				}
-				params += "&" + url_protocol + "=" + encodeURIComponent(prefix + v_server.value + ":" + v_port.value + v_path_value);
+				params += "&" + url_protocol + "=" + encodeURIComponent(prefix + _address + ":" + v_port.value + v_path_value);
 			} else {
-				params += "&" + url_protocol + "=" + encodeURIComponent(v_server.value + ":" + v_port.value);
+				params += "&" + url_protocol + "=" + encodeURIComponent(_address + ":" + v_port.value);
 			}
 			url += url_protocol;
 			url += params;
 		} else if (v_type === "Hysteria") {
-			var v_server = opt.get("address");
 			var v_port = opt.get("port");
 			var params = "";
 			params += opt.query("protocol", "hysteria_protocol");
@@ -414,7 +411,7 @@ local has_xray = api.is_finded("xray")
 			params += opt.query("alpn", "hysteria_alpn");
 			params += opt.query("obfsParam", "hysteria_obfs");
 			var url =
-				v_server.value + ":" +
+				_address + ":" +
 				v_port.value + "?" +
 				params +
 				"#" + encodeURI(v_alias.value);
