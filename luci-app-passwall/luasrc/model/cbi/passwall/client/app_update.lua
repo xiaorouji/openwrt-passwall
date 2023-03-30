@@ -15,7 +15,7 @@ local k, v
 local com = require "luci.passwall.com"
 for k, v in pairs(com) do
 	o = s:option(Value, k:gsub("%-","_") .. "_file", translatef("%s App Path", v.name))
-	o.default = v.default_path or ("/usr/bin/"..k)
+	o.default = v.default_path or ("/usr/bin/" .. k)
 	o.rmempty = false
 end
 

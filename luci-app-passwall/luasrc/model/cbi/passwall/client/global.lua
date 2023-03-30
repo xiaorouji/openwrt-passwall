@@ -105,63 +105,85 @@ if (has_v2ray or has_xray) and #nodes_table > 0 then
 	local normal_list = {}
 	local shunt_list = {}
 	for k, v in pairs(nodes_table) do
-		if v.node_type == "normal" then
+		if v.node_type == "normal" or v.protocol == "_balancing" then
 			normal_list[#normal_list + 1] = v
 		end
 		if v.protocol and v.protocol == "_shunt" then
 			shunt_list[#shunt_list + 1] = v
 		end
 	end
+	
+	local function get_cfgvalue(shunt_node_id, rule_id)
+		return function(self, section)
+			return m:get(shunt_node_id, rule_id) or "nil"
+		end
+	end
+	local function get_write(shunt_node_id, rule_id)
+		return function(self, section, value)
+			m:set(shunt_node_id, rule_id, value)
+		end
+	end
+
 	for k, v in pairs(shunt_list) do
+		local vid = v.id:sub(1, 8)
+		o = s:taboption("Main", ListValue, vid .. "-main_node", string.format('<a style="color:red">%s</a>', translate("Preproxy Node")), translate("Set the node to be used as a pre-proxy. Each rule (including <code>Default</code>) has a separate switch that controls whether this rule uses the pre-proxy or not."))
+		o:depends("tcp_node", v.id)
+		o:value("nil", translate("Close"))
+		for k1, v1 in pairs(normal_list) do
+			o:value(v1.id, v1.remark)
+		end
+		o.cfgvalue = get_cfgvalue(v.id, "main_node")
+		o.write = get_write(v.id, "main_node")
+
 		uci:foreach(appname, "shunt_rules", function(e)
 			local id = e[".name"]
+			local node_option = vid .. "-" .. id .. "_node"
 			if id and e.remarks then
-				o = s:taboption("Main", ListValue, v.id .. "." .. id .. "_node", string.format('* <a href="%s" target="_blank">%s</a>', api.url("shunt_rules", id), e.remarks))
+				o = s:taboption("Main", ListValue, node_option, string.format('* <a href="%s" target="_blank">%s</a>', api.url("shunt_rules", id), e.remarks))
 				o:depends("tcp_node", v.id)
 				o:value("nil", translate("Close"))
 				o:value("_default", translate("Default"))
 				o:value("_direct", translate("Direct Connection"))
 				o:value("_blackhole", translate("Blackhole"))
+				local pt = s:taboption("Main", ListValue, vid .. "-".. id .. "_proxy_tag", string.format('* <a style="color:red">%s</a>', e.remarks .. " " .. translate("Preproxy")))
+				pt:value("nil", translate("Close"))
+				pt:value("main", translate("Preproxy Node"))
+				pt.default = "nil"
 				for k1, v1 in pairs(normal_list) do
-					o:value(v1.id, v1["remark"])
+					o:value(v1.id, v1.remark)
+					if v1.protocol ~= "_balancing" then
+						pt:depends(node_option, v1.id)
+					end
 				end
-				o.cfgvalue = function(self, section)
-					return m:get(v.id, id) or "nil"
-				end
-				o.write = function(self, section, value)
-					m:set(v.id, id, value)
-				end
+				o.cfgvalue = get_cfgvalue(v.id, id)
+				o.write = get_write(v.id, id)
+				pt.cfgvalue = get_cfgvalue(v.id, id .. "_proxy_tag")
+				pt.write = get_write(v.id, id .. "_proxy_tag")
 			end
 		end)
 
 		local id = "default_node"
-		o = s:taboption("Main", ListValue, v.id .. "." .. id, string.format('* <a style="color:red">%s</a>', translate("Default")))
+		o = s:taboption("Main", ListValue, vid .. "-" .. id, string.format('* <a style="color:red">%s</a>', translate("Default")))
 		o:depends("tcp_node", v.id)
 		o:value("_direct", translate("Direct Connection"))
 		o:value("_blackhole", translate("Blackhole"))
 		for k1, v1 in pairs(normal_list) do
 			o:value(v1.id, v1["remark"])
 		end
-		o.cfgvalue = function(self, section)
-			return m:get(v.id, id) or "nil"
-		end
-		o.write = function(self, section, value)
-			m:set(v.id, id, value)
-		end
+		o.cfgvalue = get_cfgvalue(v.id, id)
+		o.write = get_write(v.id, id)
 
-		local id = "main_node"
-		o = s:taboption("Main", ListValue, v.id .. "." .. id, string.format('* <a style="color:red">%s</a>', translate("Default Preproxy")), translate("When using, localhost will connect this node first and then use this node to connect the default node."))
-		o:depends("tcp_node", v.id)
-		o:value("nil", translate("Close"))
+		local id = "default_proxy_tag"
+		o = s:taboption("Main", ListValue, vid .. "-" .. id, string.format('* <a style="color:red">%s</a>', translate("Default Preproxy")), translate("When using, localhost will connect this node first and then use this node to connect the default node."))
 		for k1, v1 in pairs(normal_list) do
-			o:value(v1.id, v1["remark"])
+			if v1.protocol ~= "_balancing" then
+				o:depends(vid .. "-default_node", v1.id)
+			end
 		end
-		o.cfgvalue = function(self, section)
-			return m:get(v.id, id) or "nil"
-		end
-		o.write = function(self, section, value)
-			m:set(v.id, id, value)
-		end
+		o:value("nil", translate("Close"))
+		o:value("main", translate("Preproxy Node"))
+		o.cfgvalue = get_cfgvalue(v.id, id)
+		o.write = get_write(v.id, id)
 	end
 end
 
