@@ -45,11 +45,29 @@ o = s:option(Value, "console_port", translate("Console Port"), translate(
 o.default = "1188"
 o:depends("balancing_enable", true)
 
+---- Health Check Type
+o = s:option(ListValue, "health_check_type", translate("Health Check Type"))
+o:value("tcp", "TCP")
+o:value("passwall_logic", translate("Availability test") .. string.format("(passwall %s)", translate("Inner implement")))
+o:depends("balancing_enable", true)
+
+---- Health Check Inter
+o = s:option(Value, "health_check_inter", translate("Health Check Inter"), translate("Units:seconds"))
+o.default = "10"
+o:depends("balancing_enable", true)
+
+o = s:option(DummyValue, "health_check_tips", " ")
+o.rawhtml = true
+o.cfgvalue = function(t, n)
+	return string.format('<span style="color: red">%s</span>', translate("When the availability test is used, the load balancing node will be converted into a Socks node. when node list set customizing, must be a Socks node, otherwise the health check will be invalid."))
+end
+o:depends("health_check_type", "passwall_logic")
+
 -- [[ Balancing Settings ]]--
 s = m:section(TypedSection, "haproxy_config", "",
 			  "<font color='red'>" ..
 			  translate("Add a node, Export Of Multi WAN Only support Multi Wan. Load specific gravity range 1-256. Multiple primary servers can be load balanced, standby will only be enabled when the primary server is offline! Multiple groups can be set, Haproxy port same one for each group.") ..
-			  "\n" .. translate("Note that the node configuration parameters for load balancing must be consistent, otherwise problems can arise!") ..
+			  "\n" .. translate("Note that the node configuration parameters for load balancing must be consistent when use TCP health check type, otherwise it cannot be used normally!") ..
 			  "</font>")
 s.template = "cbi/tblsection"
 s.sortable = true
