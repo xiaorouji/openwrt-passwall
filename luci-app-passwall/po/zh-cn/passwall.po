@@ -490,6 +490,9 @@ msgstr "QUIC 连接接收窗口"
 msgid "Disable MTU detection"
 msgstr "禁用 MTU 检测"
 
+msgid "Lazy Start"
+msgstr "延迟启动"
+
 msgid "Encrypt Method"
 msgstr "加密"
 

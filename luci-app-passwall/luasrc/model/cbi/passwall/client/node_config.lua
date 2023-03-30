@@ -932,6 +932,9 @@ hysteria_hop_interval:depends("type", "Hysteria")
 hysteria_disable_mtu_discovery = s:option(Flag, "hysteria_disable_mtu_discovery", translate("Disable MTU detection"))
 hysteria_disable_mtu_discovery:depends("type", "Hysteria")
 
+hysteria_lazy_start = s:option(Flag, "hysteria_lazy_start", translate("Lazy Start"))
+hysteria_lazy_start:depends("type", "Hysteria")
+
 protocol.validate = function(self, value)
 	if value == "_shunt" or value == "_balancing" then
 		address.rmempty = true

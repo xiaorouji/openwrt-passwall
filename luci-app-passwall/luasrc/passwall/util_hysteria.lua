@@ -77,6 +77,7 @@ function gen_config(var)
 		hop_interval = (node.hysteria_hop_interval) and tonumber(node.hysteria_hop_interval) or nil,
 		disable_mtu_discovery = (node.hysteria_disable_mtu_discovery) and true or false,
 		fast_open = (node.fast_open == "1") and true or false,
+		lazy_start = (node.hysteria_lazy_start) and true or false,
 		socks5 = (local_socks_address and local_socks_port) and {
 			listen = local_socks_address .. ":" .. local_socks_port,
 			timeout = 300,
