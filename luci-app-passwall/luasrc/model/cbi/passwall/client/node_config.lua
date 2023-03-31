@@ -153,9 +153,8 @@ balancingStrategy:value("random")
 balancingStrategy:value("leastPing")
 balancingStrategy.default = "random"
 -- 探测地址
-local useCustomProbeUrl = s:option(Flag, "useCustomProbeUrl", translate("Use Custome Probe URL"))
+local useCustomProbeUrl = s:option(Flag, "useCustomProbeUrl", translate("Use Custome Probe URL"), translate("By default the built-in probe URL will be used, enable this option to use a custom probe URL."))
 useCustomProbeUrl:depends("balancingStrategy", "leastPing")
-useCustomProbeUrl.description = "By default the built-in probe URL will be used, enable this option to use a custom probe URL."
 local probeUrl = s:option(Value, "probeUrl", translate("Probe URL"))
 probeUrl:depends("useCustomProbeUrl", true)
 probeUrl.default = "https://www.google.com/generate_204"
