@@ -1,0 +1,11 @@
+--- a/build/gen.py
++++ b/build/gen.py
+@@ -368,7 +368,7 @@ def WriteGNNinja(path, platform, host, o
+     cxx = os.environ.get('CXX', 'g++')
+     ld = os.environ.get('LD', 'g++')
+     ar = os.environ.get('AR', 'ar -X64')
+-  elif platform.is_msys() or platform.is_mingw():
++  elif platform.is_msys() or platform.is_mingw() or platform.is_linux():
+     cxx = os.environ.get('CXX', 'g++')
+     ld = os.environ.get('LD', 'g++')
+     ar = os.environ.get('AR', 'ar')
