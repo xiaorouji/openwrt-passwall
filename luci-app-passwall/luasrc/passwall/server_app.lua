@@ -44,14 +44,14 @@ local function ln_run(s, d, command, output)
 	end
 	d = TMP_BIN_PATH .. "/" .. d
 	cmd(string.format('[ ! -f "%s" ] && ln -s %s %s 2>/dev/null', d, s, d))
-	return string.format("%s >%s 2>&1 &", d .. " " ..command, output)
+	return string.format("%s >%s 2>&1 &", d .. " " .. command, output)
 end
 
 local function gen_include()
 	cmd(string.format("echo '#!/bin/sh' > /tmp/etc/%s.include", CONFIG))
 	if nft_flag == "1" then
 		cmd("echo \"\" > " .. CONFIG_PATH .. "/" .. CONFIG .. ".nft")
-		local nft_cmd="for chain in $(nft -a list chains |grep -E \"chain PSW-SERVER\" |awk -F ' ' '{print$2}'); do\n nft list chain inet fw4 ${chain} >> " .. CONFIG_PATH .. "/" .. CONFIG .. ".nft\n done"
+		local nft_cmd = "for chain in $(nft -a list chains |grep -E \"chain PSW-SERVER\" |awk -F ' ' '{print$2}'); do\n nft list chain inet fw4 ${chain} >> " .. CONFIG_PATH .. "/" .. CONFIG .. ".nft\n done"
 		cmd(nft_cmd)
 	end
 	local function extract_rules(n, a)
@@ -215,7 +215,7 @@ local function stop()
 		ip6t("-F PSW-SERVER 2>/dev/null")
 		ip6t("-X PSW-SERVER 2>/dev/null")
 	else
-		nft_cmd="handles=$(nft -a list chain inet fw4 input | grep -E \"PSW-SERVER\" | awk -F '# handle ' '{print$2}')\n for handle in $handles; do\n nft delete rule inet fw4 input handle ${handle} 2>/dev/null\n done"
+		local nft_cmd = "handles=$(nft -a list chain inet fw4 input | grep -E \"PSW-SERVER\" | awk -F '# handle ' '{print$2}')\n for handle in $handles; do\n nft delete rule inet fw4 input handle ${handle} 2>/dev/null\n done"
 		cmd(nft_cmd)
 		cmd("nft flush chain inet fw4 PSW-SERVER 2>/dev/null")
 		cmd("nft delete chain inet fw4 PSW-SERVER 2>/dev/null")

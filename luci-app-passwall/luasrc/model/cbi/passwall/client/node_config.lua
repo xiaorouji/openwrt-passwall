@@ -46,7 +46,7 @@ local x_ss_encrypt_method_list = {
 	"aes-128-gcm", "aes-256-gcm", "chacha20-poly1305", "xchacha20-poly1305", "2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305"
 }
 
-local security_list = {"none", "auto", "aes-128-gcm", "chacha20-poly1305", "zero"}
+local security_list = { "none", "auto", "aes-128-gcm", "chacha20-poly1305", "zero" }
 
 local header_type_list = {
 	"none", "srtp", "utp", "wechat-video", "dtls", "wireguard"
@@ -133,9 +133,10 @@ iface:depends("protocol", "_iface")
 
 local nodes_table = {}
 for k, e in ipairs(api.get_valid_nodes()) do
-	if e.node_type == "normal" then
+	if e.node_type == "normal" or e.protocol == "_balancing" then
 		nodes_table[#nodes_table + 1] = {
 			id = e[".name"],
+			protocol = e["protocol"],
 			remarks = e["remark"]
 		}
 	end
@@ -145,17 +146,39 @@ end
 local balancing_node = s:option(DynamicList, "balancing_node", translate("Load balancing node list"), translate("Load balancing node list, <a target='_blank' href='https://toutyrater.github.io/routing/balance2.html'>document</a>"))
 for k, v in pairs(nodes_table) do balancing_node:value(v.id, v.remarks) end
 balancing_node:depends("protocol", "_balancing")
+
 local balancingStrategy = s:option(ListValue, "balancingStrategy", translate("Balancing Strategy"))
 balancingStrategy:depends("protocol", "_balancing")
 balancingStrategy:value("random")
 balancingStrategy:value("leastPing")
 balancingStrategy.default = "random"
+-- 探测地址
+local useCustomProbeUrl = s:option(Flag, "useCustomProbeUrl", translate("Use Custome Probe URL"))
+useCustomProbeUrl:depends("balancingStrategy", "leastPing")
+useCustomProbeUrl.description = "By default the built-in probe URL will be used, enable this option to use a custom probe URL."
+local probeUrl = s:option(Value, "probeUrl", translate("Probe URL"))
+probeUrl:depends("useCustomProbeUrl", true)
+probeUrl.default = "https://www.google.com/generate_204"
+probeUrl.description = translate("The URL used to detect the connection status.")
+-- 探测间隔
 local probeInterval = s:option(Value, "probeInterval", translate("Probe Interval"))
 probeInterval:depends("balancingStrategy", "leastPing")
 probeInterval.default = "1m"
 probeInterval.description = translate("The interval between initiating probes. Every time this time elapses, a server status check is performed on a server. The time format is numbers + units, such as '10s', '2h45m', and the supported time units are <code>ns</code>, <code>us</code>, <code>ms</code>, <code>s</code>, <code>m</code>, <code>h</code>, which correspond to nanoseconds, microseconds, milliseconds, seconds, minutes, and hours, respectively.")
 
 -- 分流
+if #nodes_table > 0 then
+	o = s:option(ListValue, "main_node", string.format('<a style="color:red">%s</a>', translate("Preproxy Node")), translate("Set the node to be used as a pre-proxy. Each rule (including <code>Default</code>) has a separate switch that controls whether this rule uses the pre-proxy or not."))
+	o:depends("protocol", "_shunt")
+	o:value("nil", translate("Close"))
+	dialerProxy = s:option(Flag, "dialerProxy", translate("dialerProxy"))
+	dialerProxy:depends({ type = "Xray", protocol = "_shunt" , })
+	for k, v in pairs(nodes_table) do
+		o:value(v.id, v.remarks)
+		--dialerProxy:depends({ type = "Xray", main_node = v.id })
+	end
+	o.default = "nil"
+end
 uci:foreach(appname, "shunt_rules", function(e)
 	if e[".name"] and e.remarks then
 		o = s:option(ListValue, e[".name"], string.format('* <a href="%s" target="_blank">%s</a>', api.url("shunt_rules", e[".name"]), e.remarks))
@@ -166,15 +189,15 @@ uci:foreach(appname, "shunt_rules", function(e)
 		o:depends("protocol", "_shunt")
 
 		if #nodes_table > 0 then
-			_proxy_tag = s:option(ListValue, e[".name"] .. "_proxy_tag", string.format('* <a style="color:red">%s</a>', e.remarks .. " " .. translate("Preproxy")))
-			_proxy_tag:value("nil", translate("Close"))
-			_proxy_tag:value("default", translate("Default"))
-			_proxy_tag:value("main", translate("Default Preproxy"))
-			_proxy_tag.default = "nil"
-
+			local pt = s:option(ListValue, e[".name"] .. "_proxy_tag", string.format('* <a style="color:red">%s</a>', e.remarks .. " " .. translate("Preproxy")))
+			pt:value("nil", translate("Close"))
+			pt:value("main", translate("Preproxy Node"))
+			pt.default = "nil"
 			for k, v in pairs(nodes_table) do
 				o:value(v.id, v.remarks)
-				_proxy_tag:depends(e[".name"], v.id)
+				if v.protocol ~= "_balancing" then
+					pt:depends(e[".name"], v.id)
+				end
 			end
 		end
 	end
@@ -194,16 +217,16 @@ for k, v in pairs(nodes_table) do default_node:value(v.id, v.remarks) end
 default_node:depends("protocol", "_shunt")
 
 if #nodes_table > 0 then
-	o = s:option(ListValue, "main_node", string.format('* <a style="color:red">%s</a>', translate("Default Preproxy")), translate("When using, localhost will connect this node first and then use this node to connect the default node."))
-	o:value("nil", translate("Close"))
+	local dpt = s:option(ListValue, "default_proxy_tag", string.format('* <a style="color:red">%s</a>', translate("Default Preproxy")), translate("When using, localhost will connect this node first and then use this node to connect the default node."))
+	dpt:value("nil", translate("Close"))
+	dpt:value("main", translate("Preproxy Node"))
+	dpt.default = "nil"
 	for k, v in pairs(nodes_table) do
-		o:value(v.id, v.remarks)
-		o:depends("default_node", v.id)
+		if v.protocol ~= "_balancing" then
+			dpt:depends("default_node", v.id)
+		end
 	end
 end
-
-dialerProxy = s:option(Flag, "dialerProxy", translate("dialerProxy"))
-dialerProxy:depends({ type = "Xray", protocol = "_shunt"})
 
 domainStrategy = s:option(ListValue, "domainStrategy", translate("Domain Strategy"))
 domainStrategy:value("AsIs")
@@ -211,9 +234,9 @@ domainStrategy:value("IPIfNonMatch")
 domainStrategy:value("IPOnDemand")
 domainStrategy.default = "IPOnDemand"
 domainStrategy.description = "<br /><ul><li>" .. translate("'AsIs': Only use domain for routing. Default value.")
-.. "</li><li>" .. translate("'IPIfNonMatch': When no rule matches current domain, resolves it into IP addresses (A or AAAA records) and try all rules again.")
-.. "</li><li>" .. translate("'IPOnDemand': As long as there is a IP-based rule, resolves the domain into IP immediately.")
-.. "</li></ul>"
+	.. "</li><li>" .. translate("'IPIfNonMatch': When no rule matches current domain, resolves it into IP addresses (A or AAAA records) and try all rules again.")
+	.. "</li><li>" .. translate("'IPOnDemand': As long as there is a IP-based rule, resolves the domain into IP immediately.")
+	.. "</li></ul>"
 domainStrategy:depends("protocol", "_shunt")
 
 domainMatcher = s:option(ListValue, "domainMatcher", translate("Domain matcher"))
@@ -808,7 +831,7 @@ h2_path:depends("transport", "h2")
 h2_path:depends("ss_transport", "h2")
 
 h2_health_check = s:option(Flag, "h2_health_check", translate("Health check"))
-h2_health_check:depends({ type = "Xray", transport = "h2"})
+h2_health_check:depends({ type = "Xray", transport = "h2" })
 
 h2_read_idle_timeout = s:option(Value, "h2_read_idle_timeout", translate("Idle timeout"))
 h2_read_idle_timeout.default = "10"
@@ -843,10 +866,10 @@ grpc_serviceName:depends("transport", "grpc")
 grpc_mode = s:option(ListValue, "grpc_mode", "gRPC " .. translate("Transfer mode"))
 grpc_mode:value("gun")
 grpc_mode:value("multi")
-grpc_mode:depends({ type = "Xray", transport = "grpc"})
+grpc_mode:depends({ type = "Xray", transport = "grpc" })
 
 grpc_health_check = s:option(Flag, "grpc_health_check", translate("Health check"))
-grpc_health_check:depends({ type = "Xray", transport = "grpc"})
+grpc_health_check:depends({ type = "Xray", transport = "grpc" })
 
 grpc_idle_timeout = s:option(Value, "grpc_idle_timeout", translate("Idle timeout"))
 grpc_idle_timeout.default = "10"
@@ -862,7 +885,7 @@ grpc_permit_without_stream:depends("grpc_health_check", true)
 
 grpc_initial_windows_size = s:option(Value, "grpc_initial_windows_size", translate("Initial Windows Size"))
 grpc_initial_windows_size.default = "0"
-grpc_initial_windows_size:depends({ type = "Xray", transport = "grpc"})
+grpc_initial_windows_size:depends({ type = "Xray", transport = "grpc" })
 
 -- [[ Trojan-Go Shadowsocks2 ]] --
 ss_aead = s:option(Flag, "ss_aead", translate("Shadowsocks secondary encryption"))

@@ -352,6 +352,18 @@ msgstr "V2ray 负载均衡"
 msgid "Balancing Strategy"
 msgstr "负载均衡策略"
 
+msgid "Use Custome Probe URL"
+msgstr "使用自定义探测网址"
+
+msgid "By default the built-in probe URL will be used, enable this option to use a custom probe URL."
+msgstr "默认使用内置的探测网址，启用此选项以使用自定义探测网址。"
+
+msgid "Probe URL"
+msgstr "探测网址"
+
+msgid "The URL used to detect the connection status."
+msgstr "用于检测连接状态的网址。"
+
 msgid "Probe Interval"
 msgstr "探测间隔"
 
@@ -369,6 +381,12 @@ msgstr "V2ray 分流"
 
 msgid "Preproxy"
 msgstr "前置代理"
+
+msgid "Preproxy Node"
+msgstr "前置代理节点"
+
+msgid "Set the node to be used as a pre-proxy. Each rule (including <code>Default</code>) has a separate switch that controls whether this rule uses the pre-proxy or not."
+msgstr "设置用作前置代理的节点。每条规则（包括<code>默认</code>）都有独立开关控制本规则是否使用前置代理。"
 
 msgid "Direct Connection"
 msgstr "直连"
@@ -661,8 +679,8 @@ msgstr "切掉它"
 msgid "Applying to the default node"
 msgstr "应用于默认节点"
 
-msgid "Applying to the default preproxy node"
-msgstr "应用于默认前置节点"
+msgid "Applying to the preproxy node"
+msgstr "应用于前置代理节点"
 
 msgid "Add nodes to the standby node list by keywords"
 msgstr "通过关键字添加节点到备用节点列表"
