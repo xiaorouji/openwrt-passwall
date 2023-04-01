@@ -261,4 +261,11 @@ o.remove = function(self, section, value)
 	fs.writefile(hosts, "")
 end
 
+if sys.call('[ -f "/www/luci-static/resources/uci.js" ]') == 0 then
+	m.apply_on_parse = true
+	function m.on_apply(self)
+		luci.sys.call("/etc/init.d/passwall reload > /dev/null 2>&1 &")
+	end
+end
+
 return m

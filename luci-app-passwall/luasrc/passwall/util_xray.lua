@@ -636,7 +636,7 @@ function gen_config(var)
 					if not observatory then
 						observatory = {
 							subjectSelector = { "blc-" },
-							probeUrl = _node.useCustomProbeUrl == true and _node.probeUrl or nil,
+							probeUrl = _node.useCustomProbeUrl and _node.probeUrl or nil,
 							probeInterval = _node.probeInterval or "1m",
 							enableConcurrency = node.type == "Xray" and true or nil --这里只判断顶层节点(分流总节点/单独的负载均衡节点)类型为Xray，就可以启用并发
 						}
