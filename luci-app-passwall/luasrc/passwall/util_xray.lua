@@ -817,6 +817,7 @@ function gen_config(var)
 						table.insert(rules, {
 							type = "field",
 							outboundTag = outboundTag,
+							balancerTag = balancerTag,
 							domain = _domain,
 							protocol = protocols
 						})
@@ -829,6 +830,7 @@ function gen_config(var)
 						table.insert(rules, {
 							type = "field",
 							outboundTag = outboundTag,
+							balancerTag = balancerTag,
 							ip = _ip,
 							protocol = protocols
 						})
@@ -837,6 +839,7 @@ function gen_config(var)
 						table.insert(rules, {
 							type = "field",
 							outboundTag = outboundTag,
+							balancerTag = balancerTag,
 							protocol = protocols
 						})
 					end
