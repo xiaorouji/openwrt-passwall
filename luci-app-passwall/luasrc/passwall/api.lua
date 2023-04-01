@@ -876,6 +876,6 @@ function to_check_self()
 		has_update = true,
 		local_version = local_version,
 		remote_version = remote_version,
-		error = remote_version
+		error = i18n.translatef("The latest version: %s, currently does not support automatic update, if you need to update, please compile or download the ipk and then manually install.", remote_version)
 	}
 end

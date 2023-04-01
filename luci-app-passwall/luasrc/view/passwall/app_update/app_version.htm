@@ -9,7 +9,7 @@ local version = {}
 	var appInfoList = new Array();
 	var inProgressCount = 0;
 	var tokenStr = '<%=token%>';
-	var manuallyUpdateText = '<%:Manually update%>';
+	var checkUpdateText = '<%:Check update%>';
 	var noUpdateText = '<%:It is the latest version%>';
 	var updateSuccessText = '<%:Update successful%>';
 	var clickToUpdateText = '<%:Click to update%>';
@@ -55,7 +55,7 @@ local version = {}
 
 	function onRequestError(btn, errorMessage) {
 		btn.disabled = false;
-		btn.value = manuallyUpdateText;
+		btn.value = checkUpdateText;
 
 		var ckeckDetailElm = document.getElementById(btn.id + '-detail');
 		if (errorMessage && ckeckDetailElm) {
@@ -180,7 +180,7 @@ local version = {}
 		<div class="cbi-value-description">
 			<span>【 <%=api.get_version()%> 】</span>
 			<input class="btn cbi-button cbi-button-apply" type="button" id="passwall-check_btn"
-				onclick="onBtnClick(this,'passwall');" value="<%:Manually update%>" />
+				onclick="onBtnClick(this,'passwall');" value="<%:Check update%>" />
 			<span id="passwall-check_btn-detail"></span>
 		</div>
 	</div>
@@ -196,7 +196,7 @@ local version = {}
 		<div class="cbi-value-description">
 			<span>【 <%=version[k] ~="" and version[k] or translate("Null") %> 】</span>
 			<input class="btn cbi-button cbi-button-apply" type="button" id="_<%=k%>-check_btn"
-				onclick="onBtnClick(this,'<%=k%>');" value="<%:Manually update%>" />
+				onclick="onBtnClick(this,'<%=k%>');" value="<%:Check update%>" />
 			<span id="_<%=k%>-check_btn-detail"></span>
 		</div>
 	</div>
