@@ -141,6 +141,7 @@ if (has_v2ray or has_xray) and #nodes_table > 0 then
 		o.write = get_write(v.id, "main_node")
 
 		local dialerProxy = s:taboption("Main", Flag, vid .. "-dialerProxy", translate("dialerProxy"))
+		dialerProxy.default = "0"
 		if v.type == "Xray" then
 			dialerProxy:depends("tcp_node", v.id)
 		else --主设置界面没有type判断，只能判断本分流节点类型是Xray就添加对本分流节点的依赖，但不是的话就没有依赖，会全部显示，所以添加一个不存在的依赖以达到隐藏的目的
@@ -148,6 +149,7 @@ if (has_v2ray or has_xray) and #nodes_table > 0 then
 		end
 		dialerProxy.cfgvalue = get_cfgvalue(v.id, "dialerProxy")
 		dialerProxy.write = get_write(v.id, "dialerProxy")
+		dialerProxy.rmempty = false
 
 		uci:foreach(appname, "shunt_rules", function(e)
 			local id = e[".name"]
