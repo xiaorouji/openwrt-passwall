@@ -226,7 +226,10 @@ jobs:
           cd && cd packages && mkdir -p ${{ matrix.pakcages }} && cd ${{ matrix.pakcages }}
           wget -P / ${{ matrix.release_download_url }}$New_PKG_VERSION${{ matrix.file_name }}
           file_name=${{ matrix.file_name }}
-          if [ ! -n "${{ matrix.file_name }}" ]; then PKG_HASH=$(sha256sum v$New_PKG_VERSION) && PKG_HASH=${PKG_HASH%% *}; else PKG_HASH=$(sha256sum ${file_name##*/}) && PKG_HASH=${PKG_HASH%% *}; fi;
+
+          is_v=$(echo ${{ matrix.release_download_url }} | awk -F/ '{print $NF}')
+
+          if [ ! -n "${{ matrix.file_name }}" ]; then PKG_HASH=$(sha256sum $is_v$New_PKG_VERSION) && PKG_HASH=${PKG_HASH%% *}; else PKG_HASH=$(sha256sum ${file_name##*/}) && PKG_HASH=${PKG_HASH%% *}; fi;
           cd && cd work/openwrt-passwall/openwrt-passwall/${{ matrix.folder }} 
           sed -i "${{ matrix.hash_line }}c ${{ matrix.hash_head }}$PKG_HASH" Makefile
           echo "已更新${{ matrix.pakcages }}版本到: $New_PKG_VERSION"
