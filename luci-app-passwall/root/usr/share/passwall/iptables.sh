@@ -177,9 +177,6 @@ get_redirect_ipt() {
 	returnhome)
 		echo "$(dst $IPSET_CHN) $(REDIRECT $2 $3)"
 		;;
-	direct/proxy)
-		echo "-j RETURN"
-		;;
 	esac
 }
 
@@ -199,9 +196,6 @@ get_redirect_ip6t() {
 		;;
 	returnhome)
 		echo "$(dst $IPSET_CHN6) $(REDIRECT $2 $3)"
-		;;
-	direct/proxy)
-		echo "-j RETURN"
 		;;
 	esac
 }
@@ -333,13 +327,13 @@ load_acl() {
 							$ipt_n -A PSW $(comment "$remarks") -p icmp ${_ipt_source} -d $FAKE_IP $(REDIRECT)
 							$ipt_n -A PSW $(comment "$remarks") -p icmp ${_ipt_source} $(dst $IPSET_SHUNTLIST) $(REDIRECT)
 							$ipt_n -A PSW $(comment "$remarks") -p icmp ${_ipt_source} $(dst $IPSET_BLACKLIST) $(REDIRECT)
-							$ipt_n -A PSW $(comment "$remarks") -p icmp ${_ipt_source} $(get_redirect_ipt $tcp_proxy_mode)
+							[ "$tcp_proxy_mode" != "direct/proxy" ] && $ipt_n -A PSW $(comment "$remarks") -p icmp ${_ipt_source} $(get_redirect_ipt $tcp_proxy_mode)
 						}
 						
 						[ "$accept_icmpv6" = "1" ] && [ "$PROXY_IPV6" == "1" ] && {
 							$ip6t_n -A PSW $(comment "$remarks") -p ipv6-icmp ${_ipt_source} $(dst $IPSET_SHUNTLIST6) $(REDIRECT) 2>/dev/null
 							$ip6t_n -A PSW $(comment "$remarks") -p ipv6-icmp ${_ipt_source} $(dst $IPSET_BLACKLIST6) $(REDIRECT) 2>/dev/null
-							$ip6t_n -A PSW $(comment "$remarks") -p ipv6-icmp ${_ipt_source} $(get_redirect_ip6t $tcp_proxy_mode) 2>/dev/null
+							[ "$tcp_proxy_mode" != "direct/proxy" ] && $ip6t_n -A PSW $(comment "$remarks") -p ipv6-icmp ${_ipt_source} $(get_redirect_ip6t $tcp_proxy_mode) 2>/dev/null
 						}
 						
 						[ "$tcp_no_redir_ports" != "disable" ] && {
@@ -366,18 +360,18 @@ load_acl() {
 							$ipt_n -A PSW $(comment "$remarks") -p tcp ${_ipt_source} -d $FAKE_IP $(REDIRECT $tcp_port)
 							$ipt_n -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_SHUNTLIST) $(REDIRECT $tcp_port)
 							$ipt_n -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_BLACKLIST) $(REDIRECT $tcp_port)
-							$ipt_n -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(get_redirect_ipt $tcp_proxy_mode $tcp_port)
+							[ "$tcp_proxy_mode" != "direct/proxy" ] && $ipt_n -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(get_redirect_ipt $tcp_proxy_mode $tcp_port)
 						else
 							$ipt_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} -d $FAKE_IP -j PSW_RULE
 							$ipt_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_SHUNTLIST) -j PSW_RULE
 							$ipt_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_BLACKLIST) -j PSW_RULE
-							$ipt_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(get_ipset_ipt $tcp_proxy_mode) -j PSW_RULE
+							[ "$tcp_proxy_mode" != "direct/proxy" ] && $ipt_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(get_ipset_ipt $tcp_proxy_mode) -j PSW_RULE
 							$ipt_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(REDIRECT $tcp_port TPROXY)
 						fi
 						[ "$PROXY_IPV6" == "1" ] && {
 							$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) -j PSW_RULE 2>/dev/null
 							$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_BLACKLIST6) -j PSW_RULE 2>/dev/null
-							$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(get_ipset_ip6t $tcp_proxy_mode) -j PSW_RULE 2>/dev/null
+							[ "$tcp_proxy_mode" != "direct/proxy" ] && $ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(get_ipset_ip6t $tcp_proxy_mode) -j PSW_RULE 2>/dev/null
 							$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(REDIRECT $tcp_port TPROXY) 2>/dev/null
 						}
 					else
@@ -416,13 +410,13 @@ load_acl() {
 						$ipt_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} -d $FAKE_IP -j PSW_RULE
 						$ipt_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} $(factor $udp_redir_ports "-m multiport --dport") $(dst $IPSET_SHUNTLIST) -j PSW_RULE
 						$ipt_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} $(factor $udp_redir_ports "-m multiport --dport") $(dst $IPSET_BLACKLIST) -j PSW_RULE
-						$ipt_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} $(factor $udp_redir_ports "-m multiport --dport") $(get_ipset_ipt $udp_proxy_mode) -j PSW_RULE
+						[ "$udp_proxy_mode" != "direct/proxy" ] && $ipt_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} $(factor $udp_redir_ports "-m multiport --dport") $(get_ipset_ipt $udp_proxy_mode) -j PSW_RULE
 						$ipt_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} $(REDIRECT $udp_port TPROXY)
 
 						[ "$PROXY_IPV6" == "1" ] && [ "$PROXY_IPV6_UDP" == "1" ] && {
 							$ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} $(factor $udp_redir_ports "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) -j PSW_RULE 2>/dev/null
 							$ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} $(factor $udp_redir_ports "-m multiport --dport") $(dst $IPSET_BLACKLIST6) -j PSW_RULE 2>/dev/null
-							$ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} $(factor $udp_redir_ports "-m multiport --dport") $(get_ipset_ip6t $udp_proxy_mode) -j PSW_RULE 2>/dev/null
+							[ "$udp_proxy_mode" != "direct/proxy" ] && $ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} $(factor $udp_redir_ports "-m multiport --dport") $(get_ipset_ip6t $udp_proxy_mode) -j PSW_RULE 2>/dev/null
 							$ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} $(REDIRECT $udp_port TPROXY) 2>/dev/null
 						}
 					else
@@ -475,32 +469,32 @@ load_acl() {
 					$ipt_n -A PSW $(comment "默认") -p icmp -d $FAKE_IP $(REDIRECT)
 					$ipt_n -A PSW $(comment "默认") -p icmp $(dst $IPSET_SHUNTLIST) $(REDIRECT)
 					$ipt_n -A PSW $(comment "默认") -p icmp $(dst $IPSET_BLACKLIST) $(REDIRECT)
-					$ipt_n -A PSW $(comment "默认") -p icmp $(get_redirect_ipt $TCP_PROXY_MODE)
+					[ "$TCP_PROXY_MODE" != "direct/proxy" ] && $ipt_n -A PSW $(comment "默认") -p icmp $(get_redirect_ipt $TCP_PROXY_MODE)
 				}
 				
 				[ "$accept_icmpv6" = "1" ] && [ "$PROXY_IPV6" == "1" ] && {
 					$ip6t_n -A PSW $(comment "默认") -p ipv6-icmp $(dst $IPSET_SHUNTLIST6) $(REDIRECT)
 					$ip6t_n -A PSW $(comment "默认") -p ipv6-icmp $(dst $IPSET_BLACKLIST6) $(REDIRECT)
-					$ip6t_n -A PSW $(comment "默认") -p ipv6-icmp $(get_redirect_ip6t $TCP_PROXY_MODE)
+					[ "$TCP_PROXY_MODE" != "direct/proxy" ] && $ip6t_n -A PSW $(comment "默认") -p ipv6-icmp $(get_redirect_ip6t $TCP_PROXY_MODE)
 				}
 				
 				if [ "${ipt_tmp}" = "${ipt_n}" ]; then
 					$ipt_n -A PSW $(comment "默认") -p tcp -d $FAKE_IP $(REDIRECT $TCP_REDIR_PORT)
 					$ipt_n -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST) $(REDIRECT $TCP_REDIR_PORT)
 					$ipt_n -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST) $(REDIRECT $TCP_REDIR_PORT)
-					$ipt_n -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ipt $TCP_PROXY_MODE $TCP_REDIR_PORT)
+					[ "$TCP_PROXY_MODE" != "direct/proxy" ] && $ipt_n -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ipt $TCP_PROXY_MODE $TCP_REDIR_PORT)
 				else
 					$ipt_m -A PSW $(comment "默认") -p tcp -d $FAKE_IP -j PSW_RULE
 					$ipt_m -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST) -j PSW_RULE
 					$ipt_m -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST) -j PSW_RULE
-					$ipt_m -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(get_ipset_ipt $TCP_PROXY_MODE) -j PSW_RULE
+					[ "$TCP_PROXY_MODE" != "direct/proxy" ] && $ipt_m -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(get_ipset_ipt $TCP_PROXY_MODE) -j PSW_RULE
 					$ipt_m -A PSW $(comment "默认") -p tcp $(REDIRECT $TCP_REDIR_PORT TPROXY)
 				fi
 
 				[ "$PROXY_IPV6" == "1" ] && {
 					$ip6t_m -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) -j PSW_RULE
 					$ip6t_m -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST6) -j PSW_RULE
-					$ip6t_m -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(get_ipset_ip6t $TCP_PROXY_MODE) -j PSW_RULE
+					[ "$TCP_PROXY_MODE" != "direct/proxy" ] && $ip6t_m -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(get_ipset_ip6t $TCP_PROXY_MODE) -j PSW_RULE
 					$ip6t_m -A PSW $(comment "默认") -p tcp $(REDIRECT $TCP_REDIR_PORT TPROXY)
 				}
 
@@ -539,13 +533,13 @@ load_acl() {
 				$ipt_m -A PSW $(comment "默认") -p udp -d $FAKE_IP -j PSW_RULE
 				$ipt_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST) -j PSW_RULE
 				$ipt_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST) -j PSW_RULE
-				$ipt_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(get_ipset_ipt $UDP_PROXY_MODE) -j PSW_RULE
+				[ "$UDP_PROXY_MODE" != "direct/proxy" ] && $ipt_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(get_ipset_ipt $UDP_PROXY_MODE) -j PSW_RULE
 				$ipt_m -A PSW $(comment "默认") -p udp $(REDIRECT $UDP_REDIR_PORT TPROXY)
 
 				[ "$PROXY_IPV6" == "1" ] && [ "$PROXY_IPV6_UDP" == "1" ] && {
 					$ip6t_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) -j PSW_RULE
 					$ip6t_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST6) -j PSW_RULE
-					$ip6t_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(get_ipset_ip6t $UDP_PROXY_MODE) -j PSW_RULE
+					[ "$UDP_PROXY_MODE" != "direct/proxy" ] && $ip6t_m -A PSW $(comment "默认") -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(get_ipset_ip6t $UDP_PROXY_MODE) -j PSW_RULE
 					$ip6t_m -A PSW $(comment "默认") -p udp $(REDIRECT $UDP_REDIR_PORT TPROXY)
 				}
 
@@ -924,14 +918,14 @@ add_firewall_rule() {
 				$ipt_n -A PSW_OUTPUT -p icmp -d $FAKE_IP $(REDIRECT)
 				$ipt_n -A PSW_OUTPUT -p icmp $(dst $IPSET_SHUNTLIST) $(REDIRECT)
 				$ipt_n -A PSW_OUTPUT -p icmp $(dst $IPSET_BLACKLIST) $(REDIRECT)
-				$ipt_n -A PSW_OUTPUT -p icmp $(get_redirect_ipt $TCP_PROXY_MODE )
+				[ "$LOCALHOST_TCP_PROXY_MODE" != "direct/proxy" ] && $ipt_n -A PSW_OUTPUT -p icmp $(get_redirect_ipt $LOCALHOST_TCP_PROXY_MODE)
 			}
 
 			[ "$accept_icmpv6" = "1" ] && {
 				$ip6t_n -A OUTPUT -p ipv6-icmp -j PSW_OUTPUT
 				$ip6t_n -A PSW_OUTPUT -p ipv6-icmp $(dst $IPSET_SHUNTLIST6) $(REDIRECT)
 				$ip6t_n -A PSW_OUTPUT -p ipv6-icmp $(dst $IPSET_BLACKLIST6) $(REDIRECT)
-				$ip6t_n -A PSW_OUTPUT -p ipv6-icmp $(get_redirect_ip6t $TCP_PROXY_MODE)
+				[ "$LOCALHOST_TCP_PROXY_MODE" != "direct/proxy" ] && $ip6t_n -A PSW_OUTPUT -p ipv6-icmp $(get_redirect_ip6t $LOCALHOST_TCP_PROXY_MODE)
 			}
 
 			local ipt_tmp=$ipt_n
@@ -975,7 +969,7 @@ add_firewall_rule() {
 					$ipt_n -A PSW_OUTPUT -p tcp -d $FAKE_IP $(REDIRECT $TCP_REDIR_PORT)
 					$ipt_n -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST) $(REDIRECT $TCP_REDIR_PORT)
 					$ipt_n -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST) $(REDIRECT $TCP_REDIR_PORT)
-					$ipt_n -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ipt $LOCALHOST_TCP_PROXY_MODE $TCP_REDIR_PORT)
+					[ "$LOCALHOST_TCP_PROXY_MODE" != "direct/proxy" ] && $ipt_n -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(get_redirect_ipt $LOCALHOST_TCP_PROXY_MODE $TCP_REDIR_PORT)
 				}
 				$ipt_n -A OUTPUT -p tcp -j PSW_OUTPUT
 			else
@@ -983,7 +977,7 @@ add_firewall_rule() {
 					$ipt_m -A PSW_OUTPUT -p tcp -d $FAKE_IP -j PSW_RULE
 					$ipt_m -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST) -j PSW_RULE
 					$ipt_m -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST) -j PSW_RULE
-					$ipt_m -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(get_ipset_ipt $LOCALHOST_TCP_PROXY_MODE) -j PSW_RULE
+					[ "$LOCALHOST_TCP_PROXY_MODE" != "direct/proxy" ] && $ipt_m -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(get_ipset_ipt $LOCALHOST_TCP_PROXY_MODE) -j PSW_RULE
 					$ipt_m -A PSW $(comment "本机") -p tcp -i lo $(REDIRECT $TCP_REDIR_PORT TPROXY)
 				}
 				$ipt_m -A PSW $(comment "本机") -p tcp -i lo -j RETURN
@@ -994,7 +988,7 @@ add_firewall_rule() {
 				[ "$LOCALHOST_TCP_PROXY_MODE" != "disable" ] && {
 					$ip6t_m -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) -j PSW_RULE
 					$ip6t_m -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST6) -j PSW_RULE
-					$ip6t_m -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(get_ipset_ip6t $LOCALHOST_TCP_PROXY_MODE) -j PSW_RULE
+					[ "$LOCALHOST_TCP_PROXY_MODE" != "direct/proxy" ] && $ip6t_m -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(get_ipset_ip6t $LOCALHOST_TCP_PROXY_MODE) -j PSW_RULE
 					$ip6t_m -A PSW $(comment "本机") -p tcp -i lo $(REDIRECT $TCP_REDIR_PORT TPROXY)
 				}
 				$ip6t_m -A PSW $(comment "本机") -p tcp -i lo -j RETURN
@@ -1034,7 +1028,7 @@ add_firewall_rule() {
 				$ipt_m -A PSW_OUTPUT -p udp -d $FAKE_IP -j PSW_RULE
 				$ipt_m -A PSW_OUTPUT -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST) -j PSW_RULE
 				$ipt_m -A PSW_OUTPUT -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST) -j PSW_RULE
-				$ipt_m -A PSW_OUTPUT -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(get_ipset_ipt $LOCALHOST_UDP_PROXY_MODE) -j PSW_RULE
+				[ "$LOCALHOST_UDP_PROXY_MODE" != "direct/proxy" ] && $ipt_m -A PSW_OUTPUT -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(get_ipset_ipt $LOCALHOST_UDP_PROXY_MODE) -j PSW_RULE
 				$ipt_m -A PSW $(comment "本机") -p udp -i lo $(REDIRECT $UDP_REDIR_PORT TPROXY)
 			}
 			$ipt_m -A PSW $(comment "本机") -p udp -i lo -j RETURN
@@ -1044,7 +1038,7 @@ add_firewall_rule() {
 				[ "$LOCALHOST_UDP_PROXY_MODE" != "disable" ] && {
 					$ip6t_m -A PSW_OUTPUT -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST6) -j PSW_RULE
 					$ip6t_m -A PSW_OUTPUT -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST6) -j PSW_RULE
-					$ip6t_m -A PSW_OUTPUT -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(get_ipset_ip6t $LOCALHOST_UDP_PROXY_MODE) -j PSW_RULE
+					[ "$LOCALHOST_UDP_PROXY_MODE" != "direct/proxy" ] && $ip6t_m -A PSW_OUTPUT -p udp $(factor $UDP_REDIR_PORTS "-m multiport --dport") $(get_ipset_ip6t $LOCALHOST_UDP_PROXY_MODE) -j PSW_RULE
 					$ip6t_m -A PSW $(comment "本机") -p udp -i lo $(REDIRECT $UDP_REDIR_PORT TPROXY)
 				}
 				$ip6t_m -A PSW $(comment "本机") -p udp -i lo -j RETURN
