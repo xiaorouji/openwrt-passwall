@@ -108,16 +108,20 @@ udp_node:value("tcp", translate("Same as the tcp node"))
 -- 分流
 if (has_v2ray or has_xray) and #nodes_table > 0 then
 	local normal_list = {}
+	local balancing_list = {}
 	local shunt_list = {}
 	for k, v in pairs(nodes_table) do
-		if v.node_type == "normal" or v.protocol == "_balancing" then
+		if v.node_type == "normal" then
 			normal_list[#normal_list + 1] = v
+		end
+		if v.protocol and v.protocol == "_balancing" then
+			balancing_list[#balancing_list + 1] = v
 		end
 		if v.protocol and v.protocol == "_shunt" then
 			shunt_list[#shunt_list + 1] = v
 		end
 	end
-	
+
 	local function get_cfgvalue(shunt_node_id, rule_id)
 		return function(self, section)
 			return m:get(shunt_node_id, rule_id) or "nil"
@@ -129,84 +133,115 @@ if (has_v2ray or has_xray) and #nodes_table > 0 then
 		end
 	end
 
-	for k, v in pairs(shunt_list) do
-		local vid = v.id:sub(1, 8)
-		o = s:taboption("Main", ListValue, vid .. "-main_node", string.format('<a style="color:red">%s</a>', translate("Preproxy Node")), translate("Set the node to be used as a pre-proxy. Each rule (including <code>Default</code>) has a separate switch that controls whether this rule uses the pre-proxy or not."))
-		o:depends("tcp_node", v.id)
-		o:value("nil", translate("Close"))
-		for k1, v1 in pairs(normal_list) do
-			o:value(v1.id, v1.remark)
-		end
-		o.cfgvalue = get_cfgvalue(v.id, "main_node")
-		o.write = get_write(v.id, "main_node")
+	if #normal_list > 0 then
+		for k, v in pairs(shunt_list) do
+			local vid = v.id:sub(1, 8)
+			-- shunt node type, V2ray or Xray
+			local type = s:taboption("Main", ListValue, vid .. "-type", translate("Type"))
+			if has_v2ray then
+				type:value("V2ray", translate("V2ray"))
+			end
+			if has_xray then
+				type:value("Xray", translate("Xray"))
+			end
+			type.cfgvalue = get_cfgvalue(v.id, "type")
+			type.write = get_write(v.id, "type")
+			-- pre-proxy node
+			o = s:taboption("Main", ListValue, vid .. "-main_node", string.format('<a style="color:red">%s</a>', translate("Preproxy Node")), translate("Set the node to be used as a pre-proxy. Each rule (including <code>Default</code>) has a separate switch that controls whether this rule uses the pre-proxy or not."))
+			o:depends("tcp_node", v.id)
+			o:value("nil", translate("Close"))
+			for k1, v1 in pairs(normal_list) do
+				o:value(v1.id, v1.remark)
+			end
+			o.cfgvalue = get_cfgvalue(v.id, "main_node")
+			o.write = get_write(v.id, "main_node")
+			-- Xray dialerProxy
+			local dialerProxy = s:taboption("Main", Flag, vid .. "-dialerProxy", translate("dialerProxy"))
+			dialerProxy.default = "0"
+			dialerProxy:depends(vid .. "-type", "Xray")
+			if (has_v2ray and has_xray) or (v.type == "V2ray" and not has_v2ray) or (v.type == "Xray" and not has_xray) then
+				type:depends("tcp_node", v.id)
+			else
+				type:depends("tcp_node", "hide") --不存在的依赖，即始终隐藏
+				if v.type == "Xray" then
+					dialerProxy:depends("tcp_node", v.id)
+				end
+			end
+			dialerProxy.cfgvalue = get_cfgvalue(v.id, "dialerProxy")
+			dialerProxy.write = get_write(v.id, "dialerProxy")
+			dialerProxy.rmempty = false
 
-		local dialerProxy = s:taboption("Main", Flag, vid .. "-dialerProxy", translate("dialerProxy"))
-		dialerProxy.default = "0"
-		if v.type == "Xray" then
-			dialerProxy:depends("tcp_node", v.id)
-		else --主设置界面没有type判断，只能判断本分流节点类型是Xray就添加对本分流节点的依赖，但不是的话就没有依赖，会全部显示，所以添加一个不存在的依赖以达到隐藏的目的
-			dialerProxy:depends("tcp_node", "xray_shunt")
-		end
-		dialerProxy.cfgvalue = get_cfgvalue(v.id, "dialerProxy")
-		dialerProxy.write = get_write(v.id, "dialerProxy")
-		dialerProxy.rmempty = false
-
-		uci:foreach(appname, "shunt_rules", function(e)
-			local id = e[".name"]
-			local node_option = vid .. "-" .. id .. "_node"
-			if id and e.remarks then
-				o = s:taboption("Main", ListValue, node_option, string.format('* <a href="%s" target="_blank">%s</a>', api.url("shunt_rules", id), e.remarks))
-				o:depends("tcp_node", v.id)
-				o:value("nil", translate("Close"))
-				o:value("_default", translate("Default"))
-				o:value("_direct", translate("Direct Connection"))
-				o:value("_blackhole", translate("Blackhole"))
-				local pt = s:taboption("Main", ListValue, vid .. "-".. id .. "_proxy_tag", string.format('* <a style="color:red">%s</a>', e.remarks .. " " .. translate("Preproxy")))
-				pt:value("nil", translate("Close"))
-				pt:value("main", translate("Preproxy Node"))
-				pt.default = "nil"
-				for k1, v1 in pairs(normal_list) do
-					o:value(v1.id, v1.remark)
-					if v1.protocol ~= "_balancing" then
+			uci:foreach(appname, "shunt_rules", function(e)
+				local id = e[".name"]
+				local node_option = vid .. "-" .. id .. "_node"
+				if id and e.remarks then
+					o = s:taboption("Main", ListValue, node_option, string.format('* <a href="%s" target="_blank">%s</a>', api.url("shunt_rules", id), e.remarks))
+					o:depends("tcp_node", v.id)
+					o:value("nil", translate("Close"))
+					o:value("_default", translate("Default"))
+					o:value("_direct", translate("Direct Connection"))
+					o:value("_blackhole", translate("Blackhole"))
+					local pt = s:taboption("Main", ListValue, vid .. "-".. id .. "_proxy_tag", string.format('* <a style="color:red">%s</a>', e.remarks .. " " .. translate("Preproxy")))
+					pt:value("nil", translate("Close"))
+					pt:value("main", translate("Preproxy Node"))
+					pt.default = "nil"
+					for k1, v1 in pairs(balancing_list) do
+						o:value(v1.id, v1.remark)
+					end
+					for k1, v1 in pairs(normal_list) do
+						o:value(v1.id, v1.remark)
 						pt:depends(node_option, v1.id)
 					end
+					o.cfgvalue = get_cfgvalue(v.id, id)
+					o.write = get_write(v.id, id)
+					pt.cfgvalue = get_cfgvalue(v.id, id .. "_proxy_tag")
+					pt.write = get_write(v.id, id .. "_proxy_tag")
 				end
-				o.cfgvalue = get_cfgvalue(v.id, id)
-				o.write = get_write(v.id, id)
-				pt.cfgvalue = get_cfgvalue(v.id, id .. "_proxy_tag")
-				pt.write = get_write(v.id, id .. "_proxy_tag")
-			end
-		end)
+			end)
 
-		local id = "default_node"
-		o = s:taboption("Main", ListValue, vid .. "-" .. id, string.format('* <a style="color:red">%s</a>', translate("Default")))
-		o:depends("tcp_node", v.id)
-		o:value("_direct", translate("Direct Connection"))
-		o:value("_blackhole", translate("Blackhole"))
-		for k1, v1 in pairs(normal_list) do
-			o:value(v1.id, v1["remark"])
-		end
-		o.cfgvalue = get_cfgvalue(v.id, id)
-		o.write = get_write(v.id, id)
-
-		local id = "default_proxy_tag"
-		o = s:taboption("Main", ListValue, vid .. "-" .. id, string.format('* <a style="color:red">%s</a>', translate("Default Preproxy")), translate("When using, localhost will connect this node first and then use this node to connect the default node."))
-		for k1, v1 in pairs(normal_list) do
-			if v1.protocol ~= "_balancing" then
-				o:depends(vid .. "-default_node", v1.id)
+			local id = "default_node"
+			o = s:taboption("Main", ListValue, vid .. "-" .. id, string.format('* <a style="color:red">%s</a>', translate("Default")))
+			o:depends("tcp_node", v.id)
+			o:value("_direct", translate("Direct Connection"))
+			o:value("_blackhole", translate("Blackhole"))
+			for k1, v1 in pairs(normal_list) do
+				o:value(v1.id, v1["remark"])
 			end
+			o.cfgvalue = get_cfgvalue(v.id, id)
+			o.write = get_write(v.id, id)
+
+			local id = "default_proxy_tag"
+			o = s:taboption("Main", ListValue, vid .. "-" .. id, string.format('* <a style="color:red">%s</a>', translate("Default Preproxy")), translate("When using, localhost will connect this node first and then use this node to connect the default node."))
+			for k1, v1 in pairs(normal_list) do
+				if v1.protocol ~= "_balancing" then
+					o:depends(vid .. "-default_node", v1.id)
+				end
+			end
+			o:value("nil", translate("Close"))
+			o:value("main", translate("Preproxy Node"))
+			o.cfgvalue = get_cfgvalue(v.id, id)
+			o.write = get_write(v.id, id)
 		end
-		o:value("nil", translate("Close"))
-		o:value("main", translate("Preproxy Node"))
-		o.cfgvalue = get_cfgvalue(v.id, id)
-		o.write = get_write(v.id, id)
+	else
+		local tips = s:taboption("Main", DummyValue, "tips", " ")
+		tips.rawhtml = true
+		tips.cfgvalue = function(t, n)
+			return string.format('<a style="color: red">%s</a>', translate("There are no available nodes, please add or subscribe nodes first."))
+		end
+		tips:depends({ tcp_node = "nil", ["!reverse"] = true })
+		for k, v in pairs(shunt_list) do
+			tips:depends("udp_node", v.id)
+		end
+		for k, v in pairs(balancing_list) do
+			tips:depends("udp_node", v.id)
+		end
 	end
 end
 
 tcp_node_socks_port = s:taboption("Main", Value, "tcp_node_socks_port", translate("TCP Node") .. " Socks " .. translate("Listen Port"))
 tcp_node_socks_port.default = 1070
 tcp_node_socks_port.datatype = "port"
-
+tcp_node_socks_port:depends({ tcp_node = "nil", ["!reverse"] = true })
 --[[
 if has_v2ray or has_xray then
 	tcp_node_http_port = s:taboption("Main", Value, "tcp_node_http_port", translate("TCP Node") .. " HTTP " .. translate("Listen Port") .. " " .. translate("0 is not use"))
