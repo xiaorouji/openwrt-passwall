@@ -30,7 +30,7 @@ end
 local var = api.get_args(arg)
 local haproxy_path = var["-path"]
 local haproxy_conf = var["-conf"]
-local haproxy_dns = var["-dns"] or "119.29.29.29"
+local haproxy_dns = var["-dns"] or "119.29.29.29:53,223.5.5.5:53"
 
 local health_check_type = uci:get(appname, "@global_haproxy[0]", "health_check_type") or "tcp"
 local health_check_inter = uci:get(appname, "@global_haproxy[0]", "health_check_inter") or "10"
@@ -69,18 +69,28 @@ defaults
     maxconn                 3000
     
 resolvers mydns
-    nameserver dns1 %s:53
     resolve_retries       3
     timeout retry         3s
     hold valid           600s
-
 ]]
 
 f_out:write(string.format(haproxy_config, haproxy_path, health_check_type == "passwall_logic" and string.format([[
     external-check
     insecure-fork-wanted
-]]) or "", haproxy_dns
+]]) or ""
 ))
+
+local index = 0
+string.gsub(haproxy_dns, '[^' .. "," .. ']+', function(w)
+    index = index + 1
+    local s = w:gsub("#", ":")
+    if not s:find(":") then
+        s = s .. ":53"
+    end
+    f_out:write(string.format([[
+    nameserver dns%s %s
+]], index, s))
+end)
 
 local listens = {}
 
