@@ -117,7 +117,7 @@ if (has_v2ray or has_xray) and #nodes_table > 0 then
 			shunt_list[#shunt_list + 1] = v
 		end
 	end
-	
+
 	local function get_cfgvalue(shunt_node_id, rule_id)
 		return function(self, section)
 			return m:get(shunt_node_id, rule_id) or "nil"
@@ -419,6 +419,16 @@ trojan_loglevel:value("1", "info")
 trojan_loglevel:value("2", "warn")
 trojan_loglevel:value("3", "error")
 trojan_loglevel:value("4", "fatal")
+
+o = s:taboption("log", Flag, "advanced_log_feature", translate("Advanced log feature"), translate("For professionals only."))
+o.default = "0"
+o.rmempty = false
+local syslog = s:taboption("log", Flag, "sys_log", translate("Logging to system log"), translate("Logging to the system log for more advanced functions. For example, send logs to a dedicated log server."))
+syslog:depends("advanced_log_feature", "1")
+syslog.default = "0"
+syslog.rmempty = false
+local logpath = s:taboption("log", Value, "persist_log_path", translate("Persist log file directory"), translate("The path to the directory used to store persist log files, the \"/\" at the end can be omitted. Leave it blank to disable this feature."))
+logpath:depends({ ["advanced_log_feature"] = 1, ["sys_log"] = 0 })
 
 s:tab("faq", "FAQ")
 
