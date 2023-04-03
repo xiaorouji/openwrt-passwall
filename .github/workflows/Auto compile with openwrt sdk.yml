@@ -297,7 +297,7 @@ jobs:
           cd ..
           cd ..
 
-          echo "![](https://img.shields.io/github/downloads/xiaorouji/openwrt-passwall/$psw_version_$git_head/total?style=flat-square)" >> release.txt
+          echo "![](https://img.shields.io/github/downloads/xiaorouji/openwrt-passwall/${psw_version}_${git_head}/total?style=flat-square)" >> release.txt
           echo "### Passwall Version" >> release.txt
 
           echo "**:minidisc: Passwall Version: $psw_version**" >> release.txt
