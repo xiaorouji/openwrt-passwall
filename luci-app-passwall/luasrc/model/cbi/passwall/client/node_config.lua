@@ -132,11 +132,17 @@ iface.default = "eth1"
 iface:depends("protocol", "_iface")
 
 local nodes_table = {}
+local balancers_table = {}
 for k, e in ipairs(api.get_valid_nodes()) do
-	if e.node_type == "normal" or e.protocol == "_balancing" then
+	if e.node_type == "normal" then
 		nodes_table[#nodes_table + 1] = {
 			id = e[".name"],
-			protocol = e["protocol"],
+			remarks = e["remark"]
+		}
+	end
+	if e.protocol == "_balancing" then
+		balancers_table[#balancers_table + 1] = {
+			id = e[".name"],
 			remarks = e["remark"]
 		}
 	end
@@ -187,6 +193,9 @@ uci:foreach(appname, "shunt_rules", function(e)
 		o:value("_blackhole", translate("Blackhole"))
 		o:depends("protocol", "_shunt")
 
+		for k, v in pairs(balancers_table) do
+			o:value(v.id, v.remarks)
+		end
 		if #nodes_table > 0 then
 			local pt = s:option(ListValue, e[".name"] .. "_proxy_tag", string.format('* <a style="color:red">%s</a>', e.remarks .. " " .. translate("Preproxy")))
 			pt:value("nil", translate("Close"))
@@ -194,9 +203,7 @@ uci:foreach(appname, "shunt_rules", function(e)
 			pt.default = "nil"
 			for k, v in pairs(nodes_table) do
 				o:value(v.id, v.remarks)
-				if v.protocol ~= "_balancing" then
-					pt:depends(e[".name"], v.id)
-				end
+				pt:depends(e[".name"], v.id)
 			end
 		end
 	end
