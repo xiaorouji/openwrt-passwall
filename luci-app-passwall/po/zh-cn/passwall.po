@@ -398,7 +398,7 @@ msgid "Default Preproxy"
 msgstr "默认前置代理"
 
 msgid "There are no available nodes, please add or subscribe nodes first."
-mststr "没有可用节点，请先添加或订阅节点。"
+msgstr "没有可用节点，请先添加或订阅节点。"
 
 msgid "No shunt rules? Click me to go to add."
 msgstr "没有分流规则？点我前往去添加。"
