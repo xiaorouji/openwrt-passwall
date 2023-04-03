@@ -251,7 +251,24 @@ ln_run() {
 	fi
 	#echo "${file_func} $*" >&2
 	[ -n "${file_func}" ] || echolog "  - 找不到 ${ln_name}，无法启动..."
-	${file_func:-echolog "  - ${ln_name}"} "$@" >${output} 2>&1 &
+	[ "${output}" != "/dev/null" ] && local persist_log_path=$(config_t_get global persist_log_path) && local sys_log=$(config_t_get global sys_log "0")
+	if [ -z "$persist_log_path" ] && [ "$sys_log" != "1" ]; then
+		${file_func:-echolog " - ${ln_name}"} "$@" >${output} 2>&1 &
+	else
+		[ "${output: -1, -7}" == "TCP.log" ] && local protocol="TCP"
+		[ "${output: -1, -7}" == "UDP.log" ] && local protocol="UDP"
+		if [ -n "${persist_log_path}" ]; then
+			mkdir -p ${persist_log_path}
+			local log_file=${persist_log_path}/passwall_${protocol}_${ln_name}_$(date '+%F').log
+			echolog "记录到持久性日志文件：${log_file}"
+			${file_func:-echolog " - ${ln_name}"} "$@" >> ${log_file} 2>&1 &
+			sys_log=0
+		fi
+		if [ "${sys_log}" == "1" ]; then
+			echolog "记录 ${ln_name}_${protocol} 到系统日志"
+			${file_func:-echolog " - ${ln_name}"} "$@" 2>&1 | logger -t PASSWALL_${protocol}_${ln_name} &
+		fi
+	fi
 	process_count=$(ls $TMP_SCRIPT_FUNC_PATH | wc -l)
 	process_count=$((process_count + 1))
 	echo "${file_func:-echolog "  - ${ln_name}"} $@ >${output}" > $TMP_SCRIPT_FUNC_PATH/$process_count
@@ -838,7 +855,7 @@ run_redir() {
 				run_socks flag=TCP node=$node bind=0.0.0.0 socks_port=$port config_file=$config_file http_port=$http_port http_config_file=$http_config_file
 			}
 		}
-		
+
 		[ "$tcp_node_socks" = "1" ] && {
 			echo "127.0.0.1:$tcp_node_socks_port" > $TMP_PATH/TCP_SOCKS_server
 		}
@@ -861,7 +878,7 @@ node_switch() {
 		local config_file="${FLAG}.json"
 		local log_file="${FLAG}.log"
 		local port=$(cat $TMP_PORT_PATH/${FLAG})
-		
+
 		[ "$shunt_logic" != "0" ] && {
 			local node=$(config_t_get global ${flag}_node nil)
 			[ "$(config_n_get $node protocol nil)" = "_shunt" ] && {
@@ -996,7 +1013,7 @@ start_crontab() {
 		echo "$t lua $APP_PATH/rule_update.lua log > /dev/null 2>&1 &" >>/etc/crontabs/root
 		echolog "配置定时任务：自动更新规则。"
 	fi
-	
+
 	TMP_SUB_PATH=$TMP_PATH/sub_crontabs
 	mkdir -p $TMP_SUB_PATH
 	for item in $(uci show ${CONFIG} | grep "=subscribe_list" | cut -d '.' -sf 2 | cut -d '=' -sf 1); do
@@ -1009,7 +1026,7 @@ start_crontab() {
 			echolog "配置定时任务：自动更新【$remark】订阅。"
 		fi
 	done
-	
+
 	[ -d "${TMP_SUB_PATH}" ] && {
 		for name in $(ls ${TMP_SUB_PATH}); do
 			week_update=$(echo $name | awk -F '_' '{print $1}')
@@ -1101,7 +1118,7 @@ start_dns() {
 				doh)
 					remote_dns_doh=$(config_t_get global remote_dns_doh "https://1.1.1.1/dns-query")
 					_v2ray_args="${_v2ray_args} remote_dns_doh=${remote_dns_doh}"
-					
+
 					local _doh_url=$(echo $remote_dns_doh | awk -F ',' '{print $1}')
 					local _doh_host_port=$(lua_api "get_domain_from_url(\"${_doh_url}\")")
 					local _doh_host=$(echo $_doh_host_port | awk -F ':' '{print $1}')
@@ -1171,7 +1188,7 @@ start_dns() {
 		echolog "  + 过滤服务：ChinaDNS-NG(:${china_ng_listen_port})：国内DNS：${china_ng_chn}，可信DNS：${china_ng_gfw}"
 		WHEN_CHNROUTE_DEFAULT_DNS="chinadns_ng"
 	}
-	
+
 	[ "$DNS_SHUNT" = "dnsmasq" ] && {
 		[ "$WHEN_CHNROUTE_DEFAULT_DNS" = "remote" ] && {
 			dnsmasq_version=$(dnsmasq -v | grep -i "Dnsmasq version " | awk '{print $3}')
@@ -1194,13 +1211,13 @@ add_ip2route() {
 	}
 	local remarks="${1}"
 	[ "$remarks" != "$ip" ] && remarks="${1}(${ip})"
-	
+
 	. /lib/functions/network.sh
 	local gateway device
 	network_get_gateway gateway "$2"
 	network_get_device device "$2"
 	[ -z "${device}" ] && device="$2"
-	
+
 	if [ -n "${gateway}" ]; then
 		route add -host ${ip} gw ${gateway} dev ${device} >/dev/null 2>&1
 		echo "$ip" >> $TMP_ROUTE_PATH/${device}
@@ -1249,7 +1266,7 @@ acl_app() {
 			sid=$(uci -q show "${CONFIG}.${item}" | grep "=acl_rule" | awk -F '=' '{print $1}' | awk -F '.' '{print $2}')
 			eval $(uci -q show "${CONFIG}.${item}" | cut -d'.' -sf 3-)
 			[ "$enabled" = "1" ] || continue
-			
+
 			[ -z "${sources}" ] && continue
 			for s in $sources; do
 				is_iprange=$(lua_api "iprange(\"${s}\")")
@@ -1269,7 +1286,7 @@ acl_app() {
 			[ -z "${rule_list}" ] && continue
 			mkdir -p $TMP_ACL_PATH/$sid
 			echo -e "${rule_list}" | sed '/^$/d' > $TMP_ACL_PATH/$sid/rule_list
-			
+
 			tcp_proxy_mode=${tcp_proxy_mode:-default}
 			udp_proxy_mode=${udp_proxy_mode:-default}
 			tcp_node=${tcp_node:-default}
@@ -1284,7 +1301,7 @@ acl_app() {
 			}
 			[ "$tcp_proxy_mode" = "default" ] && tcp_proxy_mode=$TCP_PROXY_MODE
 			[ "$udp_proxy_mode" = "default" ] && udp_proxy_mode=$UDP_PROXY_MODE
-			
+
 			[ "$tcp_node" != "nil" ] && {
 				if [ "$tcp_node" = "default" ]; then
 					tcp_node=$TCP_NODE
@@ -1333,7 +1350,7 @@ acl_app() {
 									[ "$tcp_proxy_mode" = "gfwlist" ] && _china_ng_default_tag="chn"
 								}
 								[ -n "$_china_ng_default_tag" ] && _china_ng_extra_param="${_china_ng_extra_param} -d ${_china_ng_default_tag}"
-			
+
 								#local _china_ng_log_file="${TMP_ACL_PATH}/${sid}/chinadns-ng.log"
 								local _china_ng_log_file="/dev/null"
 								[ "$filter_proxy_ipv6" = "1" ] && {
@@ -1508,7 +1525,7 @@ start() {
 	else
 		USE_TABLES="iptables"
 	fi
-	
+
 	[ "$ENABLED_DEFAULT_ACL" == 1 ] && {
 		start_redir TCP
 		start_redir UDP

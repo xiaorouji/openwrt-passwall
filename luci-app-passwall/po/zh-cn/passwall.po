@@ -1291,6 +1291,24 @@ msgstr "%s 节点日志关闭"
 msgid "Log Level"
 msgstr "日志等级"
 
+msgid "Advanced log feature"
+msgstr "高级日志功能"
+
+msgid "For professionals only."
+msgstr "仅限专业人士使用。"
+
+msgid "Persist log file directory"
+msgstr "持久性日志文件目录"
+
+msgid "The path to the directory used to store persist log files, the \"/\" at the end can be omitted. Leave it blank to disable this feature."
+msgstr "用来存储持久性日志文件的目录路径，末尾的 “/” 可以省略。留空以禁用此功能。"
+
+msgid "Logging to system log"
+msgstr "记录到系统日志"
+
+msgid "Logging to the system log for more advanced functions. For example, send logs to a dedicated log server."
+msgstr "将日志记录到系统日志，以实现更加高级的功能。例如，把日志发送到专门的日志服务器。"
+
 msgid "Not enabled log"
 msgstr "未启用日志"
 
