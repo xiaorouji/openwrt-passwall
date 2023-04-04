@@ -307,7 +307,11 @@ jobs:
         if: steps.compile.outputs.status == 'success'
         run: |
           cd sdk
-          zip -r passwall_ipk_${{ matrix.platform }}.zip bin/packages/
+          mkdir upload
+
+          zip -jr upload/passwall_packages_ipk_${{ matrix.platform }}.zip bin/packages/*/passwall_packages/
+          mv bin/packages/*/passwall_luci/*.ipk upload
+
           echo "FIRMWARE=$PWD" >> $GITHUB_ENV
           echo "status=success" >> $GITHUB_OUTPUT
 
@@ -366,5 +370,4 @@ jobs:
         with:
           tag_name: ${{needs.job_init.outputs.output_passwall_version}}
           body_path: ${{ env.FIRMWARE }}/release.txt
-          files: ${{ env.FIRMWARE }}/passwall_ipk_${{ matrix.platform }}.zip
-
+          files: ${{ env.FIRMWARE }}/upload/*
