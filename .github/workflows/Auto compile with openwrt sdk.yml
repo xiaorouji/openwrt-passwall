@@ -11,14 +11,51 @@ on:
         description: 'SSH connection to Actions'
         required: false
         default: 'false'
-  # schedule:
-  #   - cron: "0 */4 * * *"
+  schedule:
+    - cron: "0 */4 * * *"
 env:
   TZ: Asia/Shanghai
 
 
 jobs:
+  job_init: 
+    runs-on: ubuntu-latest
+    outputs:
+      output_git_head: ${{ steps.verion_hash.outputs.git_head }}
+      output_passwall_version: ${{ steps.verion_hash.outputs.psw_version }}
+      output_is_not_compile:  ${{ steps.cache_version.outputs.cache-hit }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          fetch-depth: 0
+          ref: 'luci'
+
+      - name: get passwall version and commit hash
+        id: verion_hash
+        run: |
+          cd luci-app-passwall
+          echo "git_head=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          echo "psw_version=$(sed -n '9,10p' Makefile | awk -F':=' '{ORS="-"}{print $2}' | sed 's/-$/\n/')" >> $GITHUB_OUTPUT
+
+
+      - name: Compare verion 
+        id: cache_version
+        uses: actions/cache@v3.0.11
+        with:
+          path: .passwall_version
+          key: PasswallVersion-${{ steps.verion_hash.outputs.psw_version }}
+
+      - name: Save new version
+        if: steps.cache_version.outputs.cache-hit != 'true'
+        run: |
+          echo ${{ steps.verion_hash.outputs.psw_version }} | tee .passwall_version
+
+
+
   job_auto_compile:
+    if: needs.job_init.outputs.output_is_not_compile != 'true'
+    needs: job_init
     runs-on: ubuntu-latest
     name: build (${{ matrix.platform }}) 
     strategy:
@@ -67,11 +104,11 @@ jobs:
           - platform: ramips_rt305x
             url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/ramips/rt305x/openwrt-sdk-22.03.3-ramips-rt305x_gcc-11.2.0_musl.Linux-x86_64.tar.xz
 
-          - platform: ramips_rt3883
-            url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/ramips/rt3883/openwrt-sdk-22.03.3-ramips-rt3883_gcc-11.2.0_musl.Linux-x86_64.tar.xz
+          # - platform: ramips_rt3883
+          #   url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/ramips/rt3883/openwrt-sdk-22.03.3-ramips-rt3883_gcc-11.2.0_musl.Linux-x86_64.tar.xz
             
-          - platform: ramips_mt76x8
-            url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/ramips/mt76x8/openwrt-sdk-22.03.3-ramips-mt76x8_gcc-11.2.0_musl.Linux-x86_64.tar.xz
+          # - platform: ramips_mt76x8
+          #   url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/ramips/mt76x8/openwrt-sdk-22.03.3-ramips-mt76x8_gcc-11.2.0_musl.Linux-x86_64.tar.xz
 
           # - platform: pistachio_generic
           #   url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/pistachio/generic/openwrt-sdk-22.03.3-pistachio_gcc-11.2.0_musl.Linux-x86_64.tar.xz
@@ -203,12 +240,6 @@ jobs:
           sudo -E apt-get -qq autoremove --purge
           sudo -E apt-get -qq clean
 
-      - name: Checkout
-        uses: actions/checkout@main
-        with:
-          fetch-depth: 0
-          ref: 'luci'
-
       - name: ${{ matrix.platform }} sdk download
         run: |
           wget ${{ matrix.url_sdk }}
@@ -286,51 +317,41 @@ jobs:
         run: |
           cd sdk
           echo "## :mega:Update content" >> release.txt
-          
 
-          psw_version=$(sed -n '9,10p' feeds/passwall_luci/luci-app-passwall/Makefile | awk -F':=' '{ORS="-"}{print $2}' | sed 's/-$/\n/')
-          echo "PASSWALL_VERSION=$psw_version" >> $GITHUB_ENV
-
-          cd feeds/passwall_luci
-          git_head=$(git rev-parse --short HEAD)
-          echo "GIT_HEAD=$git_head" >> $GITHUB_ENV
-          cd ..
-          cd ..
-
-          echo "![](https://img.shields.io/github/downloads/xiaorouji/openwrt-passwall/${psw_version}_${git_head}/total?style=flat-square)" >> release.txt
+          echo "![](https://img.shields.io/github/downloads/xiaorouji/openwrt-passwall/${{needs.job_init.outputs.output_passwall_version}}/total?style=flat-square)" >> release.txt
           echo "### Passwall Version" >> release.txt
 
-          echo "**:minidisc: Passwall Version: $psw_version**" >> release.txt
+          echo "**:minidisc: Passwall Version: ${{needs.job_init.outputs.output_passwall_version}}**" >> release.txt
           
           echo "### Packages Version" >> release.txt
           
           echo "**package name**|**package version**" >> release.txt
           echo "-|-" >> release.txt
-          echo "**:ice_cube: brook:**|**$(sed -n '8p' feeds/passwall_packages/brook/Makefile | cut -d'=' -f2)**" >> release.txt
-          echo "**:ice_cube: chinadns-ng:**|**$(sed -n '8p' feeds/passwall_packages/chinadns-ng/Makefile | cut -d'=' -f2)**" >> release.txt
-          echo "**:ice_cube: dns2socks:**|**$(sed -n '8p' feeds/passwall_packages/dns2socks/Makefile | cut -d'=' -f2)**" >> release.txt
-          echo "**:ice_cube: dns2tcp:**|**$(sed -n '8p' feeds/passwall_packages/dns2tcp/Makefile | cut -d'=' -f2)**" >> release.txt
-          echo "**:ice_cube: gn:**|**$(sed -n '12p' feeds/passwall_packages/gn/Makefile | awk -F':=' '{print $2}' | tr -d '[:space:]')**" >> release.txt
-          echo "**:ice_cube: hysteria:**|**$(sed -n '8p' feeds/passwall_packages/hysteria/Makefile | cut -d'=' -f2)**" >> release.txt
-          echo "**:ice_cube: ipt2socks:**|**$(sed -n '8p' feeds/passwall_packages/ipt2socks/Makefile | cut -d'=' -f2)**" >> release.txt
-          echo "**:ice_cube: microsocks:**|**$(sed -n '8p' feeds/passwall_packages/microsocks/Makefile | cut -d'=' -f2)**" >> release.txt
-          echo "**:ice_cube: naiveproxy:**|**$(sed -n '8p' feeds/passwall_packages/naiveproxy/Makefile | cut -d'=' -f2)**" >> release.txt
-          echo "**:ice_cube: pdnsd-alt:**|**$(sed -n '8p' feeds/passwall_packages/pdnsd-alt/Makefile | cut -d'=' -f2)**" >> release.txt
-          echo "**:ice_cube: shadowsocks-rust:**|**$(sed -n '9p' feeds/passwall_packages/shadowsocks-rust/Makefile | cut -d'=' -f2)**" >> release.txt
-          echo "**:ice_cube: shadowsocksr-libev:**|**$(sed -n '10p' feeds/passwall_packages/shadowsocksr-libev/Makefile | cut -d'=' -f2)**" >> release.txt
-          echo "**:ice_cube: simple-obfs:**|**$(sed -n '11p' feeds/passwall_packages/simple-obfs/Makefile | cut -d'=' -f2)**" >> release.txt
-          echo "**:ice_cube: sing-box:**|**$(sed -n '9p' feeds/passwall_packages/sing-box/Makefile | cut -d'=' -f2)**" >> release.txt
-          echo "**:ice_cube: ssocks:**|**$(sed -n '14p' feeds/passwall_packages/ssocks/Makefile | cut -d'=' -f2)**" >> release.txt
-          echo "**:ice_cube: tcping:**|**$(sed -n '12p' feeds/passwall_packages/tcping/Makefile | cut -d'=' -f2)**" >> release.txt
-          echo "**:ice_cube: trojan-go:**|**$(sed -n '8p' feeds/passwall_packages/trojan-go/Makefile | cut -d'=' -f2)**" >> release.txt
-          echo "**:ice_cube: trojan-plus:**|**$(sed -n '10p' feeds/passwall_packages/trojan-plus/Makefile | cut -d'=' -f2)**" >> release.txt
-          echo "**:ice_cube: trojan:**|**$(sed -n '10p' feeds/passwall_packages/trojan/Makefile | cut -d'=' -f2)**" >> release.txt
-          echo "**:ice_cube: v2ray-core:**|**$(sed -n '8p' feeds/passwall_packages/v2ray-core/Makefile | cut -d'=' -f2)**" >> release.txt
-          echo "**:ice_cube: v2ray-geoip:**|**$(sed -n '15p' feeds/passwall_packages/v2ray-geodata/Makefile | cut -d'=' -f2)**" >> release.txt
-          echo "**:ice_cube: v2ray-geosite:**|**$(sed -n '24p' feeds/passwall_packages/v2ray-geodata/Makefile | cut -d'=' -f2)**" >> release.txt
-          echo "**:ice_cube: v2ray-plugin:**|**$(sed -n '9p' feeds/passwall_packages/v2ray-plugin/Makefile | cut -d'=' -f2)**" >> release.txt
-          echo "**:ice_cube: xray-core:**|**$(sed -n '4p' feeds/passwall_packages/xray-core/Makefile | cut -d'=' -f2)**" >> release.txt
-          echo "**:ice_cube: xray-plugin:**|**$(sed -n '8p' feeds/passwall_packages/xray-plugin/Makefile | cut -d'=' -f2)**" >> release.txt
+          echo "**:ice_cube: brook**|**$(sed -n '8p' feeds/passwall_packages/brook/Makefile | cut -d'=' -f2)**" >> release.txt
+          echo "**:ice_cube: chinadns-ng**|**$(sed -n '8p' feeds/passwall_packages/chinadns-ng/Makefile | cut -d'=' -f2)**" >> release.txt
+          echo "**:ice_cube: dns2socks**|**$(sed -n '8p' feeds/passwall_packages/dns2socks/Makefile | cut -d'=' -f2)**" >> release.txt
+          echo "**:ice_cube: dns2tcp**|**$(sed -n '8p' feeds/passwall_packages/dns2tcp/Makefile | cut -d'=' -f2)**" >> release.txt
+          echo "**:ice_cube: gn**|**$(sed -n '12p' feeds/passwall_packages/gn/Makefile | awk -F':=' '{print $2}' | tr -d '[:space:]')**" >> release.txt
+          echo "**:ice_cube: hysteria**|**$(sed -n '8p' feeds/passwall_packages/hysteria/Makefile | cut -d'=' -f2)**" >> release.txt
+          echo "**:ice_cube: ipt2socks**|**$(sed -n '8p' feeds/passwall_packages/ipt2socks/Makefile | cut -d'=' -f2)**" >> release.txt
+          echo "**:ice_cube: microsocks**|**$(sed -n '8p' feeds/passwall_packages/microsocks/Makefile | cut -d'=' -f2)**" >> release.txt
+          echo "**:ice_cube: naiveproxy**|**$(sed -n '8p' feeds/passwall_packages/naiveproxy/Makefile | cut -d'=' -f2)**" >> release.txt
+          echo "**:ice_cube: pdnsd-alt**|**$(sed -n '8p' feeds/passwall_packages/pdnsd-alt/Makefile | cut -d'=' -f2)**" >> release.txt
+          echo "**:ice_cube: shadowsocks-rust**|**$(sed -n '9p' feeds/passwall_packages/shadowsocks-rust/Makefile | cut -d'=' -f2)**" >> release.txt
+          echo "**:ice_cube: shadowsocksr-libev**|**$(sed -n '10p' feeds/passwall_packages/shadowsocksr-libev/Makefile | cut -d'=' -f2)**" >> release.txt
+          echo "**:ice_cube: simple-obfs**|**$(sed -n '11p' feeds/passwall_packages/simple-obfs/Makefile | cut -d'=' -f2)**" >> release.txt
+          echo "**:ice_cube: sing-box**|**$(sed -n '9p' feeds/passwall_packages/sing-box/Makefile | cut -d'=' -f2)**" >> release.txt
+          echo "**:ice_cube: ssocks**|**$(sed -n '14p' feeds/passwall_packages/ssocks/Makefile | cut -d'=' -f2)**" >> release.txt
+          echo "**:ice_cube: tcping**|**$(sed -n '12p' feeds/passwall_packages/tcping/Makefile | cut -d'=' -f2)**" >> release.txt
+          echo "**:ice_cube: trojan-go**|**$(sed -n '8p' feeds/passwall_packages/trojan-go/Makefile | cut -d'=' -f2)**" >> release.txt
+          echo "**:ice_cube: trojan-plus**|**$(sed -n '10p' feeds/passwall_packages/trojan-plus/Makefile | cut -d'=' -f2)**" >> release.txt
+          echo "**:ice_cube: trojan**|**$(sed -n '10p' feeds/passwall_packages/trojan/Makefile | cut -d'=' -f2)**" >> release.txt
+          echo "**:ice_cube: v2ray-core**|**$(sed -n '8p' feeds/passwall_packages/v2ray-core/Makefile | cut -d'=' -f2)**" >> release.txt
+          echo "**:ice_cube: v2ray-geoip**|**$(sed -n '15p' feeds/passwall_packages/v2ray-geodata/Makefile | cut -d'=' -f2)**" >> release.txt
+          echo "**:ice_cube: v2ray-geosite**|**$(sed -n '24p' feeds/passwall_packages/v2ray-geodata/Makefile | cut -d'=' -f2)**" >> release.txt
+          echo "**:ice_cube: v2ray-plugin**|**$(sed -n '9p' feeds/passwall_packages/v2ray-plugin/Makefile | cut -d'=' -f2)**" >> release.txt
+          echo "**:ice_cube: xray-core**|**$(sed -n '4p' feeds/passwall_packages/xray-core/Makefile | cut -d'=' -f2)**" >> release.txt
+          echo "**:ice_cube: xray-plugin**|**$(sed -n '8p' feeds/passwall_packages/xray-plugin/Makefile | cut -d'=' -f2)**" >> release.txt
             
           touch release.txt
 
@@ -343,7 +364,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ env.PASSWALL_VERSION }}_${{ env.GIT_HEAD }}
+          tag_name: ${{needs.job_init.outputs.output_passwall_version}}
           body_path: ${{ env.FIRMWARE }}/release.txt
           files: ${{ env.FIRMWARE }}/passwall_ipk_${{ matrix.platform }}.zip
 
