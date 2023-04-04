@@ -173,11 +173,17 @@ probeInterval.description = translate("The interval between initiating probes. E
 
 -- 分流
 if #nodes_table > 0 then
-	o = s:option(ListValue, "main_node", string.format('<a style="color:red">%s</a>', translate("Preproxy Node")), translate("Set the node to be used as a pre-proxy. Each rule (including <code>Default</code>) has a separate switch that controls whether this rule uses the pre-proxy or not."))
+	o = s:option(Flag, "preproxy_enabled", translate("Preproxy"))
 	o:depends("protocol", "_shunt")
-	o:value("nil", translate("Close"))
-	dialerProxy = s:option(Flag, "dialerProxy", translate("dialerProxy"))
-	dialerProxy:depends({ type = "Xray", protocol = "_shunt" , })
+	o.rmempty = false
+	o = s:option(ListValue, "main_node", string.format('<a style="color:red">%s</a>', translate("Preproxy Node")), translate("Set the node to be used as a pre-proxy. Each rule (including <code>Default</code>) has a separate switch that controls whether this rule uses the pre-proxy or not."))
+	o:depends("preproxy_enabled", "1")
+	local dialerProxy = s:option(Flag, "dialerProxy", translate("dialerProxy"))
+	dialerProxy.hidden = true
+	dialerProxy:depends({ type = "Xray", protocol = "_shunt", preproxy_enabled = "1" })
+	for k, v in pairs(balancers_table) do
+		o:value(v.id, v.remarks)
+	end
 	for k, v in pairs(nodes_table) do
 		o:value(v.id, v.remarks)
 		--dialerProxy:depends({ type = "Xray", main_node = v.id })
@@ -193,17 +199,17 @@ uci:foreach(appname, "shunt_rules", function(e)
 		o:value("_blackhole", translate("Blackhole"))
 		o:depends("protocol", "_shunt")
 
-		for k, v in pairs(balancers_table) do
-			o:value(v.id, v.remarks)
-		end
 		if #nodes_table > 0 then
+			for k, v in pairs(balancers_table) do
+				o:value(v.id, v.remarks)
+			end
 			local pt = s:option(ListValue, e[".name"] .. "_proxy_tag", string.format('* <a style="color:red">%s</a>', e.remarks .. " " .. translate("Preproxy")))
 			pt:value("nil", translate("Close"))
 			pt:value("main", translate("Preproxy Node"))
 			pt.default = "nil"
 			for k, v in pairs(nodes_table) do
 				o:value(v.id, v.remarks)
-				pt:depends(e[".name"], v.id)
+				pt:depends({ preproxy_enabled = "1", [e[".name"]] = v.id })
 			end
 		end
 	end
@@ -216,21 +222,22 @@ shunt_tips.cfgvalue = function(t, n)
 end
 shunt_tips:depends("protocol", "_shunt")
 
-default_node = s:option(ListValue, "default_node", string.format('* <a style="color:red">%s</a>', translate("Default")))
+local default_node = s:option(ListValue, "default_node", string.format('* <a style="color:red">%s</a>', translate("Default")))
+default_node:depends("protocol", "_shunt")
 default_node:value("_direct", translate("Direct Connection"))
 default_node:value("_blackhole", translate("Blackhole"))
-for k, v in pairs(nodes_table) do default_node:value(v.id, v.remarks) end
-default_node:depends("protocol", "_shunt")
 
 if #nodes_table > 0 then
+	for k, v in pairs(balancers_table) do
+		default_node:value(v.id, v.remarks)
+	end
 	local dpt = s:option(ListValue, "default_proxy_tag", string.format('* <a style="color:red">%s</a>', translate("Default Preproxy")), translate("When using, localhost will connect this node first and then use this node to connect the default node."))
 	dpt:value("nil", translate("Close"))
 	dpt:value("main", translate("Preproxy Node"))
 	dpt.default = "nil"
 	for k, v in pairs(nodes_table) do
-		if v.protocol ~= "_balancing" then
-			dpt:depends("default_node", v.id)
-		end
+		default_node:value(v.id, v.remarks)
+		dpt:depends({ preproxy_enabled = "1", default_node = v.id })
 	end
 end
 

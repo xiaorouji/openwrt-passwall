@@ -146,10 +146,17 @@ if (has_v2ray or has_xray) and #nodes_table > 0 then
 			end
 			type.cfgvalue = get_cfgvalue(v.id, "type")
 			type.write = get_write(v.id, "type")
-			-- pre-proxy node
-			o = s:taboption("Main", ListValue, vid .. "-main_node", string.format('<a style="color:red">%s</a>', translate("Preproxy Node")), translate("Set the node to be used as a pre-proxy. Each rule (including <code>Default</code>) has a separate switch that controls whether this rule uses the pre-proxy or not."))
+			-- pre-proxy
+			o = s:taboption("Main", Flag, vid .. "-preproxy_enabled", translate("Preproxy"))
 			o:depends("tcp_node", v.id)
-			o:value("nil", translate("Close"))
+			o.rmempty = false
+			o.cfgvalue = get_cfgvalue(v.id, "preproxy_enabled")
+			o.write = get_write(v.id, "preproxy_enabled")
+			o = s:taboption("Main", ListValue, vid .. "-main_node", string.format('<a style="color:red">%s</a>', translate("Preproxy Node")), translate("Set the node to be used as a pre-proxy. Each rule (including <code>Default</code>) has a separate switch that controls whether this rule uses the pre-proxy or not."))
+			o:depends(vid .. "-preproxy_enabled", "1")
+			for k1, v1 in pairs(balancing_list) do
+				o:value(v1.id, v1.remark)
+			end
 			for k1, v1 in pairs(normal_list) do
 				o:value(v1.id, v1.remark)
 			end
@@ -158,18 +165,18 @@ if (has_v2ray or has_xray) and #nodes_table > 0 then
 			-- Xray dialerProxy
 			local dialerProxy = s:taboption("Main", Flag, vid .. "-dialerProxy", translate("dialerProxy"))
 			dialerProxy.default = "0"
-			dialerProxy:depends(vid .. "-type", "Xray")
+			dialerProxy.cfgvalue = get_cfgvalue(v.id, "dialerProxy")
+			dialerProxy.write = get_write(v.id, "dialerProxy")
+			dialerProxy.rmempty = false
+			dialerProxy:depends({ [vid .. "-type"] = "Xray", [vid .. "-preproxy_enabled"] = "1" })
 			if (has_v2ray and has_xray) or (v.type == "V2ray" and not has_v2ray) or (v.type == "Xray" and not has_xray) then
 				type:depends("tcp_node", v.id)
 			else
 				type:depends("tcp_node", "hide") --不存在的依赖，即始终隐藏
 				if v.type == "Xray" then
-					dialerProxy:depends("tcp_node", v.id)
+					dialerProxy:depends({ tcp_node = v.id, [vid .. "-preproxy_enabled"] = "1" })
 				end
 			end
-			dialerProxy.cfgvalue = get_cfgvalue(v.id, "dialerProxy")
-			dialerProxy.write = get_write(v.id, "dialerProxy")
-			dialerProxy.rmempty = false
 
 			uci:foreach(appname, "shunt_rules", function(e)
 				local id = e[".name"]
@@ -190,7 +197,7 @@ if (has_v2ray or has_xray) and #nodes_table > 0 then
 					end
 					for k1, v1 in pairs(normal_list) do
 						o:value(v1.id, v1.remark)
-						pt:depends(node_option, v1.id)
+						pt:depends({ [node_option] = v1.id, [vid .. "-preproxy_enabled"] = "1" })
 					end
 					o.cfgvalue = get_cfgvalue(v.id, id)
 					o.write = get_write(v.id, id)
@@ -212,9 +219,12 @@ if (has_v2ray or has_xray) and #nodes_table > 0 then
 
 			local id = "default_proxy_tag"
 			o = s:taboption("Main", ListValue, vid .. "-" .. id, string.format('* <a style="color:red">%s</a>', translate("Default Preproxy")), translate("When using, localhost will connect this node first and then use this node to connect the default node."))
+			for k1, v1 in pairs(balancing_list) do
+				o:value(v1.id, v1.remark)
+			end
 			for k1, v1 in pairs(normal_list) do
 				if v1.protocol ~= "_balancing" then
-					o:depends(vid .. "-default_node", v1.id)
+					o:depends({ [vid .. "-default_node"] = v1.id, [vid .. "-preproxy_enabled"] = "1" })
 				end
 			end
 			o:value("nil", translate("Close"))
