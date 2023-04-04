@@ -211,17 +211,17 @@ if (has_v2ray or has_xray) and #nodes_table > 0 then
 			o:depends("tcp_node", v.id)
 			o:value("_direct", translate("Direct Connection"))
 			o:value("_blackhole", translate("Blackhole"))
+			for k1, v1 in pairs(balancing_list) do
+				o:value(v1.id, v1.remark)
+			end
 			for k1, v1 in pairs(normal_list) do
-				o:value(v1.id, v1["remark"])
+				o:value(v1.id, v1.remark)
 			end
 			o.cfgvalue = get_cfgvalue(v.id, id)
 			o.write = get_write(v.id, id)
 
 			local id = "default_proxy_tag"
 			o = s:taboption("Main", ListValue, vid .. "-" .. id, string.format('* <a style="color:red">%s</a>', translate("Default Preproxy")), translate("When using, localhost will connect this node first and then use this node to connect the default node."))
-			for k1, v1 in pairs(balancing_list) do
-				o:value(v1.id, v1.remark)
-			end
 			for k1, v1 in pairs(normal_list) do
 				if v1.protocol ~= "_balancing" then
 					o:depends({ [vid .. "-default_node"] = v1.id, [vid .. "-preproxy_enabled"] = "1" })
