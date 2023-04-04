@@ -1063,29 +1063,31 @@ start_dns() {
 	DNSMASQ_FILTER_IPV6=$FILTER_PROXY_IPV6
 
 	echolog "过滤服务配置：准备接管域名解析..."
-	local items=$(uci show ${CONFIG} | grep "=acl_rule" | cut -d '.' -sf 2 | cut -d '=' -sf 1)
-	[ -n "$items" ] && {
-		for item in $items; do
-			[ "$(config_n_get $item enabled)" = "1" ] || continue
-			[ "$(config_n_get $item tcp_node)" = "default" ] && [ "$TCP_NODE" != "nil" ] && {
-				local item_tcp_proxy_mode=$(config_n_get $item tcp_proxy_mode default)
-				[ "$item_tcp_proxy_mode" = "default" ] && item_tcp_proxy_mode=$TCP_PROXY_MODE
-				global=$(echo "${global}${item_tcp_proxy_mode}" | grep "global")
-				returnhome=$(echo "${returnhome}${item_tcp_proxy_mode}" | grep "returnhome")
-				chnlist=$(echo "${chnlist}${item_tcp_proxy_mode}" | grep "chnroute")
-				gfwlist=$(echo "${gfwlist}${item_tcp_proxy_mode}" | grep "gfwlist")
-				ACL_TCP_PROXY_MODE=${ACL_TCP_PROXY_MODE}${item_tcp_proxy_mode}
-			}
-			[ "$(config_n_get $item udp_node)" = "default" ] && [ "$UDP_NODE" != "nil" ] && {
-				local item_udp_proxy_mode=$(config_n_get $item udp_proxy_mode default)
-				[ "$item_udp_proxy_mode" = "default" ] && item_udp_proxy_mode=$UDP_PROXY_MODE
-				global=$(echo "${global}${item_udp_proxy_mode}" | grep "global")
-				returnhome=$(echo "${returnhome}${item_udp_proxy_mode}" | grep "returnhome")
-				chnlist=$(echo "${chnlist}${item_udp_proxy_mode}" | grep "chnroute")
-				gfwlist=$(echo "${gfwlist}${item_udp_proxy_mode}" | grep "gfwlist")
-				ACL_UDP_PROXY_MODE=${ACL_UDP_PROXY_MODE}${item_udp_proxy_mode}
-			}
-		done
+	[ "$ENABLED_ACLS" == 1 ] && {
+		local items=$(uci show ${CONFIG} | grep "=acl_rule" | cut -d '.' -sf 2 | cut -d '=' -sf 1)
+		[ -n "$items" ] && {
+			for item in $items; do
+				[ "$(config_n_get $item enabled)" = "1" ] || continue
+				[ "$(config_n_get $item tcp_node)" = "default" ] && [ "$TCP_NODE" != "nil" ] && {
+					local item_tcp_proxy_mode=$(config_n_get $item tcp_proxy_mode default)
+					[ "$item_tcp_proxy_mode" = "default" ] && item_tcp_proxy_mode=$TCP_PROXY_MODE
+					global=$(echo "${global}${item_tcp_proxy_mode}" | grep "global")
+					returnhome=$(echo "${returnhome}${item_tcp_proxy_mode}" | grep "returnhome")
+					chnlist=$(echo "${chnlist}${item_tcp_proxy_mode}" | grep "chnroute")
+					gfwlist=$(echo "${gfwlist}${item_tcp_proxy_mode}" | grep "gfwlist")
+					ACL_TCP_PROXY_MODE=${ACL_TCP_PROXY_MODE}${item_tcp_proxy_mode}
+				}
+				[ "$(config_n_get $item udp_node)" = "default" ] && [ "$UDP_NODE" != "nil" ] && {
+					local item_udp_proxy_mode=$(config_n_get $item udp_proxy_mode default)
+					[ "$item_udp_proxy_mode" = "default" ] && item_udp_proxy_mode=$UDP_PROXY_MODE
+					global=$(echo "${global}${item_udp_proxy_mode}" | grep "global")
+					returnhome=$(echo "${returnhome}${item_udp_proxy_mode}" | grep "returnhome")
+					chnlist=$(echo "${chnlist}${item_udp_proxy_mode}" | grep "chnroute")
+					gfwlist=$(echo "${gfwlist}${item_udp_proxy_mode}" | grep "gfwlist")
+					ACL_UDP_PROXY_MODE=${ACL_UDP_PROXY_MODE}${item_udp_proxy_mode}
+				}
+			done
+		}
 	}
 
 	case "$DNS_MODE" in

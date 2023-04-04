@@ -163,11 +163,11 @@ local gfwlist = PROXY_MODE:find("gfwlist")
 local only_global
 
 local dnsmasq_default_dns
-if CHNROUTE_MODE_DEFAULT_DNS ~= "nil" and (chnlist or gfwlist) then
-	if CHNROUTE_MODE_DEFAULT_DNS == "remote" then
+if CHNROUTE_MODE_DEFAULT_DNS ~= "nil" then
+	if chnlist and CHNROUTE_MODE_DEFAULT_DNS == "remote" then
 		dnsmasq_default_dns = TUN_DNS
 	end
-	if CHNROUTE_MODE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" then
+	if (chnlist or gfwlist) and CHNROUTE_MODE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" then
 		dnsmasq_default_dns = CHINADNS_DNS
 	end
 end
