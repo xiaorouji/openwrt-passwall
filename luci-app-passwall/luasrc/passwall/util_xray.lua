@@ -779,6 +779,7 @@ function gen_config(var)
 				if outboundTag or balancerTag and e.remarks then
 					if outboundTag == "default" then
 						outboundTag = default_outboundTag
+						balancerTag = default_balancerTag
 					end
 					local protocols = nil
 					if e["protocol"] and e["protocol"] ~= "" then
