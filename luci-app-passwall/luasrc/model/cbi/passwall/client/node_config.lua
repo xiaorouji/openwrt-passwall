@@ -177,8 +177,6 @@ if #nodes_table > 0 then
 	o:depends("protocol", "_shunt")
 	o = s:option(ListValue, "main_node", string.format('<a style="color:red">%s</a>', translate("Preproxy Node")), translate("Set the node to be used as a pre-proxy. Each rule (including <code>Default</code>) has a separate switch that controls whether this rule uses the pre-proxy or not."))
 	o:depends("preproxy_enabled", "1")
-	local dialerProxy = s:option(Flag, "dialerProxy", translate("dialerProxy"))
-	dialerProxy:depends({ type = "Xray", protocol = "_shunt", preproxy_enabled = "1" })
 	for k, v in pairs(balancers_table) do
 		o:value(v.id, v.remarks)
 	end

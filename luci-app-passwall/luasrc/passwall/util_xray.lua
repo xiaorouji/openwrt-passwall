@@ -42,11 +42,9 @@ function gen_outbound(flag, node, tag, proxy_table)
 
 		local proxy = 0
 		local proxy_tag = "nil"
-		local dialerProxy = nil
 		if proxy_table ~= nil and type(proxy_table) == "table" then
 			proxy = proxy_table.proxy or 0
 			proxy_tag = proxy_table.tag or "nil"
-			dialerProxy = proxy_table.dialerProxy
 		end
 
 		if node.type == "V2ray" or node.type == "Xray" then
@@ -54,18 +52,10 @@ function gen_outbound(flag, node, tag, proxy_table)
 			else
 				proxy = 0
 				if proxy_tag ~= "nil" then
-					if dialerProxy and dialerProxy == "1" then
-						node.streamSettings = {
-							sockopt = {
-								dialerProxy = proxy_tag
-							}
-						}
-					else
-						node.proxySettings = {
-							tag = proxy_tag,
-							transportLayer = true
-						}
-					end
+					node.proxySettings = {
+						tag = proxy_tag,
+						transportLayer = true
+					}
 				end
 			end
 		end
@@ -124,8 +114,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 			-- 底层传输配置
 			streamSettings = (node.streamSettings or node.protocol == "vmess" or node.protocol == "vless" or node.protocol == "socks" or node.protocol == "shadowsocks" or node.protocol == "trojan") and {
 				sockopt = {
-					mark = 255,
-					dialerProxy = (node.streamSettings and dialerProxy and dialerProxy == "1") and node.streamSettings.sockopt.dialerProxy or nil
+					mark = 255
 				},
 				network = node.transport,
 				security = node.stream_security,
@@ -754,7 +743,7 @@ function gen_config(var)
 									})
 								end
 							end
-							local _outbound = gen_outbound(flag, _node, rule_name, { proxy = proxy and 1 or 0, tag = proxy and preproxy_tag or nil, dialerProxy = node.dialerProxy })
+							local _outbound = gen_outbound(flag, _node, rule_name, { proxy = proxy and 1 or 0, tag = proxy and preproxy_tag or nil })
 							if _outbound then
 								table.insert(outbounds, _outbound)
 								if proxy then preproxy_used = true end
