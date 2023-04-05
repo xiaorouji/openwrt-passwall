@@ -144,12 +144,7 @@ if (has_v2ray or has_xray) and #nodes_table > 0 then
 				type:value("Xray", translate("Xray"))
 			end
 			type.cfgvalue = get_cfgvalue(v.id, "type")
-			type.write = function(self, section, value)
-				m:set(v.id, "type", value)
-				if value == "V2ray" then
-					m:del(v.id, "dialerProxy")
-				end
-			end
+			type.write = get_write(v.id, "type")
 			-- pre-proxy
 			o = s:taboption("Main", Flag, vid .. "-preproxy_enabled", translate("Preproxy"))
 			o:depends("tcp_node", v.id)
@@ -166,20 +161,10 @@ if (has_v2ray or has_xray) and #nodes_table > 0 then
 			end
 			o.cfgvalue = get_cfgvalue(v.id, "main_node")
 			o.write = get_write(v.id, "main_node")
-			-- Xray dialerProxy
-			local dialerProxy = s:taboption("Main", Flag, vid .. "-dialerProxy", translate("dialerProxy"))
-			dialerProxy.cfgvalue = get_cfgvalue(v.id, "dialerProxy")
-			dialerProxy.write = get_write(v.id, "dialerProxy")
-			dialerProxy.rmempty = false
-			dialerProxy.default = "0"
-			dialerProxy:depends({ [vid .. "-type"] = "Xray", [vid .. "-preproxy_enabled"] = "1" })
 			if (has_v2ray and has_xray) or (v.type == "V2ray" and not has_v2ray) or (v.type == "Xray" and not has_xray) then
 				type:depends("tcp_node", v.id)
 			else
 				type:depends("tcp_node", "hide") --不存在的依赖，即始终隐藏
-				if v.type == "Xray" then
-					dialerProxy:depends({ tcp_node = v.id, [vid .. "-preproxy_enabled"] = "1" })
-				end
 			end
 
 			uci:foreach(appname, "shunt_rules", function(e)
