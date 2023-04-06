@@ -536,7 +536,7 @@ local function exec(cmd, args, writer, timeout)
 	end
 end
 
-local function compare_versions(ver1, comp, ver2)
+function compare_versions(ver1, comp, ver2)
 	local table = table
 
 	if not ver1 then ver1 = "" end
