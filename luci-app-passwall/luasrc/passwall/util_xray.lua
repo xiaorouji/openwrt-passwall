@@ -100,6 +100,14 @@ function gen_outbound(flag, node, tag, proxy_table)
 			end
 		end
 
+		if node.protocol == "wireguard" and node.wireguard_reserved then
+			local bytes = {}
+			node.wireguard_reserved:gsub("[^,]+", function(b)
+				bytes[#bytes+1] = tonumber(b)
+			end)
+			node.wireguard_reserved = #bytes > 0 and bytes or nil
+		end
+
 		result = {
 			_flag_tag = node_id,
 			_flag_proxy = proxy,
@@ -223,7 +231,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 						keepAlive = node.wireguard_keepAlive and tonumber(node.wireguard_keepAlive) or nil
 					}
 				} or nil,
-				mtu = (node.protocol == "wireguard" and node.wireguard_mtu) and tonumber(node.wireguard_mtu) or nil
+				mtu = (node.protocol == "wireguard" and node.wireguard_mtu) and tonumber(node.wireguard_mtu) or nil,
+				reserved = (node.protocol == "wireguard" and node.wireguard_reserved) and node.wireguard_reserved or nil
 			}
 		}
 		local alpn = {}
