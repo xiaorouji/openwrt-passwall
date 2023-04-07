@@ -11,14 +11,17 @@ on:
         description: 'SSH connection to Actions'
         required: false
         default: 'false'
-  schedule:
-    - cron: "0 */4 * * *"
+  push:
+    branches:
+      - 'luci'
+    paths:
+      - 'luci-app-passwall/Makefile'
 env:
   TZ: Asia/Shanghai
 
 
 jobs:
-  job_init: 
+  job_init:
     runs-on: ubuntu-latest
     outputs:
       output_git_head: ${{ steps.verion_hash.outputs.git_head }}
@@ -39,7 +42,7 @@ jobs:
           echo "psw_version=$(sed -n '9,10p' Makefile | awk -F':=' '{ORS="-"}{print $2}' | sed 's/-$/\n/')" >> $GITHUB_OUTPUT
 
 
-      - name: Compare verion 
+      - name: Compare verion
         id: cache_version
         uses: actions/cache@v3.0.11
         with:
@@ -57,7 +60,7 @@ jobs:
     if: needs.job_init.outputs.output_is_not_compile != 'true'
     needs: job_init
     runs-on: ubuntu-latest
-    name: build (${{ matrix.platform }}) 
+    name: build (${{ matrix.platform }})
     strategy:
       fail-fast: false
       matrix:
@@ -70,7 +73,7 @@ jobs:
 
           - platform: sunxi_cortexa53
             url_sdk: https://downloads.openwrt.org/snapshots/targets/sunxi/cortexa53/openwrt-sdk-sunxi-cortexa53_gcc-12.2.0_musl.Linux-x86_64.tar.xz
-          
+
           - platform: sunxi_cortexa7
             url_sdk: https://downloads.openwrt.org/snapshots/targets/sunxi/cortexa7/openwrt-sdk-sunxi-cortexa7_gcc-12.2.0_musl_eabi.Linux-x86_64.tar.xz
 
@@ -100,13 +103,13 @@ jobs:
 
           - platform: ramips_rt288x
             url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/ramips/rt288x/openwrt-sdk-22.03.3-ramips-rt288x_gcc-11.2.0_musl.Linux-x86_64.tar.xz
-            
+
           - platform: ramips_rt305x
             url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/ramips/rt305x/openwrt-sdk-22.03.3-ramips-rt305x_gcc-11.2.0_musl.Linux-x86_64.tar.xz
 
           # - platform: ramips_rt3883
           #   url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/ramips/rt3883/openwrt-sdk-22.03.3-ramips-rt3883_gcc-11.2.0_musl.Linux-x86_64.tar.xz
-            
+
           # - platform: ramips_mt76x8
           #   url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/ramips/mt76x8/openwrt-sdk-22.03.3-ramips-mt76x8_gcc-11.2.0_musl.Linux-x86_64.tar.xz
 
@@ -114,121 +117,121 @@ jobs:
           #   url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/pistachio/generic/openwrt-sdk-22.03.3-pistachio_gcc-11.2.0_musl.Linux-x86_64.tar.xz
 
           # - platform: oxnas_ox820
-          #   url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/oxnas/ox820/openwrt-sdk-22.03.3-oxnas-ox820_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz 
-            
+          #   url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/oxnas/ox820/openwrt-sdk-22.03.3-oxnas-ox820_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz
+
           # - platform: omap_generic
           #   url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/omap/generic/openwrt-sdk-22.03.3-omap_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz
 
           # - platform: octeontx_generic
           #   url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/octeontx/generic/openwrt-sdk-22.03.3-octeontx_gcc-11.2.0_musl.Linux-x86_64.tar.xz
-            
+
           # - platform: octeon_generic
           #   url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/octeon/generic/openwrt-sdk-22.03.3-octeon-generic_gcc-11.2.0_musl.Linux-x86_64.tar.xz
-          
+
           # - platform: mxs_generic
           #   url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/mxs/generic/openwrt-sdk-22.03.3-mxs_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz
-            
+
           - platform: mvebu_cortexa53
             url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/mvebu/cortexa53/openwrt-sdk-22.03.3-mvebu-cortexa53_gcc-11.2.0_musl.Linux-x86_64.tar.xz
 
           # - platform: mvebu_cortexa72
           #   url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/mvebu/cortexa72/openwrt-sdk-22.03.3-mvebu-cortexa72_gcc-11.2.0_musl.Linux-x86_64.tar.xz
-            
+
           - platform: mvebu_cortexa9
             url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/mvebu/cortexa9/openwrt-sdk-22.03.3-mvebu-cortexa9_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz
-          
+
           # - platform: mpc85xx_p1010
           #   url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/mpc85xx/p1010/openwrt-sdk-22.03.3-mpc85xx-p1010_gcc-11.2.0_musl.Linux-x86_64.tar.xz
-            
+
           # - platform: mpc85xx_p1020
           #   url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/mpc85xx/p1020/openwrt-sdk-22.03.3-mpc85xx-p1020_gcc-11.2.0_musl.Linux-x86_64.tar.xz
 
           # - platform: mpc85xx_p2020
           #   url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/mpc85xx/p2020/openwrt-sdk-22.03.3-mpc85xx-p2020_gcc-11.2.0_musl.Linux-x86_64.tar.xz
-          
+
           - platform: mediatek_mt7622
             url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/mediatek/mt7622/openwrt-sdk-22.03.3-mediatek-mt7622_gcc-11.2.0_musl.Linux-x86_64.tar.xz
-              
+
           - platform: mediatek_mt7623
             url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/mediatek/mt7623/openwrt-sdk-22.03.3-mediatek-mt7623_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz
 
           - platform: mediatek_mt7629
             url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/mediatek/mt7629/openwrt-sdk-22.03.3-mediatek-mt7629_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz
-              
+
           # - platform: malta_be
           #   url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/malta/be/openwrt-sdk-22.03.3-malta-be_gcc-11.2.0_musl.Linux-x86_64.tar.xz
 
           - platform: layerscape_armv7
             url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/layerscape/armv7/openwrt-sdk-22.03.3-layerscape-armv7_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz
-              
+
           - platform: layerscape_armv8_64b
             url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/layerscape/armv8_64b/openwrt-sdk-22.03.3-layerscape-armv8_64b_gcc-11.2.0_musl.Linux-x86_64.tar.xz
 
           # - platform: lantiq_ase
           #   url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/lantiq/ase/openwrt-sdk-22.03.3-lantiq-ase_gcc-11.2.0_musl.Linux-x86_64.tar.xz
-              
+
           # - platform: lantiq_xrx200
           #   url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/lantiq/xrx200/openwrt-sdk-22.03.3-lantiq-xrx200_gcc-11.2.0_musl.Linux-x86_64.tar.xz
 
           # - platform: lantiq_xway
           #   url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/lantiq/xway/openwrt-sdk-22.03.3-lantiq-xway_gcc-11.2.0_musl.Linux-x86_64.tar.xz
-              
+
           # - platform: lantiq_xway_legacy
           #   url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/lantiq/xway_legacy/openwrt-sdk-22.03.3-lantiq-xway_legacy_gcc-11.2.0_musl.Linux-x86_64.tar.xz
-          
-            
+
+
 
           # 写不动了，估计matrix的并发数量也有限制，各位有精力可以帮忙维护一下
-          # - platform: 
-          #   url_sdk: 
-              
-          # - platform: 
-          #   url_sdk: 
-              
-          # - platform: 
-          #   url_sdk: 
-              
-          # - platform: 
-          #   url_sdk: 
-              
-          # - platform: 
-          #   url_sdk: 
-              
-          # - platform: 
-          #   url_sdk: 
-              
-          # - platform: 
-          #   url_sdk: 
-              
-          # - platform: 
-          #   url_sdk: 
-              
-          # - platform: 
-          #   url_sdk: 
-              
-          # - platform: 
-          #   url_sdk: 
-              
-          # - platform: 
-          #   url_sdk: 
-              
-          # - platform: 
-          #   url_sdk: 
-              
-          # - platform: 
-          #   url_sdk: 
-              
-          # - platform: 
-          #   url_sdk: 
-              
-          # - platform: 
-          #   url_sdk: 
-              
-          # - platform: 
-          #   url_sdk: 
+          # - platform:
+          #   url_sdk:
+
+          # - platform:
+          #   url_sdk:
+
+          # - platform:
+          #   url_sdk:
+
+          # - platform:
+          #   url_sdk:
+
+          # - platform:
+          #   url_sdk:
+
+          # - platform:
+          #   url_sdk:
+
+          # - platform:
+          #   url_sdk:
+
+          # - platform:
+          #   url_sdk:
+
+          # - platform:
+          #   url_sdk:
+
+          # - platform:
+          #   url_sdk:
+
+          # - platform:
+          #   url_sdk:
+
+          # - platform:
+          #   url_sdk:
+
+          # - platform:
+          #   url_sdk:
+
+          # - platform:
+          #   url_sdk:
+
+          # - platform:
+          #   url_sdk:
+
+          # - platform:
+          #   url_sdk:
 
 
-            
+
 
 
     steps:
@@ -292,8 +295,8 @@ jobs:
         run: |
           cd sdk
           make download -j8
-          find dl -size -1024c -exec ls -l {} \;     
-      
+          find dl -size -1024c -exec ls -l {} \;
+
       - name: ${{ matrix.platform }} compile
         id: compile
         run: |
@@ -326,9 +329,9 @@ jobs:
           echo "### Passwall Version" >> release.txt
 
           echo "**:minidisc: Passwall Version: ${{needs.job_init.outputs.output_passwall_version}}**" >> release.txt
-          
+
           echo "### Packages Version" >> release.txt
-          
+
           echo "**package name**|**package version**" >> release.txt
           echo "-|-" >> release.txt
           echo "**:ice_cube: brook**|**$(sed -n '8p' feeds/passwall_packages/brook/Makefile | cut -d'=' -f2)**" >> release.txt
@@ -356,10 +359,10 @@ jobs:
           echo "**:ice_cube: v2ray-plugin**|**$(sed -n '9p' feeds/passwall_packages/v2ray-plugin/Makefile | cut -d'=' -f2)**" >> release.txt
           echo "**:ice_cube: xray-core**|**$(sed -n '4p' feeds/passwall_packages/xray-core/Makefile | cut -d'=' -f2)**" >> release.txt
           echo "**:ice_cube: xray-plugin**|**$(sed -n '8p' feeds/passwall_packages/xray-plugin/Makefile | cut -d'=' -f2)**" >> release.txt
-            
+
           touch release.txt
 
-          
+
           echo "status=success" >> $GITHUB_OUTPUT
 
       - name: Upload firmware to release
