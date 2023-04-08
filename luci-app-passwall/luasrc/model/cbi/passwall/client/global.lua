@@ -389,6 +389,9 @@ if has_chnlist then
 	.. "<li>" .. translate("Remote DNS can avoid more DNS leaks, but some domestic domain names maybe to proxy!") .. "</li>"
 	.. "<li>" .. translate("Direct DNS Internet experience may be better, but DNS will be leaked!") .. "</li>"
 	.. "</ul>"
+	if api.is_finded("chinadns-ng") then
+		when_chnroute_default_dns:depends("chinadns_ng", false)
+	end
 end
 
 o = s:taboption("DNS", Button, "clear_ipset", translate("Clear IPSET"), translate("Try this feature if the rule modification does not take effect."))

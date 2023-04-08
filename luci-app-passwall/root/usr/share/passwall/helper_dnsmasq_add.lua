@@ -317,14 +317,15 @@ if not fs.access(CACHE_DNS_PATH) then
 
 		if chnlist and fs.access("/usr/share/passwall/rules/chnlist") and (CHNROUTE_MODE_DEFAULT_DNS == "remote" or (CHNROUTE_MODE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0")) then
 			fwd_dns = LOCAL_DNS
-			local chnlist_str = sys.exec('cat /usr/share/passwall/rules/chnlist | grep -v -E "^#" | grep -v -E "' .. excluded_domain_str .. '"')
-			for line in string.gmatch(chnlist_str, "[^\r\n]+") do
-				if line ~= "" then
-					if CHNROUTE_MODE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" then
-						fwd_dns = nil
+			if CHNROUTE_MODE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" then
+				fwd_dns = nil
+			else
+				local chnlist_str = sys.exec('cat /usr/share/passwall/rules/chnlist | grep -v -E "^#" | grep -v -E "' .. excluded_domain_str .. '"')
+				for line in string.gmatch(chnlist_str, "[^\r\n]+") do
+					if line ~= "" then
+						set_domain_dns(line, fwd_dns)
+						set_domain_ipset(line, setflag_4 .. "chnroute," .. setflag_6 .. "chnroute6")
 					end
-					set_domain_dns(line, fwd_dns)
-					set_domain_ipset(line, setflag_4 .. "chnroute," .. setflag_6 .. "chnroute6")
 				end
 			end
 			log(string.format("  - 中国域名表(chnroute)：%s", fwd_dns or "默认"))
