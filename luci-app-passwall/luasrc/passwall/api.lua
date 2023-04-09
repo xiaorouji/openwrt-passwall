@@ -18,12 +18,12 @@ LOG_FILE = "/tmp/log/" .. appname .. ".log"
 CACHE_PATH = "/tmp/etc/" .. appname .. "_tmp"
 
 function log(...)
-    local result = os.date("%Y-%m-%d %H:%M:%S: ") .. table.concat({...}, " ")
-    local f, err = io.open(LOG_FILE, "a")
-    if f and err == nil then
-        f:write(result .. "\n")
-        f:close()
-    end
+	local result = os.date("%Y-%m-%d %H:%M:%S: ") .. table.concat({...}, " ")
+	local f, err = io.open(LOG_FILE, "a")
+	if f and err == nil then
+		f:write(result .. "\n")
+		f:close()
+	end
 end
 
 function exec_call(cmd)
