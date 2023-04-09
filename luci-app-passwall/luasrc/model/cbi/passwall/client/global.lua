@@ -84,21 +84,39 @@ s:tab("Main", translate("Main"))
 o = s:taboption("Main", Flag, "enabled", translate("Main switch"))
 o.rmempty = false
 
----- TCP Node
-tcp_node = s:taboption("Main", ListValue, "tcp_node", "<a style='color: red'>" .. translate("TCP Node") .. "</a>")
-tcp_node.description = ""
-local current_node = luci.sys.exec(string.format("[ -f '/tmp/etc/%s/id/TCP' ] && echo -n $(cat /tmp/etc/%s/id/TCP)", appname, appname))
-if current_node and current_node ~= "" and current_node ~= "nil" then
-	local n = uci:get_all(appname, current_node)
+local auto_switch_tip
+local auto_switch_flag
+local current_tcp_node = luci.sys.exec(string.format("[ -f '/tmp/etc/%s/id/TCP' ] && echo -n $(cat /tmp/etc/%s/id/TCP)", appname, appname))
+if current_tcp_node and current_tcp_node ~= "" and current_tcp_node ~= "nil" then
+	local n = uci:get_all(appname, current_tcp_node)
 	if n then
 		if tonumber(m:get("@auto_switch[0]", "enable") or 0) == 1 then
-			local remarks = api.get_full_node_remarks(n)
-			local url = api.url("node_config", current_node)
-			tcp_node.description = tcp_node.description .. translatef("Current node: %s", string.format('<a href="%s">%s</a>', url, remarks)) .. "<br />"
+			auto_switch_flag = ""
+			if n.protocol == "_shunt" then
+				local shunt_logic = tonumber(m:get("@auto_switch[0]", "shunt_logic"))
+				if shunt_logic == 1 then
+					auto_switch_flag = "default"
+				elseif shunt_logic == 2 then
+					auto_switch_flag = "main"
+				end
+				current_tcp_node = luci.sys.exec(string.format("[ -f '/tmp/etc/%s/id/TCP_%s' ] && echo -n $(cat /tmp/etc/%s/id/TCP_%s)", appname, auto_switch_flag, appname, auto_switch_flag))
+				if current_tcp_node and current_tcp_node ~= "" and current_tcp_node ~= "nil" then
+					n = uci:get_all(appname, current_tcp_node)
+				end
+			end
+			local remarks = api.get_node_remarks(n)
+			local url = api.url("node_config", n[".name"])
+			auto_switch_tip = translatef("Current node: %s", string.format('<a href="%s">%s</a>', url, remarks)) .. "<br />"
 		end
 	end
 end
+
+---- TCP Node
+tcp_node = s:taboption("Main", ListValue, "tcp_node", "<a style='color: red'>" .. translate("TCP Node") .. "</a>")
 tcp_node:value("nil", translate("Close"))
+if auto_switch_flag == "" and auto_switch_tip then
+	tcp_node.description = auto_switch_tip
+end
 
 ---- UDP Node
 udp_node = s:taboption("Main", ListValue, "udp_node", "<a style='color: red'>" .. translate("UDP Node") .. "</a>")
@@ -145,12 +163,14 @@ if (has_v2ray or has_xray) and #nodes_table > 0 then
 			end
 			type.cfgvalue = get_cfgvalue(v.id, "type")
 			type.write = get_write(v.id, "type")
+			
 			-- pre-proxy
 			o = s:taboption("Main", Flag, vid .. "-preproxy_enabled", translate("Preproxy"))
 			o:depends("tcp_node", v.id)
 			o.rmempty = false
 			o.cfgvalue = get_cfgvalue(v.id, "preproxy_enabled")
 			o.write = get_write(v.id, "preproxy_enabled")
+
 			o = s:taboption("Main", ListValue, vid .. "-main_node", string.format('<a style="color:red">%s</a>', translate("Preproxy Node")), translate("Set the node to be used as a pre-proxy. Each rule (including <code>Default</code>) has a separate switch that controls whether this rule uses the pre-proxy or not."))
 			o:depends(vid .. "-preproxy_enabled", "1")
 			for k1, v1 in pairs(balancing_list) do
@@ -161,6 +181,10 @@ if (has_v2ray or has_xray) and #nodes_table > 0 then
 			end
 			o.cfgvalue = get_cfgvalue(v.id, "main_node")
 			o.write = get_write(v.id, "main_node")
+			if auto_switch_flag == "main" and auto_switch_tip then
+				o.description = auto_switch_tip
+			end
+
 			if (has_v2ray and has_xray) or (v.type == "V2ray" and not has_v2ray) or (v.type == "Xray" and not has_xray) then
 				type:depends("tcp_node", v.id)
 			else
@@ -208,6 +232,9 @@ if (has_v2ray or has_xray) and #nodes_table > 0 then
 			end
 			for k1, v1 in pairs(normal_list) do
 				o:value(v1.id, v1.remark)
+			end
+			if auto_switch_flag == "default" and auto_switch_tip then
+				o.description = auto_switch_tip
 			end
 
 			local id = "default_proxy_tag"

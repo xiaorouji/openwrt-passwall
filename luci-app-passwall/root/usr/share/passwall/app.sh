@@ -896,8 +896,8 @@ node_switch() {
 		echo $new_node > $TMP_ID_PATH/${FLAG}
 
 		[ "$shunt_logic" != "0" ] && [ "$(config_n_get $new_node protocol nil)" = "_shunt" ] && {
-			echo $(config_n_get $new_node default_node nil) > $TMP_ID_PATH/${1}_default
-			echo $(config_n_get $new_node main_node nil) > $TMP_ID_PATH/${1}_main
+			echo $(config_n_get $new_node default_node nil) > $TMP_ID_PATH/${FLAG}_default
+			echo $(config_n_get $new_node main_node nil) > $TMP_ID_PATH/${FLAG}_main
 			uci commit $CONFIG
 		}
 
