@@ -32,9 +32,9 @@ local haproxy_path = var["-path"]
 local haproxy_conf = var["-conf"]
 local haproxy_dns = var["-dns"] or "119.29.29.29:53,223.5.5.5:53"
 
+local cpu_thread = sys.exec('echo -n $(cat /proc/cpuinfo | grep "processor" | wc -l)') or "1"
 local health_check_type = uci:get(appname, "@global_haproxy[0]", "health_check_type") or "tcp"
 local health_check_inter = uci:get(appname, "@global_haproxy[0]", "health_check_inter") or "10"
-health_check_inter = tonumber(health_check_inter) * 1000
 
 log("HAPROXY 负载均衡...")
 fs.mkdir(haproxy_path)
@@ -47,8 +47,10 @@ global
 	daemon
 	log         127.0.0.1 local2
 	maxconn     60000
-	stats socket  %s/haproxy.sock
-%s
+	stats socket  {{path}}/haproxy.sock
+	nbthread {{nbthread}}
+	external-check
+	insecure-fork-wanted
 
 defaults
 	mode                    tcp
@@ -69,17 +71,16 @@ defaults
 	maxconn                 3000
 	
 resolvers mydns
-	resolve_retries       3
-	timeout retry         3s
+	resolve_retries       1
+	timeout resolve       5s
 	hold valid           600s
+{{dns}}
 ]]
 
-f_out:write(string.format(haproxy_config, haproxy_path, health_check_type == "passwall_logic" and string.format([[
-	external-check
-	insecure-fork-wanted
-]]) or ""
-))
+haproxy_config = haproxy_config:gsub("{{path}}",  haproxy_path)
+haproxy_config = haproxy_config:gsub("{{nbthread}}",  cpu_thread)
 
+local mydns = ""
 local index = 0
 string.gsub(haproxy_dns, '[^' .. "," .. ']+', function(w)
 	index = index + 1
@@ -87,10 +88,11 @@ string.gsub(haproxy_dns, '[^' .. "," .. ']+', function(w)
 	if not s:find(":") then
 		s = s .. ":53"
 	end
-	f_out:write(string.format([[
-	nameserver dns%s %s
-]], index, s))
+	mydns = mydns .. (index > 1 and "\n" or "") .. "    " .. string.format("nameserver dns%s %s", index, s)
 end)
+haproxy_config = haproxy_config:gsub("{{dns}}",  mydns)
+
+f_out:write(haproxy_config)
 
 local listens = {}
 
@@ -159,7 +161,7 @@ table.sort(sortTable, function(a,b) return (a < b) end)
 for i, port in pairs(sortTable) do
 	log("  + 入口 0.0.0.0:%s..." % port)
 
-	f_out:write(string.format([[
+	f_out:write("\n" .. string.format([[
 listen %s
 	bind 0.0.0.0:%s
 	mode tcp
@@ -176,9 +178,19 @@ listen %s
 	for i, o in ipairs(listens[port]) do
 		local remark = o.server_remark
 		local server = o.server_address .. ":" .. o.server_port
-		f_out:write(string.format([[
-	server %s %s weight %s check resolvers mydns inter %s rise 1 fall 3 %s
-]], remark, server, o.lbweight, health_check_inter, o.backup == "1" and "backup" or ""))
+		local server_conf = "server {{remark}} {{server}} weight {{weight}} {{resolvers}} check inter {{inter}} rise 1 fall 3 {{backup}}"
+		server_conf = server_conf:gsub("{{remark}}", remark)
+		server_conf = server_conf:gsub("{{server}}", server)
+		server_conf = server_conf:gsub("{{weight}}",  o.lbweight)
+		local resolvers = "resolvers mydns"
+		if api.is_ip(o.server_address) then
+			resolvers = ""
+		end
+		server_conf = server_conf:gsub("{{resolvers}}",  resolvers)
+		server_conf = server_conf:gsub("{{inter}}",  tonumber(health_check_inter) .. "s")
+		server_conf = server_conf:gsub("{{backup}}",  o.backup == "1" and "backup" or "")
+
+		f_out:write("    " .. server_conf .. "\n")
 
 		if o.export ~= "0" then
 			sys.call(string.format("/usr/share/passwall/app.sh add_ip2route %s %s", o.origin_address, o.export))
@@ -201,7 +213,7 @@ listen console
 	stats admin if TRUE
 	%s
 ]]
-f_out:write(string.format(str, console_port, (console_user and console_user ~= "" and console_password and console_password ~= "") and "stats auth " .. console_user .. ":" .. console_password or ""))
+f_out:write("\n" .. string.format(str, console_port, (console_user and console_user ~= "" and console_password and console_password ~= "") and "stats auth " .. console_user .. ":" .. console_password or ""))
 log(string.format("  * 控制台端口：%s", console_port))
 
 f_out:close()

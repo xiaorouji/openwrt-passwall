@@ -47,13 +47,14 @@ o:depends("balancing_enable", true)
 
 ---- Health Check Type
 o = s:option(ListValue, "health_check_type", translate("Health Check Type"))
+o.default = "passwall_logic"
 o:value("tcp", "TCP")
 o:value("passwall_logic", translate("Availability test") .. string.format("(passwall %s)", translate("Inner implement")))
 o:depends("balancing_enable", true)
 
 ---- Health Check Inter
 o = s:option(Value, "health_check_inter", translate("Health Check Inter"), translate("Units:seconds"))
-o.default = "10"
+o.default = "60"
 o:depends("balancing_enable", true)
 
 o = s:option(DummyValue, "health_check_tips", " ")
