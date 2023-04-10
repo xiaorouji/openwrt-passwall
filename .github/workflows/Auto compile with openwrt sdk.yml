@@ -22,6 +22,7 @@ env:
 
 jobs:
   job_init:
+    if: github.repository == 'xiaorouji/openwrt-passwall'
     runs-on: ubuntu-latest
     outputs:
       output_git_head: ${{ steps.verion_hash.outputs.git_head }}
@@ -321,7 +322,7 @@ jobs:
       - name: ${{ matrix.platform }} feeds configuration only luci
         run: |
           cd sdk
-          
+
           rm -rf .config
 
           echo "CONFIG_PACKAGE_luci-app-passwall=m" >> .config
@@ -361,7 +362,7 @@ jobs:
         if: steps.compile_only_luci.outputs.status == 'success'
         run: |
           cd sdk
-          
+
           cd bin/packages/*/passwall_luci
           for file in *; do mv "$file" "${file%.*}_only_luci.ipk" && mv "${file%.*}_only_luci.ipk" ../../../../upload/; done
 
