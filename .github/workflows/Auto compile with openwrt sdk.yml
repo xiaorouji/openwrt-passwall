@@ -254,7 +254,7 @@ jobs:
         uses: mxschmitt/action-tmate@v3.13
         if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
 
-      - name: ${{ matrix.platform }} feeds configuration
+      - name: ${{ matrix.platform }} feeds configuration all packages
         run: |
           cd sdk
 
@@ -297,17 +297,17 @@ jobs:
           make download -j8
           find dl -size -1024c -exec ls -l {} \;
 
-      - name: ${{ matrix.platform }} compile
-        id: compile
+      - name: ${{ matrix.platform }} compile all
+        id: compile_all
         run: |
           cd sdk
           make package/luci-app-passwall/{clean,compile} -j$(($(nproc)))
 
           echo "status=success" >> $GITHUB_OUTPUT
 
-      - name: Organize ${{ matrix.platform }} files
-        id: organize
-        if: steps.compile.outputs.status == 'success'
+      - name: Organize ${{ matrix.platform }} files all
+        id: organize_all
+        if: steps.compile_all.outputs.status == 'success'
         run: |
           cd sdk
           mkdir upload
@@ -318,15 +318,65 @@ jobs:
           echo "FIRMWARE=$PWD" >> $GITHUB_ENV
           echo "status=success" >> $GITHUB_OUTPUT
 
+      - name: ${{ matrix.platform }} feeds configuration only luci
+        run: |
+          cd sdk
+          
+          rm -rf .config
+
+          echo "CONFIG_PACKAGE_luci-app-passwall=m" >> .config
+          echo "CONFIG_PACKAGE_luci-app-passwall_Iptables_Transparent_Proxy=n" >> .config
+          echo "CONFIG_PACKAGE_luci-app-passwall_Nftables_Transparent_Proxy=n" >> .config
+          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Brook=n" >> .config
+          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ChinaDNS_NG=n" >> .config
+          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Haproxy=n" >> .config
+          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Hysteria=n" >> .config
+          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_NaiveProxy=n" >> .config
+          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Libev_Client=n" >> .config
+          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Libev_Server=n" >> .config
+          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Rust_Client=n" >> .config
+          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Rust_Server=n" >> .config
+          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ShadowsocksR_Libev_Client=n" >> .config
+          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ShadowsocksR_Libev_Server=n" >> .config
+          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Simple_Obfs=n" >> .config
+          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Trojan_GO=n" >> .config
+          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Trojan_Plus=n" >> .config
+          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_V2ray=n" >> .config
+          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_V2ray_Geodata=n" >> .config
+          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_V2ray_Plugin=n" >> .config
+          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Xray=n" >> .config
+          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Xray_Plugin=n" >> .config
+
+          make defconfig
+
+      - name: ${{ matrix.platform }} compile only luci
+        id: compile_only_luci
+        run: |
+          cd sdk
+          make package/luci-app-passwall/{clean,compile} -j$(($(nproc)))
+          echo "status=success" >> $GITHUB_OUTPUT
+
+      - name: Organize ${{ matrix.platform }} files only luci
+        id: organize_only_luci
+        if: steps.compile_only_luci.outputs.status == 'success'
+        run: |
+          cd sdk
+          
+          cd bin/packages/*/passwall_luci
+          for file in *; do mv "$file" "${file%.*}_only_luci.ipk" && mv "${file%.*}_only_luci.ipk" ../../../../upload/; done
+
+          echo "status=success" >> $GITHUB_OUTPUT
+
+
       - name: Generate release tag
         id: tag
-        if: steps.compile.outputs.status == 'success'
+        if: steps.compile_all.outputs.status == 'success' && steps.compile_only_luci.outputs.status == 'success'
         run: |
           cd sdk
           echo "## :mega:Update content" >> release.txt
 
           echo "![](https://img.shields.io/github/downloads/xiaorouji/openwrt-passwall/${{needs.job_init.outputs.output_passwall_version}}/total?style=flat-square)" >> release.txt
-          echo "### Passwall Version" >> release.txt
+          echo "### Passwall Info" >> release.txt
 
           echo "**:minidisc: Passwall Version: ${{needs.job_init.outputs.output_passwall_version}}**" >> release.txt
 
