@@ -40,7 +40,7 @@ jobs:
         run: |
           cd luci-app-passwall
           echo "git_head=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-          echo "psw_version=$(sed -n '9,10p' Makefile | awk -F':=' '{ORS="-"}{print $2}' | sed 's/-$/\n/')" >> $GITHUB_OUTPUT
+          echo "psw_version=$(sed -n '9p' Makefile | awk -F ":=" '{print $2}')" >> $GITHUB_OUTPUT
 
 
       - name: Compare verion
