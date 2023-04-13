@@ -29,13 +29,19 @@ jobs:
       passwall_version: ${{ steps.check_version.outputs.latest_version }}
       has_update: ${{ steps.check_version.outputs.has_update }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          fetch-depth: 0
+          ref: 'luci'
+
       - name: Check version
         id: check_version
         env:
-          url_makefile: https://raw.githubusercontent.com/xiaorouji/openwrt-passwall/luci/luci-app-passwall/Makefile
           url_release: https://api.github.com/repos/xiaorouji/openwrt-passwall/releases/latest
         run: |
-          latest_version=$(wget -qO- -t1 -T2 ${{env.url_makefile}} | awk -F ':=' '/PKG_VERSION|PKG_RELEASE/ {print $2}' | sed ':a;N;s/\n$//;s/\n/-/;ba')
+          cd luci-app-passwall
+          latest_version=$(awk -F ':=' '/PKG_VERSION|PKG_RELEASE/ {print $2}' Makefile | sed ':a;N;s/\n$//;s/\n/-/;ba')
           latest_release=$(wget -qO- -t1 -T2 ${{env.url_release}} | awk -F '"' '/tag_name/{print $4}')
           has_update=$([ "${latest_version}" != "${latest_release}" ] && echo true || echo false)
           echo "latest_version=${latest_version}" >> $GITHUB_OUTPUT
@@ -191,20 +197,35 @@ jobs:
           - platform: arm_cortex-a8_vfpv3
             url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/sunxi/cortexa8/openwrt-sdk-22.03.3-sunxi-cortexa8_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz
 
+          - platform: arm_cortex-a9
+            url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/bcm53xx/generic/openwrt-sdk-22.03.3-bcm53xx-generic_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz
+
           - platform: arm_cortex-a9_neon
             url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/zynq/generic/openwrt-sdk-22.03.3-zynq_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz
 
           - platform: arm_cortex-a9_vfpv3-d16
             url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/mvebu/cortexa9/openwrt-sdk-22.03.3-mvebu-cortexa9_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz
 
+          - platform: arm_cortex-a15_neon-vfpv4
+            url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/ipq806x/generic/openwrt-sdk-22.03.3-ipq806x-generic_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz
+
+          - platform: mips_24kc
+            url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/ath79/generic/openwrt-sdk-22.03.3-ath79-generic_gcc-11.2.0_musl.Linux-x86_64.tar.xz
+
           - platform: mips_4kec
             url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/realtek/rtl838x/openwrt-sdk-22.03.3-realtek-rtl838x_gcc-11.2.0_musl.Linux-x86_64.tar.xz
+
+          - platform: mips_mips32
+            url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/bcm63xx/generic/openwrt-sdk-22.03.3-bcm63xx-generic_gcc-11.2.0_musl.Linux-x86_64.tar.xz
 
           - platform: mipsel_24kc
             url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/ramips/rt288x/openwrt-sdk-22.03.3-ramips-rt288x_gcc-11.2.0_musl.Linux-x86_64.tar.xz
 
           - platform: mipsel_74kc
             url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/ramips/rt3883/openwrt-sdk-22.03.3-ramips-rt3883_gcc-11.2.0_musl.Linux-x86_64.tar.xz
+
+          - platform: mipsel_mips32
+            url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/bcm47xx/generic/openwrt-sdk-22.03.3-bcm47xx-generic_gcc-11.2.0_musl.Linux-x86_64.tar.xz
 
     steps:
       - name: Initialization ${{ matrix.platform }} compile environment
