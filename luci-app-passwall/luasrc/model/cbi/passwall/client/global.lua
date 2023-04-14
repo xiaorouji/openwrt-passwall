@@ -174,7 +174,7 @@ if (has_v2ray or has_xray) and #nodes_table > 0 then
 			o.cfgvalue = get_cfgvalue(v.id, "preproxy_enabled")
 			o.write = get_write(v.id, "preproxy_enabled")
 
-			o = s:taboption("Main", ListValue, vid .. "-main_node", string.format('<a style="color:red">%s</a>', translate("Preproxy Node")), translate("Set the node to be used as a pre-proxy. Each rule (including <code>Default</code>) has a separate switch that controls whether this rule uses the pre-proxy or not."))
+			o = s:taboption("Main", Value, vid .. "-main_node", string.format('<a style="color:red">%s</a>', translate("Preproxy Node")), translate("Set the node to be used as a pre-proxy. Each rule (including <code>Default</code>) has a separate switch that controls whether this rule uses the pre-proxy or not."))
 			o:depends(vid .. "-preproxy_enabled", "1")
 			for k1, v1 in pairs(balancing_list) do
 				o:value(v1.id, v1.remark)
@@ -198,7 +198,7 @@ if (has_v2ray or has_xray) and #nodes_table > 0 then
 				local id = e[".name"]
 				local node_option = vid .. "-" .. id .. "_node"
 				if id and e.remarks then
-					o = s:taboption("Main", ListValue, node_option, string.format('* <a href="%s" target="_blank">%s</a>', api.url("shunt_rules", id), e.remarks))
+					o = s:taboption("Main", Value, node_option, string.format('* <a href="%s" target="_blank">%s</a>', api.url("shunt_rules", id), e.remarks))
 					o.cfgvalue = get_cfgvalue(v.id, id)
 					o.write = get_write(v.id, id)
 					o:depends("tcp_node", v.id)
@@ -224,7 +224,7 @@ if (has_v2ray or has_xray) and #nodes_table > 0 then
 			end)
 
 			local id = "default_node"
-			o = s:taboption("Main", ListValue, vid .. "-" .. id, string.format('* <a style="color:red">%s</a>', translate("Default")))
+			o = s:taboption("Main", Value, vid .. "-" .. id, string.format('* <a style="color:red">%s</a>', translate("Default")))
 			o.cfgvalue = get_cfgvalue(v.id, id)
 			o.write = get_write(v.id, id)
 			o:depends("tcp_node", v.id)

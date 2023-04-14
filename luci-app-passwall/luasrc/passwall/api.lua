@@ -611,6 +611,44 @@ local function auto_get_arch()
 	return util.trim(arch)
 end
 
+function parseURL(url)
+	if not url or url == "" then
+		return nil
+	end
+    local pattern = "^(%w+)://"
+    local protocol = url:match(pattern)
+
+    if not protocol then
+        --error("Invalid URL: " .. url)
+        return nil
+    end
+
+    local auth_host_port = url:sub(#protocol + 4)
+    local auth_pattern = "^([^@]+)@"
+    local auth = auth_host_port:match(auth_pattern)
+    local username, password
+
+    if auth then
+        username, password = auth:match("^([^:]+):([^:]+)$")
+        auth_host_port = auth_host_port:sub(#auth + 2)
+    end
+
+    local host, port = auth_host_port:match("^([^:]+):(%d+)$")
+
+    if not host or not port then
+        --error("Invalid URL: " .. url)
+        return nil
+    end
+
+    return {
+        protocol = protocol,
+        username = username,
+        password = password,
+        host = host,
+        port = tonumber(port)
+    }
+end
+
 local default_file_tree = {
 	x86_64  = "amd64",
 	x86     = "386",
