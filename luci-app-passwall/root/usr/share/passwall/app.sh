@@ -1519,8 +1519,8 @@ start() {
 	elif [ "$use_nft" == 1 ] && [ -n "$(dnsmasq --version | grep 'Compile time options:.* nftset')" ]; then
 		USE_TABLES="nftables"
 		nftflag=1
-	elif [ -z "$(command -v iptables-legacy || command -v iptables)" ] || [ -z "$(command -v ipset)" ]; then
-		echolog "系统未安装iptables或ipset，无法透明代理！"
+	elif [ -z "$(command -v iptables-legacy || command -v iptables)" ] || [ -z "$(command -v ipset)" ] || [ -z "$(dnsmasq --version | grep 'Compile time options:.* ipset')" ]; then
+		echolog "系统未安装iptables或ipset或Dnsmasq没有开启ipset支持，无法透明代理！"
 	else
 		USE_TABLES="iptables"
 	fi
