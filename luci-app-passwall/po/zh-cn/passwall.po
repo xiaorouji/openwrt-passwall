@@ -1360,6 +1360,9 @@ msgstr "无法移动新文件到：%s"
 msgid "Mux concurrency"
 msgstr "最大并发连接数"
 
+msgid "XUDP Mux concurrency"
+msgstr "XUDP 最大并发连接数"
+
 msgid "Mux idle timeout"
 msgstr "最大闲置时间"
 
