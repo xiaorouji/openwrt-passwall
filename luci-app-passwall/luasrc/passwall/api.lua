@@ -1,5 +1,6 @@
 module("luci.passwall.api", package.seeall)
 local com = require "luci.passwall.com"
+bin = require "nixio".bin
 fs = require "nixio.fs"
 sys = require "luci.sys"
 uci = require"luci.model.uci".cursor()

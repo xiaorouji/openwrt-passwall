@@ -102,9 +102,16 @@ function gen_outbound(flag, node, tag, proxy_table)
 
 		if node.protocol == "wireguard" and node.wireguard_reserved then
 			local bytes = {}
-			node.wireguard_reserved:gsub("[^,]+", function(b)
-				bytes[#bytes+1] = tonumber(b)
-			end)
+			if not node.wireguard_reserved:match("[^%d,]+") then
+				node.wireguard_reserved:gsub("%d+", function(b)
+					bytes[#bytes + 1] = tonumber(b)
+				end)
+			else
+				local result = api.bin.b64decode(node.wireguard_reserved)
+				for i = 1, #result do
+					bytes[i] = result:byte(i)
+				end
+			end
 			node.wireguard_reserved = #bytes > 0 and bytes or nil
 		end
 
