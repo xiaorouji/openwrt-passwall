@@ -1018,12 +1018,17 @@ local function select_node(nodes, config)
 	end
 	-- 还不行 随便找一个
 	if not server then
-		server = uci:get_all(appname, '@' .. "nodes" .. '[0]')
-		if server then
-			if config.log == nil or config.log == true then
-				log('【' .. config.remarks .. '】' .. '无法找到最匹配的节点，当前已更换为：' .. server.remarks)
+		local nodes_table = {}
+		for k, e in ipairs(api.get_valid_nodes()) do
+			if e.node_type == "normal" then
+				nodes_table[#nodes_table + 1] = e
 			end
-			server = server[".name"]
+		end
+		if #nodes_table > 0 then
+			if config.log == nil or config.log == true then
+				log('【' .. config.remarks .. '】' .. '无法找到最匹配的节点，当前已更换为：' .. nodes_table[1].remarks)
+			end
+			server = nodes_table[1][".name"]
 		end
 	end
 	if server then
@@ -1037,15 +1042,15 @@ local function update_node(manual)
 		return
 	end
 
-	local group = ""
+	local group = {}
 	for _, v in ipairs(nodeResult) do
-		group = group .. v["remark"]
+		group[v["remark"]] = true
 	end
 
-	if manual == 0 and #group > 0 then
+	if manual == 0 and next(group) then
 		uci:foreach(appname, "nodes", function(node)
-			-- 如果是未发现新节点或手动导入的节点就不要删除了...
-			if (node.add_from and group:find(node.add_from, 1, true)) and node.add_mode == "2" then
+			-- 如果未发现新节点或手动导入的节点就不要删除了...
+			if node.add_mode == "2" and (node.add_from and group[node.add_from] == true) then
 				uci:delete(appname, node['.name'])
 			end
 		end)
@@ -1246,7 +1251,7 @@ local execute = function()
 
 		if #fail_list > 0 then
 			for index, value in ipairs(fail_list) do
-				log(value.remark .. '订阅失败，可能是订阅地址失效，或是网络问题，请诊断！')
+				log(string.format('【%s】订阅失败，可能是订阅地址失效，或是网络问题，请诊断！', value.remark))
 			end
 		end
 		update_node(0)
