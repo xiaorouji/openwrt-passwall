@@ -910,7 +910,6 @@ function to_check_self()
 	end
 	local local_version  = get_version()
 	local remote_version = sys.exec("echo -n $(grep 'PKG_VERSION' /tmp/passwall_makefile|awk -F '=' '{print $2}')")
-				.. "-" ..  sys.exec("echo -n $(grep 'PKG_RELEASE' /tmp/passwall_makefile|awk -F '=' '{print $2}')")
 
 	local has_update = compare_versions(local_version, "<", remote_version)
 	if not has_update then
