@@ -51,7 +51,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        pakcages: [brook, chinadns-ng, hysteria, ipt2socks, microsocks, sing-box, trojan, trojan-go, v2ray-core, v2ray-plugin, xray-core, xray-plugin]
+        pakcages: [brook, chinadns-ng, hysteria, ipt2socks, microsocks, trojan, trojan-go, v2ray-core, v2ray-plugin, xray-core, xray-plugin]
         include:
           - pakcages: brook
             folder: brook
@@ -103,15 +103,15 @@ jobs:
             release_download_url: https://codeload.github.com/rofl0r/microsocks/tar.gz/v
             file_name:
 
-          - pakcages: sing-box
-            folder: sing-box
-            version_line: 9
-            hash_line: 14
-            version_head: PKG_VERSION:=
-            hash_head: PKG_HASH:=
-            release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/SagerNet/sing-box/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}'
-            release_download_url: https://codeload.github.com/SagerNet/sing-box/tar.gz/v
-            file_name:
+          # - pakcages: sing-box
+          #   folder: sing-box
+          #   version_line: 9
+          #   hash_line: 14
+          #   version_head: PKG_VERSION:=
+          #   hash_head: PKG_HASH:=
+          #   release_api_command: wget -qO- -t5 -T5 "https://api.github.com/repos/SagerNet/sing-box/releases" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | awk -F 'v' '{print $2}'
+          #   release_download_url: https://codeload.github.com/SagerNet/sing-box/tar.gz/v
+          #   file_name:
 
           - pakcages: trojan
             folder: trojan
