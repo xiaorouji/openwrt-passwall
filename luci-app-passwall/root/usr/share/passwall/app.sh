@@ -423,7 +423,7 @@ run_chinadns_ng() {
 	([ -n "$_chnlist" ] || [ -n "$_gfwlist" ]) && [ -s "${RULES_PATH}/gfwlist" ] && {
 		local _gfwlist_file="${TMP_PATH}/chinadns_gfwlist"
 		cp -a "${RULES_PATH}/gfwlist" "${_gfwlist_file}"
-		_extra_param="${_extra_param} -g ${_gfwlist_file}"
+		_extra_param="${_extra_param} -g ${_gfwlist_file} -A gfwlist,gfwlist6"
 		#当只有使用gfwlist模式时设置默认DNS为本地直连
 		[ -n "$_gfwlist" ] && [ -z "$_chnlist" ] && _default_tag="chn"
 	}
