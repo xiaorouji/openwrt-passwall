@@ -416,11 +416,11 @@ run_chinadns_ng() {
 		[ -s "${RULES_PATH}/chnlist" ] && {
 			local _chnlist_file="${TMP_PATH}/chinadns_chnlist"
 			cp -a "${RULES_PATH}/chnlist" "${_chnlist_file}"
-			local chnroute4_set="chnroute"
-			local chnroute6_set="chnroute6"
+			local chnroute4_set="passwall_chnroute"
+			local chnroute6_set="passwall_chnroute6"
 			[ "$nftflag" = "1" ] && {
-				chnroute4_set="inet@fw4@chnroute"
-				chnroute6_set="inet@fw4@chnroute6"
+				chnroute4_set="inet@fw4@passwall_chnroute"
+				chnroute6_set="inet@fw4@passwall_chnroute6"
 			}
 			_extra_param="${_extra_param} -4 ${chnroute4_set} -6 ${chnroute6_set} -m ${_chnlist_file} -M -a"
 		}
@@ -429,8 +429,8 @@ run_chinadns_ng() {
 	([ -n "$_chnlist" ] || [ -n "$_gfwlist" ]) && [ -s "${RULES_PATH}/gfwlist" ] && {
 		local _gfwlist_file="${TMP_PATH}/chinadns_gfwlist"
 		cp -a "${RULES_PATH}/gfwlist" "${_gfwlist_file}"
-		local gfwlist_set="gfwlist,gfwlist6"
-		[ "$nftflag" = "1" ] && gfwlist_set="inet@fw4@gfwlist,inet@fw4@gfwlist6"
+		local gfwlist_set="passwall_gfwlist,passwall_gfwlist6"
+		[ "$nftflag" = "1" ] && gfwlist_set="inet@fw4@passwall_gfwlist,inet@fw4@passwall_gfwlist6"
 		_extra_param="${_extra_param} -g ${_gfwlist_file} -A ${gfwlist_set}"
 		#当只有使用gfwlist模式时设置默认DNS为本地直连
 		[ -n "$_gfwlist" ] && [ -z "$_chnlist" ] && _default_tag="chn"

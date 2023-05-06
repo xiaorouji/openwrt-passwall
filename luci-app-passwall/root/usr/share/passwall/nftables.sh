@@ -2,23 +2,23 @@
 
 DIR="$(cd "$(dirname "$0")" && pwd)"
 MY_PATH=$DIR/nftables.sh
-NFTSET_LANIPLIST="laniplist"
-NFTSET_VPSIPLIST="vpsiplist"
-NFTSET_SHUNTLIST="shuntlist"
-NFTSET_GFW="gfwlist"
-NFTSET_CHN="chnroute"
-NFTSET_BLACKLIST="blacklist"
-NFTSET_WHITELIST="whitelist"
-NFTSET_BLOCKLIST="blocklist"
+NFTSET_LANLIST="passwall_lanlist"
+NFTSET_VPSLIST="passwall_vpslist"
+NFTSET_SHUNTLIST="passwall_shuntlist"
+NFTSET_GFW="passwall_gfwlist"
+NFTSET_CHN="passwall_chnroute"
+NFTSET_BLACKLIST="passwall_blacklist"
+NFTSET_WHITELIST="passwall_whitelist"
+NFTSET_BLOCKLIST="passwall_blocklist"
 
-NFTSET_LANIPLIST6="laniplist6"
-NFTSET_VPSIPLIST6="vpsiplist6"
-NFTSET_SHUNTLIST6="shuntlist6"
-NFTSET_GFW6="gfwlist6"
-NFTSET_CHN6="chnroute6"
-NFTSET_BLACKLIST6="blacklist6"
-NFTSET_WHITELIST6="whitelist6"
-NFTSET_BLOCKLIST6="blocklist6"
+NFTSET_LANLIST6="passwall_lanlist6"
+NFTSET_VPSLIST6="passwall_vpslist6"
+NFTSET_SHUNTLIST6="passwall_shuntlist6"
+NFTSET_GFW6="passwall_gfwlist6"
+NFTSET_CHN6="passwall_chnroute6"
+NFTSET_BLACKLIST6="passwall_blacklist6"
+NFTSET_WHITELIST6="passwall_whitelist6"
+NFTSET_BLOCKLIST6="passwall_blocklist6"
 
 FORCE_INDEX=2
 
@@ -233,11 +233,11 @@ get_action_chain_name() {
 	esac
 }
 
-gen_laniplist() {
+gen_lanlist() {
 	cat $RULES_PATH/lanlist_ipv4 | tr -s '\n' | grep -v "^#"
 }
 
-gen_laniplist_6() {
+gen_lanlist_6() {
 	cat $RULES_PATH/lanlist_ipv6 | tr -s '\n' | grep -v "^#"
 }
 
@@ -563,24 +563,24 @@ load_acl() {
 filter_haproxy() {
 	for item in ${haproxy_items}; do
 		local ip=$(get_host_ip ipv4 $(echo $item | awk -F ":" '{print $1}') 1)
-		insert_nftset $NFTSET_VPSIPLIST $ip
+		insert_nftset $NFTSET_VPSLIST $ip
 	done
-	echolog "加入负载均衡的节点到nftset[$NFTSET_VPSIPLIST]直连完成"
+	echolog "加入负载均衡的节点到nftset[$NFTSET_VPSLIST]直连完成"
 }
 
 filter_vps_addr() {
 	for server_host in $@; do
 		local vps_ip4=$(get_host_ip "ipv4" ${server_host})
 		local vps_ip6=$(get_host_ip "ipv6" ${server_host})
-		[ -n "$vps_ip4" ] && insert_nftset $NFTSET_VPSIPLIST $vps_ip4
-		[ -n "$vps_ip6" ] && insert_nftset $NFTSET_VPSIPLIST6 $vps_ip6
+		[ -n "$vps_ip4" ] && insert_nftset $NFTSET_VPSLIST $vps_ip4
+		[ -n "$vps_ip6" ] && insert_nftset $NFTSET_VPSLIST6 $vps_ip6
 	done
 }
 
 filter_vpsip() {
-	insert_nftset $NFTSET_VPSIPLIST $(uci show $CONFIG | grep ".address=" | cut -d "'" -f 2 | grep -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}" | sed -e "/^$/d")
-	insert_nftset $NFTSET_VPSIPLIST6 $(uci show $CONFIG | grep ".address=" | cut -d "'" -f 2 | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "/^$/d")
-	echolog "加入所有节点到nftset[$NFTSET_VPSIPLIST]直连完成"
+	insert_nftset $NFTSET_VPSLIST $(uci show $CONFIG | grep ".address=" | cut -d "'" -f 2 | grep -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}" | sed -e "/^$/d")
+	insert_nftset $NFTSET_VPSLIST6 $(uci show $CONFIG | grep ".address=" | cut -d "'" -f 2 | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "/^$/d")
+	echolog "加入所有节点到nftset[$NFTSET_VPSLIST]直连完成"
 }
 
 filter_node() {
@@ -613,8 +613,8 @@ filter_node() {
 
 		local ADD_INDEX=$FORCE_INDEX
 		for _ipt in 4 6; do
-			[ "$_ipt" == "4" ] && _ip_type=ip4 && _set_name=$NFTSET_VPSIPLIST
-			[ "$_ipt" == "6" ] && _ip_type=ip6 && _set_name=$NFTSET_VPSIPLIST6
+			[ "$_ipt" == "4" ] && _ip_type=ip4 && _set_name=$NFTSET_VPSLIST
+			[ "$_ipt" == "6" ] && _ip_type=ip6 && _set_name=$NFTSET_VPSLIST6
 			nft "list chain inet fw4 $nft_output_chain" | grep -q "${address}:${port}"
 			if [ $? -ne 0 ]; then
 				unset dst_rule
@@ -693,18 +693,18 @@ dns_hijack() {
 
 add_firewall_rule() {
 	echolog "开始加载防火墙规则..."
-	gen_nftset $NFTSET_VPSIPLIST ipv4_addr
+	gen_nftset $NFTSET_VPSLIST ipv4_addr
 	gen_nftset $NFTSET_GFW ipv4_addr
-	gen_nftset $NFTSET_LANIPLIST ipv4_addr $(gen_laniplist)
+	gen_nftset $NFTSET_LANLIST ipv4_addr $(gen_lanlist)
 	gen_nftset $NFTSET_CHN ipv4_addr $(cat $RULES_PATH/chnroute | tr -s '\n' | grep -v "^#")
 	gen_nftset $NFTSET_BLACKLIST ipv4_addr $(cat $RULES_PATH/proxy_ip | tr -s '\n' | grep -v "^#" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
 	gen_nftset $NFTSET_WHITELIST ipv4_addr $(cat $RULES_PATH/direct_ip | tr -s '\n' | grep -v "^#" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
 	gen_nftset $NFTSET_BLOCKLIST ipv4_addr $(cat $RULES_PATH/block_ip | tr -s '\n' | grep -v "^#" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
 	gen_nftset $NFTSET_SHUNTLIST ipv4_addr
 
-	gen_nftset $NFTSET_VPSIPLIST6 ipv6_addr
+	gen_nftset $NFTSET_VPSLIST6 ipv6_addr
 	gen_nftset $NFTSET_GFW6 ipv6_addr
-	gen_nftset $NFTSET_LANIPLIST6 ipv6_addr $(gen_laniplist_6)
+	gen_nftset $NFTSET_LANLIST6 ipv6_addr $(gen_lanlist_6)
 	gen_nftset $NFTSET_CHN6 ipv6_addr $(cat $RULES_PATH/chnroute6 | tr -s '\n' | grep -v "^#")
 	gen_nftset $NFTSET_BLACKLIST6 ipv6_addr $(cat $RULES_PATH/proxy_ip | tr -s '\n' | grep -v "^#" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
 	gen_nftset $NFTSET_WHITELIST6 ipv6_addr $(cat $RULES_PATH/direct_ip | tr -s '\n' | grep -v "^#" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
@@ -730,8 +730,8 @@ add_firewall_rule() {
 		#echolog "本机IPv4网段互访直连：${lan_ip}"
 		#echolog "本机IPv6网段互访直连：${lan_ip6}"
 
-		[ -n "$lan_ip" ] && insert_nftset $NFTSET_LANIPLIST $(echo $lan_ip | sed -e "s/ /\n/g")
-		[ -n "$lan_ip6" ] && insert_nftset $NFTSET_LANIPLIST6 $(echo $lan_ip6 | sed -e "s/ /\n/g")
+		[ -n "$lan_ip" ] && insert_nftset $NFTSET_LANLIST $(echo $lan_ip | sed -e "s/ /\n/g")
+		[ -n "$lan_ip6" ] && insert_nftset $NFTSET_LANLIST6 $(echo $lan_ip6 | sed -e "s/ /\n/g")
 	}
 
 	[ -n "$ISP_DNS" ] && {
@@ -792,15 +792,15 @@ add_firewall_rule() {
 	#ipv4 tproxy mode and udp
 	nft "add chain inet fw4 PSW_MANGLE"
 	nft "flush chain inet fw4 PSW_MANGLE"
-	nft "add rule inet fw4 PSW_MANGLE ip daddr @$NFTSET_LANIPLIST counter return"
-	nft "add rule inet fw4 PSW_MANGLE ip daddr @$NFTSET_VPSIPLIST counter return"
+	nft "add rule inet fw4 PSW_MANGLE ip daddr @$NFTSET_LANLIST counter return"
+	nft "add rule inet fw4 PSW_MANGLE ip daddr @$NFTSET_VPSLIST counter return"
 	nft "add rule inet fw4 PSW_MANGLE ip daddr @$NFTSET_WHITELIST counter return"
 	nft "add rule inet fw4 PSW_MANGLE ip daddr @$NFTSET_BLOCKLIST counter drop"
 
 	nft "add chain inet fw4 PSW_OUTPUT_MANGLE"
 	nft "flush chain inet fw4 PSW_OUTPUT_MANGLE"
-	nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip daddr @$NFTSET_LANIPLIST counter return"
-	nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip daddr @$NFTSET_VPSIPLIST counter return"
+	nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip daddr @$NFTSET_LANLIST counter return"
+	nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip daddr @$NFTSET_VPSLIST counter return"
 	nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip daddr @$NFTSET_WHITELIST counter return"
 	nft "add rule inet fw4 PSW_OUTPUT_MANGLE meta mark 0xff counter return"
 	nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip daddr @$NFTSET_BLOCKLIST counter drop"
@@ -813,16 +813,16 @@ add_firewall_rule() {
 	[ -z "${is_tproxy}" ] && {
 		nft "add chain inet fw4 PSW"
 		nft "flush chain inet fw4 PSW"
-		nft "add rule inet fw4 PSW ip daddr @$NFTSET_LANIPLIST counter return"
-		nft "add rule inet fw4 PSW ip daddr @$NFTSET_VPSIPLIST counter return"
+		nft "add rule inet fw4 PSW ip daddr @$NFTSET_LANLIST counter return"
+		nft "add rule inet fw4 PSW ip daddr @$NFTSET_VPSLIST counter return"
 		nft "add rule inet fw4 PSW ip daddr @$NFTSET_WHITELIST counter return"
 		nft "add rule inet fw4 PSW ip daddr @$NFTSET_BLOCKLIST counter drop"
 		nft "add rule inet fw4 dstnat ip protocol tcp counter jump PSW"
 
 		nft "add chain inet fw4 PSW_OUTPUT"
 		nft "flush chain inet fw4 PSW_OUTPUT"
-		nft "add rule inet fw4 PSW_OUTPUT ip daddr @$NFTSET_LANIPLIST counter return"
-		nft "add rule inet fw4 PSW_OUTPUT ip daddr @$NFTSET_VPSIPLIST counter return"
+		nft "add rule inet fw4 PSW_OUTPUT ip daddr @$NFTSET_LANLIST counter return"
+		nft "add rule inet fw4 PSW_OUTPUT ip daddr @$NFTSET_VPSLIST counter return"
 		nft "add rule inet fw4 PSW_OUTPUT ip daddr @$NFTSET_WHITELIST counter return"
 		nft "add rule inet fw4 PSW_OUTPUT meta mark 0xff counter return"
 		nft "add rule inet fw4 PSW_OUTPUT ip daddr @$NFTSET_BLOCKLIST counter drop"
@@ -832,13 +832,13 @@ add_firewall_rule() {
 	if [ "$accept_icmp" = "1" ]; then
 		nft "add chain inet fw4 PSW_ICMP_REDIRECT"
 		nft "flush chain inet fw4 PSW_ICMP_REDIRECT"
-		nft "add rule inet fw4 PSW_ICMP_REDIRECT ip daddr @$NFTSET_LANIPLIST counter return"
-		nft "add rule inet fw4 PSW_ICMP_REDIRECT ip daddr @$NFTSET_VPSIPLIST counter return"
+		nft "add rule inet fw4 PSW_ICMP_REDIRECT ip daddr @$NFTSET_LANLIST counter return"
+		nft "add rule inet fw4 PSW_ICMP_REDIRECT ip daddr @$NFTSET_VPSLIST counter return"
 		nft "add rule inet fw4 PSW_ICMP_REDIRECT ip daddr @$NFTSET_WHITELIST counter return"
 
 		[ "$accept_icmpv6" = "1" ] && {
-			nft "add rule inet fw4 PSW_ICMP_REDIRECT ip6 daddr @$NFTSET_LANIPLIST6 counter return"
-			nft "add rule inet fw4 PSW_ICMP_REDIRECT ip6 daddr @$NFTSET_VPSIPLIST6 counter return"
+			nft "add rule inet fw4 PSW_ICMP_REDIRECT ip6 daddr @$NFTSET_LANLIST6 counter return"
+			nft "add rule inet fw4 PSW_ICMP_REDIRECT ip6 daddr @$NFTSET_VPSLIST6 counter return"
 			nft "add rule inet fw4 PSW_ICMP_REDIRECT ip6 daddr @$NFTSET_WHITELIST6 counter return"
 		}
 
@@ -858,15 +858,15 @@ add_firewall_rule() {
 	#ipv6 tproxy mode and udp
 	nft "add chain inet fw4 PSW_MANGLE_V6"
 	nft "flush chain inet fw4 PSW_MANGLE_V6"
-	nft "add rule inet fw4 PSW_MANGLE_V6 ip6 daddr @$NFTSET_LANIPLIST6 counter return"
-	nft "add rule inet fw4 PSW_MANGLE_V6 ip6 daddr @$NFTSET_VPSIPLIST6 counter return"
+	nft "add rule inet fw4 PSW_MANGLE_V6 ip6 daddr @$NFTSET_LANLIST6 counter return"
+	nft "add rule inet fw4 PSW_MANGLE_V6 ip6 daddr @$NFTSET_VPSLIST6 counter return"
 	nft "add rule inet fw4 PSW_MANGLE_V6 ip6 daddr @$NFTSET_WHITELIST6 counter return"
 	nft "add rule inet fw4 PSW_MANGLE_V6 ip6 daddr @$NFTSET_BLOCKLIST6 counter drop"
 
 	nft "add chain inet fw4 PSW_OUTPUT_MANGLE_V6"
 	nft "flush chain inet fw4 PSW_OUTPUT_MANGLE_V6"
-	nft "add rule inet fw4 PSW_OUTPUT_MANGLE_V6 ip6 daddr @$NFTSET_LANIPLIST6 counter return"
-	nft "add rule inet fw4 PSW_OUTPUT_MANGLE_V6 ip6 daddr @$NFTSET_VPSIPLIST6 counter return"
+	nft "add rule inet fw4 PSW_OUTPUT_MANGLE_V6 ip6 daddr @$NFTSET_LANLIST6 counter return"
+	nft "add rule inet fw4 PSW_OUTPUT_MANGLE_V6 ip6 daddr @$NFTSET_VPSLIST6 counter return"
 	nft "add rule inet fw4 PSW_OUTPUT_MANGLE_V6 ip6 daddr @$NFTSET_WHITELIST6 counter return"
 	nft "add rule inet fw4 PSW_OUTPUT_MANGLE_V6 meta mark 0xff counter return"
 	nft "add rule inet fw4 PSW_OUTPUT_MANGLE_V6 ip6 daddr @$NFTSET_BLOCKLIST6 counter drop"
@@ -944,7 +944,7 @@ add_firewall_rule() {
 
 			_proxy_tcp_access() {
 				[ -n "${2}" ] || return 0
-				nft "get element inet fw4 $NFTSET_LANIPLIST {${2}}" &>/dev/null
+				nft "get element inet fw4 $NFTSET_LANLIST {${2}}" &>/dev/null
 				[ $? -eq 0 ] && {
 					echolog "  - 上游 DNS 服务器 ${2} 已在直接访问的列表中，不强制向 TCP 代理转发对该服务器 TCP/${3} 端口的访问"
 					return 0
@@ -1015,7 +1015,7 @@ add_firewall_rule() {
 			echolog "加载路由器自身 UDP 代理..."
 			_proxy_udp_access() {
 				[ -n "${2}" ] || return 0
-				nft "get element inet fw4 $NFTSET_LANIPLIST {${2}}" &>/dev/null
+				nft "get element inet fw4 $NFTSET_LANLIST {${2}}" &>/dev/null
 				[ $? == 0 ] && {
 					echolog "  - 上游 DNS 服务器 ${2} 已在直接访问的列表中，不强制向 UDP 代理转发对该服务器 UDP/${3} 端口的访问"
 					return 0
@@ -1101,8 +1101,8 @@ del_firewall_rule() {
 	ip -6 rule del fwmark 1 table 100 2>/dev/null
 	ip -6 route del local ::/0 dev lo table 100 2>/dev/null
 
-	destroy_nftset $NFTSET_LANIPLIST
-	destroy_nftset $NFTSET_VPSIPLIST
+	destroy_nftset $NFTSET_LANLIST
+	destroy_nftset $NFTSET_VPSLIST
 	#destroy_nftset $NFTSET_SHUNTLIST
 	#destroy_nftset $NFTSET_GFW
 	#destroy_nftset $NFTSET_CHN
@@ -1110,8 +1110,8 @@ del_firewall_rule() {
 	destroy_nftset $NFTSET_BLOCKLIST
 	destroy_nftset $NFTSET_WHITELIST
 
-	destroy_nftset $NFTSET_LANIPLIST6
-	destroy_nftset $NFTSET_VPSIPLIST6
+	destroy_nftset $NFTSET_LANLIST6
+	destroy_nftset $NFTSET_VPSLIST6
 	#destroy_nftset $NFTSET_SHUNTLIST6
 	#destroy_nftset $NFTSET_GFW6
 	#destroy_nftset $NFTSET_CHN6
@@ -1124,8 +1124,8 @@ del_firewall_rule() {
 
 flush_nftset() {
 	del_firewall_rule
-	destroy_nftset $NFTSET_VPSIPLIST $NFTSET_SHUNTLIST $NFTSET_GFW $NFTSET_CHN $NFTSET_BLACKLIST $NFTSET_BLOCKLIST $NFTSET_WHITELIST $NFTSET_LANIPLIST
-	destroy_nftset $NFTSET_VPSIPLIST6 $NFTSET_SHUNTLIST6 $NFTSET_GFW6 $NFTSET_CHN6 $NFTSET_BLACKLIST6 $NFTSET_BLOCKLIST6 $NFTSET_WHITELIST6 $NFTSET_LANIPLIST6
+	destroy_nftset $NFTSET_VPSLIST $NFTSET_SHUNTLIST $NFTSET_GFW $NFTSET_CHN $NFTSET_BLACKLIST $NFTSET_BLOCKLIST $NFTSET_WHITELIST $NFTSET_LANLIST
+	destroy_nftset $NFTSET_VPSLIST6 $NFTSET_SHUNTLIST6 $NFTSET_GFW6 $NFTSET_CHN6 $NFTSET_BLACKLIST6 $NFTSET_BLOCKLIST6 $NFTSET_WHITELIST6 $NFTSET_LANLIST6
 	rm -rf /tmp/etc/passwall_tmp/dnsmasq*
 	/etc/init.d/passwall reload
 }
