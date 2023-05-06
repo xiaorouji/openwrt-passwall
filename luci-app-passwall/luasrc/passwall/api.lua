@@ -365,6 +365,10 @@ function gen_uuid(format)
 	return uuid
 end
 
+function gen_short_uuid()
+	return sys.exec("echo -n $(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 8)")
+end
+
 function uci_get_type(type, config, default)
 	local value = uci:get_first(appname, type, config, default) or sys.exec("echo -n $(uci -q get " .. appname .. ".@" .. type .."[0]." .. config .. ")")
 	if (value == nil or value == "") and (default and default ~= "") then

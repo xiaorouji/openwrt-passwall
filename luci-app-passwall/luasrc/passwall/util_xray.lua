@@ -602,7 +602,7 @@ function gen_config(var)
 		end
 
 		local function get_balancer_tag(_node_id)
-			return "balancer-" .. _node_id:sub(1, 8)
+			return "balancer-" .. _node_id
 		end
 
 		local function gen_balancer(_node, loopbackTag)
@@ -611,7 +611,7 @@ function gen_config(var)
 			local valid_nodes = {}
 			for i = 1, length do
 				local blc_node_id = blc_nodes[i]
-				local blc_node_tag = "blc-" .. blc_node_id:sub(1, 8)
+				local blc_node_tag = "blc-" .. blc_node_id
 				local is_new_blc_node = true
 				for _, outbound in ipairs(outbounds) do
 					if outbound.tag == blc_node_tag then

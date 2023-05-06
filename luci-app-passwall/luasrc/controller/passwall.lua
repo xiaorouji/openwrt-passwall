@@ -290,7 +290,7 @@ end
 
 function copy_node()
 	local section = luci.http.formvalue("section")
-	local uuid = api.gen_uuid()
+	local uuid = api.gen_short_uuid()
 	ucic:section(appname, "nodes", uuid)
 	for k, v in pairs(ucic:get_all(appname, section)) do
 		local filter = k:find("%.")

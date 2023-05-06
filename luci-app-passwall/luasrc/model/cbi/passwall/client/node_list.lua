@@ -26,7 +26,7 @@ s.addremove = true
 s.template = "cbi/tblsection"
 s.extedit = api.url("node_config", "%s")
 function s.create(e, t)
-	local uuid = api.gen_uuid()
+	local uuid = api.gen_short_uuid()
 	t = uuid
 	TypedSection.create(e, t)
 	luci.http.redirect(e.extedit:format(t))
