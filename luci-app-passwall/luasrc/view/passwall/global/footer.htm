@@ -50,10 +50,11 @@ local auto_switch = api.uci_get_type("auto_switch", "enable", 0)
 							if (dom.id) {
 								var s = dom.id.match(reg1);
 								if (s) {
-									dom_id = dom.id.split("cbi-").join("cbid-").split("-").join(".");
+									var cbi_id = global_id + "-"
+									var dom_id = dom.id.split(cbi_id).join(cbi_id.split("-").join(".")).split("cbi.").join("cbid.")
 									var node_select = document.getElementsByName(dom_id)[0];
 									var node_select_value = node_select.value;
-									if (node_select_value && node_select_value != "nil" && node_select_value.indexOf("_default") != 0 && node_select_value.indexOf("_direct") != 0 && node_select_value.indexOf("_blackhole") != 0) {
+									if (node_select_value && node_select_value != "nil" && node_select_value.indexOf("socks://") != 0 && node_select_value.indexOf("_default") != 0 && node_select_value.indexOf("_direct") != 0 && node_select_value.indexOf("_blackhole") != 0) {
 										if (global_id != null && node_select_value.indexOf("tcp") == 0) {
 											var d = global_id + "-tcp_node";
 											d = d.replace("cbi-", "cbid-").replace(new RegExp("-", 'g'), ".");
@@ -63,20 +64,16 @@ local auto_switch = api.uci_get_type("auto_switch", "enable", 0)
 												node_select_value = _node_select_value;
 											}
 										}
-										var v = document.getElementById(dom_id + "-" + node_select_value);
-										if (v) {
-											node_select.title = v.text;
-										} else {
-											node_select.title = node_select.options[node_select.options.selectedIndex].text;
+										
+										if (node_select.tagName == "INPUT") {
+											node_select = document.getElementById("cbi.combobox." + dom_id);
 										}
-
-										var new_html = "";
 
 										var new_a = document.createElement("a");
 										new_a.innerHTML = "<%:Edit%>";
 										new_a.href = "#";
 										new_a.setAttribute("onclick", "location.href='" + '<%=api.url("node_config")%>' + "/" + node_select_value + "'");
-										new_html = new_a.outerHTML;
+										var new_html = new_a.outerHTML;
 
 										if (s[0] == "tcp" || s[0] == "udp") {
 											var log_a = document.createElement("a");
