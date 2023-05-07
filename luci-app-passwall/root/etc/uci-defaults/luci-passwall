@@ -27,15 +27,20 @@ uci -q batch <<-EOF >/dev/null
 	commit uhttpd
 EOF
 
-[ ! -s "/etc/config/passwall" ] && cp -f /usr/share/passwall/0_default_config /etc/config/passwall
 touch /etc/config/passwall_show >/dev/null 2>&1
+[ ! -s "/etc/config/passwall" ] && cp -f /usr/share/passwall/0_default_config /etc/config/passwall
 
-[ "$(opkg list-installed | grep "firewall4")" ] && [ "$(opkg list-installed | grep "nftables")" ] && {
-	[ "$(opkg list-installed | grep "kmod\-nft\-socket")" ] && [ "$(opkg list-installed | grep "kmod\-nft\-tproxy")" ] && [ "$(opkg list-installed | grep "kmod\-nft\-nat")" ] && {
-		uci -q set passwall.@global_forwarding[0].use_nft=1
-		uci -q commit passwall
-		sed -i "s#use_nft '0'#use_nft '1'#g" /usr/share/passwall/0_default_config
-	}
+use_nft=$(uci -q get passwall.@global_forwarding[0].use_nft || echo "0")
+[ "${use_nft}" = "0" ] && {
+	if [ -z "$(command -v iptables-legacy || command -v iptables)" ] || [ -z "$(command -v ipset)" ] || [ -z "$(dnsmasq --version | grep 'Compile time options:.* ipset')" ]; then
+		[ "$(opkg list-installed | grep "firewall4")" ] && [ "$(opkg list-installed | grep "nftables")" ] && {
+			[ "$(opkg list-installed | grep "kmod\-nft\-socket")" ] && [ "$(opkg list-installed | grep "kmod\-nft\-tproxy")" ] && [ "$(opkg list-installed | grep "kmod\-nft\-nat")" ] && {
+				uci -q set passwall.@global_forwarding[0].use_nft=1
+				uci -q commit passwall
+				sed -i "s#use_nft '0'#use_nft '1'#g" /usr/share/passwall/0_default_config
+			}
+		}
+	fi
 }
 
 rm -f /tmp/luci-indexcache

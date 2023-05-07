@@ -1,6 +1,6 @@
 #!/bin/sh
 
-[[ "$ACTION" == "ifup" && $(uci get "passwall.@global[0].enabled") == "1" ]] && {
+[[ "$ACTION" == "ifup" && $(uci get "passwall.@global[0].enabled") == "1" ]] && [ -f /var/lock/passwall_ready.lock ] && {
 	default_device=$(ip route | grep default | awk -F 'dev ' '{print $2}' | awk '{print $1}')
 	[ "$default_device" == "$DEVICE" ] && {
 		LOCK_FILE_DIR=/var/lock

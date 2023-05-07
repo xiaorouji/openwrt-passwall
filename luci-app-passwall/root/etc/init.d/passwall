@@ -39,6 +39,7 @@ boot() {
 		sleep $delay
 	fi
 	restart
+	touch ${LOCK_FILE_DIR}/${CONFIG}_ready.lock
 }
 
 start() {
