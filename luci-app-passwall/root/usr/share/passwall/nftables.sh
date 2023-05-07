@@ -128,7 +128,7 @@ insert_nftset() {
 	do
 		nftset_elements="$element,$nftset_elements"
 	done
-	nft "add element inet fw4 $nftset_name { $nftset_elements }"
+	[ -n "${nftset_elements}" ] && nft "add element inet fw4 $nftset_name { $nftset_elements }"
 }
 
 gen_nftset() {
@@ -423,9 +423,9 @@ load_acl() {
 						nft "add rule inet fw4 PSW_MANGLE ip protocol udp ${_ipt_source} $(REDIRECT $udp_port TPROXY4) comment \"$remarks\""
 
 						[ "$PROXY_IPV6" == "1" ] && [ "$PROXY_IPV6_UDP" == "1" ] && {
-							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} $(factor $udp_redir_ports "tcp dport") ip6 daddr @$NFTSET_SHUNTLIST6 counter jump PSW_RULE comment \"$remarks\"" 2>/dev/null
-							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} $(factor $udp_redir_ports "tcp dport") ip6 daddr @$NFTSET_BLACKLIST6 counter jump PSW_RULE comment \"$remarks\"" 2>/dev/null
-							[ "$udp_proxy_mode" != "direct/proxy" ] && nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} $(factor $udp_redir_ports "tcp dport") $(get_nftset_ipv6 $udp_proxy_mode) counter jump PSW_RULE comment \"$remarks\"" 2>/dev/null
+							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} $(factor $udp_redir_ports "udp dport") ip6 daddr @$NFTSET_SHUNTLIST6 counter jump PSW_RULE comment \"$remarks\"" 2>/dev/null
+							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} $(factor $udp_redir_ports "udp dport") ip6 daddr @$NFTSET_BLACKLIST6 counter jump PSW_RULE comment \"$remarks\"" 2>/dev/null
+							[ "$udp_proxy_mode" != "direct/proxy" ] && nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} $(factor $udp_redir_ports "udp dport") $(get_nftset_ipv6 $udp_proxy_mode) counter jump PSW_RULE comment \"$remarks\"" 2>/dev/null
 							nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} $(REDIRECT $udp_port TPROXY) comment \"$remarks\"" 2>/dev/null
 						}
 					else
@@ -926,7 +926,7 @@ add_firewall_rule() {
 			echolog "加载路由器自身 TCP 代理..."
 
 			[ "$accept_icmp" = "1" ] && {
-				nft "add rule inet fw4 PSW_ICMP_REDIRECT meta l4proto icmp ip daddr 198.18.0.0/16 counter redirect"
+				nft "add rule inet fw4 PSW_ICMP_REDIRECT meta l4proto icmp ip daddr $FAKE_IP counter redirect"
 				nft "add rule inet fw4 PSW_ICMP_REDIRECT meta l4proto icmp ip daddr @$NFTSET_SHUNTLIST counter redirect"
 				nft "add rule inet fw4 PSW_ICMP_REDIRECT meta l4proto icmp ip daddr @$NFTSET_BLACKLIST counter redirect"
 				[ "$LOCALHOST_TCP_PROXY_MODE" != "direct/proxy" ] && nft "add rule inet fw4 PSW_ICMP_REDIRECT meta l4proto icmp $(get_nftset_ipv4 $LOCALHOST_TCP_PROXY_MODE) counter redirect"
