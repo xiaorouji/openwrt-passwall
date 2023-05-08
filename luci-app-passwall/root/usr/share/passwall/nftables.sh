@@ -124,11 +124,21 @@ destroy_nftset() {
 insert_nftset() {
 	local nftset_name="${1}"; shift
 	local nftset_elements
+
 	for element in $@
 	do
 		nftset_elements="$element,$nftset_elements"
 	done
-	[ -n "${nftset_elements}" ] && nft "add element inet fw4 $nftset_name { $nftset_elements }"
+	[ -n "${nftset_elements}" ] && {
+		mkdir -p $TMP_PATH2/nftset
+
+		cat > "$TMP_PATH2/nftset/$nftset_name" <<-EOF
+			define $nftset_name = {$nftset_elements}	
+			add element inet fw4 $nftset_name \$$nftset_name
+		EOF
+		nft -f "$TMP_PATH2/nftset/$nftset_name"
+		rm -rf "$TMP_PATH2/nftset"
+	}
 }
 
 gen_nftset() {
