@@ -970,8 +970,8 @@ add_firewall_rule() {
 
 			[ "$use_tcp_node_resolve_dns" == 1 ] && hosts_foreach REMOTE_DNS _proxy_tcp_access 53
 			[ "$TCP_NO_REDIR_PORTS" != "disable" ] && {
-				nft "add rule inet fw4 $nft_output_chain ip protocol tcp $(factor $TCP_PROXY_DROP_PORTS "tcp dport") counter return"
-				nft "add rule inet fw4 PSW_OUTPUT_MANGLE_V6 meta l4proto tcp $(factor $TCP_PROXY_DROP_PORTS "tcp dport") counter return"
+				nft "add rule inet fw4 $nft_output_chain ip protocol tcp $(factor $TCP_NO_REDIR_PORTS "tcp dport") counter return"
+				nft "add rule inet fw4 PSW_OUTPUT_MANGLE_V6 meta l4proto tcp $(factor $TCP_NO_REDIR_PORTS "tcp dport") counter return"
 				echolog "  - [$?]不代理TCP 端口：$TCP_NO_REDIR_PORTS"
 			}
 			[ "$TCP_PROXY_DROP_PORTS" != "disable" ] && [ "$LOCALHOST_TCP_PROXY_MODE" != "disable" ] && {
