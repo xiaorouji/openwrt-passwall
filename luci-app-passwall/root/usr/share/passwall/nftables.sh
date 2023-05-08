@@ -41,44 +41,46 @@ factor() {
 }
 
 insert_rule_before() {
-	[ $# -ge 3 ] || {
+	[ $# -ge 4 ] || {
 		return 1
 	}
-	local table="${1}"; shift
-	local chain="${1}"; shift
+	local table_name="${1}"; shift
+	local chain_name="${1}"; shift
 	local keyword="${1}"; shift
 	local rule="${1}"; shift
 	local default_index="${1}"; shift
 	default_index=${default_index:-0}
-	local _index=$(nft -a list chain $table $chain 2>/dev/null | grep "$keyword" | awk -F '# handle ' '{print$2}' | head -n 1 | awk '{print $1}')
+	local _index=$(nft -a list chain $table_name $chain_name 2>/dev/null | grep "$keyword" | awk -F '# handle ' '{print$2}' | head -n 1 | awk '{print $1}')
 	if [ -z "${_index}" ] && [ "${default_index}" = "0" ]; then
-		nft "add rule $table $chain $rule"
+		nft "add rule $table_name $chain_name $rule"
 	else
 		if [ -z "${_index}" ]; then
 			_index=${default_index}
 		fi
-		nft "insert rule $table $chain position $_index $rule"
+		nft "insert rule $table_name $chain_name position $_index $rule"
 	fi
 }
 
 insert_rule_after() {
-	[ $# -ge 3 ] || {
+	[ $# -ge 4 ] || {
 		return 1
 	}
-	local table="${1}"; shift
-	local chain="${1}"; shift
+	local table_name="${1}"; shift
+	local chain_name="${1}"; shift
 	local keyword="${1}"; shift
 	local rule="${1}"; shift
 	local default_index="${1}"; shift
 	default_index=${default_index:-0}
-	local _index=$(nft -a list chain $table $chain 2>/dev/null | grep "$keyword" | awk -F '# handle ' '{print$2}' | head -n 1 | awk '{print $1}')
+	local _index=$(nft -a list chain $table_name $chain_name 2>/dev/null | grep "$keyword" | awk -F '# handle ' '{print$2}' | head -n 1 | awk '{print $1}')
 	if [ -z "${_index}" ] && [ "${default_index}" = "0" ]; then
-		$ipt_tmp -A $chain $rule
+		nft "add rule $table_name $chain_name $rule"
 	else
-		if [ -z "${_index}" ]; then
+		if [ -n "${_index}" ]; then
+			_index=$((_index + 1))
+		else
 			_index=${default_index}
 		fi
-		nft "add rule $table $chain position $_index $rule"
+		nft "insert rule $table_name $chain_name position $_index $rule"
 	fi
 }
 
@@ -87,11 +89,11 @@ RULE_LAST_INDEX() {
 		echolog "索引列举方式不正确（nftables），终止执行！"
 		return 1
 	}
-	local ipt_tmp="${1}"; shift
-	local chain="${1}"; shift
-	local list="${1}"; shift
+	local table_name="${1}"; shift
+	local chain_name="${1}"; shift
+	local keyword="${1}"; shift
 	local default="${1:-0}"; shift
-	local _index=$(nft -a list chain inet fw4 $chain 2>/dev/null | grep "$keyword" | awk -F '# handle ' '{print$2}' | head -n 1 | awk '{print $1}')
+	local _index=$(nft -a list chain $table_name $chain_name 2>/dev/null | grep "$keyword" | awk -F '# handle ' '{print$2}' | head -n 1 | awk '{print $1}')
 	echo "${_index:-${default}}"
 }
 
@@ -448,7 +450,7 @@ load_acl() {
 			done
 			unset enabled sid remarks sources tcp_proxy_mode udp_proxy_mode tcp_no_redir_ports udp_no_redir_ports tcp_proxy_drop_ports udp_proxy_drop_ports tcp_redir_ports udp_redir_ports tcp_node udp_node
 			unset _ip _mac _iprange _ipset _ip_or_mac rule_list tcp_port udp_port tcp_node_remark udp_node_remark
-			unset ipt_tmp msg msg2
+			unset msg msg2
 		done
 	}
 
@@ -603,7 +605,7 @@ filter_node() {
 		local stream=${2}
 		local _proxy=${3}
 		local _port=${4}
-		local _is_tproxy ipt_tmp msg msg2
+		local _is_tproxy msg msg2
 
 		if [ -n "$node" ] && [ "$node" != "nil" ]; then
 			local type=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
@@ -1164,11 +1166,21 @@ gen_include() {
 			}
 
 			[ -z "${is_tproxy}" ] && {
+				PR_INDEX=\$(${MY_PATH} RULE_LAST_INDEX "inet fw4" PSW WAN_IP_RETURN -1)
+				if [ \$PR_INDEX -ge 0 ]; then
+					WAN_IP=\$(${MY_PATH} get_wan_ip)
+					[ ! -z "\${WAN_IP}" ] && nft "replace rule inet fw4 PSW handle \$PR_INDEX ip daddr "\${WAN_IP}" counter return comment \"WAN_IP_RETURN\""
+				fi
 				nft "add rule inet fw4 dstnat ip protocol tcp counter jump PSW"
 				nft "add rule inet fw4 nat_output ip protocol tcp counter jump PSW_OUTPUT"
 			}
 
 			[ -n "${is_tproxy}" ] && {
+				PR_INDEX=\$(${MY_PATH} RULE_LAST_INDEX "inet fw4" PSW_MANGLE WAN_IP_RETURN -1)
+				if [ \$PR_INDEX -ge 0 ]; then
+					WAN_IP=\$(${MY_PATH} get_wan_ip)
+					[ ! -z "\${WAN_IP}" ] && nft "replace rule inet fw4 PSW_MANGLE handle \$PR_INDEX ip daddr "\${WAN_IP}" counter return comment \"WAN_IP_RETURN\""
+				fi
 				nft "add rule inet fw4 mangle_prerouting meta nfproto {ipv4} counter jump PSW_MANGLE"
 				nft "add rule inet fw4 mangle_output meta nfproto {ipv4} meta l4proto tcp counter jump PSW_OUTPUT_MANGLE comment \"mangle-OUTPUT-PSW\""
 			}
@@ -1177,6 +1189,11 @@ gen_include() {
 			[ "$UDP_NODE" != "nil" -o "$TCP_UDP" = "1" ] && nft "add rule inet fw4 mangle_output meta nfproto {ipv4} meta l4proto udp counter jump PSW_OUTPUT_MANGLE comment \"mangle-OUTPUT-PSW\""
 
 			[ "$PROXY_IPV6" == "1" ] && {
+				PR_INDEX=\$(${MY_PATH} RULE_LAST_INDEX "inet fw4" PSW_MANGLE_V6 WAN6_IP_RETURN -1)
+				if [ \$PR_INDEX -ge 0 ]; then
+					WAN6_IP=\$(${MY_PATH} get_wan6_ip)
+					[ ! -z "\${WAN_IP}" ] && nft "replace rule inet fw4 PSW_MANGLE_V6 handle \$PR_INDEX ip6 daddr "\${WAN6_IP}" counter return comment \"WAN6_IP_RETURN\""
+				fi
 				nft "add rule inet fw4 mangle_prerouting meta nfproto {ipv6} counter jump PSW_MANGLE_V6"
 				nft "add rule inet fw4 mangle_output meta nfproto {ipv6} counter jump PSW_OUTPUT_MANGLE_V6 comment \"mangle-OUTPUT-PSW\""
 			}
