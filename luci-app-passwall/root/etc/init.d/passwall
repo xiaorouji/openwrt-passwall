@@ -64,23 +64,3 @@ restart() {
 	$APP_FILE start
 	unset_lock
 }
-
-disable() {
-	rm -f "$IPKG_INSTROOT"/etc/rc.d/S??zzz_${CONFIG}
-	rm -f "$IPKG_INSTROOT"/etc/rc.d/K??zzz_${CONFIG}
-}
-
-enable() {
-	err=1
-	[ "$START" ] && \
-		ln -sf "../init.d/${CONFIG}" "$IPKG_INSTROOT/etc/rc.d/S${START}zzz_${CONFIG}" && \
-		err=0
-	[ "$STOP" ] && \
-		ln -sf "../init.d/${CONFIG}" "$IPKG_INSTROOT/etc/rc.d/K${STOP}zzz_${CONFIG}" && \
-		err=0
-	return $err
-}
-
-enabled() {
-	[ -x "$IPKG_INSTROOT/etc/rc.d/S${START}zzz_${CONFIG}" ]
-}

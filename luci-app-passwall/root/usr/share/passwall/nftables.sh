@@ -627,7 +627,7 @@ filter_node() {
 		for _ipt in 4 6; do
 			[ "$_ipt" == "4" ] && _ip_type=ip4 && _set_name=$NFTSET_VPSLIST
 			[ "$_ipt" == "6" ] && _ip_type=ip6 && _set_name=$NFTSET_VPSLIST6
-			nft "list chain inet fw4 $nft_output_chain" | grep -q "${address}:${port}"
+			nft "list chain inet fw4 $nft_output_chain" 2>/dev/null | grep -q "${address}:${port}"
 			if [ $? -ne 0 ]; then
 				unset dst_rule
 				local dst_rule="jump PSW_RULE"
@@ -1094,7 +1094,7 @@ add_firewall_rule() {
 
 del_firewall_rule() {
 	for nft in "input" "forward" "dstnat" "srcnat" "nat_output" "mangle_prerouting" "mangle_output"; do
-        local handles=$(nft -a list chain inet fw4 ${nft} | grep -E "PSW" | awk -F '# handle ' '{print$2}')
+        local handles=$(nft -a list chain inet fw4 ${nft} 2>/dev/null | grep -E "PSW" | awk -F '# handle ' '{print$2}')
 		for handle in $handles; do
 			nft delete rule inet fw4 ${nft} handle ${handle} 2>/dev/null
 		done
@@ -1131,7 +1131,7 @@ del_firewall_rule() {
 	destroy_nftset $NFTSET_BLOCKLIST6
 	destroy_nftset $NFTSET_WHITELIST6
 
-	echolog "删除相关防火墙规则完成。"
+	$DIR/app.sh echolog "删除相关防火墙规则完成。"
 }
 
 flush_nftset() {
@@ -1149,7 +1149,7 @@ flush_include() {
 gen_include() {
 	local nft_chain_file=$TMP_PATH/PSW.nft
 	echo "" > $nft_chain_file
-	for chain in $(nft -a list chains |grep -E "chain PSW" |awk -F ' ' '{print$2}'); do
+	for chain in $(nft -a list chains | grep -E "chain PSW" |awk -F ' ' '{print$2}'); do
 		nft list chain inet fw4 ${chain} >> $nft_chain_file
 	done
 
