@@ -8,6 +8,7 @@ local jsonc = api.jsonc
 
 local CONFIG = "passwall_server"
 local CONFIG_PATH = "/tmp/etc/" .. CONFIG
+local NFT_INCLUDE_FILE = CONFIG_PATH .. "/" .. CONFIG .. ".nft"
 local LOG_APP_FILE = "/tmp/log/" .. CONFIG .. ".log"
 local TMP_BIN_PATH = CONFIG_PATH .. "/bin"
 local require_dir = "luci.passwall."
@@ -49,11 +50,6 @@ end
 
 local function gen_include()
 	cmd(string.format("echo '#!/bin/sh' > /tmp/etc/%s.include", CONFIG))
-	if nft_flag == "1" then
-		cmd("echo \"\" > " .. CONFIG_PATH .. "/" .. CONFIG .. ".nft")
-		local nft_cmd = "for chain in $(nft -a list chains |grep -E \"chain PSW-SERVER\" |awk -F ' ' '{print$2}'); do\n nft list chain inet fw4 ${chain} >> " .. CONFIG_PATH .. "/" .. CONFIG .. ".nft\n done"
-		cmd(nft_cmd)
-	end
 	local function extract_rules(n, a)
 		local _ipt = ipt_bin
 		if n == "6" then
@@ -77,8 +73,7 @@ local function gen_include()
 			f:write("EOT" .. "\n")
 			f:close()
 		else
-			f:write("nft -f " .. CONFIG_PATH .. "/" .. CONFIG .. ".nft\n")
-			f:write("nft insert rule inet fw4 input position 0 counter jump PSW-SERVER")
+			f:write("nft -f " .. NFT_INCLUDE_FILE .. "\n")
 			f:close()
 		end
 	end
@@ -97,8 +92,11 @@ local function start()
 		ip6t("-N PSW-SERVER")
 		ip6t("-I INPUT -j PSW-SERVER")
 	else
-		cmd("nft add chain inet fw4 PSW-SERVER\n")
-		cmd("nft insert rule inet fw4 input position 0 counter jump PSW-SERVER")
+		nft_file, err = io.open(NFT_INCLUDE_FILE, "w")
+		nft_file:write('#!/usr/sbin/nft -f\n')
+		nft_file:write('add chain inet fw4 PSW-SERVER\n')
+		nft_file:write('flush chain inet fw4 PSW-SERVER\n')
+		nft_file:write('insert rule inet fw4 input position 0 jump PSW-SERVER comment "PSW-SERVER"\n')
 	end
 	uci:foreach(CONFIG, "user", function(user)
 		local id = user[".name"]
@@ -194,14 +192,19 @@ local function start()
 						ip6t(string.format('-A PSW-SERVER -p udp --dport %s -m comment --comment "%s" -j ACCEPT', port, remarks))
 					end
 				else
-					cmd(string.format('nft add rule inet fw4 PSW-SERVER meta l4proto tcp tcp dport {%s} accept', port))
+					nft_file:write(string.format('add rule inet fw4 PSW-SERVER meta l4proto tcp tcp dport {%s} counter accept comment "%s"\n', port, remarks))
 					if udp_forward == 1 then
-						cmd(string.format('nft add rule inet fw4 PSW-SERVER meta l4proto udp udp dport {%s} accept', port))
+						nft_file:write(string.format('add rule inet fw4 PSW-SERVER meta l4proto udp udp dport {%s} counter accept comment "%s"\n', port, remarks))
 					end
 				end
 			end
 		end
 	end)
+	if nft_flag == "1" then
+		nft_file:write("add rule inet fw4 PSW-SERVER return\n")
+		nft_file:close()
+		cmd("nft -f " .. NFT_INCLUDE_FILE)
+	end
 	gen_include()
 end
 
