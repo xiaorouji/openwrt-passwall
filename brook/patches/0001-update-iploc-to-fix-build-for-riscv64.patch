@@ -1,0 +1,41 @@
+From 934fd3f3d7c5602020850298443a08af6bbc3771 Mon Sep 17 00:00:00 2001
+From: MoetaYuko <loli@yuko.moe>
+Date: Tue, 6 Jun 2023 17:49:59 +0800
+Subject: [PATCH] update iploc to fix build for riscv64
+
+---
+ go.mod | 2 +-
+ go.sum | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/go.mod b/go.mod
+index 7aaac17..ab71685 100644
+--- a/go.mod
++++ b/go.mod
+@@ -8,7 +8,7 @@ require (
+ 	github.com/krolaw/dhcp4 v0.0.0-20190909130307-a50d88189771
+ 	github.com/miekg/dns v1.1.51
+ 	github.com/patrickmn/go-cache v2.1.0+incompatible
+-	github.com/phuslu/iploc v1.0.20230201
++	github.com/phuslu/iploc v1.0.20230606
+ 	github.com/prometheus/client_golang v1.14.0
+ 	github.com/quic-go/quic-go v0.32.0
+ 	github.com/refraction-networking/utls v1.3.2
+diff --git a/go.sum b/go.sum
+index ee5c8bf..cecdb21 100644
+--- a/go.sum
++++ b/go.sum
+@@ -180,8 +180,8 @@ github.com/onsi/ginkgo/v2 v2.2.0/go.mod h1:MEH45j8TBi6u9BMogfbp0stKC5cdGjumZj5Y7
+ github.com/onsi/gomega v1.20.1 h1:PA/3qinGoukvymdIDV8pii6tiZgC8kbmJO6Z5+b002Q=
+ github.com/patrickmn/go-cache v2.1.0+incompatible h1:HRMgzkcYKYpi3C8ajMPV8OFXaaRUnok+kx1WdO15EQc=
+ github.com/patrickmn/go-cache v2.1.0+incompatible/go.mod h1:3Qf8kWWT7OJRJbdiICTKqZju1ZixQ/KpMGzzAfe6+WQ=
+-github.com/phuslu/iploc v1.0.20230201 h1:AMhy7j8z0N5iI0jaqh514KTDEB7wVdQJ4Y4DJPCvKBU=
+-github.com/phuslu/iploc v1.0.20230201/go.mod h1:gsgExGWldwv1AEzZm+Ki9/vGfyjkL33pbSr9HGpt2Xg=
++github.com/phuslu/iploc v1.0.20230606 h1:7DcZSXuvVAlNbvGjKWOuXgpvDoUmECp8rlVEGaAydUg=
++github.com/phuslu/iploc v1.0.20230606/go.mod h1:gsgExGWldwv1AEzZm+Ki9/vGfyjkL33pbSr9HGpt2Xg=
+ github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
+ github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
+ github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
+-- 
+2.41.0
+
