@@ -127,10 +127,7 @@ insert_nftset() {
 	local nftset_name="${1}"; shift
 	local nftset_elements
 
-	for element in $@
-	do
-		nftset_elements="$element,$nftset_elements"
-	done
+	nftset_elements=$(echo -e $@ | sed 's/\s/, /g')
 	[ -n "${nftset_elements}" ] && {
 		mkdir -p $TMP_PATH2/nftset
 
@@ -707,7 +704,12 @@ add_firewall_rule() {
 	gen_nftset $NFTSET_VPSLIST ipv4_addr
 	gen_nftset $NFTSET_GFW ipv4_addr
 	gen_nftset $NFTSET_LANLIST ipv4_addr $(gen_lanlist)
-	gen_nftset $NFTSET_CHN ipv4_addr $(cat $RULES_PATH/chnroute | tr -s '\n' | grep -v "^#")
+	if [ -f $RULES_PATH/chnroute.nft ] && [ -s $RULES_PATH/chnroute.nft ] && [ $(awk 'END{print NR}' $RULES_PATH/chnroute.nft) -ge 8 ]; then
+		echolog "使用缓存加载chnroute..."
+		nft -f $RULES_PATH/chnroute.nft
+	else
+		gen_nftset $NFTSET_CHN ipv4_addr $(cat $RULES_PATH/chnroute | tr -s '\n' | grep -v "^#")
+	fi
 	gen_nftset $NFTSET_BLACKLIST ipv4_addr $(cat $RULES_PATH/proxy_ip | tr -s '\n' | grep -v "^#" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
 	gen_nftset $NFTSET_WHITELIST ipv4_addr $(cat $RULES_PATH/direct_ip | tr -s '\n' | grep -v "^#" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
 	gen_nftset $NFTSET_BLOCKLIST ipv4_addr $(cat $RULES_PATH/block_ip | tr -s '\n' | grep -v "^#" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
@@ -716,7 +718,12 @@ add_firewall_rule() {
 	gen_nftset $NFTSET_VPSLIST6 ipv6_addr
 	gen_nftset $NFTSET_GFW6 ipv6_addr
 	gen_nftset $NFTSET_LANLIST6 ipv6_addr $(gen_lanlist_6)
-	gen_nftset $NFTSET_CHN6 ipv6_addr $(cat $RULES_PATH/chnroute6 | tr -s '\n' | grep -v "^#")
+	if [ -f $RULES_PATH/chnroute6.nft ] && [ -s $RULES_PATH/chnroute6.nft ] && [ $(awk 'END{print NR}' $RULES_PATH/chnroute6.nft) -ge 8 ]; then
+		echolog "使用缓存加载chnroute6..."
+		nft -f $RULES_PATH/chnroute6.nft
+	else
+		gen_nftset $NFTSET_CHN6 ipv6_addr $(cat $RULES_PATH/chnroute6 | tr -s '\n' | grep -v "^#")
+	fi
 	gen_nftset $NFTSET_BLACKLIST6 ipv6_addr $(cat $RULES_PATH/proxy_ip | tr -s '\n' | grep -v "^#" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
 	gen_nftset $NFTSET_WHITELIST6 ipv6_addr $(cat $RULES_PATH/direct_ip | tr -s '\n' | grep -v "^#" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
 	gen_nftset $NFTSET_BLOCKLIST6 ipv6_addr $(cat $RULES_PATH/block_ip | tr -s '\n' | grep -v "^#" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
