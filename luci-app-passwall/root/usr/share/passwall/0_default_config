@@ -88,7 +88,8 @@ config nodes 'myshunt'
 	option remarks '分流总节点'
 	option type 'Xray'
 	option protocol '_shunt'
-	option STEAM '_direct'
+	option DirectGame '_direct'
+	option ProxyGame '_default'
 	option AD '_blackhole'
 	option BT '_direct'
 	option Proxy '_default'
@@ -98,11 +99,13 @@ config nodes 'myshunt'
 	option default_node 'nil'
 	option domainStrategy 'IPOnDemand'
 
-config shunt_rules 'STEAM'
-	option remarks 'STEAM'
+config shunt_rules 'DirectGame'
+	option remarks 'DirectGame'
 	option domain_list 'api.steampowered.com
 regexp:\.cm.steampowered.com$
-regexp:\.steamserver.net$'
+regexp:\.steamserver.net$
+geosite:category-games@cn
+'
 	option ip_list '103.10.124.0/24
 103.10.125.0/24
 103.28.54.0/24
@@ -150,6 +153,12 @@ regexp:\.steamserver.net$'
 208.64.203.0/24
 208.78.164.0/22'
 
+config shunt_rules 'ProxyGame'
+	option remarks 'ProxyGame'
+	option domain_list 'geosite:category-games@!cn
+domain:store.steampowered.com
+'
+
 config shunt_rules 'AD'
 	option remarks 'AD'
 	option domain_list 'geosite:category-ads-all'
@@ -191,12 +200,11 @@ config shunt_rules 'Netflix'
 	
 config shunt_rules 'OpenAI'
 	option remarks 'OpenAI'
-	option domain_list 'openai.com'
+	option domain_list 'geosite:openai'
 
 config shunt_rules 'Direct'
 	option remarks 'Direct'
-	option domain_list 'geosite:category-games@cn
-geosite:cn'
+	option domain_list 'geosite:cn'
 	option ip_list '223.5.5.5/32
 119.29.29.29/32
 180.76.76.76/32
