@@ -705,7 +705,7 @@ add_firewall_rule() {
 	gen_nftset $NFTSET_GFW ipv4_addr
 	gen_nftset $NFTSET_LANLIST ipv4_addr $(gen_lanlist)
 	if [ -f $RULES_PATH/chnroute.nft ] && [ -s $RULES_PATH/chnroute.nft ] && [ $(awk 'END{print NR}' $RULES_PATH/chnroute.nft) -ge 8 ]; then
-		echolog "使用缓存加载chnroute..."
+		#echolog "使用缓存加载chnroute..."
 		nft -f $RULES_PATH/chnroute.nft
 	else
 		gen_nftset $NFTSET_CHN ipv4_addr $(cat $RULES_PATH/chnroute | tr -s '\n' | grep -v "^#")
@@ -719,7 +719,7 @@ add_firewall_rule() {
 	gen_nftset $NFTSET_GFW6 ipv6_addr
 	gen_nftset $NFTSET_LANLIST6 ipv6_addr $(gen_lanlist_6)
 	if [ -f $RULES_PATH/chnroute6.nft ] && [ -s $RULES_PATH/chnroute6.nft ] && [ $(awk 'END{print NR}' $RULES_PATH/chnroute6.nft) -ge 8 ]; then
-		echolog "使用缓存加载chnroute6..."
+		#echolog "使用缓存加载chnroute6..."
 		nft -f $RULES_PATH/chnroute6.nft
 	else
 		gen_nftset $NFTSET_CHN6 ipv6_addr $(cat $RULES_PATH/chnroute6 | tr -s '\n' | grep -v "^#")
