@@ -113,6 +113,10 @@ if api.is_finded("hysteria") then
 	type:value("Hysteria", translate("Hysteria"))
 end
 
+if api.is_finded("tuic-client") then
+	type:value("TUIC", translate("TUIC"))
+end
+
 protocol = s:option(ListValue, "protocol", translate("Protocol"))
 protocol:value("vmess", translate("Vmess"))
 protocol:value("vless", translate("VLESS"))
@@ -292,6 +296,7 @@ address:depends("type", "Trojan-Plus")
 address:depends("type", "Trojan-Go")
 address:depends("type", "Naiveproxy")
 address:depends("type", "Hysteria")
+address:depends("type", "TUIC")
 address:depends({ type = "V2ray", protocol = "vmess" })
 address:depends({ type = "V2ray", protocol = "vless" })
 address:depends({ type = "V2ray", protocol = "http" })
@@ -319,6 +324,7 @@ port:depends("type", "Trojan-Plus")
 port:depends("type", "Trojan-Go")
 port:depends("type", "Naiveproxy")
 port:depends("type", "Hysteria")
+port:depends("type", "TUIC")
 port:depends({ type = "V2ray", protocol = "vmess" })
 port:depends({ type = "V2ray", protocol = "vless" })
 port:depends({ type = "V2ray", protocol = "http" })
@@ -538,6 +544,7 @@ uuid:depends({ type = "V2ray", protocol = "vmess" })
 uuid:depends({ type = "V2ray", protocol = "vless" })
 uuid:depends({ type = "Xray", protocol = "vmess" })
 uuid:depends({ type = "Xray", protocol = "vless" })
+uuid:depends({ type = "TUIC"})
 
 tls = s:option(Flag, "tls", translate("TLS"))
 tls.default = 0
@@ -980,6 +987,111 @@ hysteria_disable_mtu_discovery:depends("type", "Hysteria")
 
 hysteria_lazy_start = s:option(Flag, "hysteria_lazy_start", translate("Lazy Start"))
 hysteria_lazy_start:depends("type", "Hysteria")
+
+-- [[ TUIC ]]
+-- Tuic Password for remote server connect
+tuic_passwd = s:option(Value, "tuic_password", translate("TUIC User Password For Connect Remote Server"))
+tuic_passwd.password = true
+tuic_passwd.rmempty = true
+tuic_passwd.default = ""
+tuic_passwd:depends("type", "TUIC")
+
+--[[
+-- Tuic username for local socks connect
+tuic_passwd = s:option(Value, "tuic_socks_username", translate("TUIC UserName For Local Socks"))
+tuic_passwd.rmempty = true
+tuic_passwd.default = ""
+tuic_passwd:depends("type", "TUIC")
+
+-- Tuic Password for local socks connect
+tuic_passwd = s:option(Value, "tuic_socks_password", translate("TUIC Password For Local Socks"))
+tuic_passwd.password = true
+tuic_passwd.rmempty = true
+tuic_passwd.default = ""
+tuic_passwd:depends("type", "TUIC")
+--]]
+
+tuic_ip = s:option(Value, "tuic_ip", translate("Set the TUIC proxy server ip address"))
+tuic_ip:depends("type", "TUIC")
+tuic_ip.datatype = "ipaddr"
+tuic_ip.rmempty = true
+
+tuic_udp_relay_mode = s:option(ListValue, "tuic_udp_relay_mode", translate("UDP relay mode"))
+tuic_udp_relay_mode:depends("type", "TUIC")
+tuic_udp_relay_mode:value("native", translate("native"))
+tuic_udp_relay_mode:value("quic", translate("QUIC"))
+tuic_udp_relay_mode.default = "native"
+tuic_udp_relay_mode.rmempty = true
+
+tuic_congestion_control = s:option(ListValue, "tuic_congestion_control", translate("Congestion control algorithm"))
+tuic_congestion_control:depends("type", "TUIC")
+tuic_congestion_control:value("bbr", translate("BBR"))
+tuic_congestion_control:value("cubic", translate("CUBIC"))
+tuic_congestion_control:value("new_reno", translate("New Reno"))
+tuic_congestion_control.default = "cubic"
+tuic_congestion_control.rmempty = true
+
+tuic_heartbeat = s:option(Value, "tuic_heartbeat", translate("Heartbeat interval(second)"))
+tuic_heartbeat:depends("type", "TUIC")
+tuic_heartbeat.datatype = "uinteger"
+tuic_heartbeat.default = "3"
+tuic_heartbeat.rmempty = true
+
+tuic_timeout = s:option(Value, "tuic_timeout", translate("timeout for establishing a connection to server(second)"))
+tuic_timeout:depends("type", "TUIC")
+tuic_timeout.datatype = "uinteger"
+tuic_timeout.default = "8"
+tuic_timeout.rmempty = true
+
+tuic_gc_interval = s:option(Value, "tuic_gc_interval", translate("garbage collection interval(second)"))
+tuic_gc_interval:depends("type", "TUIC")
+tuic_gc_interval.datatype = "uinteger"
+tuic_gc_interval.default = "3"
+tuic_gc_interval.rmempty = true
+
+tuic_gc_lifetime = s:option(Value, "tuic_gc_lifetime", translate("garbage collection lifetime(second)"))
+tuic_gc_lifetime:depends("type", "TUIC")
+tuic_gc_lifetime.datatype = "uinteger"
+tuic_gc_lifetime.default = "15"
+tuic_gc_lifetime.rmempty = true
+
+tuic_send_window = s:option(Value, "tuic_send_window", translate("TUIC send window"))
+tuic_send_window.datatype = "uinteger"
+tuic_send_window:depends("type", "TUIC")
+tuic_send_window.default = 20971520
+tuic_send_window.rmempty = true
+
+tuic_receive_window = s:option(Value, "tuic_receive_window", translate("TUIC receive window"))
+tuic_receive_window.datatype = "uinteger"
+tuic_receive_window:depends("type", "TUIC")
+tuic_receive_window.default = 10485760
+tuic_receive_window.rmempty = true
+
+tuic_max_package_size = s:option(Value, "tuic_max_package_size", translate("TUIC Maximum packet size the socks5 server can receive from external, in bytes"))
+tuic_max_package_size.datatype = "uinteger"
+tuic_max_package_size:depends("type", "TUIC")
+tuic_max_package_size.default = 1500
+tuic_max_package_size.rmempty = true
+
+--Tuic settings for the local inbound socks5 server
+tuic_dual_stack = s:option(Flag, "tuic_dual_stack", translate("Set if the listening socket should be dual-stack"))
+tuic_dual_stack:depends("type", "TUIC")
+tuic_dual_stack.default = 0
+tuic_dual_stack.rmempty = true
+
+tuic_disable_sni = s:option(Flag, "tuic_disable_sni", translate("Disable SNI"))
+tuic_disable_sni:depends("type", "TUIC")
+tuic_disable_sni.default = 0
+tuic_disable_sni.rmempty = true
+
+tuic_zero_rtt_handshake = s:option(Flag, "tuic_zero_rtt_handshake", translate("Enable 0-RTT QUIC handshake"))
+tuic_zero_rtt_handshake:depends("type", "TUIC")
+tuic_zero_rtt_handshake.default = 0
+tuic_zero_rtt_handshake.rmempty = true
+
+tuic_tls_alpn = s:option(DynamicList, "tuic_tls_alpn", translate("TLS ALPN"))
+tuic_tls_alpn:depends({ type = "TUIC"})
+tuic_tls_alpn.rmempty = true
 
 protocol.validate = function(self, value)
 	if value == "_shunt" or value == "_balancing" then
