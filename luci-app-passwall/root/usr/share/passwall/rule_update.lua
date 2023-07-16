@@ -67,10 +67,11 @@ end
 local function gen_cache(set_name, ip_type, input_file, output_file)
 	local tmp_dir = "/tmp/"
 	local tmp_file = output_file .. "_tmp"
-	gen_nftset(set_name, ip_type, tmp_file, input_file)
-	luci.sys.call("nft list set inet fw4 " ..set_name.. " > " ..output_file)
-	luci.sys.call("nft flush set inet fw4 " ..set_name)
-	luci.sys.call("nft delete set inet fw4 " ..set_name)
+	local tmp_set_name = set_name .. "_tmp"
+	gen_nftset(tmp_set_name, ip_type, tmp_file, input_file)
+	luci.sys.call("nft list set inet fw4 " ..tmp_set_name.. " | sed 's/" ..tmp_set_name.. "/" ..set_name.. "/g' | cat > " ..output_file)
+	luci.sys.call("nft flush set inet fw4 " ..tmp_set_name)
+	luci.sys.call("nft delete set inet fw4 " ..tmp_set_name)
 end
 
 -- curl
