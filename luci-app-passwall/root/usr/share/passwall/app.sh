@@ -37,6 +37,7 @@ UTIL_XRAY=$LUA_UTIL_PATH/util_xray.lua
 UTIL_TROJAN=$LUA_UTIL_PATH/util_trojan.lua
 UTIL_NAIVE=$LUA_UTIL_PATH/util_naiveproxy.lua
 UTIL_HYSTERIA=$LUA_UTIL_PATH/util_hysteria.lua
+UTIL_TUIC=$LUA_UTIL_PATH/util_tuic.lua
 
 echolog() {
 	local d="$(date "+%Y-%m-%d %H:%M:%S")"
@@ -592,6 +593,10 @@ run_socks() {
 		lua $UTIL_HYSTERIA gen_config -node $node -local_socks_port $socks_port -server_host $server_host -server_port $port ${_extra_param} > $config_file
 		ln_run "$(first_type $(config_t_get global_app hysteria_file))" "hysteria" $log_file -c "$config_file" client
 	;;
+	tuic)
+		lua $UTIL_TUIC gen_config -node $node -local_addr $bind -local_port $socks_port -server_host $server_host -server_port $port > $config_file
+		ln_run "$(first_type tuic-client)" "tuic-client" $log_file -c "$config_file"
+	;;
 	esac
 
 	# http to socks
@@ -690,6 +695,9 @@ run_redir() {
 		hysteria)
 			lua $UTIL_HYSTERIA gen_config -node $node -local_udp_redir_port $local_port > $config_file
 			ln_run "$(first_type $(config_t_get global_app hysteria_file))" "hysteria" $log_file -c "$config_file" client
+		;;
+		tuic)
+			echolog "TUIC不支持UDP转发！"
 		;;
 		esac
 	;;

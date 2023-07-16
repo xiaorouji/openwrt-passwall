@@ -1150,6 +1150,54 @@ msgstr "SS AEAD节点使用类型"
 msgid "Trojan Node Use Type"
 msgstr "Trojan节点使用类型"
 
+msgid "Set the TUIC proxy server ip address"
+msgstr "指定远程TUIC服务器IP"
+
+msgid "TUIC User Password For Connect Remote Server"
+msgstr "用于远程TUIC服务器连接的密码"
+
+msgid "TUIC UserName For Local Socks"
+msgstr "用于本地Socks服务器连接的用户名"
+
+msgid "TUIC Password For Local Socks"
+msgstr "用于本地Socks服务器连接的密码"
+
+msgid "UDP relay mode"
+msgstr "UDP中继模式"
+
+msgid "Congestion control algorithm"
+msgstr "拥塞控制算法"
+
+msgid "Heartbeat interval(second)"
+msgstr "保活心跳包发送间隔（单位：秒）"
+
+msgid "Timeout for establishing a connection to server(second)"
+msgstr "连接超时时间（单位：秒）"
+
+msgid "Garbage collection interval(second)"
+msgstr "UDP数据包片残片清理间隔（单位：秒）"
+
+msgid "Garbage collection lifetime(second)"
+msgstr "UDP数据包残片在服务器的保留时间（单位：秒）"
+
+msgid "Disable SNI"
+msgstr "关闭SNI服务器名称指示"
+
+msgid "Enable 0-RTT QUIC handshake"
+msgstr "客户端启用 0-RTT QUIC 连接握手"
+
+msgid "TUIC send window"
+msgstr "发送窗口（无需确认即可发送的最大字节数：默认8Mb*2）"
+
+msgid "TUIC receive window"
+msgstr "接收窗口（无需确认即可接收的最大字节数：默认8Mb）"
+
+msgid "TUIC Maximum packet size the socks5 server can receive from external, in bytes"
+msgstr "TUIC socks5 服务器可以从外部接收的最大数据包大小（以字节为单位）"
+
+msgid "Set if the listening socket should be dual-stack"
+msgstr "设置监听套接字为双栈"
+
 msgid "<br />none: default, no masquerade, data sent is packets with no characteristics.<br />srtp: disguised as an SRTP packet, it will be recognized as video call data (such as FaceTime).<br />utp: packets disguised as uTP will be recognized as bittorrent downloaded data.<br />wechat-video: packets disguised as WeChat video calls.<br />dtls: disguised as DTLS 1.2 packet.<br />wireguard: disguised as a WireGuard packet. (not really WireGuard protocol)"
 msgstr "<br />none：默认值，不进行伪装，发送的数据是没有特征的数据包。<br />srtp：伪装成 SRTP 数据包，会被识别为视频通话数据（如 FaceTime）。<br />utp：伪装成 uTP 数据包，会被识别为 BT 下载数据。<br />wechat-video：伪装成微信视频通话的数据包。<br />dtls：伪装成 DTLS 1.2 数据包。<br />wireguard：伪装成 WireGuard 数据包。(并不是真正的 WireGuard 协议)"
 
