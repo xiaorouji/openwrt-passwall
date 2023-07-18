@@ -1037,19 +1037,19 @@ tuic_heartbeat.datatype = "uinteger"
 tuic_heartbeat.default = "3"
 tuic_heartbeat.rmempty = true
 
-tuic_timeout = s:option(Value, "tuic_timeout", translate("timeout for establishing a connection to server(second)"))
+tuic_timeout = s:option(Value, "tuic_timeout", translate("Timeout for establishing a connection to server(second)"))
 tuic_timeout:depends("type", "TUIC")
 tuic_timeout.datatype = "uinteger"
 tuic_timeout.default = "8"
 tuic_timeout.rmempty = true
 
-tuic_gc_interval = s:option(Value, "tuic_gc_interval", translate("garbage collection interval(second)"))
+tuic_gc_interval = s:option(Value, "tuic_gc_interval", translate("Garbage collection interval(second)"))
 tuic_gc_interval:depends("type", "TUIC")
 tuic_gc_interval.datatype = "uinteger"
 tuic_gc_interval.default = "3"
 tuic_gc_interval.rmempty = true
 
-tuic_gc_lifetime = s:option(Value, "tuic_gc_lifetime", translate("garbage collection lifetime(second)"))
+tuic_gc_lifetime = s:option(Value, "tuic_gc_lifetime", translate("Garbage collection lifetime(second)"))
 tuic_gc_lifetime:depends("type", "TUIC")
 tuic_gc_lifetime.datatype = "uinteger"
 tuic_gc_lifetime.default = "15"
