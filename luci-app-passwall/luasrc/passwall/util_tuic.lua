@@ -1,4 +1,4 @@
-module("luci.passwall.util_trojan", package.seeall)
+module("luci.passwall.util_tuic", package.seeall)
 local api = require "luci.passwall.api"
 local uci = api.uci
 local json = api.jsonc
