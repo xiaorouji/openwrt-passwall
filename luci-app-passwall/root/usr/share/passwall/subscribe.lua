@@ -276,8 +276,8 @@ do
 							--log("刷新负载均衡节点列表")
 							uci:foreach(appname, "nodes", function(node2)
 								if node2[".name"] == node[".name"] then
-									local index = node2[".index"]
-									uci:set_list(appname, "@nodes[" .. index .. "]", "balancing_node", vv.new_nodes)
+									local section = uci:section(appname, "nodes", node_id)
+									uci:set_list(appname, section, "balancing_node", vv.new_nodes)
 								end
 							end)
 						end
