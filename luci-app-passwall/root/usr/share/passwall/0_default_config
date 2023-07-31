@@ -167,6 +167,10 @@ config shunt_rules 'BT'
 	option remarks 'BT'
 	option protocol 'bittorrent'
 
+config shunt_rules 'OpenAI'
+	option remarks 'OpenAI'
+	option domain_list 'geosite:openai'	
+
 config shunt_rules 'Proxy'
 	option remarks 'Proxy'
 	option domain_list 'geosite:geolocation-!cn'
@@ -197,10 +201,6 @@ config shunt_rules 'Proxy'
 config shunt_rules 'Netflix'
 	option remarks 'Netflix'
 	option domain_list 'geosite:netflix'
-	
-config shunt_rules 'OpenAI'
-	option remarks 'OpenAI'
-	option domain_list 'geosite:openai'
 
 config shunt_rules 'Direct'
 	option remarks 'Direct'
