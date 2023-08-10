@@ -580,7 +580,7 @@ function gen_config(var)
 				protocol = "dokodemo-door",
 				settings = {network = "tcp,udp", followRedirect = true},
 				streamSettings = {sockopt = {tproxy = "tproxy"}},
-				sniffing = {enabled = sniffing and true or false, destOverride = {"http", "tls", (remote_dns_fake) and "fakedns"}, metadataOnly = false, routeOnly = route_only and true or nil, domainsExcluded = (sniffing and not route_only) and get_domain_excluded() or nil}
+				sniffing = {enabled = sniffing and true or false, destOverride = {"http", "tls", "quic", (remote_dns_fake) and "fakedns"}, metadataOnly = false, routeOnly = route_only and true or nil, domainsExcluded = (sniffing and not route_only) and get_domain_excluded() or nil}
 			}
 
 			if tcp_redir_port then
