@@ -111,7 +111,6 @@ protocol:value("http", "HTTP")
 protocol:value("socks", "Socks")
 protocol:value("shadowsocks", "Shadowsocks")
 protocol:value("trojan", "Trojan")
-protocol:value("mtproto", "MTProto")
 protocol:value("dokodemo-door", "dokodemo-door")
 protocol:depends("type", "V2ray")
 protocol:depends("type", "Xray")
@@ -164,17 +163,6 @@ password:depends("type", "SSR")
 password:depends("type", "Brook")
 password:depends({ type = "V2ray", protocol = "shadowsocks" })
 password:depends({ type = "Xray", protocol = "shadowsocks" })
-
-mtproto_password = s:option(Value, "mtproto_password", translate("Password"), translate("The MTProto protocol must be 32 characters and can only contain characters from 0 to 9 and a to f."))
-mtproto_password:depends({ type = "V2ray", protocol = "mtproto" })
-mtproto_password:depends({ type = "Xray", protocol = "mtproto" })
-mtproto_password.default = arg[1]
-function mtproto_password.cfgvalue(self, section)
-	return m:get(section, "password")
-end
-function mtproto_password.write(self, section, value)
-	m:set(section, "password", value)
-end
 
 d_protocol = s:option(ListValue, "d_protocol", translate("Destination protocol"))
 d_protocol:value("tcp", "TCP")
