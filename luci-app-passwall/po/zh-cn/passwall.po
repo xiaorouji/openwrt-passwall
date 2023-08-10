@@ -340,14 +340,17 @@ msgstr "添加方式"
 msgid "Type"
 msgstr "类型"
 
-msgid "Balancing"
+msgid "_balancing"
 msgstr "负载均衡"
 
-msgid "Xray_balancing"
-msgstr "Xray 负载均衡"
+msgid "_shunt"
+msgstr "分流"
 
-msgid "V2ray_balancing"
-msgstr "V2ray 负载均衡"
+msgid "_iface"
+msgstr "接口"
+
+msgid "Balancing"
+msgstr "负载均衡"
 
 msgid "Balancing Strategy"
 msgstr "负载均衡策略"
@@ -372,12 +375,6 @@ msgstr "发起探测的间隔。每经过这个时间，就会对一个服务器
 
 msgid "Shunt"
 msgstr "分流"
-
-msgid "Xray_shunt"
-msgstr "Xray 分流"
-
-msgid "V2ray_shunt"
-msgstr "V2ray 分流"
 
 msgid "Preproxy"
 msgstr "前置代理"

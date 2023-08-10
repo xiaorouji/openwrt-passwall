@@ -1061,7 +1061,7 @@ add_firewall_rule() {
 	#  加载ACLS
 	load_acl
 		
-	for iface in $IFACES; do
+	for iface in $(ls ${TMP_IFACE_PATH}); do
 		$ipt_n -I PSW_OUTPUT -o $iface -j RETURN
 		$ipt_m -I PSW_OUTPUT -o $iface -j RETURN
 	done

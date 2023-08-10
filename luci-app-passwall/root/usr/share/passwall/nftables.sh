@@ -1082,7 +1082,7 @@ add_firewall_rule() {
 	#  加载ACLS
 	load_acl
 	
-	for iface in $IFACES; do
+	for iface in $(ls ${TMP_IFACE_PATH}); do
 		nft "insert rule inet fw4 $nft_output_chain oif $iface counter return"
 		nft "insert rule inet fw4 PSW_OUTPUT_MANGLE_V6 oif $iface counter return"
 	done
