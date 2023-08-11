@@ -373,6 +373,7 @@ function gen_config_server(node)
 				tag = "outbound",
 				streamSettings = {
 					sockopt = {
+						mark = 255,
 						interface = node.outbound_node_iface
 					}
 				}
@@ -819,6 +820,7 @@ function gen_config(var)
 								tag = rule_name,
 								streamSettings = {
 									sockopt = {
+										mark = 255,
 										interface = _node.iface
 									}
 								}
@@ -920,6 +922,7 @@ function gen_config(var)
 						tag = "outbound",
 						streamSettings = {
 							sockopt = {
+								mark = 255,
 								interface = node.iface
 							}
 						}

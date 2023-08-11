@@ -183,6 +183,9 @@ if (has_v2ray or has_xray) and #nodes_table > 0 then
 			for k1, v1 in pairs(balancing_list) do
 				o:value(v1.id, v1.remark)
 			end
+			for k1, v1 in pairs(iface_list) do
+				o:value(v1.id, v1.remark)
+			end
 			for k1, v1 in pairs(normal_list) do
 				o:value(v1.id, v1.remark)
 			end
