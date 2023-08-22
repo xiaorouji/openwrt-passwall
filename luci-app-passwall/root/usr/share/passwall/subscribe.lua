@@ -173,47 +173,6 @@ do
 		end)
 	end
 
-	local tcp_node_table = uci:get(appname, "@auto_switch[0]", "tcp_node")
-	if tcp_node_table then
-		local nodes = {}
-		local new_nodes = {}
-		for k,node_id in ipairs(tcp_node_table) do
-			if node_id then
-				local currentNode = uci:get_all(appname, node_id) or nil
-				if currentNode then
-					if currentNode.protocol and (currentNode.protocol == "_balancing" or currentNode.protocol == "_shunt") then
-						currentNode = nil
-					end
-					nodes[#nodes + 1] = {
-						log = true,
-						remarks = "TCP备用节点的列表[" .. k .. "]",
-						currentNode = currentNode,
-						set = function(o, server)
-							for kk, vv in pairs(CONFIG) do
-								if (vv.remarks == "TCP备用节点的列表") then
-									table.insert(vv.new_nodes, server)
-								end
-							end
-						end
-					}
-				end
-			end
-		end
-		CONFIG[#CONFIG + 1] = {
-			remarks = "TCP备用节点的列表",
-			nodes = nodes,
-			new_nodes = new_nodes,
-			set = function(o)
-				for kk, vv in pairs(CONFIG) do
-					if (vv.remarks == "TCP备用节点的列表") then
-						--log("刷新自动切换的TCP备用节点的列表")
-						uci:set_list(appname, "@auto_switch[0]", "tcp_node", vv.new_nodes)
-					end
-				end
-			end
-		}
-	end
-
 	uci:foreach(appname, "nodes", function(node)
 		if node.protocol and node.protocol == '_shunt' then
 			local node_id = node[".name"]

@@ -51,11 +51,6 @@ function s.remove(e, t)
 			m:set(s[".name"], "udp_node", "default")
 		end
 	end)
-	for k, v in ipairs(m:get("@auto_switch[0]", "tcp_node") or {}) do
-		if v and v == t then
-			sys.call(string.format("uci -q del_list %s.@auto_switch[0].tcp_node='%s'", appname, v))
-		end
-	end
 	TypedSection.remove(e, t)
 	local new_node = "nil"
 	local node0 = m:get("@nodes[0]") or nil

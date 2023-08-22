@@ -929,56 +929,6 @@ run_redir() {
 	return 0
 }
 
-node_switch() {
-	local flag new_node shunt_logic log_output
-	eval_set_val $@
-	[ -n "$flag" ] && [ -n "$new_node" ] && {
-		flag=$(echo $flag | tr 'A-Z' 'a-z')
-		FLAG=$(echo $flag | tr 'a-z' 'A-Z')
-		[ -n "$log_output" ] || LOG_FILE="/dev/null"
-		local node=$2
-		pgrep -af "${TMP_PATH}" | awk -v P1="${FLAG}" 'BEGIN{IGNORECASE=1}$0~P1 && !/acl\/|acl_/{print $1}' | xargs kill -9 >/dev/null 2>&1
-		rm -rf $TMP_PATH/${FLAG}*
-		local config_file="${FLAG}.json"
-		local log_file="${FLAG}.log"
-		local port=$(cat $TMP_PORT_PATH/${FLAG})
-
-		[ "$shunt_logic" != "0" ] && {
-			local node=$(config_t_get global ${flag}_node nil)
-			[ "$(config_n_get $node protocol nil)" = "_shunt" ] && {
-				if [ "$shunt_logic" = "1" ]; then
-					uci set $CONFIG.$node.default_node="$new_node"
-				elif [ "$shunt_logic" = "2" ]; then
-					uci set $CONFIG.$node.main_node="$new_node"
-				fi
-				uci commit $CONFIG
-			}
-			new_node=$node
-		}
-
-		run_redir node=$new_node proto=$FLAG bind=0.0.0.0 local_port=$port config_file=$config_file log_file=$log_file
-		echo $new_node > $TMP_ID_PATH/${FLAG}
-
-		[ "$shunt_logic" != "0" ] && [ "$(config_n_get $new_node protocol nil)" = "_shunt" ] && {
-			echo $(config_n_get $new_node default_node nil) > $TMP_ID_PATH/${FLAG}_default
-			echo $(config_n_get $new_node main_node nil) > $TMP_ID_PATH/${FLAG}_main
-			uci commit $CONFIG
-		}
-
-		[ "$flag" = "tcp" ] && {
-			[ "$(config_t_get global udp_node nil)" = "tcp" ] && [ "$UDP_REDIR_PORT" != "$TCP_REDIR_PORT" ] && {
-				pgrep -af "$TMP_PATH" | awk 'BEGIN{IGNORECASE=1}/UDP/ && !/acl\/|acl_/{print $1}' | xargs kill -9 >/dev/null 2>&1
-				UDP_NODE=$new_node
-				start_redir UDP
-			}
-		}
-
-		#uci set $CONFIG.@global[0].${flag}_node=$new_node
-		#uci commit $CONFIG
-		source $APP_PATH/helper_${DNS_N}.sh logic_restart no_log=1
-	}
-}
-
 start_redir() {
 	local proto=${1}
 	eval node=\$${proto}_NODE
@@ -1106,9 +1056,6 @@ start_crontab() {
 	if [ "$ENABLED_DEFAULT_ACL" == 1 ] || [ "$ENABLED_ACLS" == 1 ]; then
 		start_daemon=$(config_t_get global_delay start_daemon 0)
 		[ "$start_daemon" = "1" ] && $APP_PATH/monitor.sh > /dev/null 2>&1 &
-
-		AUTO_SWITCH_ENABLE=$(config_t_get auto_switch enable 0)
-		[ "$AUTO_SWITCH_ENABLE" = "1" ] && $APP_PATH/test.sh > /dev/null 2>&1 &
 	else
 		echolog "运行于非代理模式，仅允许服务启停的定时任务。"
 	fi
@@ -1599,7 +1546,6 @@ stop() {
 	[ -s "$TMP_PATH/bridge_nf_ipt" ] && sysctl -w net.bridge.bridge-nf-call-iptables=$(cat $TMP_PATH/bridge_nf_ipt) >/dev/null 2>&1
 	[ -s "$TMP_PATH/bridge_nf_ip6t" ] && sysctl -w net.bridge.bridge-nf-call-ip6tables=$(cat $TMP_PATH/bridge_nf_ip6t) >/dev/null 2>&1
 	rm -rf ${TMP_PATH}
-	rm -rf /tmp/lock/${CONFIG}_script.lock
 	echolog "清空并关闭相关程序和缓存完成。"
 	exit 0
 }
@@ -1684,9 +1630,6 @@ run_socks)
 	;;
 run_redir)
 	run_redir $@
-	;;
-node_switch)
-	node_switch $@
 	;;
 echolog)
 	echolog $@
