@@ -173,6 +173,49 @@ do
 		end)
 	end
 
+	uci:foreach(appname, "socks", function(o)
+		local id = o[".name"]
+		local node_table = uci:get(appname, id, "autoswitch_backup_node")
+		if node_table then
+			local nodes = {}
+			local new_nodes = {}
+			for k,node_id in ipairs(node_table) do
+				if node_id then
+					local currentNode = uci:get_all(appname, node_id) or nil
+					if currentNode then
+						if currentNode.protocol and (currentNode.protocol == "_balancing" or currentNode.protocol == "_shunt") then
+							currentNode = nil
+						end
+						nodes[#nodes + 1] = {
+							log = true,
+							remarks = "Socks[" .. id .. "]备用节点的列表[" .. k .. "]",
+							currentNode = currentNode,
+							set = function(o, server)
+								for kk, vv in pairs(CONFIG) do
+									if (vv.remarks == id .. "备用节点的列表") then
+										table.insert(vv.new_nodes, server)
+									end
+								end
+							end
+						}
+					end
+				end
+			end
+			CONFIG[#CONFIG + 1] = {
+				remarks = id .. "备用节点的列表",
+				nodes = nodes,
+				new_nodes = new_nodes,
+				set = function(o)
+					for kk, vv in pairs(CONFIG) do
+						if (vv.remarks == id .. "备用节点的列表") then
+							uci:set_list(appname, id, "autoswitch_backup_node", vv.new_nodes)
+						end
+					end
+				end
+			}
+		end
+	end)
+
 	uci:foreach(appname, "nodes", function(node)
 		if node.protocol and node.protocol == '_shunt' then
 			local node_id = node[".name"]

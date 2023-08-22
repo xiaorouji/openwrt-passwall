@@ -482,11 +482,15 @@ o = s:taboption("Main", Flag, "socks_enabled", "Socks " .. translate("Main switc
 o.rmempty = false
 
 s = m:section(TypedSection, "socks", translate("Socks Config"))
+s.template = "cbi/tblsection"
 s.anonymous = true
 s.addremove = true
-s.template = "cbi/tblsection"
+s.extedit = api.url("socks_config", "%s")
 function s.create(e, t)
-	TypedSection.create(e, api.gen_short_uuid())
+	local uuid = api.gen_short_uuid()
+	t = uuid
+	TypedSection.create(e, t)
+	luci.http.redirect(e.extedit:format(t))
 end
 
 o = s:option(DummyValue, "status", translate("Status"))

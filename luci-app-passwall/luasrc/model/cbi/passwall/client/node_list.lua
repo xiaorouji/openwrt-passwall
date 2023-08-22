@@ -37,6 +37,11 @@ function s.remove(e, t)
 		if s["node"] == t then
 			m:del(s[".name"])
 		end
+		for k, v in ipairs(m:get(s[".name"], "autoswitch_backup_node") or {}) do
+			if v and v == t then
+				sys.call(string.format("uci -q del_list %s.%s.autoswitch_backup_node='%s'", appname, s[".name"], v))
+			end
+		end
 	end)
 	m.uci:foreach(appname, "haproxy_config", function(s)
 		if s["lbss"] and s["lbss"] == t then

@@ -35,6 +35,7 @@ function index()
 	entry({"admin", "services", appname, "node_subscribe_config"}, cbi(appname .. "/client/node_subscribe_config")).leaf = true
 	entry({"admin", "services", appname, "node_config"}, cbi(appname .. "/client/node_config")).leaf = true
 	entry({"admin", "services", appname, "shunt_rules"}, cbi(appname .. "/client/shunt_rules")).leaf = true
+	entry({"admin", "services", appname, "socks_config"}, cbi(appname .. "/client/socks_config")).leaf = true
 	entry({"admin", "services", appname, "acl"}, cbi(appname .. "/client/acl"), _("Access control"), 98).leaf = true
 	entry({"admin", "services", appname, "acl_config"}, cbi(appname .. "/client/acl_config")).leaf = true
 	entry({"admin", "services", appname, "log"}, form(appname .. "/client/log"), _("Watch Logs"), 999).leaf = true
@@ -49,6 +50,8 @@ function index()
 	entry({"admin", "services", appname, "server_get_log"}, call("server_get_log")).leaf = true
 	entry({"admin", "services", appname, "server_clear_log"}, call("server_clear_log")).leaf = true
 	entry({"admin", "services", appname, "link_add_node"}, call("link_add_node")).leaf = true
+	entry({"admin", "services", appname, "socks_autoswitch_add_node"}, call("socks_autoswitch_add_node")).leaf = true
+	entry({"admin", "services", appname, "socks_autoswitch_remove_node"}, call("socks_autoswitch_remove_node")).leaf = true
 	entry({"admin", "services", appname, "get_now_use_node"}, call("get_now_use_node")).leaf = true
 	entry({"admin", "services", appname, "get_redir_log"}, call("get_redir_log")).leaf = true
 	entry({"admin", "services", appname, "get_log"}, call("get_log")).leaf = true
@@ -105,6 +108,43 @@ function link_add_node()
 	local link = luci.http.formvalue("link")
 	luci.sys.call('echo \'' .. link .. '\' > ' .. lfile)
 	luci.sys.call("lua /usr/share/passwall/subscribe.lua add log")
+end
+
+function socks_autoswitch_add_node()
+	local id = luci.http.formvalue("id")
+	local key = luci.http.formvalue("key")
+	if id and id ~= "" and key and key ~= "" then
+		local new_list = ucic:get(appname, id, "autoswitch_backup_node") or {}
+		for i = #new_list, 1, -1 do
+			if (ucic:get(appname, new_list[i], "remarks") or ""):find(key) then
+				table.remove(new_list, i)
+			end
+		end
+		for k, e in ipairs(api.get_valid_nodes()) do
+			if e.node_type == "normal" and e["remark"]:find(key) then
+				table.insert(new_list, e.id)
+			end
+		end
+		ucic:set_list(appname, id, "autoswitch_backup_node", new_list)
+		ucic:commit(appname)
+	end
+	luci.http.redirect(api.url("socks_config", id))
+end
+
+function socks_autoswitch_remove_node()
+	local id = luci.http.formvalue("id")
+	local key = luci.http.formvalue("key")
+	if id and id ~= "" and key and key ~= "" then
+		local new_list = ucic:get(appname, id, "autoswitch_backup_node") or {}
+		for i = #new_list, 1, -1 do
+			if (ucic:get(appname, new_list[i], "remarks") or ""):find(key) then
+				table.remove(new_list, i)
+			end
+		end
+		ucic:set_list(appname, id, "autoswitch_backup_node", new_list)
+		ucic:commit(appname)
+	end
+	luci.http.redirect(api.url("socks_config", id))
 end
 
 function get_now_use_node()
@@ -277,6 +317,7 @@ function clear_all_nodes()
 	ucic:set(appname, '@global[0]', "udp_node", "nil")
 	ucic:foreach(appname, "socks", function(t)
 		ucic:delete(appname, t[".name"])
+		ucic:set_list(appname, t[".name"], "autoswitch_backup_node", {})
 	end)
 	ucic:foreach(appname, "haproxy_config", function(t)
 		ucic:delete(appname, t[".name"])
@@ -306,6 +347,13 @@ function delete_select_nodes()
 			if t["node"] == w then
 				ucic:delete(appname, t[".name"])
 			end
+			local auto_switch_node_list = ucic:get(appname, t[".name"], "autoswitch_backup_node") or {}
+			for i = #auto_switch_node_list, 1, -1 do
+				if w == auto_switch_node_list[i] then
+					table.remove(auto_switch_node_list, i)
+				end
+			end
+			ucic:set_list(appname, t[".name"], "autoswitch_backup_node", auto_switch_node_list)
 		end)
 		ucic:foreach(appname, "haproxy_config", function(t)
 			if t["lbss"] == w then
