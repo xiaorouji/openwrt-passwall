@@ -53,9 +53,9 @@ local function gen_nftset(set_name, ip_type, tmp_file, input_file)
 
 	nft_file, err = io.open(tmp_file, "w")
 	nft_file:write('#!/usr/sbin/nft -f\n')
-	nft_file:write(string.format('define %s = {%s}\n', set_name, string.gsub(element, "%s*%c+", ", ")))
+	nft_file:write(string.format('define %s = {%s}\n', set_name, string.gsub(element, "%s*%c+", " timeout 3650d, ")))
 	if luci.sys.call(string.format('nft "list set inet fw4 %s" >/dev/null 2>&1', set_name)) ~= 0 then
-		nft_file:write(string.format('add set inet fw4 %s { type %s; flags interval; auto-merge; }\n', set_name, ip_type))
+		nft_file:write(string.format('add set inet fw4 %s { type %s; flags interval, timeout; timeout 2d; gc-interval 2d; auto-merge; }\n', set_name, ip_type))
 	end
 	nft_file:write(string.format('add element inet fw4 %s $%s\n', set_name, set_name))
 	nft_file:close()
