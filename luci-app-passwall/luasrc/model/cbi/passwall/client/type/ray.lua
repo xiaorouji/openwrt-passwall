@@ -416,14 +416,18 @@ add_v2ray_depends(o, { xray_tls = true })
 -- add_xray_depends(o, { xray_tls = true })
 -- add_v2ray_depends(o, { xray_tls = true })
 
-o = s:option(Value, "tls_serverName", translate("Domain"))
+o = s:option(Value, "xray_tls_serverName", translate("Domain"))
 add_xray_depends(o, { xray_tls = true })
 add_v2ray_depends(o, { xray_tls = true })
+o.cfgvalue = rm_prefix_cfgvalue
+o.write = rm_prefix_write
 
-o = s:option(Flag, "tls_allowInsecure", translate("allowInsecure"), translate("Whether unsafe connections are allowed. When checked, Certificate validation will be skipped."))
+o = s:option(Flag, "xray_tls_allowInsecure", translate("allowInsecure"), translate("Whether unsafe connections are allowed. When checked, Certificate validation will be skipped."))
 o.default = "0"
 add_xray_depends(o, { xray_tls = true, reality = false })
 add_v2ray_depends(o, { xray_tls = true })
+o.cfgvalue = rm_prefix_cfgvalue
+o.write = rm_prefix_write
 
 o = s:option(Value, "xray_fingerprint", translate("Finger Print"), translate("Avoid using randomized, unless you have to."))
 o:value("", translate("Disable"))
