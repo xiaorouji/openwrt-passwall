@@ -156,7 +156,7 @@ start() {
 	LOCK_FILE=${LOCK_FILE_DIR}/${CONFIG}_socks_auto_switch_${id}.lock
 	main_node=$(config_n_get $id node nil)
 	socks_port=$(config_n_get $id port 0)
-	delay=$(config_n_get $id autoswitch_testing_time 1)
+	delay=$(config_n_get $id autoswitch_testing_time 30)
 	sleep 5s
 	connect_timeout=$(config_n_get $id autoswitch_connect_timeout 3)
 	retry_num=$(config_n_get $id autoswitch_retry_num 1)
@@ -172,7 +172,7 @@ start() {
 		backup_node=$(echo $backup_node | tr -s ' ' '\n' | uniq | tr -s '\n' ' ')
 		test_auto_switch "$backup_node"
 		rm -f $LOCK_FILE
-		sleep ${delay}m
+		sleep ${delay}
 	done
 }
 
