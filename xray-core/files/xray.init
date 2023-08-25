@@ -10,8 +10,8 @@ start_service() {
 	config_load "$CONF"
 
 	local enabled
-	config_get enabled "enabled" "enabled" "0"
-	[ "$enabled" -eq "0" ] && exit 1
+	config_get_bool enabled "enabled" "enabled" "0"
+	[ "$enabled" -eq "1" ] || return 1
 
 	local confdir
 	local conffiles
@@ -21,7 +21,7 @@ start_service() {
 
 	config_get confdir "config" "confdir"
 	config_get conffiles "config" "conffiles"
-	config_get datadir "config" "datadir" "/usr/share/v2ray"
+	config_get datadir "config" "datadir" "/usr/share/xray"
 	config_get dialer "config" "dialer"
 	config_get format "config" "format" "json"
 
