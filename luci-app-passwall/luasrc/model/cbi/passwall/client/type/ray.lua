@@ -394,6 +394,8 @@ o:value("", translate("Disable"))
 o:value("xtls-rprx-vision")
 o:value("xtls-rprx-vision-udp443")
 add_xray_depends(o, { xray_protocol = "vless", xray_tls = true, transport = "tcp" })
+o.cfgvalue = rm_prefix_cfgvalue
+o.write = rm_prefix_write
 
 o = s:option(Flag, "reality", translate("REALITY"), translate("Only recommend to use with VLESS-TCP-XTLS-Vision."))
 o.default = 0
