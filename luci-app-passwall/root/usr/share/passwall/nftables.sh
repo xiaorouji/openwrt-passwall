@@ -183,10 +183,10 @@ get_redirect_ipv6() {
 		echo "ip6 daddr @$NFTSET_GFW6 $(REDIRECT $2 $3)"
 		;;
 	chnroute)
-		echo "ip6 daddr != $NFTSET_CHN6 $(REDIRECT $2 $3)"
+		echo "ip6 daddr != @$NFTSET_CHN6 $(REDIRECT $2 $3)"
 		;;
 	returnhome)
-		echo "ip6 daddr $NFTSET_CHN6 $(REDIRECT $2 $3)"
+		echo "ip6 daddr @$NFTSET_CHN6 $(REDIRECT $2 $3)"
 		;;
 	esac
 }
@@ -1144,8 +1144,9 @@ del_firewall_rule() {
 
 flush_nftset() {
 	del_firewall_rule
-	destroy_nftset $NFTSET_VPSLIST $NFTSET_SHUNTLIST $NFTSET_GFW $NFTSET_CHN $NFTSET_BLACKLIST $NFTSET_BLOCKLIST $NFTSET_WHITELIST $NFTSET_LANLIST
-	destroy_nftset $NFTSET_VPSLIST6 $NFTSET_SHUNTLIST6 $NFTSET_GFW6 $NFTSET_CHN6 $NFTSET_BLACKLIST6 $NFTSET_BLOCKLIST6 $NFTSET_WHITELIST6 $NFTSET_LANLIST6
+	for _name in $(nft -a list sets | grep -E "passwall" | awk -F 'set ' '{print $2}' | awk '{print $1}'); do
+		destroy_nftset ${_name}
+	done
 	rm -rf /tmp/etc/passwall_tmp/dnsmasq*
 	/etc/init.d/passwall reload
 }
