@@ -183,7 +183,7 @@ get_redirect_ipv6() {
 		echo "ip6 daddr @$NFTSET_GFW6 $(REDIRECT $2 $3)"
 		;;
 	chnroute)
-		echo "ip6 daddr != { $(cat $RULES_PATH/chnroute6 | tr -s '\n' | grep -v '^#' | sed -e '/^$/d' | sed ':a;N;$!ba;s/\n/, /g') } $(REDIRECT $2 $3)"
+		echo "ip6 daddr != @$NFTSET_CHN6 $(REDIRECT $2 $3)"
 		;;
 	returnhome)
 		echo "ip6 daddr $NFTSET_CHN6 $(REDIRECT $2 $3)"
