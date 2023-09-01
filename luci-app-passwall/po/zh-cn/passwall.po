@@ -625,17 +625,14 @@ msgstr "劫持ICMP (PING)"
 msgid "Hijacking ICMPv6 (IPv6 PING)"
 msgstr "劫持ICMPv6 (IPv6 PING)"
 
-msgid "Sniffing (V2Ray/Xray)"
-msgstr "流量嗅探 (V2ray/Xray)"
+msgid "Sniffing"
+msgstr "流量嗅探"
 
-msgid "When using the V2ray/Xray shunt, must be enabled, otherwise the shunt will invalid."
-msgstr "使用 V2Ray/Xray 分流时，必须启用，否则分流将无效。"
+msgid "When using the shunt, must be enabled, otherwise the shunt will invalid."
+msgstr "使用分流时，必须启用，否则分流将无效。"
 
-msgid "Sniffing Route Only (Xray)"
-msgstr "流量嗅探只供路由使用 (Xray)"
-
-msgid "When enabled, the server not will resolve the domain name again."
-msgstr "启用后，服务器不会再次解析域名。"
+msgid "Sniffing Route Only"
+msgstr "流量嗅探只供路由使用"
 
 msgid "TCP Proxy Way"
 msgstr "TCP 代理方式"
@@ -1441,11 +1438,11 @@ msgstr "初始窗口大小"
 msgid "No Sniffing Lists"
 msgstr "不进行流量嗅探的域名列表"
 
-msgid "Hosts added into No Sniffing Lists will not resolve again on server (Xray only)."
-msgstr "加入的域名不会再次在服务器解析（仅适用于Xray）。"
+msgid "Hosts added into No Sniffing Lists will not resolve again on server."
+msgstr "加入的域名不会再次在服务器解析。"
 
-msgid "Buffer Size (Xray)"
-msgstr "缓冲区大小（Xray）"
+msgid "Buffer Size"
+msgstr "缓冲区大小"
 
 msgid "Buffer size for every connection (kB)"
 msgstr "每一个连接的缓冲区大小（kB）"

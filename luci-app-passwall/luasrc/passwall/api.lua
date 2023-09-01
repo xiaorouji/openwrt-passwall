@@ -397,8 +397,12 @@ function get_customed_path(e)
 	return uci_get_type("global_app", e .. "_file")
 end
 
+function finded(e)
+	return luci.sys.exec('echo -n $(type -t -p "/bin/%s" -p "/usr/bin/%s" -p "%s" "%s" | head -n1)' % {e, e, get_customed_path(e), e})
+end
+
 function is_finded(e)
-	return luci.sys.exec('type -t -p "/bin/%s" -p "/usr/bin/%s" -p "%s" "%s"' % {e, e, get_customed_path(e), e}) ~= "" and true or false
+	return finded(e) ~= "" and true or false
 end
 
 function clone(org)
