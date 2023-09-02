@@ -897,7 +897,7 @@ local function truncate_nodes(add_from)
 			end
 			config.set(config)
 		else
-			if config.currentNode.add_mode == "2" then
+			if config.currentNode and config.currentNode.add_mode == "2" then
 				if add_from then
 					if config.currentNode.add_from and config.currentNode.add_from == add_from then
 						config.set(config, "nil")
