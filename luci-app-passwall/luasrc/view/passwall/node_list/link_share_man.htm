@@ -334,8 +334,8 @@ local has_xray = api.is_finded("xray")
 					params += opt.query("sid", "reality_shortId");
 					params += opt.query("spx", "reality_spiderX");
 				}
-				if (opt.get(dom_prefix + "tlsflow") && opt.get(dom_prefix + "tlsflow").value) {
-					let v_flow = opt.get(dom_prefix + "tlsflow").value;
+				if (opt.get(dom_prefix + "flow") && opt.get(dom_prefix + "flow").value) {
+					let v_flow = opt.get(dom_prefix + "flow").value;
 					params += "&flow=" + v_flow;
 				}
 				params += "&security=" + v_security;
@@ -887,7 +887,7 @@ local has_xray = api.is_finded("xray")
 				if (queryParam.security == "tls") {
 					opt.set(dom_prefix + 'tls', true);
 					opt.set('reality', false)
-					opt.set(dom_prefix + 'tlsflow', queryParam.flow || '');
+					opt.set(dom_prefix + 'flow', queryParam.flow || '');
 					opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
 					opt.set(dom_prefix + 'tls_allowInsecure', true);
 					if (queryParam.allowinsecure === '0') {
@@ -901,7 +901,7 @@ local has_xray = api.is_finded("xray")
 				if (queryParam.security == "reality") {
 					opt.set(dom_prefix + 'tls', true);
 					opt.set('reality', true)
-					opt.set(dom_prefix + 'tlsflow', queryParam.flow || '');
+					opt.set(dom_prefix + 'flow', queryParam.flow || '');
 					opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
 					if (queryParam.fp && queryParam.fp.trim() != "") {
 						opt.set('reality_fingerprint', queryParam.fp);

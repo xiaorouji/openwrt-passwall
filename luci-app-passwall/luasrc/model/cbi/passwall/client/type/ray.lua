@@ -351,6 +351,12 @@ add_xray_depends(o, { [option_name("protocol")] = "vless" })
 add_v2ray_depends(o, { [option_name("protocol")] = "vmess" })
 add_v2ray_depends(o, { [option_name("protocol")] = "vless" })
 
+o = s:option(ListValue, option_name("flow"), translate("flow"))
+o.default = ""
+o:value("", translate("Disable"))
+o:value("xtls-rprx-vision")
+add_xray_depends(o, { [option_name("protocol")] = "vless", [option_name("tls")] = true, [option_name("transport")] = "tcp" })
+
 o = s:option(Flag, option_name("tls"), translate("TLS"))
 o.default = 0
 add_xray_depends(o, { [option_name("protocol")] = "vmess" })
@@ -363,13 +369,6 @@ add_v2ray_depends(o, { [option_name("protocol")] = "vless" })
 add_v2ray_depends(o, { [option_name("protocol")] = "socks" })
 add_v2ray_depends(o, { [option_name("protocol")] = "trojan" })
 add_v2ray_depends(o, { [option_name("protocol")] = "shadowsocks" })
-
-o = s:option(Value, option_name("tlsflow"), translate("flow"))
-o.default = ""
-o:value("", translate("Disable"))
-o:value("xtls-rprx-vision")
-o:value("xtls-rprx-vision-udp443")
-add_xray_depends(o, { [option_name("protocol")] = "vless", [option_name("tls")] = true, [option_name("transport")] = "tcp" })
 
 o = s:option(Flag, option_name("reality"), translate("REALITY"), translate("Only recommend to use with VLESS-TCP-XTLS-Vision."))
 o.default = 0
@@ -658,7 +657,7 @@ add_v2ray_depends(o, { [option_name("protocol")] = "socks" })
 add_v2ray_depends(o, { [option_name("protocol")] = "shadowsocks" })
 add_v2ray_depends(o, { [option_name("protocol")] = "trojan" })
 add_xray_depends(o, { [option_name("protocol")] = "vmess" })
-add_xray_depends(o, { [option_name("protocol")] = "vless", [option_name("tlsflow")] = "" })
+add_xray_depends(o, { [option_name("protocol")] = "vless", [option_name("flow")] = "" })
 add_xray_depends(o, { [option_name("protocol")] = "http" })
 add_xray_depends(o, { [option_name("protocol")] = "socks" })
 add_xray_depends(o, { [option_name("protocol")] = "shadowsocks" })
@@ -672,8 +671,7 @@ add_v2ray_depends(o, { [option_name("mux")] = true })
 -- [[ XUDP Mux ]]--
 o = s:option(Flag, option_name("xmux"), translate("xMux"))
 o.default = 1
-add_xray_depends(o, { [option_name("protocol")] = "vless", [option_name("tlsflow")] = "xtls-rprx-vision" })
-add_xray_depends(o, { [option_name("protocol")] = "vless", [option_name("tlsflow")] = "xtls-rprx-vision-udp443" })
+add_xray_depends(o, { [option_name("protocol")] = "vless", [option_name("flow")] = "xtls-rprx-vision" })
 
 o = s:option(Value, option_name("xudp_concurrency"), translate("XUDP Mux concurrency"))
 o.default = 8

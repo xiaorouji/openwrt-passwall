@@ -200,6 +200,12 @@ add_xray_depends(o, { [option_name("protocol")] = "vmess" })
 add_xray_depends(o, { [option_name("protocol")] = "vless" })
 add_xray_depends(o, { [option_name("protocol")] = "trojan" })
 
+o = s:option(ListValue, option_name("flow"), translate("flow"))
+o.default = ""
+o:value("", translate("Disable"))
+o:value("xtls-rprx-vision")
+add_xray_depends(o, { [option_name("protocol")] = "vless", [option_name("tls")] = true, [option_name("transport")] = "tcp" })
+
 o = s:option(Flag, option_name("tls"), translate("TLS"))
 o.default = 0
 o.validate = function(self, value, t)
@@ -224,13 +230,6 @@ add_xray_depends(o, { [option_name("protocol")] = "vless" })
 add_xray_depends(o, { [option_name("protocol")] = "socks" })
 add_xray_depends(o, { [option_name("protocol")] = "shadowsocks" })
 add_xray_depends(o, { [option_name("protocol")] = "trojan" })
-
-o = s:option(Value, option_name("tlsflow"), translate("flow"))
-o.default = ""
-o:value("", translate("Disable"))
-o:value("xtls-rprx-vision")
-o:value("xtls-rprx-vision-udp443")
-add_xray_depends(o, { [option_name("protocol")] = "vless", [option_name("tls")] = true })
 
 o = s:option(ListValue, option_name("alpn"), translate("alpn"))
 o.default = "h2,http/1.1"
