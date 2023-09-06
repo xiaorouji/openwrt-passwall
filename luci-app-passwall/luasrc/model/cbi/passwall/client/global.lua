@@ -270,6 +270,9 @@ end
 if api.is_finded("dns2socks") then
 	dns_mode:value("dns2socks", "dns2socks")
 end
+if has_singbox then
+	dns_mode:value("sing-box", "Sing-Box")
+end
 if has_xray then
 	dns_mode:value("xray", "Xray")
 end
@@ -279,6 +282,7 @@ o = s:taboption("DNS", ListValue, "v2ray_dns_mode", " ")
 o:value("tcp", "TCP")
 o:value("doh", "DoH")
 o:value("fakedns", "FakeDNS")
+o:depends("dns_mode", "sing-box")
 o:depends("dns_mode", "xray")
 o.validate = function(self, value, t)
 	if value == "fakedns" then
@@ -337,12 +341,14 @@ o = s:taboption("DNS", Value, "dns_client_ip", translate("EDNS Client Subnet"))
 o.description = translate("Notify the DNS server when the DNS query is notified, the location of the client (cannot be a private IP address).") .. "<br />" ..
 				translate("This feature requires the DNS server to support the Edns Client Subnet (RFC7871).")
 o.datatype = "ipaddr"
-o:depends("v2ray_dns_mode", "tcp")
-o:depends("v2ray_dns_mode", "doh")
+o:depends({dns_mode = "xray", v2ray_dns_mode = "tcp"})
+o:depends({dns_mode = "xray", v2ray_dns_mode = "doh"})
 
 o = s:taboption("DNS", Flag, "dns_cache", translate("Cache Resolved"))
 o.default = "1"
 o:depends({dns_mode = "dns2socks"})
+o:depends({dns_mode = "sing-box", v2ray_dns_mode = "tcp"})
+o:depends({dns_mode = "sing-box", v2ray_dns_mode = "doh"})
 o:depends({dns_mode = "xray", v2ray_dns_mode = "tcp"})
 o:depends({dns_mode = "xray", v2ray_dns_mode = "doh"})
 o.rmempty = false
@@ -352,6 +358,8 @@ if api.is_finded("chinadns-ng") then
 	o.default = "0"
 	o:depends({dns_mode = "dns2socks"})
 	o:depends({dns_mode = "dns2tcp"})
+	o:depends({dns_mode = "sing-box", v2ray_dns_mode = "tcp"})
+	o:depends({dns_mode = "sing-box", v2ray_dns_mode = "doh"})
 	o:depends({dns_mode = "xray", v2ray_dns_mode = "tcp"})
 	o:depends({dns_mode = "xray", v2ray_dns_mode = "doh"})
 	o:depends({dns_mode = "udp"})

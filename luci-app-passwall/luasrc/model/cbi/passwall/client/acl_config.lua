@@ -1,6 +1,7 @@
 local api = require "luci.passwall.api"
 local appname = api.appname
 local sys = api.sys
+local has_singbox = api.finded_com("singbox")
 local has_xray = api.finded_com("xray")
 local has_chnlist = api.fs.access("/usr/share/passwall/rules/chnlist")
 
@@ -231,6 +232,9 @@ o:depends({ tcp_node = "default",  ['!reverse'] = true })
 if api.is_finded("dns2socks") then
 	o:value("dns2socks", "dns2socks")
 end
+if has_singbox then
+	o:value("sing-box", "Sing-Box")
+end
 if has_xray then
 	o:value("xray", "Xray")
 end
@@ -238,6 +242,7 @@ end
 o = s:option(ListValue, "v2ray_dns_mode", " ")
 o:value("tcp", "TCP")
 o:value("doh", "DoH")
+o:depends("dns_mode", "sing-box")
 o:depends("dns_mode", "xray")
 
 ---- DNS Forward
@@ -253,7 +258,7 @@ o:value("208.67.222.222", "208.67.222.222 (OpenDNS)")
 o:depends("dns_mode", "dns2socks")
 o:depends("v2ray_dns_mode", "tcp")
 
-if has_xray then
+if has_singbox or has_xray then
 	o = s:option(Value, "remote_dns_doh", translate("Remote DNS DoH"))
 	o:value("https://1.1.1.1/dns-query", "CloudFlare")
 	o:value("https://1.1.1.2/dns-query", "CloudFlare-Security")
@@ -288,11 +293,14 @@ if has_xray then
 		return nil, translate("DoH request address") .. " " .. translate("Format must be:") .. " URL,IP"
 	end
 	o:depends("v2ray_dns_mode", "doh")
-end
 
-o = s:option(Value, "dns_client_ip", translate("EDNS Client Subnet"))
-o.datatype = "ipaddr"
-o:depends("v2ray_dns_mode", "doh")
+	if has_xray then
+		o = s:option(Value, "dns_client_ip", translate("EDNS Client Subnet"))
+		o.datatype = "ipaddr"
+		o:depends({dns_mode = "xray", v2ray_dns_mode = "tcp"})
+		o:depends({dns_mode = "xray", v2ray_dns_mode = "doh"})
+	end
+end
 
 if api.is_finded("chinadns-ng") then
 	o = s:option(Flag, "chinadns_ng", translate("ChinaDNS-NG"), translate("The effect is better, but will increase the memory."))
