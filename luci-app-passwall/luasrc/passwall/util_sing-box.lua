@@ -540,6 +540,25 @@ function gen_config_server(node)
 		}
 	end
 
+	if node.protocol == "hysteria2" then
+		protocol_table = {
+			up_mbps = (node.hysteria2_ignore_client_bandwidth ~= "1" and node.hysteria2_up_mbps and tonumber(node.hysteria2_up_mbps)) and tonumber(node.hysteria2_up_mbps) or nil,
+			down_mbps = (node.hysteria2_ignore_client_bandwidth ~= "1" and node.hysteria2_down_mbps and tonumber(node.hysteria2_down_mbps)) and tonumber(node.hysteria2_down_mbps) or nil,
+			obfs = {
+				type = node.hysteria2_obfs_type,
+				password = node.hysteria2_obfs_password
+			},
+			users = {
+				{
+					name = "user1",
+					password = node.hysteria2_auth_password or nil,
+				}
+			},
+			ignore_client_bandwidth = (node.hysteria2_ignore_client_bandwidth == "1") and true or false,
+			tls = tls,
+		}
+	end
+
 	if node.protocol == "direct" then
 		protocol_table = {
 			network = (node.d_protocol ~= "TCP,UDP") and node.d_protocol or nil,
