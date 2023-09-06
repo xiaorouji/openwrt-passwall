@@ -397,8 +397,14 @@ function get_customed_path(e)
 	return uci_get_type("global_app", e .. "_file")
 end
 
+function finded_com(e)
+	local bin = get_app_path(e)
+	if not bin then return end
+	return luci.sys.exec('echo -n $(type -t -p "%s" | head -n1)' % { bin })
+end
+
 function finded(e)
-	return luci.sys.exec('echo -n $(type -t -p "/bin/%s" -p "/usr/bin/%s" -p "%s" "%s" | head -n1)' % {e, e, get_customed_path(e), e})
+	return luci.sys.exec('echo -n $(type -t -p "/bin/%s" -p "/usr/bin/%s" "%s" | head -n1)' % {e, e, e})
 end
 
 function is_finded(e)
@@ -441,10 +447,12 @@ local function get_bin_version_cache(file, cmd)
 end
 
 function get_app_path(app_name)
-	local def_path = com[app_name].default_path
-	local path = uci_get_type("global_app", app_name:gsub("%-","_") .. "_file")
-	path = path and (#path>0 and path or def_path) or def_path
-	return path
+	if com[app_name] then
+		local def_path = com[app_name].default_path
+		local path = uci_get_type("global_app", app_name:gsub("%-","_") .. "_file")
+		path = path and (#path>0 and path or def_path) or def_path
+		return path
+	end
 end
 
 function get_app_version(app_name, file)

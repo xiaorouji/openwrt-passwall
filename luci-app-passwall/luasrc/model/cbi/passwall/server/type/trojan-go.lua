@@ -2,7 +2,7 @@ local m, s = ...
 
 local api = require "luci.passwall.api"
 
-if not api.is_finded("trojan-go") then
+if not api.finded_com("trojan-go") then
 	return
 end
 

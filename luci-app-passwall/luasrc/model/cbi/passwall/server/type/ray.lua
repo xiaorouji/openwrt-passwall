@@ -2,7 +2,7 @@ local m, s = ...
 
 local api = require "luci.passwall.api"
 
-if not api.is_finded("xray") and not api.is_finded("v2ray")then
+if not api.finded_com("xray") and not api.finded_com("v2ray")then
 	return
 end
 
@@ -74,10 +74,10 @@ local header_type_list = {
 
 -- [[ Xray ]]
 
-if api.is_finded("v2ray") then
+if api.finded_com("v2ray") then
 	s.fields["type"]:value("V2ray", translate("V2ray"))
 end
-if api.is_finded("xray") then
+if api.finded_com("xray") then
 	s.fields["type"]:value("Xray", translate("Xray"))
 end
 

@@ -1,8 +1,8 @@
 local api = require "luci.passwall.api"
 local appname = api.appname
 local sys = api.sys
-local has_v2ray = api.is_finded("v2ray")
-local has_xray = api.is_finded("xray")
+local has_v2ray = api.finded_com("v2ray")
+local has_xray = api.finded_com("xray")
 local has_chnlist = api.fs.access("/usr/share/passwall/rules/chnlist")
 
 m = Map(appname)

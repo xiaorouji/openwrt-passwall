@@ -24,9 +24,9 @@ uci:revert(appname)
 local has_ss = api.is_finded("ss-redir")
 local has_ss_rust = api.is_finded("sslocal")
 local has_trojan_plus = api.is_finded("trojan-plus")
-local has_v2ray = api.is_finded("v2ray")
-local has_xray = api.is_finded("xray")
-local has_trojan_go = api.is_finded("trojan-go")
+local has_v2ray = api.finded_com("v2ray")
+local has_xray = api.finded_com("xray")
+local has_trojan_go = api.finded_com("trojan-go")
 local allowInsecure_default = nil
 local ss_aead_type_default = uci:get(appname, "@global_subscribe[0]", "ss_aead_type") or "shadowsocks-libev"
 local trojan_type_default = uci:get(appname, "@global_subscribe[0]", "trojan_type") or "trojan-plus"
