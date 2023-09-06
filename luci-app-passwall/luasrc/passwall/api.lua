@@ -298,7 +298,7 @@ function get_valid_nodes()
 				local address = e.address
 				if is_ip(address) or datatypes.hostname(address) then
 					local type = e.type
-					if (type == "V2ray" or type == "Xray") and e.protocol then
+					if (type == "sing-box" or type == "V2ray" or type == "Xray") and e.protocol then
 						local protocol = e.protocol
 						if protocol == "vmess" then
 							protocol = "VMess"
@@ -330,7 +330,7 @@ function get_node_remarks(n)
 			remarks = "%s：[%s] " % {n.type .. " " .. i18n.translatef(n.protocol), n.remarks}
 		else
 			local type2 = n.type
-			if (n.type == "V2ray" or n.type == "Xray") and n.protocol then
+			if (n.type == "sing-box" or n.type == "V2ray" or n.type == "Xray") and n.protocol then
 				local protocol = n.protocol
 				if protocol == "vmess" then
 					protocol = "VMess"

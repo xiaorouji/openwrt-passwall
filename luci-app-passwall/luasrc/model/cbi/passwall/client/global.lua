@@ -2,6 +2,7 @@ local api = require "luci.passwall.api"
 local appname = api.appname
 local uci = api.uci
 local datatypes = api.datatypes
+local has_singbox = api.finded_com("singbox")
 local has_v2ray = api.finded_com("v2ray")
 local has_xray = api.finded_com("xray")
 local has_chnlist = api.fs.access("/usr/share/passwall/rules/chnlist")
@@ -94,7 +95,7 @@ udp_node:value("nil", translate("Close"))
 udp_node:value("tcp", translate("Same as the tcp node"))
 
 -- 分流
-if (has_v2ray or has_xray) and #nodes_table > 0 then
+if (has_singbox or has_v2ray or has_xray) and #nodes_table > 0 then
 	local normal_list = {}
 	local balancing_list = {}
 	local shunt_list = {}
@@ -127,8 +128,11 @@ if (has_v2ray or has_xray) and #nodes_table > 0 then
 	if #normal_list > 0 then
 		for k, v in pairs(shunt_list) do
 			local vid = v.id
-			-- shunt node type, V2ray or Xray
+			-- shunt node type, Sing-Box or V2ray or Xray
 			local type = s:taboption("Main", ListValue, vid .. "-type", translate("Type"))
+			if has_singbox then
+				type:value("sing-box", "Sing-Box")
+			end
 			if has_v2ray then
 				type:value("V2ray", translate("V2ray"))
 			end
@@ -159,7 +163,7 @@ if (has_v2ray or has_xray) and #nodes_table > 0 then
 			o.cfgvalue = get_cfgvalue(v.id, "main_node")
 			o.write = get_write(v.id, "main_node")
 
-			if (has_v2ray and has_xray) or (v.type == "V2ray" and not has_v2ray) or (v.type == "Xray" and not has_xray) then
+			if (has_singbox and has_v2ray and has_xray) or (v.type == "sing-box" and not has_singbox) or (v.type == "V2ray" and not has_v2ray) or (v.type == "Xray" and not has_xray) then
 				type:depends("tcp_node", v.id)
 			else
 				type:depends("tcp_node", "hide") --不存在的依赖，即始终隐藏
@@ -247,7 +251,7 @@ tcp_node_socks_port.default = 1070
 tcp_node_socks_port.datatype = "port"
 tcp_node_socks_port:depends({ tcp_node = "nil", ["!reverse"] = true })
 --[[
-if has_v2ray or has_xray then
+if has_singbox or has_v2ray or has_xray then
 	tcp_node_http_port = s:taboption("Main", Value, "tcp_node_http_port", translate("TCP Node") .. " HTTP " .. translate("Listen Port") .. " " .. translate("0 is not use"))
 	tcp_node_http_port.default = 0
 	tcp_node_http_port.datatype = "port"
@@ -447,7 +451,7 @@ o.rmempty = false
 o = s:taboption("log", Flag, "close_log_udp", translatef("%s Node Log Close", "UDP"))
 o.rmempty = false
 
-loglevel = s:taboption("log", ListValue, "loglevel", "V2ray/Xray " .. translate("Log Level"))
+loglevel = s:taboption("log", ListValue, "loglevel", "Sing-Box/V2ray/Xray " .. translate("Log Level"))
 loglevel.default = "warning"
 loglevel:value("debug")
 loglevel:value("info")
@@ -519,7 +523,7 @@ o.default = n + 1080
 o.datatype = "port"
 o.rmempty = false
 
-if has_v2ray or has_xray then
+if has_singbox or has_v2ray or has_xray then
 	o = s:option(Value, "http_port", "HTTP " .. translate("Listen Port") .. " " .. translate("0 is not use"))
 	o.default = 0
 	o.datatype = "port"
@@ -529,7 +533,7 @@ for k, v in pairs(nodes_table) do
 	tcp_node:value(v.id, v["remark"])
 	udp_node:value(v.id, v["remark"])
 	if v.type == "Socks" then
-		if has_v2ray or has_xray then
+		if has_singbox or has_v2ray or has_xray then
 			socks_node:value(v.id, v["remark"])
 		end
 	else

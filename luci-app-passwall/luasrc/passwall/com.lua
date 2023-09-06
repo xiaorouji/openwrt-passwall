@@ -49,6 +49,19 @@ _M["trojan-go"] = {
 	}
 }
 
+_M.singbox = {
+	name = "Sing-Box",
+	repo = "SagerNet/sing-box",
+	get_url = gh_pre_release_url,
+	cmd_version = "version | awk '{print $3}' | sed -n 1P",
+	zipped = true,
+	default_path = "/usr/bin/sing-box",
+	match_fmt_str = "linux%%-%s",
+	file_tree = {
+		x86_64 = "amd64"
+	}
+}
+
 _M.v2ray = {
 	name = "V2ray",
 	repo = "v2fly/v2ray-core",

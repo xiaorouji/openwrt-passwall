@@ -24,6 +24,7 @@ uci:revert(appname)
 local has_ss = api.is_finded("ss-redir")
 local has_ss_rust = api.is_finded("sslocal")
 local has_trojan_plus = api.is_finded("trojan-plus")
+local has_singbox = api.finded_com("singbox")
 local has_v2ray = api.finded_com("v2ray")
 local has_xray = api.finded_com("xray")
 local has_trojan_go = api.finded_com("trojan-go")
@@ -395,7 +396,9 @@ local function processData(szType, content, add_mode, add_from)
 		result.remarks = base64Decode(params.remarks)
 	elseif szType == 'vmess' then
 		local info = jsonParse(content)
-		if has_v2ray then
+		if has_singbox then
+			result.type = 'sing-box'
+		elseif has_v2ray then
 			result.type = 'V2ray'
 		elseif has_xray then
 			result.type = 'Xray'
@@ -542,6 +545,9 @@ local function processData(szType, content, add_mode, add_from)
 					if method:lower() == "chacha20-poly1305" then
 						result.method = "chacha20-ietf-poly1305"
 					end
+				elseif ss_aead_type_default == "sing-box" and has_singbox and not result.plugin then
+					result.type = 'sing-box'
+					result.protocol = 'shadowsocks'
 				elseif ss_aead_type_default == "v2ray" and has_v2ray and not result.plugin then
 					result.type = 'V2ray'
 					result.protocol = 'shadowsocks'
@@ -565,7 +571,10 @@ local function processData(szType, content, add_mode, add_from)
 				end
 			end
 			if aead2022 then
-				if ss_aead_type_default == "xray" and has_xray and not result.plugin then
+				if ss_aead_type_default == "sing-box" and has_singbox and not result.plugin then
+					result.type = 'sing-box'
+					result.protocol = 'shadowsocks'
+				elseif ss_aead_type_default == "xray" and has_xray and not result.plugin then
 					result.type = 'Xray'
 					result.protocol = 'shadowsocks'
 					result.transport = 'tcp'
@@ -644,6 +653,9 @@ local function processData(szType, content, add_mode, add_from)
 		end
 		if trojan_type_default == "trojan-plus" and has_trojan_plus then
 			result.type = "Trojan-Plus"
+		elseif trojan_type_default == "sing-box" and has_singbox then
+			result.type = 'sing-box'
+			result.protocol = 'trojan'
 		elseif trojan_type_default == "v2ray" and has_v2ray then
 			result.type = 'V2ray'
 			result.protocol = 'trojan'
@@ -721,7 +733,9 @@ local function processData(szType, content, add_mode, add_from)
 		result.group = content.airport
 		result.remarks = content.remarks
 	elseif szType == "vless" then
-		if has_xray then
+		if has_singbox then
+			result.type = 'sing-box'
+		elseif has_xray then
 			result.type = 'Xray'
 		elseif has_v2ray then
 			result.type = 'V2ray'

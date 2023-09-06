@@ -42,6 +42,13 @@ config global_forwarding
 config global_xray
 	option sniffing '1'
 	option route_only '0'
+	
+config global_singbox
+	option sniff_override_destination '1'
+	option geoip_path '/tmp/singbox/geoip.db'
+	option geoip_url 'https://github.com/SagerNet/sing-geoip/releases/latest/download/geoip.db'
+	option geosite_path '/tmp/singbox/geosite.db'
+	option geosite_url 'https://github.com/SagerNet/sing-geosite/releases/latest/download/geosite.db'
 
 config global_other
 	option nodes_ping 'auto_ping tcping'
@@ -65,6 +72,7 @@ config global_rules
 	option v2ray_location_asset '/usr/share/v2ray/'
 
 config global_app
+	option singbox_file '/usr/bin/sing-box'
 	option v2ray_file '/usr/bin/v2ray'
 	option xray_file '/usr/bin/xray'
 	option trojan_go_file '/usr/bin/trojan-go'

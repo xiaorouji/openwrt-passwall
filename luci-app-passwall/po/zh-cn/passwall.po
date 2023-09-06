@@ -1458,3 +1458,21 @@ msgstr "端口跳跃时间 "
 
 msgid "Additional ports for hysteria hop"
 msgstr "端口跳跃额外端口"
+
+msgid "Custom geoip Path"
+msgstr "自定义geoip文件路径"
+
+msgid "Custom geoip URL"
+msgstr "自定义geoip文件更新链接"
+
+msgid "Custom geosite Path"
+msgstr "自定义geosite文件路径"
+
+msgid "Custom geosite URL"
+msgstr "自定义geosite文件更新链接"
+
+msgid "Override the connection destination address"
+msgstr "覆盖连接目标地址"
+
+msgid "Override the connection destination address with the sniffed domain."
+msgstr "用探测出的域名覆盖连接目标地址。"
