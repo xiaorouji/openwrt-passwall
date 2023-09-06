@@ -524,6 +524,22 @@ function gen_config_server(node)
 		}
 	end
 
+	if node.protocol == "tuic" then
+		protocol_table = {
+			users = {
+				{
+					name = "user1",
+					uuid = node.uuid,
+					password = node.password
+				}
+			},
+			congestion_control = node.tuic_congestion_control or "cubic",
+			zero_rtt_handshake = (node.tuic_zero_rtt_handshake == "1") and true or false,
+			heartbeat = node.tuic_heartbeat .. "s",
+			tls = tls,
+		}
+	end
+
 	if node.protocol == "direct" then
 		protocol_table = {
 			network = (node.d_protocol ~= "TCP,UDP") and node.d_protocol or nil,
