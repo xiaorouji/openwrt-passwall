@@ -386,6 +386,18 @@ function gen_config_server(node)
 
 	local protocol_table = nil
 
+	if node.protocol == "mixed" then
+		protocol_table = {
+			users = (node.auth == "1") and {
+				{
+					username = node.username,
+					password = node.password
+				}
+			} or nil,
+			set_system_proxy = false
+		}
+	end
+
 	if node.protocol == "socks" then
 		protocol_table = {
 			users = (node.auth == "1") and {

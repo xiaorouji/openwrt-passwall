@@ -48,6 +48,7 @@ local ss_method_list = {
 s.fields["type"]:value(type_name, "Sing-Box")
 
 o = s:option(ListValue, option_name("protocol"), translate("Protocol"))
+o:value("mixed", "Mixed")
 o:value("socks", "Socks")
 o:value("http", "HTTP")
 o:value("shadowsocks", "Shadowsocks")
@@ -70,6 +71,7 @@ o.validate = function(self, value, t)
 	end
 	return value
 end
+o:depends({ [option_name("protocol")] = "mixed" })
 o:depends({ [option_name("protocol")] = "socks" })
 o:depends({ [option_name("protocol")] = "http" })
 
