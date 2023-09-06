@@ -56,6 +56,9 @@ o:value("vmess", "Vmess")
 o:value("vless", "VLESS")
 o:value("trojan", "Trojan")
 o:value("naive", "Naive")
+if singbox_tags:find("with_quic") then
+	o:value("hysteria", "Hysteria")
+end
 o:value("direct", "Direct")
 
 o = s:option(Value, option_name("port"), translate("Listen Port"))
@@ -85,6 +88,46 @@ o.password = true
 o:depends({ [option_name("auth")] = true })
 o:depends({ [option_name("protocol")] = "shadowsocks" })
 o:depends({ [option_name("protocol")] = "naive" })
+
+if singbox_tags:find("with_quic") then
+	o = s:option(Value, option_name("hysteria_up_mbps"), translate("Max upload Mbps"))
+	o.default = "100"
+	o:depends({ [option_name("protocol")] = "hysteria" })
+
+	o = s:option(Value, option_name("hysteria_down_mbps"), translate("Max download Mbps"))
+	o.default = "100"
+	o:depends({ [option_name("protocol")] = "hysteria" })
+
+	o = s:option(Value, option_name("hysteria_obfs"), translate("Obfs Password"))
+	o:depends({ [option_name("protocol")] = "hysteria" })
+
+	o = s:option(ListValue, option_name("hysteria_auth_type"), translate("Auth Type"))
+	o:value("disable", translate("Disable"))
+	o:value("string", translate("STRING"))
+	o:value("base64", translate("BASE64"))
+	o:depends({ [option_name("protocol")] = "hysteria" })
+
+	o = s:option(Value, option_name("hysteria_auth_password"), translate("Auth Password"))
+	o.password = true
+	o:depends({ [option_name("protocol")] = "hysteria", [option_name("hysteria_auth_type")] = "string"})
+	o:depends({ [option_name("protocol")] = "hysteria", [option_name("hysteria_auth_type")] = "base64"})
+
+	o = s:option(Value, option_name("hysteria_recv_window_conn"), translate("QUIC stream receive window"))
+	o:depends({ [option_name("protocol")] = "hysteria" })
+
+	o = s:option(Value, option_name("hysteria_recv_window_client"), translate("QUIC connection receive window"))
+	o:depends({ [option_name("protocol")] = "hysteria" })
+
+	o = s:option(Value, option_name("hysteria_max_conn_client"), translate("QUIC concurrent bidirectional streams"))
+	o.default = "1024"
+	o:depends({ [option_name("protocol")] = "hysteria" })
+
+	o = s:option(Flag, option_name("hysteria_disable_mtu_discovery"), translate("Disable MTU detection"))
+	o:depends({ [option_name("protocol")] = "hysteria" })
+
+	o = s:option(Value, option_name("hysteria_alpn"), translate("QUIC TLS ALPN"))
+	o:depends({ [option_name("protocol")] = "hysteria" })
+end
 
 o = s:option(ListValue, option_name("d_protocol"), translate("Destination protocol"))
 o:value("tcp", "TCP")
@@ -155,6 +198,7 @@ o:depends({ [option_name("protocol")] = "trojan" })
 o = s:option(FileUpload, option_name("tls_certificateFile"), translate("Public key absolute path"), translate("as:") .. "/etc/ssl/fullchain.pem")
 o.default = m:get(s.section, "tls_certificateFile") or "/etc/config/ssl/" .. arg[1] .. ".pem"
 o:depends({ [option_name("tls")] = true })
+o:depends({ [option_name("protocol")] = "hysteria" })
 o.validate = function(self, value, t)
 	if value and value ~= "" then
 		if not nixio.fs.access(value) then
@@ -169,6 +213,7 @@ end
 o = s:option(FileUpload, option_name("tls_keyFile"), translate("Private key absolute path"), translate("as:") .. "/etc/ssl/private.key")
 o.default = m:get(s.section, "tls_keyFile") or "/etc/config/ssl/" .. arg[1] .. ".key"
 o:depends({ [option_name("tls")] = true })
+o:depends({ [option_name("protocol")] = "hysteria" })
 o.validate = function(self, value, t)
 	if value and value ~= "" then
 		if not nixio.fs.access(value) then

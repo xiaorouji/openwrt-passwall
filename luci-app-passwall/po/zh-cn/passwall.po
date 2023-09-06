@@ -505,6 +505,9 @@ msgstr "QUIC 流接收窗口"
 msgid "QUIC connection receive window"
 msgstr "QUIC 连接接收窗口"
 
+msgid "QUIC concurrent bidirectional streams"
+msgstr "QUIC 并发双向流的最大数量"
+
 msgid "Disable MTU detection"
 msgstr "禁用 MTU 检测"
 

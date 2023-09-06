@@ -495,6 +495,35 @@ function gen_config_server(node)
 		}
 	end
 
+	if node.protocol == "hysteria" then
+		protocol_table = {
+			up = node.hysteria_up_mbps .. " Mbps",
+			down = node.hysteria_down_mbps .. " Mbps",
+			up_mbps = tonumber(node.hysteria_up_mbps),
+			down_mbps = tonumber(node.hysteria_down_mbps),
+			obfs = node.hysteria_obfs,
+			users = {
+				{
+					name = "user1",
+					auth = (node.hysteria_auth_type == "base64") and node.hysteria_auth_password or nil,
+					auth_str = (node.hysteria_auth_type == "string") and node.hysteria_auth_password or nil,
+				}
+			},
+			recv_window_conn = node.hysteria_recv_window_conn and tonumber(node.hysteria_recv_window_conn) or nil,
+			recv_window_client = node.hysteria_recv_window_client and tonumber(node.hysteria_recv_window_client) or nil,
+			max_conn_client = node.hysteria_max_conn_client and tonumber(node.hysteria_max_conn_client) or nil,
+			disable_mtu_discovery = (node.hysteria_disable_mtu_discovery == "1") and true or false,
+			tls = {
+				enabled = true,
+				certificate_path = node.tls_certificateFile,
+				key_path = node.tls_keyFile,
+				alpn = (node.hysteria_alpn and node.hysteria_alpn ~= "") and {
+					node.hysteria_alpn
+				} or nil
+			}
+		}
+	end
+
 	if node.protocol == "direct" then
 		protocol_table = {
 			network = (node.d_protocol ~= "TCP,UDP") and node.d_protocol or nil,
