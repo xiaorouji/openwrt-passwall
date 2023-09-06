@@ -80,9 +80,9 @@ o:value("disable", translate("No patterns are used"))
 
 ---- UDP Proxy Drop Ports
 o = s:option(Value, "udp_proxy_drop_ports", translate("UDP Proxy Drop Ports"))
-o.default = "80,443"
+o.default = "443"
 o:value("disable", translate("No patterns are used"))
-o:value("80,443", translate("QUIC"))
+o:value("443", translate("QUIC"))
 
 ---- TCP Redir Ports
 o = s:option(Value, "tcp_redir_ports", translate("TCP Redir Ports"))
