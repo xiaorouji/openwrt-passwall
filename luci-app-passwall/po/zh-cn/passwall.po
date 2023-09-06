@@ -481,6 +481,9 @@ msgstr "传输层插件"
 msgid "Shadowsocks secondary encryption"
 msgstr "Shadowsocks 二次加密"
 
+msgid "Obfs Type"
+msgstr "混淆类型"
+
 msgid "Obfs Password"
 msgstr "混淆密码"
 

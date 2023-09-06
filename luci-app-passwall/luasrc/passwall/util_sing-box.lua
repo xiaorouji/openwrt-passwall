@@ -306,6 +306,19 @@ function gen_outbound(flag, node, tag, proxy_table)
 			}
 		end
 
+		if node.protocol == "hysteria2" then
+			protocol_table = {
+				up_mbps = (node.hysteria2_up_mbps and tonumber(node.hysteria2_up_mbps)) and tonumber(node.hysteria2_up_mbps) or nil,
+				down_mbps = (node.hysteria2_down_mbps and tonumber(node.hysteria2_down_mbps)) and tonumber(node.hysteria2_down_mbps) or nil,
+				obfs = {
+					type = node.hysteria2_obfs_type,
+					password = node.hysteria2_obfs_password
+				},
+				password = node.hysteria2_auth_password or nil,
+				tls = tls,
+			}
+		end
+
 		if protocol_table then
 			for key, value in pairs(protocol_table) do
 				result[key] = value
