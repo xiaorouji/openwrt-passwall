@@ -102,7 +102,7 @@ add_v2ray_depends(o)
 
 o = s:option(Value, option_name("iface"), translate("Interface"))
 o.default = "eth1"
-o:depends({ [option_name("protocol")] = "_iface" })
+add_xray_depends(o, { [option_name("protocol")] = "_iface" })
 
 local nodes_table = {}
 local balancers_table = {}
@@ -130,7 +130,7 @@ end
 
 -- 负载均衡列表
 local o = s:option(DynamicList, option_name("balancing_node"), translate("Load balancing node list"), translate("Load balancing node list, <a target='_blank' href='https://toutyrater.github.io/routing/balance2.html'>document</a>"))
-o:depends({ [option_name("protocol")] = "_balancing" })
+add_xray_depends(o, { [option_name("protocol")] = "_balancing" })
 add_v2ray_depends(o, { [option_name("protocol")] = "_balancing" })
 for k, v in pairs(nodes_table) do o:value(v.id, v.remarks) end
 
@@ -162,11 +162,11 @@ o.description = translate("The interval between initiating probes. Every time th
 -- [[ 分流模块 ]]
 if #nodes_table > 0 then
 	o = s:option(Flag, option_name("preproxy_enabled"), translate("Preproxy"))
-	o:depends({ [option_name("protocol")] = "_shunt" })
+	add_xray_depends(o, { [option_name("protocol")] = "_shunt" })
 	add_v2ray_depends(o, { [option_name("protocol")] = "_shunt" })
 
 	o = s:option(Value, option_name("main_node"), string.format('<a style="color:red">%s</a>', translate("Preproxy Node")), translate("Set the node to be used as a pre-proxy. Each rule (including <code>Default</code>) has a separate switch that controls whether this rule uses the pre-proxy or not."))
-	o:depends({ [option_name("protocol")] = "_shunt", [option_name("preproxy_enabled")] = true })
+	add_xray_depends(o, { [option_name("protocol")] = "_shunt", [option_name("preproxy_enabled")] = true })
 	add_v2ray_depends(o, { [option_name("protocol")] = "_shunt", [option_name("preproxy_enabled")] = true })
 	for k, v in pairs(balancers_table) do
 		o:value(v.id, v.remarks)
@@ -186,7 +186,7 @@ uci:foreach(appname, "shunt_rules", function(e)
 		o:value("_default", translate("Default"))
 		o:value("_direct", translate("Direct Connection"))
 		o:value("_blackhole", translate("Blackhole"))
-		o:depends({ [option_name("protocol")] = "_shunt" })
+		add_xray_depends(o, { [option_name("protocol")] = "_shunt" })
 		add_v2ray_depends(o, { [option_name("protocol")] = "_shunt" })
 
 		if #nodes_table > 0 then
@@ -215,10 +215,12 @@ o.rawhtml = true
 o.cfgvalue = function(t, n)
 	return string.format('<a style="color: red" href="../rule">%s</a>', translate("No shunt rules? Click me to go to add."))
 end
-o:depends({ [option_name("protocol")] = "_shunt" })
+add_xray_depends(o, { [option_name("protocol")] = "_shunt" })
+add_v2ray_depends(o, { [option_name("protocol")] = "_shunt" })
 
 local o = s:option(Value, option_name("default_node"), string.format('* <a style="color:red">%s</a>', translate("Default")))
-o:depends({ [option_name("protocol")] = "_shunt" })
+add_xray_depends(o, { [option_name("protocol")] = "_shunt" })
+add_v2ray_depends(o, { [option_name("protocol")] = "_shunt" })
 o:value("_direct", translate("Direct Connection"))
 o:value("_blackhole", translate("Blackhole"))
 
@@ -248,45 +250,33 @@ o.description = "<br /><ul><li>" .. translate("'AsIs': Only use domain for routi
 	.. "</li><li>" .. translate("'IPIfNonMatch': When no rule matches current domain, resolves it into IP addresses (A or AAAA records) and try all rules again.")
 	.. "</li><li>" .. translate("'IPOnDemand': As long as there is a IP-based rule, resolves the domain into IP immediately.")
 	.. "</li></ul>"
-o:depends({ [option_name("protocol")] = "_shunt" })
+add_xray_depends(o, { [option_name("protocol")] = "_shunt" })
+add_v2ray_depends(o, { [option_name("protocol")] = "_shunt" })
 
 o = s:option(ListValue, option_name("domainMatcher"), translate("Domain matcher"))
 o:value("hybrid")
 o:value("linear")
-o:depends({ [option_name("protocol")] = "_shunt" })
+add_xray_depends(o, { [option_name("protocol")] = "_shunt" })
+add_v2ray_depends(o, { [option_name("protocol")] = "_shunt" })
 
 -- [[ 分流模块 End ]]
 
 o = s:option(Value, option_name("address"), translate("Address (Support Domain Name)"))
-add_xray_depends(o, { [option_name("protocol")] = "vmess" })
-add_xray_depends(o, { [option_name("protocol")] = "vless" })
-add_xray_depends(o, { [option_name("protocol")] = "http" })
-add_xray_depends(o, { [option_name("protocol")] = "socks" })
-add_xray_depends(o, { [option_name("protocol")] = "shadowsocks" })
-add_xray_depends(o, { [option_name("protocol")] = "trojan" })
-add_xray_depends(o, { [option_name("protocol")] = "wireguard" })
-add_v2ray_depends(o, { [option_name("protocol")] = "vmess" })
-add_v2ray_depends(o, { [option_name("protocol")] = "vless" })
-add_v2ray_depends(o, { [option_name("protocol")] = "http" })
-add_v2ray_depends(o, { [option_name("protocol")] = "socks" })
-add_v2ray_depends(o, { [option_name("protocol")] = "shadowsocks" })
-add_v2ray_depends(o, { [option_name("protocol")] = "trojan" })
 
 o = s:option(Value, option_name("port"), translate("Port"))
 o.datatype = "port"
-add_xray_depends(o, { [option_name("protocol")] = "vmess" })
-add_xray_depends(o, { [option_name("protocol")] = "vless" })
-add_xray_depends(o, { [option_name("protocol")] = "http" })
-add_xray_depends(o, { [option_name("protocol")] = "socks" })
-add_xray_depends(o, { [option_name("protocol")] = "shadowsocks" })
-add_xray_depends(o, { [option_name("protocol")] = "trojan" })
-add_xray_depends(o, { [option_name("protocol")] = "wireguard" })
-add_v2ray_depends(o, { [option_name("protocol")] = "vmess" })
-add_v2ray_depends(o, { [option_name("protocol")] = "vless" })
-add_v2ray_depends(o, { [option_name("protocol")] = "http" })
-add_v2ray_depends(o, { [option_name("protocol")] = "socks" })
-add_v2ray_depends(o, { [option_name("protocol")] = "shadowsocks" })
-add_v2ray_depends(o, { [option_name("protocol")] = "trojan" })
+
+local protocols = s.fields[option_name("protocol")].keylist
+if #protocols > 0 then
+	for index, value in ipairs(protocols) do
+		if not value:find("_") then
+			add_xray_depends(s.fields[option_name("address")], { [option_name("protocol")] = value })
+			add_v2ray_depends(s.fields[option_name("address")], { [option_name("protocol")] = value })
+			add_xray_depends(s.fields[option_name("port")], { [option_name("protocol")] = value })
+			add_v2ray_depends(s.fields[option_name("port")], { [option_name("protocol")] = value })
+		end
+	end
+end
 
 o = s:option(Value, option_name("username"), translate("Username"))
 add_xray_depends(o, { [option_name("protocol")] = "http" })
