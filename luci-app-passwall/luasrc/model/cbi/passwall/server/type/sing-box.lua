@@ -55,6 +55,7 @@ o:value("shadowsocks", "Shadowsocks")
 o:value("vmess", "Vmess")
 o:value("vless", "VLESS")
 o:value("trojan", "Trojan")
+o:value("naive", "Naive")
 o:value("direct", "Direct")
 
 o = s:option(Value, option_name("port"), translate("Listen Port"))
@@ -77,11 +78,13 @@ o:depends({ [option_name("protocol")] = "http" })
 
 o = s:option(Value, option_name("username"), translate("Username"))
 o:depends({ [option_name("auth")] = true })
+o:depends({ [option_name("protocol")] = "naive" })
 
 o = s:option(Value, option_name("password"), translate("Password"))
 o.password = true
 o:depends({ [option_name("auth")] = true })
 o:depends({ [option_name("protocol")] = "shadowsocks" })
+o:depends({ [option_name("protocol")] = "naive" })
 
 o = s:option(ListValue, option_name("d_protocol"), translate("Destination protocol"))
 o:value("tcp", "TCP")

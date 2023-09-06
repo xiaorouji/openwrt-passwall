@@ -483,6 +483,18 @@ function gen_config_server(node)
 		end
 	end
 
+	if node.protocol == "naive" then
+		protocol_table = {
+			users = {
+				{
+					username = node.username,
+					password = node.password
+				}
+			},
+			tls = tls,
+		}
+	end
+
 	if node.protocol == "direct" then
 		protocol_table = {
 			network = (node.d_protocol ~= "TCP,UDP") and node.d_protocol or nil,
