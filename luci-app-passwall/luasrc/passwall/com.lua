@@ -63,13 +63,13 @@ _M.singbox = {
 	}
 }
 
-_M.v2ray = {
-	name = "V2ray",
-	repo = "v2fly/v2ray-core",
+_M.xray = {
+	name = "Xray",
+	repo = "XTLS/Xray-core",
 	get_url = gh_pre_release_url,
 	cmd_version = "version | awk '{print $2}' | sed -n 1P",
 	zipped = true,
-	default_path = "/usr/bin/v2ray",
+	default_path = "/usr/bin/xray",
 	match_fmt_str = "linux%%-%s",
 	file_tree = {
 		x86_64 = "64",
@@ -77,17 +77,6 @@ _M.v2ray = {
 		mips   = "mips32",
 		mipsel = "mips32le"
 	}
-}
-
-_M.xray = {
-	name = "Xray",
-	repo = "XTLS/Xray-core",
-	get_url = gh_pre_release_url,
-	cmd_version = _M.v2ray.cmd_version,
-	zipped = true,
-	default_path = "/usr/bin/xray",
-	match_fmt_str = _M.v2ray.match_fmt_str,
-	file_tree = _M.v2ray.file_tree
 }
 
 _M["chinadns-ng"] = {

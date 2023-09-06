@@ -1,7 +1,6 @@
 local api = require "luci.passwall.api"
 local appname = api.appname
 local sys = api.sys
-local has_v2ray = api.finded_com("v2ray")
 local has_xray = api.finded_com("xray")
 local has_chnlist = api.fs.access("/usr/share/passwall/rules/chnlist")
 
@@ -254,7 +253,7 @@ o:value("208.67.222.222", "208.67.222.222 (OpenDNS)")
 o:depends("dns_mode", "dns2socks")
 o:depends("v2ray_dns_mode", "tcp")
 
-if has_v2ray or has_xray then
+if has_xray then
 	o = s:option(Value, "remote_dns_doh", translate("Remote DNS DoH"))
 	o:value("https://1.1.1.1/dns-query", "CloudFlare")
 	o:value("https://1.1.1.2/dns-query", "CloudFlare-Security")

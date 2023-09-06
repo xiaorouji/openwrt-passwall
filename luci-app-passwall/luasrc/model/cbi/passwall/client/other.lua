@@ -2,7 +2,6 @@ local api = require "luci.passwall.api"
 local appname = api.appname
 local fs = api.fs
 local has_singbox = api.finded_com("singbox")
-local has_v2ray = api.finded_com("v2ray")
 local has_xray = api.finded_com("xray")
 local has_fw3 = api.is_finded("fw3")
 local has_fw4 = api.is_finded("fw4")
@@ -141,8 +140,8 @@ o = s:option(Flag, "accept_icmpv6", translate("Hijacking ICMPv6 (IPv6 PING)"))
 o:depends("ipv6_tproxy", true)
 o.default = 0
 
-if has_v2ray or has_xray then
-	s = m:section(TypedSection, "global_xray", "V2Ray/Xray " .. translate("Settings"))
+if has_xray then
+	s = m:section(TypedSection, "global_xray", "Xray " .. translate("Settings"))
 	s.anonymous = true
 	s.addremove = false
 

@@ -2,7 +2,7 @@ local api = require "luci.passwall.api"
 local appname = api.appname
 local datatypes = api.datatypes
 
-m = Map(appname, "V2ray/Xray " .. translate("Shunt Rule"))
+m = Map(appname, "Xray " .. translate("Shunt Rule"))
 m.redirect = api.url()
 
 s = m:section(NamedSection, arg[1], "shunt_rules", "")

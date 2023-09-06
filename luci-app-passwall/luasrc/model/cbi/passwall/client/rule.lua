@@ -1,6 +1,5 @@
 local api = require "luci.passwall.api"
 local appname = api.appname
-local has_v2ray = api.finded_com("v2ray")
 local has_xray = api.finded_com("xray")
 
 m = Map(appname)
@@ -61,12 +60,12 @@ for e = 0, 23 do o:value(e, e .. translate("oclock")) end
 o.default = 0
 o:depends("auto_update", true)
 
-if has_v2ray or has_xray then
+if has_xray then
 	o = s:option(Value, "v2ray_location_asset", translate("Location of V2ray/Xray asset"), translate("This variable specifies a directory where geoip.dat and geosite.dat files are."))
 	o.default = "/usr/share/v2ray/"
 	o.rmempty = false
 
-	s = m:section(TypedSection, "shunt_rules", "V2ray/Xray " .. translate("Shunt Rule"), "<a style='color: red'>" .. translate("Please note attention to the priority, the higher the order, the higher the priority.") .. "</a>")
+	s = m:section(TypedSection, "shunt_rules", "Xray " .. translate("Shunt Rule"), "<a style='color: red'>" .. translate("Please note attention to the priority, the higher the order, the higher the priority.") .. "</a>")
 	s.template = "cbi/tblsection"
 	s.anonymous = false
 	s.addremove = true

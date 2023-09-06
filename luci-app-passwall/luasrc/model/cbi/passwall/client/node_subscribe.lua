@@ -4,7 +4,6 @@ local has_ss = api.is_finded("ss-redir")
 local has_ss_rust = api.is_finded("sslocal")
 local has_trojan_plus = api.is_finded("trojan-plus")
 local has_singbox = api.finded_com("singbox")
-local has_v2ray = api.finded_com("v2ray")
 local has_xray = api.finded_com("xray")
 local has_trojan_go = api.finded_com("trojan-go")
 local ss_aead_type = {}
@@ -21,10 +20,6 @@ end
 if has_singbox then
 	trojan_type[#trojan_type + 1] = "sing-box"
 	ss_aead_type[#ss_aead_type + 1] = "sing-box"
-end
-if has_v2ray then
-	trojan_type[#trojan_type + 1] = "v2ray"
-	ss_aead_type[#ss_aead_type + 1] = "v2ray"
 end
 if has_xray then
 	trojan_type[#trojan_type + 1] = "xray"
