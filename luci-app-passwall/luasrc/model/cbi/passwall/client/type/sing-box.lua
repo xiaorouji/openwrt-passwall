@@ -59,6 +59,9 @@ o = s:option(ListValue, option_name("protocol"), translate("Protocol"))
 o:value("socks", "Socks")
 o:value("http", "HTTP")
 o:value("shadowsocks", "Shadowsocks")
+if singbox_tags:find("with_shadowsocksr") then
+	o:value("shadowsocksr", "ShadowsocksR")
+end
 o:value("vmess", "Vmess")
 o:value("trojan", "Trojan")
 if singbox_tags:find("with_wireguard") then
@@ -192,6 +195,7 @@ o.password = true
 o:depends({ [option_name("protocol")] = "http" })
 o:depends({ [option_name("protocol")] = "socks" })
 o:depends({ [option_name("protocol")] = "shadowsocks" })
+o:depends({ [option_name("protocol")] = "shadowsocksr" })
 o:depends({ [option_name("protocol")] = "trojan" })
 
 o = s:option(ListValue, option_name("security"), translate("Encrypt Method"))
@@ -210,6 +214,47 @@ function o.write(self, section, value)
 	if s.fields["type"]:formvalue(arg[1]) == type_name then
 		m:set(section, "method", value)
 	end
+end
+
+if singbox_tags:find("with_shadowsocksr") then
+	o = s:option(ListValue, option_name("ssr_method"), translate("Encrypt Method"))
+	o.not_rewrite = true
+	for a, t in ipairs(ss_method_old_list) do o:value(t) end
+	o:depends({ [option_name("protocol")] = "shadowsocksr" })
+	function o.cfgvalue(self, section)
+		return m:get(section, "method")
+	end
+	function o.write(self, section, value)
+		if s.fields["type"]:formvalue(arg[1]) == type_name then
+			m:set(section, "method", value)
+		end
+	end
+
+	local ssr_protocol_list = {
+		"origin", "verify_simple", "verify_deflate", "verify_sha1", "auth_simple",
+		"auth_sha1", "auth_sha1_v2", "auth_sha1_v4", "auth_aes128_md5",
+		"auth_aes128_sha1", "auth_chain_a", "auth_chain_b", "auth_chain_c",
+		"auth_chain_d", "auth_chain_e", "auth_chain_f"
+	}
+
+	o = s:option(ListValue, option_name("ssr_protocol"), translate("Protocol"))
+	for a, t in ipairs(ssr_protocol_list) do o:value(t) end
+	o:depends({ [option_name("protocol")] = "shadowsocksr" })
+
+	o = s:option(Value, option_name("ssr_protocol_param"), translate("Protocol_param"))
+	o:depends({ [option_name("protocol")] = "shadowsocksr" })
+
+	local ssr_obfs_list = {
+		"plain", "http_simple", "http_post", "random_head", "tls_simple",
+		"tls1.0_session_auth", "tls1.2_ticket_auth"
+	}
+
+	o = s:option(ListValue, option_name("ssr_obfs"), translate("Obfs"))
+	for a, t in ipairs(ssr_obfs_list) do o:value(t) end
+	o:depends({ [option_name("protocol")] = "shadowsocksr" })
+
+	o = s:option(Value, option_name("ssr_obfs_param"), translate("Obfs_param"))
+	o:depends({ [option_name("protocol")] = "shadowsocksr" })
 end
 
 o = s:option(Flag, option_name("uot"), translate("UDP over TCP"), translate("Need Xray-core or sing-box as server side."))
