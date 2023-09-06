@@ -67,6 +67,7 @@ o:value("trojan", "Trojan")
 if singbox_tags:find("with_wireguard") then
 	o:value("wireguard", "WireGuard")
 end
+o:value("shadowtls", "ShadowTLS")
 o:value("vless", "VLESS")
 o:value("_shunt", translate("Shunt"))
 o:value("_iface", translate("Custom Interface") .. " (Only Support Xray)")
@@ -186,6 +187,13 @@ if #protocols > 0 then
 	end
 end
 
+o = s:option(ListValue, option_name("shadowtls_version"), translate("Version"))
+o.default = "1"
+o:value("1", "ShadowTLS v1")
+o:value("2", "ShadowTLS v2")
+o:value("3", "ShadowTLS v3")
+o:depends({ [option_name("protocol")] = "shadowtls" })
+
 o = s:option(Value, option_name("username"), translate("Username"))
 o:depends({ [option_name("protocol")] = "http" })
 o:depends({ [option_name("protocol")] = "socks" })
@@ -197,6 +205,8 @@ o:depends({ [option_name("protocol")] = "socks" })
 o:depends({ [option_name("protocol")] = "shadowsocks" })
 o:depends({ [option_name("protocol")] = "shadowsocksr" })
 o:depends({ [option_name("protocol")] = "trojan" })
+o:depends({ [option_name("protocol")] = "shadowtls", [option_name("shadowtls_version")] = "2" })
+o:depends({ [option_name("protocol")] = "shadowtls", [option_name("shadowtls_version")] = "3" })
 
 o = s:option(ListValue, option_name("security"), translate("Encrypt Method"))
 for a, t in ipairs(security_list) do o:value(t) end
@@ -280,6 +290,7 @@ o:depends({ [option_name("protocol")] = "vless" })
 o:depends({ [option_name("protocol")] = "socks" })
 o:depends({ [option_name("protocol")] = "trojan" })
 o:depends({ [option_name("protocol")] = "shadowsocks" })
+o:depends({ [option_name("protocol")] = "shadowtls" })
 
 if singbox_tags:find("with_reality") then
 	o = s:option(Flag, option_name("reality"), translate("REALITY"))

@@ -262,6 +262,14 @@ function gen_outbound(flag, node, tag, proxy_table)
 			}
 		end
 
+		if node.protocol == "shadowtls" then
+			protocol_table = {
+				version = tonumber(node.shadowtls_version),
+				password = (node.shadowtls_version == "2" or node.shadowtls_version == "3") and node.password or nil,
+				tls = tls,
+			}
+		end
+
 		if protocol_table then
 			for key, value in pairs(protocol_table) do
 				result[key] = value
