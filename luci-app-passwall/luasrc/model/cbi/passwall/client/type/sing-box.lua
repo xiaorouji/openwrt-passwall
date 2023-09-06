@@ -67,6 +67,9 @@ o:value("trojan", "Trojan")
 if singbox_tags:find("with_wireguard") then
 	o:value("wireguard", "WireGuard")
 end
+if singbox_tags:find("with_quic") then
+	o:value("hysteria", "Hysteria")
+end
 o:value("shadowtls", "ShadowTLS")
 o:value("vless", "VLESS")
 o:value("_shunt", translate("Shunt"))
@@ -283,6 +286,42 @@ o:value("", translate("Disable"))
 o:value("xtls-rprx-vision")
 o:depends({ [option_name("protocol")] = "vless", [option_name("tls")] = true })
 
+if singbox_tags:find("with_quic") then
+	o = s:option(Value, option_name("hysteria_obfs"), translate("Obfs Password"))
+	o:depends({ [option_name("protocol")] = "hysteria" })
+
+	o = s:option(ListValue, option_name("hysteria_auth_type"), translate("Auth Type"))
+	o:value("disable", translate("Disable"))
+	o:value("string", translate("STRING"))
+	o:value("base64", translate("BASE64"))
+	o:depends({ [option_name("protocol")] = "hysteria" })
+
+	o = s:option(Value, option_name("hysteria_auth_password"), translate("Auth Password"))
+	o.password = true
+	o:depends({ [option_name("protocol")] = "hysteria", [option_name("hysteria_auth_type")] = "string"})
+	o:depends({ [option_name("protocol")] = "hysteria", [option_name("hysteria_auth_type")] = "base64"})
+
+	o = s:option(Value, option_name("hysteria_up_mbps"), translate("Max upload Mbps"))
+	o.default = "10"
+	o:depends({ [option_name("protocol")] = "hysteria" })
+
+	o = s:option(Value, option_name("hysteria_down_mbps"), translate("Max download Mbps"))
+	o.default = "50"
+	o:depends({ [option_name("protocol")] = "hysteria" })
+
+	o = s:option(Value, option_name("hysteria_recv_window_conn"), translate("QUIC stream receive window"))
+	o:depends({ [option_name("protocol")] = "hysteria" })
+
+	o = s:option(Value, option_name("hysteria_recv_window"), translate("QUIC connection receive window"))
+	o:depends({ [option_name("protocol")] = "hysteria" })
+
+	o = s:option(Flag, option_name("hysteria_disable_mtu_discovery"), translate("Disable MTU detection"))
+	o:depends({ [option_name("protocol")] = "hysteria" })
+
+	o = s:option(Value, option_name("hysteria_alpn"), translate("QUIC TLS ALPN"))
+	o:depends({ [option_name("protocol")] = "hysteria" })
+end
+
 o = s:option(Flag, option_name("tls"), translate("TLS"))
 o.default = 0
 o:depends({ [option_name("protocol")] = "vmess" })
@@ -315,10 +354,12 @@ o:depends({ [option_name("tls")] = true })
 
 o = s:option(Value, option_name("tls_serverName"), translate("Domain"))
 o:depends({ [option_name("tls")] = true })
+o:depends({ [option_name("protocol")] = "hysteria"})
 
 o = s:option(Flag, option_name("tls_allowInsecure"), translate("allowInsecure"), translate("Whether unsafe connections are allowed. When checked, Certificate validation will be skipped."))
 o.default = "0"
 o:depends({ [option_name("tls")] = true })
+o:depends({ [option_name("protocol")] = "hysteria"})
 
 if singbox_tags:find("with_utls") then
 	o = s:option(Flag, option_name("utls"), translate("uTLS"))

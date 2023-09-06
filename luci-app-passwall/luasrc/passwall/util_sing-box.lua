@@ -262,6 +262,29 @@ function gen_outbound(flag, node, tag, proxy_table)
 			}
 		end
 
+		if node.protocol == "hysteria" then
+			protocol_table = {
+				up = node.hysteria_up_mbps .. " Mbps",
+				down = node.hysteria_down_mbps .. " Mbps",
+				up_mbps = tonumber(node.hysteria_up_mbps),
+				down_mbps = tonumber(node.hysteria_down_mbps),
+				obfs = node.hysteria_obfs,
+				auth = (node.hysteria_auth_type == "base64") and node.hysteria_auth_password or nil,
+				auth_str = (node.hysteria_auth_type == "string") and node.hysteria_auth_password or nil,
+				recv_window_conn = tonumber(node.hysteria_recv_window_conn),
+				recv_window = tonumber(node.hysteria_recv_window),
+				disable_mtu_discovery = (node.hysteria_disable_mtu_discovery == "1") and true or false,
+				tls = {
+					enabled = true,
+					server_name = node.tls_serverName,
+					insecure = (node.tls_allowInsecure == "1") and true or false,
+					alpn = (node.hysteria_alpn and node.hysteria_alpn ~= "") and {
+						node.hysteria_alpn
+					} or nil
+				}
+			}
+		end
+
 		if node.protocol == "shadowtls" then
 			protocol_table = {
 				version = tonumber(node.shadowtls_version),
