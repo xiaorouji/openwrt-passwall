@@ -55,6 +55,7 @@ _M.singbox = {
 	get_url = gh_pre_release_url,
 	cmd_version = "version | awk '{print $3}' | sed -n 1P",
 	zipped = true,
+	zipped_suffix = "tar.gz",
 	default_path = "/usr/bin/sing-box",
 	match_fmt_str = "linux%%-%s",
 	file_tree = {

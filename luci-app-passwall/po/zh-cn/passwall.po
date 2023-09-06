@@ -1372,8 +1372,8 @@ msgstr "无"
 msgid "You did not fill in the %s path. Please save and apply then update manually."
 msgstr "您没有填写 %s 路径。请保存应用后再手动更新。"
 
-msgid "Not installed unzip, Can't unzip!"
-msgstr "未安装unzip，无法解压。"
+msgid "Not installed %s, Can't unzip!"
+msgstr "未安装 %s，无法解压！"
 
 msgid "Can't determine ARCH, or ARCH not supported."
 msgstr "无法确认ARCH架构，或是不支持。"
