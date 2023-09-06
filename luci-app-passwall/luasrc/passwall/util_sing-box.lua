@@ -293,6 +293,19 @@ function gen_outbound(flag, node, tag, proxy_table)
 			}
 		end
 
+		if node.protocol == "tuic" then
+			protocol_table = {
+				uuid = node.uuid,
+				password = node.password,
+				congestion_control = node.tuic_congestion_control or "cubic",
+				udp_relay_mode = node.tuic_udp_relay_mode or "native",
+				udp_over_stream = false,
+				zero_rtt_handshake = (node.tuic_zero_rtt_handshake == "1") and true or false,
+				heartbeat = tonumber(node.tuic_heartbeat),
+				tls = tls,
+			}
+		end
+
 		if protocol_table then
 			for key, value in pairs(protocol_table) do
 				result[key] = value

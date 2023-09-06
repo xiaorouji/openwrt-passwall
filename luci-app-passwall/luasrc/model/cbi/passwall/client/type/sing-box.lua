@@ -72,6 +72,9 @@ if singbox_tags:find("with_quic") then
 end
 o:value("shadowtls", "ShadowTLS")
 o:value("vless", "VLESS")
+if singbox_tags:find("with_quic") then
+	o:value("tuic", "TUIC")
+end
 o:value("_shunt", translate("Shunt"))
 o:value("_iface", translate("Custom Interface") .. " (Only Support Xray)")
 
@@ -210,6 +213,7 @@ o:depends({ [option_name("protocol")] = "shadowsocksr" })
 o:depends({ [option_name("protocol")] = "trojan" })
 o:depends({ [option_name("protocol")] = "shadowtls", [option_name("shadowtls_version")] = "2" })
 o:depends({ [option_name("protocol")] = "shadowtls", [option_name("shadowtls_version")] = "3" })
+o:depends({ [option_name("protocol")] = "tuic" })
 
 o = s:option(ListValue, option_name("security"), translate("Encrypt Method"))
 for a, t in ipairs(security_list) do o:value(t) end
@@ -279,6 +283,7 @@ o = s:option(Value, option_name("uuid"), translate("ID"))
 o.password = true
 o:depends({ [option_name("protocol")] = "vmess" })
 o:depends({ [option_name("protocol")] = "vless" })
+o:depends({ [option_name("protocol")] = "tuic" })
 
 o = s:option(ListValue, option_name("flow"), translate("flow"))
 o.default = ""
@@ -322,6 +327,35 @@ if singbox_tags:find("with_quic") then
 	o:depends({ [option_name("protocol")] = "hysteria" })
 end
 
+if singbox_tags:find("with_quic") then
+	o = s:option(ListValue, option_name("tuic_congestion_control"), translate("Congestion control algorithm"))
+	o.default = "cubic"
+	o:value("bbr", translate("BBR"))
+	o:value("cubic", translate("CUBIC"))
+	o:value("new_reno", translate("New Reno"))
+	o:depends({ [option_name("protocol")] = "tuic" })
+
+	o = s:option(ListValue, option_name("tuic_udp_relay_mode"), translate("UDP relay mode"))
+	o.default = "native"
+	o:value("native", translate("native"))
+	o:value("quic", translate("QUIC"))
+	o:depends({ [option_name("protocol")] = "tuic" })
+
+	--[[
+	o = s:option(Flag, option_name("tuic_udp_over_stream"), translate("UDP over stream"))
+	o:depends({ [option_name("protocol")] = "tuic" })
+	]]--
+
+	o = s:option(Flag, option_name("tuic_zero_rtt_handshake"), translate("Enable 0-RTT QUIC handshake"))
+	o.default = 0
+	o:depends({ [option_name("protocol")] = "tuic" })
+
+	o = s:option(Value, option_name("tuic_heartbeat"), translate("Heartbeat interval(second)"))
+	o.datatype = "uinteger"
+	o.default = "3"
+	o:depends({ [option_name("protocol")] = "tuic" })
+end
+
 o = s:option(Flag, option_name("tls"), translate("TLS"))
 o.default = 0
 o:depends({ [option_name("protocol")] = "vmess" })
@@ -355,11 +389,13 @@ o:depends({ [option_name("tls")] = true })
 o = s:option(Value, option_name("tls_serverName"), translate("Domain"))
 o:depends({ [option_name("tls")] = true })
 o:depends({ [option_name("protocol")] = "hysteria"})
+o:depends({ [option_name("protocol")] = "tuic" })
 
 o = s:option(Flag, option_name("tls_allowInsecure"), translate("allowInsecure"), translate("Whether unsafe connections are allowed. When checked, Certificate validation will be skipped."))
 o.default = "0"
 o:depends({ [option_name("tls")] = true })
 o:depends({ [option_name("protocol")] = "hysteria"})
+o:depends({ [option_name("protocol")] = "tuic" })
 
 if singbox_tags:find("with_utls") then
 	o = s:option(Flag, option_name("utls"), translate("uTLS"))
