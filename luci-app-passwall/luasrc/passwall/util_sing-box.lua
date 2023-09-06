@@ -642,7 +642,8 @@ function gen_config(var)
 	local logfile = var["-logfile"] or "/dev/null"
 	local node_id = var["-node"]
 	local tcp_proxy_way = var["-tcp_proxy_way"]
-	local redir_port = var["-redir_port"]
+	local tcp_redir_port = var["-tcp_redir_port"]
+	local udp_redir_port = var["-udp_redir_port"]
 	local local_socks_address = var["-local_socks_address"] or "0.0.0.0"
 	local local_socks_port = var["-local_socks_port"]
 	local local_socks_username = var["-local_socks_username"]
@@ -734,31 +735,42 @@ function gen_config(var)
 		table.insert(inbounds, inbound)
 	end
 
-	if redir_port then
-		local inbound_tproxy = {
-			type = "tproxy",
-			tag = "tproxy",
-			listen = "::",
-			listen_port = tonumber(redir_port),
-			sniff = true,
-			sniff_override_destination = (singbox_settings.sniff_override_destination == "1") and true or false
-		}
+	if tcp_redir_port then
 		if tcp_proxy_way ~= "tproxy" then
 			local inbound = {
 				type = "redirect",
 				tag = "redirect_tcp",
 				listen = "::",
-				listen_port = tonumber(redir_port),
+				listen_port = tonumber(tcp_redir_port),
 				sniff = true,
 				sniff_override_destination = (singbox_settings.sniff_override_destination == "1") and true or false,
 			}
 			table.insert(inbounds, inbound)
-
-			inbound_tproxy.tag = "tproxy_udp"
-			inbound_tproxy.network = "udp"
+		else
+			local inbound = {
+				type = "tproxy",
+				tag = "tproxy_tcp",
+				network = "tcp",
+				listen = "::",
+				listen_port = tonumber(tcp_redir_port),
+				sniff = true,
+				sniff_override_destination = (singbox_settings.sniff_override_destination == "1") and true or false,
+			}
+			table.insert(inbounds, inbound)
 		end
+	end
 
-		table.insert(inbounds, inbound_tproxy)
+	if udp_redir_port then
+		local inbound = {
+			type = "tproxy",
+			tag = "tproxy_udp",
+			network = "udp",
+			listen = "::",
+			listen_port = tonumber(udp_redir_port),
+			sniff = true,
+			sniff_override_destination = (singbox_settings.sniff_override_destination == "1") and true or false,
+		}
+		table.insert(inbounds, inbound)
 	end
 	
 	local dns_outTag = nil
@@ -1240,7 +1252,7 @@ function gen_config(var)
 		})
 	
 		local default_dns_flag = "remote"
-		if node_id and redir_port then
+		if node_id and (tcp_redir_port or udp_redir_port) then
 			local node = uci:get_all(appname, node_id)
 			if node.protocol == "_shunt" then
 				if node.default_node == "_direct" then
