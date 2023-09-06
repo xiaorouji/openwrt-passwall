@@ -559,7 +559,7 @@ local function processData(szType, content, add_mode, add_from)
 				end
 			end
 			local aead2022 = false
-			for k, v in ipairs({"2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha8-poly1305", "2022-blake3-chacha20-poly1305"}) do
+			for k, v in ipairs({"2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305"}) do
 				if method:lower() == v:lower() then
 					aead2022 = true
 				end
