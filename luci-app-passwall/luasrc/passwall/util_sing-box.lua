@@ -261,107 +261,167 @@ function gen_outbound(flag, node, tag, proxy_table)
 end
 
 function gen_config_server(node)
-	local settings = nil
-	local routing = nil
 	local outbounds = {
-		{protocol = "freedom", tag = "direct"}, {protocol = "block", tag = "block"}
+		{ type = "direct", tag = "direct" },
+		{ type = "block", tag = "block" }
 	}
 
-	if node.protocol == "vmess" or node.protocol == "vless" then
-		if node.uuid then
-			local clients = {}
-			for i = 1, #node.uuid do
-				clients[i] = {
-					id = node.uuid[i],
-					flow = ("vless" == node.protocol and "1" == node.tls and node.tlsflow) and node.tlsflow or nil
-				}
-			end
-			settings = {
-				clients = clients,
-				decryption = node.decryption or "none"
-			}
-		end
-	elseif node.protocol == "socks" then
-		settings = {
-			udp = ("1" == node.udp_forward) and true or false,
-			auth = ("1" == node.auth) and "password" or "noauth",
-			accounts = ("1" == node.auth) and {
+	local tls = nil
+
+	if node.tls == "1" then
+		tls = {
+			enabled = true,
+			certificate_path = node.tls_certificateFile,
+			key_path = node.tls_keyFile,
+		}
+	end
+
+	local v2ray_transport = nil
+
+	if node.transport == "http" then
+		v2ray_transport = {
+			type = "http",
+			host = node.http_host,
+			path = node.http_path or "/",
+		}
+	end
+
+	if node.transport == "ws" then
+		v2ray_transport = {
+			type = "ws",
+			path = node.ws_path or "/",
+			headers = (node.ws_host ~= nil) and { Host = node.ws_host } or nil,
+			early_data_header_name = (node.ws_earlyDataHeaderName) and node.ws_earlyDataHeaderName or nil --要与 Xray-core 兼容，请将其设置为 Sec-WebSocket-Protocol。它需要与服务器保持一致。
+		}
+	end
+
+	if node.transport == "quic" then
+		v2ray_transport = {
+			type = "quic"
+		}
+		--没有额外的加密支持： 它基本上是重复加密。 并且 Xray-core 在这里与 v2ray-core 不兼容。
+	end
+
+	if node.transport == "grpc" then
+		v2ray_transport = {
+			type = "grpc",
+			serviceName = node.grpc_serviceName,
+		}
+	end
+
+	local inbound = {
+		type = node.protocol,
+		tag = "inbound",
+		listen = (node.bind_local == "1") and "127.0.0.1" or "::",
+		listen_port = tonumber(node.port),
+	}
+
+	local protocol_table = nil
+
+	if node.protocol == "socks" then
+		protocol_table = {
+			users = (node.auth == "1") and {
 				{
-					user = node.username,
-					pass = node.password
+					username = node.username,
+					password = node.password
 				}
 			} or nil
 		}
-	elseif node.protocol == "http" then
-		settings = {
-			allowTransparent = false,
-			accounts = ("1" == node.auth) and {
+	end
+
+	if node.protocol == "http" then
+		protocol_table = {
+			users = (node.auth == "1") and {
 				{
-					user = node.username,
-					pass = node.password
+					username = node.username,
+					password = node.password
 				}
-			} or nil
+			} or nil,
+			tls = tls,
 		}
-		node.transport = "tcp"
-		node.tcp_guise = "none"
-	elseif node.protocol == "shadowsocks" then
-		settings = {
+	end
+
+	if node.protocol == "shadowsocks" then
+		protocol_table = {
 			method = node.method,
 			password = node.password,
-			ivCheck = ("1" == node.iv_check) and true or false,
-			network = node.ss_network or "TCP,UDP"
 		}
-	elseif node.protocol == "trojan" then
+	end
+
+	if node.protocol == "vmess" then
 		if node.uuid then
-			local clients = {}
+			local users = {}
 			for i = 1, #node.uuid do
-				clients[i] = {
-					password = node.uuid[i]
+				users[i] = {
+					name = node.uuid[i],
+					uuid = node.uuid[i],
+					alterId = 0,
 				}
 			end
-			settings = {
-				clients = clients
+			protocol_table = {
+				users = users,
+				tls = tls,
+				transport = v2ray_transport,
 			}
 		end
-	elseif node.protocol == "dokodemo-door" then
-		settings = {
-			network = node.d_protocol,
-			address = node.d_address,
-			port = tonumber(node.d_port)
+	end
+
+	if node.protocol == "vless" then
+		if node.uuid then
+			local users = {}
+			for i = 1, #node.uuid do
+				users[i] = {
+					name = node.uuid[i],
+					uuid = node.uuid[i],
+					flow = node.flow,
+				}
+			end
+			protocol_table = {
+				users = users,
+				tls = tls,
+				transport = v2ray_transport,
+			}
+		end
+	end
+
+	if node.protocol == "trojan" then
+		if node.uuid then
+			local users = {}
+			for i = 1, #node.uuid do
+				users[i] = {
+					name = node.uuid[i],
+					uuid = node.uuid[i],
+				}
+			end
+			protocol_table = {
+				users = users,
+				tls = tls,
+				fallback = nil,
+				fallback_for_alpn = nil,
+				transport = v2ray_transport,
+			}
+		end
+	end
+
+	if node.protocol == "direct" then
+		protocol_table = {
+			network = (node.d_protocol ~= "TCP,UDP") and node.d_protocol or nil,
+			override_address = node.d_address,
+			override_port = tonumber(node.d_port)
 		}
 	end
 
-	if node.fallback and node.fallback == "1" then
-		local fallbacks = {}
-		for i = 1, #node.fallback_list do
-			local fallbackStr = node.fallback_list[i]
-			if fallbackStr then
-				local tmp = {}
-				string.gsub(fallbackStr, '[^' .. "," .. ']+', function(w)
-					table.insert(tmp, w)
-				end)
-				local dest = tmp[1] or ""
-				local path = tmp[2]
-				if dest:find("%.") then
-				else
-					dest = tonumber(dest)
-				end
-				fallbacks[i] = {
-					path = path,
-					dest = dest,
-					xver = 1
-				}
-			end
+	if protocol_table then
+		for key, value in pairs(protocol_table) do
+			inbound[key] = value
 		end
-		settings.fallbacks = fallbacks
 	end
 
-	routing = {
+	local route = {
 		rules = {
 			{
-				type = "field",
-				ip = {"10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"},
-				outboundTag = (node.accept_lan == nil or node.accept_lan == "0") and "block" or "direct"
+				ip_cidr = { "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16" },
+				outbound = (node.accept_lan == nil or node.accept_lan == "0") and "block" or "direct"
 			}
 		}
 	}
@@ -370,14 +430,10 @@ function gen_config_server(node)
 		local outbound = nil
 		if node.outbound_node == "_iface" and node.outbound_node_iface then
 			outbound = {
-				protocol = "freedom",
+				type = "direct",
 				tag = "outbound",
-				streamSettings = {
-					sockopt = {
-						mark = 255,
-						interface = node.outbound_node_iface
-					}
-				}
+				bind_interface = node.outbound_node_iface,
+				routing_mark = 255,
 			}
 			sys.call("mkdir -p /tmp/etc/passwall/iface && touch /tmp/etc/passwall/iface/" .. node.outbound_node_iface)
 		else
@@ -386,9 +442,8 @@ function gen_config_server(node)
 				outbound_node_t = {
 					type = node.type,
 					protocol = node.outbound_node:gsub("_", ""),
-					transport = "tcp",
 					address = node.outbound_node_address,
-					port = node.outbound_node_port,
+					port = tonumber(node.outbound_node_port),
 					username = (node.outbound_node_username and node.outbound_node_username ~= "") and node.outbound_node_username or nil,
 					password = (node.outbound_node_password and node.outbound_node_password ~= "") and node.outbound_node_password or nil,
 				}
@@ -396,97 +451,29 @@ function gen_config_server(node)
 			outbound = require("luci.passwall.util_sing-box").gen_outbound(nil, outbound_node_t, "outbound")
 		end
 		if outbound then
+			route.final = "outbound"
 			table.insert(outbounds, 1, outbound)
 		end
 	end
 
 	local config = {
 		log = {
-			loglevel = ("1" == node.log) and node.loglevel or "none"
+			disabled = (not node or node.log == "0") and true or false,
+			level = node.loglevel or "info",
+			timestamp = true,
+			--output = logfile,
 		},
-		-- 传入连接
-		inbounds = {
-			{
-				listen = (node.bind_local == "1") and "127.0.0.1" or nil,
-				port = tonumber(node.port),
-				protocol = node.protocol,
-				settings = settings,
-				streamSettings = {
-					network = node.transport,
-					security = "none",
-					tlsSettings = ("1" == node.tls) and {
-						disableSystemRoot = false,
-						certificates = {
-							{
-								certificateFile = node.tls_certificateFile,
-								keyFile = node.tls_keyFile
-							}
-						}
-					} or nil,
-					tcpSettings = (node.transport == "tcp") and {
-						acceptProxyProtocol = (node.acceptProxyProtocol and node.acceptProxyProtocol == "1") and true or false,
-						header = {
-							type = node.tcp_guise,
-							request = (node.tcp_guise == "http") and {
-								path = node.tcp_guise_http_path or {"/"},
-								headers = {
-									Host = node.tcp_guise_http_host or {}
-								}
-							} or nil
-						}
-					} or nil,
-					kcpSettings = (node.transport == "mkcp") and {
-						mtu = tonumber(node.mkcp_mtu),
-						tti = tonumber(node.mkcp_tti),
-						uplinkCapacity = tonumber(node.mkcp_uplinkCapacity),
-						downlinkCapacity = tonumber(node.mkcp_downlinkCapacity),
-						congestion = (node.mkcp_congestion == "1") and true or false,
-						readBufferSize = tonumber(node.mkcp_readBufferSize),
-						writeBufferSize = tonumber(node.mkcp_writeBufferSize),
-						seed = (node.mkcp_seed and node.mkcp_seed ~= "") and node.mkcp_seed or nil,
-						header = {type = node.mkcp_guise}
-					} or nil,
-					wsSettings = (node.transport == "ws") and {
-						acceptProxyProtocol = (node.acceptProxyProtocol and node.acceptProxyProtocol == "1") and true or false,
-						headers = (node.ws_host) and {Host = node.ws_host} or nil,
-						path = node.ws_path
-					} or nil,
-					httpSettings = (node.transport == "h2") and {
-						path = node.h2_path, host = node.h2_host
-					} or nil,
-					dsSettings = (node.transport == "ds") and {
-						path = node.ds_path
-					} or nil,
-					quicSettings = (node.transport == "quic") and {
-						security = node.quic_security,
-						key = node.quic_key,
-						header = {type = node.quic_guise}
-					} or nil,
-					grpcSettings = (node.transport == "grpc") and {
-						serviceName = node.grpc_serviceName
-					} or nil
-				}
-			}
-		},
-		-- 传出连接
+		inbounds = { inbound },
 		outbounds = outbounds,
-		routing = routing
+		route = route
 	}
 
-	local alpn = {}
-	if node.alpn then
-		string.gsub(node.alpn, '[^' .. "," .. ']+', function(w)
-			table.insert(alpn, w)
-		end)
-	end
-	if alpn and #alpn > 0 then
-		if config.inbounds[1].streamSettings.tlsSettings then
-			config.inbounds[1].streamSettings.tlsSettings.alpn = alpn
+	for index, value in ipairs(config.outbounds) do
+		for k, v in pairs(config.outbounds[index]) do
+			if k:find("_") == 1 then
+				config.outbounds[index][k] = nil
+			end
 		end
-	end
-
-	if "1" == node.tls then
-		config.inbounds[1].streamSettings.security = "tls"
 	end
 
 	return config
