@@ -19,21 +19,33 @@ local function option_name(name)
 end
 
 local function rm_prefix_cfgvalue(self, section)
-	if self.option:find(option_prefix) == 1 then
-		return m:get(section, self.option:sub(1 + #option_prefix))
+	if self.rewrite_option then
+		return m:get(section, self.rewrite_option)
+	else
+		if self.option:find(option_prefix) == 1 then
+			return m:get(section, self.option:sub(1 + #option_prefix))
+		end
 	end
 end
 local function rm_prefix_write(self, section, value)
 	if s.fields["type"]:formvalue(arg[1]) == type_name then
-		if self.option:find(option_prefix) == 1 then
-			m:set(section, self.option:sub(1 + #option_prefix), value)
+		if self.rewrite_option then
+			m:set(section, self.rewrite_option, value)
+		else
+			if self.option:find(option_prefix) == 1 then
+				m:set(section, self.option:sub(1 + #option_prefix), value)
+			end
 		end
 	end
 end
-local function rm_prefix_remove(self, section, value)
+local function rm_prefix_remove(self, section)
 	if s.fields["type"]:formvalue(arg[1]) == type_name then
-		if self.option:find(option_prefix) == 1 then
-			m:del(section, self.option:sub(1 + #option_prefix))
+		if self.rewrite_option then
+			m:del(section, self.rewrite_option)
+		else
+			if self.option:find(option_prefix) == 1 then
+				m:del(section, self.option:sub(1 + #option_prefix))
+			end
 		end
 	end
 end
@@ -196,17 +208,9 @@ o.default = "none"
 o:depends({ [option_name("protocol")] = "vless" })
 
 o = s:option(ListValue, option_name("ss_method"), translate("Encrypt Method"))
-o.not_rewrite = true
+o.rewrite_option = "method"
 for a, t in ipairs(ss_method_list) do o:value(t) end
 o:depends({ [option_name("protocol")] = "shadowsocks" })
-function o.cfgvalue(self, section)
-	return m:get(section, "method")
-end
-function o.write(self, section, value)
-	if s.fields["type"]:formvalue(arg[1]) == type_name then
-		m:set(section, "method", value)
-	end
-end
 
 o = s:option(DynamicList, option_name("uuid"), translate("ID") .. "/" .. translate("Password"))
 for i = 1, 3 do

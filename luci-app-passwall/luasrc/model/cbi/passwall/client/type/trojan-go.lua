@@ -15,21 +15,33 @@ local function option_name(name)
 end
 
 local function rm_prefix_cfgvalue(self, section)
-	if self.option:find(option_prefix) == 1 then
-		return m:get(section, self.option:sub(1 + #option_prefix))
+	if self.rewrite_option then
+		return m:get(section, self.rewrite_option)
+	else
+		if self.option:find(option_prefix) == 1 then
+			return m:get(section, self.option:sub(1 + #option_prefix))
+		end
 	end
 end
 local function rm_prefix_write(self, section, value)
 	if s.fields["type"]:formvalue(arg[1]) == type_name then
-		if self.option:find(option_prefix) == 1 then
-			m:set(section, self.option:sub(1 + #option_prefix), value)
+		if self.rewrite_option then
+			m:set(section, self.rewrite_option, value)
+		else
+			if self.option:find(option_prefix) == 1 then
+				m:set(section, self.option:sub(1 + #option_prefix), value)
+			end
 		end
 	end
 end
-local function rm_prefix_remove(self, section, value)
+local function rm_prefix_remove(self, section)
 	if s.fields["type"]:formvalue(arg[1]) == type_name then
-		if self.option:find(option_prefix) == 1 then
-			m:del(section, self.option:sub(1 + #option_prefix))
+		if self.rewrite_option then
+			m:del(section, self.rewrite_option)
+		else
+			if self.option:find(option_prefix) == 1 then
+				m:del(section, self.option:sub(1 + #option_prefix))
+			end
 		end
 	end
 end
@@ -82,15 +94,7 @@ o = s:option(ListValue, option_name("transport"), translate("Transport"))
 o:value("original", translate("Original"))
 o:value("ws", "WebSocket")
 o.default = "original"
-o.not_rewrite = true
-function o.cfgvalue(self, section)
-	return m:get(section, "trojan_transport")
-end
-function o.write(self, section, value)
-	if s.fields["type"]:formvalue(arg[1]) == type_name then
-		m:set(section, "trojan_transport", value)
-	end
-end
+o.rewrite_option = "trojan_transport"
 
 o = s:option(ListValue, option_name("plugin_type"), translate("Transport Plugin"))
 o:value("plaintext", "Plain Text")
