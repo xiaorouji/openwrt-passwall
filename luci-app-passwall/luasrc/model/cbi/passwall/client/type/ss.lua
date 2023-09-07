@@ -14,38 +14,6 @@ local function option_name(name)
 	return option_prefix .. name
 end
 
-local function rm_prefix_cfgvalue(self, section)
-	if self.rewrite_option then
-		return m:get(section, self.rewrite_option)
-	else
-		if self.option:find(option_prefix) == 1 then
-			return m:get(section, self.option:sub(1 + #option_prefix))
-		end
-	end
-end
-local function rm_prefix_write(self, section, value)
-	if s.fields["type"]:formvalue(arg[1]) == type_name then
-		if self.rewrite_option then
-			m:set(section, self.rewrite_option, value)
-		else
-			if self.option:find(option_prefix) == 1 then
-				m:set(section, self.option:sub(1 + #option_prefix), value)
-			end
-		end
-	end
-end
-local function rm_prefix_remove(self, section)
-	if s.fields["type"]:formvalue(arg[1]) == type_name then
-		if self.rewrite_option then
-			m:del(section, self.rewrite_option)
-		else
-			if self.option:find(option_prefix) == 1 then
-				m:del(section, self.option:sub(1 + #option_prefix))
-			end
-		end
-	end
-end
-
 local ss_encrypt_method_list = {
 	"rc4-md5", "aes-128-cfb", "aes-192-cfb", "aes-256-cfb", "aes-128-ctr",
 	"aes-192-ctr", "aes-256-ctr", "bf-cfb", "salsa20", "chacha20", "chacha20-ietf",
@@ -87,21 +55,4 @@ o:depends({ [option_name("plugin")] = "xray-plugin"})
 o:depends({ [option_name("plugin")] = "v2ray-plugin"})
 o:depends({ [option_name("plugin")] = "obfs-local"})
 
-for key, value in pairs(s.fields) do
-	if key:find(option_prefix) == 1 then
-		if not s.fields[key].not_rewrite then
-			s.fields[key].cfgvalue = rm_prefix_cfgvalue
-			s.fields[key].write = rm_prefix_write
-			s.fields[key].remove = rm_prefix_remove
-		end
-
-		local deps = s.fields[key].deps
-		if #deps > 0 then
-			for index, value in ipairs(deps) do
-				deps[index]["type"] = type_name
-			end
-		else
-			s.fields[key]:depends({ type = type_name })
-		end
-	end
-end
+api.luci_types(arg[1], m, s, type_name, option_prefix)
