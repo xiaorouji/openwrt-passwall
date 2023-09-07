@@ -3,10 +3,19 @@
 CONFIG=passwall
 LOG_FILE=/tmp/log/$CONFIG.log
 
+get_system_lang(){
+	local lang=$(grep "option lang" /etc/config/luci | awk -F"'" '{print $2}')
+	return "$lang"
+}
+
 echolog() {
 	local d="$(date "+%Y-%m-%d %H:%M:%S")"
-	#echo -e "$d: $1"
-	echo -e "$d: $1" >> $LOG_FILE
+	system_lang=$(get_system_lang)
+	if [ "$system_lang" == "zh_cn" ]; then
+    	echo -e "$d: $1" >>$LOG_FILE
+	else
+		echo -e "$d: $2" >>$LOG_FILE
+	fi
 }
 
 config_n_get() {

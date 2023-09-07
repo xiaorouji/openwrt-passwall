@@ -50,7 +50,7 @@ logic_restart() {
 	else
 		/etc/init.d/dnsmasq restart >/dev/null 2>&1
 	fi
-	echolog "重启 dnsmasq 服务"
+	echolog "重启 dnsmasq 服务" "Restart dnsmasq service"
 	LOG_FILE=${_LOG_FILE}
 }
 
@@ -60,7 +60,7 @@ restart() {
 	_LOG_FILE=$LOG_FILE
 	[ -n "$no_log" ] && LOG_FILE="/dev/null"
 	/etc/init.d/dnsmasq restart >/dev/null 2>&1
-	echolog "重启 dnsmasq 服务"
+	echolog "重启 dnsmasq 服务" "Restart dnsmasq service"
 	LOG_FILE=${_LOG_FILE}
 }
 

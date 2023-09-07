@@ -93,7 +93,7 @@ test_auto_switch() {
 
 	status=$(test_proxy)
 	if [ "$status" == 2 ]; then
-		echolog "自动切换检测：无法连接到网络，请检查网络是否正常！"
+		echolog "自动切换检测：无法连接到网络，请检查网络是否正常！" "Auto switch detection: Unable to connect to the network, please check whether the network is normal!"
 		return 2
 	fi
 	
@@ -102,10 +102,10 @@ test_auto_switch() {
 		test_node ${main_node}
 		[ $? -eq 0 ] && {
 			#主节点正常，切换到主节点
-			echolog "自动切换检测：${id}主节点【$(config_n_get $main_node type)：[$(config_n_get $main_node remarks)]】正常，切换到主节点！"
+			echolog "自动切换检测：${id}主节点【$(config_n_get $main_node type)：[$(config_n_get $main_node remarks)]】正常，切换到主节点！" "Auto switch detection: ${id} main node [$(config_n_get $main_node type): [$(config_n_get $main_node remarks)]] is normal, switch to the main node!"
 			/usr/share/${CONFIG}/app.sh socks_node_switch flag=${id} new_node=${main_node}
 			[ $? -eq 0 ] && {
-				echolog "自动切换检测：${id}节点切换完毕！"
+				echolog "自动切换检测：${id}节点切换完毕！" "Auto switch detection: ${id} node switch completed!"
 			}
 			return 0
 		}
@@ -115,7 +115,7 @@ test_auto_switch() {
 		#echolog "自动切换检测：${id}【$(config_n_get $now_node type)：[$(config_n_get $now_node remarks)]】正常。"
 		return 0
 	elif [ "$status" == 1 ]; then
-		echolog "自动切换检测：${id}【$(config_n_get $now_node type)：[$(config_n_get $now_node remarks)]】异常，切换到下一个备用节点检测！"
+		echolog "自动切换检测：${id}【$(config_n_get $now_node type)：[$(config_n_get $now_node remarks)]】异常，切换到下一个备用节点检测！" "Automatic switching detection: ${id}【$(config_n_get $now_node type):[$(config_n_get $now_node remarks)]】abnormal, switch to the next standby node detection!"
 		local new_node
 		in_backup_nodes=$(echo $b_nodes | grep $now_node)
 		# 判断当前节点是否存在于备用节点列表里
@@ -139,10 +139,10 @@ test_auto_switch() {
 				[ -z "$(echo $b_nodes | grep $main_node)" ] && uci add_list $CONFIG.${id}.autoswitch_backup_node=$main_node
 				uci commit $CONFIG
 			}
-			echolog "自动切换检测：${id}【$(config_n_get $new_node type)：[$(config_n_get $new_node remarks)]】正常，切换到此节点！"
+			echolog "自动切换检测：${id}【$(config_n_get $new_node type)：[$(config_n_get $new_node remarks)]】正常，切换到此节点！" "Auto switch detection: ${id}【$(config_n_get $new_node type):[$(config_n_get $new_node remarks)]】OK, switch to this node!"
 			/usr/share/${CONFIG}/app.sh socks_node_switch flag=${id} new_node=${new_node}
 			[ $? -eq 0 ] && {
-				echolog "自动切换检测：${id}节点切换完毕！"
+				echolog "自动切换检测：${id}节点切换完毕！" "Auto switch detection: ${id} node switch completed!"
 			}
 			return 0
 		else
