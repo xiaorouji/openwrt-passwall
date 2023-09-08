@@ -1135,6 +1135,7 @@ function gen_config(var)
 				tag = dns_tag,
 				address_strategy = "prefer_ipv4",
 				strategy = remote_strategy,
+				address_resolver = "direct",
 				detour = dns_outTag,
 			}
 	
@@ -1153,7 +1154,9 @@ function gen_config(var)
 				server.address = remote_dns_doh_url
 			end
 	
-			table.insert(dns.servers, server)
+			if server.address then
+				table.insert(dns.servers, server)
+			end
 	
 			if remote_dns_fake then
 				dns.fakeip = {
@@ -1161,14 +1164,20 @@ function gen_config(var)
 					inet4_range = "198.18.0.0/16",
 					inet6_range = "fc00::/18",
 				}
-	
+
+				local fakedns_tag = dns_tag .. "_fakeip"
+				
+				if not server.address then
+					fakedns_tag = dns_tag
+				end
+				
 				table.insert(dns.servers, {
-					tag = dns_tag .. "_fakeip",
+					tag = fakedns_tag,
 					address = "fakeip",
 					strategy = remote_strategy,
 				})
 	
-				rule_server = dns_tag .. "_fakeip"
+				rule_server = fakedns_tag
 
 				if tags and tags:find("with_clash_api") then
 					if not experimental then
