@@ -357,6 +357,9 @@ if singbox_tags:find("with_quic") then
 	o.datatype = "uinteger"
 	o.default = "3"
 	o:depends({ [option_name("protocol")] = "tuic" })
+
+	o = s:option(Value, option_name("tuic_alpn"), translate("QUIC TLS ALPN"))
+	o:depends({ [option_name("protocol")] = "tuic" })
 end
 
 if singbox_tags:find("with_quic") then
