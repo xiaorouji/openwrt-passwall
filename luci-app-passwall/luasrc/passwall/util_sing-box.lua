@@ -306,6 +306,9 @@ function gen_outbound(flag, node, tag, proxy_table)
 					enabled = true,
 					server_name = node.tls_serverName,
 					insecure = (node.tls_allowInsecure == "1") and true or false,
+					alpn = (node.tuic_alpn and node.tuic_alpn ~= "") and {
+						node.tuic_alpn
+					} or nil,
 				},
 			}
 		end
@@ -548,6 +551,9 @@ function gen_config_server(node)
 				enabled = true,
 				certificate_path = node.tls_certificateFile,
 				key_path = node.tls_keyFile,
+				alpn = (node.tuic_alpn and node.tuic_alpn ~= "") and {
+					node.tuic_alpn
+				} or nil,
 			},
 		}
 	end
