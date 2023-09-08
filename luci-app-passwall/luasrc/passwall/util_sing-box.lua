@@ -301,7 +301,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 				udp_relay_mode = node.tuic_udp_relay_mode or "native",
 				udp_over_stream = false,
 				zero_rtt_handshake = (node.tuic_zero_rtt_handshake == "1") and true or false,
-				heartbeat = tonumber(node.tuic_heartbeat),
+				heartbeat = node.tuic_heartbeat .. "s",
 				tls = {
 					enabled = true,
 					server_name = node.tls_serverName,
