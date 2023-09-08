@@ -228,7 +228,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 		if node.protocol == "vless" then
 			protocol_table = {
 				uuid = node.uuid,
-				flow = (node.tls == '1' and node.tlsflow) and node.tlsflow or nil,
+				flow = (node.tls == '1' and node.flow) and node.flow or nil,
 				tls = tls,
 				packet_encoding = "xudp", --UDP 包编码。(空)：禁用	packetaddr：由 v2ray 5+ 支持	xudp：由 xray 支持
 				transport = v2ray_transport,
