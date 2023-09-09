@@ -722,7 +722,8 @@ local function processData(szType, content, add_mode, add_from)
 	elseif szType == "vless" then
 		if has_singbox then
 			result.type = 'sing-box'
-		elseif has_xray then
+		end
+		if has_xray then
 			result.type = 'Xray'
 		end
 		result.protocol = "vless"

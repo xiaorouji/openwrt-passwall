@@ -1,10 +1,11 @@
 <%+cbi/valueheader%>
 <%
 local api = require "luci.passwall.api"
-local has_singbox = api.finded_com("singbox")
-local has_xray = api.finded_com("xray")
 -%>
 <script type="text/javascript">//<![CDATA[
+	let has_singbox = "<%=api.finded_com("singbox")%>"
+	let has_xray = "<%=api.finded_com("xray")%>"
+
 	function padright(str, cnt, pad) {
 		return str + Array(cnt + 1).join(pad);
 	}
@@ -248,7 +249,7 @@ local has_xray = api.finded_com("xray")
 			info.port = opt.get(dom_prefix + "port").value;
 			info.id = opt.get(dom_prefix + "uuid").value;
 
-			var v_transport = opt.get("transport").value;
+			var v_transport = opt.get(dom_prefix + "transport").value;
 			if (v_transport === "ws") {
 				info.host = opt.get(dom_prefix + "ws_host").value;
 				info.path = opt.get(dom_prefix + "ws_path").value;
@@ -256,27 +257,27 @@ local has_xray = api.finded_com("xray")
 				info.host = opt.get(dom_prefix + "h2_host").value;
 				info.path = opt.get(dom_prefix + "h2_path").value;
 			} else if (v_transport === "tcp") {
-				info.type = opt.get("tcp_guise").value;
+				info.type = opt.get(dom_prefix + "tcp_guise").value;
 				if (info.type === "http") {
-					info.host = opt.get("tcp_guise_http_host").value;
-					info.path = opt.get("tcp_guise_http_path").value;
+					info.host = opt.get(dom_prefix + "tcp_guise_http_host").value;
+					info.path = opt.get(dom_prefix + "tcp_guise_http_path").value;
 				}
 			} else if (v_transport === "mkcp") {
 				v_transport = "kcp";
-				info.type = opt.get("mkcp_guise").value;
+				info.type = opt.get(dom_prefix + "mkcp_guise").value;
 			} else if (v_transport === "quic") {
-				info.type = opt.get("quic_guise").value;
-				info.key = opt.get("quic_key").value;
-				info.securty = opt.get("quic_security").value;
+				info.type = opt.get(dom_prefix + "quic_guise").value;
+				info.key = opt.get(dom_prefix + "quic_key").value;
+				info.securty = opt.get(dom_prefix + "quic_security").value;
 			} else if (v_transport === "grpc") {
-				info.path = opt.get("grpc_serviceName").value;
+				info.path = opt.get(dom_prefix + "grpc_serviceName").value;
 			}
 			if (info.path && info.path != "") {
 				info.path = encodeURI(info.path);
 			}
 			info.net = v_transport;
 
-			info.security = opt.get("security").value || "auto";
+			info.security = opt.get(dom_prefix + "security").value || "auto";
 			if (opt.get(dom_prefix + "tls").checked) {
 				var v_security = "tls";
 				info.tls = "tls";
@@ -292,7 +293,7 @@ local has_xray = api.finded_com("xray")
 				":" + v_port.value + "?";
 
 			var params = "";
-			var v_transport = opt.get("transport").value;
+			var v_transport = opt.get(dom_prefix + "transport").value;
 			if (v_transport === "ws") {
 				params += opt.query("host", dom_prefix + "ws_host");
 				params += opt.query("path", dom_prefix + "ws_path");
@@ -301,24 +302,24 @@ local has_xray = api.finded_com("xray")
 				params += opt.query("host", dom_prefix + "h2_host");
 				params += opt.query("path", dom_prefix + "h2_path");
 			} else if (v_transport === "tcp") {
-				params += opt.query("headerType", "tcp_guise");
-				params += opt.query("host", "tcp_guise_http_host");
-				params += opt.query("path", "tcp_guise_http_path");
+				params += opt.query("headerType", dom_prefix + "tcp_guise");
+				params += opt.query("host", dom_prefix + "tcp_guise_http_host");
+				params += opt.query("path", dom_prefix + "tcp_guise_http_path");
 			} else if (v_transport === "mkcp") {
 				v_transport = "kcp";
-				params += opt.query("headerType", "mkcp_guise");
+				params += opt.query("headerType", dom_prefix + "mkcp_guise");
 			} else if (v_transport === "quic") {
-				params += opt.query("headerType", "quic_guise");
-				params += opt.query("key", "quic_key");
-				params += opt.query("quicSecurity", "quic_security");
+				params += opt.query("headerType", dom_prefix + "quic_guise");
+				params += opt.query("key", dom_prefix + "quic_key");
+				params += opt.query("quicSecurity", dom_prefix + "quic_security");
 			} else if (v_transport === "grpc") {
-				params += opt.query("path", "grpc_serviceName");
-				params += opt.query("serviceName", "grpc_serviceName");
-				params += opt.query("mode", "grpc_mode");
+				params += opt.query("path", dom_prefix + "grpc_serviceName");
+				params += opt.query("serviceName", dom_prefix + "grpc_serviceName");
+				params += opt.query("mode", dom_prefix + "grpc_mode");
 			}
 			params += "&type=" + v_transport;
 
-			params += opt.query("encryption", "encryption");
+			params += opt.query("encryption", dom_prefix + "encryption");
 
 			if (opt.get(dom_prefix + "tls").checked) {
 				var v_security = "tls";
@@ -326,15 +327,15 @@ local has_xray = api.finded_com("xray")
 					let v_fp = opt.get(dom_prefix + "fingerprint").value;
 					params += "&fp=" + v_fp;
 				}
-				if (opt.get("reality") && opt.get("reality").checked) {
+				if (opt.get(dom_prefix + "reality") && opt.get(dom_prefix + "reality").checked) {
 					v_security = "reality";
-					if (opt.get("reality_fingerprint") && opt.get("reality_fingerprint").value != "") {
-						let v_fp = opt.get("reality_fingerprint").value;
+					if (opt.get(dom_prefix + "fingerprint") && opt.get(dom_prefix + "fingerprint").value != "") {
+						let v_fp = opt.get(dom_prefix + "fingerprint").value;
 						params += "&fp=" + v_fp;
 					}
-					params += opt.query("pbk", "reality_publicKey");
-					params += opt.query("sid", "reality_shortId");
-					params += opt.query("spx", "reality_spiderX");
+					params += opt.query("pbk", dom_prefix + "reality_publicKey");
+					params += opt.query("sid", dom_prefix + "reality_shortId");
+					params += opt.query("spx", dom_prefix + "reality_spiderX");
 				}
 				if (opt.get(dom_prefix + "flow") && opt.get(dom_prefix + "flow").value) {
 					let v_flow = opt.get(dom_prefix + "flow").value;
@@ -661,27 +662,27 @@ local has_xray = api.finded_com("xray")
 					password = userInfo.substr(userInfoSplitIndex + 1);
 				}
 				if (["2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305"].includes(method)) {
-					<% if has_singbox then %>
-					opt.set('type', "sing-box");
-					dom_prefix = "singbox_"
-					<% elseif has_xray then %>
-					opt.set('type', "Xray");
-					dom_prefix = "xray_"
-					<% else %>
-					opt.set('type', "SS-Rust");
-					dom_prefix = "ssrust_"
-					<% end %>
+					if (has_singbox) {
+						opt.set('type', "sing-box");
+						dom_prefix = "singbox_"
+					} else if (has_xray) {
+						opt.set('type', "Xray");
+						dom_prefix = "xray_"
+					} else {
+						opt.set('type', "SS-Rust");
+						dom_prefix = "ssrust_"
+					}
 				} else {
-					<% if has_singbox then %>
-					opt.set('type', "sing-box");
-					dom_prefix = "singbox_"
-					<% elseif has_xray then %>
-					opt.set('type', "Xray");
-					dom_prefix = "xray_"
-					<% else %>
-					opt.set('type', "SS");
-					dom_prefix = "ss_"
-					<% end %>
+					if (has_singbox) {
+						opt.set('type', "sing-box");
+						dom_prefix = "singbox_"
+					} else if (has_xray) {
+						opt.set('type', "Xray");
+						dom_prefix = "xray_"
+					} else {
+						opt.set('type', "SS");
+						dom_prefix = "ss_"
+					}
 				}
 				opt.set(dom_prefix + 'address', server);
 				opt.set(dom_prefix + 'port', port);
@@ -695,16 +696,16 @@ local has_xray = api.finded_com("xray")
 					opt.set('remarks', decodeURI(param));
 				}
 			} else {
-				<% if has_singbox then %>
-				opt.set('type', "sing-box");
-				dom_prefix = "singbox_"
-				<% elseif has_xray then %>
-				opt.set('type', "Xray");
-				dom_prefix = "xray_"
-				<% else %>
-				opt.set('type', "SS");
-				dom_prefix = "ss_"
-				<% end %>
+				if (has_singbox) {
+					opt.set('type', "sing-box");
+					dom_prefix = "singbox_"
+				} else if (has_xray) {
+					opt.set('type', "Xray");
+					dom_prefix = "xray_"
+				} else {
+					opt.set('type', "SS");
+					dom_prefix = "ss_"
+				}
 				var sstr = b64decsafe(url0);
 				var team = sstr.split('@');
 				var part1 = team[0].split(':');
@@ -721,16 +722,16 @@ local has_xray = api.finded_com("xray")
 			}
 		}
 		if (ssu[0] === "trojan" || ssu[0] === "trojan-plus") {
-			<% if has_singbox then %>
-			opt.set('type', "sing-box");
-			dom_prefix = "singbox_"
-			<% elseif has_xray then %>
-			opt.set('type', "Xray");
-			dom_prefix = "xray_"
-			<% else %>
-			opt.set('type', "Trojan-Plus");
-			dom_prefix = "trojan_plus_"
-			<% end %>
+			if (has_singbox) {
+				opt.set('type', "sing-box");
+				dom_prefix = "singbox_"
+			} else if (has_xray) {
+				opt.set('type', "Xray");
+				dom_prefix = "xray_"
+			} else {
+				opt.set('type', "Trojan-Plus");
+				dom_prefix = "trojan_plus_"
+			}
 			var m = parseNodeUrl(ssrurl);
 			var password = m.passwd;
 			if (password === "") {
@@ -838,13 +839,13 @@ local has_xray = api.finded_com("xray")
 		if (ssu[0] === "vmess") {
 			var sstr = b64DecodeUnicode(ssu[1]);
 			var ploc = sstr.indexOf("/?");
-			<% if has_singbox then %>
-			opt.set('type', "sing-box");
-			dom_prefix = "singbox_"
-			<% elseif has_xray then %>
-			opt.set('type', "Xray");
-			dom_prefix = "xray_"
-			<% end %>
+			if (has_singbox) {
+				opt.set('type', "sing-box");
+				dom_prefix = "singbox_"
+			} else if (has_xray) {
+				opt.set('type', "Xray");
+				dom_prefix = "xray_"
+			}
 			opt.set(dom_prefix + 'protocol', "vmess");
 			var url0, param = "";
 			if (ploc > 0) {
@@ -867,12 +868,12 @@ local has_xray = api.finded_com("xray")
 			ssm.net = ssm.net.toLowerCase();
 			if (ssm.net === "kcp" || ssm.net === "mkcp")
 				ssm.net = "mkcp"
-			opt.set('transport', ssm.net);
+			opt.set(dom_prefix + 'transport', ssm.net);
 			if (ssm.net === "tcp") {
-				opt.set('tcp_guise', (ssm.host && ssm.path) ? "http" : "none");
+				opt.set(dom_prefix + 'tcp_guise', (ssm.host && ssm.path) ? "http" : "none");
 				if (ssm.host && ssm.path) {
-					opt.set('tcp_guise_http_host', ssm.host);
-					opt.set('tcp_guise_http_path', ssm.path);
+					opt.set(dom_prefix + 'tcp_guise_http_host', ssm.host);
+					opt.set(dom_prefix + 'tcp_guise_http_path', ssm.path);
 				}
 			} else if (ssm.net === "ws") {
 				opt.set(dom_prefix + 'ws_host', ssm.host);
@@ -881,22 +882,22 @@ local has_xray = api.finded_com("xray")
 				opt.set(dom_prefix + 'h2_host', ssm.host);
 				opt.set(dom_prefix + 'h2_path', ssm.path);
 			} else if (ssm.net === "quic") {
-				opt.set('quic_security', ssm.securty);
-				opt.set('quic_key', ssm.key);
+				opt.set(dom_prefix + 'quic_security', ssm.securty);
+				opt.set(dom_prefix + 'quic_key', ssm.key);
 			} else if (ssm.net === "kcp" || ssm.net === "mkcp") {
-				opt.set('mkcp_guise', ssm.type);
+				opt.set(dom_prefix + 'mkcp_guise', ssm.type);
 			} else if (ssm.net === "grpc") {
-				opt.set('grpc_serviceName', ssm.path);
+				opt.set(dom_prefix + 'grpc_serviceName', ssm.path);
 			}
 		}
 		if (ssu[0] === "vless") {
-			<% if has_singbox then %>
-			opt.set('type', "sing-box");
-			dom_prefix = "singbox_"
-			<% elseif has_xray then %>
-			opt.set('type', "Xray");
-			dom_prefix = "xray_"
-			<% end %>
+			if (has_xray) {
+				opt.set('type', "Xray");
+				dom_prefix = "xray_"
+			} else if (has_singbox) {
+				opt.set('type', "sing-box");
+				dom_prefix = "singbox_"
+			}
 			opt.set(dom_prefix + 'protocol', "vless");
 			var m = parseNodeUrl(ssrurl);
 			var password = m.passwd;
@@ -919,11 +920,11 @@ local has_xray = api.finded_com("xray")
 				}
 			}
 
-			opt.set('encryption', queryParam.encryption);
+			opt.set(dom_prefix + 'encryption', queryParam.encryption);
 			if (queryParam.security) {
 				if (queryParam.security == "tls") {
 					opt.set(dom_prefix + 'tls', true);
-					opt.set('reality', false)
+					opt.set(dom_prefix + 'reality', false)
 					opt.set(dom_prefix + 'flow', queryParam.flow || '');
 					opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
 					opt.set(dom_prefix + 'tls_allowInsecure', true);
@@ -937,15 +938,15 @@ local has_xray = api.finded_com("xray")
 
 				if (queryParam.security == "reality") {
 					opt.set(dom_prefix + 'tls', true);
-					opt.set('reality', true)
+					opt.set(dom_prefix + 'reality', true)
 					opt.set(dom_prefix + 'flow', queryParam.flow || '');
 					opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
 					if (queryParam.fp && queryParam.fp.trim() != "") {
-						opt.set('reality_fingerprint', queryParam.fp);
+						opt.set(dom_prefix + 'fingerprint', queryParam.fp);
 					}
-					opt.set('reality_publicKey', queryParam.pbk || '');
-					opt.set('reality_shortId', queryParam.sid || '');
-					opt.set('reality_spiderX', queryParam.spx || '');
+					opt.set(dom_prefix + 'reality_publicKey', queryParam.pbk || '');
+					opt.set(dom_prefix + 'reality_shortId', queryParam.sid || '');
+					opt.set(dom_prefix + 'reality_spiderX', queryParam.spx || '');
 				}
 
 			}
@@ -955,12 +956,12 @@ local has_xray = api.finded_com("xray")
 				queryParam.type = "mkcp"
 			if (queryParam.type === "h2" || queryParam.type === "http")
 				queryParam.type = "h2"
-			opt.set('transport', queryParam.type);
+			opt.set(dom_prefix + 'transport', queryParam.type);
 			if (queryParam.type === "tcp") {
-				opt.set('tcp_guise', queryParam.headerType || "none");
+				opt.set(dom_prefix + 'tcp_guise', queryParam.headerType || "none");
 				if (queryParam.headerType && queryParam.headerType != "none") {
-					opt.set('tcp_guise_http_host', queryParam.host || "");
-					opt.set('tcp_guise_http_path', queryParam.path || "");
+					opt.set(dom_prefix + 'tcp_guise_http_host', queryParam.host || "");
+					opt.set(dom_prefix + 'tcp_guise_http_path', queryParam.path || "");
 				}
 			} else if (queryParam.type === "ws") {
 				opt.set(dom_prefix + 'ws_host', queryParam.host || "");
@@ -969,14 +970,14 @@ local has_xray = api.finded_com("xray")
 				opt.set(dom_prefix + 'h2_host', queryParam.host || "");
 				opt.set(dom_prefix + 'h2_path', queryParam.path || "");
 			} else if (queryParam.type === "quic") {
-				opt.set('quic_guise', queryParam.headerType || "none");
-				opt.set('quic_security', queryParam.quicSecurity);
-				opt.set('quic_key', queryParam.key);
+				opt.set(dom_prefix + 'quic_guise', queryParam.headerType || "none");
+				opt.set(dom_prefix + 'quic_security', queryParam.quicSecurity);
+				opt.set(dom_prefix + 'quic_key', queryParam.key);
 			} else if (queryParam.type === "kcp" || queryParam.type === "mkcp") {
-				opt.set('mkcp_guise', queryParam.headerType || "none");
+				opt.set(dom_prefix + 'mkcp_guise', queryParam.headerType || "none");
 			} else if (queryParam.type === "grpc") {
-				opt.set('grpc_serviceName', (queryParam.serviceName || queryParam.path) || "");
-				opt.set('grpc_mode', queryParam.mode);
+				opt.set(dom_prefix + 'grpc_serviceName', (queryParam.serviceName || queryParam.path) || "");
+				opt.set(dom_prefix + 'grpc_mode', queryParam.mode);
 			}
 
 			if (m.hash) {
@@ -1040,13 +1041,13 @@ local has_xray = api.finded_com("xray")
 			}
 		}
 		if (ssu[0] === "hysteria") {
-			<% if has_singbox then %>
-			opt.set('type', "sing-box");
-			dom_prefix = "singbox_"
-			<% else %>
-			opt.set('type', "Hysteria");
-			dom_prefix = "hysteria_"
-			<% end %>
+			if (has_singbox) {
+				opt.set('type', "sing-box");
+				dom_prefix = "singbox_"
+			} else {
+				opt.set('type', "Hysteria");
+				dom_prefix = "hysteria_"
+			}
 			var m = parseNodeUrl(ssrurl);
 			var queryParam = {};
 			if (m.search.length > 1) {

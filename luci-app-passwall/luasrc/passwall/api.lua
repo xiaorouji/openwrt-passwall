@@ -400,7 +400,11 @@ end
 function finded_com(e)
 	local bin = get_app_path(e)
 	if not bin then return end
-	return luci.sys.exec('echo -n $(type -t -p "%s" | head -n1)' % { bin })
+	local s = luci.sys.exec('echo -n $(type -t -p "%s" | head -n1)' % { bin })
+	if s == "" then
+		s = nil
+	end
+	return s
 end
 
 function finded(e)
