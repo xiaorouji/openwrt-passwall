@@ -57,6 +57,7 @@ jobs:
           echo "![](https://img.shields.io/github/downloads/xiaorouji/openwrt-passwall/${{steps.check_version.outputs.latest_version}}/total?style=flat-square)" >> release.txt
           echo "### Passwall Info" >> release.txt
           echo "**:minidisc: Passwall Version: ${{steps.check_version.outputs.latest_version}}**" >> release.txt
+          echo "**:gear: OpenWrt SDK Version: 23.05-rc3**" >> release.txt
           touch release.txt
 
       - name: Generate new tag & release
@@ -88,21 +89,21 @@ jobs:
         uses: actions/cache@v3
         with:
           path: sdk
-          key: openwrt-sdk-21.02-x86_64
+          key: openwrt-sdk-23.05-rc3-x86_64
 
       - name: Initialization environment
         if: steps.cache-sdk.outputs.cache-hit != 'true'
         env:
-          url_sdk: https://archive.openwrt.org/releases/21.02.5/targets/x86/64/openwrt-sdk-21.02.5-x86-64_gcc-8.4.0_musl.Linux-x86_64.tar.xz
+          url_sdk: https://downloads.openwrt.org/releases/23.05.0-rc3/targets/x86/64/openwrt-sdk-23.05.0-rc3-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
         run: |
           wget ${{ env.url_sdk }}
           file_name=$(echo ${{env.url_sdk}} | awk -F/ '{print $NF}')
           mkdir sdk && tar -xJf $file_name -C ./sdk --strip-components=1
           cd sdk
-          echo "src-git base https://github.com/openwrt/openwrt.git;openwrt-21.02" > feeds.conf
-          echo "src-git-full packages https://github.com/openwrt/packages.git;openwrt-21.02" >> feeds.conf
-          echo "src-git-full luci https://github.com/openwrt/luci.git;openwrt-19.07" >> feeds.conf
-          echo "src-git-full routing https://git.openwrt.org/feed/routing.git;openwrt-21.02"  >> feeds.conf
+          echo "src-git base https://github.com/openwrt/openwrt.git;openwrt-23.05" > feeds.conf
+          echo "src-git packages https://github.com/openwrt/packages.git;openwrt-23.05" >> feeds.conf
+          echo "src-git luci https://github.com/openwrt/luci.git;openwrt-23.05" >> feeds.conf
+          echo "src-git routing https://git.openwrt.org/feed/routing.git;openwrt-23.05"  >> feeds.conf
           echo "src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall.git;packages" >> feeds.conf
           echo "src-git passwall https://github.com/xiaorouji/openwrt-passwall.git;luci" >> feeds.conf
           ./scripts/feeds update -a
@@ -136,6 +137,7 @@ jobs:
           echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ShadowsocksR_Libev_Client=n" >> .config
           echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ShadowsocksR_Libev_Server=n" >> .config
           echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Simple_Obfs=n" >> .config
+          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_SingBox=n" >> .config
           echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Trojan_GO=n" >> .config
           echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Trojan_Plus=n" >> .config
           echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_tuic_client=n" >> .config
@@ -177,55 +179,55 @@ jobs:
       matrix:
         include:
           - platform: x86_64
-            url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/x86/64/openwrt-sdk-22.03.3-x86-64_gcc-11.2.0_musl.Linux-x86_64.tar.xz
+            url_sdk: https://downloads.openwrt.org/releases/23.05.0-rc3/targets/x86/64/openwrt-sdk-23.05.0-rc3-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
 
           - platform: aarch64_generic
-            url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/rockchip/armv8/openwrt-sdk-22.03.3-rockchip-armv8_gcc-11.2.0_musl.Linux-x86_64.tar.xz
+            url_sdk: https://downloads.openwrt.org/releases/23.05.0-rc3/targets/rockchip/armv8/openwrt-sdk-23.05.0-rc3-rockchip-armv8_gcc-12.3.0_musl.Linux-x86_64.tar.xz
 
           - platform: aarch64_cortex-a53
-            url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/mvebu/cortexa53/openwrt-sdk-22.03.3-mvebu-cortexa53_gcc-11.2.0_musl.Linux-x86_64.tar.xz
+            url_sdk: https://downloads.openwrt.org/releases/23.05.0-rc3/targets/mvebu/cortexa53/openwrt-sdk-23.05.0-rc3-mvebu-cortexa53_gcc-12.3.0_musl.Linux-x86_64.tar.xz
 
           - platform: aarch64_cortex-a72
-            url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/mvebu/cortexa72/openwrt-sdk-22.03.3-mvebu-cortexa72_gcc-11.2.0_musl.Linux-x86_64.tar.xz
+            url_sdk: https://downloads.openwrt.org/releases/23.05.0-rc3/targets/mvebu/cortexa72/openwrt-sdk-23.05.0-rc3-mvebu-cortexa72_gcc-12.3.0_musl.Linux-x86_64.tar.xz
 
           - platform: arm_cortex-a7
-            url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/mediatek/mt7629/openwrt-sdk-22.03.3-mediatek-mt7629_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz
+            url_sdk: https://downloads.openwrt.org/releases/23.05.0-rc3/targets/mediatek/mt7629/openwrt-sdk-23.05.0-rc3-mediatek-mt7629_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz
 
           - platform: arm_cortex-a7_neon-vfpv4
-            url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/sunxi/cortexa7/openwrt-sdk-22.03.3-sunxi-cortexa7_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz
+            url_sdk: https://downloads.openwrt.org/releases/23.05.0-rc3/targets/sunxi/cortexa7/openwrt-sdk-23.05.0-rc3-sunxi-cortexa7_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz
 
           - platform: arm_cortex-a8_vfpv3
-            url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/sunxi/cortexa8/openwrt-sdk-22.03.3-sunxi-cortexa8_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz
+            url_sdk: https://downloads.openwrt.org/releases/23.05.0-rc3/targets/sunxi/cortexa8/openwrt-sdk-23.05.0-rc3-sunxi-cortexa8_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz
 
           - platform: arm_cortex-a9
-            url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/bcm53xx/generic/openwrt-sdk-22.03.3-bcm53xx-generic_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz
+            url_sdk: https://downloads.openwrt.org/releases/23.05.0-rc3/targets/bcm53xx/generic/openwrt-sdk-23.05.0-rc3-bcm53xx-generic_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz
 
           - platform: arm_cortex-a9_neon
-            url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/zynq/generic/openwrt-sdk-22.03.3-zynq_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz
+            url_sdk: https://downloads.openwrt.org/releases/23.05.0-rc3/targets/zynq/generic/openwrt-sdk-23.05.0-rc3-zynq_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz
 
           - platform: arm_cortex-a9_vfpv3-d16
-            url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/mvebu/cortexa9/openwrt-sdk-22.03.3-mvebu-cortexa9_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz
+            url_sdk: https://downloads.openwrt.org/releases/23.05.0-rc3/targets/mvebu/cortexa9/openwrt-sdk-23.05.0-rc3-mvebu-cortexa9_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz
 
           - platform: arm_cortex-a15_neon-vfpv4
-            url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/ipq806x/generic/openwrt-sdk-22.03.3-ipq806x-generic_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz
+            url_sdk: https://downloads.openwrt.org/releases/23.05.0-rc3/targets/ipq806x/generic/openwrt-sdk-23.05.0-rc3-ipq806x-generic_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz
 
           - platform: mips_24kc
-            url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/ath79/generic/openwrt-sdk-22.03.3-ath79-generic_gcc-11.2.0_musl.Linux-x86_64.tar.xz
+            url_sdk: https://downloads.openwrt.org/releases/23.05.0-rc3/targets/ath79/generic/openwrt-sdk-23.05.0-rc3-ath79-generic_gcc-12.3.0_musl.Linux-x86_64.tar.xz
 
           - platform: mips_4kec
-            url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/realtek/rtl838x/openwrt-sdk-22.03.3-realtek-rtl838x_gcc-11.2.0_musl.Linux-x86_64.tar.xz
+            url_sdk: https://downloads.openwrt.org/releases/23.05.0-rc3/targets/realtek/rtl838x/openwrt-sdk-23.05.0-rc3-realtek-rtl838x_gcc-12.3.0_musl.Linux-x86_64.tar.xz
 
           - platform: mips_mips32
-            url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/bcm63xx/generic/openwrt-sdk-22.03.3-bcm63xx-generic_gcc-11.2.0_musl.Linux-x86_64.tar.xz
+            url_sdk: https://downloads.openwrt.org/releases/23.05.0-rc3/targets/bcm63xx/generic/openwrt-sdk-23.05.0-rc3-bcm63xx-generic_gcc-12.3.0_musl.Linux-x86_64.tar.xz
 
           - platform: mipsel_24kc
-            url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/ramips/rt288x/openwrt-sdk-22.03.3-ramips-rt288x_gcc-11.2.0_musl.Linux-x86_64.tar.xz
+            url_sdk: https://downloads.openwrt.org/releases/23.05.0-rc3/targets/ramips/rt288x/openwrt-sdk-23.05.0-rc3-ramips-rt288x_gcc-12.3.0_musl.Linux-x86_64.tar.xz
 
           - platform: mipsel_74kc
-            url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/ramips/rt3883/openwrt-sdk-22.03.3-ramips-rt3883_gcc-11.2.0_musl.Linux-x86_64.tar.xz
+            url_sdk: https://downloads.openwrt.org/releases/23.05.0-rc3/targets/ramips/rt3883/openwrt-sdk-23.05.0-rc3-ramips-rt3883_gcc-12.3.0_musl.Linux-x86_64.tar.xz
 
           - platform: mipsel_mips32
-            url_sdk: https://downloads.openwrt.org/releases/22.03.3/targets/bcm47xx/generic/openwrt-sdk-22.03.3-bcm47xx-generic_gcc-11.2.0_musl.Linux-x86_64.tar.xz
+            url_sdk: https://downloads.openwrt.org/releases/23.05.0-rc3/targets/bcm47xx/generic/openwrt-sdk-23.05.0-rc3-bcm47xx-generic_gcc-12.3.0_musl.Linux-x86_64.tar.xz
 
     steps:
       - name: Initialization ${{ matrix.platform }} compile environment
@@ -250,10 +252,10 @@ jobs:
       - name: ${{ matrix.platform }} feeds configuration packages
         run: |
           cd sdk
-          echo "src-git base https://github.com/openwrt/openwrt.git;openwrt-22.03" > feeds.conf
-          echo "src-git-full packages https://github.com/openwrt/packages.git;openwrt-22.03" >> feeds.conf
-          echo "src-git-full luci https://github.com/openwrt/luci.git;openwrt-22.03" >> feeds.conf
-          echo "src-git-full routing https://git.openwrt.org/feed/routing.git;openwrt-22.03"  >> feeds.conf
+          echo "src-git base https://github.com/openwrt/openwrt.git;openwrt-23.05" > feeds.conf
+          echo "src-git packages https://github.com/openwrt/packages.git;openwrt-23.05" >> feeds.conf
+          echo "src-git luci https://github.com/openwrt/luci.git;openwrt-23.05" >> feeds.conf
+          echo "src-git routing https://git.openwrt.org/feed/routing.git;openwrt-23.05"  >> feeds.conf
           echo "src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall.git;packages" >> feeds.conf
           echo "src-git passwall_luci https://github.com/xiaorouji/openwrt-passwall.git;luci" >> feeds.conf
 
@@ -280,6 +282,7 @@ jobs:
           echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ShadowsocksR_Libev_Client=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ShadowsocksR_Libev_Server=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Simple_Obfs=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_SingBox=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Trojan_GO=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Trojan_Plus=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_tuic_client=y" >> .config
@@ -326,6 +329,7 @@ jobs:
           echo "![](https://img.shields.io/github/downloads/xiaorouji/openwrt-passwall/${{needs.job_check.outputs.passwall_version}}/total?style=flat-square)" >> release.txt
           echo "### Passwall Info" >> release.txt
           echo "**:minidisc: Passwall Version: ${{needs.job_check.outputs.passwall_version}}**" >> release.txt
+          echo "**:gear: OpenWrt SDK Version: 23.05-rc3**" >> release.txt
 
           echo "### Packages Version" >> release.txt
           echo "**package name**|**package version**" >> release.txt
