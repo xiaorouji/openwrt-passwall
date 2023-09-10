@@ -1292,6 +1292,7 @@ function gen_config(var)
 					default_dns_flag = "direct"
 				end
 			end
+		else default_dns_flag = "direct"
 		end
 		dns.final = default_dns_flag
 	end
