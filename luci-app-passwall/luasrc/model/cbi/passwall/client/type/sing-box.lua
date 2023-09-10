@@ -513,7 +513,7 @@ o:depends({ [option_name("protocol")] = "vmess" })
 o:depends({ [option_name("protocol")] = "vless", [option_name("flow")] = "" })
 o:depends({ [option_name("protocol")] = "http" })
 o:depends({ [option_name("protocol")] = "socks" })
-o:depends({ [option_name("protocol")] = "shadowsocks" })
+o:depends({ [option_name("protocol")] = "shadowsocks", [option_name("uot")] = "" })
 o:depends({ [option_name("protocol")] = "trojan" })
 
 o = s:option(ListValue, option_name("mux_type"), translate("Mux"))
@@ -524,6 +524,10 @@ o:depends({ [option_name("mux")] = true })
 
 o = s:option(Value, option_name("mux_concurrency"), translate("Mux concurrency"))
 o.default = 8
+o:depends({ [option_name("mux")] = true })
+
+o = s:option(Flag, option_name("mux_padding"), translate("Padding"))
+o.default = 0
 o:depends({ [option_name("mux")] = true })
 
 api.luci_types(arg[1], m, s, type_name, option_prefix)

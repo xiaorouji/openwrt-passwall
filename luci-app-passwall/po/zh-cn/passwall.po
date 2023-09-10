@@ -1417,6 +1417,9 @@ msgstr "XUDP 最大并发连接数"
 msgid "Mux idle timeout"
 msgstr "最大闲置时间"
 
+msgid "Padding"
+msgstr "填充"
+
 msgid "Enable early data"
 msgstr "启用前置数据"
 
