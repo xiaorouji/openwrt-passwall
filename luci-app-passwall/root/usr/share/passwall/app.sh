@@ -580,9 +580,6 @@ run_socks() {
 
 	case "$type" in
 	socks)
-		local bin=$(first_type $(config_t_get global_app xray_file) xray)
-		[ -n "$bin" ] && type="xray"
-		[ -z "$type" ] && return 1
 		local _socks_address=$(config_n_get $node address)
 		local _socks_port=$(config_n_get $node port)
 		local _socks_username=$(config_n_get $node username)
@@ -592,14 +589,25 @@ run_socks() {
 			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
 			local _extra_param="-local_http_port $http_port"
 		}
-		lua $UTIL_XRAY gen_proto_config -local_socks_port $socks_port ${_extra_param} -server_proto socks -server_address ${_socks_address} -server_port ${_socks_port} -server_username ${_socks_username} -server_password ${_socks_password} > $config_file
-		ln_run "$bin" $type $log_file run -c "$config_file"
+		local bin=$(first_type $(config_t_get global_app singbox_file) sing-box)
+		if [ -n "$bin" ]; then
+			type="sing-box"
+			lua $UTIL_SINGBOX gen_proto_config -local_socks_port $socks_port ${_extra_param} -server_proto socks -server_address ${_socks_address} -server_port ${_socks_port} -server_username ${_socks_username} -server_password ${_socks_password} > $config_file
+			ln_run "$bin" ${type} $log_file run -c "$config_file"
+		else
+			bin=$(first_type $(config_t_get global_app xray_file) xray)
+			[ -n "$bin" ] && {
+				type="xray"
+				lua $UTIL_XRAY gen_proto_config -local_socks_port $socks_port ${_extra_param} -server_proto socks -server_address ${_socks_address} -server_port ${_socks_port} -server_username ${_socks_username} -server_password ${_socks_password} > $config_file
+				ln_run "$bin" ${type} $log_file run -c "$config_file"
+			}
+		fi
 	;;
 	sing-box)
 		[ "$http_port" != "0" ] && {
 			http_flag=1
 			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
-			local _args="-local_http_port $http_port"
+			local _args="http_port=$http_port"
 		}
 		run_singbox flag=$flag node=$node socks_port=$socks_port config_file=$config_file log_file=$log_file ${_args}
 	;;
