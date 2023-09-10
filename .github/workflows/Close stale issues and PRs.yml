@@ -1,0 +1,31 @@
+name: "Close stale issues and PRs"
+on:
+  schedule:
+    - cron: "30 1 * * *"
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v7.0.0
+        with:
+          stale-issue-message: "Stale Issue"
+          stale-pr-message: "Stale PR"
+          stale-issue-label: "no-issue-activity"
+          exempt-issue-labels: "awaiting-approval,awaiting,work-in-progress"
+          stale-pr-label: "no-pr-activity"
+          exempt-pr-labels: "awaiting-approval,awaiting,work-in-progress,automated-pr"
+          # only-labels: 'bug,enhancement'
+          days-before-issue-stale: 10
+          days-before-pr-stale: 10
+          days-before-issue-close: 5
+          days-before-pr-close: -1
+          operations-per-run: 500
+
+      - name: Delete workflow runs
+        uses: Mattraks/delete-workflow-runs@main
+        with:
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          retain_days: 1
+          keep_minimum_runs: 0
