@@ -13,7 +13,7 @@ on:
         default: 'false'
   push:
     branches:
-      - 'main'
+      - 'luci-smartdns-dev'
     paths:
       - 'luci-app-passwall/Makefile'
 env:
@@ -34,7 +34,7 @@ jobs:
         uses: actions/checkout@main
         with:
           fetch-depth: 0
-          ref: 'main'
+          ref: 'luci-smartdns-dev'
 
       - name: Check version
         id: check_version
@@ -106,7 +106,7 @@ jobs:
           echo "src-git luci https://github.com/openwrt/luci.git;openwrt-23.05" >> feeds.conf
           echo "src-git routing https://git.openwrt.org/feed/routing.git;openwrt-23.05"  >> feeds.conf
           echo "src-git passwall_packages https://github.com/${{ env.packages }}.git;main" >> feeds.conf
-          echo "src-git passwall https://github.com/${{ env.passwall }}.git;main" >> feeds.conf
+          echo "src-git passwall https://github.com/${{ env.passwall }}.git;luci-smartdns-dev" >> feeds.conf
           ./scripts/feeds update -a
           echo "CONFIG_PACKAGE_luci-app-passwall=m" > .config
           ./scripts/feeds install -d n luci-app-passwall
@@ -258,7 +258,7 @@ jobs:
           echo "src-git luci https://github.com/openwrt/luci.git;openwrt-23.05" >> feeds.conf
           echo "src-git routing https://git.openwrt.org/feed/routing.git;openwrt-23.05"  >> feeds.conf
           echo "src-git passwall_packages https://github.com/${{ env.packages }}.git;main" >> feeds.conf
-          echo "src-git passwall https://github.com/${{ env.passwall }}.git;main" >> feeds.conf
+          echo "src-git passwall https://github.com/${{ env.passwall }}.git;luci-smartdns-dev" >> feeds.conf
 
           ./scripts/feeds update -a
           ./scripts/feeds install -a -f -p passwall_packages
