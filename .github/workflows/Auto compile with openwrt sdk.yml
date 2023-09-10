@@ -203,7 +203,7 @@ jobs:
             url_sdk: https://downloads.openwrt.org/releases/23.05.0-rc3/targets/bcm53xx/generic/openwrt-sdk-23.05.0-rc3-bcm53xx-generic_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz
 
           - platform: arm_cortex-a9_neon
-            url_sdk: https://downloads.openwrt.org/releases/23.05.0-rc3/targets/zynq/generic/openwrt-sdk-23.05.0-rc3-zynq_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz
+            url_sdk: https://downloads.openwrt.org/releases/23.05.0-rc3/targets/zynq/generic/openwrt-sdk-23.05.0-rc3-zynq-generic_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz
 
           - platform: arm_cortex-a9_vfpv3-d16
             url_sdk: https://downloads.openwrt.org/releases/23.05.0-rc3/targets/mvebu/cortexa9/openwrt-sdk-23.05.0-rc3-mvebu-cortexa9_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz
