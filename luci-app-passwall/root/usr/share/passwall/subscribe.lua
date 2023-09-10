@@ -400,6 +400,7 @@ local function processData(szType, content, add_mode, add_from)
 		elseif has_xray then
 			result.type = 'Xray'
 		end
+		result.alter_id = info.aid
 		result.address = info.add
 		result.port = info.port
 		result.protocol = 'vmess'

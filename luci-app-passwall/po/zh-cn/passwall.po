@@ -1488,3 +1488,9 @@ msgstr "覆盖连接目标地址"
 
 msgid "Override the connection destination address with the sniffed domain."
 msgstr "用探测出的域名覆盖连接目标地址。"
+
+msgid "Protocol parameter. Will waste traffic randomly if enabled."
+msgstr "协议参数。 如果启用会随机浪费流量。"
+
+msgid "Protocol parameter. Enable length block encryption."
+msgstr "协议参数。启用长度块加密。"

@@ -216,9 +216,9 @@ function gen_outbound(flag, node, tag, proxy_table)
 			protocol_table = {
 				uuid = node.uuid,
 				security = node.security,
-				alter_id = 0,
-				global_padding = false,
-				authenticated_length = true,
+				alter_id = (node.alter_id) and tonumber(node.alter_id) or 0,
+				global_padding = (node.global_padding == "1") and true or false,
+				authenticated_length = (node.authenticated_length == "1") and true or false,
 				tls = tls,
 				packet_encoding = "", --UDP 包编码。(空)：禁用	packetaddr：由 v2ray 5+ 支持	xudp：由 xray 支持
 				multiplex = mux,

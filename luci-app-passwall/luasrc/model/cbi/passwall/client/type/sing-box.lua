@@ -252,6 +252,19 @@ o:depends({ [option_name("protocol")] = "vmess" })
 o:depends({ [option_name("protocol")] = "vless" })
 o:depends({ [option_name("protocol")] = "tuic" })
 
+o = s:option(Value, option_name("alter_id"), "Alter ID")
+o.datatype = "uinteger"
+o.default = "0"
+o:depends({ [option_name("protocol")] = "vmess" })
+
+o = s:option(Flag, option_name("global_padding"), "global_padding", translate("Protocol parameter. Will waste traffic randomly if enabled."))
+o.default = "0"
+o:depends({ [option_name("protocol")] = "vmess" })
+
+o = s:option(Flag, option_name("authenticated_length"), "authenticated_length", translate("Protocol parameter. Enable length block encryption."))
+o.default = "0"
+o:depends({ [option_name("protocol")] = "vmess" })
+
 o = s:option(ListValue, option_name("flow"), translate("flow"))
 o.default = ""
 o:value("", translate("Disable"))
