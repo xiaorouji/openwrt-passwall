@@ -111,6 +111,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 				enabled = true,
 				protocol = node.mux_type or "h2mux",
 				max_connections = tonumber(node.mux_concurrency) or 4,
+				padding = (node.mux_padding == "1") and true or false,
 				--min_streams = 4,
 				--max_streams = 0,
 			}
@@ -231,6 +232,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 				flow = (node.tls == '1' and node.flow) and node.flow or nil,
 				tls = tls,
 				packet_encoding = "xudp", --UDP 包编码。(空)：禁用	packetaddr：由 v2ray 5+ 支持	xudp：由 xray 支持
+				multiplex = mux,
 				transport = v2ray_transport,
 			}
 		end
@@ -1290,6 +1292,7 @@ function gen_config(var)
 					default_dns_flag = "direct"
 				end
 			end
+		else default_dns_flag = "direct"
 		end
 		dns.final = default_dns_flag
 	end

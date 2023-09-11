@@ -355,19 +355,6 @@ o:depends({ [option_name("protocol")] = "trojan" })
 o:depends({ [option_name("protocol")] = "shadowsocks" })
 o:depends({ [option_name("protocol")] = "shadowtls" })
 
-if singbox_tags:find("with_reality") then
-	o = s:option(Flag, option_name("reality"), translate("REALITY"))
-	o.default = 0
-	o:depends({ [option_name("protocol")] = "vless", [option_name("tls")] = true })
-
-	-- [[ REALITY部分 ]] --
-	o = s:option(Value, option_name("reality_publicKey"), translate("Public Key"))
-	o:depends({ [option_name("tls")] = true, [option_name("reality")] = true })
-
-	o = s:option(Value, option_name("reality_shortId"), translate("Short Id"))
-	o:depends({ [option_name("tls")] = true, [option_name("reality")] = true })
-end
-
 o = s:option(ListValue, option_name("alpn"), translate("alpn"))
 o.default = "default"
 o:value("default", translate("Default"))
@@ -392,22 +379,36 @@ o:depends({ [option_name("protocol")] = "hysteria2" })
 if singbox_tags:find("with_utls") then
 	o = s:option(Flag, option_name("utls"), translate("uTLS"))
 	o.default = "0"
-	o:depends({ [option_name("tls")] = true, [option_name("reality")] = false })
+	o:depends({ [option_name("tls")] = true })
 
 	o = s:option(ListValue, option_name("fingerprint"), translate("Finger Print"))
 	o:value("chrome")
 	o:value("firefox")
 	o:value("edge")
 	o:value("safari")
-	o:value("360")
+	-- o:value("360")
 	o:value("qq")
 	o:value("ios")
-	o:value("android")
+	-- o:value("android")
 	o:value("random")
-	o:value("randomized")
+	-- o:value("randomized")
 	o.default = "chrome"
 	o:depends({ [option_name("tls")] = true, [option_name("utls")] = true })
-	o:depends({ [option_name("tls")] = true, [option_name("reality")] = true })
+
+	-- [[ REALITY部分 ]] --
+	o = s:option(Flag, option_name("reality"), translate("REALITY"))
+	o.default = 0
+	o:depends({ [option_name("protocol")] = "vless", [option_name("utls")] = true })
+	o:depends({ [option_name("protocol")] = "vmess", [option_name("utls")] = true })
+	o:depends({ [option_name("protocol")] = "shadowsocks", [option_name("utls")] = true })
+	o:depends({ [option_name("protocol")] = "socks", [option_name("utls")] = true })
+	o:depends({ [option_name("protocol")] = "trojan", [option_name("utls")] = true })
+	
+	o = s:option(Value, option_name("reality_publicKey"), translate("Public Key"))
+	o:depends({ [option_name("utls")] = true, [option_name("reality")] = true })
+	
+	o = s:option(Value, option_name("reality_shortId"), translate("Short Id"))
+	o:depends({ [option_name("utls")] = true, [option_name("reality")] = true })
 end
 
 o = s:option(ListValue, option_name("transport"), translate("Transport"))
@@ -512,7 +513,7 @@ o:depends({ [option_name("protocol")] = "vmess" })
 o:depends({ [option_name("protocol")] = "vless", [option_name("flow")] = "" })
 o:depends({ [option_name("protocol")] = "http" })
 o:depends({ [option_name("protocol")] = "socks" })
-o:depends({ [option_name("protocol")] = "shadowsocks" })
+o:depends({ [option_name("protocol")] = "shadowsocks", [option_name("uot")] = "" })
 o:depends({ [option_name("protocol")] = "trojan" })
 
 o = s:option(ListValue, option_name("mux_type"), translate("Mux"))
@@ -523,6 +524,10 @@ o:depends({ [option_name("mux")] = true })
 
 o = s:option(Value, option_name("mux_concurrency"), translate("Mux concurrency"))
 o.default = 8
+o:depends({ [option_name("mux")] = true })
+
+o = s:option(Flag, option_name("mux_padding"), translate("Padding"))
+o.default = 0
 o:depends({ [option_name("mux")] = true })
 
 api.luci_types(arg[1], m, s, type_name, option_prefix)
