@@ -487,6 +487,21 @@ function gen_config_server(node)
 
 	if "1" == node.tls then
 		config.inbounds[1].streamSettings.security = "tls"
+		if "1" == node.reality then
+			config.inbounds[1].streamSettings.tlsSettings = nil
+			config.inbounds[1].streamSettings.security = "reality"
+			config.inbounds[1].streamSettings.realitySettings = {
+				show = false,
+				dest = node.reality_dest,
+				serverNames = {
+					node.reality_serverNames
+				},
+				privateKey = node.reality_private_key,
+				shortIds = {
+					node.reality_shortId
+				}
+			} or nil
+		end
 	end
 
 	return config

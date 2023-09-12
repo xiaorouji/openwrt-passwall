@@ -115,6 +115,8 @@ o = s:option(Flag, option_name("tls"), translate("TLS"))
 o.default = 0
 o.validate = function(self, value, t)
 	if value then
+		local reality = s.fields[option_name("reality")]:formvalue(t)
+		if reality and reality == "1" then return value end
 		if value == "1" then
 			local ca = s.fields[option_name("tls_certificateFile")]:formvalue(t) or ""
 			local key = s.fields[option_name("tls_keyFile")]:formvalue(t) or ""
@@ -130,6 +132,24 @@ o:depends({ [option_name("protocol")] = "vless" })
 o:depends({ [option_name("protocol")] = "socks" })
 o:depends({ [option_name("protocol")] = "shadowsocks" })
 o:depends({ [option_name("protocol")] = "trojan" })
+
+-- [[ REALITY部分 ]] --
+o = s:option(Flag, option_name("reality"), translate("REALITY"))
+o.default = 0
+o:depends({ [option_name("tls")] = true })
+
+o = s:option(Value, option_name("reality_private_key"), translate("Private Key"))
+o:depends({ [option_name("reality")] = true })
+
+o = s:option(Value, option_name("reality_shortId"), translate("Short Id"))
+o:depends({ [option_name("reality")] = true })
+
+o = s:option(Value, option_name("reality_dest"), translate("Dest"))
+o.default = "google.com:443"
+o:depends({ [option_name("reality")] = true })
+
+o = s:option(Value, option_name("reality_serverNames"), translate("serverNames"))
+o:depends({ [option_name("reality")] = true })
 
 o = s:option(ListValue, option_name("alpn"), translate("alpn"))
 o.default = "h2,http/1.1"
@@ -147,7 +167,7 @@ o:depends({ [option_name("tls")] = true })
 
 o = s:option(FileUpload, option_name("tls_certificateFile"), translate("Public key absolute path"), translate("as:") .. "/etc/ssl/fullchain.pem")
 o.default = m:get(s.section, "tls_certificateFile") or "/etc/config/ssl/" .. arg[1] .. ".pem"
-o:depends({ [option_name("tls")] = true })
+o:depends({ [option_name("tls")] = true, [option_name("reality")] = false })
 o.validate = function(self, value, t)
 	if value and value ~= "" then
 		if not nixio.fs.access(value) then
@@ -161,7 +181,7 @@ end
 
 o = s:option(FileUpload, option_name("tls_keyFile"), translate("Private key absolute path"), translate("as:") .. "/etc/ssl/private.key")
 o.default = m:get(s.section, "tls_keyFile") or "/etc/config/ssl/" .. arg[1] .. ".key"
-o:depends({ [option_name("tls")] = true })
+o:depends({ [option_name("tls")] = true, [option_name("reality")] = false })
 o.validate = function(self, value, t)
 	if value and value ~= "" then
 		if not nixio.fs.access(value) then
