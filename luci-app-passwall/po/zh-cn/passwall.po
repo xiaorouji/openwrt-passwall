@@ -1486,6 +1486,12 @@ msgstr "自定义geosite文件更新链接"
 msgid "Override the connection destination address"
 msgstr "覆盖连接目标地址"
 
+msgid "Handshake Server"
+msgstr "握手服务器"
+
+msgid "Handshake Server Port"
+msgstr "握手服务器端口"
+
 msgid "Override the connection destination address with the sniffed domain."
 msgstr "用探测出的域名覆盖连接目标地址。"
 

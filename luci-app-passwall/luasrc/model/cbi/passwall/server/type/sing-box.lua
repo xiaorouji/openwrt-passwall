@@ -202,6 +202,8 @@ o = s:option(Flag, option_name("tls"), translate("TLS"))
 o.default = 0
 o.validate = function(self, value, t)
 	if value then
+		local reality = s.fields[option_name("reality")]:formvalue(t)
+		if reality and reality == "1" then return value end
 		if value == "1" then
 			local ca = s.fields[option_name("tls_certificateFile")]:formvalue(t) or ""
 			local key = s.fields[option_name("tls_keyFile")]:formvalue(t) or ""
@@ -218,11 +220,37 @@ o:depends({ [option_name("protocol")] = "vmess" })
 o:depends({ [option_name("protocol")] = "vless" })
 o:depends({ [option_name("protocol")] = "trojan" })
 
+if singbox_tags:find("with_reality_server") then
+	-- [[ REALITY部分 ]] --
+	o = s:option(Flag, option_name("reality"), translate("REALITY"))
+	o.default = 0
+	o:depends({ [option_name("protocol")] = "vless", [option_name("tls")] = true })
+	o:depends({ [option_name("protocol")] = "vmess", [option_name("tls")] = true })
+	o:depends({ [option_name("protocol")] = "shadowsocks", [option_name("tls")] = true })
+	o:depends({ [option_name("protocol")] = "http", [option_name("tls")] = true })
+	o:depends({ [option_name("protocol")] = "trojan", [option_name("tls")] = true })
+
+	o = s:option(Value, option_name("reality_private_key"), translate("Private Key"))
+	o:depends({ [option_name("reality")] = true })
+
+	o = s:option(Value, option_name("reality_shortId"), translate("Short Id"))
+	o:depends({ [option_name("reality")] = true })
+
+	o = s:option(Value, option_name("reality_handshake_server"), translate("Handshake Server"))
+	o.default = "google.com"
+	o:depends({ [option_name("reality")] = true })
+
+	o = s:option(Value, option_name("reality_handshake_server_port"), translate("Handshake Server Port"))
+	o.datatype = "port"
+	o.default = "443"
+	o:depends({ [option_name("reality")] = true })
+end
+
 -- [[ TLS部分 ]] --
 
 o = s:option(FileUpload, option_name("tls_certificateFile"), translate("Public key absolute path"), translate("as:") .. "/etc/ssl/fullchain.pem")
 o.default = m:get(s.section, "tls_certificateFile") or "/etc/config/ssl/" .. arg[1] .. ".pem"
-o:depends({ [option_name("tls")] = true })
+o:depends({ [option_name("tls")] = true, [option_name("reality")] = false })
 o:depends({ [option_name("protocol")] = "naive" })
 o:depends({ [option_name("protocol")] = "hysteria" })
 o:depends({ [option_name("protocol")] = "tuic" })
@@ -240,7 +268,7 @@ end
 
 o = s:option(FileUpload, option_name("tls_keyFile"), translate("Private key absolute path"), translate("as:") .. "/etc/ssl/private.key")
 o.default = m:get(s.section, "tls_keyFile") or "/etc/config/ssl/" .. arg[1] .. ".key"
-o:depends({ [option_name("tls")] = true })
+o:depends({ [option_name("tls")] = true, [option_name("reality")] = false })
 o:depends({ [option_name("protocol")] = "naive" })
 o:depends({ [option_name("protocol")] = "hysteria" })
 o:depends({ [option_name("protocol")] = "tuic" })

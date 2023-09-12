@@ -353,6 +353,22 @@ function gen_config_server(node)
 		key_path = node.tls_keyFile,
 	}
 
+	if node.tls == "1" and node.reality == "1" then
+		tls.certificate_path = nil
+		tls.key_path = nil
+		tls.reality = {
+			enabled = true,
+			private_key = node.reality_private_key,
+			short_id = {
+				node.reality_shortId
+			},
+			handshake = {
+				server = node.reality_handshake_server,
+				server_port = tonumber(node.reality_handshake_server_port)
+			}
+		}
+	end
+
 	local v2ray_transport = nil
 
 	if node.transport == "http" then
