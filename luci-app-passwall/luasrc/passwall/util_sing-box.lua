@@ -347,15 +347,11 @@ function gen_config_server(node)
 		{ type = "block", tag = "block" }
 	}
 
-	local tls = nil
-
-	if node.tls == "1" then
-		tls = {
-			enabled = true,
-			certificate_path = node.tls_certificateFile,
-			key_path = node.tls_keyFile,
-		}
-	end
+	local tls = {
+		enabled = true,
+		certificate_path = node.tls_certificateFile,
+		key_path = node.tls_keyFile,
+	}
 
 	local v2ray_transport = nil
 
@@ -430,7 +426,7 @@ function gen_config_server(node)
 					password = node.password
 				}
 			} or nil,
-			tls = tls,
+			tls = (node.tls == "1") and tls or nil,
 		}
 	end
 
@@ -453,7 +449,7 @@ function gen_config_server(node)
 			end
 			protocol_table = {
 				users = users,
-				tls = tls,
+				tls = (node.tls == "1") and tls or nil,
 				transport = v2ray_transport,
 			}
 		end
@@ -471,7 +467,7 @@ function gen_config_server(node)
 			end
 			protocol_table = {
 				users = users,
-				tls = tls,
+				tls = (node.tls == "1") and tls or nil,
 				transport = v2ray_transport,
 			}
 		end
@@ -483,12 +479,12 @@ function gen_config_server(node)
 			for i = 1, #node.uuid do
 				users[i] = {
 					name = node.uuid[i],
-					uuid = node.uuid[i],
+					password = node.uuid[i],
 				}
 			end
 			protocol_table = {
 				users = users,
-				tls = tls,
+				tls = (node.tls == "1") and tls or nil,
 				fallback = nil,
 				fallback_for_alpn = nil,
 				transport = v2ray_transport,
@@ -509,6 +505,9 @@ function gen_config_server(node)
 	end
 
 	if node.protocol == "hysteria" then
+		tls.alpn = (node.hysteria_alpn and node.hysteria_alpn ~= "") and {
+			node.hysteria_alpn
+		} or nil
 		protocol_table = {
 			up = node.hysteria_up_mbps .. " Mbps",
 			down = node.hysteria_down_mbps .. " Mbps",
@@ -526,18 +525,14 @@ function gen_config_server(node)
 			recv_window_client = node.hysteria_recv_window_client and tonumber(node.hysteria_recv_window_client) or nil,
 			max_conn_client = node.hysteria_max_conn_client and tonumber(node.hysteria_max_conn_client) or nil,
 			disable_mtu_discovery = (node.hysteria_disable_mtu_discovery == "1") and true or false,
-			tls = {
-				enabled = true,
-				certificate_path = node.tls_certificateFile,
-				key_path = node.tls_keyFile,
-				alpn = (node.hysteria_alpn and node.hysteria_alpn ~= "") and {
-					node.hysteria_alpn
-				} or nil
-			}
+			tls = tls
 		}
 	end
 
 	if node.protocol == "tuic" then
+		tls.alpn = (node.tuic_alpn and node.tuic_alpn ~= "") and {
+			node.tuic_alpn
+		} or nil
 		protocol_table = {
 			users = {
 				{
@@ -549,14 +544,7 @@ function gen_config_server(node)
 			congestion_control = node.tuic_congestion_control or "cubic",
 			zero_rtt_handshake = (node.tuic_zero_rtt_handshake == "1") and true or false,
 			heartbeat = node.tuic_heartbeat .. "s",
-			tls = {
-				enabled = true,
-				certificate_path = node.tls_certificateFile,
-				key_path = node.tls_keyFile,
-				alpn = (node.tuic_alpn and node.tuic_alpn ~= "") and {
-					node.tuic_alpn
-				} or nil,
-			},
+			tls = tls
 		}
 	end
 
@@ -575,11 +563,7 @@ function gen_config_server(node)
 				}
 			},
 			ignore_client_bandwidth = (node.hysteria2_ignore_client_bandwidth == "1") and true or false,
-			tls = {
-				enabled = true,
-				certificate_path = node.tls_certificateFile,
-				key_path = node.tls_keyFile,
-			},
+			tls = tls
 		}
 	end
 
