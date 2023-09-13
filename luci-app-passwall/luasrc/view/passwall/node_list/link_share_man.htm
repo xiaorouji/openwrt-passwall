@@ -145,9 +145,9 @@ local api = require "luci.passwall.api"
 		} else if (v_type === "Brook") {
 			dom_prefix = "brook_"
 			protocol = "brook"
-		} else if (v_type === "Hysteria") {
-			dom_prefix = "hysteria_"
-			protocol = "hysteria"
+		} else if (v_type === "Hysteria2") {
+			dom_prefix = "hysteria2_"
+			protocol = "hysteria2"
 		} else if (v_type === "Xray") {
 			dom_prefix = "xray_"
 		} else if (v_type === "sing-box") {
@@ -453,17 +453,14 @@ local api = require "luci.passwall.api"
 			}
 			url += url_protocol;
 			url += params;
-		} else if (v_type === "Hysteria") {
+		} else if (v_type === "Hysteria2") {
 			var v_port = opt.get(dom_prefix + "port");
 			var params = "";
-			params += opt.query("protocol", dom_prefix + "protocol");
 			params += opt.query("auth", dom_prefix + "auth_password");
-			params += opt.query("peer", dom_prefix + "tls_serverName");
+			params += opt.query("sni", dom_prefix + "tls_serverName");
 			params += opt.query("insecure", dom_prefix + "tls_allowInsecure");
-			params += opt.query("upmbps", dom_prefix + "up_mbps", 1000);
-			params += opt.query("downmbps", dom_prefix + "down_mbps", 1000);
-			params += opt.query("alpn", dom_prefix + "alpn");
-			params += opt.query("obfsParam", dom_prefix + "obfs");
+			params += opt.query("obfs", "salamander");
+			params += opt.query("obfs-password", dom_prefix + "obfs");
 			var url =
 				_address + ":" +
 				v_port.value + "?" +
@@ -1040,13 +1037,13 @@ local api = require "luci.passwall.api"
 				opt.set('remarks', decodeURI(m.hash.substr(1)));
 			}
 		}
-		if (ssu[0] === "hysteria") {
+		if (ssu[0] === "hysteria2") {
 			if (has_singbox) {
 				opt.set('type', "sing-box");
 				dom_prefix = "singbox_"
 			} else {
-				opt.set('type', "Hysteria");
-				dom_prefix = "hysteria_"
+				opt.set('type', "Hysteria2");
+				dom_prefix = "hysteria2_"
 			}
 			var m = parseNodeUrl(ssrurl);
 			var queryParam = {};
@@ -1062,17 +1059,12 @@ local api = require "luci.passwall.api"
 			}
 			opt.set(dom_prefix + 'address', m.hostname);
 			opt.set(dom_prefix + 'port', m.port || "443");
-			opt.set(dom_prefix + 'protocol', queryParam.protocol);
-			opt.set(dom_prefix + 'obfs', queryParam.obfsParam);
-			opt.set(dom_prefix + 'auth_type', "string");
-			opt.set(dom_prefix + 'auth_password', queryParam.auth);
-			opt.set(dom_prefix + 'tls_serverName', queryParam.peer);
+			opt.set(dom_prefix + 'obfs', queryParam["obfs-password"]);
+			opt.set(dom_prefix + 'auth', queryParam.auth);
+			opt.set(dom_prefix + 'tls_serverName', queryParam.sni);
 			if (queryParam.insecure && queryParam.insecure == "1") {
 				opt.set(dom_prefix + 'tls_allowInsecure', true);
 			}
-			opt.set(dom_prefix + 'alpn', queryParam.alpn);
-			opt.set(dom_prefix + 'up_mbps', queryParam.upmbps);
-			opt.set(dom_prefix + 'down_mbps', queryParam.downmbps);
 			if (m.hash) {
 				opt.set('remarks', decodeURI(m.hash.substr(1)));
 			}

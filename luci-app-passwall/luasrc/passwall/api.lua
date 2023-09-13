@@ -735,6 +735,9 @@ function to_check(arch, app_name)
 	end
 
 	local remote_version = json.tag_name
+	if com[app_name].remote_version_str_replace then
+		remote_version = remote_version:gsub(com[app_name].remote_version_str_replace, "")
+	end
 	local has_update = compare_versions(local_version:match("[^v]+"), "<", remote_version:match("[^v]+"))
 
 	if not has_update then

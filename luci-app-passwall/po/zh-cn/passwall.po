@@ -517,6 +517,9 @@ msgstr "QUIC 并发双向流的最大数量"
 msgid "Disable MTU detection"
 msgstr "禁用 MTU 检测"
 
+msgid "ignoreClientBandwidth"
+msgstr "忽略客户端带宽设置"
+
 msgid "Lazy Start"
 msgstr "延迟启动"
 
