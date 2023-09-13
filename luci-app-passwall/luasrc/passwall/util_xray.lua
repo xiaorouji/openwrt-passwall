@@ -1036,6 +1036,7 @@ function gen_config(var)
 					address = remote_dns_server,
 					port = (_remote_dns_proto ~= "doh" and tonumber(remote_dns_port)) and tonumber(remote_dns_port) or 53,
 					network = "tcp",
+					nonIPQuery = (_remote_dns_proto == "tcp") and "skip" or "drop"
 				}
 			})
 

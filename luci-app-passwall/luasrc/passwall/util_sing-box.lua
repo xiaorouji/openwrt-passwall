@@ -1233,14 +1233,16 @@ function gen_config(var)
 			end
 			local direct_rule = {
 				server = dns_tag,
-				domain = domain,
+				domain = #domain > 0 and domain or nil,
 				domain_suffix = #domain_suffix > 0 and domain_suffix or nil,
 				domain_keyword = #domain_keyword > 0 and domain_keyword or nil,
 				domain_regex = #domain_regex > 0 and domain_regex or nil,
 				geosite = #geosite > 0 and geosite or nil,
 				disable_cache = false,
 			}
-			table.insert(dns.rules, direct_rule)
+			if direct_rule.domain or direct_rule.domain_suffix or direct_rule.domain_keyword or direct_rule.domain_regex or direct_rule.geosite then
+				table.insert(dns.rules, direct_rule)
+			end
 	
 			local direct_strategy = "prefer_ipv6"
 			if direct_dns_query_strategy == "UseIPv4" then
