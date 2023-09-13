@@ -281,19 +281,8 @@ dns_mode:value("udp", translatef("Requery DNS By %s", "UDP"))
 o = s:taboption("DNS", ListValue, "v2ray_dns_mode", " ")
 o:value("tcp", "TCP")
 o:value("doh", "DoH")
-o:value("fakedns", "FakeDNS")
 o:depends("dns_mode", "sing-box")
 o:depends("dns_mode", "xray")
-o.validate = function(self, value, t)
-	if value == "fakedns" then
-		local _dns_mode = dns_mode:formvalue(t)
-		local _tcp_node = tcp_node:formvalue(t)
-		if m:get(_tcp_node, "type"):lower() ~= _dns_mode then
-			return nil, translatef("TCP node must be '%s' type to use FakeDNS.", _dns_mode)
-		end
-	end
-	return value
-end
 
 o = s:taboption("DNS", Value, "socks_server", translate("Socks Server"), translate("Make sure socks service is available on this address."))
 for k, v in pairs(socks_table) do o:value(v.id, v.remarks) end
@@ -344,13 +333,28 @@ o.datatype = "ipaddr"
 o:depends({dns_mode = "xray", v2ray_dns_mode = "tcp"})
 o:depends({dns_mode = "xray", v2ray_dns_mode = "doh"})
 
+o = s:taboption("DNS", Flag, "remote_fakedns", "FakeDNS", translate("Use FakeDNS work in the shunt domain that proxy."))
+o.default = "0"
+o:depends({dns_mode = "sing-box"})
+o:depends({dns_mode = "xray"})
+o.validate = function(self, value, t)
+	if value and value == "1" then
+		local _dns_mode = dns_mode:formvalue(t)
+		local _tcp_node = tcp_node:formvalue(t)
+		if _dns_mode and _tcp_node and _tcp_node ~= "nil" then
+			if m:get(_tcp_node, "type"):lower() ~= _dns_mode then
+				return nil, translatef("TCP node must be '%s' type to use FakeDNS.", _dns_mode)
+			end
+		end
+	end
+	return value
+end
+
 o = s:taboption("DNS", Flag, "dns_cache", translate("Cache Resolved"))
 o.default = "1"
 o:depends({dns_mode = "dns2socks"})
-o:depends({dns_mode = "sing-box", v2ray_dns_mode = "tcp"})
-o:depends({dns_mode = "sing-box", v2ray_dns_mode = "doh"})
-o:depends({dns_mode = "xray", v2ray_dns_mode = "tcp"})
-o:depends({dns_mode = "xray", v2ray_dns_mode = "doh"})
+o:depends({dns_mode = "sing-box", remote_fakedns = false})
+o:depends({dns_mode = "xray", remote_fakedns = false})
 o.rmempty = false
 
 if api.is_finded("chinadns-ng") then
@@ -358,10 +362,8 @@ if api.is_finded("chinadns-ng") then
 	o.default = "0"
 	o:depends({dns_mode = "dns2socks"})
 	o:depends({dns_mode = "dns2tcp"})
-	o:depends({dns_mode = "sing-box", v2ray_dns_mode = "tcp"})
-	o:depends({dns_mode = "sing-box", v2ray_dns_mode = "doh"})
-	o:depends({dns_mode = "xray", v2ray_dns_mode = "tcp"})
-	o:depends({dns_mode = "xray", v2ray_dns_mode = "doh"})
+	o:depends({dns_mode = "sing-box", remote_fakedns = false})
+	o:depends({dns_mode = "xray", remote_fakedns = false})
 	o:depends({dns_mode = "udp"})
 end
 

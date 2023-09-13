@@ -999,7 +999,6 @@ function gen_config(var)
 		end
 
 		if remote_dns_fake then
-			remote_dns_server = "1.1.1.1"
 			fakedns = {}
 			fakedns[#fakedns + 1] = {
 				ipPool = "198.18.0.0/16",
@@ -1012,6 +1011,11 @@ function gen_config(var)
 				}
 			end
 			_remote_dns.address = "fakedns"
+		end
+
+		if not remote_dns_server then
+			remote_dns_server = "1.1.1.1"
+			remote_dns_port = 53
 		end
 
 		table.insert(dns.servers, _remote_dns)
