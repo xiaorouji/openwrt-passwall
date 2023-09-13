@@ -526,12 +526,12 @@ function gen_config(var)
 	local local_http_password = var["-local_http_password"]
 	local dns_listen_port = var["-dns_listen_port"]
 	local dns_query_strategy = var["-dns_query_strategy"]
-	local remote_dns_server = var["-remote_dns_server"]
-	local remote_dns_port = var["-remote_dns_port"]
 	local remote_dns_tcp_server = var["-remote_dns_tcp_server"]
+	local remote_dns_tcp_port = var["-remote_dns_tcp_port"]
 	local remote_dns_doh_url = var["-remote_dns_doh_url"]
 	local remote_dns_doh_host = var["-remote_dns_doh_host"]
-	local remote_dns_fake = var["-remote_dns_fake"]
+	local remote_dns_doh_ip = var["-remote_dns_doh_ip"]
+	local remote_dns_doh_port = var["-remote_dns_doh_port"]
 	local dns_cache = var["-dns_cache"]
 	local dns_client_ip = var["-dns_client_ip"]
 	local dns_socks_address = var["-dns_socks_address"]
@@ -539,7 +539,6 @@ function gen_config(var)
 	local loglevel = var["-loglevel"] or "warning"
 
 	local dns = nil
-	local fakedns = nil
 	local routing = nil
 	local observatory = nil
 	local inbounds = {}
@@ -589,7 +588,7 @@ function gen_config(var)
 				protocol = "dokodemo-door",
 				settings = {network = "tcp,udp", followRedirect = true},
 				streamSettings = {sockopt = {tproxy = "tproxy"}},
-				sniffing = {enabled = sniffing and true or false, destOverride = {"http", "tls", "quic", (remote_dns_fake) and "fakedns"}, metadataOnly = false, routeOnly = route_only and true or nil, domainsExcluded = (sniffing and not route_only) and get_domain_excluded() or nil}
+				sniffing = {enabled = sniffing and true or false, destOverride = {"http", "tls", "quic"}, metadataOnly = false, routeOnly = route_only and true or nil, domainsExcluded = (sniffing and not route_only) and get_domain_excluded() or nil}
 			}
 
 			if tcp_redir_port then
@@ -956,10 +955,8 @@ function gen_config(var)
 		end
 	end
 
-	if remote_dns_server or remote_dns_doh_url or remote_dns_fake then
+	if remote_dns_tcp_server and remote_dns_tcp_port then
 		local rules = {}
-		local _remote_dns_proto = "tcp"
-		local _remote_dns_host
 
 		if not routing then
 			routing = {
@@ -980,78 +977,22 @@ function gen_config(var)
 		}
 
 		local _remote_dns = {
-			--_flag = "remote"
+			--_flag = "remote",
+			address = "tcp://" .. remote_dns_tcp_server,
+			port = tonumber(remote_dns_tcp_port)
 		}
 
-		if remote_dns_tcp_server then
-			_remote_dns.address = remote_dns_tcp_server
-			_remote_dns.port = tonumber(remote_dns_port)
-		end
-
+		local _remote_dns_host
 		if remote_dns_doh_url and remote_dns_doh_host then
-			if remote_dns_server and remote_dns_doh_host ~= remote_dns_server and not api.is_ip(remote_dns_doh_host) then
-				dns.hosts[remote_dns_doh_host] = remote_dns_server
+			if remote_dns_doh_ip and remote_dns_doh_host ~= remote_dns_doh_ip and not api.is_ip(remote_dns_doh_host) then
+				dns.hosts[remote_dns_doh_host] = remote_dns_doh_ip
 				_remote_dns_host = remote_dns_doh_host
 			end
 			_remote_dns.address = remote_dns_doh_url
-			_remote_dns.port = tonumber(remote_dns_port)
-			_remote_dns_proto = "doh"
-		end
-
-		if remote_dns_fake then
-			fakedns = {}
-			fakedns[#fakedns + 1] = {
-				ipPool = "198.18.0.0/16",
-				poolSize = 65535
-			}
-			if dns_query_strategy == "UseIP" then
-				fakedns[#fakedns + 1] = {
-					ipPool = "fc00::/18",
-					poolSize = 65535
-				}
-			end
-			_remote_dns.address = "fakedns"
-		end
-
-		if not remote_dns_server then
-			remote_dns_server = "1.1.1.1"
-			remote_dns_port = 53
+			_remote_dns.port = tonumber(remote_dns_doh_port)
 		end
 
 		table.insert(dns.servers, _remote_dns)
-
-		if dns_listen_port then
-			table.insert(inbounds, {
-				listen = "127.0.0.1",
-				port = tonumber(dns_listen_port),
-				protocol = "dokodemo-door",
-				tag = "dns-in",
-				settings = {
-					address = remote_dns_server,
-					port = (_remote_dns_proto ~= "doh" and tonumber(remote_dns_port)) and tonumber(remote_dns_port) or 53,
-					network = "tcp,udp"
-				}
-			})
-
-			table.insert(outbounds, {
-				tag = "dns-out",
-				protocol = "dns",
-				settings = {
-					address = remote_dns_server,
-					port = (_remote_dns_proto ~= "doh" and tonumber(remote_dns_port)) and tonumber(remote_dns_port) or 53,
-					network = "tcp",
-					nonIPQuery = (_remote_dns_proto == "tcp") and "skip" or "drop"
-				}
-			})
-
-			table.insert(routing.rules, 1, {
-				type = "field",
-				inboundTag = {
-					"dns-in"
-				},
-				outboundTag = "dns-out"
-			})
-		end
 
 	--[[
 		local default_dns_flag = "remote"
@@ -1081,62 +1022,109 @@ function gen_config(var)
 			end
 		end
 	]]--
-		if true then
-			local dns_outboundTag = "direct"
-			if dns_socks_address and dns_socks_port then
-				dns_outboundTag = "out"
-				table.insert(outbounds, 1, {
-					tag = dns_outboundTag,
-					protocol = "socks",
-					streamSettings = {
-						network = "tcp",
-						security = "none",
-						sockopt = {
-							mark = 255
-						}
-					},
-					settings = {
-						servers = {
-							{
-								address = dns_socks_address,
-								port = tonumber(dns_socks_port)
-							}
+		local dns_outboundTag = "direct"
+		if dns_socks_address and dns_socks_port then
+			dns_outboundTag = "out"
+			table.insert(outbounds, 1, {
+				tag = dns_outboundTag,
+				protocol = "socks",
+				streamSettings = {
+					network = "tcp",
+					security = "none",
+					sockopt = {
+						mark = 255
+					}
+				},
+				settings = {
+					servers = {
+						{
+							address = dns_socks_address,
+							port = tonumber(dns_socks_port)
 						}
 					}
-				})
-			else
-				if node_id and tcp_redir_port and not remote_dns_fake then
-					dns_outboundTag = node_id
-					local node = uci:get_all(appname, node_id)
-					if node.protocol == "_shunt" then
-						dns_outboundTag = "default"
-					end
+				}
+			})
+		else
+			if node_id and tcp_redir_port then
+				dns_outboundTag = node_id
+				local node = uci:get_all(appname, node_id)
+				if node.protocol == "_shunt" then
+					dns_outboundTag = "default"
 				end
 			end
+		end
+
+		if dns_listen_port then
+			table.insert(inbounds, {
+				listen = "127.0.0.1",
+				port = tonumber(dns_listen_port),
+				protocol = "dokodemo-door",
+				tag = "dns-in",
+				settings = {
+					address = remote_dns_tcp_server,
+					port = tonumber(remote_dns_tcp_port),
+					network = "tcp,udp"
+				}
+			})
+
+			table.insert(outbounds, {
+				tag = "dns-out",
+				protocol = "dns",
+				proxySettings = {
+					tag = dns_outboundTag
+				},
+				settings = {
+					address = remote_dns_tcp_server,
+					port = tonumber(remote_dns_tcp_port),
+					network = "tcp",
+					nonIPQuery = "skip"
+				}
+			})
+
+			table.insert(routing.rules, 1, {
+				type = "field",
+				inboundTag = {
+					"dns-in"
+				},
+				outboundTag = "dns-out"
+			})
+		end
+		table.insert(rules, {
+			type = "field",
+			inboundTag = {
+				"dns-in1"
+			},
+			ip = {
+				remote_dns_tcp_server
+			},
+			port = tonumber(remote_dns_tcp_port),
+			outboundTag = dns_outboundTag
+		})
+		if _remote_dns_host then
+			table.insert(rules, {
+				type = "field",
+				inboundTag = {
+					"dns-in1"
+				},
+				domain = {
+					_remote_dns_host
+				},
+				port = tonumber(remote_dns_doh_port),
+				outboundTag = dns_outboundTag
+			})
+		end
+		if remote_dns_doh_ip then
 			table.insert(rules, {
 				type = "field",
 				inboundTag = {
 					"dns-in1"
 				},
 				ip = {
-					remote_dns_server
+					remote_dns_doh_ip
 				},
-				port = tonumber(remote_dns_port),
+				port = tonumber(remote_dns_doh_port),
 				outboundTag = dns_outboundTag
 			})
-			if _remote_dns_host then
-				table.insert(rules, {
-					type = "field",
-					inboundTag = {
-						"dns-in1"
-					},
-					domain = {
-						_remote_dns_host
-					},
-					port = tonumber(remote_dns_port),
-					outboundTag = dns_outboundTag
-				})
-			end
 		end
 
 		local default_rule_index = #routing.rules > 0 and #routing.rules or 1
@@ -1169,7 +1157,6 @@ function gen_config(var)
 			},
 			-- DNS
 			dns = dns,
-			fakedns = fakedns,
 			-- 传入连接
 			inbounds = inbounds,
 			-- 传出连接
