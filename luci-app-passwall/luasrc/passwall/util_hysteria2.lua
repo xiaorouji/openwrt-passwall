@@ -10,12 +10,12 @@ function gen_config_server(node)
 			cert = node.tls_certificateFile,
 			key = node.tls_keyFile,
 		},
-		obfs = {
+		obfs = (node.hysteria2_obfs) and {
 			type = "salamander",
 			salamander = {
 				password = node.hysteria2_obfs
 			}
-		},
+		} or nil,
 		auth = {
 			type = "password",
 			password = node.hysteria2_auth_password
@@ -25,7 +25,7 @@ function gen_config_server(node)
 			down = node.hysteria2_down_mbps and node.hysteria2_down_mbps .. " mbps" or "1 gbps",
 		},
 		ignoreClientBandwidth = (node.hysteria2_ignoreClientBandwidth == "1") and true or false,
-		disable_udp = (node.hysteria2_udp == "0") and true or false,
+		disableUDP = (node.hysteria2_udp == "0") and true or false,
 	}
 	return config
 end
@@ -68,12 +68,12 @@ function gen_config(var)
 				hopInterval = node.hysteria2_hop_interval and node.hysteria2_hop_interval .. "s" or "30s"
 			}
 		},
-		obfs = {
+		obfs = (node.hysteria2_obfs) and {
 			type = "salamander",
 			salamander = {
 				password = node.hysteria2_obfs
 			}
-		},
+		} or nil,
 		auth = node.hysteria2_auth_password,
 		tls = {
 			sni = node.tls_serverName,
@@ -95,13 +95,12 @@ function gen_config(var)
 			listen = local_socks_address .. ":" .. local_socks_port,
 			username = (local_socks_username and local_socks_password) and local_socks_username or nil,
 			password = (local_socks_username and local_socks_password) and local_socks_password or nil,
-			disable_udp = false,
+			disableUDP = false,
 		} or nil,
 		http = (local_http_address and local_http_port) and {
 			listen = local_http_address .. ":" .. local_http_port,
 			username = (local_http_username and local_http_password) and local_http_username or nil,
 			password = (local_http_username and local_http_password) and local_http_password or nil,
-			disable_udp = false,
 		} or nil,
 		tcpRedirect = ("redirect" == tcp_proxy_way and local_tcp_redir_port) and {
 			listen = "0.0.0.0:" .. local_tcp_redir_port

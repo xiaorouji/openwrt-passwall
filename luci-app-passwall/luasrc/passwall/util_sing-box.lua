@@ -150,7 +150,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 		if node.transport == "grpc" then
 			v2ray_transport = {
 				type = "grpc",
-				serviceName = node.grpc_serviceName,
+				service_name = node.grpc_serviceName,
 				idle_timeout = tonumber(node.grpc_idle_timeout) or nil,
 				ping_timeout = tonumber(node.grpc_health_check_timeout) or nil,
 				permit_without_stream = (node.grpc_permit_without_stream == "1") and true or nil,
@@ -398,7 +398,7 @@ function gen_config_server(node)
 	if node.transport == "grpc" then
 		v2ray_transport = {
 			type = "grpc",
-			serviceName = node.grpc_serviceName,
+			service_name = node.grpc_serviceName,
 		}
 	end
 
