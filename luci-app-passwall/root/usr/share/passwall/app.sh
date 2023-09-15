@@ -1659,25 +1659,25 @@ start() {
 	local use_nft=$(config_t_get global_forwarding use_nft 0)
 	local USE_TABLES
 	if [ "$use_nft" == 0 ]; then
-		if [ -z "$(command -v iptables-legacy || command -v iptables)" ] || [ -z "$(command -v ipset)" ] || [ -z "$(dnsmasq --version | grep 'Compile time options:.* ipset')" ]; then
-			if [ -n "$(command -v nft)" ] && [ -n "$(dnsmasq --version | grep 'Compile time options:.* nftset')" ]; then
+		if [ -n "$(command -v iptables-legacy || command -v iptables)" ] && [ -n "$(command -v ipset)" ] && [ -n "$(dnsmasq --version | grep 'Compile time options:.* ipset')" ]; then
+			USE_TABLES="iptables"
+		else
+			if [ -n "$(command -v fw4)" ] && [ -n "$(command -v nft)" ] && [ -n "$(dnsmasq --version | grep 'Compile time options:.* nftset')" ]; then
 				echolog "检测到fw4，使用nftables进行透明代理。"
 				USE_TABLES="nftables"
 				nftflag=1
 				config_t_set global_forwarding use_nft 1
-				uci commit
+				uci commit ${CONFIG}
 			else
 				echolog "系统未安装iptables或ipset或Dnsmasq没有开启ipset支持，无法透明代理！"
 			fi
-		else
-			USE_TABLES="iptables"
 		fi
 	else
-		if [ -z "$(dnsmasq --version | grep 'Compile time options:.* nftset')" ]; then
-			echolog "Dnsmasq软件包不满足nftables透明代理要求，如需使用请确保dnsmasq版本在2.87以上并开启nftset支持。"
-		elif [ -n "$(dnsmasq --version | grep 'Compile time options:.* nftset')" ]; then
+		if [ -n "$(dnsmasq --version | grep 'Compile time options:.* nftset')" ]; then
 			USE_TABLES="nftables"
 			nftflag=1
+		else
+			echolog "Dnsmasq软件包不满足nftables透明代理要求，如需使用请确保dnsmasq版本在2.87以上并开启nftset支持。"
 		fi
 	fi
 
