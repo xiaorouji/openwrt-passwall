@@ -433,6 +433,7 @@ if singbox_tags:find("with_quic") then
 end
 if singbox_tags:find("with_grpc") then
 	o:value("grpc", "gRPC")
+else o:value("grpc", "gRPC-lite")
 end
 o:depends({ [option_name("protocol")] = "vmess" })
 o:depends({ [option_name("protocol")] = "vless" })
@@ -499,25 +500,23 @@ o = s:option(Value, option_name("ws_earlyDataHeaderName"), translate("Early data
 o:depends({ [option_name("ws_enableEarlyData")] = true })
 
 -- [[ gRPC部分 ]]--
-if singbox_tags:find("with_grpc") then
-	o = s:option(Value, option_name("grpc_serviceName"), "ServiceName")
-	o:depends({ [option_name("transport")] = "grpc" })
+o = s:option(Value, option_name("grpc_serviceName"), "ServiceName")
+o:depends({ [option_name("transport")] = "grpc" })
 
-	o = s:option(Flag, option_name("grpc_health_check"), translate("Health check"))
-	o:depends({ [option_name("transport")] = "grpc" })
+o = s:option(Flag, option_name("grpc_health_check"), translate("Health check"))
+o:depends({ [option_name("transport")] = "grpc" })
 
-	o = s:option(Value, option_name("grpc_idle_timeout"), translate("Idle timeout"))
-	o.default = "10"
-	o:depends({ [option_name("grpc_health_check")] = true })
+o = s:option(Value, option_name("grpc_idle_timeout"), translate("Idle timeout"))
+o.default = "10"
+o:depends({ [option_name("grpc_health_check")] = true })
 
-	o = s:option(Value, option_name("grpc_health_check_timeout"), translate("Health check timeout"))
-	o.default = "20"
-	o:depends({ [option_name("grpc_health_check")] = true })
+o = s:option(Value, option_name("grpc_health_check_timeout"), translate("Health check timeout"))
+o.default = "20"
+o:depends({ [option_name("grpc_health_check")] = true })
 
-	o = s:option(Flag, option_name("grpc_permit_without_stream"), translate("Permit without stream"))
-	o.default = "0"
-	o:depends({ [option_name("grpc_health_check")] = true })
-end
+o = s:option(Flag, option_name("grpc_permit_without_stream"), translate("Permit without stream"))
+o.default = "0"
+o:depends({ [option_name("grpc_health_check")] = true })
 
 -- [[ Mux ]]--
 o = s:option(Flag, option_name("mux"), translate("Mux"))
