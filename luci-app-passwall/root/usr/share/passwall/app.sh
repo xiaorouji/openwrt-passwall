@@ -1473,7 +1473,9 @@ acl_app() {
 								elif [ "$dns_mode" = "sing-box" -o "$dns_mode" = "xray" ]; then
 									config_file=$TMP_ACL_PATH/${tcp_node}_SOCKS_${socks_port}_DNS.json
 									[ "$dns_mode" = "xray" ] && [ "$v2ray_dns_mode" = "tcp+doh" ] && remote_dns_doh=${remote_dns_doh:-https://1.1.1.1/dns-query}
-									run_${dns_mode} flag=acl_${sid} type=$dns_mode dns_socks_address=127.0.0.1 dns_socks_port=$socks_port dns_listen_port=${_dns_port} remote_dns_protocol=${v2ray_dns_mode} remote_dns_tcp_server=${remote_dns} remote_dns_doh="${remote_dns_doh}" remote_dns_query_strategy=${DNS_QUERY_STRATEGY} dns_client_ip=${dns_client_ip} dns_query_strategy=${DNS_QUERY_STRATEGY} config_file=$config_file
+									local type=${dns_mode}
+									[ "${dns_mode}" = "sing-box" ] && type="singbox"
+									run_${type} flag=acl_${sid} type=$dns_mode dns_socks_address=127.0.0.1 dns_socks_port=$socks_port dns_listen_port=${_dns_port} remote_dns_protocol=${v2ray_dns_mode} remote_dns_tcp_server=${remote_dns} remote_dns_doh="${remote_dns_doh}" remote_dns_query_strategy=${DNS_QUERY_STRATEGY} dns_client_ip=${dns_client_ip} dns_query_strategy=${DNS_QUERY_STRATEGY} config_file=$config_file
 								fi
 								eval node_${tcp_node}_$(echo -n "${remote_dns}" | md5sum | cut -d " " -f1)=${_dns_port}
 							}
@@ -1572,6 +1574,7 @@ acl_app() {
 										_extra_param="${_extra_param} udp_redir_port=$redir_port"
 									}
 									config_file="$TMP_PATH/$config_file"
+									[ "${type}" = "sing-box" ] && type="singbox"
 									run_${type} flag=$tcp_node node=$tcp_node tcp_redir_port=$redir_port ${_extra_param} config_file=$config_file
 								else
 									config_file="acl/${tcp_node}_SOCKS_${socks_port}.json"
@@ -1625,6 +1628,7 @@ acl_app() {
 								if [ -n "${type}" ] && ([ "${type}" = "sing-box" ] || [ "${type}" = "xray" ]); then
 									config_file="acl/${udp_node}_UDP_${redir_port}.json"
 									config_file="$TMP_PATH/$config_file"
+									[ "${type}" = "sing-box" ] && type="singbox"
 									run_${type} flag=$udp_node node=$udp_node udp_redir_port=$redir_port config_file=$config_file
 								else
 									config_file="acl/${udp_node}_SOCKS_${socks_port}.json"
