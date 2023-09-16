@@ -688,6 +688,8 @@ function gen_config(var)
 	local remote_dns_query_strategy = var["-remote_dns_query_strategy"]
 	local remote_dns_fake = var["-remote_dns_fake"]
 	local dns_cache = var["-dns_cache"]
+	local dns_socks_address = var["-dns_socks_address"]
+	local dns_socks_port = var["-dns_socks_port"]
 	local tags = var["-tags"]
 
 	local dns_direct_domains = {}
@@ -714,93 +716,85 @@ function gen_config(var)
 
 	local experimental = nil
 
-	local nodes = {}
+	local dns_outTag = nil
 	if node_id then
 		local node = uci:get_all(appname, node_id)
-		if node then
-			nodes[node_id] = node
-		end
-	end
 
-	if local_socks_port then
-		local inbound = {
-			type = "socks",
-			tag = "socks-in",
-			listen = local_socks_address,
-			listen_port = tonumber(local_socks_port),
-			sniff = true
-		}
-		if local_socks_username and local_socks_password and local_socks_username ~= "" and local_socks_password ~= "" then
-			inbound.users = {
-				{
-					username = local_socks_username,
-					password = local_socks_password
-				}
-			}
-		end
-		table.insert(inbounds, inbound)
-	end
-
-	if local_http_port then
-		local inbound = {
-			type = "http",
-			tag = "http-in",
-			listen = local_http_address,
-			listen_port = tonumber(local_http_port)
-		}
-		if local_http_username and local_http_password and local_http_username ~= "" and local_http_password ~= "" then
-			inbound.users = {
-				{
-					username = local_http_username,
-					password = local_http_password
-				}
-			}
-		end
-		table.insert(inbounds, inbound)
-	end
-
-	if tcp_redir_port then
-		if tcp_proxy_way ~= "tproxy" then
+		if local_socks_port then
 			local inbound = {
-				type = "redirect",
-				tag = "redirect_tcp",
-				listen = "::",
-				listen_port = tonumber(tcp_redir_port),
-				sniff = true,
-				sniff_override_destination = (singbox_settings.sniff_override_destination == "1") and true or false,
+				type = "socks",
+				tag = "socks-in",
+				listen = local_socks_address,
+				listen_port = tonumber(local_socks_port),
+				sniff = true
 			}
+			if local_socks_username and local_socks_password and local_socks_username ~= "" and local_socks_password ~= "" then
+				inbound.users = {
+					{
+						username = local_socks_username,
+						password = local_socks_password
+					}
+				}
+			end
 			table.insert(inbounds, inbound)
-		else
+		end
+
+		if local_http_port then
+			local inbound = {
+				type = "http",
+				tag = "http-in",
+				listen = local_http_address,
+				listen_port = tonumber(local_http_port)
+			}
+			if local_http_username and local_http_password and local_http_username ~= "" and local_http_password ~= "" then
+				inbound.users = {
+					{
+						username = local_http_username,
+						password = local_http_password
+					}
+				}
+			end
+			table.insert(inbounds, inbound)
+		end
+
+		if tcp_redir_port then
+			if tcp_proxy_way ~= "tproxy" then
+				local inbound = {
+					type = "redirect",
+					tag = "redirect_tcp",
+					listen = "::",
+					listen_port = tonumber(tcp_redir_port),
+					sniff = true,
+					sniff_override_destination = (singbox_settings.sniff_override_destination == "1") and true or false,
+				}
+				table.insert(inbounds, inbound)
+			else
+				local inbound = {
+					type = "tproxy",
+					tag = "tproxy_tcp",
+					network = "tcp",
+					listen = "::",
+					listen_port = tonumber(tcp_redir_port),
+					sniff = true,
+					sniff_override_destination = (singbox_settings.sniff_override_destination == "1") and true or false,
+				}
+				table.insert(inbounds, inbound)
+			end
+		end
+
+		if udp_redir_port then
 			local inbound = {
 				type = "tproxy",
-				tag = "tproxy_tcp",
-				network = "tcp",
+				tag = "tproxy_udp",
+				network = "udp",
 				listen = "::",
-				listen_port = tonumber(tcp_redir_port),
+				listen_port = tonumber(udp_redir_port),
 				sniff = true,
 				sniff_override_destination = (singbox_settings.sniff_override_destination == "1") and true or false,
 			}
 			table.insert(inbounds, inbound)
 		end
-	end
 
-	if udp_redir_port then
-		local inbound = {
-			type = "tproxy",
-			tag = "tproxy_udp",
-			network = "udp",
-			listen = "::",
-			listen_port = tonumber(udp_redir_port),
-			sniff = true,
-			sniff_override_destination = (singbox_settings.sniff_override_destination == "1") and true or false,
-		}
-		table.insert(inbounds, inbound)
-	end
-	
-	local dns_outTag = nil
-
-	for k, v in pairs(nodes) do
-		local node = v
 		if node.protocol == "_shunt" then
 			local rules = {}
 
@@ -1101,6 +1095,16 @@ function gen_config(var)
 			fakeip = nil,
 		}
 
+		if dns_socks_address and dns_socks_port then
+			dns_outTag = "dns_socks_out"
+			table.insert(outbounds, 1, {
+				type = "socks",
+				tag = dns_outTag,
+				server = dns_socks_address,
+				server_port = tonumber(dns_socks_port)
+			})
+		end
+
 		local dns_tag = "remote"
 
 		local domain = {}
@@ -1263,14 +1267,17 @@ function gen_config(var)
 		})
 
 		local default_dns_flag = "remote"
-		if node_id and (tcp_redir_port or udp_redir_port) then
-			local node = uci:get_all(appname, node_id)
-			if node.protocol == "_shunt" then
-				if node.default_node == "_direct" then
-					default_dns_flag = "direct"
+		if dns_socks_address and dns_socks_port then
+		else
+			if node_id and (tcp_redir_port or udp_redir_port) then
+				local node = uci:get_all(appname, node_id)
+				if node.protocol == "_shunt" then
+					if node.default_node == "_direct" then
+						default_dns_flag = "direct"
+					end
 				end
+			else default_dns_flag = "direct"
 			end
-		else default_dns_flag = "direct"
 		end
 		if default_dns_flag == "remote" then
 			if remote_dns_fake then
@@ -1421,174 +1428,8 @@ function gen_proto_config(var)
 	return jsonc.stringify(config, 1)
 end
 
-function gen_dns_config(var)
-	local dns_listen_port = var["-dns_listen_port"]
-	local dns_query_strategy = var["-dns_query_strategy"]
-	local dns_out_tag = var["-dns_out_tag"]
-	local dns_client_ip = var["-dns_client_ip"]
-	local direct_dns_server = var["-direct_dns_server"]
-	local direct_dns_port = var["-direct_dns_port"]
-	local direct_dns_udp_server = var["-direct_dns_udp_server"]
-	local direct_dns_tcp_server = var["-direct_dns_tcp_server"]
-	local direct_dns_doh_url = var["-direct_dns_doh_url"]
-	local direct_dns_doh_host = var["-direct_dns_doh_host"]
-	local remote_dns_server = var["-remote_dns_server"]
-	local remote_dns_port = var["-remote_dns_port"]
-	local remote_dns_udp_server = var["-remote_dns_udp_server"]
-	local remote_dns_tcp_server = var["-remote_dns_tcp_server"]
-	local remote_dns_doh_url = var["-remote_dns_doh_url"]
-	local remote_dns_doh_host = var["-remote_dns_doh_host"]
-	local remote_dns_outbound_socks_address = var["-remote_dns_outbound_socks_address"]
-	local remote_dns_outbound_socks_port = var["-remote_dns_outbound_socks_port"]
-	local remote_dns_fake = var["-remote_dns_fake"]
-	local dns_cache = var["-dns_cache"]
-	local log = var["-log"] or "0"
-	local loglevel = var["-loglevel"] or "warn"
-	local logfile = var["-logfile"] or "/dev/null"
-	
-	local inbounds = {}
-	local outbounds = {}
-	local dns = nil
-	local route = nil
-
-	if dns_listen_port then
-		route = {
-			rules = {}
-		}
-
-		dns = {
-			servers = {},
-			rules = {},
-			disable_cache = (dns_cache and dns_cache == "0") and true or false,
-			disable_expire = false, --禁用 DNS 缓存过期。
-			independent_cache = false, --使每个 DNS 服务器的缓存独立，以满足特殊目的。如果启用，将轻微降低性能。
-			reverse_mapping = true, --在响应 DNS 查询后存储 IP 地址的反向映射以为路由目的提供域名。
-			fakeip = nil,
-		}
-	
-		if dns_out_tag == "remote" then
-			local server = {
-				tag = dns_out_tag,
-				address_strategy = "prefer_ipv4",
-				strategy = (dns_query_strategy and dns_query_strategy ~= "UseIP") and "ipv4_only" or "prefer_ipv6",
-				detour = "remote-out",
-			}
-
-			if remote_dns_fake then
-				server.address = "fakeip"
-				dns.fakeip = {
-					enabled = true,
-					inet4_range = "198.18.0.0/16",
-					inet6_range = "fc00::/18",
-				}
-			end
-	
-			if remote_dns_udp_server then
-				local server_port = tonumber(remote_dns_port) or 53
-				server.address = "udp://" .. remote_dns_udp_server .. ":" .. server_port
-			end
-	
-			if remote_dns_tcp_server then
-				server.address = remote_dns_tcp_server
-			end
-	
-			if remote_dns_doh_url and remote_dns_doh_host then
-				server.address = remote_dns_doh_url
-			end
-	
-			table.insert(dns.servers, server)
-
-			table.insert(outbounds, 1, {
-				type = "socks",
-				tag = "remote-out",
-				server = remote_dns_outbound_socks_address,
-				server_port = tonumber(remote_dns_outbound_socks_port),
-			})
-
-			table.insert(route.rules, {
-				network = {"tcp", "udp"},
-				outbound = "remote-out"
-			})
-		elseif dns_out_tag == "direct" then
-			local server = {
-				tag = dns_out_tag,
-				address_strategy = "prefer_ipv6",
-				strategy = (dns_query_strategy and dns_query_strategy ~= "UseIP") and "ipv4_only" or "prefer_ipv6",
-				detour = "direct-out",
-			}
-	
-			if direct_dns_udp_server then
-				local server_port = tonumber(direct_dns_port) or 53
-				server.address = "udp://" .. direct_dns_udp_server .. ":" .. server_port
-			end
-	
-			if direct_dns_tcp_server then
-				local server_port = tonumber(direct_dns_port) or 53
-				server.address = direct_dns_tcp_server .. ":" .. server_port
-			end
-	
-			if direct_dns_doh_url and direct_dns_doh_host then
-				local server_port = tonumber(direct_dns_port) or 443
-				server.address = direct_dns_doh_url
-			end
-	
-			table.insert(dns.servers, server)
-	
-			table.insert(outbounds, 1, {
-				type = "direct",
-				tag = "direct-out",
-				routing_mark = 255,
-				domain_strategy = (dns_query_strategy and dns_query_strategy ~= "UseIP") and "ipv4_only" or "prefer_ipv6",
-			})
-		end
-
-		table.insert(inbounds, {
-			type = "direct",
-			tag = "dns-in",
-			listen = "127.0.0.1",
-			listen_port = tonumber(dns_listen_port),
-			sniff = true,
-		})
-	
-		table.insert(outbounds, {
-			type = "dns",
-			tag = "dns-out",
-		})
-	
-		table.insert(route.rules, 1, {
-			protocol = "dns",
-			inbound = {
-				"dns-in"
-			},
-			outbound = "dns-out"
-		})
-	end
-	
-	if inbounds or outbounds then
-		local config = {
-			log = {
-				disabled = log == "0" and true or false,
-				level = loglevel,
-				timestamp = true,
-				output = logfile,
-			},
-			-- DNS
-			dns = dns,
-			-- 传入连接
-			inbounds = inbounds,
-			-- 传出连接
-			outbounds = outbounds,
-			-- 路由
-			route = route
-		}
-		return jsonc.stringify(config, 1)
-	end
-	
-end
-
 _G.gen_config = gen_config
 _G.gen_proto_config = gen_proto_config
-_G.gen_dns_config = gen_dns_config
 
 if arg[1] then
 	local func =_G[arg[1]]

@@ -1285,6 +1285,7 @@ start_dns() {
 					echolog "  - 域名解析 DNS Over HTTPS..."
 				;;
 			esac
+			_args="${_args} dns_socks_address=127.0.0.1 dns_socks_port=${tcp_node_socks_port}"
 			run_singbox ${_args}
 		}
 	;;
@@ -1306,6 +1307,7 @@ start_dns() {
 				remote_dns_doh=$(config_t_get global remote_dns_doh "https://1.1.1.1/dns-query")
 				_args="${_args} remote_dns_doh=${remote_dns_doh}"
 			}
+			_args="${_args} dns_socks_address=127.0.0.1 dns_socks_port=${tcp_node_socks_port}"
 			run_xray ${_args}
 		}
 	;;
