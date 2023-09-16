@@ -694,6 +694,7 @@ function gen_config(var)
 
 	local dns_direct_domains = {}
 	local dns_remote_domains = {}
+	local dns_block_domains = {}
 	local dns = nil
 	local inbounds = {}
 	local outbounds = {}
@@ -1019,6 +1020,8 @@ function gen_config(var)
 
 							if outboundTag == "direct" then
 								table.insert(dns_direct_domains, w)
+							elseif outboundTag == "block" then
+								table.insert(dns_block_domains, w)
 							else
 								if outboundTag ~= "nil" then
 									table.insert(dns_remote_domains, w)
@@ -1260,11 +1263,43 @@ function gen_config(var)
 				detour = "direct",
 			})
 		end
-	
+
 		table.insert(dns.servers, {
 			tag = "block",
-			address = "rcode://refused",
+			address = "rcode://success",
 		})
+
+		local block_domain = {}
+		local block_domain_suffix = {}
+		local block_domain_keyword = {}
+		local block_domain_regex = {}
+		local block_geosite = {}
+		for index, value in ipairs(dns_block_domains) do
+			if value:find("geosite:") == 1 then
+				table.insert(block_geosite, value:sub(1 + #"geosite:"))
+			elseif value:find("regexp:") == 1 then
+				table.insert(block_domain_regex, value:sub(1 + #"regexp:"))
+			elseif value:find("full:") == 1 then
+				table.insert(block_domain, value:sub(1 + #"full:"))
+			elseif value:find("domain:") == 1 then
+				table.insert(block_domain_keyword, value:sub(1 + #"domain:"))
+			else
+				table.insert(block_domain, value)
+			end
+		end
+		local block_rule = {
+			server = "block",
+			domain = #block_domain > 0 and block_domain or nil,
+			domain_suffix = #block_domain_suffix > 0 and block_domain_suffix or nil,
+			domain_keyword = #block_domain_keyword > 0 and block_domain_keyword or nil,
+			domain_regex = #block_domain_regex > 0 and block_domain_regex or nil,
+			geosite = #block_geosite > 0 and block_geosite or nil,
+			disable_cache = true,
+		}
+
+		if block_rule.domain or block_rule.domain_suffix or block_rule.domain_keyword or block_rule.domain_regex or block_rule.geosite then
+			table.insert(dns.rules, block_rule)
+		end
 
 		local default_dns_flag = "remote"
 		if dns_socks_address and dns_socks_port then
