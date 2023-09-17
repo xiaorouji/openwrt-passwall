@@ -188,7 +188,7 @@ if not fs.access(CACHE_DNS_PATH) then
 	--屏蔽列表
 	for line in io.lines("/usr/share/passwall/rules/block_host") do
 		if line ~= "" and not line:find("#") then
-			set_domain_address(line, "0.0.0.0")
+			set_domain_address(line, "")
 		end
 	end
 
@@ -366,7 +366,7 @@ if not fs.access(CACHE_DNS_PATH) then
 		set_name = "nftset"
 	end
 	for key, value in pairs(list1) do
-		if value.address and #value.address > 0 then
+		if value.address then
 			address_out:write(string.format("address=/.%s/%s\n", key, value.address))
 		end
 		if value.dns and #value.dns > 0 then
