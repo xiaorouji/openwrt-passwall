@@ -1214,7 +1214,6 @@ stop_crontab() {
 
 start_dns() {
 	TUN_DNS="127.0.0.1#${dns_listen_port}"
-	DNSMASQ_FILTER_IPV6=$FILTER_PROXY_IPV6
 
 	echolog "过滤服务配置：准备接管域名解析..."
 	[ "$ENABLED_ACLS" == 1 ] && {
@@ -1329,7 +1328,6 @@ start_dns() {
 	[ "$CHINADNS_NG" = "1" ] && [ -n "$(first_type chinadns-ng)" ] && ([ -n "$chnlist" ] || [ -n "$gfwlist" ]) && {
 		[ "$FILTER_PROXY_IPV6" = "1" ] && {
 			local _no_ipv6_rules="gt"
-			DNSMASQ_FILTER_IPV6=0
 		}
 		local china_ng_listen_port=$(expr $dns_listen_port + 1)
 		local china_ng_listen="127.0.0.1#${china_ng_listen_port}"
@@ -1354,7 +1352,7 @@ start_dns() {
 		lua $APP_PATH/helper_dnsmasq_add.lua -FLAG "default" -TMP_DNSMASQ_PATH ${TMP_DNSMASQ_PATH} \
 			-DNSMASQ_CONF_FILE "/tmp/dnsmasq.d/dnsmasq-passwall.conf" -DEFAULT_DNS ${DEFAULT_DNS} -LOCAL_DNS ${LOCAL_DNS} \
 			-TUN_DNS ${TUN_DNS} -REMOTE_FAKEDNS ${fakedns:-0} -CHNROUTE_MODE_DEFAULT_DNS "${WHEN_CHNROUTE_DEFAULT_DNS:-direct}" -CHINADNS_DNS ${china_ng_listen:-0} \
-			-TCP_NODE ${TCP_NODE} -PROXY_MODE "${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}${ACL_TCP_PROXY_MODE}" -NO_PROXY_IPV6 ${DNSMASQ_FILTER_IPV6:-0} -NFTFLAG ${nftflag:-0} \
+			-TCP_NODE ${TCP_NODE} -PROXY_MODE "${TCP_PROXY_MODE}${LOCALHOST_TCP_PROXY_MODE}${ACL_TCP_PROXY_MODE}" -NO_PROXY_IPV6 ${FILTER_PROXY_IPV6:-0} -NFTFLAG ${nftflag:-0} \
 			-NO_LOGIC_LOG ${NO_LOGIC_LOG:-0}
 	}
 }
@@ -1482,11 +1480,9 @@ acl_app() {
 								eval node_${tcp_node}_$(echo -n "${remote_dns}" | md5sum | cut -d " " -f1)=${_dns_port}
 							}
 
-							local _dnsmasq_filter_ipv6=$filter_proxy_ipv6
 							[ "$chinadns_ng" = "1" ] && [ -n "$(first_type chinadns-ng)" ] && ([ "$tcp_proxy_mode" = "chnroute" ] || [ "$tcp_proxy_mode" = "gfwlist" ]) && {
 								[ "$filter_proxy_ipv6" = "1" ] && {
 									local _no_ipv6_rules="gt"
-									_dnsmasq_filter_ipv6=0
 								}
 								chinadns_port=$(expr $chinadns_port + 1)
 								_china_ng_listen="127.0.0.1#${chinadns_port}"
@@ -1532,7 +1528,7 @@ acl_app() {
 							lua $APP_PATH/helper_dnsmasq_add.lua -FLAG ${sid} -TMP_DNSMASQ_PATH $TMP_ACL_PATH/$sid/dnsmasq.d \
 								-DNSMASQ_CONF_FILE $TMP_ACL_PATH/$sid/dnsmasq.conf -DEFAULT_DNS $DEFAULT_DNS -LOCAL_DNS $LOCAL_DNS \
 								-TUN_DNS "127.0.0.1#${_dns_port}" -REMOTE_FAKEDNS 0 -CHNROUTE_MODE_DEFAULT_DNS "${when_chnroute_default_dns:-direct}" -CHINADNS_DNS ${_china_ng_listen:-0} \
-								-TCP_NODE $tcp_node -PROXY_MODE ${tcp_proxy_mode} -NO_PROXY_IPV6 ${_dnsmasq_filter_ipv6:-0} -NFTFLAG ${nftflag:-0} \
+								-TCP_NODE $tcp_node -PROXY_MODE ${tcp_proxy_mode} -NO_PROXY_IPV6 ${filter_proxy_ipv6:-0} -NFTFLAG ${nftflag:-0} \
 								-NO_LOGIC_LOG 1
 							ln_run "$(first_type dnsmasq)" "dnsmasq_${sid}" "/dev/null" -C $TMP_ACL_PATH/$sid/dnsmasq.conf -x $TMP_ACL_PATH/$sid/dnsmasq.pid
 							eval node_${tcp_node}_$(echo -n "${tcp_proxy_mode}${remote_dns}" | md5sum | cut -d " " -f1)=${dnsmasq_port}
@@ -1650,7 +1646,7 @@ acl_app() {
 			[ -n "$redirect_dns_port" ] && echo "${redirect_dns_port}" > $TMP_ACL_PATH/$sid/var_redirect_dns_port
 			unset enabled sid remarks sources tcp_proxy_mode udp_proxy_mode tcp_node udp_node filter_proxy_ipv6 dns_mode remote_dns v2ray_dns_mode remote_dns_doh dns_client_ip
 			unset _ip _mac _iprange _ipset _ip_or_mac rule_list tcp_port udp_port config_file _extra_param
-			unset _china_ng_listen _china_ng_chn _china_ng_gfw _gfwlist_file _chnlist_file _china_ng_log_file _no_ipv6_rules _china_ng_extra_param _dnsmasq_filter_ipv6
+			unset _china_ng_listen _china_ng_chn _china_ng_gfw _gfwlist_file _chnlist_file _china_ng_log_file _no_ipv6_rules _china_ng_extra_param
 			unset redirect_dns_port
 		done
 		unset socks_port redir_port dns_port dnsmasq_port chinadns_port
