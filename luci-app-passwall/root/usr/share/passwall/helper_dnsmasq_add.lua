@@ -222,7 +222,7 @@ if not fs.access(CACHE_DNS_PATH) then
 			add_excluded_domain(line)
 			local ipset_flag = setflag_4 .. "passwall_blacklist," .. setflag_6 .. "passwall_blacklist6"
 			if NO_PROXY_IPV6 == "1" then
-					set_domain_address(line, "::")
+				set_domain_address(line, "::")
 				ipset_flag = setflag_4 .. "passwall_blacklist"
 			end
 			if REMOTE_FAKEDNS == "1" then
