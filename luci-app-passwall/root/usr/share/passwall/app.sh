@@ -511,7 +511,7 @@ run_chinadns_ng() {
 	
 	([ -n "$_chnlist" ] || [ -n "$_gfwlist" ]) && [ -s "${RULES_PATH}/gfwlist" ] && {
 		local _gfwlist_file="${TMP_PATH}/chinadns_gfwlist"
-		cp -a "${RULES_PATH}/gfwlist" "${_gfwlist_file}"
+		cp -a "${RULES_PATH}/gfwlist" "${_TCP_NODEgfwlist_file}"
 		local gfwlist_set="passwall_gfwlist,passwall_gfwlist6"
 		[ "$nftflag" = "1" ] && gfwlist_set="inet@fw4@passwall_gfwlist,inet@fw4@passwall_gfwlist6"
 		_extra_param="${_extra_param} -g ${_gfwlist_file} -A ${gfwlist_set}"
