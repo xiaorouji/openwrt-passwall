@@ -24,8 +24,8 @@ o.datatype = "port"
 o = s:option(Flag, option_name("auth"), translate("Auth"))
 o.validate = function(self, value, t)
 	if value and value == "1" then
-		local user_v = s.fields[option_name("username")]:formvalue(t) or ""
-		local pass_v = s.fields[option_name("password")]:formvalue(t) or ""
+		local user_v = s.fields[option_name("username")] and s.fields[option_name("username")]:formvalue(t) or ""
+		local pass_v = s.fields[option_name("password")] and s.fields[option_name("password")]:formvalue(t) or ""
 		if user_v == "" or pass_v == "" then
 			return nil, translate("Username and Password must be used together!")
 		end

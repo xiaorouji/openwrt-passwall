@@ -161,7 +161,7 @@ if has_xray then
 		o.cfgvalue = function(self, section) return fs.readfile(domains_excluded) or "" end
 		o.write = function(self, section, value) fs.writefile(domains_excluded, value:gsub("\r\n", "\n")) end
 		o.remove = function(self, section)
-			local route_only_value = s_xray.fields["route_only"]:formvalue(section)
+			local route_only_value = s_xray.fields["route_only"] and s_xray.fields["route_only"]:formvalue(section) or nil
 			if not route_only_value or route_only_value == "0" then
 				fs.writefile(domains_excluded, "")
 			end

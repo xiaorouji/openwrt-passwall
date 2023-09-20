@@ -34,7 +34,7 @@ o = s:option(Flag, option_name("tls"), translate("TLS"))
 o.default = 0
 o.validate = function(self, value, t)
 	if value then
-		local type = s.fields["type"]:formvalue(t) or ""
+		local type = s.fields["type"] and s.fields["type"]:formvalue(t) or ""
 		if value == "0" and type == type_name then
 			return nil, translate("Original Trojan only supported 'tls', please choose 'tls'.")
 		end
