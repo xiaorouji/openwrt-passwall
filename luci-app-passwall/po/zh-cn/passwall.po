@@ -1060,6 +1060,9 @@ msgstr "TCP 封装 UDP"
 msgid "Need Xray-core or sing-box as server side."
 msgstr "需要 Xray-core 或者 sing-box 作为服务器端。"
 
+msgid "Sing-Box Settings"
+msgstr "sing-box 设置"
+
 msgid "Connection Timeout"
 msgstr "连接超时时间"
 
@@ -1506,3 +1509,6 @@ msgstr "协议参数。 如果启用会随机浪费流量。"
 
 msgid "Protocol parameter. Enable length block encryption."
 msgstr "协议参数。启用长度块加密。"
+
+msgid " Use FakeDNS work in the shunt domain that proxy."
+msgstr "使用FakeDNS在代理的分流域中工作。"
