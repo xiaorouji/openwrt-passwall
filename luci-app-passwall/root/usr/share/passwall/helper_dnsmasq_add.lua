@@ -286,66 +286,72 @@ if not fs.access(CACHE_DNS_PATH) then
 				end
 			end
 		end)
+	elseif only_global == 1 and NO_PROXY_IPV6 == "1" then
+		--节点：固定节点
+		--代理模式：全局模式
+		--过滤代理域名 IPv6：启用
+		--禁止解析所有IPv6记录
+		list1["#"] = {
+			dns = {},
+			ipsets = {},
+			address = "::"
+		}
 	end
 
-	--如果没有使用回国模式
-	if not returnhome then
-		if fs.access("/usr/share/passwall/rules/gfwlist") then
-			fwd_dns = TUN_DNS
-			if CHNROUTE_MODE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" then
-				fwd_dns = nil
-			else
-				local ipset_flag = setflag_4 .. "passwall_gfwlist," .. setflag_6 .. "passwall_gfwlist6"
-				if NO_PROXY_IPV6 == "1" then
-					ipset_flag = setflag_4 .. "passwall_gfwlist"
-				end
-				if not only_global then
+	if not only_global then
+		--如果没有使用回国模式
+		if not returnhome then
+			if fs.access("/usr/share/passwall/rules/gfwlist") then
+				fwd_dns = TUN_DNS
+				if CHNROUTE_MODE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" then
+					fwd_dns = nil
+				else
+					local ipset_flag = setflag_4 .. "passwall_gfwlist," .. setflag_6 .. "passwall_gfwlist6"
+					if NO_PROXY_IPV6 == "1" then
+						ipset_flag = setflag_4 .. "passwall_gfwlist"
+					end
 					if REMOTE_FAKEDNS == "1" then
 						ipset_flag = nil
 					end
-				end
-				local gfwlist_str = sys.exec('cat /usr/share/passwall/rules/gfwlist | grep -v -E "^#" | grep -v -E "' .. excluded_domain_str .. '"')
-				for line in string.gmatch(gfwlist_str, "[^\r\n]+") do
-					if line ~= "" then
-						if NO_PROXY_IPV6 == "1" then
-							set_domain_address(line, "::")
-						end
-						if not only_global then
+					local gfwlist_str = sys.exec('cat /usr/share/passwall/rules/gfwlist | grep -v -E "^#" | grep -v -E "' .. excluded_domain_str .. '"')
+					for line in string.gmatch(gfwlist_str, "[^\r\n]+") do
+						if line ~= "" then
+							if NO_PROXY_IPV6 == "1" then
+								set_domain_address(line, "::")
+							end
 							set_domain_dns(line, fwd_dns)
 							set_domain_ipset(line, ipset_flag)
 						end
 					end
 				end
+				log(string.format("  - 防火墙域名表(gfwlist)：%s", fwd_dns or "默认"))
 			end
-			log(string.format("  - 防火墙域名表(gfwlist)：%s", fwd_dns or "默认"))
-		end
 
-		if chnlist and fs.access("/usr/share/passwall/rules/chnlist") and (CHNROUTE_MODE_DEFAULT_DNS == "remote" or (CHNROUTE_MODE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0")) then
-			fwd_dns = LOCAL_DNS
-			if CHNROUTE_MODE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" then
-				fwd_dns = nil
-			else
+			if chnlist and fs.access("/usr/share/passwall/rules/chnlist") and (CHNROUTE_MODE_DEFAULT_DNS == "remote" or (CHNROUTE_MODE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0")) then
+				fwd_dns = LOCAL_DNS
+				if CHNROUTE_MODE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" then
+					fwd_dns = nil
+				else
+					local chnlist_str = sys.exec('cat /usr/share/passwall/rules/chnlist | grep -v -E "^#" | grep -v -E "' .. excluded_domain_str .. '"')
+					for line in string.gmatch(chnlist_str, "[^\r\n]+") do
+						if line ~= "" then
+							set_domain_dns(line, fwd_dns)
+							set_domain_ipset(line, setflag_4 .. "passwall_chnroute," .. setflag_6 .. "passwall_chnroute6")
+						end
+					end
+				end
+				log(string.format("  - 中国域名表(chnroute)：%s", fwd_dns or "默认"))
+			end
+		else
+			if fs.access("/usr/share/passwall/rules/chnlist") then
 				local chnlist_str = sys.exec('cat /usr/share/passwall/rules/chnlist | grep -v -E "^#" | grep -v -E "' .. excluded_domain_str .. '"')
 				for line in string.gmatch(chnlist_str, "[^\r\n]+") do
 					if line ~= "" then
-						set_domain_dns(line, fwd_dns)
-						set_domain_ipset(line, setflag_4 .. "passwall_chnroute," .. setflag_6 .. "passwall_chnroute6")
-					end
-				end
-			end
-			log(string.format("  - 中国域名表(chnroute)：%s", fwd_dns or "默认"))
-		end
-	else
-		if fs.access("/usr/share/passwall/rules/chnlist") then
-			local chnlist_str = sys.exec('cat /usr/share/passwall/rules/chnlist | grep -v -E "^#" | grep -v -E "' .. excluded_domain_str .. '"')
-			for line in string.gmatch(chnlist_str, "[^\r\n]+") do
-				if line ~= "" then
-					local ipset_flag = setflag_4 .. "passwall_chnroute," .. setflag_6 .. "passwall_chnroute6"
-					if NO_PROXY_IPV6 == "1" then
-						ipset_flag = setflag_4 .. "passwall_chnroute"
-						set_domain_address(line, "::")
-					end
-					if not only_global then
+						local ipset_flag = setflag_4 .. "passwall_chnroute," .. setflag_6 .. "passwall_chnroute6"
+						if NO_PROXY_IPV6 == "1" then
+							ipset_flag = setflag_4 .. "passwall_chnroute"
+							set_domain_address(line, "::")
+						end
 						set_domain_dns(line, TUN_DNS)
 						if REMOTE_FAKEDNS == "1" then
 							ipset_flag = nil
@@ -353,8 +359,8 @@ if not fs.access(CACHE_DNS_PATH) then
 						set_domain_ipset(line, ipset_flag)
 					end
 				end
+				log(string.format("  - 中国域名表(chnroute)：%s", TUN_DNS or "默认"))
 			end
-			log(string.format("  - 中国域名表(chnroute)：%s", TUN_DNS or "默认"))
 		end
 	end
 
@@ -367,7 +373,11 @@ if not fs.access(CACHE_DNS_PATH) then
 	end
 	for key, value in pairs(list1) do
 		if value.address then
-			address_out:write(string.format("address=/.%s/%s\n", key, value.address))
+			local domain = "." .. key
+			if key == "#" then
+				domain = key
+			end
+			address_out:write(string.format("address=/%s/%s\n", domain, value.address))
 		end
 		if value.dns and #value.dns > 0 then
 			for i, dns in ipairs(value.dns) do
