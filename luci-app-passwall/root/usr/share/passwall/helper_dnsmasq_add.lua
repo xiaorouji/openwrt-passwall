@@ -188,7 +188,7 @@ if not fs.access(CACHE_DNS_PATH) then
 	--屏蔽列表
 	for line in io.lines("/usr/share/passwall/rules/block_host") do
 		if line ~= "" and not line:find("#") then
-			set_domain_address(line, "0.0.0.0")
+			set_domain_address(line, "")
 		end
 	end
 

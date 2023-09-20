@@ -692,9 +692,7 @@ function gen_config(var)
 	local dns_socks_port = var["-dns_socks_port"]
 	local tags = var["-tags"]
 
-	local dns_direct_domains = {}
-	local dns_remote_domains = {}
-	local dns_block_domains = {}
+	local dns_domain_rules = {}
 	local dns = nil
 	local inbounds = {}
 	local outbounds = {}
@@ -717,7 +715,7 @@ function gen_config(var)
 
 	local experimental = nil
 
-	local dns_outTag = nil
+	local default_outTag = nil
 	if node_id then
 		local node = uci:get_all(appname, node_id)
 
@@ -823,6 +821,27 @@ function gen_config(var)
 			elseif preproxy_node and api.is_normal_node(preproxy_node) then
 				local preproxy_outbound = gen_outbound(flag, preproxy_node, preproxy_tag)
 				if preproxy_outbound then
+					if preproxy_node.shadowtls == "1" then
+						local _node = {
+							type = "sing-box",
+							protocol = "shadowtls",
+							shadowtls_version = preproxy_node.shadowtls_version,
+							password = (preproxy_node.shadowtls_version == "2" or preproxy_node.shadowtls_version == "3") and preproxy_node.shadowtls_password or nil,
+							address = preproxy_node.address,
+							port = preproxy_node.port,
+							tls = "1",
+							tls_serverName = preproxy_node.shadowtls_serverName,
+							utls = preproxy_node.shadowtls_utls,
+							fingerprint = preproxy_node.shadowtls_fingerprint
+						}
+						local shadowtls_outbound = gen_outbound(flag, _node, preproxy_tag .. "_shadowtls")
+						if shadowtls_outbound then
+							table.insert(outbounds, shadowtls_outbound)
+							preproxy_outbound.detour = preproxy_outbound.tag .. "_shadowtls"
+							preproxy_outbound.server = nil
+							preproxy_outbound.server_port = nil
+						end
+					end
 					table.insert(outbounds, preproxy_outbound)
 				else
 					preproxy_enabled = false
@@ -904,8 +923,28 @@ function gen_config(var)
 							end
 							local _outbound = gen_outbound(flag, _node, rule_name, { proxy = proxy and 1 or 0, tag = proxy and preproxy_tag or nil })
 							if _outbound then
+								if _node.shadowtls == "1" then
+									local shadowtls_node = {
+										type = "sing-box",
+										protocol = "shadowtls",
+										shadowtls_version = _node.shadowtls_version,
+										password = (_node.shadowtls_version == "2" or _node.shadowtls_version == "3") and _node.shadowtls_password or nil,
+										address = _node.address,
+										port = _node.port,
+										tls = "1",
+										tls_serverName = _node.shadowtls_serverName,
+										utls = _node.shadowtls_utls,
+										fingerprint = _node.shadowtls_fingerprint
+									}
+									local shadowtls_outbound = gen_outbound(flag, shadowtls_node, rule_name .. "_shadowtls", { proxy = proxy and 1 or 0, tag = proxy and preproxy_tag or nil })
+									if shadowtls_outbound then
+										table.insert(outbounds, shadowtls_outbound)
+										_outbound.detour = _outbound.tag .. "_shadowtls"
+										_outbound.server = nil
+										_outbound.server_port = nil
+									end
+								end
 								table.insert(outbounds, _outbound)
-								if proxy then preproxy_used = true end
 								rule_outboundTag = rule_name
 							end
 						end
@@ -1000,40 +1039,37 @@ function gen_config(var)
 					end
 
 					if e.domain_list then
-						local domain = {}
-						local domain_suffix = {}
-						local domain_keyword = {}
-						local domain_regex = {}
-						local geosite = {}
+						local domain_table = {
+							outboundTag = outboundTag,
+							domain = {},
+							domain_suffix = {},
+							domain_keyword = {},
+							domain_regex = {},
+							geosite = {},
+						}
 						string.gsub(e.domain_list, '[^' .. "\r\n" .. ']+', function(w)
 							if w:find("geosite:") == 1 then
-								table.insert(geosite, w:sub(1 + #"geosite:"))
+								table.insert(domain_table.geosite, w:sub(1 + #"geosite:"))
 							elseif w:find("regexp:") == 1 then
-								table.insert(domain_regex, w:sub(1 + #"regexp:"))
+								table.insert(domain_table.domain_regex, w:sub(1 + #"regexp:"))
 							elseif w:find("full:") == 1 then
-								table.insert(domain, w:sub(1 + #"full:"))
+								table.insert(domain_table.domain, w:sub(1 + #"full:"))
 							elseif w:find("domain:") == 1 then
-								table.insert(domain_keyword, w:sub(1 + #"domain:"))
+								table.insert(domain_table.domain, w:sub(1 + #"domain:"))
+								table.insert(domain_table.domain_suffix, "." .. w:sub(1 + #"domain:"))
 							else
-								table.insert(domain, w)
-							end
-
-							if outboundTag == "direct" then
-								table.insert(dns_direct_domains, w)
-							elseif outboundTag == "block" then
-								table.insert(dns_block_domains, w)
-							else
-								if outboundTag ~= "nil" then
-									table.insert(dns_remote_domains, w)
-								end
+								table.insert(domain_table.domain_keyword, w)
 							end
 						end)
+						rule.domain = #domain_table.domain > 0 and domain_table.domain or nil
+						rule.domain_suffix = #domain_table.domain_suffix > 0 and domain_table.domain_suffix or nil
+						rule.domain_keyword = #domain_table.domain_keyword > 0 and domain_table.domain_keyword or nil
+						rule.domain_regex = #domain_table.domain_regex > 0 and domain_table.domain_regex or nil
+						rule.geosite = #domain_table.geosite > 0 and domain_table.geosite or nil
 
-						rule.domain = #domain > 0 and domain or nil
-						rule.domain_suffix = #domain_suffix > 0 and domain_suffix or nil
-						rule.domain_keyword = #domain_keyword > 0 and domain_keyword or nil
-						rule.domain_regex = #domain_regex > 0 and domain_regex or nil
-						rule.geosite = #geosite > 0 and geosite or nil
+						if outboundTag and outboundTag ~= "nil" then
+							table.insert(dns_domain_rules, domain_table)
+						end
 					end
 
 					if e.ip_list then
@@ -1057,7 +1093,7 @@ function gen_config(var)
 
 			if default_outboundTag then
 				route.final = default_outboundTag
-				dns_outTag = default_outboundTag
+				default_outTag = default_outboundTag
 			end
 
 			for index, value in ipairs(rules) do
@@ -1077,9 +1113,32 @@ function gen_config(var)
 				end
 			else
 				outbound = gen_outbound(flag, node)
+				if outbound then
+					if node.shadowtls == "1" then
+						local shadowtls_node = {
+							type = "sing-box",
+							protocol = "shadowtls",
+							shadowtls_version = node.shadowtls_version,
+							password = (node.shadowtls_version == "2" or node.shadowtls_version == "3") and node.shadowtls_password or nil,
+							address = node.address,
+							port = node.port,
+							tls = "1",
+							tls_serverName = node.shadowtls_serverName,
+							utls = node.shadowtls_utls,
+							fingerprint = node.shadowtls_fingerprint
+						}
+						local shadowtls_outbound = gen_outbound(flag, shadowtls_node, outbound.tag .. "_shadowtls")
+						if shadowtls_outbound then
+							table.insert(outbounds, shadowtls_outbound)
+							outbound.detour = outbound.tag .. "_shadowtls"
+							outbound.server = nil
+							outbound.server_port = nil
+						end
+					end
+				end
 			end
 			if outbound then
-				dns_outTag = outbound.tag
+				default_outTag = outbound.tag
 				table.insert(outbounds, outbound)
 			end
 
@@ -1098,45 +1157,20 @@ function gen_config(var)
 			fakeip = nil,
 		}
 
+		table.insert(dns.servers, {
+			tag = "block",
+			address = "rcode://success",
+		})
+
 		if dns_socks_address and dns_socks_port then
-			dns_outTag = "dns_socks_out"
+			default_outTag = "dns_socks_out"
 			table.insert(outbounds, 1, {
 				type = "socks",
-				tag = dns_outTag,
+				tag = default_outTag,
 				server = dns_socks_address,
 				server_port = tonumber(dns_socks_port)
 			})
 		end
-
-		local dns_tag = "remote"
-
-		local domain = {}
-		local domain_suffix = {}
-		local domain_keyword = {}
-		local domain_regex = {}
-		local geosite = {}
-		for index, value in ipairs(dns_remote_domains) do
-			if value:find("geosite:") == 1 then
-				table.insert(geosite, value:sub(1 + #"geosite:"))
-			elseif value:find("regexp:") == 1 then
-				table.insert(domain_regex, value:sub(1 + #"regexp:"))
-			elseif value:find("full:") == 1 then
-				table.insert(domain, value:sub(1 + #"full:"))
-			elseif value:find("domain:") == 1 then
-				table.insert(domain_keyword, value:sub(1 + #"domain:"))
-			else
-				table.insert(domain, value)
-			end
-		end
-		local remote_rule = {
-			server = dns_tag,
-			domain = #domain > 0 and domain or nil,
-			domain_suffix = #domain_suffix > 0 and domain_suffix or nil,
-			domain_keyword = #domain_keyword > 0 and domain_keyword or nil,
-			domain_regex = #domain_regex > 0 and domain_regex or nil,
-			geosite = #geosite > 0 and geosite or nil,
-			disable_cache = true,
-		}
 
 		local remote_strategy = "prefer_ipv6"
 		if remote_dns_query_strategy == "UseIPv4" then
@@ -1145,32 +1179,32 @@ function gen_config(var)
 			remote_strategy = "ipv6_only"
 		end
 
-		local server = {
-			tag = dns_tag,
+		local remote_server = {
+			tag = "remote",
 			address_strategy = "prefer_ipv4",
 			strategy = remote_strategy,
 			address_resolver = "direct",
-			detour = dns_outTag,
+			detour = default_outTag,
 		}
 
 		if remote_dns_udp_server then
 			local server_port = tonumber(remote_dns_port) or 53
-			server.address = "udp://" .. remote_dns_udp_server .. ":" .. server_port
+			remote_server.address = "udp://" .. remote_dns_udp_server .. ":" .. server_port
 		end
 
 		if remote_dns_tcp_server then
-			server.address = remote_dns_tcp_server
+			remote_server.address = remote_dns_tcp_server
 		end
 
 		if remote_dns_doh_url and remote_dns_doh_host then
-			server.address = remote_dns_doh_url
+			remote_server.address = remote_dns_doh_url
 		end
 
-		if server.address then
-			table.insert(dns.servers, server)
+		if remote_server.address then
+			table.insert(dns.servers, remote_server)
 		end
 
-		local fakedns_tag = dns_tag .. "_fakeip"
+		local fakedns_tag = "remote_fakeip"
 		if remote_dns_fake then
 			dns.fakeip = {
 				enabled = true,
@@ -1194,56 +1228,18 @@ function gen_config(var)
 				}
 			end
 		end
-
-		if remote_rule.domain or remote_rule.domain_suffix or remote_rule.domain_keyword or remote_rule.domain_regex or remote_rule.geosite then
-			local rule = api.clone(remote_rule)
-			rule.server = dns_tag
-			if remote_dns_fake then
-				rule.query_type = {
-					"A", "AAAA"
-				}
-				rule.server = fakedns_tag
-			end
-			table.insert(dns.rules, rule)
-		end
 	
 		if direct_dns_udp_server then
+			local domain = {}
 			local nodes_domain_text = sys.exec('uci show passwall | grep ".address=" | cut -d "\'" -f 2 | grep "[a-zA-Z]$" | sort -u')
 			string.gsub(nodes_domain_text, '[^' .. "\r\n" .. ']+', function(w)
-				table.insert(dns_direct_domains, "full:" .. w)
+				table.insert(domain, w)
 			end)
-	
-			local dns_tag = "direct"
-	
-			local domain = {}
-			local domain_suffix = {}
-			local domain_keyword = {}
-			local domain_regex = {}
-			local geosite = {}
-			for index, value in ipairs(dns_direct_domains) do
-				if value:find("geosite:") == 1 then
-					table.insert(geosite, value:sub(1 + #"geosite:"))
-				elseif value:find("regexp:") == 1 then
-					table.insert(domain_regex, value:sub(1 + #"regexp:"))
-				elseif value:find("full:") == 1 then
-					table.insert(domain, value:sub(1 + #"full:"))
-				elseif value:find("domain:") == 1 then
-					table.insert(domain_keyword, value:sub(1 + #"domain:"))
-				else
-					table.insert(domain, value)
-				end
-			end
-			local direct_rule = {
-				server = dns_tag,
-				domain = #domain > 0 and domain or nil,
-				domain_suffix = #domain_suffix > 0 and domain_suffix or nil,
-				domain_keyword = #domain_keyword > 0 and domain_keyword or nil,
-				domain_regex = #domain_regex > 0 and domain_regex or nil,
-				geosite = #geosite > 0 and geosite or nil,
-				disable_cache = false,
-			}
-			if direct_rule.domain or direct_rule.domain_suffix or direct_rule.domain_keyword or direct_rule.domain_regex or direct_rule.geosite then
-				table.insert(dns.rules, direct_rule)
+			if #domain > 0 then
+				table.insert(dns_domain_rules, {
+					outboundTag = "direct",
+					domain = domain
+				})
 			end
 	
 			local direct_strategy = "prefer_ipv6"
@@ -1256,49 +1252,12 @@ function gen_config(var)
 			local port = tonumber(direct_dns_port) or 53
 	
 			table.insert(dns.servers, {
-				tag = dns_tag,
+				tag = "direct",
 				address = "udp://" .. direct_dns_udp_server .. ":" .. port,
 				address_strategy = "prefer_ipv6",
 				strategy = direct_strategy,
 				detour = "direct",
 			})
-		end
-
-		table.insert(dns.servers, {
-			tag = "block",
-			address = "rcode://success",
-		})
-
-		local block_domain = {}
-		local block_domain_suffix = {}
-		local block_domain_keyword = {}
-		local block_domain_regex = {}
-		local block_geosite = {}
-		for index, value in ipairs(dns_block_domains) do
-			if value:find("geosite:") == 1 then
-				table.insert(block_geosite, value:sub(1 + #"geosite:"))
-			elseif value:find("regexp:") == 1 then
-				table.insert(block_domain_regex, value:sub(1 + #"regexp:"))
-			elseif value:find("full:") == 1 then
-				table.insert(block_domain, value:sub(1 + #"full:"))
-			elseif value:find("domain:") == 1 then
-				table.insert(block_domain_keyword, value:sub(1 + #"domain:"))
-			else
-				table.insert(block_domain, value)
-			end
-		end
-		local block_rule = {
-			server = "block",
-			domain = #block_domain > 0 and block_domain or nil,
-			domain_suffix = #block_domain_suffix > 0 and block_domain_suffix or nil,
-			domain_keyword = #block_domain_keyword > 0 and block_domain_keyword or nil,
-			domain_regex = #block_domain_regex > 0 and block_domain_regex or nil,
-			geosite = #block_geosite > 0 and block_geosite or nil,
-			disable_cache = true,
-		}
-
-		if block_rule.domain or block_rule.domain_suffix or block_rule.domain_keyword or block_rule.domain_regex or block_rule.geosite then
-			table.insert(dns.rules, block_rule)
 		end
 
 		local default_dns_flag = "remote"
@@ -1323,6 +1282,43 @@ function gen_config(var)
 			end
 		end
 		dns.final = default_dns_flag
+
+		--按分流顺序DNS
+		if dns_domain_rules and #dns_domain_rules > 0 then
+			for index, value in ipairs(dns_domain_rules) do
+				if value.outboundTag and (value.domain or value.domain_suffix or value.domain_keyword or value.domain_regex or value.geosite) then
+					local dns_rule = {
+						server = value.outboundTag,
+						domain = (value.domain and #value.domain > 0) and value.domain or nil,
+						domain_suffix = (value.domain_suffix and #value.domain_suffix > 0) and value.domain_suffix or nil,
+						domain_keyword = (value.domain_keyword and #value.domain_keyword > 0) and value.domain_keyword or nil,
+						domain_regex = (value.domain_regex and #value.domain_regex > 0) and value.domain_regex or nil,
+						geosite = (value.geosite and #value.geosite > 0) and value.geosite or nil,
+						disable_cache = false,
+					}
+					if value.outboundTag ~= "block" and value.outboundTag ~= "direct" then
+						dns_rule.server = "remote"
+						if value.outboundTag ~= "default" and remote_server.address then
+							local remote_dns_server = api.clone(remote_server)
+							remote_dns_server.tag = value.outboundTag
+							remote_dns_server.detour = value.outboundTag
+							table.insert(dns.servers, remote_dns_server)
+							dns_rule.server = remote_dns_server.tag
+						end
+						if remote_dns_fake then
+							local fakedns_dns_rule = api.clone(dns_rule)
+							fakedns_dns_rule.query_type = {
+								"A", "AAAA"
+							}
+							fakedns_dns_rule.server = fakedns_tag
+							fakedns_dns_rule.disable_cache = true
+							table.insert(dns.rules, fakedns_dns_rule)
+						end
+					end
+					table.insert(dns.rules, dns_rule)
+				end
+			end
+		end
 	
 		table.insert(inbounds, {
 			type = "direct",

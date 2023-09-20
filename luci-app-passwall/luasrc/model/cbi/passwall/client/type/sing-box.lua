@@ -50,7 +50,6 @@ end
 if singbox_tags:find("with_quic") then
 	o:value("hysteria", "Hysteria")
 end
-o:value("shadowtls", "ShadowTLS")
 o:value("vless", "VLESS")
 if singbox_tags:find("with_quic") then
 	o:value("tuic", "TUIC")
@@ -176,13 +175,6 @@ if #protocols > 0 then
 	end
 end
 
-o = s:option(ListValue, option_name("shadowtls_version"), translate("Version"))
-o.default = "1"
-o:value("1", "ShadowTLS v1")
-o:value("2", "ShadowTLS v2")
-o:value("3", "ShadowTLS v3")
-o:depends({ [option_name("protocol")] = "shadowtls" })
-
 o = s:option(Value, option_name("username"), translate("Username"))
 o:depends({ [option_name("protocol")] = "http" })
 o:depends({ [option_name("protocol")] = "socks" })
@@ -194,8 +186,6 @@ o:depends({ [option_name("protocol")] = "socks" })
 o:depends({ [option_name("protocol")] = "shadowsocks" })
 o:depends({ [option_name("protocol")] = "shadowsocksr" })
 o:depends({ [option_name("protocol")] = "trojan" })
-o:depends({ [option_name("protocol")] = "shadowtls", [option_name("shadowtls_version")] = "2" })
-o:depends({ [option_name("protocol")] = "shadowtls", [option_name("shadowtls_version")] = "3" })
 o:depends({ [option_name("protocol")] = "tuic" })
 
 o = s:option(ListValue, option_name("security"), translate("Encrypt Method"))
@@ -366,7 +356,6 @@ o:depends({ [option_name("protocol")] = "vless" })
 o:depends({ [option_name("protocol")] = "socks" })
 o:depends({ [option_name("protocol")] = "trojan" })
 o:depends({ [option_name("protocol")] = "shadowsocks" })
-o:depends({ [option_name("protocol")] = "shadowtls" })
 
 o = s:option(ListValue, option_name("alpn"), translate("alpn"))
 o.default = "default"
@@ -541,5 +530,48 @@ o:depends({ [option_name("mux")] = true })
 o = s:option(Flag, option_name("mux_padding"), translate("Padding"))
 o.default = 0
 o:depends({ [option_name("mux")] = true })
+
+o = s:option(Flag, option_name("shadowtls"), "ShadowTLS")
+o.default = 0
+o:depends({ [option_name("protocol")] = "vmess" })
+o:depends({ [option_name("protocol")] = "vless" })
+o:depends({ [option_name("protocol")] = "socks" })
+o:depends({ [option_name("protocol")] = "trojan" })
+o:depends({ [option_name("protocol")] = "shadowsocks" })
+
+o = s:option(ListValue, option_name("shadowtls_version"), "ShadowTLS " .. translate("Version"))
+o.default = "1"
+o:value("1", "ShadowTLS v1")
+o:value("2", "ShadowTLS v2")
+o:value("3", "ShadowTLS v3")
+o:depends({ [option_name("shadowtls")] = true })
+
+o = s:option(Value, option_name("shadowtls_password"), "ShadowTLS " .. translate("Password"))
+o.password = true
+o:depends({ [option_name("shadowtls")] = true, [option_name("shadowtls_version")] = "2" })
+o:depends({ [option_name("shadowtls")] = true, [option_name("shadowtls_version")] = "3" })
+
+o = s:option(Value, option_name("shadowtls_serverName"), "ShadowTLS " .. translate("Domain"))
+o:depends({ [option_name("shadowtls")] = true })
+
+if singbox_tags:find("with_utls") then
+	o = s:option(Flag, option_name("shadowtls_utls"), "ShadowTLS " .. translate("uTLS"))
+	o.default = "0"
+	o:depends({ [option_name("shadowtls")] = true })
+
+	o = s:option(ListValue, option_name("shadowtls_fingerprint"), "ShadowTLS " .. translate("Finger Print"))
+	o:value("chrome")
+	o:value("firefox")
+	o:value("edge")
+	o:value("safari")
+	-- o:value("360")
+	o:value("qq")
+	o:value("ios")
+	-- o:value("android")
+	o:value("random")
+	-- o:value("randomized")
+	o.default = "chrome"
+	o:depends({ [option_name("shadowtls")] = true, [option_name("shadowtls_utls")] = true })
+end
 
 api.luci_types(arg[1], m, s, type_name, option_prefix)
