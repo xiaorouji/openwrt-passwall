@@ -821,6 +821,27 @@ function gen_config(var)
 			elseif preproxy_node and api.is_normal_node(preproxy_node) then
 				local preproxy_outbound = gen_outbound(flag, preproxy_node, preproxy_tag)
 				if preproxy_outbound then
+					if preproxy_node.shadowtls == "1" then
+						local _node = {
+							type = "sing-box",
+							protocol = "shadowtls",
+							shadowtls_version = preproxy_node.shadowtls_version,
+							password = (preproxy_node.shadowtls_version == "2" or preproxy_node.shadowtls_version == "3") and preproxy_node.shadowtls_password or nil,
+							address = preproxy_node.address,
+							port = preproxy_node.port,
+							tls = "1",
+							tls_serverName = preproxy_node.shadowtls_serverName,
+							utls = preproxy_node.shadowtls_utls,
+							fingerprint = preproxy_node.shadowtls_fingerprint
+						}
+						local shadowtls_outbound = gen_outbound(flag, _node, preproxy_tag .. "_shadowtls")
+						if shadowtls_outbound then
+							table.insert(outbounds, shadowtls_outbound)
+							preproxy_outbound.detour = preproxy_outbound.tag .. "_shadowtls"
+							preproxy_outbound.server = nil
+							preproxy_outbound.server_port = nil
+						end
+					end
 					table.insert(outbounds, preproxy_outbound)
 				else
 					preproxy_enabled = false
@@ -902,8 +923,28 @@ function gen_config(var)
 							end
 							local _outbound = gen_outbound(flag, _node, rule_name, { proxy = proxy and 1 or 0, tag = proxy and preproxy_tag or nil })
 							if _outbound then
+								if _node.shadowtls == "1" then
+									local shadowtls_node = {
+										type = "sing-box",
+										protocol = "shadowtls",
+										shadowtls_version = _node.shadowtls_version,
+										password = (_node.shadowtls_version == "2" or _node.shadowtls_version == "3") and _node.shadowtls_password or nil,
+										address = _node.address,
+										port = _node.port,
+										tls = "1",
+										tls_serverName = _node.shadowtls_serverName,
+										utls = _node.shadowtls_utls,
+										fingerprint = _node.shadowtls_fingerprint
+									}
+									local shadowtls_outbound = gen_outbound(flag, shadowtls_node, rule_name .. "_shadowtls", { proxy = proxy and 1 or 0, tag = proxy and preproxy_tag or nil })
+									if shadowtls_outbound then
+										table.insert(outbounds, shadowtls_outbound)
+										_outbound.detour = _outbound.tag .. "_shadowtls"
+										_outbound.server = nil
+										_outbound.server_port = nil
+									end
+								end
 								table.insert(outbounds, _outbound)
-								if proxy then preproxy_used = true end
 								rule_outboundTag = rule_name
 							end
 						end
@@ -1072,6 +1113,29 @@ function gen_config(var)
 				end
 			else
 				outbound = gen_outbound(flag, node)
+				if outbound then
+					if node.shadowtls == "1" then
+						local shadowtls_node = {
+							type = "sing-box",
+							protocol = "shadowtls",
+							shadowtls_version = node.shadowtls_version,
+							password = (node.shadowtls_version == "2" or node.shadowtls_version == "3") and node.shadowtls_password or nil,
+							address = node.address,
+							port = node.port,
+							tls = "1",
+							tls_serverName = node.shadowtls_serverName,
+							utls = node.shadowtls_utls,
+							fingerprint = node.shadowtls_fingerprint
+						}
+						local shadowtls_outbound = gen_outbound(flag, shadowtls_node, outbound.tag .. "_shadowtls")
+						if shadowtls_outbound then
+							table.insert(outbounds, shadowtls_outbound)
+							outbound.detour = outbound.tag .. "_shadowtls"
+							outbound.server = nil
+							outbound.server_port = nil
+						end
+					end
+				end
 			end
 			if outbound then
 				default_outTag = outbound.tag
