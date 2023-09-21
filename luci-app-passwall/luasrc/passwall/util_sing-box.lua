@@ -1068,7 +1068,7 @@ function gen_config(var)
 						rule.geosite = #domain_table.geosite > 0 and domain_table.geosite or nil
 
 						if outboundTag and outboundTag ~= "nil" then
-							table.insert(dns_domain_rules, domain_table)
+							table.insert(dns_domain_rules, api.clone(domain_table))
 						end
 					end
 
@@ -1236,7 +1236,7 @@ function gen_config(var)
 				table.insert(domain, w)
 			end)
 			if #domain > 0 then
-				table.insert(dns_domain_rules, {
+				table.insert(dns_domain_rules, 1, {
 					outboundTag = "direct",
 					domain = domain
 				})
