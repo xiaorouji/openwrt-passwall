@@ -90,7 +90,7 @@ function gen_config(var)
 			down = node.hysteria2_down_mbps and node.hysteria2_down_mbps .. " mbps" or "100 mbps"
 		},
 		fast_open = (node.fast_open == "1") and true or false,
-		lazy = true,
+		lazy = (node.hysteria2_lazy_start == "1") and true or false,
 		socks5 = (local_socks_address and local_socks_port) and {
 			listen = local_socks_address .. ":" .. local_socks_port,
 			username = (local_socks_username and local_socks_password) and local_socks_username or nil,

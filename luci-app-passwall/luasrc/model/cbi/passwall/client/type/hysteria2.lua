@@ -68,4 +68,8 @@ o = s:option(Flag, option_name("disable_mtu_discovery"), translate("Disable MTU 
 o.default = "0"
 o.rewrite_option = o.option
 
+o = s:option(Flag, option_name("lazy_start"), translate("Lazy Start"))
+o.default = "0"
+o.rewrite_option = o.option
+
 api.luci_types(arg[1], m, s, type_name, option_prefix)
