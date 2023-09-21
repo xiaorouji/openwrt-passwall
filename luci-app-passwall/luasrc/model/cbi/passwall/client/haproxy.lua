@@ -16,6 +16,7 @@ for k, e in ipairs(api.get_valid_nodes()) do
 end
 
 m = Map(appname)
+api.set_apply_on_parse(m)
 
 -- [[ Haproxy Settings ]]--
 s = m:section(TypedSection, "global_haproxy")

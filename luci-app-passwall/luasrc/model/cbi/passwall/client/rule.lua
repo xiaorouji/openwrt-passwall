@@ -3,6 +3,8 @@ local appname = api.appname
 local has_xray = api.finded_com("xray")
 
 m = Map(appname)
+api.set_apply_on_parse(m)
+
 -- [[ Rule Settings ]]--
 s = m:section(TypedSection, "global_rules", translate("Rule status"))
 s.anonymous = true

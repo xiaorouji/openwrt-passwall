@@ -4,6 +4,7 @@ local types_dir = "/usr/lib/lua/luci/model/cbi/passwall/server/type/"
 
 m = Map("passwall_server", translate("Server Config"))
 m.redirect = api.url("server")
+api.set_apply_on_parse(m)
 
 s = m:section(NamedSection, arg[1], "user", "")
 s.addremove = false

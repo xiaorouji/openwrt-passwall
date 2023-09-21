@@ -7,6 +7,7 @@ local has_fw3 = api.is_finded("fw3")
 local has_fw4 = api.is_finded("fw4")
 
 m = Map(appname)
+api.set_apply_on_parse(m)
 
 -- [[ Delay Settings ]]--
 s = m:section(TypedSection, "global_delay", translate("Delay Settings"))

@@ -30,6 +30,7 @@ if has_trojan_go then
 end
 
 m = Map(appname)
+api.set_apply_on_parse(m)
 
 -- [[ Subscribe Settings ]]--
 s = m:section(TypedSection, "global_subscribe", "")

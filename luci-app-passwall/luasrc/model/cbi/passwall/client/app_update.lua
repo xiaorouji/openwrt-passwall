@@ -2,6 +2,7 @@ local api = require "luci.passwall.api"
 local appname = api.appname
 
 m = Map(appname)
+api.set_apply_on_parse(m)
 
 -- [[ App Settings ]]--
 s = m:section(TypedSection, "global_app", translate("App Update"),

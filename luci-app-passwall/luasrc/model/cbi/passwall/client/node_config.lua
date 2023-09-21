@@ -10,6 +10,7 @@ end
 
 m = Map(appname, translate("Node Config"))
 m.redirect = api.url()
+api.set_apply_on_parse(m)
 
 s = m:section(NamedSection, arg[1], "nodes", "")
 s.addremove = false

@@ -4,6 +4,7 @@ local sys = api.sys
 local has_chnlist = api.fs.access("/usr/share/passwall/rules/chnlist")
 
 m = Map(appname)
+api.set_apply_on_parse(m)
 
 s = m:section(TypedSection, "global", translate("ACLs"), "<font color='red'>" .. translate("ACLs is a tools which used to designate specific IP proxy mode.") .. "</font>")
 s.anonymous = true

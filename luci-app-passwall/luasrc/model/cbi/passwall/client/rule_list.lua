@@ -7,6 +7,7 @@ local path = string.format("/usr/share/%s/rules/", appname)
 local route_hosts_path = "/etc/"
 
 m = Map(appname)
+api.set_apply_on_parse(m)
 
 -- [[ Rule List Settings ]]--
 s = m:section(TypedSection, "global_rules")

@@ -1,6 +1,7 @@
 local api = require "luci.passwall.api"
 
 m = Map("passwall_server", translate("Server-Side"))
+api.set_apply_on_parse(m)
 
 t = m:section(NamedSection, "global", "global")
 t.anonymous = true

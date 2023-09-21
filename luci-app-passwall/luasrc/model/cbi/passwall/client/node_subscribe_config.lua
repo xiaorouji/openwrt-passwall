@@ -32,6 +32,7 @@ end
 
 m = Map(appname)
 m.redirect = api.url("node_subscribe")
+api.set_apply_on_parse(m)
 
 s = m:section(NamedSection, arg[1])
 s.addremove = false
