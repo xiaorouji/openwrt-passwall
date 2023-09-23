@@ -378,6 +378,27 @@ o:depends({ [option_name("protocol")] = "hysteria"})
 o:depends({ [option_name("protocol")] = "tuic" })
 o:depends({ [option_name("protocol")] = "hysteria2" })
 
+if singbox_tags:find("with_ech") then
+	o = s:option(Flag, option_name("ech"), translate("ECH"))
+	o.default = "0"
+	o:depends({ [option_name("tls")] = true, [option_name("flow")] = "", [option_name("reality")] = false })
+	o:depends({ [option_name("protocol")] = "tuic" })
+	o:depends({ [option_name("protocol")] = "hysteria" })
+	o:depends({ [option_name("protocol")] = "hysteria2" })
+
+	o = s:option(Value, option_name("ech_config"), translate("ECH Config"))
+	o.default = ""
+	o:depends({ [option_name("ech")] = true })
+
+	o = s:option(Flag, option_name("pq_signature_schemes_enabled"), translate("PQ signature schemes"))
+	o.default = "0"
+	o:depends({ [option_name("ech")] = true })
+
+	o = s:option(Flag, option_name("dynamic_record_sizing_disabled"), translate("Disable adaptive sizing of TLS records"))
+	o.default = "0"
+	o:depends({ [option_name("ech")] = true })
+end
+
 if singbox_tags:find("with_utls") then
 	o = s:option(Flag, option_name("utls"), translate("uTLS"))
 	o.default = "0"
@@ -533,11 +554,8 @@ o:depends({ [option_name("mux")] = true })
 
 o = s:option(Flag, option_name("shadowtls"), "ShadowTLS")
 o.default = 0
-o:depends({ [option_name("protocol")] = "vmess" })
-o:depends({ [option_name("protocol")] = "vless" })
-o:depends({ [option_name("protocol")] = "socks" })
-o:depends({ [option_name("protocol")] = "trojan" })
-o:depends({ [option_name("protocol")] = "shadowsocks" })
+o:depends({ [option_name("protocol")] = "vmess", [option_name("tls")] = false })
+o:depends({ [option_name("protocol")] = "shadowsocks", [option_name("tls")] = false })
 
 o = s:option(ListValue, option_name("shadowtls_version"), "ShadowTLS " .. translate("Version"))
 o.default = "1"

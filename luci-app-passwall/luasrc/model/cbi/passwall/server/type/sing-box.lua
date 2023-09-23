@@ -284,6 +284,28 @@ o.validate = function(self, value, t)
 	return nil
 end
 
+if singbox_tags:find("with_ech") then
+	o = s:option(Flag, option_name("ech"), translate("ECH"))
+	o.default = "0"
+	o:depends({ [option_name("tls")] = true, [option_name("flow")] = "", [option_name("reality")] = false })
+	o:depends({ [option_name("protocol")] = "naive" })
+	o:depends({ [option_name("protocol")] = "hysteria" })
+	o:depends({ [option_name("protocol")] = "tuic" })
+	o:depends({ [option_name("protocol")] = "hysteria2" })
+
+	o = s:option(Value, option_name("ech_key"), translate("ECH Key"))
+	o.default = ""
+	o:depends({ [option_name("ech")] = true })
+
+	o = s:option(Flag, option_name("pq_signature_schemes_enabled"), translate("PQ signature schemes"))
+	o.default = "0"
+	o:depends({ [option_name("ech")] = true })
+
+	o = s:option(Flag, option_name("dynamic_record_sizing_disabled"), translate("Disable adaptive sizing of TLS records"))
+	o.default = "0"
+	o:depends({ [option_name("ech")] = true })
+end
+
 o = s:option(ListValue, option_name("transport"), translate("Transport"))
 o:value("tcp", "TCP")
 o:value("http", "HTTP")
