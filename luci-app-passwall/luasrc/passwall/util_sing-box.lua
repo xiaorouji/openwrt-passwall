@@ -93,6 +93,12 @@ function gen_outbound(flag, node, tag, proxy_table)
 				alpn = alpn, --支持的应用层协议协商列表，按优先顺序排列。如果两个对等点都支持 ALPN，则选择的协议将是此列表中的一个，如果没有相互支持的协议则连接将失败。
 				--min_version = "1.2",
 				--max_version = "1.3",
+				ech = {
+					enabled = (node.ech == "1") and true or false,
+					config = (node.ech_config and node.ech_config:gsub("\\n","\n")) and node.ech_config:gsub("\\n","\n") or nil,
+					pq_signature_schemes_enabled = node.pq_signature_schemes_enabled and true or false,
+					dynamic_record_sizing_disabled = node.dynamic_record_sizing_disabled and true or false
+				},
 				utls = {
 					enabled = (node.utls == "1" or node.reality == "1") and true or false,
 					fingerprint = node.fingerprint or "chrome"
@@ -282,7 +288,13 @@ function gen_outbound(flag, node, tag, proxy_table)
 					insecure = (node.tls_allowInsecure == "1") and true or false,
 					alpn = (node.hysteria_alpn and node.hysteria_alpn ~= "") and {
 						node.hysteria_alpn
-					} or nil
+					} or nil,
+					ech = {
+						enabled = (node.ech == "1") and true or false,
+						config = (node.ech_config and node.ech_config:gsub("\\n","\n")) and node.ech_config:gsub("\\n","\n") or nil,
+						pq_signature_schemes_enabled = node.pq_signature_schemes_enabled and true or false,
+						dynamic_record_sizing_disabled = node.dynamic_record_sizing_disabled and true or false
+					}
 				}
 			}
 		end
@@ -311,7 +323,13 @@ function gen_outbound(flag, node, tag, proxy_table)
 					alpn = (node.tuic_alpn and node.tuic_alpn ~= "") and {
 						node.tuic_alpn
 					} or nil,
-				},
+					ech = {
+						enabled = (node.ech == "1") and true or false,
+						config = (node.ech_config and node.ech_config:gsub("\\n","\n")) and node.ech_config:gsub("\\n","\n") or nil,
+						pq_signature_schemes_enabled = node.pq_signature_schemes_enabled and true or false,
+						dynamic_record_sizing_disabled = node.dynamic_record_sizing_disabled and true or false
+					}
+				}
 			}
 		end
 
@@ -328,7 +346,13 @@ function gen_outbound(flag, node, tag, proxy_table)
 					enabled = true,
 					server_name = node.tls_serverName,
 					insecure = (node.tls_allowInsecure == "1") and true or false,
-				},
+					ech = {
+						enabled = (node.ech == "1") and true or false,
+						config = (node.ech_config and node.ech_config:gsub("\\n","\n")) and node.ech_config:gsub("\\n","\n") or nil,
+						pq_signature_schemes_enabled = node.pq_signature_schemes_enabled and true or false,
+						dynamic_record_sizing_disabled = node.dynamic_record_sizing_disabled and true or false
+					}
+				}
 			}
 		end
 
@@ -366,6 +390,15 @@ function gen_config_server(node)
 				server = node.reality_handshake_server,
 				server_port = tonumber(node.reality_handshake_server_port)
 			}
+		}
+	end
+
+	if node.tls == "1" and node.ech == "1" then
+		tls.ech = {
+			enabled = true,
+			key = (node.ech_key and node.ech_key:gsub("\\n","\n")) and node.ech_key:gsub("\\n","\n") or nil,
+			pq_signature_schemes_enabled = (node.pq_signature_schemes_enabled == "1") and true or false,
+			dynamic_record_sizing_disabled = (node.dynamic_record_sizing_disabled == "1") and true or false,
 		}
 	end
 
