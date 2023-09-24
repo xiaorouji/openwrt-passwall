@@ -44,7 +44,7 @@ config global_xray
 	option route_only '0'
 	
 config global_singbox
-	option sniff_override_destination '1'
+	option sniff_override_destination '0'
 	option geoip_path '/usr/share/singbox/geoip.db'
 	option geoip_url 'https://github.com/SagerNet/sing-geoip/releases/latest/download/geoip.db'
 	option geosite_path '/usr/share/singbox/geosite.db'
