@@ -61,7 +61,7 @@ sed -i "s#option tlsflow#option flow#g" /etc/config/passwall
 global_singbox=$(uci -q get passwall.@global_singbox[0])
 [ -z "${global_singbox}" ] && {
 	cfgid=$(uci add passwall global_singbox)
-	uci -q set passwall.${cfgid}.sniff_override_destination=1
+	uci -q set passwall.${cfgid}.sniff_override_destination=0
 	uci -q set passwall.${cfgid}.geoip_path="/tmp/singbox/geoip.db"
 	uci -q set passwall.${cfgid}.geoip_url="https://github.com/SagerNet/sing-geoip/releases/latest/download/geoip.db"
 	uci -q set passwall.${cfgid}.geosite_path="/tmp/singbox/geosite.db"

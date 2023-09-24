@@ -180,7 +180,7 @@ if has_singbox then
 	s.addremove = false
 
 	o = s:option(Flag, "sniff_override_destination", translate("Override the connection destination address"), translate("Override the connection destination address with the sniffed domain."))
-	o.default = 1
+	o.default = 0
 	o.rmempty = false
 
 	o = s:option(Value, "geoip_path", translate("Custom geoip Path"))
