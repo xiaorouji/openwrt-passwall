@@ -513,9 +513,6 @@ function gen_config(var)
 	local tcp_proxy_way = var["-tcp_proxy_way"] or "redirect"
 	local tcp_redir_port = var["-tcp_redir_port"]
 	local udp_redir_port = var["-udp_redir_port"]
-	local sniffing = var["-sniffing"]
-	local route_only = var["-route_only"]
-	local buffer_size = var["-buffer_size"]
 	local local_socks_address = var["-local_socks_address"] or "0.0.0.0"
 	local local_socks_port = var["-local_socks_port"]
 	local local_socks_username = var["-local_socks_username"]
@@ -543,6 +540,8 @@ function gen_config(var)
 	local observatory = nil
 	local inbounds = {}
 	local outbounds = {}
+
+	local xray_settings = uci:get_all(appname, "@global_xray[0]") or {}
 
 	if node_id then
 		local node = uci:get_all(appname, node_id)
@@ -588,7 +587,13 @@ function gen_config(var)
 				protocol = "dokodemo-door",
 				settings = {network = "tcp,udp", followRedirect = true},
 				streamSettings = {sockopt = {tproxy = "tproxy"}},
-				sniffing = {enabled = sniffing and true or false, destOverride = {"http", "tls", "quic"}, metadataOnly = false, routeOnly = route_only and true or nil, domainsExcluded = (sniffing and not route_only) and get_domain_excluded() or nil}
+				sniffing = {
+					enabled = xray_settings.sniffing == "1" and true or false,
+					destOverride = {"http", "tls", "quic"},
+					metadataOnly = false,
+					routeOnly = (xray_settings.sniffing == "1" and xray_settings.route_only == "1") and true or nil,
+					domainsExcluded = (xray_settings.sniffing == "1" and xray_settings.route_only == "0") and get_domain_excluded() or nil
+				}
 			}
 
 			if tcp_redir_port then
@@ -1173,7 +1178,7 @@ function gen_config(var)
 						-- connIdle = 300,
 						-- uplinkOnly = 2,
 						-- downlinkOnly = 5,
-						bufferSize = buffer_size and tonumber(buffer_size) or nil,
+						bufferSize = xray_settings.buffer_size and tonumber(xray_settings.buffer_size) or nil,
 						statsUserUplink = false,
 						statsUserDownlink = false
 					}

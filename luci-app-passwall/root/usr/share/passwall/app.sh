@@ -433,14 +433,6 @@ run_xray() {
 	[ -n "$dns_query_strategy" ] && _extra_param="${_extra_param} -dns_query_strategy ${dns_query_strategy}"
 	[ -n "$dns_client_ip" ] && _extra_param="${_extra_param} -dns_client_ip ${dns_client_ip}"
 	[ -n "$dns_cache" ] && _extra_param="${_extra_param} -dns_cache ${dns_cache}"
-	local sniffing=$(config_t_get global_forwarding sniffing 1)
-	[ "${sniffing}" = "1" ] && {
-		_extra_param="${_extra_param} -sniffing 1"
-		local route_only=$(config_t_get global_forwarding route_only 0)
-		[ "${route_only}" = "1" ] && _extra_param="${_extra_param} -route_only 1"
-	}
-	local buffer_size=$(config_t_get global_forwarding buffer_size)
-	[ -n "${buffer_size}" ] && _extra_param="${_extra_param} -buffer_size ${buffer_size}"
 	[ -n "${remote_dns_tcp_server}" ] && {
 		local _dns=$(get_first_dns remote_dns_tcp_server 53 | sed 's/#/:/g')
 		local _dns_address=$(echo ${_dns} | awk -F ':' '{print $1}')
