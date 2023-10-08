@@ -240,11 +240,31 @@ if has_xray then
 	o:value("xray", "Xray")
 end
 
-o = s:option(ListValue, "v2ray_dns_mode", " ")
+o = s:option(ListValue, "xray_dns_mode", " ")
+o:value("tcp", "TCP")
+o:value("tcp+doh", "TCP + DoH (" .. translate("A/AAAA type") .. ")")
+o:depends("dns_mode", "xray")
+o.cfgvalue = function(self, section)
+	return m:get(section, "v2ray_dns_mode")
+end
+o.write = function(self, section, value)
+	if dns_mode:formvalue(section) == "xray" then
+		return m:set(section, "v2ray_dns_mode", value)
+	end
+end
+
+o = s:option(ListValue, "singbox_dns_mode", " ")
 o:value("tcp", "TCP")
 o:value("doh", "DoH")
 o:depends("dns_mode", "sing-box")
-o:depends("dns_mode", "xray")
+o.cfgvalue = function(self, section)
+	return m:get(section, "v2ray_dns_mode")
+end
+o.write = function(self, section, value)
+	if dns_mode:formvalue(section) == "sing-box" then
+		return m:set(section, "v2ray_dns_mode", value)
+	end
+end
 
 ---- DNS Forward
 o = s:option(Value, "remote_dns", translate("Remote DNS"))
@@ -256,8 +276,10 @@ o:value("8.8.8.8", "8.8.8.8 (Google)")
 o:value("9.9.9.9", "9.9.9.9 (Quad9-Recommended)")
 o:value("208.67.220.220", "208.67.220.220 (OpenDNS)")
 o:value("208.67.222.222", "208.67.222.222 (OpenDNS)")
-o:depends("dns_mode", "dns2socks")
-o:depends("v2ray_dns_mode", "tcp")
+o:depends({dns_mode = "dns2socks"})
+o:depends({xray_dns_mode = "tcp"})
+o:depends({xray_dns_mode = "tcp+doh"})
+o:depends({singbox_dns_mode = "tcp"})
 
 if has_singbox or has_xray then
 	o = s:option(Value, "remote_dns_doh", translate("Remote DNS DoH"))
@@ -293,23 +315,25 @@ if has_singbox or has_xray then
 		end
 		return nil, translate("DoH request address") .. " " .. translate("Format must be:") .. " URL,IP"
 	end
-	o:depends("v2ray_dns_mode", "doh")
+	o:depends({xray_dns_mode = "tcp+doh"})
+	o:depends({singbox_dns_mode = "doh"})
 
 	if has_xray then
 		o = s:option(Value, "dns_client_ip", translate("EDNS Client Subnet"))
 		o.datatype = "ipaddr"
-		o:depends({dns_mode = "xray", v2ray_dns_mode = "tcp"})
-		o:depends({dns_mode = "xray", v2ray_dns_mode = "doh"})
+		o:depends({dns_mode = "xray"})
 	end
 end
 
 if api.is_finded("chinadns-ng") then
 	o = s:option(Flag, "chinadns_ng", translate("ChinaDNS-NG"), translate("The effect is better, but will increase the memory."))
 	o.default = "0"
-	o:depends({ tcp_proxy_mode = "gfwlist", dns_mode = "dns2socks"})
-	o:depends({ tcp_proxy_mode = "gfwlist", dns_mode = "xray"})
-	o:depends({ tcp_proxy_mode = "chnroute", dns_mode = "dns2socks"})
-	o:depends({ tcp_proxy_mode = "chnroute", dns_mode = "xray"})
+	o:depends({ tcp_proxy_mode = "gfwlist", dns_mode = "dns2socks" })
+	o:depends({ tcp_proxy_mode = "gfwlist", dns_mode = "xray" })
+	o:depends({ tcp_proxy_mode = "gfwlist", dns_mode = "sing-box" })
+	o:depends({ tcp_proxy_mode = "chnroute", dns_mode = "dns2socks" })
+	o:depends({ tcp_proxy_mode = "chnroute", dns_mode = "xray" })
+	o:depends({ tcp_proxy_mode = "chnroute", dns_mode = "sing-box" })
 end
 
 if has_chnlist then
@@ -323,7 +347,8 @@ if has_chnlist then
 	.. "</ul>"
 	local _depends = {
 		{ dns_mode = "dns2socks" },
-		{ dns_mode = "xray" }
+		{ dns_mode = "xray" },
+		{ dns_mode = "sing-box" },
 	}
 	for i, d in ipairs(_depends) do
 		d["tcp_proxy_mode"] = "chnroute"
