@@ -92,8 +92,6 @@ config nodes 'myshunt'
 	option protocol '_shunt'
 	option DirectGame '_direct'
 	option ProxyGame '_default'
-	option AD '_blackhole'
-	option BT '_direct'
 	option Proxy '_default'
 	option Netflix '_default'
 	option OpenAI '_default'
@@ -160,14 +158,6 @@ config shunt_rules 'ProxyGame'
 	option domain_list 'geosite:category-games@!cn
 domain:store.steampowered.com
 '
-
-config shunt_rules 'AD'
-	option remarks 'AD'
-	option domain_list 'geosite:category-ads-all'
-
-config shunt_rules 'BT'
-	option remarks 'BT'
-	option protocol 'bittorrent'
 
 config shunt_rules 'OpenAI'
 	option remarks 'OpenAI'
