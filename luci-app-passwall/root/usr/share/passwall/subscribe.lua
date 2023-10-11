@@ -16,6 +16,7 @@ local datatypes = require "luci.cbi.datatypes"
 -- so caching them is worth the effort
 local tinsert = table.insert
 local ssub, slen, schar, sbyte, sformat, sgsub = string.sub, string.len, string.char, string.byte, string.format, string.gsub
+local split = api.split
 local jsonParse, jsonStringify = luci.jsonc.parse, luci.jsonc.stringify
 local base64Decode = api.base64Decode
 local uci = luci.model.uci.cursor()
@@ -317,28 +318,6 @@ do
 	end
 end
 
--- 分割字符串
-local function split(full, sep)
-	if full then
-		full = full:gsub("%z", "") -- 这里不是很清楚 有时候结尾带个\0
-		local off, result = 1, {}
-		while true do
-			local nStart, nEnd = full:find(sep, off)
-			if not nEnd then
-				local res = ssub(full, off, slen(full))
-				if #res > 0 then -- 过滤掉 \0
-					tinsert(result, res)
-				end
-				break
-			else
-				tinsert(result, ssub(full, off, nStart - 1))
-				off = nEnd + 1
-			end
-		end
-		return result
-	end
-	return {}
-end
 -- urlencode
 -- local function get_urlencode(c) return sformat("%%%02X", sbyte(c)) end
 
