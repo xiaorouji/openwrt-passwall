@@ -33,11 +33,9 @@ o.default = "1"
 o.rewrite_option = o.option
 
 o = s:option(Value, option_name("up_mbps"), translate("Max upload Mbps"))
-o.default = "100"
 o.rewrite_option = o.option
 
 o = s:option(Value, option_name("down_mbps"), translate("Max download Mbps"))
-o.default = "100"
 o.rewrite_option = o.option
 
 o = s:option(Flag, option_name("ignoreClientBandwidth"), translate("ignoreClientBandwidth"))
