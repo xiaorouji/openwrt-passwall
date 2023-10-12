@@ -169,6 +169,15 @@ msgstr "远程DNS可以避免更多的DNS泄露，但会导致规则列表外的
 msgid "Direct DNS Internet experience may be better, but DNS will be leaked!"
 msgstr "直连DNS上网体验可能会更佳，但是会泄露DNS！"
 
+msgid "ChinaDNS-NG Domain Default Tag"
+msgstr "ChinaDNS-NG 域名默认标签"
+
+msgid "Smart DNS"
+msgstr "智能 DNS"
+
+msgid "Forward to both remote and direct DNS, if the direct DNS resolution result is a mainland China ip, then use the direct result, otherwise use the remote result"
+msgstr "同时转发给远程和直连DNS，如果直连DNS解析结果是大陆ip，则使用直连结果，否则使用远程结果"
+
 msgid "Filter Proxy Host IPv6"
 msgstr "过滤代理域名 IPv6"
 

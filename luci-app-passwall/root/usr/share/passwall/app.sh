@@ -485,7 +485,7 @@ run_chinadns_ng() {
 
 	echolog "  | - (chinadns-ng) 最高支持4级域名过滤..."
 
-	local _default_tag
+	local _default_tag=$(config_t_get global chinadns_ng_default_tag smart)
 	local _extra_param=""
 	[ -n "$_chnlist" ] && {
 		[ -s "${RULES_PATH}/chnlist" ] && {
@@ -510,7 +510,7 @@ run_chinadns_ng() {
 		#当只有使用gfwlist模式时设置默认DNS为本地直连
 		[ -n "$_gfwlist" ] && [ -z "$_chnlist" ] && _default_tag="chn"
 	}
-	[ -n "$_default_tag" ] && _extra_param="${_extra_param} -d ${_default_tag}"
+	[ -n "$_default_tag" ] && [ "$_default_tag" != "smart" ] && _extra_param="${_extra_param} -d ${_default_tag}"
 
 	_log_path="/dev/null"
 	ln_run "$(first_type chinadns-ng)" chinadns-ng "$_log_path" -v -b 127.0.0.1 -l "${_listen_port}" ${_dns_china:+-c "${_dns_china}"} ${_dns_trust:+-t "${_dns_trust}"} ${_extra_param} -f ${_no_ipv6_rules:+-N=${_no_ipv6_rules}}
