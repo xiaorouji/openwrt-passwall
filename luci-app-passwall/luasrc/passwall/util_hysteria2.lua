@@ -20,10 +20,10 @@ function gen_config_server(node)
 			type = "password",
 			password = node.hysteria2_auth_password
 		},
-		bandwidth = {
-			up = node.hysteria2_up_mbps and node.hysteria2_up_mbps .. " mbps" or "1 gbps",
-			down = node.hysteria2_down_mbps and node.hysteria2_down_mbps .. " mbps" or "1 gbps",
-		},
+		bandwidth = (node.hysteria2_up_mbps or node.hysteria2_down_mbps) and {
+			up = node.hysteria2_up_mbps and node.hysteria2_up_mbps .. " mbps" or nil,
+			down = node.hysteria2_down_mbps and node.hysteria2_down_mbps .. " mbps" or nil
+		} or nil,
 		ignoreClientBandwidth = (node.hysteria2_ignoreClientBandwidth == "1") and true or false,
 		disableUDP = (node.hysteria2_udp == "0") and true or false,
 	}
@@ -85,10 +85,10 @@ function gen_config(var)
 			maxIdleTimeout = (node.hysteria2_idle_timeout) and tonumber(node.hysteria2_idle_timeout) or nil,
 			disablePathMTUDiscovery = (node.hysteria2_disable_mtu_discovery) and true or false,
 		},
-		bandwidth = {
-			up = node.hysteria2_up_mbps and node.hysteria2_up_mbps .. " mbps" or "100 mbps",
-			down = node.hysteria2_down_mbps and node.hysteria2_down_mbps .. " mbps" or "100 mbps"
-		},
+		bandwidth = (node.hysteria2_up_mbps or node.hysteria2_down_mbps) and {
+			up = node.hysteria2_up_mbps and node.hysteria2_up_mbps .. " mbps" or nil,
+			down = node.hysteria2_down_mbps and node.hysteria2_down_mbps .. " mbps" or nil
+		} or nil,
 		fast_open = (node.fast_open == "1") and true or false,
 		lazy = (node.hysteria2_lazy_start == "1") and true or false,
 		socks5 = (local_socks_address and local_socks_port) and {

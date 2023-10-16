@@ -45,11 +45,9 @@ o = s:option(Flag, option_name("tls_allowInsecure"), translate("allowInsecure"),
 o.default = "0"
 
 o = s:option(Value, option_name("up_mbps"), translate("Max upload Mbps"))
-o.default = "100"
 o.rewrite_option = o.option
 
 o = s:option(Value, option_name("down_mbps"), translate("Max download Mbps"))
-o.default = "100"
 o.rewrite_option = o.option
 
 o = s:option(Value, option_name("hop_interval"), translate("Hop Interval"))
