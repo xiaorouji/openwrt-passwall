@@ -248,7 +248,7 @@ o.cfgvalue = function(self, section)
 	return m:get(section, "v2ray_dns_mode")
 end
 o.write = function(self, section, value)
-	if dns_mode:formvalue(section) == "xray" then
+	if s.fields["dns_mode"]:formvalue(section) == "xray" then
 		return m:set(section, "v2ray_dns_mode", value)
 	end
 end
@@ -261,7 +261,7 @@ o.cfgvalue = function(self, section)
 	return m:get(section, "v2ray_dns_mode")
 end
 o.write = function(self, section, value)
-	if dns_mode:formvalue(section) == "sing-box" then
+	if s.fields["dns_mode"]:formvalue(section) == "sing-box" then
 		return m:set(section, "v2ray_dns_mode", value)
 	end
 end
