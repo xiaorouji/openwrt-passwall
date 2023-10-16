@@ -334,6 +334,17 @@ if api.is_finded("chinadns-ng") then
 	o:depends({ tcp_proxy_mode = "chnroute", dns_mode = "dns2socks" })
 	o:depends({ tcp_proxy_mode = "chnroute", dns_mode = "xray" })
 	o:depends({ tcp_proxy_mode = "chnroute", dns_mode = "sing-box" })
+	chinadns_ng_default_tag = s:option(ListValue, "chinadns_ng_default_tag", translate("ChinaDNS-NG Domain Default Tag"))
+	chinadns_ng_default_tag.default = "smart"
+	chinadns_ng_default_tag:value("smart", translate("Smart DNS"))
+	chinadns_ng_default_tag:value("gfw", translate("Remote DNS"))
+	chinadns_ng_default_tag:value("chn", translate("Direct DNS"))
+	chinadns_ng_default_tag.description = "<ul>"
+			.. "<li>" .. translate("Forward to both remote and direct DNS, if the direct DNS resolution result is a mainland China ip, then use the direct result, otherwise use the remote result") .. "</li>"
+			.. "<li>" .. translate("Remote DNS can avoid more DNS leaks, but some domestic domain names maybe to proxy!") .. "</li>"
+			.. "<li>" .. translate("Direct DNS Internet experience may be better, but DNS will be leaked!") .. "</li>"
+			.. "</ul>"
+	chinadns_ng_default_tag:depends("chinadns_ng", true)
 end
 
 if has_chnlist then

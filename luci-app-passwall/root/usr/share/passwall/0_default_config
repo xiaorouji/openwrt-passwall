@@ -11,6 +11,7 @@ config global
 	option when_chnroute_default_dns 'direct'
 	option tcp_proxy_mode 'chnroute'
 	option udp_proxy_mode 'chnroute'
+	option chinadns_ng_default_tag 'smart'
 	option localhost_tcp_proxy_mode 'default'
 	option localhost_udp_proxy_mode 'default'
 	option acl_enable '0'
