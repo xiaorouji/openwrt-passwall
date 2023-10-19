@@ -341,8 +341,7 @@ jobs:
           echo "![](https://img.shields.io/github/downloads/${{ env.passwall }}/${{needs.job_check.outputs.passwall_version}}/total?style=flat-square)" >> release.txt
           echo "### Passwall Info" >> release.txt
           echo "**:minidisc: Passwall Version: ${{needs.job_check.outputs.passwall_version}}**" >> release.txt
-          echo "**:gear: OpenWrt SDK Version: 23.05.0**" >> release.txt
-
+    
           echo "### Packages Version" >> release.txt
           echo "**package name**|**package version**" >> release.txt
           echo "-|-" >> release.txt
