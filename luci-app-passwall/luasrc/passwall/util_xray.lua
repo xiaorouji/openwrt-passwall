@@ -870,39 +870,52 @@ function gen_config(var)
 							table.insert(protocols, w)
 						end)
 					end
+					local domains = nil
 					if e.domain_list then
-						local _domain = {}
+						domains = {}
 						string.gsub(e.domain_list, '[^' .. "\r\n" .. ']+', function(w)
-							table.insert(_domain, w)
+							table.insert(domains, w)
 						end)
-						table.insert(rules, {
-							type = "field",
-							outboundTag = outboundTag,
-							balancerTag = balancerTag,
-							domain = _domain,
-							protocol = protocols
-						})
 					end
+					local ip = nil
 					if e.ip_list then
-						local _ip = {}
+						ip = {}
 						string.gsub(e.ip_list, '[^' .. "\r\n" .. ']+', function(w)
-							table.insert(_ip, w)
+							table.insert(ip, w)
 						end)
-						table.insert(rules, {
-							type = "field",
-							outboundTag = outboundTag,
-							balancerTag = balancerTag,
-							ip = _ip,
-							protocol = protocols
-						})
 					end
-					if not e.domain_list and not e.ip_list and protocols then
-						table.insert(rules, {
-							type = "field",
-							outboundTag = outboundTag,
-							balancerTag = balancerTag,
-							protocol = protocols
-						})
+					local source = nil
+					if e.source then
+						source = {}
+						string.gsub(e.source, '[^' .. " " .. ']+', function(w)
+							table.insert(source, w)
+						end)
+					end
+					local rule = {
+						_flag = e.remarks,
+						type = "field",
+						outboundTag = outboundTag,
+						balancerTag = balancerTag,
+						network = e["network"] or "tcp,udp",
+						source = source,
+						sourcePort = nil,
+						port = e["port"] ~= "" and e["port"] or nil,
+						protocol = protocols
+					}
+					if domains then
+						local _rule = api.clone(rule)
+						_rule["_flag"] = _rule["_flag"] .. "_domains"
+						_rule.domains = domains
+						table.insert(rules, _rule)
+					end
+					if ip then
+						local _rule = api.clone(rule)
+						_rule["_flag"] = _rule["_flag"] .. "_ip"
+						_rule.ip = ip
+						table.insert(rules, _rule)
+					end
+					if not domains and not ip and protocols then
+						table.insert(rules, rule)
 					end
 				end
 			end)

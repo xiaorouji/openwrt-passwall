@@ -19,6 +19,83 @@ protocol:value("http")
 protocol:value("tls")
 protocol:value("bittorrent")
 
+network = s:option(ListValue, "network", translate("Network"))
+network:value("tcp,udp", "TCP UDP")
+network:value("tcp", "TCP")
+network:value("udp", "UDP")
+
+source = s:option(DynamicList, "source", translate("Source"))
+source.description = "<ul><li>" .. translate("Example:")
+.. "</li><li>" .. translate("IP") .. ": 192.168.1.100"
+.. "</li><li>" .. translate("IP CIDR") .. ": 192.168.1.0/24"
+.. "</li><li>" .. translate("GeoIP") .. ": geoip:private"
+.. "</li></ul>"
+source.cast = "string"
+source.cfgvalue = function(self, section)
+	local value
+	if self.tag_error[section] then
+		value = self:formvalue(section)
+	else
+		value = self.map:get(section, self.option)
+		if type(value) == "string" then
+			local value2 = {}
+			string.gsub(value, '[^' .. " " .. ']+', function(w) table.insert(value2, w) end)
+			value = value2
+		end
+	end
+	return value
+end
+source.validate = function(self, value, t)
+	local err = {}
+	for _, v in ipairs(value) do
+		local flag = false
+		if datatypes.ip4addr(v) then
+			flag = true
+		end
+
+		if flag == false and v:find("geoip:") and v:find("geoip:") == 1 then
+			flag = true
+		end
+
+		if flag == false then
+			err[#err + 1] = v
+		end
+	end
+
+	if #err > 0 then
+		self:add_error(t, "invalid", translate("Not true format, please re-enter!"))
+		for _, v in ipairs(err) do
+			self:add_error(t, "invalid", v)
+		end
+	end
+
+	return value
+end
+
+local dynamicList_write = function(self, section, value)
+	local t = {}
+	local t2 = {}
+	if type(value) == "table" then
+		local x
+		for _, x in ipairs(value) do
+			if x and #x > 0 then
+				if not t2[x] then
+					t2[x] = x
+					t[#t+1] = x
+				end
+			end
+		end
+	else
+		t = { value }
+	end
+	t = table.concat(t, " ")
+	return DynamicList.write(self, section, t)
+end
+
+source.write = dynamicList_write
+
+port = s:option(Value, "port", translate("port"))
+
 domain_list = s:option(TextValue, "domain_list", translate("Domain"))
 domain_list.rows = 10
 domain_list.wrap = "off"
