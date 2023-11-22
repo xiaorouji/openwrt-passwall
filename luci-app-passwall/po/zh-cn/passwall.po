@@ -1510,6 +1510,12 @@ msgstr "自定义geosite文件路径"
 msgid "Custom geosite URL"
 msgstr "自定义geosite文件更新链接"
 
+msgid "Remove resource files"
+msgstr "删除资源文件"
+
+msgid "Sing-Box will automatically download resource files when starting, you can use this feature achieve upgrade resource files."
+msgstr "Sing-Box 会在启动时自动下载资源文件，您可以使用此功能实现升级资源文件。"
+
 msgid "Override the connection destination address"
 msgstr "覆盖连接目标地址"
 

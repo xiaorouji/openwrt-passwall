@@ -200,6 +200,20 @@ if has_singbox then
 	o.default = "https://github.com/SagerNet/sing-geosite/releases/latest/download/geosite.db"
 	o:value("https://github.com/SagerNet/sing-geosite/releases/latest/download/geosite.db")
 	o.rmempty = false
+
+	o = s:option(Button, "_remove_resource", translate("Remove resource files"))
+	o.description = translate("Sing-Box will automatically download resource files when starting, you can use this feature achieve upgrade resource files.")
+	o.inputstyle = "remove"
+	function o.write(self, section, value)
+		local geoip_path = s.fields["geoip_path"] and s.fields["geoip_path"]:formvalue(section) or nil
+		if geoip_path then
+			os.remove(geoip_path)
+		end
+		local geosite_path = s.fields["geosite_path"] and s.fields["geosite_path"]:formvalue(section) or nil
+		if geosite_path then
+			os.remove(geosite_path)
+		end
+	end
 end
 
 return m
