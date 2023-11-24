@@ -19,6 +19,10 @@ protocol:value("http")
 protocol:value("tls")
 protocol:value("bittorrent")
 
+o = s:option(MultiValue, "inbound", translate("Inbound Tag"))
+o:value("tproxy", translate("Transparent proxy"))
+o:value("socks", "Socks")
+
 network = s:option(ListValue, "network", translate("Network"))
 network:value("tcp,udp", "TCP UDP")
 network:value("tcp", "TCP")

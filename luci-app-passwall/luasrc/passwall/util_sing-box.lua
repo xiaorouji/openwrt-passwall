@@ -1052,8 +1052,31 @@ function gen_config(var)
 							table.insert(protocols, w)
 						end)
 					end
+
+					local inboundTag = nil
+					if e["inbound"] and e["inbound"] ~= "" then
+						inboundTag = {}
+						if e["inbound"]:find("tproxy") then
+							if tcp_redir_port then
+								if tcp_proxy_way == "tproxy" then
+									table.insert(inboundTag, "tproxy_tcp")
+								else
+									table.insert(inboundTag, "redirect_tcp")
+								end
+							end
+							if udp_redir_port then
+								table.insert(inboundTag, "tproxy_udp")
+							end
+						end
+						if e["inbound"]:find("socks") then
+							if local_socks_port then
+								table.insert(inboundTag, "socks-in")
+							end
+						end
+					end
 					
 					local rule = {
+						inbound = inboundTag,
 						outbound = outboundTag,
 						invert = false, --匹配反选
 						protocol = protocols

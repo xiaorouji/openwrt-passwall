@@ -1018,6 +1018,12 @@ msgstr "配置路由etc/hosts文件，如果你不知道自己在做什么，请
 msgid "These had been joined ip addresses will be block. Please input the ip address or ip address segment, every line can input only one ip address."
 msgstr "加入的IP段将屏蔽。可输入IP地址或地址段，每个地址段一行。"
 
+msgid "Inbound Tag"
+msgstr "入站标签"
+
+msgid "Transparent proxy"
+msgstr "透明代理"
+
 msgid "Not valid domain name, please re-enter!"
 msgstr "不是有效域名，请重新输入！"
 
