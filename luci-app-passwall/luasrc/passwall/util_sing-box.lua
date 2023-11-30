@@ -407,6 +407,19 @@ function gen_config_server(node)
 		}
 	end
 
+	local mux = nil
+	if node.mux == "1" then
+		mux = {
+			enabled = true,
+			padding = (node.mux_padding == "1") and true or false,
+			brutal = {
+				enabled = (node.tcpbrutal == "1") and true or false,
+				up_mbps = tonumber(node.tcpbrutal_up_mbps) or 10,
+				down_mbps = tonumber(node.tcpbrutal_down_mbps) or 50,
+			},
+		}
+	end
+
 	local v2ray_transport = nil
 
 	if node.transport == "http" then
@@ -488,6 +501,7 @@ function gen_config_server(node)
 		protocol_table = {
 			method = node.method,
 			password = node.password,
+			multiplex = mux,
 		}
 	end
 
@@ -504,6 +518,7 @@ function gen_config_server(node)
 			protocol_table = {
 				users = users,
 				tls = (node.tls == "1") and tls or nil,
+				multiplex = mux,
 				transport = v2ray_transport,
 			}
 		end
@@ -522,6 +537,7 @@ function gen_config_server(node)
 			protocol_table = {
 				users = users,
 				tls = (node.tls == "1") and tls or nil,
+				multiplex = mux,
 				transport = v2ray_transport,
 			}
 		end
@@ -541,6 +557,7 @@ function gen_config_server(node)
 				tls = (node.tls == "1") and tls or nil,
 				fallback = nil,
 				fallback_for_alpn = nil,
+				multiplex = mux,
 				transport = v2ray_transport,
 			}
 		end
