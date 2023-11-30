@@ -116,10 +116,15 @@ function gen_outbound(flag, node, tag, proxy_table)
 			mux = {
 				enabled = true,
 				protocol = node.mux_type or "h2mux",
-				max_connections = tonumber(node.mux_concurrency) or 4,
+				max_connections = ( (node.tcpbrutal == "1") and 1 ) or tonumber(node.mux_concurrency) or 4,
 				padding = (node.mux_padding == "1") and true or false,
 				--min_streams = 4,
 				--max_streams = 0,
+				brutal = {
+					enabled = (node.tcpbrutal == "1") and true or false,
+					up_mbps = tonumber(node.tcpbrutal_up_mbps) or 10,
+					down_mbps = tonumber(node.tcpbrutal_down_mbps) or 50,
+				},
 			}
 		end
 
