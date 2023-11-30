@@ -146,6 +146,14 @@ function gen_outbound(flag, node, tag, proxy_table)
 			}
 		end
 
+		if node.transport == "httpupgrade" then
+			v2ray_transport = {
+				type = "httpupgrade",
+				host = node.httpupgrade_host,
+				path = node.httpupgrade_path or "/",
+			}
+		end
+
 		if node.transport == "quic" then
 			v2ray_transport = {
 				type = "quic"
@@ -418,6 +426,14 @@ function gen_config_server(node)
 			path = node.ws_path or "/",
 			headers = (node.ws_host ~= nil) and { Host = node.ws_host } or nil,
 			early_data_header_name = (node.ws_earlyDataHeaderName) and node.ws_earlyDataHeaderName or nil --要与 Xray-core 兼容，请将其设置为 Sec-WebSocket-Protocol。它需要与服务器保持一致。
+		}
+	end
+
+	if node.transport == "httpupgrade" then
+		v2ray_transport = {
+			type = "httpupgrade",
+			host = node.httpupgrade_host,
+			path = node.httpupgrade_path or "/",
 		}
 	end
 

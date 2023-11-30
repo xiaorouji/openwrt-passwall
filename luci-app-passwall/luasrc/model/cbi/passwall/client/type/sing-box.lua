@@ -438,6 +438,7 @@ o = s:option(ListValue, option_name("transport"), translate("Transport"))
 o:value("tcp", "TCP")
 o:value("http", "HTTP")
 o:value("ws", "WebSocket")
+o:value("httpupgrade", "HTTPUpgrade")
 if singbox_tags:find("with_quic") then
 	o:value("quic", "QUIC")
 end
@@ -508,6 +509,14 @@ o:depends({ [option_name("ws_enableEarlyData")] = true })
 
 o = s:option(Value, option_name("ws_earlyDataHeaderName"), translate("Early data header name"), translate("Recommended value: Sec-WebSocket-Protocol"))
 o:depends({ [option_name("ws_enableEarlyData")] = true })
+
+-- [[ HTTPUpgrade部分 ]]--
+o = s:option(Value, option_name("httpupgrade_host"), translate("HTTPUpgrade Host"))
+o:depends({ [option_name("transport")] = "httpupgrade" })
+
+o = s:option(Value, option_name("httpupgrade_path"), translate("HTTPUpgrade Path"))
+o.placeholder = "/"
+o:depends({ [option_name("transport")] = "httpupgrade" })
 
 -- [[ gRPC部分 ]]--
 o = s:option(Value, option_name("grpc_serviceName"), "ServiceName")

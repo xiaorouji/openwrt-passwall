@@ -310,6 +310,7 @@ o = s:option(ListValue, option_name("transport"), translate("Transport"))
 o:value("tcp", "TCP")
 o:value("http", "HTTP")
 o:value("ws", "WebSocket")
+o:value("httpupgrade", "HTTPUpgrade")
 o:value("quic", "QUIC")
 o:value("grpc", "gRPC")
 o:depends({ [option_name("protocol")] = "shadowsocks" })
@@ -332,6 +333,14 @@ o:depends({ [option_name("transport")] = "ws" })
 
 o = s:option(Value, option_name("ws_path"), translate("WebSocket Path"))
 o:depends({ [option_name("transport")] = "ws" })
+
+-- [[ HTTPUpgrade部分 ]]--
+
+o = s:option(Value, option_name("httpupgrade_host"), translate("HTTPUpgrade Host"))
+o:depends({ [option_name("transport")] = "httpupgrade" })
+
+o = s:option(Value, option_name("httpupgrade_path"), translate("HTTPUpgrade Path"))
+o:depends({ [option_name("transport")] = "httpupgrade" })
 
 -- [[ gRPC部分 ]]--
 o = s:option(Value, option_name("grpc_serviceName"), "ServiceName")
