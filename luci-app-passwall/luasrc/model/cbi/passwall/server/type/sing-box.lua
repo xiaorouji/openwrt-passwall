@@ -346,6 +346,27 @@ o:depends({ [option_name("transport")] = "httpupgrade" })
 o = s:option(Value, option_name("grpc_serviceName"), "ServiceName")
 o:depends({ [option_name("transport")] = "grpc" })
 
+-- [[ Mux ]]--
+o = s:option(Flag, option_name("mux"), translate("Mux"))
+o.rmempty = false
+o:depends({ [option_name("protocol")] = "vmess" })
+o:depends({ [option_name("protocol")] = "vless", [option_name("flow")] = "" })
+o:depends({ [option_name("protocol")] = "shadowsocks" })
+o:depends({ [option_name("protocol")] = "trojan" })
+
+-- [[ TCP Brutal ]]--
+o = s:option(Flag, option_name("tcpbrutal"), translate("TCP Brutal"))
+o.default = 0
+o:depends({ [option_name("mux")] = true })
+
+o = s:option(Value, option_name("tcpbrutal_up_mbps"), translate("Max upload Mbps"))
+o.default = "10"
+o:depends({ [option_name("tcpbrutal")] = true })
+
+o = s:option(Value, option_name("tcpbrutal_down_mbps"), translate("Max download Mbps"))
+o.default = "50"
+o:depends({ [option_name("tcpbrutal")] = true })
+
 o = s:option(Flag, option_name("bind_local"), translate("Bind Local"), translate("When selected, it can only be accessed locally, It is recommended to turn on when using reverse proxies or be fallback."))
 o.default = "0"
 
