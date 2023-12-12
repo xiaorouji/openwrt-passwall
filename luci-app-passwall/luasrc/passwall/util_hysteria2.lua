@@ -77,7 +77,8 @@ function gen_config(var)
 		auth = node.hysteria2_auth_password,
 		tls = {
 			sni = node.tls_serverName,
-			insecure = (node.tls_allowInsecure == "1") and true or false
+			insecure = (node.tls_allowInsecure == "1") and true or false,
+			pinSHA256 = (node.hysteria2_tls_pinSHA256) and node.hysteria2_tls_pinSHA256 or nil,
 		},
 		quic = {
 			initStreamReceiveWindow = (node.hysteria2_recv_window) and tonumber(node.hysteria2_recv_window) or nil,
