@@ -514,6 +514,12 @@ msgstr "认证密码"
 msgid "Commands the client to use the BBR flow control algorithm"
 msgstr "命令客户端使用 BBR 流量控制算法"
 
+msgid "PinSHA256"
+msgstr "PinSHA256"
+
+msgid "Certificate fingerprint"
+msgstr "证书指纹"
+
 msgid "Max upload Mbps"
 msgstr "最大上行(Mbps)"
 
