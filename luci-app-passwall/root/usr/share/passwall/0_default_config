@@ -47,9 +47,9 @@ config global_xray
 config global_singbox
 	option sniff_override_destination '0'
 	option geoip_path '/usr/share/singbox/geoip.db'
-	option geoip_url 'https://github.com/SagerNet/sing-geoip/releases/latest/download/geoip.db'
+	option geoip_url 'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.db'
 	option geosite_path '/usr/share/singbox/geosite.db'
-	option geosite_url 'https://github.com/SagerNet/sing-geosite/releases/latest/download/geosite.db'
+	option geosite_url 'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.db'
 
 config global_other
 	option nodes_ping 'auto_ping tcping'
@@ -69,7 +69,6 @@ config global_rules
 	list chnroute6_url 'https://fastly.jsdelivr.net/gh/gaoyifan/china-operator-ip@ip-lists/china6.txt'
 	list chnlist_url 'https://fastly.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/accelerated-domains.china.conf'
 	list chnlist_url 'https://fastly.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/apple.china.conf'
-	list chnlist_url 'https://fastly.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/google.china.conf'
 	option v2ray_location_asset '/usr/share/v2ray/'
 
 config global_app
