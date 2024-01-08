@@ -6,27 +6,46 @@ local has_trojan_plus = api.is_finded("trojan-plus")
 local has_singbox = api.finded_com("singbox")
 local has_xray = api.finded_com("xray")
 local has_trojan_go = api.finded_com("trojan-go")
+local has_hysteria2 = api.finded_com("hysteria")
 local ss_aead_type = {}
 local trojan_type = {}
+local vmess_type = {}
+local vless_type = {}
+local hysteria2_type = {}
 if has_ss then
-	ss_aead_type[#ss_aead_type + 1] = "shadowsocks-libev"
+	local s = "shadowsocks-libev"
+	table.insert(ss_aead_type, s)
 end
 if has_ss_rust then
-	ss_aead_type[#ss_aead_type + 1] = "shadowsocks-rust"
+	local s = "shadowsocks-rust"
+	table.insert(ss_aead_type, s)
 end
 if has_trojan_plus then
-	trojan_type[#trojan_type + 1] = "trojan-plus"
+	local s = "trojan-plus"
+	table.insert(trojan_type, s)
 end
 if has_singbox then
-	trojan_type[#trojan_type + 1] = "sing-box"
-	ss_aead_type[#ss_aead_type + 1] = "sing-box"
+	local s = "sing-box"
+	table.insert(trojan_type, s)
+	table.insert(ss_aead_type, s)
+	table.insert(vmess_type, s)
+	table.insert(vless_type, s)
+	table.insert(hysteria2_type, s)
 end
 if has_xray then
-	trojan_type[#trojan_type + 1] = "xray"
-	ss_aead_type[#ss_aead_type + 1] = "xray"
+	local s = "xray"
+	table.insert(trojan_type, s)
+	table.insert(ss_aead_type, s)
+	table.insert(vmess_type, s)
+	table.insert(vless_type, s)
 end
 if has_trojan_go then
-	trojan_type[#trojan_type + 1] = "trojan-go"
+	local s = "trojan-go"
+	table.insert(trojan_type, s)
+end
+if has_hysteria2 then
+	local s = "hysteria2"
+	table.insert(hysteria2_type, s)
 end
 
 m = Map(appname)
@@ -48,16 +67,46 @@ o = s:option(DynamicList, "filter_discard_list", translate("Discard List"))
 o = s:option(DynamicList, "filter_keep_list", translate("Keep List"))
 
 if #ss_aead_type > 0 then
-	o = s:option(ListValue, "ss_aead_type", translate("SS AEAD Node Use Type"))
+	o = s:option(ListValue, "ss_aead_type", translatef("%s Node Use Type", "SS AEAD"))
 	for key, value in pairs(ss_aead_type) do
-		o:value(value, translate(value:gsub("^%l",string.upper)))
+		o:value(value)
 	end
 end
 
 if #trojan_type > 0 then
-	o = s:option(ListValue, "trojan_type", translate("Trojan Node Use Type"))
+	o = s:option(ListValue, "trojan_type", translatef("%s Node Use Type", "Trojan"))
 	for key, value in pairs(trojan_type) do
-		o:value(value, translate(value:gsub("^%l",string.upper)))
+		o:value(value)
+	end
+end
+
+if #vmess_type > 0 then
+	o = s:option(ListValue, "vmess_type", translatef("%s Node Use Type", "VMess"))
+	for key, value in pairs(vmess_type) do
+		o:value(value)
+	end
+	if has_xray then
+		o.default = "xray"
+	end
+end
+
+if #vless_type > 0 then
+	o = s:option(ListValue, "vless_type", translatef("%s Node Use Type", "VLESS"))
+	for key, value in pairs(vless_type) do
+		o:value(value)
+	end
+	if has_xray then
+		o.default = "xray"
+	end
+end
+
+if #hysteria2_type > 0 then
+	o = s:option(ListValue, "hysteria2_type", translatef("%s Node Use Type", "Hysteria2"))
+	for key, value in pairs(hysteria2_type) do
+		o:value(value)
+	end
+	if has_hysteria2 then
+		o.default = "hysteria2"
 	end
 end
 

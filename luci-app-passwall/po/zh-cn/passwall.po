@@ -1180,11 +1180,8 @@ msgstr "允许不安全连接"
 msgid "Whether unsafe connections are allowed. When checked, Certificate validation will be skipped."
 msgstr "是否允许不安全连接。当勾选时，将跳过证书验证。"
 
-msgid "SS AEAD Node Use Type"
-msgstr "SS AEAD节点使用类型"
-
-msgid "Trojan Node Use Type"
-msgstr "Trojan节点使用类型"
+msgid "%s Node Use Type"
+msgstr "%s 节点使用类型"
 
 msgid "Set the TUIC proxy server ip address"
 msgstr "指定远程TUIC服务器IP"
