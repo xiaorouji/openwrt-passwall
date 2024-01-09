@@ -155,7 +155,7 @@ geosite:category-games@cn
 
 config shunt_rules 'ProxyGame'
 	option remarks 'ProxyGame'
-	option domain_list 'geosite:category-games@!cn
+	option domain_list 'geosite:category-games
 domain:store.steampowered.com
 '
 
