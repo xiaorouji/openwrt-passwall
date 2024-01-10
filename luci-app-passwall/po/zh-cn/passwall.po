@@ -160,8 +160,11 @@ msgstr "此功能需要 DNS 服务器支持 EDNS Client Subnet（RFC7871）。"
 msgid "The effect is better, but will increase the memory."
 msgstr "效果更好，但会增加内存使用。"
 
-msgid "When using the chnroute list the default DNS"
-msgstr "当使用中国列表外时的默认DNS"
+msgid "Default DNS"
+msgstr "默认DNS"
+
+msgid "The default DNS used when not in the domain name rules list."
+msgstr "当域名不在规则列表中时使用的默认DNS。"
 
 msgid "Remote DNS can avoid more DNS leaks, but some domestic domain names maybe to proxy!"
 msgstr "远程DNS可以避免更多的DNS泄露，但会导致规则列表外的某些国内域名可能会走代理！"
@@ -247,6 +250,12 @@ msgstr "进程"
 msgid "1 Process"
 msgstr "单进程"
 
+msgid "Use %s"
+msgstr "使用 %s"
+
+msgid "Close(Not use)"
+msgstr "关闭（不使用）"
+
 msgid "Proxy Mode"
 msgstr "代理模式"
 
@@ -270,9 +279,6 @@ msgstr "游戏模式"
 
 msgid "China List"
 msgstr "中国列表"
-
-msgid "Only use direct/proxy list"
-msgstr "仅使用直连/代理列表"
 
 msgid "Localhost"
 msgstr "本机"

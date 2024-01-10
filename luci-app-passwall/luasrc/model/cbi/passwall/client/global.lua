@@ -4,7 +4,9 @@ local uci = api.uci
 local datatypes = api.datatypes
 local has_singbox = api.finded_com("singbox")
 local has_xray = api.finded_com("xray")
+local has_gfwlist = api.fs.access("/usr/share/passwall/rules/gfwlist")
 local has_chnlist = api.fs.access("/usr/share/passwall/rules/chnlist")
+local has_chnroute = api.fs.access("/usr/share/passwall/rules/chnroute")
 
 m = Map(appname)
 api.set_apply_on_parse(m)
@@ -57,20 +59,6 @@ local doh_validate = function(self, value, t)
 		end
 	end
 	return nil, translate("DoH request address") .. " " .. translate("Format must be:") .. " URL,IP"
-end
-
-local redir_mode_validate = function(self, value, t)
-	local tcp_proxy_mode_v = tcp_proxy_mode:formvalue(t) or ""
-	local udp_proxy_mode_v = udp_proxy_mode:formvalue(t) or ""
-	local localhost_tcp_proxy_mode_v = localhost_tcp_proxy_mode:formvalue(t) or ""
-	local localhost_udp_proxy_mode_v = localhost_udp_proxy_mode:formvalue(t) or ""
-	local s = tcp_proxy_mode_v .. udp_proxy_mode_v .. localhost_tcp_proxy_mode_v .. localhost_udp_proxy_mode_v
-	if s:find("returnhome") then
-		if s:find("chnroute") or s:find("gfwlist") then
-			return nil, translate("China list or gfwlist cannot be used together with outside China list!")
-		end
-	end
-	return value
 end
 
 m:append(Template(appname .. "/global/status"))
@@ -400,18 +388,17 @@ if api.is_finded("chinadns-ng") then
 	o:depends({dns_mode = "udp"})
 end
 
-if has_chnlist then
-	when_chnroute_default_dns = s:taboption("DNS", ListValue, "when_chnroute_default_dns", translate("When using the chnroute list the default DNS"))
-	when_chnroute_default_dns.default = "direct"
-	when_chnroute_default_dns:value("remote", translate("Remote DNS"))
-	when_chnroute_default_dns:value("direct", translate("Direct DNS"))
-	when_chnroute_default_dns.description = "<ul>"
-	.. "<li>" .. translate("Remote DNS can avoid more DNS leaks, but some domestic domain names maybe to proxy!") .. "</li>"
-	.. "<li>" .. translate("Direct DNS Internet experience may be better, but DNS will be leaked!") .. "</li>"
-	.. "</ul>"
-	if api.is_finded("chinadns-ng") then
-		when_chnroute_default_dns:depends("chinadns_ng", false)
-	end
+o = s:taboption("DNS", ListValue, "use_default_dns", translate("Default DNS"))
+o.default = "direct"
+o:value("remote", translate("Remote DNS"))
+o:value("direct", translate("Direct DNS"))
+o.description = translate("The default DNS used when not in the domain name rules list.")
+.. "<ul>"
+.. "<li>" .. translate("Remote DNS can avoid more DNS leaks, but some domestic domain names maybe to proxy!") .. "</li>"
+.. "<li>" .. translate("Direct DNS Internet experience may be better, but DNS will be leaked!") .. "</li>"
+.. "</ul>"
+if api.is_finded("chinadns-ng") then
+	o:depends("chinadns_ng", false)
 end
 
 o = s:taboption("DNS", Button, "clear_ipset", translate("Clear IPSET"), translate("Try this feature if the rule modification does not take effect."))
@@ -423,59 +410,53 @@ end
 
 s:tab("Proxy", translate("Mode"))
 
+o = s:taboption("Proxy", Flag, "use_direct_list", translatef("Use %s", translate("Direct List")))
+o.default = "1"
+
+o = s:taboption("Proxy", Flag, "use_proxy_list", translatef("Use %s", translate("Proxy List")))
+o.default = "1"
+
+o = s:taboption("Proxy", Flag, "use_block_list", translatef("Use %s", translate("Block List")))
+o.default = "1"
+
+if has_gfwlist then
+	o = s:taboption("Proxy", Flag, "use_gfw_list", translatef("Use %s", translate("GFW List")))
+	o.default = "1"
+end
+
+if has_chnlist or has_chnroute then
+	o = s:taboption("Proxy", ListValue, "chn_list", translate("China List"))
+	o:value("0", translate("Close(Not use)"))
+	o:value("direct", translate("Direct Connection"))
+	o:value("proxy", translate("Proxy"))
+	o.default = "direct"
+end
+
 ---- TCP Default Proxy Mode
 tcp_proxy_mode = s:taboption("Proxy", ListValue, "tcp_proxy_mode", "TCP " .. translate("Default Proxy Mode"))
 tcp_proxy_mode:value("disable", translate("No Proxy"))
-tcp_proxy_mode:value("global", translate("Global Proxy"))
-tcp_proxy_mode:value("gfwlist", translate("GFW List"))
-tcp_proxy_mode:value("chnroute", translate("Not China List"))
-if has_chnlist then
-	tcp_proxy_mode:value("returnhome", translate("China List"))
-end
-tcp_proxy_mode:value("direct/proxy", translate("Only use direct/proxy list"))
-tcp_proxy_mode.default = "chnroute"
---tcp_proxy_mode.validate = redir_mode_validate
+tcp_proxy_mode:value("proxy", translate("Proxy"))
+tcp_proxy_mode.default = "proxy"
 
 ---- UDP Default Proxy Mode
 udp_proxy_mode = s:taboption("Proxy", ListValue, "udp_proxy_mode", "UDP " .. translate("Default Proxy Mode"))
 udp_proxy_mode:value("disable", translate("No Proxy"))
-udp_proxy_mode:value("global", translate("Global Proxy"))
-udp_proxy_mode:value("gfwlist", translate("GFW List"))
-udp_proxy_mode:value("chnroute", translate("Not China List"))
-if has_chnlist then
-	udp_proxy_mode:value("returnhome", translate("China List"))
-end
-udp_proxy_mode:value("direct/proxy", translate("Only use direct/proxy list"))
-udp_proxy_mode.default = "chnroute"
---udp_proxy_mode.validate = redir_mode_validate
+udp_proxy_mode:value("proxy", translate("Proxy"))
+udp_proxy_mode.default = "proxy"
 
 ---- Localhost TCP Proxy Mode
 localhost_tcp_proxy_mode = s:taboption("Proxy", ListValue, "localhost_tcp_proxy_mode", translate("Router Localhost") .. " TCP " .. translate("Proxy Mode"))
 localhost_tcp_proxy_mode:value("default", translatef("Same as the %s default proxy mode", "TCP"))
-localhost_tcp_proxy_mode:value("global", translate("Global Proxy"))
-localhost_tcp_proxy_mode:value("gfwlist", translate("GFW List"))
-localhost_tcp_proxy_mode:value("chnroute", translate("Not China List"))
-if has_chnlist then
-	localhost_tcp_proxy_mode:value("returnhome", translate("China List"))
-end
 localhost_tcp_proxy_mode:value("disable", translate("No Proxy"))
-localhost_tcp_proxy_mode:value("direct/proxy", translate("Only use direct/proxy list"))
+localhost_tcp_proxy_mode:value("proxy", translate("Proxy"))
 localhost_tcp_proxy_mode.default = "default"
---localhost_tcp_proxy_mode.validate = redir_mode_validate
 
 ---- Localhost UDP Proxy Mode
 localhost_udp_proxy_mode = s:taboption("Proxy", ListValue, "localhost_udp_proxy_mode", translate("Router Localhost") .. " UDP " .. translate("Proxy Mode"))
 localhost_udp_proxy_mode:value("default", translatef("Same as the %s default proxy mode", "UDP"))
-localhost_udp_proxy_mode:value("global", translate("Global Proxy"))
-localhost_udp_proxy_mode:value("gfwlist", translate("GFW List"))
-localhost_udp_proxy_mode:value("chnroute", translate("Not China List"))
-if has_chnlist then
-	localhost_udp_proxy_mode:value("returnhome", translate("China List"))
-end
 localhost_udp_proxy_mode:value("disable", translate("No Proxy"))
-localhost_udp_proxy_mode:value("direct/proxy", translate("Only use direct/proxy list"))
+localhost_udp_proxy_mode:value("proxy", translate("Proxy"))
 localhost_udp_proxy_mode.default = "default"
-localhost_udp_proxy_mode.validate = redir_mode_validate
 
 tips = s:taboption("Proxy", DummyValue, "tips", " ")
 tips.rawhtml = true

@@ -1,7 +1,6 @@
 local api = require "luci.passwall.api"
 local appname = api.appname
 local sys = api.sys
-local has_chnlist = api.fs.access("/usr/share/passwall/rules/chnlist")
 
 m = Map(appname)
 api.set_apply_on_parse(m)
@@ -12,8 +11,6 @@ s.anonymous = true
 o = s:option(Flag, "acl_enable", translate("Main switch"))
 o.rmempty = false
 o.default = false
-
-local global_proxy_mode = (m:get("@global[0]", "tcp_proxy_mode") or "") .. (m:get("@global[0]", "udp_proxy_mode") or "")
 
 -- [[ ACLs Settings ]]--
 s = m:section(TypedSection, "acl_rule")
@@ -65,36 +62,6 @@ o.cfgvalue = function(t, n)
 	end)
 	return e
 end
-
----- TCP Proxy Mode
-tcp_proxy_mode = s:option(ListValue, "tcp_proxy_mode", "TCP " .. translate("Proxy Mode"))
-tcp_proxy_mode.default = "default"
-tcp_proxy_mode.rmempty = false
-tcp_proxy_mode:value("default", translate("Default"))
-tcp_proxy_mode:value("disable", translate("No Proxy"))
-tcp_proxy_mode:value("global", translate("Global Proxy"))
-if has_chnlist and global_proxy_mode:find("returnhome") then
-	tcp_proxy_mode:value("returnhome", translate("China List"))
-else
-	tcp_proxy_mode:value("gfwlist", translate("GFW List"))
-	tcp_proxy_mode:value("chnroute", translate("Not China List"))
-end
-tcp_proxy_mode:value("direct/proxy", translate("Only use direct/proxy list"))
-
----- UDP Proxy Mode
-udp_proxy_mode = s:option(ListValue, "udp_proxy_mode", "UDP " .. translate("Proxy Mode"))
-udp_proxy_mode.default = "default"
-udp_proxy_mode.rmempty = false
-udp_proxy_mode:value("default", translate("Default"))
-udp_proxy_mode:value("disable", translate("No Proxy"))
-udp_proxy_mode:value("global", translate("Global Proxy"))
-if has_chnlist and global_proxy_mode:find("returnhome") then
-	udp_proxy_mode:value("returnhome", translate("China List"))
-else
-	udp_proxy_mode:value("gfwlist", translate("GFW List"))
-	udp_proxy_mode:value("chnroute", translate("Not China List"))
-end
-udp_proxy_mode:value("direct/proxy", translate("Only use direct/proxy list"))
 
 --[[
 ---- TCP No Redir Ports

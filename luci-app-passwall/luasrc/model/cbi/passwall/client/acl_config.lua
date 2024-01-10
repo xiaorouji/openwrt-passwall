@@ -1,9 +1,12 @@
 local api = require "luci.passwall.api"
 local appname = api.appname
+local uci = api.uci
 local sys = api.sys
 local has_singbox = api.finded_com("singbox")
 local has_xray = api.finded_com("xray")
+local has_gfwlist = api.fs.access("/usr/share/passwall/rules/gfwlist")
 local has_chnlist = api.fs.access("/usr/share/passwall/rules/chnlist")
+local has_chnroute = api.fs.access("/usr/share/passwall/rules/chnroute")
 
 local port_validate = function(self, value, t)
 	return value:gsub("-", ":")
@@ -16,8 +19,6 @@ local nodes_table = {}
 for k, e in ipairs(api.get_valid_nodes()) do
 	nodes_table[#nodes_table + 1] = e
 end
-
-local global_proxy_mode = (m:get("@global[0]", "tcp_proxy_mode") or "") .. (m:get("@global[0]", "udp_proxy_mode") or "")
 
 local dynamicList_write = function(self, section, value)
 	local t = {}
@@ -140,92 +141,17 @@ sources.validate = function(self, value, t)
 end
 sources.write = dynamicList_write
 
----- TCP No Redir Ports
-o = s:option(Value, "tcp_no_redir_ports", translate("TCP No Redir Ports"))
-o.default = "default"
-o:value("disable", translate("No patterns are used"))
-o:value("default", translate("Default"))
-o:value("1:65535", translate("All"))
-o.validate = port_validate
-
----- UDP No Redir Ports
-o = s:option(Value, "udp_no_redir_ports", translate("UDP No Redir Ports"))
-o.default = "default"
-o:value("disable", translate("No patterns are used"))
-o:value("default", translate("Default"))
-o:value("1:65535", translate("All"))
-o.validate = port_validate
-
----- TCP Proxy Drop Ports
-o = s:option(Value, "tcp_proxy_drop_ports", translate("TCP Proxy Drop Ports"))
-o.default = "default"
-o:value("disable", translate("No patterns are used"))
-o:value("default", translate("Default"))
-o.validate = port_validate
-
----- UDP Proxy Drop Ports
-o = s:option(Value, "udp_proxy_drop_ports", translate("UDP Proxy Drop Ports"))
-o.default = "default"
-o:value("disable", translate("No patterns are used"))
-o:value("default", translate("Default"))
-o:value("80,443", translate("QUIC"))
-o.validate = port_validate
-
----- TCP Redir Ports
-o = s:option(Value, "tcp_redir_ports", translate("TCP Redir Ports"))
-o.default = "default"
-o:value("default", translate("Default"))
-o:value("1:65535", translate("All"))
-o:value("80,443", "80,443")
-o:value("80:65535", "80 " .. translate("or more"))
-o:value("1:443", "443 " .. translate("or less"))
-o.validate = port_validate
-
----- UDP Redir Ports
-o = s:option(Value, "udp_redir_ports", translate("UDP Redir Ports"))
-o.default = "default"
-o:value("default", translate("Default"))
-o:value("1:65535", translate("All"))
-o:value("53", "53")
-o.validate = port_validate
-
----- TCP Proxy Mode
-tcp_proxy_mode = s:option(ListValue, "tcp_proxy_mode", "TCP " .. translate("Proxy Mode"))
-tcp_proxy_mode.default = "default"
-tcp_proxy_mode.rmempty = false
-tcp_proxy_mode:value("default", translate("Default"))
-tcp_proxy_mode:value("disable", translate("No Proxy"))
-tcp_proxy_mode:value("global", translate("Global Proxy"))
-if has_chnlist and global_proxy_mode:find("returnhome") then
-	tcp_proxy_mode:value("returnhome", translate("China List"))
-else
-	tcp_proxy_mode:value("gfwlist", translate("GFW List"))
-	tcp_proxy_mode:value("chnroute", translate("Not China List"))
-end
-tcp_proxy_mode:value("direct/proxy", translate("Only use direct/proxy list"))
-
----- UDP Proxy Mode
-udp_proxy_mode = s:option(ListValue, "udp_proxy_mode", "UDP " .. translate("Proxy Mode"))
-udp_proxy_mode.default = "default"
-udp_proxy_mode.rmempty = false
-udp_proxy_mode:value("default", translate("Default"))
-udp_proxy_mode:value("disable", translate("No Proxy"))
-udp_proxy_mode:value("global", translate("Global Proxy"))
-if has_chnlist and global_proxy_mode:find("returnhome") then
-	udp_proxy_mode:value("returnhome", translate("China List"))
-else
-	udp_proxy_mode:value("gfwlist", translate("GFW List"))
-	udp_proxy_mode:value("chnroute", translate("Not China List"))
-end
-udp_proxy_mode:value("direct/proxy", translate("Only use direct/proxy list"))
-
+local TCP_NODE = uci:get(appname, "@global[0]", "tcp_node")
 tcp_node = s:option(ListValue, "tcp_node", "<a style='color: red'>" .. translate("TCP Node") .. "</a>")
 tcp_node.default = "default"
-tcp_node:value("default", translate("Default"))
+tcp_node:value("nil", translate("Close"))
+tcp_node:value("default", translate("Use global config") .. "(" .. TCP_NODE .. ")")
 
+local UDP_NODE = uci:get(appname, "@global[0]", "udp_node")
 udp_node = s:option(ListValue, "udp_node", "<a style='color: red'>" .. translate("UDP Node") .. "</a>")
 udp_node.default = "default"
-udp_node:value("default", translate("Default"))
+udp_node:value("nil", translate("Close"))
+udp_node:value("default", translate("Use global config") .. "(" .. UDP_NODE .. ")")
 udp_node:value("tcp", translate("Same as the tcp node"))
 
 for k, v in pairs(nodes_table) do
@@ -233,13 +159,112 @@ for k, v in pairs(nodes_table) do
 	udp_node:value(v.id, v["remark"])
 end
 
+---- TCP No Redir Ports
+local TCP_NO_REDIR_PORTS = uci:get(appname, "@global_forwarding[0]", "tcp_no_redir_ports")
+o = s:option(Value, "tcp_no_redir_ports", translate("TCP No Redir Ports"))
+o.default = "default"
+o:value("disable", translate("No patterns are used"))
+o:value("default", translate("Use global config") .. "(" .. TCP_NO_REDIR_PORTS .. ")")
+o:value("1:65535", translate("All"))
+o.validate = port_validate
+o:depends({ tcp_node = "nil",  ['!reverse'] = true })
+
+---- UDP No Redir Ports
+local UDP_NO_REDIR_PORTS = uci:get(appname, "@global_forwarding[0]", "udp_no_redir_ports")
+o = s:option(Value, "udp_no_redir_ports", translate("UDP No Redir Ports"))
+o.default = "default"
+o:value("disable", translate("No patterns are used"))
+o:value("default", translate("Use global config") .. "(" .. UDP_NO_REDIR_PORTS .. ")")
+o:value("1:65535", translate("All"))
+o.validate = port_validate
+o:depends({ udp_node = "nil",  ['!reverse'] = true })
+
+---- TCP Proxy Drop Ports
+local TCP_PROXY_DROP_PORTS = uci:get(appname, "@global_forwarding[0]", "tcp_proxy_drop_ports")
+o = s:option(Value, "tcp_proxy_drop_ports", translate("TCP Proxy Drop Ports"))
+o.default = "default"
+o:value("disable", translate("No patterns are used"))
+o:value("default", translate("Default"))
+o.validate = port_validate
+o:value("default", translate("Use global config") .. "(" .. TCP_PROXY_DROP_PORTS .. ")")
+o:depends({ tcp_node = "nil",  ['!reverse'] = true })
+
+---- UDP Proxy Drop Ports
+local UDP_PROXY_DROP_PORTS = uci:get(appname, "@global_forwarding[0]", "udp_proxy_drop_ports")
+o = s:option(Value, "udp_proxy_drop_ports", translate("UDP Proxy Drop Ports"))
+o.default = "default"
+o:value("disable", translate("No patterns are used"))
+o:value("default", translate("Use global config") .. "(" .. UDP_PROXY_DROP_PORTS .. ")")
+o:value("80,443", translate("QUIC"))
+o.validate = port_validate
+o:depends({ udp_node = "nil",  ['!reverse'] = true })
+
+---- TCP Redir Ports
+local TCP_REDIR_PORTS = uci:get(appname, "@global_forwarding[0]", "tcp_redir_ports")
+o = s:option(Value, "tcp_redir_ports", translate("TCP Redir Ports"))
+o.default = "default"
+o:value("default", translate("Use global config") .. "(" .. TCP_REDIR_PORTS .. ")")
+o:value("1:65535", translate("All"))
+o:value("80,443", "80,443")
+o:value("80:65535", "80 " .. translate("or more"))
+o:value("1:443", "443 " .. translate("or less"))
+o.validate = port_validate
+o:depends({ tcp_node = "nil",  ['!reverse'] = true })
+
+---- UDP Redir Ports
+local UDP_REDIR_PORTS = uci:get(appname, "@global_forwarding[0]", "udp_redir_ports")
+o = s:option(Value, "udp_redir_ports", translate("UDP Redir Ports"))
+o.default = "default"
+o:value("default", translate("Use global config") .. "(" .. UDP_REDIR_PORTS .. ")")
+o:value("1:65535", translate("All"))
+o:value("53", "53")
+o.validate = port_validate
+o:depends({ udp_node = "nil",  ['!reverse'] = true })
+
+o = s:option(Flag, "use_direct_list", translatef("Use %s", translate("Direct List")))
+o.default = "1"
+o:depends({ tcp_node = "nil",  ['!reverse'] = true })
+
+o = s:option(Flag, "use_proxy_list", translatef("Use %s", translate("Proxy List")))
+o.default = "1"
+o:depends({ tcp_node = "nil",  ['!reverse'] = true })
+
+o = s:option(Flag, "use_block_list", translatef("Use %s", translate("Block List")))
+o.default = "1"
+o:depends({ tcp_node = "nil",  ['!reverse'] = true })
+
+if has_gfwlist then
+	o = s:option(Flag, "use_gfw_list", translatef("Use %s", translate("GFW List")))
+	o.default = "1"
+	o:depends({ tcp_node = "nil",  ['!reverse'] = true })
+end
+
+if has_chnlist or has_chnroute then
+	o = s:option(ListValue, "chn_list", translate("China List"))
+	o:value("0", translate("Close(Not use)"))
+	o:value("direct", translate("Direct Connection"))
+	o:value("proxy", translate("Proxy"))
+	o.default = "direct"
+	o:depends({ tcp_node = "nil",  ['!reverse'] = true })
+end
+
+o = s:option(ListValue, "tcp_proxy_mode", "TCP " .. translate("Proxy Mode"))
+o:value("disable", translate("No Proxy"))
+o:value("proxy", translate("Proxy"))
+o:depends({ tcp_node = "nil",  ['!reverse'] = true })
+
+o = s:option(ListValue, "udp_proxy_mode", "UDP " .. translate("Proxy Mode"))
+o:value("disable", translate("No Proxy"))
+o:value("proxy", translate("Proxy"))
+o:depends({ udp_node = "nil",  ['!reverse'] = true })
+
 o = s:option(Flag, "filter_proxy_ipv6", translate("Filter Proxy Host IPv6"), translate("Experimental feature."))
 o.default = "0"
-o:depends({ tcp_node = "default",  ['!reverse'] = true })
+o:depends({ tcp_node = "nil",  ['!reverse'] = true })
 
 ---- DNS Forward Mode
 o = s:option(ListValue, "dns_mode", translate("Filter Mode"))
-o:depends({ tcp_node = "default",  ['!reverse'] = true })
+o:depends({ tcp_node = "nil",  ['!reverse'] = true })
 if api.is_finded("dns2socks") then
 	o:value("dns2socks", "dns2socks")
 end
@@ -338,46 +363,33 @@ end
 if api.is_finded("chinadns-ng") then
 	o = s:option(Flag, "chinadns_ng", translate("ChinaDNS-NG"), translate("The effect is better, but will increase the memory."))
 	o.default = "0"
-	o:depends({ tcp_proxy_mode = "gfwlist", dns_mode = "dns2socks" })
-	o:depends({ tcp_proxy_mode = "gfwlist", dns_mode = "xray" })
-	o:depends({ tcp_proxy_mode = "gfwlist", dns_mode = "sing-box" })
-	o:depends({ tcp_proxy_mode = "chnroute", dns_mode = "dns2socks" })
-	o:depends({ tcp_proxy_mode = "chnroute", dns_mode = "xray" })
-	o:depends({ tcp_proxy_mode = "chnroute", dns_mode = "sing-box" })
-	chinadns_ng_default_tag = s:option(ListValue, "chinadns_ng_default_tag", translate("ChinaDNS-NG Domain Default Tag"))
-	chinadns_ng_default_tag.default = "smart"
-	chinadns_ng_default_tag:value("smart", translate("Smart DNS"))
-	chinadns_ng_default_tag:value("gfw", translate("Remote DNS"))
-	chinadns_ng_default_tag:value("chn", translate("Direct DNS"))
-	chinadns_ng_default_tag.description = "<ul>"
+	o:depends({ use_gfw_list = true })
+	o:depends({ chn_list = "direct" })
+
+	o = s:option(ListValue, "chinadns_ng_default_tag", translate("ChinaDNS-NG Domain Default Tag"))
+	o.default = "smart"
+	o:value("smart", translate("Smart DNS"))
+	o:value("gfw", translate("Remote DNS"))
+	o:value("chn", translate("Direct DNS"))
+	o.description = "<ul>"
 			.. "<li>" .. translate("Forward to both remote and direct DNS, if the direct DNS resolution result is a mainland China ip, then use the direct result, otherwise use the remote result") .. "</li>"
 			.. "<li>" .. translate("Remote DNS can avoid more DNS leaks, but some domestic domain names maybe to proxy!") .. "</li>"
 			.. "<li>" .. translate("Direct DNS Internet experience may be better, but DNS will be leaked!") .. "</li>"
 			.. "</ul>"
-	chinadns_ng_default_tag:depends("chinadns_ng", true)
+	o:depends("chinadns_ng", true)
 end
 
-if has_chnlist then
-	when_chnroute_default_dns = s:option(ListValue, "when_chnroute_default_dns", translate("When using the chnroute list the default DNS"))
-	when_chnroute_default_dns.default = "direct"
-	when_chnroute_default_dns:value("remote", translate("Remote DNS"))
-	when_chnroute_default_dns:value("direct", translate("Direct DNS"))
-	when_chnroute_default_dns.description = "<ul>"
-	.. "<li>" .. translate("Remote DNS can avoid more DNS leaks, but some domestic domain names maybe to proxy!") .. "</li>"
-	.. "<li>" .. translate("Direct DNS Internet experience may be better, but DNS will be leaked!") .. "</li>"
-	.. "</ul>"
-	local _depends = {
-		{ dns_mode = "dns2socks" },
-		{ dns_mode = "xray" },
-		{ dns_mode = "sing-box" },
-	}
-	for i, d in ipairs(_depends) do
-		d["tcp_proxy_mode"] = "chnroute"
-		if api.is_finded("chinadns-ng") then
-			d["chinadns_ng"] = false
-		end
-		when_chnroute_default_dns:depends(d)
-	end
+o = s:option(ListValue, "use_default_dns", translate("Default DNS"))
+o.default = "direct"
+o:value("remote", translate("Remote DNS"))
+o:value("direct", translate("Direct DNS"))
+o.description = translate("The default DNS used when not in the domain name rules list.")
+.. "<ul>"
+.. "<li>" .. translate("Remote DNS can avoid more DNS leaks, but some domestic domain names maybe to proxy!") .. "</li>"
+.. "<li>" .. translate("Direct DNS Internet experience may be better, but DNS will be leaked!") .. "</li>"
+.. "</ul>"
+if api.is_finded("chinadns-ng") then
+	o:depends("chinadns_ng", false)
 end
 
 return m
