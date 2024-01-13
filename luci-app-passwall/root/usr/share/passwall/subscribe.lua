@@ -873,15 +873,18 @@ local function processData(szType, content, add_mode, add_from)
 			content = content:sub(0, idx_sp - 1)
 		end
 		result.remarks = UrlDecode(alias)
-		
-		local dat = split(content, '%?')
-		local host_port = dat[1]
+		local Info = content
+		if content:find("@") then
+			local contents = split(content, "@")
+			result.hysteria2_auth_password = UrlDecode(contents[1])
+			Info = (contents[2] or ""):gsub("/%?", "?")
+		end
+		local query = split(Info, "?")
+		local host_port = query[1]
 		local params = {}
-		for _, v in pairs(split(dat[2], '&')) do
+		for _, v in pairs(split(query[2], '&')) do
 			local t = split(v, '=')
-			if #t > 0 then
-				params[t[1]] = t[2]
-			end
+			params[string.lower(t[1])] = UrlDecode(t[2])
 		end
 		-- [2001:4860:4860::8888]:443
 		-- 8.8.8.8:443
@@ -896,7 +899,6 @@ local function processData(szType, content, add_mode, add_from)
 		else
 			result.address = host_port
 		end
-		result.hysteria2_auth_password = params.auth
 		result.tls_serverName = params.sni
 		if params.insecure and (params.insecure == "1" or params.insecure == "0") then
 			result.tls_allowInsecure = params.insecure
@@ -908,13 +910,17 @@ local function processData(szType, content, add_mode, add_from)
 
 		if has_hysteria2 then
 			result.type = "Hysteria2"
-			result.hysteria2_obfs = params["obfs-password"]
+			if params["obfs-password"] then
+				result.hysteria2_obfs = params["obfs-password"]
+			end
 		end
 		if hysteria2_type_default == "sing-box" and has_singbox then
 			result.type = 'sing-box'
 			result.protocol = "hysteria2"
-			result.hysteria2_obfs_type = "salamander"
-			result.hysteria2_obfs_password = params["obfs-password"]
+			if params["obfs-password"] then
+				result.hysteria2_obfs_type = "salamander"
+				result.hysteria2_obfs_password = params["obfs-password"]
+			end
 		end
 	else
 		log('暂时不支持' .. szType .. "类型的节点订阅，跳过此节点。")

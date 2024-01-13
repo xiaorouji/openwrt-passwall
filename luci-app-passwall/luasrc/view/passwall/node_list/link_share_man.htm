@@ -1049,6 +1049,11 @@ local api = require "luci.passwall.api"
 		}
 		if (ssu[0] === "hysteria2" || ssu[0] === "hy2") {
 			var m = parseNodeUrl(ssrurl);
+			var password = m.passwd;
+			if (password === "") {
+				s.innerHTML = "<font color='red'><%:Invalid Share URL Format%></font>";
+				return false;
+			}
 			var queryParam = {};
 			if (m.search.length > 1) {
 				var query = m.search.split('?');
@@ -1060,20 +1065,23 @@ local api = require "luci.passwall.api"
 					queryParam[decodeURIComponent(params[0])] = decodeURIComponent(params[1] || '');
 				}
 			}
-		
 			if (has_singbox) {
 				opt.set('type', "sing-box");
 				dom_prefix = "singbox_"
 				opt.set(dom_prefix + 'protocol', "hysteria2");
-				opt.set(dom_prefix + 'hysteria2_obfs_type', "salamander");
-				opt.set(dom_prefix + 'hysteria2_obfs_password', queryParam["obfs-password"]);
-				opt.set(dom_prefix + 'hysteria2_auth_password', queryParam.auth);
+				opt.set(dom_prefix + 'hysteria2_auth_password', decodeURIComponent(password));
+				if (queryParam["obfs-password"]) {
+					opt.set(dom_prefix + 'hysteria2_obfs_type', "salamander");
+					opt.set(dom_prefix + 'hysteria2_obfs_password', queryParam["obfs-password"]);
+				}
 			}
 			if (has_hysteria2) {
 				opt.set('type', "Hysteria2");
 				dom_prefix = "hysteria2_"
-				opt.set(dom_prefix + 'obfs', queryParam["obfs-password"]);
-				opt.set(dom_prefix + 'auth_password', queryParam.auth);
+				opt.set(dom_prefix + 'auth_password', decodeURIComponent(password));
+				if (queryParam["obfs-password"]) {
+					opt.set(dom_prefix + 'obfs', queryParam["obfs-password"]);
+				}
 				if (queryParam.pinSHA256) {
 					opt.set(dom_prefix + 'tls_pinSHA256', queryParam.pinSHA256);
 				}

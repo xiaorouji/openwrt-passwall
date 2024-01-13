@@ -285,8 +285,6 @@ function gen_outbound(flag, node, tag, proxy_table)
 
 		if node.protocol == "hysteria" then
 			protocol_table = {
-				up = node.hysteria_up_mbps .. " Mbps",
-				down = node.hysteria_down_mbps .. " Mbps",
 				up_mbps = tonumber(node.hysteria_up_mbps),
 				down_mbps = tonumber(node.hysteria_down_mbps),
 				obfs = node.hysteria_obfs,
