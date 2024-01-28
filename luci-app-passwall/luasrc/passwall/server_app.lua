@@ -155,15 +155,6 @@ local function start()
 			elseif type == "Trojan-Go" then
 				config = require(require_dir .. "util_trojan").gen_config_server(user)
 				bin = ln_run(api.get_app_path("trojan-go"), "trojan-go", "-config " .. config_file, log_path)
-			elseif type == "Brook" then
-				local brook_protocol = user.protocol
-				local brook_password = user.password
-				local brook_path = user.ws_path or "/ws"
-				local brook_path_arg = ""
-				if brook_protocol == "wsserver" and brook_path then
-					brook_path_arg = " --path " .. brook_path
-				end
-				bin = ln_run(api.get_app_path("brook"), "brook_" .. id, string.format("--debug %s -l :%s -p %s%s", brook_protocol, port, brook_password, brook_path_arg), log_path)
 			elseif type == "Hysteria2" then
 				config = require(require_dir .. "util_hysteria2").gen_config_server(user)
 				bin = ln_run(api.get_app_path("hysteria"), "hysteria", "-c " .. config_file .. " server", log_path)

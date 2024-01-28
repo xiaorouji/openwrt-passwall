@@ -1120,12 +1120,6 @@ msgstr "插件名称"
 msgid "Plugin Arguments"
 msgstr "插件参数"
 
-msgid "Brook Protocol"
-msgstr "Brook协议"
-
-msgid "Use TLS"
-msgstr "使用TLS"
-
 msgid "Naiveproxy Protocol"
 msgstr "Naiveproxy协议"
 
