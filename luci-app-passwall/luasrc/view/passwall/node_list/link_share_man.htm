@@ -168,9 +168,10 @@ local api = require "luci.passwall.api"
 			}
 		}
 		var url = null;
-		if (v_type === "SS") {
+		if (v_type === "SS" || v_type === "SS-Rust" || ((v_type === "sing-box" || v_type === "Xray") && opt.get(dom_prefix + "protocol").value === "shadowsocks")) {
+			protocol = "ss"
 			var v_port = opt.get(dom_prefix + "port");
-			var v_method = opt.get(dom_prefix + "method");
+			var v_method = opt.get(dom_prefix + "method") || opt.get(dom_prefix + "ss_method");
 			var v_password = opt.get(dom_prefix + "password");
 
 			url = b64encsafe(v_method.value + ":" + v_password.value) + "@" +
@@ -178,43 +179,19 @@ local api = require "luci.passwall.api"
 				v_port.value + "/?";
 
 			var params = "";
-			var v_plugin = opt.get(dom_prefix + "plugin").value;
-			if (v_plugin && v_plugin != "none") {
-				if (v_plugin == "simple-obfs" || v_plugin == "obfs-local") {
-					v_plugin = "obfs-local";
+			var v_plugin_dom = opt.get(dom_prefix + "plugin");
+			if (v_plugin_dom) {
+				var v_plugin = v_plugin_dom.value;
+				if (v_plugin && v_plugin != "none") {
+					if (v_plugin == "simple-obfs" || v_plugin == "obfs-local") {
+						v_plugin = "obfs-local";
+					}
+					var v_plugin_opts = opt.get(dom_prefix + "plugin_opts").value;
+					if (v_plugin_opts && v_plugin_opts != "") {
+						v_plugin += ";" + v_plugin_opts;
+					}
+					params += "&plugin=" + encodeURIComponent(v_plugin);
 				}
-				var v_plugin_opts = opt.get(dom_prefix + "plugin_opts").value;
-				if (v_plugin_opts && v_plugin_opts != "") {
-					v_plugin += ";" + v_plugin_opts;
-				}
-				params += "&plugin=" + encodeURIComponent(v_plugin);
-			}
-			params += "&group="
-			params += "#" + encodeURIComponent(v_alias.value);
-			if (params[0] == "&") {
-				params = params.substring(1);
-			}
-			url += params;
-		} else if (v_type === "SS-Rust") {
-			var v_port = opt.get(dom_prefix + "port");
-			var v_method = opt.get(dom_prefix + "method");
-			var v_password = opt.get(dom_prefix + "password");
-
-			url = btoa(v_method.value + ":" + v_password.value) + "@" +
-				_address + ":" +
-				v_port.value + "/?";
-
-			var params = "";
-			var v_plugin = opt.get(dom_prefix + "plugin").value;
-			if (v_plugin && v_plugin != "none") {
-				if (v_plugin == "simple-obfs" || v_plugin == "obfs-local") {
-					v_plugin = "obfs-local";
-				}
-				var v_plugin_opts = opt.get(dom_prefix + "plugin_opts").value;
-				if (v_plugin_opts && v_plugin_opts != "") {
-					v_plugin += ";" + v_plugin_opts;
-				}
-				params += "&plugin=" + encodeURIComponent(v_plugin);
 			}
 			params += "&group="
 			params += "#" + encodeURIComponent(v_alias.value);
@@ -351,7 +328,8 @@ local api = require "luci.passwall.api"
 				params = params.substring(1);
 			}
 			url += params;
-		} else if (v_type === "Trojan-Plus") {
+		} else if (v_type === "Trojan-Plus" || ((v_type === "sing-box" || v_type === "Xray") && opt.get(dom_prefix + "protocol").value === "trojan")) {
+			protocol = "trojan"
 			var v_password = opt.get(dom_prefix + "password");
 			var v_port = opt.get(dom_prefix + "port");
 			url = encodeURIComponent(v_password.value) +
@@ -403,24 +381,6 @@ local api = require "luci.passwall.api"
 					":" + opt.get(dom_prefix + "ss_aead_pwd").value;
 			}
 			params += "&encryption=" + encodeURIComponent(enc);
-			params += "#" + encodeURI(v_alias.value);
-			if (params[0] == "&") {
-				params = params.substring(1);
-			}
-			url += params;
-		} else if (((v_type === "sing-box" || v_type === "Xray") && opt.get(dom_prefix + "protocol").value === "trojan")) {
-			protocol = "trojan";
-			var v_password = opt.get(dom_prefix + "password");
-			var v_port = opt.get(dom_prefix + "port");
-			url = encodeURIComponent(v_password.value) +
-				"@" + _address +
-				":" + v_port.value + "/?";
-			var params = "";
-			if (opt.get(dom_prefix + "tls").checked) {
-				params += opt.query("sni", dom_prefix + "tls_serverName");
-				params += "&tls=1"
-				params += opt.query("allowinsecure", dom_prefix + "tls_allowInsecure");
-			}
 			params += "#" + encodeURI(v_alias.value);
 			if (params[0] == "&") {
 				params = params.substring(1);
@@ -666,27 +626,21 @@ local api = require "luci.passwall.api"
 					method = userInfo.substr(0, userInfoSplitIndex);
 					password = userInfo.substr(userInfoSplitIndex + 1);
 				}
-				if (["2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305"].includes(method)) {
-					if (has_singbox) {
-						opt.set('type', "sing-box");
-						dom_prefix = "singbox_"
-					} else if (has_xray) {
-						opt.set('type', "Xray");
-						dom_prefix = "xray_"
-					} else {
-						opt.set('type', "SS-Rust");
-						dom_prefix = "ssrust_"
-					}
+				if (has_singbox) {
+					dom_prefix = "singbox_"
+					opt.set('type', "sing-box");
+					opt.set(dom_prefix + 'protocol', "shadowsocks");
+				} else if (has_xray) {
+					dom_prefix = "xray_"
+					opt.set('type', "Xray");
+					opt.set(dom_prefix + 'protocol', "shadowsocks");
 				} else {
-					if (has_singbox) {
-						opt.set('type', "sing-box");
-						dom_prefix = "singbox_"
-					} else if (has_xray) {
-						opt.set('type', "Xray");
-						dom_prefix = "xray_"
+					if (["2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305"].includes(method)) {
+						dom_prefix = "ssrust_"
+						opt.set('type', "SS-Rust");
 					} else {
-						opt.set('type', "SS");
 						dom_prefix = "ss_"
+						opt.set('type', "SS");
 					}
 				}
 				opt.set(dom_prefix + 'address', server);
@@ -702,14 +656,16 @@ local api = require "luci.passwall.api"
 				}
 			} else {
 				if (has_singbox) {
-					opt.set('type', "sing-box");
 					dom_prefix = "singbox_"
+					opt.set('type', "sing-box");
+					opt.set(dom_prefix + 'protocol', "shadowsocks");
 				} else if (has_xray) {
-					opt.set('type', "Xray");
 					dom_prefix = "xray_"
+					opt.set('type', "Xray");
+					opt.set(dom_prefix + 'protocol', "shadowsocks");
 				} else {
-					opt.set('type', "SS");
 					dom_prefix = "ss_"
+					opt.set('type', "SS");
 				}
 				var sstr = b64decsafe(url0);
 				var team = sstr.split('@');
@@ -728,14 +684,16 @@ local api = require "luci.passwall.api"
 		}
 		if (ssu[0] === "trojan" || ssu[0] === "trojan-plus") {
 			if (has_singbox) {
-				opt.set('type', "sing-box");
 				dom_prefix = "singbox_"
+				opt.set('type', "sing-box");
+				opt.set(dom_prefix + 'protocol', "trojan");
 			} else if (has_xray) {
-				opt.set('type', "Xray");
 				dom_prefix = "xray_"
+				opt.set('type', "Xray");
+				opt.set(dom_prefix + 'protocol', "trojan");
 			} else {
-				opt.set('type', "Trojan-Plus");
 				dom_prefix = "trojan_plus_"
+				opt.set('type', "Trojan-Plus");
 			}
 			var m = parseNodeUrl(ssrurl);
 			var password = m.passwd;
@@ -760,7 +718,7 @@ local api = require "luci.passwall.api"
 			opt.set(dom_prefix + 'address', m.hostname);
 			opt.set(dom_prefix + 'port', m.port || "443");
 			opt.set(dom_prefix + 'password', decodeURIComponent(password));
-			opt.set(dom_prefix + 'tls', tls);
+			opt.set(dom_prefix + 'tls', queryParam.tls === "1");
 			opt.set(dom_prefix + 'tls_serverName', queryParam.peer || queryParam.sni || '');
 			opt.set(dom_prefix + 'tls_allowInsecure', queryParam.allowinsecure === '1');
 			if (m.hash) {
@@ -788,7 +746,7 @@ local api = require "luci.passwall.api"
 			opt.set(dom_prefix + 'address', m.hostname);
 			opt.set(dom_prefix + 'port', m.port || "443");
 			opt.set(dom_prefix + 'password', decodeURIComponent(password));
-			opt.set(dom_prefix + 'tls', '1');
+			opt.set(dom_prefix + 'tls', true);
 			opt.set(dom_prefix + 'tls_allowInsecure', '0');
 			opt.set(dom_prefix + 'tls_serverName', queryParam.peer || queryParam.sni || '');
 			var plugin = queryParam.plugin !== undefined;
@@ -845,12 +803,12 @@ local api = require "luci.passwall.api"
 			var sstr = b64DecodeUnicode(ssu[1]);
 			var ploc = sstr.indexOf("/?");
 			if (has_singbox) {
-				opt.set('type', "sing-box");
 				dom_prefix = "singbox_"
+				opt.set('type', "sing-box");
 			}
 			if (has_xray) {
-				opt.set('type', "Xray");
 				dom_prefix = "xray_"
+				opt.set('type', "Xray");
 			}
 			opt.set(dom_prefix + 'protocol', "vmess");
 			var url0, param = "";
@@ -898,12 +856,12 @@ local api = require "luci.passwall.api"
 		}
 		if (ssu[0] === "vless") {
 			if (has_singbox) {
-				opt.set('type', "sing-box");
 				dom_prefix = "singbox_"
+				opt.set('type', "sing-box");
 			}
 			if (has_xray) {
-				opt.set('type', "Xray");
 				dom_prefix = "xray_"
+				opt.set('type', "Xray");
 			}
 			opt.set(dom_prefix + 'protocol', "vless");
 			var m = parseNodeUrl(ssrurl);
