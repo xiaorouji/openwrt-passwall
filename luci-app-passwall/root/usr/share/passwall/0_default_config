@@ -52,7 +52,8 @@ config global_singbox
 	option geosite_url 'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.db'
 
 config global_other
-	option nodes_ping 'auto_ping tcping'
+	option auto_detection_time 'tcping'
+	option show_node_info '0'
 
 config global_rules
 	option auto_update '0'

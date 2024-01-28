@@ -345,7 +345,7 @@ o = s:option(ListValue, option_name("outbound_node"), translate("outbound node")
 o:value("nil", translate("Close"))
 o:value("_socks", translate("Custom Socks"))
 o:value("_http", translate("Custom HTTP"))
-o:value("_iface", translate("Custom Interface") .. " (Only Support Xray)")
+o:value("_iface", translate("Custom Interface"))
 for k, v in pairs(nodes_table) do o:value(v.id, v.remarks) end
 o.default = "nil"
 

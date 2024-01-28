@@ -48,9 +48,8 @@ local api = require "luci.passwall.api"
 	function add_node() {
 		var nodes_link = document.getElementById("nodes_link").value;
 		if (nodes_link.trim() != "") {
-			var supports = "ss ssr vmess vless trojan trojan-go hysteria";
-			var itype = nodes_link.split('://')[0];
-			if (itype.trim() != "" && supports.indexOf(itype) >= 0) {
+			var s = nodes_link.split('://');
+			if (s.length > 1) {
 				ajax_add_node(nodes_link);
 			}
 			else {
@@ -81,9 +80,10 @@ local api = require "luci.passwall.api"
 
 <div id="add_link_div">
 	<div class="cbi-value">
-		<label class="cbi-value-title"><%:SS/SSR/Vmess/VLESS/Trojan/Hysteria Link%></label>
+		<label class="cbi-value-title"><%:Share Link%></label>
 		<div class="cbi-value-field">
-			<textarea id="nodes_link" rows="5" cols="50"></textarea>
+			<p><textarea id="nodes_link" rows="5" cols="50"></textarea></p>
+			<font color="red"><%:Not a subscription link!!!%></font>
 		</div>
 	</div>
 	<div class="cbi-value">
@@ -103,6 +103,8 @@ local api = require "luci.passwall.api"
 		<input class="btn cbi-button cbi-button-remove" type="button" onclick="delete_select_nodes()" value="<%:Delete select nodes%>" />
 		<input class="btn cbi-button" type="button" onclick="checked_all_node(this)" value="<%:Select all%>" />
 		<input class="btn cbi-button cbi-button-apply" type="submit" name="cbi.apply" value="<%:Save & Apply%>" />
+		<input class="btn cbi-button cbi-button-save" type="submit" name="cbi.save" value="<%:Save%>" />
+		<input class="btn cbi-button cbi-button-reset" type="button" value="<%:Reset%>" onclick="location.href='<%=REQUEST_URI%>'" />
 		<div id="div_node_count"></div>
 	</div>
 </div>

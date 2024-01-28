@@ -36,6 +36,8 @@ table td, .table .td {
 
 <script type="text/javascript">
 	//<![CDATA[
+	let auto_detection_time = "<%=api.uci_get_type("global_other", "auto_detection_time", "0")%>"
+	
 	var node_list = {};
 	var node_count = 0;
 
@@ -229,8 +231,8 @@ table td, .table .td {
 
 	function urltest_node(cbi_id, dom) {
 		if (cbi_id != null) {
-			dom.disabled = true;
-			dom.value = "<%:Check...%>";
+			dom.onclick = null
+			dom.innerText = "<%:Check...%>";
 			XHR.get('<%=api.url("urltest_node")%>', {
 					id: cbi_id
 				},
@@ -241,6 +243,7 @@ table td, .table .td {
 						} else {
 							var color = "red";
 							var use_time = result.use_time;
+							use_time = parseInt(use_time) + 1;
 							if (use_time < 1000) {
 								color = "green";
 							} else if (use_time < 2000) {
@@ -248,20 +251,25 @@ table td, .table .td {
 							} else {
 								color = "red";
 							}
-							dom.outerHTML = "<font style='color:" + color + "'>" + result.use_time + " ms" + "</font>";
+							dom.outerHTML = "<font style='color:" + color + "'>" + use_time + " ms" + "</font>";
 						}
+					} else {
+						dom.outerHTML = "<font style='color:red'><%:Error%></font>";
 					}
 				}
 			);
 		}
 	}
-
-	function ping_node(cbi_id, dom) {
+	
+	function ping_node(cbi_id, dom, type) {
 		var full = get_address_full(cbi_id);
 		if (full != null) {
+			dom.onclick = null
+			dom.innerText = "<%:Check...%>";
 			XHR.get('<%=api.url("ping_node")%>', {
 					address: full.address,
-					port: full.port
+					port: full.port,
+					type: type
 				},
 				function(x, result) {
 					if(x && x.status == 200) {
@@ -281,132 +289,88 @@ table td, .table .td {
 			);
 		}
 	}
-
-	/* 自动Ping */
-	var nodes = [];
-	const ping_value = document.getElementsByClassName('ping_value');
-	for (var i = 0; i < ping_value.length; i++) {
-		var cbi_id = ping_value[i].getAttribute("cbiid");
-		var full = get_address_full(cbi_id);
-		if (full != null) {
-			var flag = false;
-			//当有多个相同地址和端口时合在一起
-			for (var j = 0; j < nodes.length; j++) {
-				if (nodes[j].address == full.address && nodes[j].port == full.port) {
-					nodes[j].indexs = nodes[j].indexs + "," + i;
-					flag = true;
-					break;
-				}
-			}
-			if (flag)
-				continue;
-			nodes.push({
-				indexs: i + "",
-				address: full.address,
-				port: full.port
-			});
-		}
-	}
-
+	
 	get_now_use_node();
 
-	const _xhr = (index) => {
-		return new Promise((res) => {
-			const dom = nodes[index];
-			if (!dom) res()
-			ajax.post('<%=api.url("ping_node")%>', {
-					index: dom.indexs,
-					address: dom.address,
-					port: dom.port
-				},
-				function(x, result) {
-					if (x && x.status == 200) {
-						var strs = dom.indexs.split(",");
-						for (var i = 0; i < strs.length; i++) {
-							if (result.ping == null || result.ping.trim() == "") {
-								ping_value[strs[i]].innerHTML = "<font style='color:red'><%:Timeout%></font>";
-							} else {
-								var ping = parseInt(result.ping);
-								if (ping < 100)
-									ping_value[strs[i]].innerHTML = "<font style='color:green'>" + result.ping + " ms" + "</font>";
-								else if (ping < 200)
-									ping_value[strs[i]].innerHTML = "<font style='color:#fb9a05'>" + result.ping + " ms" + "</font>";
-								else if (ping >= 200)
-									ping_value[strs[i]].innerHTML = "<font style='color:red'>" + result.ping + " ms" + "</font>";
+	/* 自动Ping */
+	if (auto_detection_time == "icmp" || auto_detection_time == "tcping") {
+		var nodes = [];
+		const ping_value = document.getElementsByClassName(auto_detection_time == "tcping" ? 'tcping_value' : 'ping_value');
+		for (var i = 0; i < ping_value.length; i++) {
+			var cbi_id = ping_value[i].getAttribute("cbiid");
+			var full = get_address_full(cbi_id);
+			if (full != null) {
+				var flag = false;
+				//当有多个相同地址和端口时合在一起
+				for (var j = 0; j < nodes.length; j++) {
+					if (nodes[j].address == full.address && nodes[j].port == full.port) {
+						nodes[j].indexs = nodes[j].indexs + "," + i;
+						flag = true;
+						break;
+					}
+				}
+				if (flag)
+					continue;
+				nodes.push({
+					indexs: i + "",
+					address: full.address,
+					port: full.port
+				});
+			}
+		}
+
+		const _xhr = (index) => {
+			return new Promise((res) => {
+				const dom = nodes[index];
+				if (!dom) res()
+				ajax.post('<%=api.url("ping_node")%>', {
+						index: dom.indexs,
+						address: dom.address,
+						port: dom.port,
+						type: auto_detection_time
+					},
+					function(x, result) {
+						if (x && x.status == 200) {
+							var strs = dom.indexs.split(",");
+							for (var i = 0; i < strs.length; i++) {
+								if (result.ping == null || result.ping.trim() == "") {
+									ping_value[strs[i]].innerHTML = "<font style='color:red'><%:Timeout%></font>";
+								} else {
+									var ping = parseInt(result.ping);
+									if (ping < 100)
+										ping_value[strs[i]].innerHTML = "<font style='color:green'>" + result.ping + " ms" + "</font>";
+									else if (ping < 200)
+										ping_value[strs[i]].innerHTML = "<font style='color:#fb9a05'>" + result.ping + " ms" + "</font>";
+									else if (ping >= 200)
+										ping_value[strs[i]].innerHTML = "<font style='color:red'>" + result.ping + " ms" + "</font>";
+								}
 							}
 						}
-					}
-					res();
-				},
-				5000,
-				function(x) {
-					var strs = dom.indexs.split(",");
-					for (var i = 0; i < strs.length; i++) {
-						ping_value[strs[i]].innerHTML = "<font style='color:red'><%:Timeout%></font>";
-					}
-					res();
-				}
-			);
-		})
-	}
-
-	let task = -1;
-	const thread = () => {
-		task = task + 1
-		if (nodes[task]) {
-			_xhr(task).then(thread);
-		}
-	}
-	for (let i = 0; i < 20; i++) {
-		thread()
-	}
-
-	/* 递归单请求方法
-	var index = 0;
-	function auto_ping() {
-		if (index >= nodes.length) {
-			return;
-		}
-		var indexs = nodes[index].indexs;
-		var address = nodes[index].address;
-		var port = nodes[index].port;
-		ajax.post('<%=api.url("ping_node")%>', {
-				index: indexs,
-				address: address,
-				port: port
-			},
-			function(x, result) {
-				if (x && x.status == 200) {
-					var strs = indexs.split(",");
-					for (var i = 0; i < strs.length; i++) {
-						if (result.ping == null || result.ping.trim() == "") {
+						res();
+					},
+					5000,
+					function(x) {
+						var strs = dom.indexs.split(",");
+						for (var i = 0; i < strs.length; i++) {
 							ping_value[strs[i]].innerHTML = "<font style='color:red'><%:Timeout%></font>";
-						} else {
-							var ping = parseInt(result.ping);
-							if (ping < 100)
-								ping_value[strs[i]].innerHTML = "<font style='color:green'>" + result.ping + " ms" + "</font>";
-							else if (ping < 200)
-								ping_value[strs[i]].innerHTML = "<font style='color:#fb9a05'>" + result.ping + " ms" + "</font>";
-							else if (ping >= 200)
-								ping_value[strs[i]].innerHTML = "<font style='color:red'>" + result.ping + " ms" + "</font>";
 						}
+						res();
 					}
-				}
-				index++;
-				return auto_ping();
-			},
-			function(x) {
-				var strs = indexs.split(",");
-				for (var i = 0; i < strs.length; i++) {
-					ping_value[strs[i]].innerHTML = "<font style='color:red'><%:Timeout%></font>";
-				}
-				index++;
-				return auto_ping();
-			},
-		);
+				);
+			})
+		}
+
+		let task = -1;
+		const thread = () => {
+			task = task + 1
+			if (nodes[task]) {
+				_xhr(task).then(thread);
+			}
+		}
+		for (let i = 0; i < 20; i++) {
+			thread()
+		}
 	}
-	auto_ping();
-	*/
 
 	var edit_btn = document.getElementById("cbi-passwall-nodes").getElementsByClassName("cbi-button cbi-button-edit");
 	for (var i = 0; i < edit_btn.length; i++) {

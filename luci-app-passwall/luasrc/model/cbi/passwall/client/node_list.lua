@@ -10,15 +10,19 @@ api.set_apply_on_parse(m)
 s = m:section(TypedSection, "global_other")
 s.anonymous = true
 
-o = s:option(MultiValue, "nodes_ping", " ")
-o:value("auto_ping", translate("Auto Ping"), translate("This will automatically ping the node for latency"))
-o:value("tcping", translate("Tcping"), translate("This will use tcping replace ping detection of node"))
-o:value("info", translate("Show server address and port"), translate("Show server address and port"))
+o = s:option(ListValue, "auto_detection_time", translate("Automatic detection delay"))
+o:value("0", translate("Close"))
+o:value("icmp", "Ping")
+o:value("tcping", "TCP Ping")
+
+o = s:option(Flag, "show_node_info", translate("Show server address and port"))
+o.default = "0"
 
 -- [[ Add the node via the link ]]--
 s:append(Template(appname .. "/node_list/link_add_node"))
 
-local nodes_ping = m:get("@global_other[0]", "nodes_ping") or ""
+local auto_detection_time = m:get("@global_other[0]", "auto_detection_time") or "0"
+local show_node_info = m:get("@global_other[0]", "show_node_info") or "0"
 
 -- [[ Node List ]]--
 s = m:section(TypedSection, "nodes")
@@ -114,7 +118,7 @@ o.cfgvalue = function(t, n)
 	local port = m:get(n, "port") or ""
 	str = str .. translate(type) .. "：" .. remarks
 	if address ~= "" and port ~= "" then
-		if nodes_ping:find("info") then
+		if show_node_info == "1" then
 			if datatypes.ip6addr(address) then
 				str = str .. string.format("（[%s]:%s）", address, port)
 			else
@@ -128,23 +132,38 @@ o.cfgvalue = function(t, n)
 end
 
 ---- Ping
-o = s:option(DummyValue, "ping")
+o = s:option(DummyValue, "ping", "Ping")
 o.width = "8%"
 o.rawhtml = true
 o.cfgvalue = function(t, n)
 	local result = "---"
-	if not nodes_ping:find("auto_ping") then
-		result = string.format('<span class="ping"><a href="javascript:void(0)" onclick="javascript:ping_node(\'%s\',this)">Ping</a></span>', n)
+	if auto_detection_time ~= "icmp" then
+		result = string.format('<span class="ping"><a href="javascript:void(0)" onclick="javascript:ping_node(\'%s\', this, \'icmp\')">%s</a></span>', n, translate("Test"))
 	else
 		result = string.format('<span class="ping_value" cbiid="%s">---</span>', n)
 	end
 	return result
 end
 
-o = s:option(DummyValue, "_url_test")
+---- TCP Ping
+o = s:option(DummyValue, "tcping", "TCPing")
+o.width = "8%"
 o.rawhtml = true
 o.cfgvalue = function(t, n)
-	return string.format('<input type="button" class="cbi-button" value="%s" onclick="javascript:urltest_node(\'%s\',this)"', translate("Availability test"), n)
+	local result = "---"
+	if auto_detection_time ~= "tcping" then
+		result = string.format('<span class="ping"><a href="javascript:void(0)" onclick="javascript:ping_node(\'%s\', this, \'tcping\')">%s</a></span>', n, translate("Test"))
+	else
+		result = string.format('<span class="tcping_value" cbiid="%s">---</span>', n)
+	end
+	return result
+end
+
+o = s:option(DummyValue, "_url_test", translate("URL Test"))
+o.width = "8%"
+o.rawhtml = true
+o.cfgvalue = function(t, n)
+	return string.format('<span class="ping"><a href="javascript:void(0)" onclick="javascript:urltest_node(\'%s\', this)">%s</a></span>', n, translate("Test"))
 end
 
 m:append(Template(appname .. "/node_list/node_list"))

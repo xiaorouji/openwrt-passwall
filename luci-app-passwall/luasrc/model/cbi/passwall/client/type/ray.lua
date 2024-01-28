@@ -41,7 +41,7 @@ o:value("trojan", translate("Trojan"))
 o:value("wireguard", translate("WireGuard"))
 o:value("_balancing", translate("Balancing"))
 o:value("_shunt", translate("Shunt"))
-o:value("_iface", translate("Custom Interface") .. " (Only Support Xray)")
+o:value("_iface", translate("Custom Interface"))
 
 o = s:option(Value, option_name("iface"), translate("Interface"))
 o.default = "eth1"

@@ -298,8 +298,11 @@ msgstr "添加节点"
 msgid "Add the node via the link"
 msgstr "通过链接添加节点"
 
-msgid "SS/SSR/Vmess/VLESS/Trojan/Hysteria Link"
-msgstr "SS/SSR/Vmess/VLESS/Trojan/Hysteria 链接"
+msgid "Share Link"
+msgstr "分享链接"
+
+msgid "Not a subscription link!!!"
+msgstr "不是订阅链接！！！"
 
 msgid "Please enter the correct link."
 msgstr "请输入正确的链接。"
@@ -550,26 +553,17 @@ msgstr "加密"
 msgid "Latency"
 msgstr "延迟"
 
-msgid "Show Add Mode"
-msgstr "显示添加方式"
-
-msgid "Show Group"
-msgstr "显示组"
-
-msgid "Group"
-msgstr "组"
-
-msgid "Auto Ping"
-msgstr "自动Ping"
-
-msgid "Concise display nodes"
-msgstr "简洁显示节点"
+msgid "Automatic detection delay"
+msgstr "自动检测延迟"
 
 msgid "Show server address and port"
 msgstr "显示服务器地址和端口"
 
-msgid "Availability test"
-msgstr "可用性测试"
+msgid "URL Test"
+msgstr "URL 测试"
+
+msgid "Test"
+msgstr "测试"
 
 msgid "Node num"
 msgstr "节点数量"
@@ -751,8 +745,8 @@ msgstr "内置实现"
 msgid "Health Check Inter"
 msgstr "健康检查节点间隔时间"
 
-msgid "When the availability test is used, the load balancing node will be converted into a Socks node. when node list set customizing, must be a Socks node, otherwise the health check will be invalid."
-msgstr "当使用可用性测试时，负载均衡节点将转换成Socks节点。下面的节点列表自定义时必须为Socks节点，否则健康检查将无效。"
+msgid "When the URL test is used, the load balancing node will be converted into a Socks node. when node list set customizing, must be a Socks node, otherwise the health check will be invalid."
+msgstr "当使用URL测试时，负载均衡节点将转换成Socks节点。下面的节点列表自定义时必须为Socks节点，否则健康检查将无效。"
 
 msgid "Add a node, Export Of Multi WAN Only support Multi Wan. Load specific gravity range 1-256. Multiple primary servers can be load balanced, standby will only be enabled when the primary server is offline! Multiple groups can be set, Haproxy port same one for each group."
 msgstr "添加节点，指定出口功能是为多WAN用户准备的。负载比重范围1-256。多个主服务器可以负载均衡，备用只有在主服务器离线时才会启用！可以设置多个组，负载均衡端口相同则为一组。"

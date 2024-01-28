@@ -50,7 +50,7 @@ o:depends("balancing_enable", true)
 o = s:option(ListValue, "health_check_type", translate("Health Check Type"))
 o.default = "passwall_logic"
 o:value("tcp", "TCP")
-o:value("passwall_logic", translate("Availability test") .. string.format("(passwall %s)", translate("Inner implement")))
+o:value("passwall_logic", translate("URL Test") .. string.format("(passwall %s)", translate("Inner implement")))
 o:depends("balancing_enable", true)
 
 ---- Health Check Inter
@@ -61,7 +61,7 @@ o:depends("balancing_enable", true)
 o = s:option(DummyValue, "health_check_tips", " ")
 o.rawhtml = true
 o.cfgvalue = function(t, n)
-	return string.format('<span style="color: red">%s</span>', translate("When the availability test is used, the load balancing node will be converted into a Socks node. when node list set customizing, must be a Socks node, otherwise the health check will be invalid."))
+	return string.format('<span style="color: red">%s</span>', translate("When the URL test is used, the load balancing node will be converted into a Socks node. when node list set customizing, must be a Socks node, otherwise the health check will be invalid."))
 end
 o:depends("health_check_type", "passwall_logic")
 
