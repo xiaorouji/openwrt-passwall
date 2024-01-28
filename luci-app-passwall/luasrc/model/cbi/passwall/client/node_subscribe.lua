@@ -5,7 +5,6 @@ local has_ss_rust = api.is_finded("sslocal")
 local has_trojan_plus = api.is_finded("trojan-plus")
 local has_singbox = api.finded_com("singbox")
 local has_xray = api.finded_com("xray")
-local has_trojan_go = api.finded_com("trojan-go")
 local has_hysteria2 = api.finded_com("hysteria")
 local ss_aead_type = {}
 local trojan_type = {}
@@ -38,10 +37,6 @@ if has_xray then
 	table.insert(ss_aead_type, s)
 	table.insert(vmess_type, s)
 	table.insert(vless_type, s)
-end
-if has_trojan_go then
-	local s = "trojan-go"
-	table.insert(trojan_type, s)
 end
 if has_hysteria2 then
 	local s = "hysteria2"

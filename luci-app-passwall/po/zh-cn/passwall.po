@@ -898,9 +898,6 @@ msgstr "%s 程序路径"
 msgid "%s Client App Path"
 msgstr "%s 客户端程序路径"
 
-msgid "Trojan-Go Version API"
-msgstr "Trojan-Go 版本 API"
-
 msgid "alternate API URL for version checking"
 msgstr "用于版本检查的 API URL"
 

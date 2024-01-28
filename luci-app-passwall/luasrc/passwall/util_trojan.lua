@@ -37,30 +37,6 @@ function gen_config_server(node)
 			fast_open_qlen = 20
 		}
 	}
-	if node.type == "Trojan-Go" then
-		config.ssl.cipher = nil
-		config.ssl.cipher_tls13 = nil
-		config.udp_timeout = 60
-		config.disable_http_check = true
-		config.transport_plugin = ((node.tls == nil or node.tls ~= "1") and node.trojan_transport == "original") and {
-			enabled = node.plugin_type ~= nil,
-			type = node.plugin_type or "plaintext",
-			command = node.plugin_type ~= "plaintext" and node.plugin_cmd or nil,
-			option = node.plugin_type ~= "plaintext" and node.plugin_option or nil,
-			arg = node.plugin_type ~= "plaintext" and { node.plugin_arg } or nil,
-			env = {}
-		} or nil
-		config.websocket = (node.trojan_transport == 'ws') and {
-			enabled = true,
-			path = node.ws_path or "/",
-			host = node.ws_host or ""
-		} or nil
-		config.shadowsocks = (node.ss_aead == "1") and {
-			enabled = true,
-			method = node.ss_aead_method or "aes_128_gcm",
-			password = node.ss_aead_pwd or ""
-		} or nil
-	end
 	return config
 end
 
@@ -115,36 +91,6 @@ function gen_config(var)
 			fast_open_qlen = 20
 		}
 	}
-	if node.type == "Trojan-Go" then
-		trojan.ssl.cipher = nil
-		trojan.ssl.cipher_tls13 = nil
-		trojan.ssl.fingerprint = (node.fingerprint ~= "disable") and node.fingerprint or ""
-		trojan.ssl.alpn = (node.trojan_transport == 'ws') and {} or {"h2", "http/1.1"}
-		if node.tls ~= "1" and node.trojan_transport == "original" then trojan.ssl = nil end
-		trojan.transport_plugin = ((not node.tls or node.tls ~= "1") and node.trojan_transport == "original") and {
-			enabled = node.plugin_type ~= nil,
-			type = node.plugin_type or "plaintext",
-			command = node.plugin_type ~= "plaintext" and node.plugin_cmd or nil,
-			option = node.plugin_type ~= "plaintext" and node.plugin_option or nil,
-			arg = node.plugin_type ~= "plaintext" and { node.plugin_arg } or nil,
-			env = {}
-		} or nil
-		trojan.websocket = (node.trojan_transport == 'ws') and {
-			enabled = true,
-			path = node.ws_path or "/",
-			host = node.ws_host or (node.tls_serverName or server)
-		} or nil
-		trojan.shadowsocks = (node.ss_aead == "1") and {
-			enabled = true,
-			method = node.ss_aead_method or "aes_128_gcm",
-			password = node.ss_aead_pwd or ""
-		} or nil
-		trojan.mux = (node.smux == "1") and {
-			enabled = true,
-			concurrency = tonumber(node.mux_concurrency),
-			idle_timeout = tonumber(node.smux_idle_timeout)
-		} or nil
-	end
 	return json.stringify(trojan, 1)
 end
 

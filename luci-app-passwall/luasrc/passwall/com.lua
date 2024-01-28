@@ -23,22 +23,6 @@ _M.hysteria = {
 	}
 }
 
-_M["trojan-go"] = {
-	name = "Trojan-Go",
-	repo = "p4gefau1t/trojan-go",
-	get_url = gh_release_url,
-	cmd_version = "-version | awk '{print $2}' | sed -n 1P",
-	zipped = true,
-	default_path = "/usr/bin/trojan-go",
-	match_fmt_str = "linux%%-%s%%.zip",
-	file_tree = {
-		aarch64 = "armv8",
-		armv8   = "armv8",
-		mips    = "mips%-hardfloat",
-		mipsel  = "mipsle%-hardfloat"
-	}
-}
-
 _M.singbox = {
 	name = "Sing-Box",
 	repo = "SagerNet/sing-box",

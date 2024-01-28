@@ -146,7 +146,6 @@ jobs:
           echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ShadowsocksR_Libev_Server=n" >> .config
           echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Simple_Obfs=n" >> .config
           echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_SingBox=n" >> .config
-          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Trojan_GO=n" >> .config
           echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Trojan_Plus=n" >> .config
           echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_tuic_client=n" >> .config
           echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_V2ray_Geodata=n" >> .config
@@ -293,7 +292,6 @@ jobs:
           echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ShadowsocksR_Libev_Server=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Simple_Obfs=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_SingBox=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Trojan_GO=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Trojan_Plus=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_tuic_client=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_V2ray_Geodata=y" >> .config

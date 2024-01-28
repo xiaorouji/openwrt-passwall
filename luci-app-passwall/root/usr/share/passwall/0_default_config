@@ -75,7 +75,6 @@ config global_rules
 config global_app
 	option singbox_file '/usr/bin/sing-box'
 	option xray_file '/usr/bin/xray'
-	option trojan_go_file '/usr/bin/trojan-go'
 	option hysteria_file '/usr/bin/hysteria'
 	option chinadns_ng '/usr/bin/chinadns-ng'
 

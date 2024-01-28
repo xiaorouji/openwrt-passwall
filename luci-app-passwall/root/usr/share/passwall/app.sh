@@ -608,10 +608,6 @@ run_socks() {
 		[ -n "$relay_port" ] && _args="${_args} -server_host $server_host -server_port $port"
 		run_xray flag=$flag node=$node socks_port=$socks_port config_file=$config_file log_file=$log_file ${_args}
 	;;
-	trojan-go)
-		lua $UTIL_TROJAN gen_config -node $node -run_type client -local_addr $bind -local_port $socks_port -server_host $server_host -server_port $port > $config_file
-		ln_run "$(first_type $(config_t_get global_app trojan_go_file) trojan-go)" trojan-go $log_file -config "$config_file"
-	;;
 	trojan*)
 		lua $UTIL_TROJAN gen_config -node $node -run_type client -local_addr $bind -local_port $socks_port -server_host $server_host -server_port $port > $config_file
 		ln_run "$(first_type ${type})" "${type}" $log_file -c "$config_file"
@@ -717,11 +713,6 @@ run_redir() {
 		;;
 		xray)
 			run_xray flag=UDP node=$node udp_redir_port=$local_port config_file=$config_file log_file=$log_file
-		;;
-		trojan-go)
-			local loglevel=$(config_t_get global trojan_loglevel "2")
-			lua $UTIL_TROJAN gen_config -node $node -run_type nat -local_addr "0.0.0.0" -local_port $local_port -loglevel $loglevel > $config_file
-			ln_run "$(first_type $(config_t_get global_app trojan_go_file) trojan-go)" trojan-go $log_file -config "$config_file"
 		;;
 		trojan*)
 			local loglevel=$(config_t_get global trojan_loglevel "2")
@@ -874,16 +865,6 @@ run_redir() {
 				}
 			}
 			run_xray flag=$_flag node=$node tcp_redir_port=$local_port config_file=$config_file log_file=$log_file ${_args}
-		;;
-		trojan-go)
-			[ "$TCP_UDP" = "1" ] && {
-				config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
-				UDP_REDIR_PORT=$TCP_REDIR_PORT
-				UDP_NODE="nil"
-			}
-			local loglevel=$(config_t_get global trojan_loglevel "2")
-			lua $UTIL_TROJAN gen_config -node $node -run_type nat -local_addr "0.0.0.0" -local_port $local_port -loglevel $loglevel > $config_file
-			ln_run "$(first_type $(config_t_get global_app trojan_go_file) trojan-go)" trojan-go $log_file -config "$config_file"
 		;;
 		trojan*)
 			[ "$tcp_proxy_way" = "tproxy" ] && lua_tproxy_arg="-use_tproxy true"
@@ -1707,8 +1688,8 @@ USE_DEFAULT_DNS=$(config_t_get global use_default_dns direct)
 FILTER_PROXY_IPV6=$(config_t_get global filter_proxy_ipv6 0)
 dns_listen_port=${DNS_PORT}
 
-REDIRECT_LIST="socks ss ss-rust ssr sing-box xray trojan-go trojan-plus naiveproxy hysteria2"
-TPROXY_LIST="socks ss ss-rust ssr sing-box xray trojan-go trojan-plus hysteria2"
+REDIRECT_LIST="socks ss ss-rust ssr sing-box xray trojan-plus naiveproxy hysteria2"
+TPROXY_LIST="socks ss ss-rust ssr sing-box xray trojan-plus hysteria2"
 RESOLVFILE=/tmp/resolv.conf.d/resolv.conf.auto
 [ -f "${RESOLVFILE}" ] && [ -s "${RESOLVFILE}" ] || RESOLVFILE=/tmp/resolv.conf.auto
 
