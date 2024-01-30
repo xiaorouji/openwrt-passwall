@@ -612,4 +612,18 @@ if singbox_tags:find("with_utls") then
 	o:depends({ [option_name("shadowtls")] = true, [option_name("shadowtls_utls")] = true })
 end
 
+-- [[ SIP003 plugin ]]--
+o = s:option(Flag, option_name("plugin_enabled"), translate("plugin"))
+o.default = 0
+o:depends({ [option_name("protocol")] = "shadowsocks" })
+
+o = s:option(ListValue, option_name("plugin"), "SIP003 " .. translate("plugin"))
+o.default = "obfs-local"
+o:depends({ [option_name("plugin_enabled")] = true })
+o:value("obfs-local")
+o:value("v2ray-plugin")
+
+o = s:option(Value, option_name("plugin_opts"), translate("opts"))
+o:depends({ [option_name("plugin_enabled")] = true })
+
 api.luci_types(arg[1], m, s, type_name, option_prefix)
