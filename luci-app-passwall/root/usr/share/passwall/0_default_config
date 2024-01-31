@@ -197,8 +197,12 @@ config shunt_rules 'Direct'
 	option remarks 'Direct'
 	option domain_list 'geosite:cn'
 	option ip_list '223.5.5.5/32
+223.6.6.6/32
 119.29.29.29/32
 180.76.76.76/32
 114.114.114.114/32
+114.114.115.115/32
+1.12.12.12/32
+120.53.53.53/32
 geoip:cn
 geoip:private'
