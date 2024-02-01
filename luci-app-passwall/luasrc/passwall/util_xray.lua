@@ -510,6 +510,8 @@ end
 function gen_config(var)
 	local flag = var["-flag"]
 	local node_id = var["-node"]
+	local server_host = var["-server_host"]
+	local server_port = var["-server_port"]
 	local tcp_proxy_way = var["-tcp_proxy_way"] or "redirect"
 	local tcp_redir_port = var["-tcp_redir_port"]
 	local udp_redir_port = var["-udp_redir_port"]
@@ -545,6 +547,12 @@ function gen_config(var)
 
 	if node_id then
 		local node = uci:get_all(appname, node_id)
+		if node then
+			if server_host and server_port then
+				node.address = server_host
+				node.port = server_port
+			end
+		end
 		if local_socks_port then
 			local inbound = {
 				tag = "socks-in",

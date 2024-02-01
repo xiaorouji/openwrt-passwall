@@ -398,7 +398,12 @@ local function processData(szType, content, add_mode, add_from)
 		result.remarks = info.ps
 		-- result.mux = 1
 		-- result.mux_concurrency = 8
+
+		if not info.net then
+			info.net = "tcp"
+		end
 		info.net = string.lower(info.net)
+		result.transport = info.net
 		if info.net == 'ws' then
 			result.ws_host = info.host
 			result.ws_path = info.path
@@ -434,7 +439,6 @@ local function processData(szType, content, add_mode, add_from)
 		if info.net == 'grpc' then
 			result.grpc_serviceName = info.path
 		end
-		result.transport = info.net
 		if not info.security then result.security = "auto" end
 		if info.tls == "tls" or info.tls == "1" then
 			result.tls = "1"
@@ -757,7 +761,11 @@ local function processData(szType, content, add_mode, add_from)
 				result.address = host_port
 			end
 
+			if not params.type then
+				params.type = "tcp"
+			end
 			params.type = string.lower(params.type)
+			result.transport = params.type
 			if params.type == 'ws' then
 				result.ws_host = params.host
 				result.ws_path = params.path
@@ -793,7 +801,6 @@ local function processData(szType, content, add_mode, add_from)
 				if params.serviceName then result.grpc_serviceName = params.serviceName end
 				result.grpc_mode = params.mode
 			end
-			result.transport = params.type
 			
 			result.encryption = params.encryption or "none"
 

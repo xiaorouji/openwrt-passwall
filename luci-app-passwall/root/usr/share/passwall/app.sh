@@ -594,6 +594,7 @@ run_socks() {
 			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
 			local _args="http_port=$http_port"
 		}
+		[ -n "$relay_port" ] && _args="${_args} -server_host $server_host -server_port $port"
 		run_singbox flag=$flag node=$node socks_port=$socks_port config_file=$config_file log_file=$log_file ${_args}
 	;;
 	xray)
@@ -602,6 +603,7 @@ run_socks() {
 			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
 			local _args="http_port=$http_port"
 		}
+		[ -n "$relay_port" ] && _args="${_args} -server_host $server_host -server_port $port"
 		run_xray flag=$flag node=$node socks_port=$socks_port config_file=$config_file log_file=$log_file ${_args}
 	;;
 	trojan-go)
