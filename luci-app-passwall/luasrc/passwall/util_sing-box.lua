@@ -183,7 +183,10 @@ function gen_outbound(flag, node, tag, proxy_table)
 				version = "5",
 				username = (node.username and node.password) and node.username or nil,
 				password = (node.username and node.password) and node.password or nil,
-				udp_over_tcp = false,
+				udp_over_tcp = node.uot == "1" and {
+					enabled = true,
+					version = 2
+				} or nil,
 			}
 		end
 
@@ -888,6 +891,7 @@ function gen_config(var)
 					password = parsed1.password,
 					address = parsed1.host,
 					port = parsed1.port,
+					uot = "1",
 				}
 				local preproxy_outbound = gen_outbound(flag, _node, preproxy_tag)
 				if preproxy_outbound then
@@ -944,6 +948,7 @@ function gen_config(var)
 						password = parsed1.password,
 						address = parsed1.host,
 						port = parsed1.port,
+						uot = "1",
 					}
 					local _outbound = gen_outbound(flag, _node, rule_name)
 					if _outbound then

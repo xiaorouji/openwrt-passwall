@@ -237,10 +237,8 @@ o:depends({ [option_name("protocol")] = "shadowsocks", [option_name("x_ss_encryp
 o:depends({ [option_name("protocol")] = "shadowsocks", [option_name("x_ss_encrypt_method")] = "chacha20-poly1305" })
 o:depends({ [option_name("protocol")] = "shadowsocks", [option_name("x_ss_encrypt_method")] = "xchacha20-poly1305" })
 
-o = s:option(Flag, option_name("uot"), translate("UDP over TCP"), translate("Need Xray-core or sing-box as server side."))
-o:depends({ [option_name("protocol")] = "shadowsocks", [option_name("x_ss_encrypt_method")] = "2022-blake3-aes-128-gcm" })
-o:depends({ [option_name("protocol")] = "shadowsocks", [option_name("x_ss_encrypt_method")] = "2022-blake3-aes-256-gcm" })
-o:depends({ [option_name("protocol")] = "shadowsocks", [option_name("x_ss_encrypt_method")] = "2022-blake3-chacha20-poly1305" })
+o = s:option(Flag, option_name("uot"), translate("UDP over TCP"))
+o:depends({ [option_name("protocol")] = "shadowsocks" })
 
 o = s:option(Value, option_name("uuid"), translate("ID"))
 o.password = true
