@@ -1122,7 +1122,7 @@ function gen_config(var)
 					address = remote_dns_tcp_server,
 					port = tonumber(remote_dns_tcp_port),
 					network = "tcp",
-					nonIPQuery = "skip"
+					nonIPQuery = "drop"
 				}
 			})
 
