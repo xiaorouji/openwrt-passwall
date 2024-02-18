@@ -228,7 +228,7 @@ function connect_status()
     e.use_time = ""
     local url = luci.http.formvalue("url")
     local hostname = url:match("//([^/]+)")
-    local pingOutput = luci.sys.exec("ping -c 4 " .. hostname .. " | tail -1")
+    local pingOutput = luci.sys.exec("ping -c 3 " .. hostname .. " | tail -1")
     if pingOutput and pingOutput:find("min/avg/max") then
         local avgPingTime = pingOutput:match("/(%d+%.%d+)/")
         if avgPingTime then
