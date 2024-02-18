@@ -145,7 +145,7 @@ if (os.execute("lsmod | grep -i REDIRECT >/dev/null") == 0 and os.execute("lsmod
 end
 
 o = s:option(Flag, "accept_icmp", translate("Hijacking ICMP (PING)"))
-o.default = 0
+o.default = 1
 
 o = s:option(Flag, "accept_icmpv6", translate("Hijacking ICMPv6 (IPv6 PING)"))
 o:depends("ipv6_tproxy", true)
