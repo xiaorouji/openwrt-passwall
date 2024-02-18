@@ -224,22 +224,35 @@ function socks_status()
 end
 
 function connect_status()
-	local e = {}
-	e.use_time = ""
-	local url = luci.http.formvalue("url")
-	local result = luci.sys.exec('curl --connect-timeout 3 -o /dev/null -I -sk -w "%{http_code}:%{time_starttransfer}" ' .. url)
-	local code = tonumber(luci.sys.exec("echo -n '" .. result .. "' | awk -F ':' '{print $1}'") or "0")
-	if code ~= 0 then
-		local use_time = luci.sys.exec("echo -n '" .. result .. "' | awk -F ':' '{print $2}'")
-		if use_time:find("%.") then
-			e.use_time = string.format("%.2f", use_time * 1000)
-		else
-			e.use_time = string.format("%.2f", use_time / 1000)
+    local e = {}
+    e.use_time = ""
+    local url = luci.http.formvalue("url")
+    local hostname = url:match("//([^/]+)")
+    local pingOutput = luci.sys.exec("ping -c 3 " .. hostname .. " | tail -1")
+    if pingOutput and pingOutput:find("min/avg/max") then
+        local avgPingTime = pingOutput:match("/(%d+%.%d+)/")
+        if avgPingTime then
+            e.use_time = string.format("%.2f", tonumber(avgPingTime))
+            e.ping_type = "ping"
+        else
+            e.use_time = "N/A"
+            e.ping_type = "ping"
+        end
+    else
+		local result = luci.sys.exec('curl --connect-timeout 3 -o /dev/null -i -sk -w "%{http_code}:%{time_starttransfer}" ' .. url)
+    	local code = tonumber(luci.sys.exec("echo -n '" .. result .. "' | awk -F ':' '{print $1}'") or "0")
+		if code ~= 0 then
+			local use_time = luci.sys.exec("echo -n '" .. result .. "' | awk -F ':' '{print $2}'")
+			if use_time:find("%.") then
+				e.use_time = string.format("%.2f", use_time * 1000)
+			else
+				e.use_time = string.format("%.2f", use_time / 1000)
+			end
+			e.ping_type = "curl"
 		end
-		e.ping_type = "curl"
-	end
-	luci.http.prepare_content("application/json")
-	luci.http.write_json(e)
+    end
+    luci.http.prepare_content("application/json")
+    luci.http.write_json(e)
 end
 
 function ping_node()

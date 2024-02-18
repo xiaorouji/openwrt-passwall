@@ -149,7 +149,7 @@ https://github.com/pure-css/pure/blob/master/LICENSE.md
 				</div>
 			</div>
 		</div>
-		<div class="pure-u-1-4 check" onclick="check_connect('google', 'http://www.google.com/generate_204')">
+		<div class="pure-u-1-4 check" onclick="check_connect('google', 'http://www.google.com')">
 			<div class="block pure-g">
 				<div class="pure-u-1-3">
 					<div class="img-con">
@@ -249,8 +249,9 @@ https://github.com/pure-css/pure/blob/master/LICENSE.md
 						url : url
 					},
 					function(x, rv) {
-						if (rv.ping_type && rv.ping_type == "curl") {
+						if (rv.ping_type) {
 							var use_time = rv.use_time;
+							var ping_type = rv.ping_type;
 							if (use_time < 1000) {
 								s.className="green";
 							} else if (use_time < 2000) {
@@ -258,7 +259,7 @@ https://github.com/pure-css/pure/blob/master/LICENSE.md
 							} else {
 								s.className="red";
 							}
-							s.innerHTML = use_time + " ms";
+							s.innerHTML = ping_type+ " " + use_time + " ms";
 						} else if (rv.status) {
 							s.className="green";
 							s.innerHTML = "<%:Working...%>";
