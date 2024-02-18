@@ -232,7 +232,7 @@ function connect_status()
     if pingOutput and pingOutput:find("min/avg/max") then
         local avgPingTime = pingOutput:match("/(%d+%.%d+)/")
         if avgPingTime then
-            e.use_time = string.format("%.2f", tonumber(avgPingTime) * 1000)
+            e.use_time = string.format("%.2f", tonumber(avgPingTime))
             e.ping_type = "ping"
         else
             e.use_time = "N/A"
