@@ -130,7 +130,9 @@ function gen_outbound(flag, node, tag, proxy_table)
 			-- 底层传输配置
 			streamSettings = (node.streamSettings or node.protocol == "vmess" or node.protocol == "vless" or node.protocol == "socks" or node.protocol == "shadowsocks" or node.protocol == "trojan") and {
 				sockopt = {
-					mark = 255
+					mark = 255,
+					tcpMptcp = (node.tcpMptcp == "1") and true or nil,
+					tcpNoDelay = (node.tcpNoDelay == "1") and true or nil,
 				},
 				network = node.transport,
 				security = node.stream_security,

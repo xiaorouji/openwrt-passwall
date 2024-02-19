@@ -514,4 +514,11 @@ o = s:option(Value, option_name("xudp_concurrency"), translate("XUDP Mux concurr
 o.default = 8
 o:depends({ [option_name("xmux")] = true })
 
+--[[tcpMptcp]]
+o = s:option(Flag, option_name("tcpMptcp"), "tcpMptcp", translate("Enable Multipath TCP, need to be enabled in both server and client configuration."))
+o.default = 0
+
+o = s:option(Flag, option_name("tcpNoDelay"), "tcpNoDelay")
+o.default = 0
+
 api.luci_types(arg[1], m, s, type_name, option_prefix)
