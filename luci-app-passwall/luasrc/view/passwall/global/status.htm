@@ -249,9 +249,8 @@ https://github.com/pure-css/pure/blob/master/LICENSE.md
 						url : url
 					},
 					function(x, rv) {
-						if (rv.ping_type) {
+						if (rv.ping_type && rv.ping_type == "curl") {
 							var use_time = rv.use_time;
-							var ping_type = rv.ping_type;
 							if (use_time < 1000) {
 								s.className="green";
 							} else if (use_time < 2000) {
@@ -259,7 +258,7 @@ https://github.com/pure-css/pure/blob/master/LICENSE.md
 							} else {
 								s.className="red";
 							}
-							s.innerHTML = ping_type+ " " + use_time + " ms";
+							s.innerHTML = use_time + " ms";
 						} else if (rv.status) {
 							s.className="green";
 							s.innerHTML = "<%:Working...%>";
