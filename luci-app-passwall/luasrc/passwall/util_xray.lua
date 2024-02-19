@@ -1231,6 +1231,27 @@ function gen_config(var)
 				-- }
 			}
 		}
+		
+		if xray_settings.fragment and true then
+			table.insert(outbounds, {
+				protocol = "freedom",
+				tag = "fragment",
+				settings = {
+					domainStrategy = (direct_dns_query_strategy and direct_dns_query_strategy ~= "") and direct_dns_query_strategy or "UseIP",
+					fragments = {
+						packets = (xray_settings.fragment_packets and xray_settings.fragment_packets ~= "") and xray_settings.fragment_packets,
+						length = (xray_settings.fragment_length and xray_settings.fragment_length ~= "") and xray_settings.fragment_length,
+						interval = (xray_settings.fragment_interval and xray_settings.fragment_interval ~= "") and xray_settings.fragment_interval
+					}
+				},
+				streamSettings = {
+					sockopt = {
+						mark = 255
+					}
+				}
+			})		
+		end
+		
 		table.insert(outbounds, {
 			protocol = "freedom",
 			tag = "direct",
