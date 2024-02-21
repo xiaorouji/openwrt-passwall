@@ -277,6 +277,7 @@ jobs:
           echo "CONFIG_ALL_KMODS=n" >> .config
           echo "CONFIG_ALL=n" >> .config
           echo "CONFIG_AUTOREMOVE=n" >> .config
+          echo "CONFIG_SIGNED_PACKAGES=n" >> .config
           echo "CONFIG_PACKAGE_luci-app-passwall=m" >> .config
           echo "CONFIG_PACKAGE_luci-app-passwall_Iptables_Transparent_Proxy=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-passwall_Nftables_Transparent_Proxy=y" >> .config
@@ -312,7 +313,7 @@ jobs:
         id: compile
         run: |
           cd sdk
-          make package/luci-app-passwall/{clean,compile} -j$(nproc)
+          make -j$(nproc)
 
           echo "status=success" >> $GITHUB_OUTPUT
 
@@ -323,7 +324,7 @@ jobs:
           cd sdk
           mkdir upload
 
-          zip -jr upload/passwall_packages_ipk_${{ matrix.platform }}.zip bin/packages/*/passwall_packages/
+          zip -jr upload/passwall_packages_ipk_${{ matrix.platform }}.zip bin/packages/*/passwall_packages/*.ipk
 
           echo "FIRMWARE=$PWD" >> $GITHUB_ENV
           echo "status=success" >> $GITHUB_OUTPUT
@@ -337,7 +338,7 @@ jobs:
           echo "![](https://img.shields.io/github/downloads/${{ env.passwall }}/${{needs.job_check.outputs.passwall_version}}/total?style=flat-square)" >> release.txt
           echo "### Passwall Info" >> release.txt
           echo "**:minidisc: Passwall Version: ${{needs.job_check.outputs.passwall_version}}**" >> release.txt
-    
+
           echo "### Packages Version" >> release.txt
           echo "**package name**|**package version**" >> release.txt
           echo "-|-" >> release.txt
