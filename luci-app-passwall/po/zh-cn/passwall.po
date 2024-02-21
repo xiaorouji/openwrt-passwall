@@ -265,6 +265,9 @@ msgstr "默认代理模式"
 msgid "No Proxy"
 msgstr "不代理"
 
+msgid "Proxy"
+msgstr "代理"
+
 msgid "Global Proxy"
 msgstr "全局代理"
 
