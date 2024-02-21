@@ -313,7 +313,11 @@ jobs:
         id: compile
         run: |
           cd sdk
-          make -j$(nproc)
+          for package in $(ls feeds/passwall_packages); do
+              if [ -d "feeds/passwall_packages/$package" ]; then
+                  make package/feeds/passwall_packages/$package/compile -j$(nproc)
+              fi
+          done
 
           echo "status=success" >> $GITHUB_OUTPUT
 
