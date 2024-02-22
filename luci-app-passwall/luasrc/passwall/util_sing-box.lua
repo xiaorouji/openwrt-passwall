@@ -1206,7 +1206,7 @@ function gen_config(var)
 				if node.iface then
 					outbound = {
 						type = "direct",
-						tag = "outbound",
+						tag = node_id,
 						bind_interface = node.iface,
 						routing_mark = 255,
 					}
@@ -1241,9 +1241,8 @@ function gen_config(var)
 			if outbound then
 				default_outTag = outbound.tag
 				table.insert(outbounds, outbound)
+				route.final = default_outTag
 			end
-
-			route.final = node_id
 		end
 	end
 

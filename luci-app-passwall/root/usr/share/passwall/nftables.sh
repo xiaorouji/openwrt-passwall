@@ -325,7 +325,7 @@ load_acl() {
 
 						[ "$tcp_no_redir_ports" != "disable" ] && {
 							nft "add rule inet fw4 $nft_prerouting_chain ${_ipt_source} ip protocol tcp $(factor $tcp_no_redir_ports "tcp dport") counter return comment \"$remarks\""
-							nft "add rule inet fw4 PSW_MANGLE_V6 comment ${_ipt_source} meta l4proto tcp tcp dport {$tcp_no_redir_ports} counter return comment \"$remarks\""
+							nft "add rule inet fw4 PSW_MANGLE_V6 ${_ipt_source} meta l4proto tcp $(factor $tcp_no_redir_ports "tcp dport") counter return comment \"$remarks\""
 							msg2="${msg2}[$?]除${tcp_no_redir_ports}外的"
 						}
 						msg2="${msg2}所有端口"
@@ -988,10 +988,10 @@ add_firewall_rule() {
 					return 0
 				}
 				if [ -z "${is_tproxy}" ]; then
-					nft add rule inet fw4 PSW_OUTPUT_NAT ip protocol tcp ip daddr ${2} tcp dport ${3} $(REDIRECT $TCP_REDIR_PORT)
+					nft insert rule inet fw4 PSW_OUTPUT_NAT ip protocol tcp ip daddr ${2} tcp dport ${3} $(REDIRECT $TCP_REDIR_PORT)
 				else
-					nft add rule inet fw4 PSW_OUTPUT_MANGLE ip protocol tcp ip daddr ${2} tcp dport ${3} counter jump PSW_RULE
-					nft add rule inet fw4 PSW_MANGLE iif lo tcp dport ${3} ip daddr ${2} $(REDIRECT $TCP_REDIR_PORT TPROXY4) comment \"本机\"
+					nft insert rule inet fw4 PSW_OUTPUT_MANGLE ip protocol tcp ip daddr ${2} tcp dport ${3} counter jump PSW_RULE
+					nft insert rule inet fw4 PSW_MANGLE iif lo tcp dport ${3} ip daddr ${2} $(REDIRECT $TCP_REDIR_PORT TPROXY4) comment \"本机\"
 				fi
 				echolog "  - [$?]将上游 DNS 服务器 ${2}:${3} 加入到路由器自身代理的 TCP 转发链"
 			}
@@ -1068,8 +1068,8 @@ add_firewall_rule() {
 					echolog "  - 上游 DNS 服务器 ${2} 已在直接访问的列表中，不强制向 UDP 代理转发对该服务器 UDP/${3} 端口的访问"
 					return 0
 				}
-				nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip protocol udp ip daddr ${2} udp dport ${3} counter jump PSW_RULE"
-				nft "add rule inet fw4 PSW_MANGLE iif lo meta l4proto udp ip daddr ${2} $(REDIRECT $UDP_REDIR_PORT TPROXY4) comment \"本机\""
+				nft "insert rule inet fw4 PSW_OUTPUT_MANGLE ip protocol udp ip daddr ${2} udp dport ${3} counter jump PSW_RULE"
+				nft "insert rule inet fw4 PSW_MANGLE iif lo meta l4proto udp ip daddr ${2} $(REDIRECT $UDP_REDIR_PORT TPROXY4) comment \"本机\""
 				echolog "  - [$?]将上游 DNS 服务器 ${2}:${3} 加入到路由器自身代理的 UDP 转发链"
 			}
 			[ "$use_udp_node_resolve_dns" == 1 ] && hosts_foreach REMOTE_DNS _proxy_udp_access 53
