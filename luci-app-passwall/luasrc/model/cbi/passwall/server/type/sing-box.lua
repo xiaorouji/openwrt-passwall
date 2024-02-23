@@ -215,7 +215,6 @@ o.validate = function(self, value, t)
 	end
 end
 o:depends({ [option_name("protocol")] = "http" })
-o:depends({ [option_name("protocol")] = "shadowsocks" })
 o:depends({ [option_name("protocol")] = "vmess" })
 o:depends({ [option_name("protocol")] = "vless" })
 o:depends({ [option_name("protocol")] = "trojan" })
@@ -224,10 +223,9 @@ if singbox_tags:find("with_reality_server") then
 	-- [[ REALITY部分 ]] --
 	o = s:option(Flag, option_name("reality"), translate("REALITY"))
 	o.default = 0
-	o:depends({ [option_name("protocol")] = "vless", [option_name("tls")] = true })
-	o:depends({ [option_name("protocol")] = "vmess", [option_name("tls")] = true })
-	o:depends({ [option_name("protocol")] = "shadowsocks", [option_name("tls")] = true })
 	o:depends({ [option_name("protocol")] = "http", [option_name("tls")] = true })
+	o:depends({ [option_name("protocol")] = "vmess", [option_name("tls")] = true })
+	o:depends({ [option_name("protocol")] = "vless", [option_name("tls")] = true })
 	o:depends({ [option_name("protocol")] = "trojan", [option_name("tls")] = true })
 
 	o = s:option(Value, option_name("reality_private_key"), translate("Private Key"))
