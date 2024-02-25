@@ -1566,3 +1566,6 @@ msgstr "分片间隔"
 
 msgid "Fragmentation interval (ms)"
 msgstr "分片间隔（ms）"
+
+msgid "If is domain name, The requested domain name will be resolved to IP before connect."
+msgstr "如果是域名，域名将在请求发出之前解析为 IP。"
