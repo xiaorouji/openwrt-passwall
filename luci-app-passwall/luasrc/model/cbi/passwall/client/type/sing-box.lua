@@ -65,13 +65,13 @@ o.default = "eth1"
 o:depends({ [option_name("protocol")] = "_iface" })
 
 local nodes_table = {}
-local balancers_table = {}
 local iface_table = {}
 for k, e in ipairs(api.get_valid_nodes()) do
 	if e.node_type == "normal" then
 		nodes_table[#nodes_table + 1] = {
 			id = e[".name"],
-			remarks = e["remark"]
+			remarks = e["remark"],
+			type = e["type"]
 		}
 	end
 	if e.protocol == "_iface" then
@@ -89,9 +89,6 @@ if #nodes_table > 0 then
 
 	o = s:option(Value, option_name("main_node"), string.format('<a style="color:red">%s</a>', translate("Preproxy Node")), translate("Set the node to be used as a pre-proxy. Each rule (including <code>Default</code>) has a separate switch that controls whether this rule uses the pre-proxy or not."))
 	o:depends({ [option_name("protocol")] = "_shunt", [option_name("preproxy_enabled")] = true })
-	for k, v in pairs(balancers_table) do
-		o:value(v.id, v.remarks)
-	end
 	for k, v in pairs(iface_table) do
 		o:value(v.id, v.remarks)
 	end
@@ -110,9 +107,6 @@ uci:foreach(appname, "shunt_rules", function(e)
 		o:depends({ [option_name("protocol")] = "_shunt" })
 
 		if #nodes_table > 0 then
-			for k, v in pairs(balancers_table) do
-				o:value(v.id, v.remarks)
-			end
 			for k, v in pairs(iface_table) do
 				o:value(v.id, v.remarks)
 			end
@@ -142,9 +136,6 @@ o:value("_direct", translate("Direct Connection"))
 o:value("_blackhole", translate("Blackhole"))
 
 if #nodes_table > 0 then
-	for k, v in pairs(balancers_table) do
-		o:value(v.id, v.remarks)
-	end
 	for k, v in pairs(iface_table) do
 		o:value(v.id, v.remarks)
 	end
@@ -630,5 +621,19 @@ o:value("prefer_ipv4")
 o:value("prefer_ipv6")
 o:value("ipv4_only")
 o:value("ipv6_only")
+
+o = s:option(ListValue, option_name("to_node"), translate("Landing node"), translate("Only support a layer of proxy."))
+o.default = ""
+o:value("", translate("Close(Not use)"))
+for k, v in pairs(nodes_table) do
+	if v.type == "sing-box" then
+		o:value(v.id, v.remarks)
+	end
+end
+for i, v in ipairs(s.fields[option_name("protocol")].keylist) do
+	if not v:find("_") then
+		o:depends({ [option_name("protocol")] = v })
+	end
+end
 
 api.luci_types(arg[1], m, s, type_name, option_prefix)
