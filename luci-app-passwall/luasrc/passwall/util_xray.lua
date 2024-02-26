@@ -248,6 +248,11 @@ function gen_outbound(flag, node, tag, proxy_table)
 				reserved = (node.protocol == "wireguard" and node.wireguard_reserved) and node.wireguard_reserved or nil
 			}
 		}
+
+		if node.protocol == "wireguard" then
+			result.settings.kernelMode = false
+		end
+
 		local alpn = {}
 		if node.alpn and node.alpn ~= "default" then
 			string.gsub(node.alpn, '[^' .. "," .. ']+', function(w)
