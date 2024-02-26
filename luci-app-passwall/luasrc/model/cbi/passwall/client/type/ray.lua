@@ -54,7 +54,8 @@ for k, e in ipairs(api.get_valid_nodes()) do
 	if e.node_type == "normal" then
 		nodes_table[#nodes_table + 1] = {
 			id = e[".name"],
-			remarks = e["remark"]
+			remarks = e["remark"],
+			type = e["type"]
 		}
 	end
 	if e.protocol == "_balancing" then
@@ -521,5 +522,22 @@ o.default = 0
 
 o = s:option(Flag, option_name("tcpNoDelay"), "tcpNoDelay")
 o.default = 0
+
+o = s:option(ListValue, option_name("to_node"), translate("Landing node"), translate("Only support a layer of proxy."))
+o.default = ""
+o:value("", translate("Close(Not use)"))
+for k, v in pairs(nodes_table) do
+	if v.type == "Xray" then
+		o:value(v.id, v.remarks)
+	end
+end
+
+for i, v in ipairs(s.fields[option_name("protocol")].keylist) do
+	if not v:find("_") then
+		s.fields[option_name("tcpMptcp")]:depends({ [option_name("protocol")] = v })
+		s.fields[option_name("tcpNoDelay")]:depends({ [option_name("protocol")] = v })
+		s.fields[option_name("to_node")]:depends({ [option_name("protocol")] = v })
+	end
+end
 
 api.luci_types(arg[1], m, s, type_name, option_prefix)
