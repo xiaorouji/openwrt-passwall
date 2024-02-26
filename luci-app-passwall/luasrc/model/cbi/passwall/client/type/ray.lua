@@ -81,11 +81,13 @@ local o = s:option(ListValue, option_name("balancingStrategy"), translate("Balan
 o:depends({ [option_name("protocol")] = "_balancing" })
 o:value("random")
 o:value("leastPing")
-o.default = "random"
+o:value("leastLoad")
+o.default = "leastLoad"
 
 -- 探测地址
 local o = s:option(Flag, option_name("useCustomProbeUrl"), translate("Use Custome Probe URL"), translate("By default the built-in probe URL will be used, enable this option to use a custom probe URL."))
 o:depends({ [option_name("balancingStrategy")] = "leastPing" })
+o:depends({ [option_name("balancingStrategy")] = "leastLoad" })
 
 local o = s:option(Value, option_name("probeUrl"), translate("Probe URL"))
 o:depends({ [option_name("useCustomProbeUrl")] = true })
@@ -95,6 +97,7 @@ o.description = translate("The URL used to detect the connection status.")
 -- 探测间隔
 local o = s:option(Value, option_name("probeInterval"), translate("Probe Interval"))
 o:depends({ [option_name("balancingStrategy")] = "leastPing" })
+o:depends({ [option_name("balancingStrategy")] = "leastLoad" })
 o.default = "1m"
 o.description = translate("The interval between initiating probes. Every time this time elapses, a server status check is performed on a server. The time format is numbers + units, such as '10s', '2h45m', and the supported time units are <code>ns</code>, <code>us</code>, <code>ms</code>, <code>s</code>, <code>m</code>, <code>h</code>, which correspond to nanoseconds, microseconds, milliseconds, seconds, minutes, and hours, respectively.")
 

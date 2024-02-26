@@ -670,7 +670,7 @@ function gen_config(var)
 					selector = valid_nodes,
 					strategy = { type = _node.balancingStrategy or "random" }
 				}
-				if _node.balancingStrategy == "leastPing" then
+				if _node.balancingStrategy == "leastPing" or _node.balancingStrategy == "leastLoad" then
 					if not observatory then
 						observatory = {
 							subjectSelector = { "blc-" },
