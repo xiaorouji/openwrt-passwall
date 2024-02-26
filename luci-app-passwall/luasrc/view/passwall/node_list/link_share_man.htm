@@ -225,6 +225,10 @@ local api = require "luci.passwall.api"
 			if (v_transport === "ws") {
 				info.host = opt.get(dom_prefix + "ws_host").value;
 				info.path = opt.get(dom_prefix + "ws_path").value;
+				if (v_type == "sing-box" && opt.get(dom_prefix + "ws_enableEarlyData").checked) {
+					var ws_maxEarlyData = opt.get(dom_prefix + "ws_maxEarlyData").value;
+					info.path = info.path + "?ed=" + ws_maxEarlyData;
+				}
 			} else if (v_transport === "h2") {
 				info.host = opt.get(dom_prefix + "h2_host").value;
 				info.path = opt.get(dom_prefix + "h2_path").value;
@@ -269,6 +273,10 @@ local api = require "luci.passwall.api"
 			if (v_transport === "ws") {
 				params += opt.query("host", dom_prefix + "ws_host");
 				params += opt.query("path", dom_prefix + "ws_path");
+				if (v_type == "sing-box" && opt.get(dom_prefix + "ws_enableEarlyData").checked) {
+					var ws_maxEarlyData = opt.get(dom_prefix + "ws_maxEarlyData").value;
+					params += "?ed=" + ws_maxEarlyData;
+				}
 			} else if (v_transport === "h2") {
 				v_transport = "http";
 				params += opt.query("host", dom_prefix + "h2_host");
@@ -704,6 +712,24 @@ local api = require "luci.passwall.api"
 			} else if (ssm.net === "ws") {
 				opt.set(dom_prefix + 'ws_host', ssm.host);
 				opt.set(dom_prefix + 'ws_path', ssm.path);
+				if (dom_prefix == "singbox_" && ssm.path && ssm.path.length > 1) {
+					var ws_path_params = {};
+					var ws_path_dat = ssm.path.split('?');
+					var ws_path = ws_path_dat[0];
+					var ws_path_params = {};
+					var ws_path_params_array = ws_path_dat[1].split('&');
+					for (i = 0; i < ws_path_params_array.length; i++) {
+						var kv = ws_path_params_array[i].split('=');
+						ws_path_params[decodeURIComponent(kv[0]).toLowerCase()] = decodeURIComponent(kv[1] || '');
+					}
+					
+					if (ws_path_params.ed) {
+						opt.set(dom_prefix + 'ws_path', ws_path);
+						opt.set(dom_prefix + 'ws_enableEarlyData', true);
+						opt.set(dom_prefix + 'ws_maxEarlyData', ws_path_params.ed);
+						opt.set(dom_prefix + 'ws_earlyDataHeaderName', 'Sec-WebSocket-Protocol');
+					}
+				}
 			} else if (ssm.net === "h2") {
 				opt.set(dom_prefix + 'h2_host', ssm.host);
 				opt.set(dom_prefix + 'h2_path', ssm.path);
@@ -793,6 +819,24 @@ local api = require "luci.passwall.api"
 			} else if (queryParam.type === "ws") {
 				opt.set(dom_prefix + 'ws_host', queryParam.host || "");
 				opt.set(dom_prefix + 'ws_path', queryParam.path || "");
+				if (dom_prefix == "singbox_" && queryParam.path && queryParam.path.length > 1) {
+					var ws_path_params = {};
+					var ws_path_dat = queryParam.path.split('?');
+					var ws_path = ws_path_dat[0];
+					var ws_path_params = {};
+					var ws_path_params_array = ws_path_dat[1].split('&');
+					for (i = 0; i < ws_path_params_array.length; i++) {
+						var kv = ws_path_params_array[i].split('=');
+						ws_path_params[decodeURIComponent(kv[0]).toLowerCase()] = decodeURIComponent(kv[1] || '');
+					}
+					
+					if (ws_path_params.ed) {
+						opt.set(dom_prefix + 'ws_path', ws_path);
+						opt.set(dom_prefix + 'ws_enableEarlyData', true);
+						opt.set(dom_prefix + 'ws_maxEarlyData', ws_path_params.ed);
+						opt.set(dom_prefix + 'ws_earlyDataHeaderName', 'Sec-WebSocket-Protocol');
+					}
+				}
 			} else if (queryParam.type === "h2" || queryParam.type === "http") {
 				opt.set(dom_prefix + 'h2_host', queryParam.host || "");
 				opt.set(dom_prefix + 'h2_path', queryParam.path || "");
