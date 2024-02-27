@@ -255,9 +255,8 @@ load_acl() {
 				[ "${use_direct_list}" = "1" ] && $ipt_m -A PSW $(comment "$remarks") ${_ipt_source} $(dst $IPSET_WHITELIST) -j RETURN
 				[ "${use_block_list}" = "1" ] && $ipt_m -A PSW $(comment "$remarks") ${_ipt_source} $(dst $IPSET_BLOCKLIST) -j DROP
 				[ "$PROXY_IPV6" == "1" ] && {
-					[ "${use_direct_list}" = "1" ] && $ipt6_n -A PSW $(comment "$remarks") ${_ipt_source} $(dst $IPSET_WHITELIST6) -j RETURN
-					[ "${use_direct_list}" = "1" ] && $ipt6_m -A PSW $(comment "$remarks") ${_ipt_source} $(dst $IPSET_WHITELIST6) -j RETURN
-					[ "${use_block_list}" = "1" ] && $ipt6_m -A PSW $(comment "$remarks") ${_ipt_source} $(dst $IPSET_BLOCKLIST6) -j DROP
+					[ "${use_direct_list}" = "1" ] && $ip6t_m -A PSW $(comment "$remarks") ${_ipt_source} $(dst $IPSET_WHITELIST6) -j RETURN 2>/dev/null
+					[ "${use_block_list}" = "1" ] && $ip6t_m -A PSW $(comment "$remarks") ${_ipt_source} $(dst $IPSET_BLOCKLIST6) -j DROP 2>/dev/null
 				}
 				
 				[ -n "$tcp_port" ] && {
@@ -408,9 +407,8 @@ load_acl() {
 		[ "${USE_DIRECT_LIST}" = "1" ] && $ipt_m -A PSW $(comment "默认") $(dst $IPSET_WHITELIST) -j RETURN
 		[ "${USE_BLOCK_LIST}" = "1" ] && $ipt_m -A PSW $(comment "默认") $(dst $IPSET_BLOCKLIST) -j DROP
 		[ "$PROXY_IPV6" == "1" ] && {
-			[ "${USE_DIRECT_LIST}" = "1" ] && $ipt6_n -A PSW $(comment "默认") $(dst $IPSET_WHITELIST6) -j RETURN
-			[ "${USE_DIRECT_LIST}" = "1" ] && $ipt6_m -A PSW $(comment "默认") $(dst $IPSET_WHITELIST6) -j RETURN
-			[ "${USE_BLOCK_LIST}" = "1" ] && $ipt6_m -A PSW $(comment "默认") $(dst $IPSET_BLOCKLIST6) -j DROP
+			[ "${USE_DIRECT_LIST}" = "1" ] && $ip6t_m -A PSW $(comment "默认") $(dst $IPSET_WHITELIST6) -j RETURN 2>/dev/null
+			[ "${USE_BLOCK_LIST}" = "1" ] && $ip6t_m -A PSW $(comment "默认") $(dst $IPSET_BLOCKLIST6) -j DROP 2>/dev/null
 		}
 		#  加载TCP默认代理模式
 		[ "$TCP_PROXY_DROP_PORTS" != "disable" ] && {
