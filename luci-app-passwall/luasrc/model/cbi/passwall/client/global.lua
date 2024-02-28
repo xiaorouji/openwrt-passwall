@@ -370,22 +370,20 @@ o.rmempty = false
 if api.is_finded("chinadns-ng") then
 	o = s:taboption("DNS", Flag, "chinadns_ng", translate("ChinaDNS-NG"), translate("The effect is better, but will increase the memory."))
 	o.default = "0"
-	chinadns_ng_default_tag = s:taboption("DNS", ListValue, "chinadns_ng_default_tag", translate("ChinaDNS-NG Domain Default Tag"))
-	chinadns_ng_default_tag.default = "smart"
-	chinadns_ng_default_tag:value("smart", translate("Smart DNS"))
-	chinadns_ng_default_tag:value("gfw", translate("Remote DNS"))
-	chinadns_ng_default_tag:value("chn", translate("Direct DNS"))
-	chinadns_ng_default_tag.description = "<ul>"
+	o:depends({remote_fakedns = false, use_gfw_list = true})
+	o:depends({remote_fakedns = false, chn_list = "direct"})
+
+	o = s:taboption("DNS", ListValue, "chinadns_ng_default_tag", translate("ChinaDNS-NG Domain Default Tag"))
+	o.default = "smart"
+	o:value("smart", translate("Smart DNS"))
+	o:value("gfw", translate("Remote DNS"))
+	o:value("chn", translate("Direct DNS"))
+	o.description = "<ul>"
 			.. "<li>" .. translate("Forward to both remote and direct DNS, if the direct DNS resolution result is a mainland China ip, then use the direct result, otherwise use the remote result") .. "</li>"
 			.. "<li>" .. translate("Remote DNS can avoid more DNS leaks, but some domestic domain names maybe to proxy!") .. "</li>"
 			.. "<li>" .. translate("Direct DNS Internet experience may be better, but DNS will be leaked!") .. "</li>"
 			.. "</ul>"
-	chinadns_ng_default_tag:depends("chinadns_ng", true)
-	o:depends({dns_mode = "dns2socks"})
-	o:depends({dns_mode = "dns2tcp"})
-	o:depends({dns_mode = "sing-box", remote_fakedns = false})
-	o:depends({dns_mode = "xray"})
-	o:depends({dns_mode = "udp"})
+	o:depends("chinadns_ng", true)
 end
 
 o = s:taboption("DNS", ListValue, "use_default_dns", translate("Default DNS"))
@@ -397,9 +395,11 @@ o.description = translate("The default DNS used when not in the domain name rule
 .. "<li>" .. translate("Remote DNS can avoid more DNS leaks, but some domestic domain names maybe to proxy!") .. "</li>"
 .. "<li>" .. translate("Direct DNS Internet experience may be better, but DNS will be leaked!") .. "</li>"
 .. "</ul>"
+local _depends = {tcp_proxy_mode = "proxy"}
 if api.is_finded("chinadns-ng") then
-	o:depends("chinadns_ng", false)
+	_depends["chinadns_ng"] = false
 end
+o:depends(_depends)
 
 o = s:taboption("DNS", Button, "clear_ipset", translate("Clear IPSET"), translate("Try this feature if the rule modification does not take effect."))
 o.inputstyle = "remove"
