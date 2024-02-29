@@ -615,12 +615,12 @@ o:value("v2ray-plugin")
 o = s:option(Value, option_name("plugin_opts"), translate("opts"))
 o:depends({ [option_name("plugin_enabled")] = true })
 
-o = s:option(ListValue, option_name("domain_strategy"), "Domain Strategy", translate("If is domain name, The requested domain name will be resolved to IP before connect."))
+o = s:option(ListValue, option_name("domain_strategy"), translate("Domain Strategy"), translate("If is domain name, The requested domain name will be resolved to IP before connect."))
 o.default = "prefer_ipv6"
-o:value("prefer_ipv4")
-o:value("prefer_ipv6")
-o:value("ipv4_only")
-o:value("ipv6_only")
+o:value("prefer_ipv4", translate("Prefer IPv4"))
+o:value("prefer_ipv6", translate("Prefer IPv6"))
+o:value("ipv4_only", translate("IPv4 Only"))
+o:value("ipv6_only", translate("IPv6 Only"))
 
 o = s:option(ListValue, option_name("to_node"), translate("Landing node"), translate("Only support a layer of proxy."))
 o.default = ""
