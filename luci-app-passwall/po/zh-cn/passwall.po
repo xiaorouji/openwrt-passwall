@@ -449,16 +449,16 @@ msgid "'IPOnDemand': As long as there is a IP-based rule, resolves the domain in
 msgstr "IPOnDemand：当匹配时碰到任何基于 IP 的规则，将域名立即解析为 IP 进行匹配。"
 
 msgid "Prefer IPv4"
-msgstr "IPv4优先"
+msgstr "IPv4 优先"
 
 msgid "Prefer IPv6"
-msgstr "IPv6优先"
+msgstr "IPv6 优先"
 
 msgid "IPv4 Only"
-msgstr "仅IPv4"
+msgstr "仅 IPv4"
 
 msgid "IPv6 Only"
-msgstr "仅IPv6"
+msgstr "仅 IPv6"
 
 msgid "Load balancing node list"
 msgstr "负载均衡节点列表"
