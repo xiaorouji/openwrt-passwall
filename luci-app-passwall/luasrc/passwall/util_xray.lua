@@ -434,7 +434,6 @@ function gen_config_server(node)
 						}
 					} or nil,
 					tcpSettings = (node.transport == "tcp") and {
-						acceptProxyProtocol = (node.acceptProxyProtocol and node.acceptProxyProtocol == "1") and true or false,
 						header = {
 							type = node.tcp_guise,
 							request = (node.tcp_guise == "http") and {
@@ -457,7 +456,6 @@ function gen_config_server(node)
 						header = {type = node.mkcp_guise}
 					} or nil,
 					wsSettings = (node.transport == "ws") and {
-						acceptProxyProtocol = (node.acceptProxyProtocol and node.acceptProxyProtocol == "1") and true or false,
 						headers = (node.ws_host) and {Host = node.ws_host} or nil,
 						path = node.ws_path
 					} or nil,
@@ -474,7 +472,10 @@ function gen_config_server(node)
 					} or nil,
 					grpcSettings = (node.transport == "grpc") and {
 						serviceName = node.grpc_serviceName
-					} or nil
+					} or nil,
+					sockopt = {
+						acceptProxyProtocol = (node.acceptProxyProtocol and node.acceptProxyProtocol == "1") and true or false
+					}
 				}
 			}
 		},
@@ -507,9 +508,7 @@ function gen_config_server(node)
 					node.reality_serverNames
 				},
 				privateKey = node.reality_private_key,
-				shortIds = {
-					node.reality_shortId
-				}
+				shortIds = node.reality_shortId or ""
 			} or nil
 		end
 	end
