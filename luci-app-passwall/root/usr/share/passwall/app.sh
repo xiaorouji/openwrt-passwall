@@ -799,17 +799,13 @@ run_redir() {
 				_args="${_args} udp_redir_port=${UDP_REDIR_PORT}"
 				config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
 			}
-			local v2ray_dns_mode=$(config_t_get global v2ray_dns_mode tcp)
-			[ "${DNS_MODE}" != "sing-box" ] && [ "${DNS_MODE}" != "udp" ] && {
-				DNS_MODE="sing-box"
-				v2ray_dns_mode="tcp"
-			}
 			[ "${DNS_MODE}" = "sing-box" ] && {
 				resolve_dns=1
 				config_file=$(echo $config_file | sed "s/.json/_DNS.json/g")
 				_args="${_args} remote_dns_query_strategy=${DNS_QUERY_STRATEGY}"
 				FILTER_PROXY_IPV6=0
 				[ "${DNS_CACHE}" == "0" ] && _args="${_args} dns_cache=0"
+				local v2ray_dns_mode=$(config_t_get global v2ray_dns_mode tcp)
 				_args="${_args} remote_dns_protocol=${v2ray_dns_mode}"
 				_args="${_args} dns_listen_port=${dns_listen_port}"
 				local logout=""
@@ -854,11 +850,6 @@ run_redir() {
 				_args="${_args} udp_redir_port=${UDP_REDIR_PORT}"
 				config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
 			}
-			local v2ray_dns_mode=$(config_t_get global v2ray_dns_mode tcp)
-			[ "${DNS_MODE}" != "xray" ] && [ "${DNS_MODE}" != "udp" ] && {
-				DNS_MODE="xray"
-				v2ray_dns_mode="tcp"
-			}
 			[ "${DNS_MODE}" = "xray" ] && {
 				resolve_dns=1
 				config_file=$(echo $config_file | sed "s/.json/_DNS.json/g")
@@ -869,6 +860,7 @@ run_redir() {
 				[ "${DNS_CACHE}" == "0" ] && _args="${_args} dns_cache=0"
 				_args="${_args} dns_listen_port=${dns_listen_port}"
 				_args="${_args} remote_dns_tcp_server=${REMOTE_DNS}"
+				local v2ray_dns_mode=$(config_t_get global v2ray_dns_mode tcp)
 				[ "$v2ray_dns_mode" = "tcp+doh" ] && {
 					remote_dns_doh=$(config_t_get global remote_dns_doh "https://1.1.1.1/dns-query")
 					_args="${_args} remote_dns_doh=${remote_dns_doh}"
