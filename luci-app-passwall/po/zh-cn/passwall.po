@@ -277,9 +277,6 @@ msgstr "GFW列表"
 msgid "Not China List"
 msgstr "中国列表以外"
 
-msgid "Game Mode"
-msgstr "游戏模式"
-
 msgid "China List"
 msgstr "中国列表"
 
@@ -292,11 +289,11 @@ msgstr "路由器本机"
 msgid "Same as the %s default proxy mode"
 msgstr "与 %s 默认代理模式相同"
 
+msgid "Switch Mode"
+msgstr "切换模式"
+
 msgid "Want different devices to use different proxy modes/ports/nodes? Please use access control."
 msgstr "希望不同设备使用不同的代理模式/端口/节点？请使用访问控制。"
-
-msgid "China list or gfwlist cannot be used together with outside China list!"
-msgstr "中国列表不能和中国列表外或防火墙表一起使用！"
 
 msgid "Operation"
 msgstr "操作"

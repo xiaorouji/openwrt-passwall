@@ -458,6 +458,9 @@ localhost_udp_proxy_mode:value("disable", translate("No Proxy"))
 localhost_udp_proxy_mode:value("proxy", translate("Proxy"))
 localhost_udp_proxy_mode.default = "default"
 
+o = s:taboption("Proxy", DummyValue, "", " ")
+o.template = appname .. "/global/proxy"
+
 tips = s:taboption("Proxy", DummyValue, "tips", " ")
 tips.rawhtml = true
 tips.cfgvalue = function(t, n)

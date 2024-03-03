@@ -1,0 +1,108 @@
+<div class="cbi-value">
+	<label class="cbi-value-title">
+		<%:Switch Mode%>
+	</label>
+	<div class="cbi-value-field">
+		<div>
+			<input class="btn cbi-button cbi-button-apply" type="button" onclick="switch_gfw_mode()" value="<%:GFW List%>" />
+			<input class="btn cbi-button cbi-button-apply" type="button" onclick="switch_chnroute_mode()" value="<%:Not China List%>" />
+			<input class="btn cbi-button cbi-button-apply" type="button" onclick="switch_returnhome_mode()" value="<%:China List%>" />
+		</div>
+	</div>
+</div>
+
+<script>
+	var opt = {
+		base: 'cbid.passwall.<%=self.cfgid or section%>',
+		client: true,
+		get: function (opt) {
+			var obj;
+			var id = this.base + '.' + opt;
+			obj = document.getElementsByName(id)[0] || document.getElementById(id);
+			if (obj) {
+				var combobox = document.getElementById('cbi.combobox.' + id);
+				if (combobox) {
+					obj.combobox = combobox;
+				}
+				var div = document.getElementById(id);
+				if (div && div.getElementsByTagName("li").length > 0) {
+					obj = div;
+				}
+				return obj;
+			} else {
+				return null;
+			}
+		},
+		set: function (opt, val) {
+			var obj;
+			obj = this.get(opt);
+			if (obj) {
+				var event = document.createEvent("HTMLEvents");
+				event.initEvent("change", true, true);
+				if (obj.type === 'checkbox') {
+					obj.checked = val;
+				} else {
+					obj.value = val;
+					if (obj.combobox) {
+						obj.combobox.value = val;
+					}
+
+					var list = obj.getElementsByTagName("li");
+					if (list.length > 0) {
+						for (var i = 0; i < list.length; i++) {
+							var li = list[i];
+							var data = li.getAttribute("data-value");
+							li.removeAttribute("selected");
+							li.removeAttribute("display");
+							if (data && data == val) {
+								li.setAttribute("selected", true);
+								li.setAttribute("display", "0");
+							}
+						}
+						var input = document.getElementsByName(obj.id)[0];
+						if (input) {
+							input.value = val;
+						} else {
+							var input = document.createElement("input");
+							input.setAttribute("type", "hidden");
+							input.setAttribute("name", obj.id);
+							input.setAttribute("value", val);
+							obj.appendChild(input);
+						}
+					}
+				}
+				try {
+					obj.dispatchEvent(event);
+				} catch (err) {
+				}
+			}
+		}
+	}
+	
+	function switch_gfw_mode() {
+		opt.set("use_gfw_list", true);
+		opt.set("chn_list", "0");
+		opt.set("tcp_proxy_mode", "disable");
+		opt.set("udp_proxy_mode", "disable");
+		opt.set("localhost_tcp_proxy_mode", "default");
+		opt.set("localhost_udp_proxy_mode", "default");
+	}
+	
+	function switch_chnroute_mode() {
+		opt.set("use_gfw_list", true);
+		opt.set("chn_list", "direct");
+		opt.set("tcp_proxy_mode", "proxy");
+		opt.set("udp_proxy_mode", "proxy");
+		opt.set("localhost_tcp_proxy_mode", "default");
+		opt.set("localhost_udp_proxy_mode", "default");
+	}
+	
+	function switch_returnhome_mode() {
+		opt.set("use_gfw_list", false);
+		opt.set("chn_list", "proxy");
+		opt.set("tcp_proxy_mode", "disable");
+		opt.set("udp_proxy_mode", "disable");
+		opt.set("localhost_tcp_proxy_mode", "default");
+		opt.set("localhost_udp_proxy_mode", "default");
+	}
+</script>

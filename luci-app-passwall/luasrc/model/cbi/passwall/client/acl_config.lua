@@ -141,17 +141,17 @@ sources.validate = function(self, value, t)
 end
 sources.write = dynamicList_write
 
-local TCP_NODE = uci:get(appname, "@global[0]", "tcp_node")
+--local TCP_NODE = uci:get(appname, "@global[0]", "tcp_node")
 tcp_node = s:option(ListValue, "tcp_node", "<a style='color: red'>" .. translate("TCP Node") .. "</a>")
-tcp_node.default = "default"
+tcp_node.default = "nil"
 tcp_node:value("nil", translate("Close"))
-tcp_node:value("default", translate("Use global config") .. "(" .. TCP_NODE .. ")")
+--tcp_node:value("default", translate("Use global config") .. "(" .. TCP_NODE .. ")")
 
-local UDP_NODE = uci:get(appname, "@global[0]", "udp_node")
+--local UDP_NODE = uci:get(appname, "@global[0]", "udp_node")
 udp_node = s:option(ListValue, "udp_node", "<a style='color: red'>" .. translate("UDP Node") .. "</a>")
-udp_node.default = "default"
+udp_node.default = "nil"
 udp_node:value("nil", translate("Close"))
-udp_node:value("default", translate("Use global config") .. "(" .. UDP_NODE .. ")")
+--udp_node:value("default", translate("Use global config") .. "(" .. UDP_NODE .. ")")
 udp_node:value("tcp", translate("Same as the tcp node"))
 
 for k, v in pairs(nodes_table) do
@@ -257,6 +257,9 @@ o = s:option(ListValue, "udp_proxy_mode", "UDP " .. translate("Proxy Mode"))
 o:value("disable", translate("No Proxy"))
 o:value("proxy", translate("Proxy"))
 o:depends({ udp_node = "nil",  ['!reverse'] = true })
+
+o = s:option(DummyValue, "", " ")
+o.template = appname .. "/global/proxy"
 
 o = s:option(Flag, "filter_proxy_ipv6", translate("Filter Proxy Host IPv6"), translate("Experimental feature."))
 o.default = "0"
@@ -388,8 +391,10 @@ o.description = translate("The default DNS used when not in the domain name rule
 .. "<li>" .. translate("Remote DNS can avoid more DNS leaks, but some domestic domain names maybe to proxy!") .. "</li>"
 .. "<li>" .. translate("Direct DNS Internet experience may be better, but DNS will be leaked!") .. "</li>"
 .. "</ul>"
+local _depends = {tcp_proxy_mode = "proxy"}
 if api.is_finded("chinadns-ng") then
-	o:depends("chinadns_ng", false)
+	_depends["chinadns_ng"] = false
 end
+o:depends(_depends)
 
 return m
