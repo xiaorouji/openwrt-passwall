@@ -16,7 +16,7 @@ stretch() {
 }
 
 backup_servers() {
-	DNSMASQ_DNS=$(uci show dhcp | grep "@dnsmasq" | grep ".server=" | awk -F '=' '{print $2}' | sed "s/'//g" | tr ' ' ',')
+	DNSMASQ_DNS=$(uci show dhcp.@dnsmasq[0] | grep ".server=" | awk -F '=' '{print $2}' | sed "s/'//g" | tr ' ' ',')
 	if [ -n "${DNSMASQ_DNS}" ]; then
 		uci -q set $CONFIG.@global[0].dnsmasq_servers="${DNSMASQ_DNS}"
 		uci commit $CONFIG

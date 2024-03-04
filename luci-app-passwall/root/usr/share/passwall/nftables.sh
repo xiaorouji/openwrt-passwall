@@ -780,16 +780,16 @@ add_firewall_rule() {
 	[ -n "$ISP_DNS" ] && {
 		#echolog "处理 ISP DNS 例外..."
 		for ispip in $ISP_DNS; do
-			insert_nftset $NFTSET_WHITELIST "-1" $ispip >/dev/null 2>&1 &
-			#echolog "  - 追加到白名单：${ispip}"
+			insert_nftset $NFTSET_WHITELIST "-1" $ispip
+			echolog "  - [$?]追加ISP IPv4 DNS到白名单：${ispip}"
 		done
 	}
 
 	[ -n "$ISP_DNS6" ] && {
 		#echolog "处理 ISP IPv6 DNS 例外..."
 		for ispip6 in $ISP_DNS6; do
-			insert_nftset $NFTSET_WHITELIST6 "-1" $ispip6 >/dev/null 2>&1 &
-			#echolog "  - 追加到白名单：${ispip6}"
+			insert_nftset $NFTSET_WHITELIST6 "-1" $ispip6
+			echolog "  - [$?]追加ISP IPv6 DNS到白名单：${ispip6}"
 		done
 	}
 
@@ -842,6 +842,14 @@ add_firewall_rule() {
 	nft "flush chain inet fw4 PSW_OUTPUT_MANGLE"
 	nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip daddr @$NFTSET_LANLIST counter return"
 	nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip daddr @$NFTSET_VPSLIST counter return"
+	[ -n "$LOCAL_DNS" ] && {
+		for local_dns in $(echo $LOCAL_DNS | tr ',' ' '); do
+			local dns_address=$(echo $local_dns | awk -F '#' '{print $1}')
+			local dns_port=$(echo $local_dns | awk -F '#' '{print $2}')
+			nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip protocol udp ip daddr ${dns_address} $(factor ${dns_port:-53} "udp dport") counter return"
+			echolog "  - [$?]追加直连DNS到nftables：${dns_address}:${dns_port:-53}"
+		done
+	}
 	[ "${USE_DIRECT_LIST}" = "1" ] && nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip daddr @$NFTSET_WHITELIST counter return"
 	nft "add rule inet fw4 PSW_OUTPUT_MANGLE meta mark 0xff counter return"
 	[ "${USE_BLOCK_LIST}" = "1" ] && nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip daddr @$NFTSET_BLOCKLIST counter drop"
