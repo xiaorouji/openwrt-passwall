@@ -444,26 +444,20 @@ udp_proxy_mode:value("disable", translate("No Proxy"))
 udp_proxy_mode:value("proxy", translate("Proxy"))
 udp_proxy_mode.default = "proxy"
 
----- Localhost TCP Proxy Mode
-localhost_tcp_proxy_mode = s:taboption("Proxy", ListValue, "localhost_tcp_proxy_mode", translate("Router Localhost") .. " TCP " .. translate("Proxy Mode"))
-localhost_tcp_proxy_mode:value("default", translatef("Same as the %s default proxy mode", "TCP"))
-localhost_tcp_proxy_mode:value("disable", translate("No Proxy"))
-localhost_tcp_proxy_mode:value("proxy", translate("Proxy"))
-localhost_tcp_proxy_mode.default = "default"
-
----- Localhost UDP Proxy Mode
-localhost_udp_proxy_mode = s:taboption("Proxy", ListValue, "localhost_udp_proxy_mode", translate("Router Localhost") .. " UDP " .. translate("Proxy Mode"))
-localhost_udp_proxy_mode:value("default", translatef("Same as the %s default proxy mode", "UDP"))
-localhost_udp_proxy_mode:value("disable", translate("No Proxy"))
-localhost_udp_proxy_mode:value("proxy", translate("Proxy"))
-localhost_udp_proxy_mode.default = "default"
-
 o = s:taboption("Proxy", DummyValue, "", " ")
 o.template = appname .. "/global/proxy"
 
-tips = s:taboption("Proxy", DummyValue, "tips", " ")
-tips.rawhtml = true
-tips.cfgvalue = function(t, n)
+o = s:taboption("Proxy", Flag, "localhost_proxy", translate("Localhost Proxy"), translate("When selected, localhost can transparent proxy."))
+o.default = "1"
+o.rmempty = false
+
+o = s:taboption("Proxy", Flag, "client_proxy", translate("Client Proxy"), translate("When selected, devices in LAN can transparent proxy. Otherwise, it will not be proxy."))
+o.default = "1"
+o.rmempty = false
+
+o = s:taboption("Proxy", DummyValue, "_proxy_tips", " ")
+o.rawhtml = true
+o.cfgvalue = function(t, n)
 	return string.format('<a style="color: red" href="%s">%s</a>', api.url("acl"), translate("Want different devices to use different proxy modes/ports/nodes? Please use access control."))
 end
 

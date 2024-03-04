@@ -1273,19 +1273,17 @@ start_dns() {
 		USE_DEFAULT_DNS="chinadns_ng"
 	}
 
-	[ "$DNS_SHUNT" = "dnsmasq" ] && {
-		[ "$USE_DEFAULT_DNS" = "remote" ] && {
-			dnsmasq_version=$(dnsmasq -v | grep -i "Dnsmasq version " | awk '{print $3}')
-			[ "$(expr $dnsmasq_version \>= 2.87)" == 0 ] && echolog "Dnsmasq版本低于2.87，有可能无法正常使用！！！"
-		}
-		source $APP_PATH/helper_dnsmasq.sh stretch
-		lua $APP_PATH/helper_dnsmasq_add.lua -FLAG "default" -TMP_DNSMASQ_PATH ${TMP_DNSMASQ_PATH} \
-			-DNSMASQ_CONF_FILE "/tmp/dnsmasq.d/dnsmasq-passwall.conf" -DEFAULT_DNS ${DEFAULT_DNS} -LOCAL_DNS ${LOCAL_DNS} \
-			-TUN_DNS ${TUN_DNS} -REMOTE_FAKEDNS ${fakedns:-0} -USE_DEFAULT_DNS "${USE_DEFAULT_DNS:-direct}" -CHINADNS_DNS ${china_ng_listen:-0} \
-			-USE_DIRECT_LIST "${USE_DIRECT_LIST}" -USE_PROXY_LIST "${USE_PROXY_LIST}" -USE_BLOCK_LIST "${USE_BLOCK_LIST}" -USE_GFW_LIST "${USE_GFW_LIST}" -CHN_LIST "${CHN_LIST}" \
-			-TCP_NODE ${TCP_NODE} -DEFAULT_PROXY_MODE "${TCP_PROXY_MODE}" -NO_PROXY_IPV6 ${FILTER_PROXY_IPV6:-0} -NFTFLAG ${nftflag:-0} \
-			-NO_LOGIC_LOG ${NO_LOGIC_LOG:-0}
+	[ "$USE_DEFAULT_DNS" = "remote" ] && {
+		dnsmasq_version=$(dnsmasq -v | grep -i "Dnsmasq version " | awk '{print $3}')
+		[ "$(expr $dnsmasq_version \>= 2.87)" == 0 ] && echolog "Dnsmasq版本低于2.87，有可能无法正常使用！！！"
 	}
+	source $APP_PATH/helper_dnsmasq.sh stretch
+	lua $APP_PATH/helper_dnsmasq_add.lua -FLAG "default" -TMP_DNSMASQ_PATH ${TMP_DNSMASQ_PATH} \
+		-DNSMASQ_CONF_FILE "/tmp/dnsmasq.d/dnsmasq-passwall.conf" -DEFAULT_DNS ${DEFAULT_DNS} -LOCAL_DNS ${LOCAL_DNS} \
+		-TUN_DNS ${TUN_DNS} -REMOTE_FAKEDNS ${fakedns:-0} -USE_DEFAULT_DNS "${USE_DEFAULT_DNS:-direct}" -CHINADNS_DNS ${china_ng_listen:-0} \
+		-USE_DIRECT_LIST "${USE_DIRECT_LIST}" -USE_PROXY_LIST "${USE_PROXY_LIST}" -USE_BLOCK_LIST "${USE_BLOCK_LIST}" -USE_GFW_LIST "${USE_GFW_LIST}" -CHN_LIST "${CHN_LIST}" \
+		-TCP_NODE ${TCP_NODE} -DEFAULT_PROXY_MODE "${TCP_PROXY_MODE}" -NO_PROXY_IPV6 ${FILTER_PROXY_IPV6:-0} -NFTFLAG ${nftflag:-0} \
+		-NO_LOGIC_LOG ${NO_LOGIC_LOG:-0}
 }
 
 add_ip2route() {
@@ -1680,13 +1678,12 @@ TCP_PROXY_MODE=$(config_t_get global tcp_proxy_mode proxy)
 UDP_PROXY_MODE=$(config_t_get global udp_proxy_mode proxy)
 [ "${TCP_PROXY_MODE}" != "disable" ] && TCP_PROXY_MODE="proxy"
 [ "${UDP_PROXY_MODE}" != "disable" ] && UDP_PROXY_MODE="proxy"
-LOCALHOST_TCP_PROXY_MODE=$(config_t_get global localhost_tcp_proxy_mode default)
-LOCALHOST_UDP_PROXY_MODE=$(config_t_get global localhost_udp_proxy_mode default)
-[ "${LOCALHOST_TCP_PROXY_MODE}" == "default" ] && LOCALHOST_TCP_PROXY_MODE=$TCP_PROXY_MODE
-[ "${LOCALHOST_UDP_PROXY_MODE}" == "default" ] && LOCALHOST_UDP_PROXY_MODE=$UDP_PROXY_MODE
-[ "${LOCALHOST_TCP_PROXY_MODE}" != "disable" ] && LOCALHOST_TCP_PROXY_MODE="proxy"
-[ "${LOCALHOST_UDP_PROXY_MODE}" != "disable" ] && LOCALHOST_UDP_PROXY_MODE="proxy"
-DNS_SHUNT="dnsmasq"
+LOCALHOST_PROXY=$(config_t_get global localhost_proxy 1)
+[ "${LOCALHOST_PROXY}" == 1 ] && {
+	LOCALHOST_TCP_PROXY_MODE=$TCP_PROXY_MODE
+	LOCALHOST_UDP_PROXY_MODE=$UDP_PROXY_MODE
+}
+CLIENT_PROXY=$(config_t_get global client_proxy 1)
 DNS_MODE=$(config_t_get global dns_mode dns2tcp)
 DNS_CACHE=$(config_t_get global dns_cache 0)
 REMOTE_DNS=$(config_t_get global remote_dns 1.1.1.1:53 | sed 's/#/:/g' | sed -E 's/\:([^:]+)$/#\1/g')

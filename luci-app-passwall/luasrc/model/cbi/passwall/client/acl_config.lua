@@ -141,6 +141,24 @@ sources.validate = function(self, value, t)
 end
 sources.write = dynamicList_write
 
+---- TCP No Redir Ports
+local TCP_NO_REDIR_PORTS = uci:get(appname, "@global_forwarding[0]", "tcp_no_redir_ports")
+o = s:option(Value, "tcp_no_redir_ports", translate("TCP No Redir Ports"))
+o.default = "default"
+o:value("disable", translate("No patterns are used"))
+o:value("default", translate("Use global config") .. "(" .. TCP_NO_REDIR_PORTS .. ")")
+o:value("1:65535", translate("All"))
+o.validate = port_validate
+
+---- UDP No Redir Ports
+local UDP_NO_REDIR_PORTS = uci:get(appname, "@global_forwarding[0]", "udp_no_redir_ports")
+o = s:option(Value, "udp_no_redir_ports", translate("UDP No Redir Ports"))
+o.default = "default"
+o:value("disable", translate("No patterns are used"))
+o:value("default", translate("Use global config") .. "(" .. UDP_NO_REDIR_PORTS .. ")")
+o:value("1:65535", translate("All"))
+o.validate = port_validate
+
 --local TCP_NODE = uci:get(appname, "@global[0]", "tcp_node")
 tcp_node = s:option(ListValue, "tcp_node", "<a style='color: red'>" .. translate("TCP Node") .. "</a>")
 tcp_node.default = "nil"
@@ -158,26 +176,6 @@ for k, v in pairs(nodes_table) do
 	tcp_node:value(v.id, v["remark"])
 	udp_node:value(v.id, v["remark"])
 end
-
----- TCP No Redir Ports
-local TCP_NO_REDIR_PORTS = uci:get(appname, "@global_forwarding[0]", "tcp_no_redir_ports")
-o = s:option(Value, "tcp_no_redir_ports", translate("TCP No Redir Ports"))
-o.default = "default"
-o:value("disable", translate("No patterns are used"))
-o:value("default", translate("Use global config") .. "(" .. TCP_NO_REDIR_PORTS .. ")")
-o:value("1:65535", translate("All"))
-o.validate = port_validate
-o:depends({ tcp_node = "nil",  ['!reverse'] = true })
-
----- UDP No Redir Ports
-local UDP_NO_REDIR_PORTS = uci:get(appname, "@global_forwarding[0]", "udp_no_redir_ports")
-o = s:option(Value, "udp_no_redir_ports", translate("UDP No Redir Ports"))
-o.default = "default"
-o:value("disable", translate("No patterns are used"))
-o:value("default", translate("Use global config") .. "(" .. UDP_NO_REDIR_PORTS .. ")")
-o:value("1:65535", translate("All"))
-o.validate = port_validate
-o:depends({ udp_node = "nil",  ['!reverse'] = true })
 
 ---- TCP Proxy Drop Ports
 local TCP_PROXY_DROP_PORTS = uci:get(appname, "@global_forwarding[0]", "tcp_proxy_drop_ports")

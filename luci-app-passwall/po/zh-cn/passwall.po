@@ -283,14 +283,20 @@ msgstr "中国列表"
 msgid "Localhost"
 msgstr "本机"
 
-msgid "Router Localhost"
-msgstr "路由器本机"
-
-msgid "Same as the %s default proxy mode"
-msgstr "与 %s 默认代理模式相同"
-
 msgid "Switch Mode"
 msgstr "切换模式"
+
+msgid "Localhost Proxy"
+msgstr "路由器本机代理"
+
+msgid "When selected, localhost can transparent proxy."
+msgstr "当勾选时，路由器本机可以透明代理。"
+
+msgid "Client Proxy"
+msgstr "客户端代理"
+
+msgid "When selected, devices in LAN can transparent proxy. Otherwise, it will not be proxy."
+msgstr "当勾选时，局域网内的设备可以透明代理。否则，将不代理。"
 
 msgid "Want different devices to use different proxy modes/ports/nodes? Please use access control."
 msgstr "希望不同设备使用不同的代理模式/端口/节点？请使用访问控制。"
@@ -1561,8 +1567,8 @@ msgstr "TCP 分片，在某些情况下可以欺骗审查系统，比如绕过 S
 msgid "Fragment Packets"
 msgstr "分片方式"
 
-msgid " \"1-3\" is for segmentation at TCP layer, applying to the beginning 1 to 3 data writes by the client. \"tlshello\" is for TLS client hello packet fragmentation."
-msgstr " \"1-3\" 是 TCP 的流切片，应用于客户端第 1 至第 3 次写数据。\"tlshello\" 是 TLS 握手包切片。"
+msgid "\"1-3\" is for segmentation at TCP layer, applying to the beginning 1 to 3 data writes by the client. \"tlshello\" is for TLS client hello packet fragmentation."
+msgstr "\"1-3\" 是 TCP 的流切片，应用于客户端第 1 至第 3 次写数据。\"tlshello\" 是 TLS 握手包切片。"
 
 msgid "Fragment Length"
 msgstr "分片包长"

@@ -159,7 +159,7 @@ if has_xray then
 	o = s_xray:option(Flag, "fragment", translate("Fragment"), translate("TCP fragments, which can deceive the censorship system in some cases, such as bypassing SNI blacklists."))
 	o.default = 0
 	
-	o = s_xray:option(ListValue, "fragment_packets", translate("Fragment Packets"), translate(" \"1-3\" is for segmentation at TCP layer, applying to the beginning 1 to 3 data writes by the client. \"tlshello\" is for TLS client hello packet fragmentation."))
+	o = s_xray:option(ListValue, "fragment_packets", translate("Fragment Packets"), translate("\"1-3\" is for segmentation at TCP layer, applying to the beginning 1 to 3 data writes by the client. \"tlshello\" is for TLS client hello packet fragmentation."))
 	o.default = "tlshello"
 	o:value("1-3", "1-3")
 	o:value("tlshello", "tlshello")
