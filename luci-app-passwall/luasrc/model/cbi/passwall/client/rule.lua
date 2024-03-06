@@ -1,7 +1,7 @@
 local api = require "luci.passwall.api"
 local appname = api.appname
 local has_xray = api.finded_com("xray")
-local has_singbox = api.finded_com("sing-box")
+local has_singbox = api.finded_com("singbox")
 
 m = Map(appname)
 api.set_apply_on_parse(m)
@@ -68,7 +68,7 @@ if has_xray or has_singbox then
 	o.default = "/usr/share/v2ray/"
 	o.rmempty = false
 
-	s = m:section(TypedSection, "shunt_rules", "Xray/Sing-Box " .. translate("Shunt Rule"), "<a style='color: red'>" .. translate("Please note attention to the priority, the higher the order, the higher the priority.") .. "</a>")
+	s = m:section(TypedSection, "shunt_rules", "Sing-Box/Xray " .. translate("Shunt Rule"), "<a style='color: red'>" .. translate("Please note attention to the priority, the higher the order, the higher the priority.") .. "</a>")
 	s.template = "cbi/tblsection"
 	s.anonymous = false
 	s.addremove = true
