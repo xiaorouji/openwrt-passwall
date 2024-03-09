@@ -1,5 +1,5 @@
 local api = require "luci.passwall.api"
-local appname = api.appname
+local appname = "passwall"
 local uci = api.uci
 local fs = require "nixio.fs"
 local types_dir = "/usr/lib/lua/luci/model/cbi/passwall/client/type/"

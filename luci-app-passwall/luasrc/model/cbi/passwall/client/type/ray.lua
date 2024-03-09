@@ -6,7 +6,7 @@ if not api.finded_com("xray") then
 	return
 end
 
-local appname = api.appname
+local appname = "passwall"
 local uci = api.uci
 
 local type_name = "Xray"

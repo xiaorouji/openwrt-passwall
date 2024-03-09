@@ -1,5 +1,5 @@
 local api = require "luci.passwall.api"
-local appname = api.appname
+local appname = "passwall"
 local uci = api.uci
 local has_xray = api.finded_com("xray")
 

@@ -1,5 +1,5 @@
 local api = require "luci.passwall.api"
-local appname = api.appname
+local appname = "passwall"
 local sys = api.sys
 local datatypes = api.datatypes
 

@@ -3,7 +3,7 @@ local api = require "luci.passwall.api"
 local uci = api.uci
 local sys = api.sys
 local jsonc = api.jsonc
-local appname = api.appname
+local appname = "passwall"
 local fs = api.fs
 
 local new_port

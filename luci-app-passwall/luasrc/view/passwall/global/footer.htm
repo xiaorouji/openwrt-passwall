@@ -78,7 +78,7 @@ local api = require "luci.passwall.api"
 											var log_a = document.createElement("a");
 											log_a.innerHTML = "<%:Log%>";
 											log_a.href = "#";
-											log_a.setAttribute("onclick", "window.open('" + '<%=api.url("get_redir_log")%>' + "?proto=" + s[0] + "', '_blank')");
+											log_a.setAttribute("onclick", "window.open('" + '<%=api.url("get_redir_log")%>' + "?name=default&proto=" + s[0] + "', '_blank')");
 											new_html += "&nbsp&nbsp" + log_a.outerHTML;
 										}
 

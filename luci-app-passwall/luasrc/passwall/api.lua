@@ -73,7 +73,7 @@ end
 
 function curl_proxy(url, file, args)
 	--使用代理
-	local socks_server = luci.sys.exec("[ -f /tmp/etc/passwall/TCP_SOCKS_server ] && echo -n $(cat /tmp/etc/passwall/TCP_SOCKS_server) || echo -n ''")
+	local socks_server = luci.sys.exec("[ -f /tmp/etc/passwall/acl/default/TCP_SOCKS_server ] && echo -n $(cat /tmp/etc/passwall/acl/default/TCP_SOCKS_server) || echo -n ''")
 	if socks_server ~= "" then
 		if not args then args = {} end
 		local tmp_args = clone(args)
@@ -919,7 +919,7 @@ function to_move(app_name,file)
 		sys.call(cmd_rm_tmp)
 		return {
 			code = 1,
-			error = i18n.translate("The client file is not suitable for current device.")..app_name.."__"..bin_path
+			error = i18n.translate("The client file is not suitable for current device.") .. app_name .. "__" .. bin_path
 		}
 	end
 

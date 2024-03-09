@@ -1,7 +1,7 @@
 #!/usr/bin/lua
 
 local api = require ("luci.passwall.api")
-local appname = api.appname
+local appname = "passwall"
 local fs = api.fs
 local jsonc = api.jsonc
 local uci = api.uci

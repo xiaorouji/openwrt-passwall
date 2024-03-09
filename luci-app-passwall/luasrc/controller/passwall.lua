@@ -3,14 +3,14 @@
 
 module("luci.controller.passwall", package.seeall)
 local api = require "luci.passwall.api"
-local appname = api.appname
+local appname = "passwall"
 local ucic = luci.model.uci.cursor()
 local http = require "luci.http"
 local util = require "luci.util"
 local i18n = require "luci.i18n"
 
 function index()
-	appname = require "luci.passwall.api".appname
+	appname = "passwall"
 	entry({"admin", "services", appname}).dependent = true
 	entry({"admin", "services", appname, "reset_config"}, call("reset_config")).leaf = true
 	entry({"admin", "services", appname, "show"}, call("show_menu")).leaf = true
@@ -148,12 +148,13 @@ function socks_autoswitch_remove_node()
 end
 
 function get_now_use_node()
+	local path = "/tmp/etc/passwall/acl/default"
 	local e = {}
-	local data, code, msg = nixio.fs.readfile("/tmp/etc/passwall/id/TCP")
+	local data, code, msg = nixio.fs.readfile(path .. "/TCP.id")
 	if data then
 		e["TCP"] = util.trim(data)
 	end
-	local data, code, msg = nixio.fs.readfile("/tmp/etc/passwall/id/UDP")
+	local data, code, msg = nixio.fs.readfile(path .. "/UDP.id")
 	if data then
 		e["UDP"] = util.trim(data)
 	end
@@ -162,13 +163,15 @@ function get_now_use_node()
 end
 
 function get_redir_log()
+	local name = luci.http.formvalue("name")
 	local proto = luci.http.formvalue("proto")
+	local path = "/tmp/etc/passwall/acl/" .. name
 	proto = proto:upper()
-	if proto == "UDP" and (ucic:get(appname, "@global[0]", "udp_node") or "nil") == "tcp" and not nixio.fs.access("/tmp/etc/passwall/" .. proto .. ".log") then
+	if proto == "UDP" and (ucic:get(appname, "@global[0]", "udp_node") or "nil") == "tcp" and not nixio.fs.access(path .. "/" .. proto .. ".log") then
 		proto = "TCP"
 	end
-	if nixio.fs.access("/tmp/etc/passwall/" .. proto .. ".log") then
-		local content = luci.sys.exec("cat /tmp/etc/passwall/" .. proto .. ".log")
+	if nixio.fs.access(path .. "/" .. proto .. ".log") then
+		local content = luci.sys.exec("cat ".. path .. "/" .. proto .. ".log")
 		content = content:gsub("\n", "<br />")
 		luci.http.write(content)
 	else

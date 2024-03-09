@@ -10,7 +10,6 @@ TMP_PATH=/tmp/etc/$CONFIG
 TMP_BIN_PATH=$TMP_PATH/bin
 TMP_SCRIPT_FUNC_PATH=$TMP_PATH/script_func
 TMP_ID_PATH=$TMP_PATH/id
-TMP_PORT_PATH=$TMP_PATH/port
 TMP_ROUTE_PATH=$TMP_PATH/route
 TMP_ACL_PATH=$TMP_PATH/acl
 TMP_IFACE_PATH=$TMP_PATH/iface
@@ -672,9 +671,9 @@ run_redir() {
 	local node proto bind local_port config_file log_file
 	eval_set_val $@
 	local tcp_node_socks_flag tcp_node_http_flag
-	[ -n "$config_file" ] && [ -z "$(echo ${config_file} | grep $TMP_PATH)" ] && config_file=$TMP_PATH/$config_file
+	[ -n "$config_file" ] && [ -z "$(echo ${config_file} | grep $TMP_PATH)" ] && config_file=${TMP_ACL_PATH}/default/${config_file}
 	if [ -n "$log_file" ] && [ -z "$(echo ${log_file} | grep $TMP_PATH)" ]; then
-		log_file=$TMP_PATH/$log_file
+		log_file=${TMP_ACL_PATH}/default/${log_file}
 	else
 		log_file="/dev/null"
 	fi
@@ -982,7 +981,8 @@ run_redir() {
 		}
 
 		[ "$tcp_node_socks" = "1" ] && {
-			echo "127.0.0.1:$tcp_node_socks_port" > $TMP_PATH/TCP_SOCKS_server
+			TCP_SOCKS_server="127.0.0.1:$tcp_node_socks_port"
+			echo "${TCP_SOCKS_server}" > $TMP_ACL_PATH/default/TCP_SOCKS_server
 		}
 	;;
 	esac
@@ -1001,15 +1001,7 @@ start_redir() {
 		local port=$(echo $(get_new_port $current_port $proto))
 		eval ${proto}_REDIR=$port
 		run_redir node=$node proto=${proto} bind=0.0.0.0 local_port=$port config_file=$config_file log_file=$log_file
-		#eval ip=\$${proto}_NODE_IP
-		echo $port > $TMP_PORT_PATH/${proto}
-		echo $node > $TMP_ID_PATH/${proto}
-		[ "$(config_n_get $node protocol nil)" = "_shunt" ] && {
-			local default_node=$(config_n_get $node default_node nil)
-			local main_node=$(config_n_get $node main_node nil)
-			echo $default_node > $TMP_ID_PATH/${proto}_default
-			echo $main_node > $TMP_ID_PATH/${proto}_main
-		}
+		echo $node > $TMP_ACL_PATH/default/${proto}.id
 	else
 		[ "${proto}" = "UDP" ] && [ "$TCP_UDP" = "1" ] && return
 		echolog "${proto}节点没有选择或为空，不代理${proto}。"
@@ -1618,6 +1610,7 @@ start() {
 	}
 
 	[ "$ENABLED_DEFAULT_ACL" == 1 ] && {
+		mkdir -p $TMP_ACL_PATH/default
 		start_redir TCP
 		start_redir UDP
 		start_dns
@@ -1718,7 +1711,7 @@ DNS_QUERY_STRATEGY="UseIPv4"
 
 export V2RAY_LOCATION_ASSET=$(config_t_get global_rules v2ray_location_asset "/usr/share/v2ray/")
 export XRAY_LOCATION_ASSET=$V2RAY_LOCATION_ASSET
-mkdir -p /tmp/etc $TMP_PATH $TMP_BIN_PATH $TMP_SCRIPT_FUNC_PATH $TMP_ID_PATH $TMP_PORT_PATH $TMP_ROUTE_PATH $TMP_ACL_PATH $TMP_IFACE_PATH $TMP_PATH2
+mkdir -p /tmp/etc $TMP_PATH $TMP_BIN_PATH $TMP_SCRIPT_FUNC_PATH $TMP_ID_PATH $TMP_ROUTE_PATH $TMP_ACL_PATH $TMP_IFACE_PATH $TMP_PATH2
 
 arg1=$1
 shift

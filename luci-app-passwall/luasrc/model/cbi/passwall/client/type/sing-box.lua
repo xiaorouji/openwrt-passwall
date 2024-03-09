@@ -10,7 +10,7 @@ end
 
 local singbox_tags = luci.sys.exec(singbox_bin .. " version  | grep 'Tags:' | awk '{print $2}'")
 
-local appname = api.appname
+local appname = "passwall"
 local uci = api.uci
 
 local type_name = "sing-box"
