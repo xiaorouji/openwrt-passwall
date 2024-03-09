@@ -62,14 +62,15 @@ _M["chinadns-ng"] = {
 	default_path = "/usr/bin/chinadns-ng",
 	match_fmt_str = "%s$",
 	file_tree = {
-		x86_64  = "x86_64",
-		x86     = "i686",
-		mipsel  = "mipsel",
-		aarch64 = "aarch64",
-		armv5   = "arm%-eabi",
-		armv6   = "armv6%-eabihf",
-		armv7   = "armv7l%-eabihf",
-		armv8   = "aarch64"
+		x86_64  = "@x86_64@",
+		x86     = "@i686@",
+		mips    = "mips-linux-musl@mips32@",
+		mipsel  = "mipsel-linux-musl@mips32@",
+		aarch64 = "aarch64-linux-musl@generic+v8a",
+		armv5   = "arm-linux-musleabi@generic+v5te",
+		armv6   = "arm-linux-musleabi@generic+v6t2",
+		armv7   = "arm-linux-musleabihf@generic+v7a",
+		armv8   = "aarch64-linux-musl@generic+v8a"
 	}
 }
 
