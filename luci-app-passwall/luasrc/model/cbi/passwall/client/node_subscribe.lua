@@ -6,18 +6,18 @@ local has_trojan_plus = api.is_finded("trojan-plus")
 local has_singbox = api.finded_com("singbox")
 local has_xray = api.finded_com("xray")
 local has_hysteria2 = api.finded_com("hysteria")
-local ss_aead_type = {}
+local ss_type = {}
 local trojan_type = {}
 local vmess_type = {}
 local vless_type = {}
 local hysteria2_type = {}
 if has_ss then
 	local s = "shadowsocks-libev"
-	table.insert(ss_aead_type, s)
+	table.insert(ss_type, s)
 end
 if has_ss_rust then
 	local s = "shadowsocks-rust"
-	table.insert(ss_aead_type, s)
+	table.insert(ss_type, s)
 end
 if has_trojan_plus then
 	local s = "trojan-plus"
@@ -26,7 +26,7 @@ end
 if has_singbox then
 	local s = "sing-box"
 	table.insert(trojan_type, s)
-	table.insert(ss_aead_type, s)
+	table.insert(ss_type, s)
 	table.insert(vmess_type, s)
 	table.insert(vless_type, s)
 	table.insert(hysteria2_type, s)
@@ -34,7 +34,7 @@ end
 if has_xray then
 	local s = "xray"
 	table.insert(trojan_type, s)
-	table.insert(ss_aead_type, s)
+	table.insert(ss_type, s)
 	table.insert(vmess_type, s)
 	table.insert(vless_type, s)
 end
@@ -61,9 +61,9 @@ o = s:option(DynamicList, "filter_discard_list", translate("Discard List"))
 
 o = s:option(DynamicList, "filter_keep_list", translate("Keep List"))
 
-if #ss_aead_type > 0 then
-	o = s:option(ListValue, "ss_aead_type", translatef("%s Node Use Type", "SS AEAD"))
-	for key, value in pairs(ss_aead_type) do
+if #ss_type > 0 then
+	o = s:option(ListValue, "ss_type", translatef("%s Node Use Type", "Shadowsocks"))
+	for key, value in pairs(ss_type) do
 		o:value(value)
 	end
 end

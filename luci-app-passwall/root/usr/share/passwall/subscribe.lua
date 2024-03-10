@@ -29,7 +29,7 @@ local has_singbox = api.finded_com("singbox")
 local has_xray = api.finded_com("xray")
 local has_hysteria2 = api.finded_com("hysteria")
 local allowInsecure_default = nil
-local ss_aead_type_default = uci:get(appname, "@global_subscribe[0]", "ss_aead_type") or "shadowsocks-libev"
+local ss_type_default = uci:get(appname, "@global_subscribe[0]", "ss_type") or "shadowsocks-libev"
 local trojan_type_default = uci:get(appname, "@global_subscribe[0]", "trojan_type") or "trojan-plus"
 local vmess_type_default = uci:get(appname, "@global_subscribe[0]", "vmess_type") or "xray"
 local vless_type_default = uci:get(appname, "@global_subscribe[0]", "vless_type") or "xray"
@@ -537,48 +537,46 @@ local function processData(szType, content, add_mode, add_from)
 			result.method = method
 			result.password = password
 
-			local aead = false
-			for k, v in ipairs({"aes-128-gcm", "aes-256-gcm", "chacha20-poly1305", "chacha20-ietf-poly1305"}) do
-				if method:lower() == v:lower() then
-					aead = true
+			if ss_type_default == "shadowsocks-rust" and has_ss_rust then
+				result.type = 'SS-Rust'
+			end
+			if ss_type_default == "xray" and has_xray then
+				result.type = 'Xray'
+				result.protocol = 'shadowsocks'
+				result.transport = 'tcp'
+			end
+			if ss_type_default == "sing-box" and has_singbox then
+				result.type = 'sing-box'
+				result.protocol = 'shadowsocks'
+			end
+
+			if result.type == "SS-Rust" or result.type == "Xray" then
+				if method:lower() == "chacha20-ietf-poly1305" then
+					result.method = "chacha20-poly1305"
 				end
 			end
-			if aead then
-				if ss_aead_type_default == "shadowsocks-libev" and has_ss then
-					result.type = "SS"
-				elseif ss_aead_type_default == "shadowsocks-rust" and has_ss_rust then
-					result.type = 'SS-Rust'
-					if method:lower() == "chacha20-poly1305" then
-						result.method = "chacha20-ietf-poly1305"
+
+			if result.plugin then
+				if result.type == 'Xray' then
+					--不支持插件
+					result.error_msg = "Xray不支持插件."
+				end
+				if result.type == "sing-box" then
+					result.plugin_enabled = "1"
+				end
+			end
+
+			if result.type == "SS" then
+				local aead2022_methods = { "2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305" }
+				local aead2022 = false
+				for k, v in ipairs(aead2022_methods) do
+					if method:lower() == v:lower() then
+						aead2022 = true
 					end
-				elseif ss_aead_type_default == "sing-box" and has_singbox and not result.plugin then
-					result.type = 'sing-box'
-					result.protocol = 'shadowsocks'
-				elseif ss_aead_type_default == "xray" and has_xray and not result.plugin then
-					result.type = 'Xray'
-					result.protocol = 'shadowsocks'
-					result.transport = 'tcp'
-					if method:lower() == "chacha20-ietf-poly1305" then
-						result.method = "chacha20-poly1305"
-					end
 				end
-			end
-			local aead2022 = false
-			for k, v in ipairs({"2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305"}) do
-				if method:lower() == v:lower() then
-					aead2022 = true
-				end
-			end
-			if aead2022 then
-				if ss_aead_type_default == "sing-box" and has_singbox and not result.plugin then
-					result.type = 'sing-box'
-					result.protocol = 'shadowsocks'
-				elseif ss_aead_type_default == "xray" and has_xray and not result.plugin then
-					result.type = 'Xray'
-					result.protocol = 'shadowsocks'
-					result.transport = 'tcp'
-				elseif has_ss_rust then
-					result.type = 'SS-Rust'
+				if aead2022 then
+					-- shadowsocks-libev 不支持2022加密
+					result.error_msg = "shadowsocks-libev 不支持2022加密."
 				end
 			end
 		end
@@ -1184,8 +1182,10 @@ local function parse_link(raw, add_mode, add_from)
 					end
 					-- log(result)
 					if result then
-						if not result.type then
-							log('丢弃节点:' .. result.remarks .. ",找不到可使用二进制.")
+						if result.error_msg then
+							log('丢弃节点: ' .. result.remarks .. ", 原因:" .. result.error_msg)
+						elseif not result.type then
+							log('丢弃节点: ' .. result.remarks .. ", 找不到可使用二进制.")
 						elseif (add_mode == "2" and is_filter_keyword(result.remarks)) or not result.address or result.remarks == "NULL" or result.address == "127.0.0.1" or
 								(not datatypes.hostname(result.address) and not (api.is_ip(result.address))) then
 							log('丢弃过滤节点: ' .. result.type .. ' 节点, ' .. result.remarks)
@@ -1252,9 +1252,9 @@ local execute = function()
 				filter_keyword_keep_list_default = value.filter_keep_list or {}
 				filter_keyword_discard_list_default = value.filter_discard_list or {}
 			end
-			local ss_aead_type = value.ss_aead_type or "global"
-			if ss_aead_type ~= "global" then
-				ss_aead_type_default = ss_aead_type
+			local ss_type = value.ss_type or "global"
+			if ss_type ~= "global" then
+				ss_type_default = ss_type
 			end
 			local trojan_type = value.trojan_type or "global"
 			if trojan_type ~= "global" then
@@ -1289,7 +1289,7 @@ local execute = function()
 			filter_keyword_mode_default = uci:get(appname, "@global_subscribe[0]", "filter_keyword_mode") or "0"
 			filter_keyword_discard_list_default = uci:get(appname, "@global_subscribe[0]", "filter_discard_list") or {}
 			filter_keyword_keep_list_default = uci:get(appname, "@global_subscribe[0]", "filter_keep_list") or {}
-			ss_aead_type_default = uci:get(appname, "@global_subscribe[0]", "ss_aead_type") or "shadowsocks-libev"
+			ss_type_default = uci:get(appname, "@global_subscribe[0]", "ss_type") or "shadowsocks-libev"
 			trojan_type_default = uci:get(appname, "@global_subscribe[0]", "trojan_type") or "trojan-plus"
 			vmess_type_default = uci:get(appname, "@global_subscribe[0]", "vmess_type") or "xray"
 			vless_type_default = uci:get(appname, "@global_subscribe[0]", "vless_type") or "xray"
