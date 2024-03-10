@@ -60,17 +60,17 @@ _M["chinadns-ng"] = {
 	cmd_version = "-V | awk '{print $2}'",
 	zipped = false,
 	default_path = "/usr/bin/chinadns-ng",
-	match_fmt_str = "%s$",
+	match_fmt_str = "%s",
 	file_tree = {
-		x86_64  = "@x86_64@",
-		x86     = "@i686@",
-		mips    = "mips-linux-musl@mips32@",
-		mipsel  = "mipsel-linux-musl@mips32@",
-		aarch64 = "aarch64-linux-musl@generic+v8a",
-		armv5   = "arm-linux-musleabi@generic+v5te",
-		armv6   = "arm-linux-musleabi@generic+v6t2",
-		armv7   = "arm-linux-musleabihf@generic+v7a",
-		armv8   = "aarch64-linux-musl@generic+v8a"
+		x86_64  = "x86_64_v4",
+		x86     = "i686",
+		mips    = "mips.*mips32@",
+		mipsel  = "mipsel.*mips32@",
+		aarch64 = "aarch64.*v8a",
+		armv5   = "arm.*v5te",
+		armv6   = "arm.*v6t2",
+		armv7   = "eabihf.*v7a",
+		armv8   = "aarch64.*v8a"
 	}
 }
 
