@@ -190,7 +190,6 @@ o:value("disable", translate("No patterns are used"))
 o:value("default", translate("Default"))
 o.validate = port_validate
 o:value("default", translate("Use global config") .. "(" .. TCP_PROXY_DROP_PORTS .. ")")
-o:depends({ tcp_node = "",  ['!reverse'] = true })
 
 ---- UDP Proxy Drop Ports
 local UDP_PROXY_DROP_PORTS = uci:get(appname, "@global_forwarding[0]", "udp_proxy_drop_ports")
@@ -200,11 +199,10 @@ o:value("disable", translate("No patterns are used"))
 o:value("default", translate("Use global config") .. "(" .. UDP_PROXY_DROP_PORTS .. ")")
 o:value("80,443", translate("QUIC"))
 o.validate = port_validate
-o:depends({ udp_node = "",  ['!reverse'] = true })
 
 ---- TCP Redir Ports
 local TCP_REDIR_PORTS = uci:get(appname, "@global_forwarding[0]", "tcp_redir_ports")
-o = s:option(Value, "tcp_redir_ports", translate("TCP Redir Ports"))
+o = s:option(Value, "tcp_redir_ports", translate("TCP Redir Ports"), translatef("Only work with using the %s node.", "TCP"))
 o.default = "default"
 o:value("default", translate("Use global config") .. "(" .. TCP_REDIR_PORTS .. ")")
 o:value("1:65535", translate("All"))
@@ -212,17 +210,15 @@ o:value("80,443", "80,443")
 o:value("80:65535", "80 " .. translate("or more"))
 o:value("1:443", "443 " .. translate("or less"))
 o.validate = port_validate
-o:depends({ tcp_node = "",  ['!reverse'] = true })
 
 ---- UDP Redir Ports
 local UDP_REDIR_PORTS = uci:get(appname, "@global_forwarding[0]", "udp_redir_ports")
-o = s:option(Value, "udp_redir_ports", translate("UDP Redir Ports"))
+o = s:option(Value, "udp_redir_ports", translate("UDP Redir Ports"), translatef("Only work with using the %s node.", "UDP"))
 o.default = "default"
 o:value("default", translate("Use global config") .. "(" .. UDP_REDIR_PORTS .. ")")
 o:value("1:65535", translate("All"))
 o:value("53", "53")
 o.validate = port_validate
-o:depends({ udp_node = "",  ['!reverse'] = true })
 
 o = s:option(Flag, "use_direct_list", translatef("Use %s", translate("Direct List")))
 o.default = "1"
