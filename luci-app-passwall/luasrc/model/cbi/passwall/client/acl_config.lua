@@ -187,9 +187,8 @@ local TCP_PROXY_DROP_PORTS = uci:get(appname, "@global_forwarding[0]", "tcp_prox
 o = s:option(Value, "tcp_proxy_drop_ports", translate("TCP Proxy Drop Ports"))
 o.default = "default"
 o:value("disable", translate("No patterns are used"))
-o:value("default", translate("Default"))
-o.validate = port_validate
 o:value("default", translate("Use global config") .. "(" .. TCP_PROXY_DROP_PORTS .. ")")
+o.validate = port_validate
 
 ---- UDP Proxy Drop Ports
 local UDP_PROXY_DROP_PORTS = uci:get(appname, "@global_forwarding[0]", "udp_proxy_drop_ports")
@@ -197,7 +196,7 @@ o = s:option(Value, "udp_proxy_drop_ports", translate("UDP Proxy Drop Ports"))
 o.default = "default"
 o:value("disable", translate("No patterns are used"))
 o:value("default", translate("Use global config") .. "(" .. UDP_PROXY_DROP_PORTS .. ")")
-o:value("80,443", translate("QUIC"))
+o:value("443", translate("QUIC"))
 o.validate = port_validate
 
 ---- TCP Redir Ports
