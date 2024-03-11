@@ -1360,7 +1360,7 @@ acl_app() {
 			mkdir -p $TMP_ACL_PATH/$sid
 			echo -e "${rule_list}" | sed '/^$/d' > $TMP_ACL_PATH/$sid/rule_list
 
-			use_global_config=${use_global_config}
+			use_global_config=${use_global_config:-0}
 			tcp_node=${tcp_node:-nil}
 			udp_node=${udp_node:-nil}
 			use_direct_list=${use_direct_list:-1}
@@ -1379,7 +1379,7 @@ acl_app() {
 				[ "$v2ray_dns_mode" = "doh" ] && remote_dns=${remote_dns_doh:-https://1.1.1.1/dns-query}
 			}
 			
-			[ "${use_global_config}" = "1" ] & {
+			[ "${use_global_config}" = "1" ] && {
 				tcp_node="default"
 				udp_node="default"
 			}
