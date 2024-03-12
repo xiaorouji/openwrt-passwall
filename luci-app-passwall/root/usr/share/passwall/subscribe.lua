@@ -550,10 +550,12 @@ local function processData(szType, content, add_mode, add_from)
 				result.protocol = 'shadowsocks'
 			end
 
-			if result.type == "SS-Rust" or result.type == "Xray" then
-				if method:lower() == "chacha20-ietf-poly1305" then
-					result.method = "chacha20-poly1305"
-				end
+			if result.type == "SS-Rust" and method:lower() == "chacha20-poly1305" then
+				result.method = "chacha20-ietf-poly1305"
+			end
+
+			if result.type == "Xray" and method:lower() == "chacha20-ietf-poly1305" then
+				result.method = "chacha20-poly1305"
 			end
 
 			if result.plugin then
