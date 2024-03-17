@@ -53,7 +53,7 @@ local api = require "luci.passwall.api"
 									var dom_id = dom.id.split(cbi_id).join(cbi_id.split("-").join(".")).split("cbi.").join("cbid.")
 									var node_select = document.getElementsByName(dom_id)[0];
 									var node_select_value = node_select.value;
-									if (node_select_value && node_select_value != "nil" && node_select_value.indexOf("socks://") != 0 && node_select_value.indexOf("_default") != 0 && node_select_value.indexOf("_direct") != 0 && node_select_value.indexOf("_blackhole") != 0) {
+									if (node_select_value && node_select_value != "nil" && node_select_value.indexOf("_default") != 0 && node_select_value.indexOf("_direct") != 0 && node_select_value.indexOf("_blackhole") != 0) {
 										if (global_id != null && node_select_value.indexOf("tcp") == 0) {
 											var d = global_id + "-tcp_node";
 											d = d.replace("cbi-", "cbid-").replace(new RegExp("-", 'g'), ".");
@@ -68,11 +68,18 @@ local api = require "luci.passwall.api"
 											node_select = document.getElementById("cbi.combobox." + dom_id);
 										}
 
-										var new_a = document.createElement("a");
-										new_a.innerHTML = "<%:Edit%>";
-										new_a.href = "#";
-										new_a.setAttribute("onclick", "location.href='" + '<%=api.url("node_config")%>' + "/" + node_select_value + "'");
-										var new_html = new_a.outerHTML;
+										var new_html = ""
+										if (true) {
+											var to_url = '<%=api.url("node_config")%>/' + node_select_value;
+											if (node_select_value.indexOf("Socks_") == 0) {
+												to_url = '<%=api.url("socks_config")%>/' + node_select_value.substring("Socks_".length);
+											}
+											var new_a = document.createElement("a");
+											new_a.innerHTML = "<%:Edit%>";
+											new_a.href = "#";
+											new_a.setAttribute("onclick", "location.href='" + to_url + "'");
+											new_html = new_a.outerHTML;
+										}
 
 										if (s[0] == "tcp" || s[0] == "udp") {
 											var log_a = document.createElement("a");

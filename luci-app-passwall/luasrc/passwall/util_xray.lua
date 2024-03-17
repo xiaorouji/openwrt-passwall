@@ -742,23 +742,24 @@ function gen_config(var)
 			local preproxy_node = preproxy_enabled and preproxy_node_id and uci:get_all(appname, preproxy_node_id) or nil
 			local preproxy_is_balancer
 
-			if not preproxy_node and preproxy_node_id and api.parseURL(preproxy_node_id) then
-				local parsed1 = api.parseURL(preproxy_node_id)
-				local _node = {
-					type = "Xray",
-					protocol = parsed1.protocol,
-					username = parsed1.username,
-					password = parsed1.password,
-					address = parsed1.host,
-					port = parsed1.port,
-					transport = "tcp",
-					stream_security = "none"
-				}
-				local preproxy_outbound = gen_outbound(flag, _node, preproxy_tag)
-				if preproxy_outbound then
-					table.insert(outbounds, preproxy_outbound)
-				else
-					preproxy_enabled = false
+			if preproxy_node_id and preproxy_node_id:find("Socks_") then
+				local socks_id = preproxy_node_id:sub(1 + #"Socks_")
+				local socks_node = uci:get_all(appname, socks_id) or nil
+				if socks_node then
+					local _node = {
+						type = "Xray",
+						protocol = "socks",
+						address = "127.0.0.1",
+						port = socks_node.port,
+						transport = "tcp",
+						stream_security = "none"
+					}
+					local preproxy_outbound = gen_outbound(flag, _node, preproxy_tag)
+					if preproxy_outbound then
+						table.insert(outbounds, preproxy_outbound)
+					else
+						preproxy_enabled = false
+					end
 				end
 			elseif preproxy_node and api.is_normal_node(preproxy_node) then
 				local preproxy_outbound = gen_outbound(flag, preproxy_node, preproxy_tag, { fragment = xray_settings.fragment == "1" or nil })
@@ -790,22 +791,23 @@ function gen_config(var)
 					rule_outboundTag = "blackhole"
 				elseif _node_id == "_default" and rule_name ~= "default" then
 					rule_outboundTag = "default"
-				elseif api.parseURL(_node_id) then
-					local parsed1 = api.parseURL(_node_id)
-					local _node = {
-						type = "Xray",
-						protocol = parsed1.protocol,
-						username = parsed1.username,
-						password = parsed1.password,
-						address = parsed1.host,
-						port = parsed1.port,
-						transport = "tcp",
-						stream_security = "none"
-					}
-					local _outbound = gen_outbound(flag, _node, rule_name)
-					if _outbound then
-						table.insert(outbounds, _outbound)
-						rule_outboundTag = rule_name
+				elseif _node_id:find("Socks_") then
+					local socks_id = _node_id:sub(1 + #"Socks_")
+					local socks_node = uci:get_all(appname, socks_id) or nil
+					if socks_node then
+						local _node = {
+							type = "Xray",
+							protocol = "socks",
+							address = "127.0.0.1",
+							port = socks_node.port,
+							transport = "tcp",
+							stream_security = "none"
+						}
+						local _outbound = gen_outbound(flag, _node, rule_name)
+						if _outbound then
+							table.insert(outbounds, _outbound)
+							rule_outboundTag = rule_name
+						end
 					end
 				elseif _node_id ~= "nil" then
 					local _node = uci:get_all(appname, _node_id)

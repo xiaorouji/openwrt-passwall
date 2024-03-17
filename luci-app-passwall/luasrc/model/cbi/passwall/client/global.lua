@@ -16,24 +16,49 @@ for k, e in ipairs(api.get_valid_nodes()) do
 	nodes_table[#nodes_table + 1] = e
 end
 
+local normal_list = {}
+local balancing_list = {}
+local shunt_list = {}
+local iface_list = {}
+for k, v in pairs(nodes_table) do
+	if v.node_type == "normal" then
+		normal_list[#normal_list + 1] = v
+	end
+	if v.protocol and v.protocol == "_balancing" then
+		balancing_list[#balancing_list + 1] = v
+	end
+	if v.protocol and v.protocol == "_shunt" then
+		shunt_list[#shunt_list + 1] = v
+	end
+	if v.protocol and v.protocol == "_iface" then
+		iface_list[#iface_list + 1] = v
+	end
+end
+
+local socks_list = {}
+
 local tcp_socks_server = "127.0.0.1" .. ":" .. (uci:get(appname, "@global[0]", "tcp_node_socks_port") or "1070")
 local socks_table = {}
 socks_table[#socks_table + 1] = {
 	id = tcp_socks_server,
-	remarks = tcp_socks_server .. " - " .. translate("TCP Node")
+	remark = tcp_socks_server .. " - " .. translate("TCP Node")
 }
 uci:foreach(appname, "socks", function(s)
 	if s.enabled == "1" and s.node then
-		local id, remarks
+		local id, remark
 		for k, n in pairs(nodes_table) do
 			if (s.node == n.id) then
-				remarks = n["remark"]; break
+				remark = n["remark"]; break
 			end
 		end
 		id = "127.0.0.1" .. ":" .. s.port
 		socks_table[#socks_table + 1] = {
 			id = id,
-			remarks = id .. " - " .. (remarks or translate("Misconfigured"))
+			remark = id .. " - " .. (remark or translate("Misconfigured"))
+		}
+		socks_list[#socks_list + 1] = {
+			id = "Socks_" .. s[".name"],
+			remark = translate("Socks Config") .. " " .. string.format("[%s %s]", s.port, translate("Port"))
 		}
 	end
 end)
@@ -84,25 +109,6 @@ udp_node:value("tcp", translate("Same as the tcp node"))
 
 -- 分流
 if (has_singbox or has_xray) and #nodes_table > 0 then
-	local normal_list = {}
-	local balancing_list = {}
-	local shunt_list = {}
-	local iface_list = {}
-	for k, v in pairs(nodes_table) do
-		if v.node_type == "normal" then
-			normal_list[#normal_list + 1] = v
-		end
-		if v.protocol and v.protocol == "_balancing" then
-			balancing_list[#balancing_list + 1] = v
-		end
-		if v.protocol and v.protocol == "_shunt" then
-			shunt_list[#shunt_list + 1] = v
-		end
-		if v.protocol and v.protocol == "_iface" then
-			iface_list[#iface_list + 1] = v
-		end
-	end
-
 	local function get_cfgvalue(shunt_node_id, option)
 		return function(self, section)
 			return m:get(shunt_node_id, option) or "nil"
@@ -134,8 +140,11 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 			o.cfgvalue = get_cfgvalue(v.id, "preproxy_enabled")
 			o.write = get_write(v.id, "preproxy_enabled")
 
-			o = s:taboption("Main", Value, vid .. "-main_node", string.format('<a style="color:red">%s</a>', translate("Preproxy Node")), translate("Set the node to be used as a pre-proxy. Each rule (including <code>Default</code>) has a separate switch that controls whether this rule uses the pre-proxy or not."))
+			o = s:taboption("Main", ListValue, vid .. "-main_node", string.format('<a style="color:red">%s</a>', translate("Preproxy Node")), translate("Set the node to be used as a pre-proxy. Each rule (including <code>Default</code>) has a separate switch that controls whether this rule uses the pre-proxy or not."))
 			o:depends(vid .. "-preproxy_enabled", "1")
+			for k1, v1 in pairs(socks_list) do
+				o:value(v1.id, v1.remark)
+			end
 			for k1, v1 in pairs(balancing_list) do
 				o:value(v1.id, v1.remark)
 			end
@@ -158,7 +167,7 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 				local id = e[".name"]
 				local node_option = vid .. "-" .. id .. "_node"
 				if id and e.remarks then
-					o = s:taboption("Main", Value, node_option, string.format('* <a href="%s" target="_blank">%s</a>', api.url("shunt_rules", id), e.remarks))
+					o = s:taboption("Main", ListValue, node_option, string.format('* <a href="%s" target="_blank">%s</a>', api.url("shunt_rules", id), e.remarks))
 					o.cfgvalue = get_cfgvalue(v.id, id)
 					o.write = get_write(v.id, id)
 					o:depends("tcp_node", v.id)
@@ -173,6 +182,9 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 					pt:value("nil", translate("Close"))
 					pt:value("main", translate("Preproxy Node"))
 					pt.default = "nil"
+					for k1, v1 in pairs(socks_list) do
+						o:value(v1.id, v1.remark)
+					end
 					for k1, v1 in pairs(balancing_list) do
 						o:value(v1.id, v1.remark)
 					end
@@ -187,12 +199,15 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 			end)
 
 			local id = "default_node"
-			o = s:taboption("Main", Value, vid .. "-" .. id, string.format('* <a style="color:red">%s</a>', translate("Default")))
+			o = s:taboption("Main", ListValue, vid .. "-" .. id, string.format('* <a style="color:red">%s</a>', translate("Default")))
 			o.cfgvalue = get_cfgvalue(v.id, id)
 			o.write = get_write(v.id, id)
 			o:depends("tcp_node", v.id)
 			o:value("_direct", translate("Direct Connection"))
 			o:value("_blackhole", translate("Blackhole"))
+			for k1, v1 in pairs(socks_list) do
+				o:value(v1.id, v1.remark)
+			end
 			for k1, v1 in pairs(balancing_list) do
 				o:value(v1.id, v1.remark)
 			end
@@ -294,7 +309,7 @@ o.write = function(self, section, value)
 end
 
 o = s:taboption("DNS", Value, "socks_server", translate("Socks Server"), translate("Make sure socks service is available on this address."))
-for k, v in pairs(socks_table) do o:value(v.id, v.remarks) end
+for k, v in pairs(socks_table) do o:value(v.id, v.remark) end
 o.default = socks_table[1].id
 o.validate = function(self, value, t)
 	if not datatypes.ipaddrport(value) then
