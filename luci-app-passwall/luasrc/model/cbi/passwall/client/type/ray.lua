@@ -328,19 +328,12 @@ o:value("h2", "HTTP/2")
 o:value("ds", "DomainSocket")
 o:value("quic", "QUIC")
 o:value("grpc", "gRPC")
+o:value("httpupgrade", "HttpUpgrade")
 o:depends({ [option_name("protocol")] = "vmess" })
 o:depends({ [option_name("protocol")] = "vless" })
 o:depends({ [option_name("protocol")] = "socks" })
 o:depends({ [option_name("protocol")] = "shadowsocks" })
 o:depends({ [option_name("protocol")] = "trojan" })
-
---[[
-o = s:option(ListValue, option_name("ss_transport"), translate("Transport"))
-o:value("ws", "WebSocket")
-o:value("h2", "HTTP/2")
-o:value("h2+ws", "HTTP/2 & WebSocket")
-o:depends({ [option_name("protocol")] = "shadowsocks" })
-]]--
 
 o = s:option(Value, option_name("wireguard_public_key"), translate("Public Key"))
 o:depends({ [option_name("protocol")] = "wireguard" })
@@ -423,22 +416,18 @@ o:depends({ [option_name("transport")] = "mkcp" })
 -- [[ WebSocket部分 ]]--
 o = s:option(Value, option_name("ws_host"), translate("WebSocket Host"))
 o:depends({ [option_name("transport")] = "ws" })
-o:depends({ [option_name("ss_transport")] = "ws" })
 
 o = s:option(Value, option_name("ws_path"), translate("WebSocket Path"))
 o.placeholder = "/"
 o:depends({ [option_name("transport")] = "ws" })
-o:depends({ [option_name("ss_transport")] = "ws" })
 
 -- [[ HTTP/2部分 ]]--
 o = s:option(Value, option_name("h2_host"), translate("HTTP/2 Host"))
 o:depends({ [option_name("transport")] = "h2" })
-o:depends({ [option_name("ss_transport")] = "h2" })
 
 o = s:option(Value, option_name("h2_path"), translate("HTTP/2 Path"))
 o.placeholder = "/"
 o:depends({ [option_name("transport")] = "h2" })
-o:depends({ [option_name("ss_transport")] = "h2" })
 
 o = s:option(Flag, option_name("h2_health_check"), translate("Health check"))
 o:depends({ [option_name("transport")] = "h2" })
@@ -496,6 +485,14 @@ o:depends({ [option_name("grpc_health_check")] = true })
 o = s:option(Value, option_name("grpc_initial_windows_size"), translate("Initial Windows Size"))
 o.default = "0"
 o:depends({ [option_name("transport")] = "grpc" })
+
+-- [[ HttpUpgrade部分 ]]--
+o = s:option(Value, option_name("httpupgrade_host"), translate("HttpUpgrade Host"))
+o:depends({ [option_name("transport")] = "httpupgrade" })
+
+o = s:option(Value, option_name("httpupgrade_path"), translate("HttpUpgrade Path"))
+o.placeholder = "/"
+o:depends({ [option_name("transport")] = "httpupgrade" })
 
 -- [[ Mux ]]--
 o = s:option(Flag, option_name("mux"), translate("Mux"))

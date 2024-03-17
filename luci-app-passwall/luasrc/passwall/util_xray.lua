@@ -200,7 +200,11 @@ function gen_outbound(flag, node, tag, proxy_table)
 					health_check_timeout = tonumber(node.grpc_health_check_timeout) or nil,
 					permit_without_stream = (node.grpc_permit_without_stream == "1") and true or nil,
 					initial_windows_size = tonumber(node.grpc_initial_windows_size) or nil
-				} or nil
+				} or nil,
+				httpupgradeSettings = (node.transport == "httpupgrade") and {
+					path = node.httpupgrade_path or "/",
+					host = node.httpupgrade_host
+				} or nil,
 			} or nil,
 			settings = {
 				vnext = (node.protocol == "vmess" or node.protocol == "vless") and {
@@ -472,6 +476,10 @@ function gen_config_server(node)
 					} or nil,
 					grpcSettings = (node.transport == "grpc") and {
 						serviceName = node.grpc_serviceName
+					} or nil,
+					httpupgradeSettings = (node.transport == "httpupgrade") and {
+						path = node.httpupgrade_path or "/",
+						host = node.httpupgrade_host
 					} or nil,
 					sockopt = {
 						acceptProxyProtocol = (node.acceptProxyProtocol and node.acceptProxyProtocol == "1") and true or false

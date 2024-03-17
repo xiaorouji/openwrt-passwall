@@ -202,6 +202,7 @@ o:value("h2", "HTTP/2")
 o:value("ds", "DomainSocket")
 o:value("quic", "QUIC")
 o:value("grpc", "gRPC")
+o:value("httpupgrade", "HttpUpgrade")
 o:depends({ [option_name("protocol")] = "vmess" })
 o:depends({ [option_name("protocol")] = "vless" })
 o:depends({ [option_name("protocol")] = "socks" })
@@ -215,6 +216,14 @@ o:depends({ [option_name("transport")] = "ws" })
 
 o = s:option(Value, option_name("ws_path"), translate("WebSocket Path"))
 o:depends({ [option_name("transport")] = "ws" })
+
+-- [[ HttpUpgrade部分 ]]--
+o = s:option(Value, option_name("httpupgrade_host"), translate("HttpUpgrade Host"))
+o:depends({ [option_name("transport")] = "httpupgrade" })
+
+o = s:option(Value, option_name("httpupgrade_path"), translate("HttpUpgrade Path"))
+o.placeholder = "/"
+o:depends({ [option_name("transport")] = "httpupgrade" })
 
 -- [[ HTTP/2部分 ]]--
 
