@@ -125,12 +125,21 @@ local api = require "luci.passwall.api"
 							node_select.title = node_select.options[node_select.options.selectedIndex].text;
 						}
 
+						var new_html = ""
+
 						var new_a = document.createElement("a");
 						new_a.innerHTML = "<%:Edit%>";
 						new_a.href = "#";
 						new_a.setAttribute("onclick","location.href='" + '<%=api.url("node_config")%>' + "/" + node_select_value + "'");
+						new_html = new_a.outerHTML;
+						
+						var log_a = document.createElement("a");
+						log_a.innerHTML = "<%:Log%>";
+						log_a.href = "#";
+						log_a.setAttribute("onclick", "window.open('" + '<%=api.url("get_socks_log")%>' + "?name=" + id.replace("cbi-passwall-", "") + "', '_blank')");
+						new_html += "&nbsp" + log_a.outerHTML;
 
-						node_select.insertAdjacentHTML("afterend", "&nbsp&nbsp" + new_a.outerHTML);
+						node_select.insertAdjacentHTML("afterend", "&nbsp&nbsp" + new_html);
 					}
 				} catch(err) {
 				}
