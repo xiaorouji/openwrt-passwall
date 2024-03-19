@@ -2,6 +2,7 @@
 <%
 local api = require "luci.passwall.api"
 -%>
+<script src="<%=resource%>/qrcode.min.js"></script>
 <script type="text/javascript">//<![CDATA[
 	let has_singbox = "<%=api.finded_com("singbox")%>"
 	let has_xray = "<%=api.finded_com("xray")%>"
@@ -72,6 +73,20 @@ local api = require "luci.passwall.api"
 		};
 		return r;
 	}
+	
+	function genQrcode(btn, urlname, sid) {
+		var qrcode_div = document.getElementById("qrcode_div");
+		qrcode_div.style.display = null;
+		document.getElementById("qrcode").innerHTML = "";
+		var url = buildUrl(btn, urlname, sid);
+		if (url) {
+			var qrcode = new QRCode(document.getElementById("qrcode"), {
+				width: 150,
+				height: 150
+			});
+			qrcode.makeCode(url);
+		}
+	}
 
 	function buildUrl(btn, urlname, sid) {
 		var opt = {
@@ -114,12 +129,6 @@ local api = require "luci.passwall.api"
 				}
 				return ""
 			}
-		}
-
-		var s = document.getElementById(urlname + "-status");
-		if (!s) {
-			alert("Never");
-			return false;
 		}
 		opt.base = "cbid." + urlname + "." + sid;
 		opt.client = urlname.indexOf("server") === -1;
@@ -384,12 +393,27 @@ local api = require "luci.passwall.api"
 		}
 		if (url) {
 			url = protocol.toLowerCase() + "://" + url;
+			return url;
+		} else {
+			alert("<%:Not a supported scheme:%> " + v_type);
+		}
+		return false;
+	}
+	
+	function exportUrl(btn, urlname, sid) {
+		var url = buildUrl(btn, urlname, sid);
+		if (url) {
 			var textarea = document.createElement("textarea");
 			textarea.textContent = url;
 			textarea.style.position = "fixed";
 			document.body.appendChild(textarea);
 			textarea.select();
 			try {
+				var s = document.getElementById(urlname + "-status");
+				if (!s) {
+					alert("Never");
+					return false;
+				}
 				document.execCommand("copy"); // Security exception may be thrown by some browsers.
 				s.innerHTML = "<font color='green'><%:Share URL to clipboard successfully.%></font>";
 			} catch (ex) {
@@ -397,11 +421,7 @@ local api = require "luci.passwall.api"
 			} finally {
 				document.body.removeChild(textarea);
 			}
-			//alert(url);
-		} else {
-			alert("<%:Not a supported scheme:%> " + v_type);
 		}
-		return false;
 	}
 
 	function fromUrl(btn, urlname, sid) {
@@ -921,6 +941,10 @@ local api = require "luci.passwall.api"
 
 //]]></script>
 <input type="button" class="btn cbi-button cbi-button-apply" value='<%:From Share URL%>' onclick="return fromUrl(this, '<%=self.option%>', '<%=self.value%>')" />
-<input type="button" class="btn cbi-button cbi-button-apply" value='<%:Build Share URL%>' onclick="return buildUrl(this, '<%=self.option%>', '<%=self.value%>')" />
+<input type="button" class="btn cbi-button cbi-button-apply" value='<%:Build Share URL%>' onclick="return exportUrl(this, '<%=self.option%>', '<%=self.value%>')" />
+<input type="button" class="btn cbi-button cbi-button-apply" value='<%:Generate QRCode%>' onclick="return genQrcode(this, '<%=self.option%>', '<%=self.value%>')" />
+<div id="qrcode_div" style="margin-top: 1rem;display:none">
+	<div id="qrcode"></div>
+</div>
 <span id="<%=self.option%>-status"></span>
 <%+cbi/valuefooter%>

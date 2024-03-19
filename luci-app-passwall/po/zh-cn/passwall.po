@@ -475,6 +475,9 @@ msgstr "导入分享URL"
 msgid "Build Share URL"
 msgstr "导出分享URL"
 
+msgid "Generate QRCode"
+msgstr "生成二维码"
+
 msgid "Import Finished"
 msgstr "导入完成："
 
