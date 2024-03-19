@@ -10,7 +10,7 @@ jsonc = require "luci.jsonc"
 i18n = require "luci.i18n"
 
 appname = "passwall"
-curl_args = { "-skfL", "--connect-timeout 3", "--retry 3", "-m 60" }
+curl_args = { "-skfL", "--connect-timeout 3", "--retry 3" }
 command_timeout = 300
 OPENWRT_ARCH = nil
 DISTRIB_ARCH = nil
@@ -820,7 +820,10 @@ function to_download(app_name, url, size)
 		end
 	end
 
-	local return_code, result = curl_logic(url, tmp_file, curl_args)
+	local _curl_args = clone(curl_args)
+	table.insert(_curl_args, "-m 60")
+
+	local return_code, result = curl_logic(url, tmp_file, _curl_args)
 	result = return_code == 0
 
 	if not result then
