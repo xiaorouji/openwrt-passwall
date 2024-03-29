@@ -218,6 +218,11 @@ load_acl() {
 			[ "${use_global_config}" = "1" ] && {
 				tcp_node_remark=$(config_n_get $TCP_NODE remarks)
 				udp_node_remark=$(config_n_get $UDP_NODE remarks)
+				use_direct_list=${USE_DIRECT_LIST}
+				use_proxy_list=${USE_PROXY_LIST}
+				use_block_list=${USE_BLOCK_LIST}
+				use_gfw_list=${USE_GFW_LIST}
+				chn_list=${CHN_LIST}
 			}
 
 			for i in $(cat ${TMP_ACL_PATH}/${sid}/rule_list); do
