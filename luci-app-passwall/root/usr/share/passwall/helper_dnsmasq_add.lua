@@ -255,7 +255,8 @@ if not fs.access(CACHE_DNS_PATH) then
 			fwd_dns = TUN_DNS
 			if USE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" then
 				fwd_dns = nil
-			else
+			end
+			if fwd_dns then
 				local ipset_flag = setflag_4 .. "passwall_gfwlist," .. setflag_6 .. "passwall_gfwlist6"
 				if NO_PROXY_IPV6 == "1" then
 					ipset_flag = setflag_4 .. "passwall_gfwlist"
@@ -269,7 +270,11 @@ if not fs.access(CACHE_DNS_PATH) then
 						if NO_PROXY_IPV6 == "1" then
 							set_domain_address(line, "::")
 						end
-						set_domain_dns(line, fwd_dns)
+						if dnsmasq_default_dns == fwd_dns then
+							fwd_dns = nil
+						else
+							set_domain_dns(line, fwd_dns)
+						end
 						set_domain_ipset(line, ipset_flag)
 					end
 				end
@@ -282,12 +287,15 @@ if not fs.access(CACHE_DNS_PATH) then
 	if CHN_LIST ~= "0" then
 		if fs.access("/usr/share/passwall/rules/chnlist") then
 			fwd_dns = LOCAL_DNS
+			if CHN_LIST == "direct" then
+				if USE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" then
+					fwd_dns = nil
+				end
+			end
 			if CHN_LIST == "proxy" then
 				fwd_dns = TUN_DNS
 			end
-			if CHN_LIST == "direct" and USE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" then
-				fwd_dns = nil
-			else
+			if fwd_dns then
 				local ipset_flag = setflag_4 .. "passwall_chnroute," .. setflag_6 .. "passwall_chnroute6"
 				if CHN_LIST == "proxy" then
 					if NO_PROXY_IPV6 == "1" then
@@ -303,7 +311,11 @@ if not fs.access(CACHE_DNS_PATH) then
 						if CHN_LIST == "proxy" and NO_PROXY_IPV6 == "1" then
 							set_domain_address(line, "::")
 						end
-						set_domain_dns(line, fwd_dns)
+						if dnsmasq_default_dns == fwd_dns then
+							fwd_dns = nil
+						else
+							set_domain_dns(line, fwd_dns)
+						end
 						set_domain_ipset(line, ipset_flag)
 					end
 				end
@@ -432,7 +444,7 @@ if DNSMASQ_CONF_FILE ~= "nil" then
 		conf_out:write("no-poll\n")
 		conf_out:write("no-resolv\n")
 		conf_out:close()
-		log(string.format("  - 以上所列以外及默认：%s", dnsmasq_default_dns))
+		log(string.format("  - 默认：%s", dnsmasq_default_dns))
 
 		if FLAG == "default" then
 			local f_out = io.open("/tmp/etc/passwall/default_DNS", "a")
