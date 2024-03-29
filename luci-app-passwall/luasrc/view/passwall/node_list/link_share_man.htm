@@ -114,20 +114,25 @@ local api = require "luci.passwall.api"
 				}
 				return ret;
 			},
-			query: function (param, src, default_value, tval = "1", fval = "0") {
-				var ret = "&" + param + "=";
+			query: function (param, src, default_value) {
 				var obj = this.get(src);
 				if (obj) {
+					var ret = "&" + param + "=";
 					if (obj.type === "checkbox") {
-						return ret + (obj.checked === true ? tval : fval);
+						return ret + (obj.checked === true ? "1" : "0");
 					} else {
 						var result = encodeURIComponent(obj.value);
-						if ((result == null || result.trim() == "") && default_value)
-							result = default_value;
-						return ret + result;
+						if (result == null || result.trim() == "") {
+							if (default_value) {
+								return ret + default_value;
+							}
+							return "";
+						} else {
+							return ret + result;
+						}
 					}
 				}
-				return ""
+				return "";
 			}
 		}
 		opt.base = "cbid." + urlname + "." + sid;
