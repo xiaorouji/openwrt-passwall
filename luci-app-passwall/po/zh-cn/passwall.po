@@ -388,6 +388,9 @@ msgstr "负载均衡"
 msgid "Balancing Strategy"
 msgstr "负载均衡策略"
 
+msgid "Fallback Node"
+msgstr "后备节点"
+
 msgid "Use Custome Probe URL"
 msgstr "使用自定义探测网址"
 

@@ -646,6 +646,7 @@ function gen_config(var)
 
 		local function gen_balancer(_node, loopbackTag)
 			local blc_nodes = _node.balancing_node
+			local fallback_node_id = _node.fallback_node
 			local length = #blc_nodes
 			local valid_nodes = {}
 			for i = 1, length do
@@ -668,6 +669,27 @@ function gen_config(var)
 					end
 				end
 			end
+			if fallback_node_id == "" then
+				fallback_node_id = nil
+			end
+			if fallback_node_id then
+				local is_new_node = true
+				for _, outbound in ipairs(outbounds) do
+					if outbound.tag == fallback_node_id then
+						is_new_node = false
+						break
+					end
+				end
+				if is_new_node then
+					local fallback_node = uci:get_all(appname, fallback_node_id)
+					local outbound = gen_outbound(flag, fallback_node, fallback_node_id, { fragment = xray_settings.fragment == "1" or nil })
+					if outbound then
+						table.insert(outbounds, outbound)
+					else
+						fallback_node_id = nil
+					end
+				end
+			end
 
 			local balancer, rule
 			if #valid_nodes > 0 then
@@ -675,6 +697,7 @@ function gen_config(var)
 				balancer = {
 					tag = balancerTag,
 					selector = valid_nodes,
+					fallbackTag = fallback_node_id,
 					strategy = { type = _node.balancingStrategy or "random" }
 				}
 				if _node.balancingStrategy == "leastPing" or _node.balancingStrategy == "leastLoad" then
@@ -683,23 +706,22 @@ function gen_config(var)
 							subjectSelector = { "blc-" },
 							probeUrl = _node.useCustomProbeUrl and _node.probeUrl or nil,
 							probeInterval = _node.probeInterval or "1m",
-							enableConcurrency = node.type == "Xray" and true or nil --这里只判断顶层节点(分流总节点/单独的负载均衡节点)类型为Xray，就可以启用并发
+							enableConcurrency = true
 						}
 					end
 				end
-				if loopbackTag and loopbackTag ~= "" then
-					local inboundTag = loopbackTag .. "-in"
-					table.insert(outbounds, {
-						protocol = "loopback",
-						tag = loopbackTag,
-						settings = { inboundTag = inboundTag }
-					})
-					rule = {
-						type = "field",
-						inboundTag = { inboundTag },
-						balancerTag = balancerTag
-					}
-				end
+				if loopbackTag == nil or loopbackTag =="" then loopbackTag = _node[".name"] end
+				local inboundTag = loopbackTag .. "-in"
+				table.insert(outbounds, {
+					protocol = "loopback",
+					tag = loopbackTag,
+					settings = { inboundTag = inboundTag }
+				})
+				rule = {
+					type = "field",
+					inboundTag = { inboundTag },
+					balancerTag = balancerTag
+				}
 			end
 			return balancer, rule
 		end
@@ -891,9 +913,10 @@ function gen_config(var)
 							end
 						end
 						if is_new_balancer then
-							local balancer = gen_balancer(_node)
+							local balancer, rule = gen_balancer(_node)
 							if balancer then
 								table.insert(balancers, balancer)
+								table.insert(rules, rule)
 								rule_balancerTag = balancer.tag
 							end
 						end
@@ -1020,11 +1043,12 @@ function gen_config(var)
 			}
 		elseif node.protocol == "_balancing" then
 			if node.balancing_node then
-				local balancer = gen_balancer(node)
+				local balancer, rule = gen_balancer(node)
 				routing = {
 					balancers = { balancer },
 					rules = {
-						{ type = "field", network = "tcp,udp", balancerTag = balancer.tag }
+						{ type = "field", network = "tcp,udp", balancerTag = balancer.tag },
+						rule
 					}
 				}
 			end
@@ -1286,7 +1310,7 @@ function gen_config(var)
 				-- }
 			}
 		}
-		
+
 		if xray_settings.fragment == "1" then
 			table.insert(outbounds, {
 				protocol = "freedom",
@@ -1305,9 +1329,9 @@ function gen_config(var)
 						tcpNoDelay = true
 					}
 				}
-			})		
+			})
 		end
-		
+
 		table.insert(outbounds, {
 			protocol = "freedom",
 			tag = "direct",

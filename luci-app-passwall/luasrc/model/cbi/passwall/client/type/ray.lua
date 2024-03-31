@@ -94,6 +94,15 @@ o:value("leastPing")
 o:value("leastLoad")
 o.default = "leastLoad"
 
+-- Fallback Node
+if api.compare_versions(api.get_app_version("xray"), ">=", "1.8.10") then
+	local o = s:option(ListValue, option_name("fallback_node"), translate("Fallback Node"))
+	o:depends({ [option_name("protocol")] = "_balancing" })
+	o:value("",translate("Null"))
+	o.default = ""
+	for k, v in pairs(nodes_table) do o:value(v.id, v.remark) end
+end
+
 -- 探测地址
 local o = s:option(Flag, option_name("useCustomProbeUrl"), translate("Use Custome Probe URL"), translate("By default the built-in probe URL will be used, enable this option to use a custom probe URL."))
 o:depends({ [option_name("balancingStrategy")] = "leastPing" })
