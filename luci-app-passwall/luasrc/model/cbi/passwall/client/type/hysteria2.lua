@@ -56,10 +56,10 @@ o.rewrite_option = o.option
 o = s:option(Value, option_name("hop_interval"), translate("Hop Interval"))
 o.rewrite_option = o.option
 
-o = s:option(Value, option_name("recv_window_conn"), translate("QUIC stream receive window"))
+o = s:option(Value, option_name("recv_window_conn"), translate("QUIC connection receive window"))
 o.rewrite_option = o.option
 
-o = s:option(Value, option_name("recv_window"), translate("QUIC connection receive window"))
+o = s:option(Value, option_name("recv_window"), translate("QUIC stream receive window"))
 o.rewrite_option = o.option
 
 o = s:option(Value, option_name("idle_timeout"), translate("Idle Timeout"))
