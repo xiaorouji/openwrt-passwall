@@ -108,7 +108,7 @@ o.default = "leastPing"
 -- Fallback Node
 if api.compare_versions(api.get_app_version("xray"), ">=", "1.8.10") then
 	local o = s:option(ListValue, option_name("fallback_node"), translate("Fallback Node"))
-	o:depends({ [option_name("protocol")] = "_balancing" })
+	o:depends({ [option_name("balancingStrategy")] = "leastPing" })
 	o:value("",translate("Null"))
 	o.default = ""
 	local function check_fallback_chain(fb)
