@@ -709,7 +709,7 @@ function gen_config(var)
 					fallbackTag = fallback_node_id,
 					strategy = { type = _node.balancingStrategy or "random" }
 				})
-				if _node.balancingStrategy == "leastPing" or _node.balancingStrategy == "leastLoad" then
+				if _node.balancingStrategy == "leastPing" then
 					if not observatory then
 						observatory = {
 							subjectSelector = { "blc-" },
