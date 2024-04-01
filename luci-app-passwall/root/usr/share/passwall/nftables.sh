@@ -1218,10 +1218,15 @@ del_firewall_rule() {
 }
 
 flush_nftset() {
-	del_firewall_rule
+	$DIR/app.sh echolog "清空 NFTSET。"
 	for _name in $(nft -a list sets | grep -E "passwall" | awk -F 'set ' '{print $2}' | awk '{print $1}'); do
 		destroy_nftset ${_name}
 	done
+}
+
+flush_nftset_reload() {
+	del_firewall_rule
+	flush_nftset
 	rm -rf /tmp/singbox_passwall*
 	rm -rf /tmp/etc/passwall_tmp/dnsmasq*
 	/etc/init.d/passwall reload
@@ -1327,6 +1332,9 @@ insert_rule_after)
 	;;
 flush_nftset)
 	flush_nftset
+	;;
+flush_nftset_reload)
+	flush_nftset_reload
 	;;
 get_wan_ip)
 	get_wan_ip

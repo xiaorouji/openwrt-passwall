@@ -461,9 +461,9 @@ luci.sys.call("uci commit " .. name)
 if reboot == 1 then
 	log("重启服务，应用新的规则。")
 	if use_nft == "1" then
-		luci.sys.call("sh /usr/share/" .. name .. "/nftables.sh flush_nftset > /dev/null 2>&1 &")
+		luci.sys.call("sh /usr/share/" .. name .. "/nftables.sh flush_nftset_reload > /dev/null 2>&1 &")
 	else
-		luci.sys.call("sh /usr/share/" .. name .. "/iptables.sh flush_ipset > /dev/null 2>&1 &")
+		luci.sys.call("sh /usr/share/" .. name .. "/iptables.sh flush_ipset_reload > /dev/null 2>&1 &")
 	end
 end
 log("规则更新完毕...")
