@@ -135,7 +135,9 @@ REDIRECT() {
 get_jump_ipt() {
 	case "$1" in
 	direct)
-		echo "-j RETURN"
+		local mark="-m mark ! --mark 1"
+		s="${mark} -j RETURN"
+		echo $s
 		;;
 	proxy)
 		if [ -n "$2" ] && [ -n "$(echo $2 | grep "^-")" ]; then

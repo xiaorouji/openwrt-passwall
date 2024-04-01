@@ -170,7 +170,7 @@ gen_nftset() {
 get_jump_ipt() {
 	case "$1" in
 	direct)
-		echo "counter return"
+		echo "mark != 1 counter return"
 		;;
 	proxy)
 		if [ -n "$2" ] && [ -n "$(echo $2 | grep "^counter")" ]; then
