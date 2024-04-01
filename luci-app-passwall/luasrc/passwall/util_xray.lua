@@ -564,6 +564,8 @@ function gen_config(var)
 
 	if node_id then
 		local node = uci:get_all(appname, node_id)
+		local balancers = {}
+		local rules = {}
 		if node then
 			if server_host and server_port then
 				node.address = server_host
@@ -682,24 +684,31 @@ function gen_config(var)
 				end
 				if is_new_node then
 					local fallback_node = uci:get_all(appname, fallback_node_id)
-					local outbound = gen_outbound(flag, fallback_node, fallback_node_id, { fragment = xray_settings.fragment == "1" or nil })
-					if outbound then
-						table.insert(outbounds, outbound)
+					if fallback_node.protocol ~= "_balancing" then
+						local outbound = gen_outbound(flag, fallback_node, fallback_node_id, { fragment = xray_settings.fragment == "1" or nil })
+						if outbound then
+							table.insert(outbounds, outbound)
+						else
+							fallback_node_id = nil
+						end
 					else
-						fallback_node_id = nil
+						local valid = gen_balancer(fallback_node)
+						if not valid then
+							fallback_node_id = nil
+						end
 					end
 				end
 			end
 
-			local balancer, rule
+			local valid = nil
 			if #valid_nodes > 0 then
 				local balancerTag = get_balancer_tag(_node[".name"])
-				balancer = {
+				table.insert(balancers, {
 					tag = balancerTag,
 					selector = valid_nodes,
 					fallbackTag = fallback_node_id,
 					strategy = { type = _node.balancingStrategy or "random" }
-				}
+				})
 				if _node.balancingStrategy == "leastPing" or _node.balancingStrategy == "leastLoad" then
 					if not observatory then
 						observatory = {
@@ -717,13 +726,10 @@ function gen_config(var)
 					tag = loopbackTag,
 					settings = { inboundTag = inboundTag }
 				})
-				rule = {
-					type = "field",
-					inboundTag = { inboundTag },
-					balancerTag = balancerTag
-				}
+				table.insert(rules, { type = "field", inboundTag = { inboundTag }, balancerTag = balancerTag })
+				valid = true
 			end
-			return balancer, rule
+			return valid
 		end
 
 		local function set_outbound_detour(node, outbound, outbounds_table, shunt_rule_name)
@@ -755,9 +761,6 @@ function gen_config(var)
 		end
 
 		if node.protocol == "_shunt" then
-			local rules = {}
-			local balancers = {}
-
 			local preproxy_enabled = node.preproxy_enabled == "1"
 			local preproxy_tag = "main"
 			local preproxy_node_id = node["main_node"]
@@ -793,11 +796,8 @@ function gen_config(var)
 				end
 			elseif preproxy_node and preproxy_node.protocol == "_balancing" then
 				preproxy_is_balancer = true
-				local preproxy_balancer, preproxy_rule = gen_balancer(preproxy_node, preproxy_tag)
-				if preproxy_balancer and preproxy_rule then
-					table.insert(balancers, preproxy_balancer)
-					table.insert(rules, preproxy_rule)
-				else
+				local valid = gen_balancer(preproxy_node, preproxy_tag)
+				if not valid then
 					preproxy_enabled = false
 				end
 			end
@@ -913,11 +913,9 @@ function gen_config(var)
 							end
 						end
 						if is_new_balancer then
-							local balancer, rule = gen_balancer(_node)
-							if balancer then
-								table.insert(balancers, balancer)
-								table.insert(rules, rule)
-								rule_balancerTag = balancer.tag
+							local valid = gen_balancer(_node)
+							if valid then
+								rule_balancerTag = get_balancer_tag(_node_id)
 							end
 						end
 					elseif _node.protocol == "_iface" then
@@ -1043,13 +1041,13 @@ function gen_config(var)
 			}
 		elseif node.protocol == "_balancing" then
 			if node.balancing_node then
-				local balancer, rule = gen_balancer(node)
+				local valid = gen_balancer(node)
+				if valid then
+					table.insert(rules, { type = "field", network = "tcp,udp", balancerTag = get_balancer_tag(node_id) })
+				end
 				routing = {
-					balancers = { balancer },
-					rules = {
-						{ type = "field", network = "tcp,udp", balancerTag = balancer.tag },
-						rule
-					}
+					balancers = balancers,
+					rules = rules
 				}
 			end
 		elseif node.protocol == "_iface" then

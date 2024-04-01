@@ -49,7 +49,9 @@ o:depends({ [option_name("protocol")] = "_iface" })
 
 local nodes_table = {}
 local balancers_table = {}
+local fallback_table = {}
 local iface_table = {}
+local is_balancer = nil
 for k, e in ipairs(api.get_valid_nodes()) do
 	if e.node_type == "normal" then
 		nodes_table[#nodes_table + 1] = {
@@ -63,6 +65,15 @@ for k, e in ipairs(api.get_valid_nodes()) do
 			id = e[".name"],
 			remark = e["remark"]
 		}
+		if e[".name"] ~= arg[1] then
+			fallback_table[#fallback_table + 1] = {
+				id = e[".name"],
+				remark = e["remark"],
+				fallback = e["fallback_node"]
+			}
+		else
+			is_balancer = true
+		end
 	end
 	if e.protocol == "_iface" then
 		iface_table[#iface_table + 1] = {
@@ -100,6 +111,19 @@ if api.compare_versions(api.get_app_version("xray"), ">=", "1.8.10") then
 	o:depends({ [option_name("protocol")] = "_balancing" })
 	o:value("",translate("Null"))
 	o.default = ""
+	local function check_fallback_chain(fb)
+		for k, v in pairs(fallback_table) do
+			if v.fallback == fb then
+				fallback_table[k] = nil
+				check_fallback_chain(v.id)
+			end
+		end
+	end
+	-- 检查fallback链，去掉会形成闭环的balancer节点
+	if is_balancer then
+		check_fallback_chain(arg[1])
+	end
+	for k, v in pairs(fallback_table) do o:value(v.id, v.remark) end
 	for k, v in pairs(nodes_table) do o:value(v.id, v.remark) end
 end
 
