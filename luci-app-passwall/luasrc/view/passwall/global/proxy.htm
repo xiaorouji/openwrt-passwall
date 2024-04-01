@@ -7,6 +7,7 @@
 			<input class="btn cbi-button cbi-button-apply" type="button" onclick="switch_gfw_mode()" value="<%:GFW List%>" />
 			<input class="btn cbi-button cbi-button-apply" type="button" onclick="switch_chnroute_mode()" value="<%:Not China List%>" />
 			<input class="btn cbi-button cbi-button-apply" type="button" onclick="switch_returnhome_mode()" value="<%:China List%>" />
+			<input class="btn cbi-button cbi-button-apply" type="button" onclick="switch_global_mode()" value="<%:Global Proxy%>" />
 		</div>
 	</div>
 </div>
@@ -98,5 +99,12 @@
 		opt.set("chn_list", "proxy");
 		opt.set("tcp_proxy_mode", "disable");
 		opt.set("udp_proxy_mode", "disable");
+	}
+	
+	function switch_global_mode() {
+		opt.set("use_gfw_list", false);
+		opt.set("chn_list", "0");
+		opt.set("tcp_proxy_mode", "proxy");
+		opt.set("udp_proxy_mode", "proxy");
 	}
 </script>
