@@ -49,7 +49,9 @@ o:depends({ [option_name("protocol")] = "_iface" })
 
 local nodes_table = {}
 local balancers_table = {}
+local fallback_table = {}
 local iface_table = {}
+local is_balancer = nil
 for k, e in ipairs(api.get_valid_nodes()) do
 	if e.node_type == "normal" then
 		nodes_table[#nodes_table + 1] = {
@@ -63,6 +65,15 @@ for k, e in ipairs(api.get_valid_nodes()) do
 			id = e[".name"],
 			remark = e["remark"]
 		}
+		if e[".name"] ~= arg[1] then
+			fallback_table[#fallback_table + 1] = {
+				id = e[".name"],
+				remark = e["remark"],
+				fallback = e["fallback_node"]
+			}
+		else
+			is_balancer = true
+		end
 	end
 	if e.protocol == "_iface" then
 		iface_table[#iface_table + 1] = {
@@ -90,23 +101,35 @@ for k, v in pairs(nodes_table) do o:value(v.id, v.remark) end
 local o = s:option(ListValue, option_name("balancingStrategy"), translate("Balancing Strategy"))
 o:depends({ [option_name("protocol")] = "_balancing" })
 o:value("random")
+o:value("roundRobin")
 o:value("leastPing")
-o:value("leastLoad")
-o.default = "leastLoad"
+o.default = "leastPing"
 
 -- Fallback Node
 if api.compare_versions(api.get_app_version("xray"), ">=", "1.8.10") then
 	local o = s:option(ListValue, option_name("fallback_node"), translate("Fallback Node"))
-	o:depends({ [option_name("protocol")] = "_balancing" })
+	o:depends({ [option_name("balancingStrategy")] = "leastPing" })
 	o:value("",translate("Null"))
 	o.default = ""
+	local function check_fallback_chain(fb)
+		for k, v in pairs(fallback_table) do
+			if v.fallback == fb then
+				fallback_table[k] = nil
+				check_fallback_chain(v.id)
+			end
+		end
+	end
+	-- 检查fallback链，去掉会形成闭环的balancer节点
+	if is_balancer then
+		check_fallback_chain(arg[1])
+	end
+	for k, v in pairs(fallback_table) do o:value(v.id, v.remark) end
 	for k, v in pairs(nodes_table) do o:value(v.id, v.remark) end
 end
 
 -- 探测地址
 local o = s:option(Flag, option_name("useCustomProbeUrl"), translate("Use Custome Probe URL"), translate("By default the built-in probe URL will be used, enable this option to use a custom probe URL."))
 o:depends({ [option_name("balancingStrategy")] = "leastPing" })
-o:depends({ [option_name("balancingStrategy")] = "leastLoad" })
 
 local o = s:option(Value, option_name("probeUrl"), translate("Probe URL"))
 o:depends({ [option_name("useCustomProbeUrl")] = true })
@@ -116,7 +139,6 @@ o.description = translate("The URL used to detect the connection status.")
 -- 探测间隔
 local o = s:option(Value, option_name("probeInterval"), translate("Probe Interval"))
 o:depends({ [option_name("balancingStrategy")] = "leastPing" })
-o:depends({ [option_name("balancingStrategy")] = "leastLoad" })
 o.default = "1m"
 o.description = translate("The interval between initiating probes. Every time this time elapses, a server status check is performed on a server. The time format is numbers + units, such as '10s', '2h45m', and the supported time units are <code>ns</code>, <code>us</code>, <code>ms</code>, <code>s</code>, <code>m</code>, <code>h</code>, which correspond to nanoseconds, microseconds, milliseconds, seconds, minutes, and hours, respectively.")
 
