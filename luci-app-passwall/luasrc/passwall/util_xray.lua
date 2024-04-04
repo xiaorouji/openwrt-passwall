@@ -646,6 +646,17 @@ function gen_config(var)
 			return "balancer-" .. _node_id
 		end
 
+		local function gen_loopback(outboundTag, dst_node_id)
+			if not outboundTag then return nil end
+			local inboundTag = dst_node_id and "loop-in-" .. dst_node_id or outboundTag .. "-lo"
+			table.insert(outbounds, {
+				protocol = "loopback",
+				tag = outboundTag,
+				settings = { inboundTag = inboundTag }
+			})
+			return inboundTag
+		end
+
 		local function gen_balancer(_node, loopbackTag)
 			local blc_nodes = _node.balancing_node
 			local fallback_node_id = _node.fallback_node
@@ -720,12 +731,7 @@ function gen_config(var)
 					end
 				end
 				if loopbackTag == nil or loopbackTag =="" then loopbackTag = _node[".name"] end
-				local inboundTag = loopbackTag .. "-in"
-				table.insert(outbounds, {
-					protocol = "loopback",
-					tag = loopbackTag,
-					settings = { inboundTag = inboundTag }
-				})
+				local inboundTag = gen_loopback(loopbackTag, _node[".name"])
 				table.insert(rules, { type = "field", inboundTag = { inboundTag }, balancerTag = balancerTag })
 				valid = true
 			end
@@ -761,46 +767,10 @@ function gen_config(var)
 		end
 
 		if node.protocol == "_shunt" then
-			local preproxy_enabled = node.preproxy_enabled == "1"
-			local preproxy_tag = "main"
-			local preproxy_node_id = node["main_node"]
-			local preproxy_node = preproxy_enabled and preproxy_node_id and uci:get_all(appname, preproxy_node_id) or nil
-			local preproxy_is_balancer
-
-			if preproxy_node_id and preproxy_node_id:find("Socks_") then
-				local socks_id = preproxy_node_id:sub(1 + #"Socks_")
-				local socks_node = uci:get_all(appname, socks_id) or nil
-				if socks_node then
-					local _node = {
-						type = "Xray",
-						protocol = "socks",
-						address = "127.0.0.1",
-						port = socks_node.port,
-						transport = "tcp",
-						stream_security = "none"
-					}
-					local preproxy_outbound = gen_outbound(flag, _node, preproxy_tag)
-					if preproxy_outbound then
-						table.insert(outbounds, preproxy_outbound)
-					else
-						preproxy_enabled = false
-					end
-				end
-			elseif preproxy_node and api.is_normal_node(preproxy_node) then
-				local preproxy_outbound = gen_outbound(flag, preproxy_node, preproxy_tag, { fragment = xray_settings.fragment == "1" or nil })
-				if preproxy_outbound then
-					set_outbound_detour(preproxy_node, preproxy_outbound, outbounds, preproxy_tag)
-					table.insert(outbounds, preproxy_outbound)
-				else
-					preproxy_enabled = false
-				end
-			elseif preproxy_node and preproxy_node.protocol == "_balancing" then
-				preproxy_is_balancer = true
-				local valid = gen_balancer(preproxy_node, preproxy_tag)
-				if not valid then
-					preproxy_enabled = false
-				end
-			end
+			local proxy_tag = "main"
+			local proxy_node_id = node["main_node"]
+			local proxy_node = node.preproxy_enabled == "1" and proxy_node_id and uci:get_all(appname, proxy_node_id) or nil
+			local proxy_outboundTag, proxy_balancerTag
 
 			local function gen_shunt_node(rule_name, _node_id)
 				if not rule_name then return nil, nil end
@@ -811,7 +781,7 @@ function gen_config(var)
 					rule_outboundTag = "direct"
 				elseif _node_id == "_blackhole" then
 					rule_outboundTag = "blackhole"
-				elseif _node_id == "_default" and rule_name ~= "default" then
+				elseif _node_id == "_default" then
 					rule_outboundTag = "default"
 				elseif _node_id:find("Socks_") then
 					local socks_id = _node_id:sub(1 + #"Socks_")
@@ -825,9 +795,9 @@ function gen_config(var)
 							transport = "tcp",
 							stream_security = "none"
 						}
-						local _outbound = gen_outbound(flag, _node, rule_name)
-						if _outbound then
-							table.insert(outbounds, _outbound)
+						local outbound = gen_outbound(flag, _node, rule_name)
+						if outbound then
+							table.insert(outbounds, outbound)
 							rule_outboundTag = rule_name
 						end
 					end
@@ -836,19 +806,18 @@ function gen_config(var)
 					if not _node then return nil, nil end
 
 					if api.is_normal_node(_node) then
-						local proxy = preproxy_enabled and node[rule_name .. "_proxy_tag"] == preproxy_tag and _node_id ~= preproxy_node_id
-						if proxy and preproxy_is_balancer then
-							local blc_nodes = proxy_node.balancing_node
-							for _, blc_node_id in ipairs(blc_nodes) do
+						local use_proxy = proxy_node and node[rule_name .. "_proxy_tag"] == proxy_tag and _node_id ~= proxy_node_id
+						if use_proxy and proxy_balancerTag then
+							for _, blc_node_id in ipairs(proxy_node.balancing_node) do
 								if _node_id == blc_node_id then
-									proxy = false
+									use_proxy = false
 									break
 								end
 							end
 						end
 						local copied_outbound
 						for index, value in ipairs(outbounds) do
-							if value["_flag_tag"] == _node_id and value["_flag_proxy_tag"] == preproxy_tag then
+							if value["_flag_tag"] == _node_id and value["_flag_proxy_tag"] == proxy_tag then
 								copied_outbound = api.clone(value)
 								break
 							end
@@ -858,69 +827,60 @@ function gen_config(var)
 							table.insert(outbounds, copied_outbound)
 							rule_outboundTag = rule_name
 						else
-							if proxy then
-								local pre_proxy = nil
-								if _node.type ~= "Xray" then
-									pre_proxy = true
+							if use_proxy and (_node.type ~= "Xray" or _node.flow == "xtls-rprx-vision") then
+								new_port = get_new_port()
+								table.insert(inbounds, {
+									tag = "proxy_" .. rule_name,
+									listen = "127.0.0.1",
+									port = new_port,
+									protocol = "dokodemo-door",
+									settings = {network = "tcp,udp", address = _node.address, port = tonumber(_node.port)}
+								})
+								if _node.tls_serverName == nil then
+									_node.tls_serverName = _node.address
 								end
-								if _node.type == "Xray" and _node.flow == "xtls-rprx-vision" then
-									pre_proxy = true
-								end
-								if pre_proxy then
-									new_port = get_new_port()
-									table.insert(inbounds, {
-										tag = "proxy_" .. rule_name,
-										listen = "127.0.0.1",
-										port = new_port,
-										protocol = "dokodemo-door",
-										settings = {network = "tcp,udp", address = _node.address, port = tonumber(_node.port)}
-									})
-									if _node.tls_serverName == nil then
-										_node.tls_serverName = _node.address
-									end
-									_node.address = "127.0.0.1"
-									_node.port = new_port
-									table.insert(rules, 1, {
-										type = "field",
-										inboundTag = {"proxy_" .. rule_name},
-										outboundTag = is_balancing_proxy and nil or preproxy_tag,
-										balancerTag = is_balancing_proxy and get_balancer_tag(proxy_node_id) or nil
-									})
-								end
+								_node.address = "127.0.0.1"
+								_node.port = new_port
+								table.insert(rules, 1, {
+									type = "field",
+									inboundTag = {"proxy_" .. rule_name},
+									outboundTag = proxy_outboundTag,
+									balancerTag = proxy_balancerTag
+								})
 							end
 							local proxy_table = {
-								proxy = proxy and 1 or 0,
-								tag = proxy and preproxy_tag or nil
+								proxy = use_proxy and 1 or 0,
+								tag = use_proxy and proxy_tag or nil
 							}
 							if xray_settings.fragment == "1" and not proxy_table.tag then
 								proxy_table.fragment = true
 							end
-							local _outbound = gen_outbound(flag, _node, rule_name, proxy_table)
-							if _outbound then
-								set_outbound_detour(_node, _outbound, outbounds, rule_name)
-								table.insert(outbounds, _outbound)
-								if proxy then preproxy_used = true end
+							local outbound = gen_outbound(flag, _node, rule_name, proxy_table)
+							if outbound then
+								set_outbound_detour(_node, outbound, outbounds, rule_name)
+								table.insert(outbounds, outbound)
 								rule_outboundTag = rule_name
 							end
 						end
 					elseif _node.protocol == "_balancing" then
 						local is_new_balancer = true
+						rule_balancerTag = get_balancer_tag(_node_id)
 						for _, v in ipairs(balancers) do
-							if v["_flag_tag"] == _node_id then
+							if v.tag == rule_balancerTag then
 								is_new_balancer = false
-								rule_balancerTag = v.tag
+								gen_loopback(rule_name, _node_id)
 								break
 							end
 						end
 						if is_new_balancer then
-							local valid = gen_balancer(_node)
-							if valid then
-								rule_balancerTag = get_balancer_tag(_node_id)
+							local valid = gen_balancer(_node, rule_name)
+							if not valid then
+								rule_balancerTag = nil
 							end
 						end
 					elseif _node.protocol == "_iface" then
 						if _node.iface then
-							local _outbound = {
+							local outbound = {
 								protocol = "freedom",
 								tag = rule_name,
 								streamSettings = {
@@ -930,13 +890,21 @@ function gen_config(var)
 									}
 								}
 							}
-							table.insert(outbounds, _outbound)
+							table.insert(outbounds, outbound)
 							rule_outboundTag = rule_name
 							sys.call("touch /tmp/etc/passwall/iface/" .. _node.iface)
 						end
 					end
 				end
 				return rule_outboundTag, rule_balancerTag
+			end
+
+			--proxy_node
+			if proxy_node then
+				proxy_outboundTag, proxy_balancerTag = gen_shunt_node(proxy_tag, proxy_node_id)
+				if not proxy_outboundTag  and not proxy_balancerTag then
+					proxy_node = nil
+				end
 			end
 			--default_node
 			local default_node_id = node.default_node or "_direct"
