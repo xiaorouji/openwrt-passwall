@@ -1,0 +1,18 @@
+<%
+local api = require "luci.passwall.api"
+-%>
+<script type="text/javascript">
+	//<![CDATA[
+	let dom = document.getElementById("cbi-passwall-global_rules");
+	if (dom) {
+		let textareas = dom.getElementsByTagName("textarea");
+		for (let i = 0; i < textareas.length; i++) {
+			let o = textareas[i];
+			if (o.readOnly) {
+				o.removeAttribute("name");
+				o.removeAttribute("id");
+			}
+		}
+	}
+	//]]>
+</script>

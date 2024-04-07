@@ -4,7 +4,9 @@ local fs = api.fs
 local sys = api.sys
 local datatypes = api.datatypes
 local path = string.format("/usr/share/%s/rules/", appname)
-local route_hosts_path = "/etc/"
+local gfwlist_path = "/usr/share/passwall/rules/gfwlist"
+local chnlist_path = "/usr/share/passwall/rules/chnlist"
+local chnroute_path = "/usr/share/passwall/rules/chnroute"
 
 m = Map(appname)
 api.set_apply_on_parse(m)
@@ -248,7 +250,7 @@ o.validate = function(self, value)
 end
 
 ---- Route Hosts
-local hosts = route_hosts_path .. "hosts"
+local hosts = "/etc/hosts"
 o = s:taboption("route_hosts", TextValue, "hosts", "", "<font color='red'>" .. translate("Configure routing etc/hosts file, if you don't know what you are doing, please don't change the content.") .. "</font>")
 o.rows = 15
 o.wrap = "off"
@@ -261,6 +263,41 @@ end
 o.remove = function(self, section, value)
 	fs.writefile(hosts, "")
 end
+
+if api.fs.access(gfwlist_path) then
+	s:tab("gfw_list", translate("GFW List"))
+	o = s:taboption("gfw_list", TextValue, "gfw_list", "")
+	o.readonly = true
+	o.rows = 45
+	o.wrap = "off"
+	o.cfgvalue = function(self, section)
+		return fs.readfile(gfwlist_path) or ""
+	end
+end
+
+if api.fs.access(chnlist_path) then
+	s:tab("chn_list", translate("China List"))
+	o = s:taboption("chn_list", TextValue, "chn_list", "")
+	o.readonly = true
+	o.rows = 45
+	o.wrap = "off"
+	o.cfgvalue = function(self, section)
+		return fs.readfile(chnlist_path) or ""
+	end
+end
+
+if api.fs.access(chnroute_path) then
+	s:tab("chnroute_list", translate("China List"))
+	o = s:taboption("chnroute_list", TextValue, "chnroute_list", "")
+	o.readonly = true
+	o.rows = 45
+	o.wrap = "off"
+	o.cfgvalue = function(self, section)
+		return fs.readfile(chnroute_path) or ""
+	end
+end
+
+m:append(Template(appname .. "/rule_list/js"))
 
 if sys.call('[ -f "/www/luci-static/resources/uci.js" ]') == 0 then
 	m.apply_on_parse = true
