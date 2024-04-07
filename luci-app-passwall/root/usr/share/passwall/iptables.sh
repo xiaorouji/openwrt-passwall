@@ -1172,7 +1172,7 @@ del_firewall_rule() {
 	destroy_ipset $IPSET_BLOCKLIST6
 	destroy_ipset $IPSET_WHITELIST6
 
-	$DIR/app.sh echolog "删除相关防火墙规则完成。"
+	$DIR/app.sh echolog "删除iptables防火墙规则完成。"
 }
 
 flush_ipset() {

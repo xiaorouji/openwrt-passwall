@@ -1214,7 +1214,7 @@ del_firewall_rule() {
 	destroy_nftset $NFTSET_BLOCKLIST6
 	destroy_nftset $NFTSET_WHITELIST6
 
-	$DIR/app.sh echolog "删除相关防火墙规则完成。"
+	$DIR/app.sh echolog "删除nftables防火墙规则完成。"
 }
 
 flush_nftset() {
