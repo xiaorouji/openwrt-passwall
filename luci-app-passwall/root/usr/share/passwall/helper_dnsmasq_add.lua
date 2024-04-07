@@ -205,6 +205,7 @@ if not fs.access(CACHE_DNS_PATH) then
 	--始终用国内DNS解析节点域名
 	uci:foreach(appname, "nodes", function(t)
 		local address = t.address
+		if address == "engage.cloudflareclient.com" then return end
 		if datatypes.hostname(address) then
 			set_domain_dns(address, LOCAL_DNS)
 			set_domain_ipset(address, setflag_4 .. "passwall_vpslist," .. setflag_6 .. "passwall_vpslist6")
