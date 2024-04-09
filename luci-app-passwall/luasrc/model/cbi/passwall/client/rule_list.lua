@@ -276,7 +276,7 @@ if api.fs.access(gfwlist_path) then
 end
 
 if api.fs.access(chnlist_path) then
-	s:tab("chn_list", translate("China List"))
+	s:tab("chn_list", translate("China List") .. "(" .. translate("Domain") .. ")")
 	o = s:taboption("chn_list", TextValue, "chn_list", "")
 	o.readonly = true
 	o.rows = 45
@@ -287,7 +287,7 @@ if api.fs.access(chnlist_path) then
 end
 
 if api.fs.access(chnroute_path) then
-	s:tab("chnroute_list", translate("China List"))
+	s:tab("chnroute_list", translate("China List") .. "(IP)")
 	o = s:taboption("chnroute_list", TextValue, "chnroute_list", "")
 	o.readonly = true
 	o.rows = 45
