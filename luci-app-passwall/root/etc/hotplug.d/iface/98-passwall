@@ -16,7 +16,7 @@
 		echo $$ > ${LOCK_FILE}
 		
 		/etc/init.d/passwall restart >/dev/null 2>&1 &
-		echo "passwall: restart when $INTERFACE ifup" > /dev/kmsg
+		logger -p notice -t network -s "passwall: restart when $INTERFACE ifup"
 		
 		rm -rf ${LOCK_FILE}
 	}
