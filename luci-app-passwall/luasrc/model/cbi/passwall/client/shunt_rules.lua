@@ -119,6 +119,8 @@ domain_list.validate = function(self, value)
 			flag = 0
 		elseif host:find("ext:") and host:find("ext:") == 1 then
 			flag = 0
+		elseif host:find("#") and host:find("#") == 1 then
+			flag = 0
 		end
 		if flag == 1 then
 			if not datatypes.hostname(tmp_host) then
@@ -133,7 +135,7 @@ domain_list.description = "<br /><ul><li>" .. translate("Plaintext: If this stri
 .. "</li><li>" .. translate("Subdomain (recommended): Begining with 'domain:' and the rest is a domain. When the targeting domain is exactly the value, or is a subdomain of the value, this rule takes effect. Example: rule 'domain:v2ray.com' matches 'www.v2ray.com', 'v2ray.com', but not 'xv2ray.com'.")
 .. "</li><li>" .. translate("Full domain: Begining with 'full:' and the rest is a domain. When the targeting domain is exactly the value, the rule takes effect. Example: rule 'domain:v2ray.com' matches 'v2ray.com', but not 'www.v2ray.com'.")
 .. "</li><li>" .. translate("Pre-defined domain list: Begining with 'geosite:' and the rest is a name, such as geosite:google or geosite:cn.")
-.. "</li><li>" .. translate("Domains from file: Such as 'ext:file:tag'. The value must begin with ext: (lowercase), and followed by filename and tag. The file is placed in resource directory, and has the same format of geosite.dat. The tag must exist in the file.")
+.. "</li><li>" .. translate("Annotation: Begining with #")
 .. "</li></ul>"
 ip_list = s:option(TextValue, "ip_list", "IP")
 ip_list.rows = 10
@@ -144,6 +146,7 @@ ip_list.validate = function(self, value)
 	for index, ipmask in ipairs(ipmasks) do
 		if ipmask:find("geoip:") and ipmask:find("geoip:") == 1 then
 		elseif ipmask:find("ext:") and ipmask:find("ext:") == 1 then
+		elseif ipmask:find("#") and ipmask:find("#") == 1 then
 		else
 			if not (datatypes.ipmask4(ipmask) or datatypes.ipmask6(ipmask)) then
 				return nil, ipmask .. " " .. translate("Not valid IP format, please re-enter!")
@@ -155,7 +158,7 @@ end
 ip_list.description = "<br /><ul><li>" .. translate("IP: such as '127.0.0.1'.")
 .. "</li><li>" .. translate("CIDR: such as '127.0.0.0/8'.")
 .. "</li><li>" .. translate("GeoIP: such as 'geoip:cn'. It begins with geoip: (lower case) and followed by two letter of country code.")
-.. "</li><li>" .. translate("IPs from file: Such as 'ext:file:tag'. The value must begin with ext: (lowercase), and followed by filename and tag. The file is placed in resource directory, and has the same format of geoip.dat. The tag must exist in the file.")
+.. "</li><li>" .. translate("Annotation: Begining with #")
 .. "</li></ul>"
 
 return m
