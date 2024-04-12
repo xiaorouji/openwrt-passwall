@@ -811,14 +811,7 @@ function gen_config(var)
 
 				if api.is_normal_node(_node) then
 					local use_proxy = proxy_tag and node[rule_name .. "_proxy_tag"] == proxy_tag and _node_id ~= proxy_node_id
-					if use_proxy and proxy_balancer_tag then
-						for _, blc_node_id in ipairs(proxy_node.balancing_node) do
-							if _node_id == blc_node_id then
-								use_proxy = false
-								break
-							end
-						end
-					end
+					if use_proxy and proxy_balancer_tag and proxy_nodes[_node_id] then use_proxy = false end
 					local copied_outbound
 					for index, value in ipairs(outbounds) do
 						if value["_flag_tag"] == _node_id and value["_flag_proxy_tag"] == (use_proxy and proxy_tag or "nil") then
@@ -901,11 +894,11 @@ function gen_config(var)
 						_node = uci:get_all(appname, _node_id)
 						if not _node then break end
 						if _node.protocol ~= "_balancing" then
-							table.insert(proxy_nodes, _node_id)
+							proxy_nodes[_node_id] = true
 							break
 						end
 						local _blc_nodes = _node.balancing_node
-						for i = 1, #_blc_nodes do proxy_nodes[#proxy_nodes + i] = _blc_nodes[i] end
+						for i = 1, #_blc_nodes do proxy_nodes[_blc_nodes[i]] = true end
 						_node_id = _node.fallback_node
 					end
 				else
