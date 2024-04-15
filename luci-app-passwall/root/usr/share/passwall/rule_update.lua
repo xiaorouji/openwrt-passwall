@@ -19,7 +19,7 @@ local geoip_update = 0
 local geosite_update = 0
 
 -- match comments/title/whitelist/ip address/excluded_domain
-local comment_pattern = "^[!\\[@]+"
+local comment_pattern = "^[#!\\[@]+"
 local ip_pattern = "^%d+%.%d+%.%d+%.%d+"
 local ip4_ipset_pattern = "^%d+%.%d+%.%d+%.%d+[%/][%d]+$"
 local ip6_ipset_pattern = ":-[%x]+%:+[%x]-[%/][%d]+$"
