@@ -1256,7 +1256,7 @@ start_dns() {
 
 	[ "$CHINADNS_NG" = "1" ] && [ -n "$(first_type chinadns-ng)" ] && ([ "${CHN_LIST}" = "direct" ] || [ "${USE_GFW_LIST}" = "1" ]) && {
 		[ "$FILTER_PROXY_IPV6" = "1" ] && {
-			local _no_ipv6_rules="gt"
+			local _no_ipv6_rules="tag:gfw"
 			FILTER_PROXY_IPV6=0
 		}
 		local china_ng_listen_port=$(expr $dns_listen_port + 1)
@@ -1419,7 +1419,7 @@ acl_app() {
 
 							[ "$chinadns_ng" = "1" ] && [ -n "$(first_type chinadns-ng)" ] && ([ "${chn_list}" = "direct" ] || [ "${use_gfw_list}" = "1" ]) && {
 								[ "$filter_proxy_ipv6" = "1" ] && {
-									local _no_ipv6_rules="gt"
+									local _no_ipv6_rules="tag:gfw"
 									filter_proxy_ipv6=0
 								}
 								chinadns_port=$(expr $chinadns_port + 1)
