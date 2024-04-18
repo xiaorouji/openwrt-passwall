@@ -213,42 +213,58 @@ if not fs.access(CACHE_DNS_PATH) then
 	end)
 	log(string.format("  - 节点列表中的域名(vpslist)：%s", LOCAL_DNS or "默认"))
 
-	--直连（白名单）列表
-	if USE_DIRECT_LIST == "1" then
-		--始终用国内DNS解析直连（白名单）列表
-		for line in io.lines("/usr/share/passwall/rules/direct_host") do
-			if line ~= "" and not line:find("#") then
-				add_excluded_domain(line)
-				set_domain_dns(line, LOCAL_DNS)
-				set_domain_ipset(line, setflag_4 .. "passwall_whitelist," .. setflag_6 .. "passwall_whitelist6")
-			end
-		end
-		log(string.format("  - 域名白名单(whitelist)：%s", LOCAL_DNS or "默认"))
-	end
-
 	local fwd_dns
 	local ipset_flag
 	local no_ipv6
 
+	--直连（白名单）列表
+	if USE_DIRECT_LIST == "1" then
+		if fs.access("/usr/share/passwall/rules/direct_host") then
+			fwd_dns = TUN_DNS
+			if USE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" then
+				fwd_dns = nil
+			end
+			if fwd_dns then
+				--始终用国内DNS解析直连（白名单）列表
+				for line in io.lines("/usr/share/passwall/rules/direct_host") do
+					if line ~= "" and not line:find("#") then
+						add_excluded_domain(line)
+						set_domain_dns(line, LOCAL_DNS)
+						set_domain_ipset(line, setflag_4 .. "passwall_whitelist," .. setflag_6 .. "passwall_whitelist6")
+					end
+				end
+			end
+			log(string.format("  - 域名白名单(whitelist)：%s", fwd_dns or "默认"))
+		end
+	end
+
 	--代理（黑名单）列表
 	if USE_PROXY_LIST == "1" then
-		--始终使用远程DNS解析代理（黑名单）列表
-		for line in io.lines("/usr/share/passwall/rules/proxy_host") do
-			if line ~= "" and not line:find("#") then
-				add_excluded_domain(line)
-				local ipset_flag = setflag_4 .. "passwall_blacklist," .. setflag_6 .. "passwall_blacklist6"
-				if NO_PROXY_IPV6 == "1" then
-					set_domain_address(line, "::")
-					ipset_flag = setflag_4 .. "passwall_blacklist"
-				end
-				if REMOTE_FAKEDNS == "1" then
-					ipset_flag = nil
-				end
-				set_domain_dns(line, TUN_DNS)
-				set_domain_ipset(line, ipset_flag)
+		if fs.access("/usr/share/passwall/rules/proxy_host") then
+			fwd_dns = TUN_DNS
+			if USE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" then
+				fwd_dns = nil
 			end
+			if fwd_dns then
+				--始终使用远程DNS解析代理（黑名单）列表
+				for line in io.lines("/usr/share/passwall/rules/proxy_host") do
+					if line ~= "" and not line:find("#") then
+						add_excluded_domain(line)
+						local ipset_flag = setflag_4 .. "passwall_blacklist," .. setflag_6 .. "passwall_blacklist6"
+						if NO_PROXY_IPV6 == "1" then
+							set_domain_address(line, "::")
+							ipset_flag = setflag_4 .. "passwall_blacklist"
+						end
+						if REMOTE_FAKEDNS == "1" then
+							ipset_flag = nil
+						end
+						set_domain_dns(line, TUN_DNS)
+						set_domain_ipset(line, ipset_flag)
+					end
+				end
+			end
+			log(string.format("  - 代理域名表(blacklist)：%s", fwd_dns or "默认"))
 		end
-		log(string.format("  - 代理域名表(blacklist)：%s", TUN_DNS or "默认"))
 	end
 
 	--GFW列表
