@@ -193,7 +193,7 @@ https://github.com/pure-css/pure/blob/master/LICENSE.md
 			document.getElementsByTagName('img')[i].setAttribute("oncontextmenu","return false;");
 			document.getElementsByTagName('img')[i].setAttribute("ondragstart","return false;");
 		}
-		XHR.poll(5, '<%=api.url("status")%>', null,
+		XHR.poll(5, '<%=api.url("index_status")%>', null,
 			function (x, data) {
 				var status_dns = document.getElementById('status_dns');
 				var status_haproxy = document.getElementById('status_haproxy');
