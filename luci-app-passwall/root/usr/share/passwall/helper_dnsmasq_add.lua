@@ -220,7 +220,7 @@ if not fs.access(CACHE_DNS_PATH) then
 	--直连（白名单）列表
 	if USE_DIRECT_LIST == "1" then
 		if fs.access("/usr/share/passwall/rules/direct_host") then
-			fwd_dns = TUN_DNS
+			fwd_dns = LOCAL_DNS
 			if USE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" then
 				fwd_dns = nil
 			end
@@ -229,7 +229,7 @@ if not fs.access(CACHE_DNS_PATH) then
 				for line in io.lines("/usr/share/passwall/rules/direct_host") do
 					if line ~= "" and not line:find("#") then
 						add_excluded_domain(line)
-						set_domain_dns(line, LOCAL_DNS)
+						set_domain_dns(line, fwd_dns)
 						set_domain_ipset(line, setflag_4 .. "passwall_whitelist," .. setflag_6 .. "passwall_whitelist6")
 					end
 				end
@@ -258,7 +258,7 @@ if not fs.access(CACHE_DNS_PATH) then
 						if REMOTE_FAKEDNS == "1" then
 							ipset_flag = nil
 						end
-						set_domain_dns(line, TUN_DNS)
+						set_domain_dns(line, fwd_dns)
 						set_domain_ipset(line, ipset_flag)
 					end
 				end

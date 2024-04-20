@@ -319,6 +319,9 @@ run_ipt2socks() {
 		flag="${flag}_TCP"
 		_extra_param="${_extra_param} -T"
 	;;
+	*)
+		flag="${flag}_TCP_UDP"
+	;;
 	esac
 	_extra_param="${_extra_param} -v"
 	ln_run "$(first_type ipt2socks)" "ipt2socks_${flag}" $log_file -l $local_port -b 0.0.0.0 -s $socks_address -p $socks_port ${_extra_param}
@@ -492,7 +495,7 @@ run_chinadns_ng() {
 		bind-addr 127.0.0.1
 		bind-port ${_listen_port}@udp
 		china-dns ${_dns_china}
-		trust-dns ${_dns_trust}
+		trust-dns udp://${_dns_trust}
 		filter-qtype 65
 	EOF
 
@@ -522,7 +525,7 @@ run_chinadns_ng() {
 		cat <<-EOF >> ${_CONF_FILE}
 			group proxylist
 			group-dnl ${RULES_PATH}/proxy_host
-			group-upstream ${_dns_trust}
+			group-upstream udp://${_dns_trust}
 			group-ipset ${blacklist4_set},${blacklist6_set}
 		EOF
 		[ "${_no_ipv6_dns}" = "trust" ] && echo "no-ipv6 tag:proxylist" >> ${_CONF_FILE}
@@ -751,12 +754,10 @@ run_redir() {
 		case "$type" in
 		socks)
 			local _socks_address=$(config_n_get $node address)
-			_socks_address=$(get_host_ip "ipv4" ${_socks_address})
 			local _socks_port=$(config_n_get $node port)
 			local _socks_username=$(config_n_get $node username)
 			local _socks_password=$(config_n_get $node password)
-			[ -n "${_socks_username}" ] && [ -n "${_socks_password}" ] && local _extra_param="-a ${_socks_username} -k ${_socks_password}"
-			ln_run "$(first_type ipt2socks)" "ipt2socks_UDP" $log_file -l $local_port -b 0.0.0.0 -s ${_socks_address} -p ${_socks_port} ${_extra_param} -U -v
+			run_ipt2socks flag=default proto=UDP local_port=${local_port} socks_address=${_socks_address} socks_port=${_socks_port} socks_username=${_socks_username} socks_password=${_socks_password} log_file=${log_file}
 		;;
 		sing-box)
 			run_singbox flag=UDP node=$node udp_redir_port=$local_port config_file=$config_file log_file=$log_file
@@ -814,7 +815,6 @@ run_redir() {
 		socks)
 			_socks_flag=1
 			_socks_address=$(config_n_get $node address)
-			_socks_address=$(get_host_ip "ipv4" ${_socks_address})
 			_socks_port=$(config_n_get $node port)
 			_socks_username=$(config_n_get $node username)
 			_socks_password=$(config_n_get $node password)
@@ -1004,18 +1004,14 @@ run_redir() {
 		esac
 		if [ -n "${_socks_flag}" ]; then
 			local _flag="TCP"
-			local _extra_param="-T"
 			[ "$TCP_UDP" = "1" ] && {
 				_flag="TCP_UDP"
-				_extra_param=""
 				UDP_REDIR_PORT=$TCP_REDIR_PORT
 				UDP_NODE="nil"
 			}
-			local _socks_tproxy="-R"
-			[ "$tcp_proxy_way" = "tproxy" ] && _socks_tproxy=""
-			_extra_param="${_extra_param} ${_socks_tproxy}"
-			[ -n "${_socks_username}" ] && [ -n "${_socks_password}" ] && _extra_param="-a ${_socks_username} -k ${_socks_password} ${_extra_param}"
-			ln_run "$(first_type ipt2socks)" "ipt2socks_${_flag}" $log_file -l $local_port -b 0.0.0.0 -s ${_socks_address} -p ${_socks_port} ${_extra_param} -v
+			local _socks_tproxy=""
+			[ "$tcp_proxy_way" = "tproxy" ] && _socks_tproxy="1"
+			run_ipt2socks flag=default proto=${_flag} tcp_tproxy=${_socks_tproxy} local_port=${local_port} socks_address=${_socks_address} socks_port=${_socks_port} socks_username=${_socks_username} socks_password=${_socks_password} log_file=${log_file}
 		fi
 
 		[ -z "$tcp_node_socks_flag" ] && {
