@@ -751,8 +751,8 @@ run_redir() {
 	local proto=$(echo $proto | tr 'A-Z' 'a-z')
 	local PROTO=$(echo $proto | tr 'a-z' 'A-Z')
 	local type=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
-	local close_log=$(config_t_get global close_log_${proto} 1)
-	[ "$close_log" = "1" ] && log_file="/dev/null"
+	local enable_log=$(config_t_get global log_${proto} 1)
+	[ "$enable_log" != "1" ] && log_file="/dev/null"
 	local remarks=$(config_n_get $node remarks)
 	local server_host=$(config_n_get $node address)
 	local port=$(config_n_get $node port)

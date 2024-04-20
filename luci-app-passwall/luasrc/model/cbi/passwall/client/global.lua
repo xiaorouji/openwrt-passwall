@@ -477,10 +477,12 @@ o.cfgvalue = function(t, n)
 end
 
 s:tab("log", translate("Log"))
-o = s:taboption("log", Flag, "close_log_tcp", translatef("%s Node Log Close", "TCP"))
+o = s:taboption("log", Flag, "log_tcp", translate("Enable") .. " " .. translatef("%s Node Log", "TCP"))
+o.default = "1"
 o.rmempty = false
 
-o = s:taboption("log", Flag, "close_log_udp", translatef("%s Node Log Close", "UDP"))
+o = s:taboption("log", Flag, "log_udp", translate("Enable") .. " " .. translatef("%s Node Log", "UDP"))
+o.default = "1"
 o.rmempty = false
 
 loglevel = s:taboption("log", ListValue, "loglevel", "Sing-Box/Xray " .. translate("Log Level"))
