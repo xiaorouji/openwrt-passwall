@@ -383,33 +383,33 @@ o:depends({dns_mode = "xray"})
 o.rmempty = false
 
 if api.is_finded("chinadns-ng") then
-	o = s:taboption("DNS", Flag, "chinadns_ng", translate("ChinaDNS-NG"), translate("The effect is better, but will increase the memory."))
+	o = s:taboption("DNS", Flag, "chinadns_ng", translate("ChinaDNS-NG"), translate("The effect is better, recommend."))
 	o.default = "0"
-	o:depends({remote_fakedns = false, use_gfw_list = true})
-	o:depends({remote_fakedns = false, chn_list = "direct"})
+	o:depends({remote_fakedns = false})
 
 	o = s:taboption("DNS", ListValue, "chinadns_ng_default_tag", translate("ChinaDNS-NG Domain Default Tag"))
-	o.default = "smart"
-	o:value("smart", translate("Smart DNS"))
+	o.default = "none"
+	o:value("none", translate("Default"))
 	o:value("gfw", translate("Remote DNS"))
 	o:value("chn", translate("Direct DNS"))
 	o.description = "<ul>"
-			.. "<li>" .. translate("Forward to both remote and direct DNS, if the direct DNS resolution result is a mainland China ip, then use the direct result, otherwise use the remote result") .. "</li>"
-			.. "<li>" .. translate("Remote DNS can avoid more DNS leaks, but some domestic domain names maybe to proxy!") .. "</li>"
-			.. "<li>" .. translate("Direct DNS Internet experience may be better, but DNS will be leaked!") .. "</li>"
+			.. "<li>" .. translate("When not matching any domain name list:") .. "</li>"
+			.. "<li>" .. translate("Default: Forward to both direct and remote DNS, if the direct DNS resolution result is a mainland China ip, then use the direct result, otherwise use the remote result.") .. "</li>"
+			.. "<li>" .. translate("Remote DNS: Can avoid more DNS leaks, but some domestic domain names maybe to proxy!") .. "</li>"
+			.. "<li>" .. translate("Direct DNS: Internet experience may be better, but DNS will be leaked!") .. "</li>"
 			.. "</ul>"
-	o:depends("chinadns_ng", true)
+	o:depends({chinadns_ng = true, chn_list = "direct"})
 end
 
 o = s:taboption("DNS", ListValue, "use_default_dns", translate("Default DNS"))
 o.default = "direct"
 o:value("remote", translate("Remote DNS"))
 o:value("direct", translate("Direct DNS"))
-o.description = translate("The default DNS used when not in the domain name rules list.")
-.. "<ul>"
-.. "<li>" .. translate("Remote DNS can avoid more DNS leaks, but some domestic domain names maybe to proxy!") .. "</li>"
-.. "<li>" .. translate("Direct DNS Internet experience may be better, but DNS will be leaked!") .. "</li>"
-.. "</ul>"
+o.description = "<ul>"
+		.. "<li>" .. translate("When not matching any domain name list:") .. "</li>"
+		.. "<li>" .. translate("Remote DNS: Can avoid more DNS leaks, but some domestic domain names maybe to proxy!") .. "</li>"
+		.. "<li>" .. translate("Direct DNS: Internet experience may be better, but DNS will be leaked!") .. "</li>"
+		.. "</ul>"
 local _depends = {tcp_proxy_mode = "proxy"}
 if api.is_finded("chinadns-ng") then
 	_depends["chinadns_ng"] = false

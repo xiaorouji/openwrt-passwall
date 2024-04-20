@@ -10,7 +10,7 @@ config global
 	option remote_dns '1.1.1.1'
 	option use_default_dns 'direct'
 	option chinadns_ng '1'
-	option chinadns_ng_default_tag 'smart'
+	option chinadns_ng_default_tag 'none'
 	option use_direct_list '1'
 	option use_proxy_list '1'
 	option use_block_list '1'

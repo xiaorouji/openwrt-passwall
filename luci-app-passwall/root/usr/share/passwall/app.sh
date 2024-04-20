@@ -483,7 +483,7 @@ run_dns2socks() {
 }
 
 run_chinadns_ng() {
-	local _flag _listen_port _dns_china _dns_trust _use_direct_list _use_proxy_list _chnlist _gfwlist _no_ipv6_dns
+	local _flag _listen_port _dns_local _dns_trust _no_ipv6_trust _use_direct_list _use_proxy_list _gfwlist _chnlist _default_mode _default_tag
 	eval_set_val $@
 	
 	local _CONF_FILE=$TMP_ACL_PATH/$_flag/chinadns_ng.conf
@@ -494,7 +494,7 @@ run_chinadns_ng() {
 		verbose
 		bind-addr 127.0.0.1
 		bind-port ${_listen_port}@udp
-		china-dns ${_dns_china}
+		china-dns ${_dns_local}
 		trust-dns udp://${_dns_trust}
 		filter-qtype 65
 	EOF
@@ -509,10 +509,9 @@ run_chinadns_ng() {
 		cat <<-EOF >> ${_CONF_FILE}
 			group directlist
 			group-dnl ${RULES_PATH}/direct_host
-			group-upstream ${_dns_china}
+			group-upstream ${_dns_local}
 			group-ipset ${whitelist4_set},${whitelist6_set}
 		EOF
-		[ "${_no_ipv6_dns}" = "china" ] && echo "no-ipv6 tag:directlist" >> ${_CONF_FILE}
 	}
 	
 	[ "${_use_proxy_list}" = "1" ] && [ -s "${RULES_PATH}/proxy_host" ] && {
@@ -528,18 +527,32 @@ run_chinadns_ng() {
 			group-upstream udp://${_dns_trust}
 			group-ipset ${blacklist4_set},${blacklist6_set}
 		EOF
-		[ "${_no_ipv6_dns}" = "trust" ] && echo "no-ipv6 tag:proxylist" >> ${_CONF_FILE}
+		[ "${_no_ipv6_trust}" = "1" ] && echo "no-ipv6 tag:proxylist" >> ${_CONF_FILE}
 	}
+	
+	[ "${_gfwlist}" = "1" ] && [ -s "${RULES_PATH}/gfwlist" ] && {
+		local gfwlist4_set="passwall_gfwlist"
+		local gfwlist6_set="passwall_gfwlist6"
+		[ "$nftflag" = "1" ] && {
+			gfwlist4_set="inet@fw4@${gfwlist4_set}"
+			gfwlist6_set="inet@fw4@${gfwlist6_set}"
+		}
+		cat <<-EOF >> ${_CONF_FILE}
+			gfwlist-file ${RULES_PATH}/gfwlist
+			add-taggfw-ip ${gfwlist4_set},${gfwlist6_set}
+		EOF
+		[ "${_no_ipv6_trust}" = "1" ] && echo "no-ipv6 tag:gfw" >> ${_CONF_FILE}
+	}
+	
+	[ "${_chnlist}" != "0" ] && [ -s "${RULES_PATH}/chnlist" ] && {
+		local chnroute4_set="passwall_chnroute"
+		local chnroute6_set="passwall_chnroute6"
+		[ "$nftflag" = "1" ] && {
+			chnroute4_set="inet@fw4@${chnroute4_set}"
+			chnroute6_set="inet@fw4@${chnroute6_set}"
+		}
 
-	local _default_tag=$(config_t_get global chinadns_ng_default_tag smart)
-	[ "${_chnlist}" = "direct" ] && {
-		[ -s "${RULES_PATH}/chnlist" ] && {
-			local chnroute4_set="passwall_chnroute"
-			local chnroute6_set="passwall_chnroute6"
-			[ "$nftflag" = "1" ] && {
-				chnroute4_set="inet@fw4@${chnroute4_set}"
-				chnroute6_set="inet@fw4@${chnroute6_set}"
-			}
+		[ "${_chnlist}" = "direct" ] && {
 			cat <<-EOF >> ${_CONF_FILE}
 				chnlist-file ${RULES_PATH}/chnlist
 				ipset-name4 ${chnroute4_set}
@@ -547,28 +560,32 @@ run_chinadns_ng() {
 				add-tagchn-ip
 				chnlist-first
 			EOF
-			[ "${_no_ipv6_dns}" = "china" ] && echo "no-ipv6 tag:chn" >> ${_CONF_FILE}
 		}
-	}
-	[ "${_gfwlist}" = "1" ] && {
-		[ -s "${RULES_PATH}/gfwlist" ] && {
-			local gfwlist4_set="passwall_gfwlist"
-			local gfwlist6_set="passwall_gfwlist6"
-			[ "$nftflag" = "1" ] && {
-				gfwlist4_set="inet@fw4@${gfwlist4_set}"
-				gfwlist6_set="inet@fw4@${gfwlist6_set}"
-			}
-			cat <<-EOF >> ${_CONF_FILE}
-				gfwlist-file ${RULES_PATH}/gfwlist
-				add-taggfw-ip ${gfwlist4_set},${gfwlist6_set}
-			EOF
-			[ "${_no_ipv6_dns}" = "trust" ] && echo "no-ipv6 tag:gfw" >> ${_CONF_FILE}
-			#当只有使用gfwlist模式时设置默认DNS为本地直连
-			[ "${_chnlist}" = "0" ] && _default_tag="chn"
-		}
-	}
 
-	[ -n "$_default_tag" ] && [ "$_default_tag" != "smart" ] && echo "default-tag ${_default_tag}" >> ${_CONF_FILE}
+		#回中国模式
+		[ "${_chnlist}" = "proxy" ] && {
+			cat <<-EOF >> ${_CONF_FILE}
+				group chn_proxy
+				group-dnl ${RULES_PATH}/chnlist
+				group-upstream udp://${_dns_trust}
+				group-ipset ${chnroute4_set},${chnroute6_set}
+			EOF
+			[ "${_no_ipv6_trust}" = "1" ] && echo "no-ipv6 tag:chn_proxy" >> ${_CONF_FILE}
+		}
+	}
+	
+	#只使用gfwlist模式，GFW列表以外的域名及默认使用本地DNS
+	[ "${_gfwlist}" = "1" ] && [ "${_chnlist}" = "0" ] && _default_tag="chn"
+	#回中国模式，中国列表以外的域名及默认使用本地DNS
+	[ "${_chnlist}" = "proxy" ] && _default_tag="chn"
+	#全局模式，默认使用远程DNS
+	[ "${_default_mode}" = "proxy" ] && [ "${_chnlist}" = "0" ] && [ "${_gfwlist}" = "0" ] && {
+		_default_tag="gfw"
+		[ "${_no_ipv6_trust}" = "1" ] && echo "no-ipv6" >> ${_CONF_FILE}
+	}
+	
+	([ -z "${_default_tag}" ] || [ "${_default_tag}" = "smart" ]) && _default_tag="none"
+	echo "default-tag ${_default_tag}" >> ${_CONF_FILE}
 
 	ln_run "$(first_type chinadns-ng)" chinadns-ng "${_LOG_FILE}" -C ${_CONF_FILE}
 }
@@ -1303,25 +1320,25 @@ start_dns() {
 	[ "${use_tcp_node_resolve_dns}" = "1" ] && echolog "  * 请确认上游 DNS 支持 TCP 查询，如非直连地址，确保 TCP 代理打开，并且已经正确转发！"
 	[ "${use_udp_node_resolve_dns}" = "1" ] && echolog "  * 要求代理 DNS 请求，如上游 DNS 非直连地址，确保 UDP 代理打开，并且已经正确转发！"
 
-	[ "$CHINADNS_NG" = "1" ] && [ -n "$(first_type chinadns-ng)" ] && ([ "${CHN_LIST}" = "direct" ] || [ "${USE_GFW_LIST}" = "1" ]) && {
-		[ "$FILTER_PROXY_IPV6" = "1" ] && {
-			local _no_ipv6_dns="trust"
-			DNSMASQ_FILTER_PROXY_IPV6=0
-		}
+	[ "$CHINADNS_NG" = "1" ] && [ -n "$(first_type chinadns-ng)" ] && {
+		[ "$FILTER_PROXY_IPV6" = "1" ] && DNSMASQ_FILTER_PROXY_IPV6=0
 		local china_ng_listen_port=$(expr $dns_listen_port + 1)
 		local china_ng_listen="127.0.0.1#${china_ng_listen_port}"
+
 		run_chinadns_ng \
 			_flag="default" \
 			_listen_port=${china_ng_listen_port} \
-			_dns_china=$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2) | tr " " ",") \
-			_dns_trust="${TUN_DNS}" \
-			_use_direct_list="${USE_DIRECT_LIST}" \
-			_use_proxy_list="${USE_PROXY_LIST}" \
-			_chnlist="${CHN_LIST}" \
-			_gfwlist="${USE_GFW_LIST}" \
-			_no_ipv6_dns="${_no_ipv6_dns}"
-			
-		echolog "  - ChinaDNS-NG(127.0.0.1#${china_ng_listen_port})：国内DNS：$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2) | tr " " ",")，可信DNS：${TUN_DNS}"
+			_dns_local=$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2) | tr " " ",") \
+			_dns_trust=${TUN_DNS} \
+			_no_ipv6_trust=${FILTER_PROXY_IPV6} \
+			_use_direct_list=${USE_DIRECT_LIST} \
+			_use_proxy_list=${USE_PROXY_LIST} \
+			_gfwlist=${USE_GFW_LIST} \
+			_chnlist=${CHN_LIST} \
+			_default_mode=${TCP_PROXY_MODE} \
+			_default_tag=$(config_t_get global chinadns_ng_default_tag smart)
+
+		echolog "  - ChinaDNS-NG(127.0.0.1#${china_ng_listen_port})：直连DNS：$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2) | tr " " ",")，可信DNS：${TUN_DNS}"
 
 		USE_DEFAULT_DNS="chinadns_ng"
 	}
@@ -1335,7 +1352,7 @@ start_dns() {
 		-DNSMASQ_CONF_FILE "/tmp/dnsmasq.d/dnsmasq-passwall.conf" -DEFAULT_DNS ${DEFAULT_DNS} -LOCAL_DNS ${LOCAL_DNS} \
 		-TUN_DNS ${TUN_DNS} -REMOTE_FAKEDNS ${fakedns:-0} -USE_DEFAULT_DNS "${USE_DEFAULT_DNS:-direct}" -CHINADNS_DNS ${china_ng_listen:-0} \
 		-USE_DIRECT_LIST "${USE_DIRECT_LIST}" -USE_PROXY_LIST "${USE_PROXY_LIST}" -USE_BLOCK_LIST "${USE_BLOCK_LIST}" -USE_GFW_LIST "${USE_GFW_LIST}" -CHN_LIST "${CHN_LIST}" \
-		-TCP_NODE ${TCP_NODE} -DEFAULT_PROXY_MODE "${TCP_PROXY_MODE}" -NO_PROXY_IPV6 ${DNSMASQ_FILTER_PROXY_IPV6:-0} -NFTFLAG ${nftflag:-0} \
+		-TCP_NODE ${TCP_NODE} -DEFAULT_PROXY_MODE ${TCP_PROXY_MODE} -NO_PROXY_IPV6 ${DNSMASQ_FILTER_PROXY_IPV6:-0} -NFTFLAG ${nftflag:-0} \
 		-NO_LOGIC_LOG ${NO_LOGIC_LOG:-0}
 }
 
@@ -1471,24 +1488,23 @@ acl_app() {
 								eval node_${tcp_node}_$(echo -n "${remote_dns}" | md5sum | cut -d " " -f1)=${_dns_port}
 							}
 
-							[ "$chinadns_ng" = "1" ] && [ -n "$(first_type chinadns-ng)" ] && ([ "${chn_list}" = "direct" ] || [ "${use_gfw_list}" = "1" ]) && {
-								[ "$filter_proxy_ipv6" = "1" ] && {
-									local _no_ipv6_dns="trust"
-									dnsmasq_filter_proxy_ipv6=0
-								}
+							[ "$chinadns_ng" = "1" ] && [ -n "$(first_type chinadns-ng)" ] && {
+								[ "$filter_proxy_ipv6" = "1" ] && dnsmasq_filter_proxy_ipv6=0
 								chinadns_port=$(expr $chinadns_port + 1)
 								_china_ng_listen="127.0.0.1#${chinadns_port}"
 
 								run_chinadns_ng \
 									_flag="$sid" \
 									_listen_port=${chinadns_port} \
-									_dns_china=$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2) | tr " " ",") \
-									_dns_trust="127.0.0.1#${_dns_port}" \
-									_use_direct_list="${use_direct_list}" \
-									_use_proxy_list="${use_proxy_list}" \
-									_chnlist=${chn_list} \
+									_dns_local=$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2) | tr " " ",") \
+									_dns_trust=127.0.0.1#${_dns_port} \
+									_no_ipv6_trust=${filter_proxy_ipv6} \
+									_use_direct_list=${use_direct_list} \
+									_use_proxy_list=${use_proxy_list} \
 									_gfwlist=${use_gfw_list} \
-									_no_ipv6_dns="${_no_ipv6_dns}"
+									_chnlist=${chn_list} \
+									_default_mode=${tcp_proxy_mode} \
+									_default_tag=${chinadns_ng_default_tag:-smart}
 
 								use_default_dns="chinadns_ng"
 							}
@@ -1628,7 +1644,7 @@ acl_app() {
 			[ -n "$redirect_dns_port" ] && echo "${redirect_dns_port}" > $TMP_ACL_PATH/$sid/var_redirect_dns_port
 			unset enabled sid remarks sources use_global_config tcp_node udp_node use_direct_list use_proxy_list use_block_list use_gfw_list chn_list tcp_proxy_mode udp_proxy_mode filter_proxy_ipv6 dns_mode remote_dns v2ray_dns_mode remote_dns_doh dns_client_ip
 			unset _ip _mac _iprange _ipset _ip_or_mac rule_list tcp_port udp_port config_file _extra_param
-			unset _china_ng_listen _china_ng_chn _china_ng_gfw _gfwlist_file _chnlist_file _china_ng_log_file _no_ipv6_dns _china_ng_extra_param dnsmasq_filter_proxy_ipv6
+			unset _china_ng_listen chinadns_ng_default_tag dnsmasq_filter_proxy_ipv6
 			unset redirect_dns_port
 		done
 		unset socks_port redir_port dns_port dnsmasq_port chinadns_port

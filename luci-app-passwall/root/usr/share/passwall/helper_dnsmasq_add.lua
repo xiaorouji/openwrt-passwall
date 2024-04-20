@@ -162,8 +162,6 @@ if cache_text ~= new_text then
 	api.remove(CACHE_DNS_PATH .. "*")
 end
 
-local only_global
-
 local dnsmasq_default_dns
 if USE_DEFAULT_DNS ~= "nil" then
 	if USE_DEFAULT_DNS == "direct" then
@@ -175,15 +173,16 @@ if USE_DEFAULT_DNS ~= "nil" then
 	if USE_DEFAULT_DNS == "remote" and CHN_LIST == "direct" then
 		dnsmasq_default_dns = TUN_DNS
 	end
-	if USE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" and (CHN_LIST == "direct" or USE_GFW_LIST == "1") then
-		dnsmasq_default_dns = CHINADNS_DNS
-	end
 end
 
+local only_global
 if DEFAULT_PROXY_MODE == "proxy" and CHN_LIST == "0" and USE_GFW_LIST == "0" then
 	--没有启用中国列表和GFW列表时
 	dnsmasq_default_dns = TUN_DNS
 	only_global = 1
+end
+if USE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" then
+	dnsmasq_default_dns = CHINADNS_DNS
 end
 
 local setflag_4= (NFTFLAG == "1") and "4#inet#fw4#" or ""
@@ -304,14 +303,15 @@ if not fs.access(CACHE_DNS_PATH) then
 	--中国列表
 	if CHN_LIST ~= "0" then
 		if fs.access("/usr/share/passwall/rules/chnlist") then
-			fwd_dns = LOCAL_DNS
+			fwd_dns = nil
 			if CHN_LIST == "direct" then
-				if USE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" then
-					fwd_dns = nil
-				end
+				fwd_dns = LOCAL_DNS
 			end
 			if CHN_LIST == "proxy" then
 				fwd_dns = TUN_DNS
+			end
+			if USE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" then
+				fwd_dns = nil
 			end
 			if fwd_dns then
 				local ipset_flag = setflag_4 .. "passwall_chnroute," .. setflag_6 .. "passwall_chnroute6"

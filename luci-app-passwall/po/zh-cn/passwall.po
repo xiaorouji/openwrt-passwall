@@ -157,29 +157,26 @@ msgstr "用于 DNS 查询时通知 DNS 服务器，客户端所在的地理位�
 msgid "This feature requires the DNS server to support the Edns Client Subnet (RFC7871)."
 msgstr "此功能需要 DNS 服务器支持 EDNS Client Subnet（RFC7871）。"
 
-msgid "The effect is better, but will increase the memory."
-msgstr "效果更好，但会增加内存使用。"
+msgid "The effect is better, recommend."
+msgstr "效果更好，推荐使用。"
 
 msgid "Default DNS"
 msgstr "默认DNS"
 
-msgid "The default DNS used when not in the domain name rules list."
-msgstr "当域名不在规则列表中时使用的默认DNS。"
+msgid "When not matching any domain name list:"
+msgstr "当不匹配任何域名列表时："
 
-msgid "Remote DNS can avoid more DNS leaks, but some domestic domain names maybe to proxy!"
-msgstr "远程DNS可以避免更多的DNS泄露，但会导致规则列表外的某些国内域名可能会走代理！"
+msgid "Remote DNS: Can avoid more DNS leaks, but some domestic domain names maybe to proxy!"
+msgstr "远程DNS：可以避免更多的DNS泄露，但会导致规则列表外的某些国内域名可能会走代理！"
 
-msgid "Direct DNS Internet experience may be better, but DNS will be leaked!"
-msgstr "直连DNS上网体验可能会更佳，但是会泄露DNS！"
+msgid "Direct DNS: Internet experience may be better, but DNS will be leaked!"
+msgstr "直连DNS：上网体验可能会更佳，但是会泄露DNS！"
 
 msgid "ChinaDNS-NG Domain Default Tag"
 msgstr "ChinaDNS-NG 域名默认标签"
 
-msgid "Smart DNS"
-msgstr "智能 DNS"
-
-msgid "Forward to both remote and direct DNS, if the direct DNS resolution result is a mainland China ip, then use the direct result, otherwise use the remote result"
-msgstr "同时转发给远程和直连DNS，如果直连DNS解析结果是大陆ip，则使用直连结果，否则使用远程结果"
+msgid "Default: Forward to both direct and remote DNS, if the direct DNS resolution result is a mainland China ip, then use the direct result, otherwise use the remote result."
+msgstr "默认：同时转发给直连和远程DNS，如果直连DNS解析结果是大陆ip，则使用直连结果，否则使用远程结果。"
 
 msgid "Filter Proxy Host IPv6"
 msgstr "过滤代理域名 IPv6"
