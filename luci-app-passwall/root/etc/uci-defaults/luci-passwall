@@ -3,20 +3,24 @@
 uci -q batch <<-EOF >/dev/null
 	set dhcp.@dnsmasq[0].localuse=1
 	commit dhcp
+	[ -e "/etc/config/ucitrack" ] && {
 	delete ucitrack.@passwall[-1]
 	add ucitrack passwall
 	set ucitrack.@passwall[-1].init=passwall
 	commit ucitrack
+	}
 	delete firewall.passwall
 	set firewall.passwall=include
 	set firewall.passwall.type=script
 	set firewall.passwall.path=/var/etc/passwall.include
 	set firewall.passwall.reload=1
 	commit firewall
+	[ -e "/etc/config/ucitrack" ] && {
 	delete ucitrack.@passwall_server[-1]
 	add ucitrack passwall_server
 	set ucitrack.@passwall_server[-1].init=passwall_server
 	commit ucitrack
+	}
 	delete firewall.passwall_server
 	set firewall.passwall_server=include
 	set firewall.passwall_server.type=script
