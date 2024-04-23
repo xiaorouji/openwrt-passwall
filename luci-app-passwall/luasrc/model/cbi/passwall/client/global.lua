@@ -132,7 +132,7 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 			end
 			type.cfgvalue = get_cfgvalue(v.id, "type")
 			type.write = get_write(v.id, "type")
-			
+
 			-- pre-proxy
 			o = s:taboption("Main", Flag, vid .. "-preproxy_enabled", translate("Preproxy"))
 			o:depends("tcp_node", v.id)
@@ -502,13 +502,15 @@ trojan_loglevel:value("4", "fatal")
 
 o = s:taboption("log", Flag, "advanced_log_feature", translate("Advanced log feature"), translate("For professionals only."))
 o.default = "0"
-o.rmempty = false
-local syslog = s:taboption("log", Flag, "sys_log", translate("Logging to system log"), translate("Logging to the system log for more advanced functions. For example, send logs to a dedicated log server."))
-syslog:depends("advanced_log_feature", "1")
-syslog.default = "0"
-syslog.rmempty = false
-local logpath = s:taboption("log", Value, "persist_log_path", translate("Persist log file directory"), translate("The path to the directory used to store persist log files, the \"/\" at the end can be omitted. Leave it blank to disable this feature."))
-logpath:depends({ ["advanced_log_feature"] = 1, ["sys_log"] = 0 })
+o = s:taboption("log", Flag, "sys_log", translate("Logging to system log"), translate("Logging to the system log for more advanced functions. For example, send logs to a dedicated log server."))
+o:depends("advanced_log_feature", "1")
+o.default = "0"
+o = s:taboption("log", Value, "persist_log_path", translate("Persist log file directory"), translate("The path to the directory used to store persist log files, the \"/\" at the end can be omitted. Leave it blank to disable this feature."))
+o:depends({ ["advanced_log_feature"] = 1, ["sys_log"] = 0 })
+o = s:taboption("log", Value, "log_event_filter", translate("Log Event Filter"), translate("Support regular expression."))
+o:depends("advanced_log_feature", "1")
+o = s:taboption("log", Value, "log_event_cmd", translate("Shell Command"), translate("Shell command to execute, replace log content with %s."))
+o:depends("advanced_log_feature", "1")
 
 s:tab("faq", "FAQ")
 

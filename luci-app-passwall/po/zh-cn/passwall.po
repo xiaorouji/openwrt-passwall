@@ -1393,6 +1393,18 @@ msgstr "记录到系统日志"
 msgid "Logging to the system log for more advanced functions. For example, send logs to a dedicated log server."
 msgstr "将日志记录到系统日志，以实现更加高级的功能。例如，把日志发送到专门的日志服务器。"
 
+msgid "Log Event Filter"
+msgstr "日志事件过滤器"
+
+msgid "Support regular expression."
+msgstr "支持正则表达式。"
+
+msgid "Shell Command"
+msgstr "Shell 命令"
+
+msgid "Shell command to execute, replace log content with %s."
+msgstr "要执行的 Shell 命令，用 %s 代替日志内容。"
+
 msgid "Not enabled log"
 msgstr "未启用日志"
 
