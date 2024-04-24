@@ -1369,8 +1369,8 @@ msgstr "日志"
 msgid "Log"
 msgstr "日志"
 
-msgid "%s Node Log Close"
-msgstr "%s 节点日志关闭"
+msgid "%s Node Log"
+msgstr "%s 节点日志"
 
 msgid "Log Level"
 msgstr "日志等级"
