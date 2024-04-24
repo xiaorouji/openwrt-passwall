@@ -145,11 +145,11 @@ msgstr "请确保此Socks服务可用。"
 msgid "Format must be:"
 msgstr "格式必须为："
 
+msgid "Request protocol"
+msgstr "请求协议"
+
 msgid "Remote DNS DoH"
 msgstr "远程 DNS DoH"
-
-msgid "Cache Resolved"
-msgstr "缓存解析结果"
 
 msgid "Notify the DNS server when the DNS query is notified, the location of the client (cannot be a private IP address)."
 msgstr "用于 DNS 查询时通知 DNS 服务器，客户端所在的地理位置（不能是私有 IP 地址）。"

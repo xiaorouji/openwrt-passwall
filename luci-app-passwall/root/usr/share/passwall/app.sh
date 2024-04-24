@@ -493,9 +493,9 @@ run_chinadns_ng() {
 	cat <<-EOF > ${_CONF_FILE}
 		verbose
 		bind-addr 127.0.0.1
-		bind-port ${_listen_port}@udp
+		bind-port ${_listen_port}
 		china-dns ${_dns_local}
-		trust-dns udp://${_dns_trust}
+		trust-dns ${_dns_trust}
 		filter-qtype 65
 	EOF
 
@@ -524,7 +524,7 @@ run_chinadns_ng() {
 		cat <<-EOF >> ${_CONF_FILE}
 			group proxylist
 			group-dnl ${RULES_PATH}/proxy_host
-			group-upstream udp://${_dns_trust}
+			group-upstream ${_dns_trust}
 			group-ipset ${blacklist4_set},${blacklist6_set}
 		EOF
 		[ "${_no_ipv6_trust}" = "1" ] && echo "no-ipv6 tag:proxylist" >> ${_CONF_FILE}
@@ -567,7 +567,7 @@ run_chinadns_ng() {
 			cat <<-EOF >> ${_CONF_FILE}
 				group chn_proxy
 				group-dnl ${RULES_PATH}/chnlist
-				group-upstream udp://${_dns_trust}
+				group-upstream ${_dns_trust}
 				group-ipset ${chnroute4_set},${chnroute6_set}
 			EOF
 			[ "${_no_ipv6_trust}" = "1" ] && echo "no-ipv6 tag:chn_proxy" >> ${_CONF_FILE}
@@ -1219,17 +1219,9 @@ stop_crontab() {
 }
 
 start_dns() {
-	TUN_DNS="127.0.0.1#${dns_listen_port}"
-
 	echolog "DNS域名解析："
-	[ "$ENABLED_ACLS" == 1 ] && {
-		local items=$(uci show ${CONFIG} | grep "=acl_rule" | cut -d '.' -sf 2 | cut -d '=' -sf 1)
-		[ -n "$items" ] && {
-			for item in $items; do
-				[ "$(config_n_get $item enabled)" = "1" ] || continue
-			done
-		}
-	}
+
+	TUN_DNS="127.0.0.1#${dns_listen_port}"
 
 	case "$DNS_MODE" in
 	dns2socks)
@@ -1303,33 +1295,44 @@ start_dns() {
 			run_xray ${_args}
 		}
 	;;
-	dns2tcp)
-		use_tcp_node_resolve_dns=1
-		ln_run "$(first_type dns2tcp)" dns2tcp "/dev/null" -L "${TUN_DNS}" -R "$(get_first_dns REMOTE_DNS 53)" -v
-		echolog "  - dns2tcp(${TUN_DNS}) -> tcp://$(get_first_dns REMOTE_DNS 53 | sed 's/#/:/g')"
-	;;
 	udp)
 		use_udp_node_resolve_dns=1
-		TUN_DNS="$(echo ${REMOTE_DNS} | sed 's/#/:/g' | sed -E 's/\:([^:]+)$/#\1/g')"
-		echolog "  - udp://${TUN_DNS}"
+		if [ "$CHINADNS_NG" = "1" ] && [ -n "$(first_type chinadns-ng)" ]; then
+			local china_ng_listen_port=${dns_listen_port}
+			local china_ng_trust_dns="udp://$(get_first_dns REMOTE_DNS 53 | sed 's/:/#/g')"
+		else
+			TUN_DNS="$(echo ${REMOTE_DNS} | sed 's/#/:/g' | sed -E 's/\:([^:]+)$/#\1/g')"
+			echolog "  - udp://${TUN_DNS}"
+		fi
+	;;
+	*)
+		use_tcp_node_resolve_dns=1
+		if [ "$CHINADNS_NG" = "1" ] && [ -n "$(first_type chinadns-ng)" ]; then
+			local china_ng_listen_port=${dns_listen_port}
+			local china_ng_trust_dns="tcp://$(get_first_dns REMOTE_DNS 53 | sed 's/:/#/g')"
+		else
+			ln_run "$(first_type dns2tcp)" dns2tcp "/dev/null" -L "${TUN_DNS}" -R "$(get_first_dns REMOTE_DNS 53)" -v
+			echolog "  - dns2tcp(${TUN_DNS}) -> tcp://$(get_first_dns REMOTE_DNS 53 | sed 's/#/:/g')"
+		fi
 	;;
 	esac
-	
+
 	[ -n "${resolve_dns_log}" ] && echolog "  - ${resolve_dns_log}"
 
 	[ "${use_tcp_node_resolve_dns}" = "1" ] && echolog "  * 请确认上游 DNS 支持 TCP 查询，如非直连地址，确保 TCP 代理打开，并且已经正确转发！"
-	[ "${use_udp_node_resolve_dns}" = "1" ] && echolog "  * 要求代理 DNS 请求，如上游 DNS 非直连地址，确保 UDP 代理打开，并且已经正确转发！"
+	[ "${use_udp_node_resolve_dns}" = "1" ] && echolog "  * 请确认上游 DNS 支持 UDP 查询并已使用 UDP 节点，如上游 DNS 非直连地址，确保 UDP 代理打开，并且已经正确转发！"
 
 	[ "$CHINADNS_NG" = "1" ] && [ -n "$(first_type chinadns-ng)" ] && {
 		[ "$FILTER_PROXY_IPV6" = "1" ] && DNSMASQ_FILTER_PROXY_IPV6=0
-		local china_ng_listen_port=$(expr $dns_listen_port + 1)
+		[ -z "${china_ng_listen_port}" ] && local china_ng_listen_port=$(expr $dns_listen_port + 1)
 		local china_ng_listen="127.0.0.1#${china_ng_listen_port}"
+		[ -z "${china_ng_trust_dns}" ] && local china_ng_trust_dns=${TUN_DNS}
 
 		run_chinadns_ng \
 			_flag="default" \
 			_listen_port=${china_ng_listen_port} \
 			_dns_local=$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2) | tr " " ",") \
-			_dns_trust=${TUN_DNS} \
+			_dns_trust=${china_ng_trust_dns} \
 			_no_ipv6_trust=${FILTER_PROXY_IPV6} \
 			_use_direct_list=${USE_DIRECT_LIST} \
 			_use_proxy_list=${USE_PROXY_LIST} \
@@ -1338,7 +1341,7 @@ start_dns() {
 			_default_mode=${TCP_PROXY_MODE} \
 			_default_tag=$(config_t_get global chinadns_ng_default_tag smart)
 
-		echolog "  - ChinaDNS-NG(127.0.0.1#${china_ng_listen_port})：直连DNS：$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2) | tr " " ",")，可信DNS：${TUN_DNS}"
+		echolog "  - ChinaDNS-NG(${china_ng_listen})：直连DNS：$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2) | tr " " ",")，可信DNS：${china_ng_trust_dns}"
 
 		USE_DEFAULT_DNS="chinadns_ng"
 	}
@@ -1763,8 +1766,8 @@ LOCALHOST_PROXY=$(config_t_get global localhost_proxy 1)
 	LOCALHOST_UDP_PROXY_MODE=$UDP_PROXY_MODE
 }
 CLIENT_PROXY=$(config_t_get global client_proxy 1)
-DNS_MODE=$(config_t_get global dns_mode dns2tcp)
-DNS_CACHE=$(config_t_get global dns_cache 0)
+DNS_MODE=$(config_t_get global dns_mode tcp)
+DNS_CACHE=0
 REMOTE_DNS=$(config_t_get global remote_dns 1.1.1.1:53 | sed 's/#/:/g' | sed -E 's/\:([^:]+)$/#\1/g')
 CHINADNS_NG=$(config_t_get global chinadns_ng 0)
 USE_DEFAULT_DNS=$(config_t_get global use_default_dns direct)
