@@ -261,7 +261,7 @@ end
 
 s:tab("DNS", translate("DNS"))
 
-dns_shunt = s:taboption("DNS", ListValue, "dns_shunt", translate("DNS Shunt"))
+dns_shunt = s:taboption("DNS", ListValue, "dns_shunt", "DNS " .. translate("Shunt"))
 dns_shunt:value("dnsmasq", "Dnsmasq")
 dns_shunt:value("chinadns-ng", "Dnsmasq + ChinaDNS-NG")
 

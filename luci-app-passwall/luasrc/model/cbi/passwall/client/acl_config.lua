@@ -261,7 +261,7 @@ o.template = appname .. "/global/proxy"
 o:depends({ tcp_node = "",  ['!reverse'] = true })
 
 ---- DNS
-o = s:option(ListValue, "dns_shunt", translate("DNS Shunt"))
+o = s:option(ListValue, "dns_shunt", "DNS " .. translate("Shunt"))
 o:depends({ tcp_node = "",  ['!reverse'] = true })
 o:value("dnsmasq", "Dnsmasq")
 o:value("chinadns-ng", "Dnsmasq + ChinaDNS-NG")
