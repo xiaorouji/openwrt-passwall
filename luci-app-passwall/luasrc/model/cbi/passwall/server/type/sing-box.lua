@@ -365,7 +365,7 @@ o = s:option(Value, option_name("tcpbrutal_down_mbps"), translate("Max download 
 o.default = "50"
 o:depends({ [option_name("tcpbrutal")] = true })
 
-o = s:option(Flag, option_name("bind_local"), translate("Bind Local"), translate("When selected, it can only be accessed locally, It is recommended to turn on when using reverse proxies or be fallback."))
+o = s:option(Flag, option_name("bind_local"), translate("Bind Local"), translate("When selected, it can only be accessed localhost."))
 o.default = "0"
 
 o = s:option(Flag, option_name("accept_lan"), translate("Accept LAN Access"), translate("When selected, it can accessed lan , this will not be safe!"))

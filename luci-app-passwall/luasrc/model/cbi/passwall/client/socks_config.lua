@@ -42,6 +42,9 @@ if auto_switch_tip then
 	socks_node.description = auto_switch_tip
 end
 
+o = s:option(Flag, "bind_local", translate("Bind Local"), translate("When selected, it can only be accessed localhost."))
+o.default = "0"
+
 local n = 1
 uci:foreach(appname, "socks", function(s)
 	if s[".name"] == section then

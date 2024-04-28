@@ -46,6 +46,9 @@ o = s:option(Value, "console_port", translate("Console Port"), translate(
 o.default = "1188"
 o:depends("balancing_enable", true)
 
+o = s:option(Flag, "bind_local", translate("Haproxy Port") .. " " .. translate("Bind Local"), translate("When selected, it can only be accessed localhost."))
+o.default = "0"
+
 ---- Health Check Type
 o = s:option(ListValue, "health_check_type", translate("Health Check Type"))
 o.default = "passwall_logic"

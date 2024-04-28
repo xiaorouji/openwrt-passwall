@@ -334,7 +334,7 @@ o:depends({ [option_name("fallback")] = true })
 o = s:option(DynamicList, option_name("fallback_list"), "Fallback", translate("dest,path"))
 o:depends({ [option_name("fallback")] = true })
 
-o = s:option(Flag, option_name("bind_local"), translate("Bind Local"), translate("When selected, it can only be accessed locally, It is recommended to turn on when using reverse proxies or be fallback."))
+o = s:option(Flag, option_name("bind_local"), translate("Bind Local"), translate("When selected, it can only be accessed localhost."))
 o.default = "0"
 
 o = s:option(Flag, option_name("accept_lan"), translate("Accept LAN Access"), translate("When selected, it can accessed lan , this will not be safe!"))

@@ -36,6 +36,9 @@ local cpu_thread = sys.exec('echo -n $(cat /proc/cpuinfo | grep "processor" | wc
 local health_check_type = uci:get(appname, "@global_haproxy[0]", "health_check_type") or "tcp"
 local health_check_inter = uci:get(appname, "@global_haproxy[0]", "health_check_inter") or "10"
 local console_port = uci:get(appname, "@global_haproxy[0]", "console_port")
+local bind_local = uci:get(appname, "@global_haproxy[0]", "bind_local") or "0"
+local bind_address = "0.0.0.0"
+if bind_local == "1" then bind_address = "127.0.0.1" end
 
 log("HAPROXY 负载均衡：")
 log(string.format("  * 控制台端口：%s", console_port))
@@ -161,14 +164,14 @@ end
 table.sort(sortTable, function(a,b) return (a < b) end)
 
 for i, port in pairs(sortTable) do
-	log("  +  入口 0.0.0.0:%s" % port)
+	log("  +  入口 %s:%s" % {bind_address, port})
 
 	f_out:write("\n" .. string.format([[
 listen %s
-	bind 0.0.0.0:%s
+	bind %s:%s
 	mode tcp
 	balance roundrobin
-]], port, port))
+]], port, bind_address, port))
 
 	if health_check_type == "passwall_logic" then
 		f_out:write(string.format([[

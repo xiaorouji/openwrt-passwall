@@ -644,18 +644,18 @@ run_socks() {
 		[ "$http_port" != "0" ] && {
 			http_flag=1
 			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
-			local _extra_param="-local_http_port $http_port"
+			local _extra_param="-local_http_address $bind -local_http_port $http_port"
 		}
 		local bin=$(first_type $(config_t_get global_app singbox_file) sing-box)
 		if [ -n "$bin" ]; then
 			type="sing-box"
-			lua $UTIL_SINGBOX gen_proto_config -local_socks_port $socks_port ${_extra_param} -server_proto socks -server_address ${_socks_address} -server_port ${_socks_port} -server_username ${_socks_username} -server_password ${_socks_password} > $config_file
+			lua $UTIL_SINGBOX gen_proto_config -local_socks_address $bind -local_socks_port $socks_port ${_extra_param} -server_proto socks -server_address ${_socks_address} -server_port ${_socks_port} -server_username ${_socks_username} -server_password ${_socks_password} > $config_file
 			ln_run "$bin" ${type} $log_file run -c "$config_file"
 		else
 			bin=$(first_type $(config_t_get global_app xray_file) xray)
 			[ -n "$bin" ] && {
 				type="xray"
-				lua $UTIL_XRAY gen_proto_config -local_socks_port $socks_port ${_extra_param} -server_proto socks -server_address ${_socks_address} -server_port ${_socks_port} -server_username ${_socks_username} -server_password ${_socks_password} > $config_file
+				lua $UTIL_XRAY gen_proto_config -local_socks_address $bind -local_socks_port $socks_port ${_extra_param} -server_proto socks -server_address ${_socks_address} -server_port ${_socks_port} -server_username ${_socks_username} -server_password ${_socks_password} > $config_file
 				ln_run "$bin" ${type} $log_file run -c "$config_file"
 			}
 		fi
@@ -664,19 +664,19 @@ run_socks() {
 		[ "$http_port" != "0" ] && {
 			http_flag=1
 			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
-			local _args="http_port=$http_port"
+			local _args="http_address=$bind http_port=$http_port"
 		}
 		[ -n "$relay_port" ] && _args="${_args} server_host=$server_host server_port=$port"
-		run_singbox flag=$flag node=$node socks_port=$socks_port config_file=$config_file log_file=$log_file ${_args}
+		run_singbox flag=$flag node=$node socks_address=$bind socks_port=$socks_port config_file=$config_file log_file=$log_file ${_args}
 	;;
 	xray)
 		[ "$http_port" != "0" ] && {
 			http_flag=1
 			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
-			local _args="http_port=$http_port"
+			local _args="http_address=$bind http_port=$http_port"
 		}
 		[ -n "$relay_port" ] && _args="${_args} server_host=$server_host server_port=$port"
-		run_xray flag=$flag node=$node socks_port=$socks_port config_file=$config_file log_file=$log_file ${_args}
+		run_xray flag=$flag node=$node socks_address=$bind socks_port=$socks_port config_file=$config_file log_file=$log_file ${_args}
 	;;
 	trojan*)
 		lua $UTIL_TROJAN gen_config -node $node -run_type client -local_addr $bind -local_port $socks_port -server_host $server_host -server_port $port > $config_file
@@ -687,29 +687,29 @@ run_socks() {
 		ln_run "$(first_type naive)" naive $log_file "$config_file"
 	;;
 	ssr)
-		lua $UTIL_SS gen_config -node $node -local_addr "0.0.0.0" -local_port $socks_port -server_host $server_host -server_port $port > $config_file
+		lua $UTIL_SS gen_config -node $node -local_addr $bind -local_port $socks_port -server_host $server_host -server_port $port > $config_file
 		ln_run "$(first_type ssr-local)" "ssr-local" $log_file -c "$config_file" -v -u
 	;;
 	ss)
-		lua $UTIL_SS gen_config -node $node -local_addr "0.0.0.0" -local_port $socks_port -server_host $server_host -server_port $port -mode tcp_and_udp > $config_file
+		lua $UTIL_SS gen_config -node $node -local_addr $bind -local_port $socks_port -server_host $server_host -server_port $port -mode tcp_and_udp > $config_file
 		ln_run "$(first_type ss-local)" "ss-local" $log_file -c "$config_file" -v
 	;;
 	ss-rust)
 		[ "$http_port" != "0" ] && {
 			http_flag=1
 			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
-			local _extra_param="-local_http_port $http_port"
+			local _extra_param="-local_http_address $bind -local_http_port $http_port"
 		}
-		lua $UTIL_SS gen_config -node $node -local_socks_port $socks_port -server_host $server_host -server_port $port ${_extra_param} > $config_file
+		lua $UTIL_SS gen_config -node $node -local_socks_address $bind -local_socks_port $socks_port -server_host $server_host -server_port $port ${_extra_param} > $config_file
 		ln_run "$(first_type sslocal)" "sslocal" $log_file -c "$config_file" -v
 	;;
 	hysteria2)
 		[ "$http_port" != "0" ] && {
 			http_flag=1
 			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
-			local _extra_param="-local_http_port $http_port"
+			local _extra_param="-local_http_address $bind -local_http_port $http_port"
 		}
-		lua $UTIL_HYSTERIA2 gen_config -node $node -local_socks_port $socks_port -server_host $server_host -server_port $port ${_extra_param} > $config_file
+		lua $UTIL_HYSTERIA2 gen_config -node $node -local_socks_address $bind -local_socks_port $socks_port -server_host $server_host -server_port $port ${_extra_param} > $config_file
 		ln_run "$(first_type $(config_t_get global_app hysteria_file))" "hysteria" $log_file -c "$config_file" client
 	;;
 	tuic)
@@ -725,13 +725,13 @@ run_socks() {
 		local bin=$(first_type $(config_t_get global_app singbox_file) sing-box)
 		if [ -n "$bin" ]; then
 			type="sing-box"
-			lua $UTIL_SINGBOX gen_proto_config -local_http_port $http_port -server_proto socks -server_address "127.0.0.1" -server_port $socks_port -server_username $_username -server_password $_password > $http_config_file
+			lua $UTIL_SINGBOX gen_proto_config -local_http_address $bind -local_http_port $http_port -server_proto socks -server_address "127.0.0.1" -server_port $socks_port -server_username $_username -server_password $_password > $http_config_file
 			ln_run "$bin" ${type} /dev/null run -c "$http_config_file"
 		else
 			bin=$(first_type $(config_t_get global_app xray_file) xray)
 			[ -n "$bin" ] && type="xray"
 			[ -z "$type" ] && return 1
-			lua $UTIL_XRAY gen_proto_config -local_http_port $http_port -server_proto socks -server_address "127.0.0.1" -server_port $socks_port -server_username $_username -server_password $_password > $http_config_file
+			lua $UTIL_XRAY gen_proto_config local_http_address $bind -local_http_port $http_port -server_proto socks -server_address "127.0.0.1" -server_port $socks_port -server_username $_username -server_password $_password > $http_config_file
 			ln_run "$bin" ${type} /dev/null run -c "$http_config_file"
 		fi
 	}
@@ -813,6 +813,9 @@ run_redir() {
 	;;
 	TCP)
 		tcp_node_socks=1
+		tcp_node_socks_bind_local=$(config_t_get global tcp_node_socks_bind_local 1)
+		tcp_node_socks_bind="127.0.0.1"
+		[ "${tcp_node_socks_bind_local}" != "1" ] && tcp_node_socks_bind="0.0.0.0"
 		tcp_node_socks_port=$(get_new_port $(config_t_get global tcp_node_socks_port 1070))
 		tcp_node_http_port=$(config_t_get global tcp_node_http_port 0)
 		[ "$tcp_node_http_port" != "0" ] && tcp_node_http=1
@@ -851,7 +854,7 @@ run_redir() {
 			local _args=""
 			[ "$tcp_node_socks" = "1" ] && {
 				tcp_node_socks_flag=1
-				_args="${_args} socks_port=${tcp_node_socks_port}"
+				_args="${_args} socks_address=${tcp_node_socks_bind} socks_port=${tcp_node_socks_port}"
 				config_file=$(echo $config_file | sed "s/TCP/TCP_SOCKS/g")
 			}
 			[ "$tcp_node_http" = "1" ] && {
@@ -900,7 +903,7 @@ run_redir() {
 			local _args=""
 			[ "$tcp_node_socks" = "1" ] && {
 				tcp_node_socks_flag=1
-				_args="${_args} socks_port=${tcp_node_socks_port}"
+				_args="${_args} socks_address=${tcp_node_socks_bind} socks_port=${tcp_node_socks_port}"
 				config_file=$(echo $config_file | sed "s/TCP/TCP_SOCKS/g")
 			}
 			[ "$tcp_node_http" = "1" ] && {
@@ -980,7 +983,7 @@ run_redir() {
 			[ "$tcp_node_socks" = "1" ] && {
 				tcp_node_socks_flag=1
 				config_file=$(echo $config_file | sed "s/TCP/TCP_SOCKS/g")
-				_extra_param="${_extra_param} -local_socks_port ${tcp_node_socks_port}"
+				_extra_param="${_extra_param} -local_socks_address ${tcp_node_socks_bind} -local_socks_port ${tcp_node_socks_port}"
 			}
 			[ "$tcp_node_http" = "1" ] && {
 				tcp_node_http_flag=1
@@ -1001,7 +1004,7 @@ run_redir() {
 			[ "$tcp_node_socks" = "1" ] && {
 				tcp_node_socks_flag=1
 				config_file=$(echo $config_file | sed "s/TCP/TCP_SOCKS/g")
-				_extra_param="${_extra_param} -local_socks_port ${tcp_node_socks_port}"
+				_extra_param="${_extra_param} -local_socks_address ${tcp_node_socks_bind} -local_socks_port ${tcp_node_socks_port}"
 			}
 			[ "$tcp_node_http" = "1" ] && {
 				tcp_node_http_flag=1
@@ -1033,7 +1036,6 @@ run_redir() {
 
 		[ -z "$tcp_node_socks_flag" ] && {
 			[ "$tcp_node_socks" = "1" ] && {
-				local port=$tcp_node_socks_port
 				local config_file="SOCKS_TCP.json"
 				local log_file="SOCKS_TCP.log"
 				local http_port=0
@@ -1041,7 +1043,7 @@ run_redir() {
 				[ "$tcp_node_http" = "1" ] && [ -z "$tcp_node_http_flag" ] && {
 					http_port=$tcp_node_http_port
 				}
-				run_socks flag=TCP node=$node bind=0.0.0.0 socks_port=$port config_file=$config_file http_port=$http_port http_config_file=$http_config_file
+				run_socks flag=TCP node=$node bind=$tcp_node_socks_bind socks_port=$tcp_node_socks_port config_file=$config_file http_port=$http_port http_config_file=$http_config_file
 			}
 		}
 
@@ -1083,6 +1085,9 @@ start_socks() {
 				[ "$enabled" == "0" ] && continue
 				local node=$(config_n_get $id node nil)
 				[ "$node" == "nil" ] && continue
+				local bind_local=$(config_n_get $id bind_local 0)
+				local bind="0.0.0.0"
+				[ "$bind_local" = "1" ] && bind="127.0.0.1"
 				local port=$(config_n_get $id port)
 				local config_file="SOCKS_${id}.json"
 				local log_file="SOCKS_${id}.log"
@@ -1090,7 +1095,7 @@ start_socks() {
 				[ "$log" == "0" ] && log_file=""
 				local http_port=$(config_n_get $id http_port 0)
 				local http_config_file="HTTP2SOCKS_${id}.json"
-				run_socks flag=$id node=$node bind=0.0.0.0 socks_port=$port config_file=$config_file http_port=$http_port http_config_file=$http_config_file log_file=$log_file
+				run_socks flag=$id node=$node bind=$bind socks_port=$port config_file=$config_file http_port=$http_port http_config_file=$http_config_file log_file=$log_file
 				echo $node > $TMP_ID_PATH/socks_${id}
 
 				#自动切换逻辑
@@ -1113,6 +1118,9 @@ socks_node_switch() {
 			cmd=$(cat ${TMP_SCRIPT_FUNC_PATH}/${filename})
 			[ -n "$(echo $cmd | grep "${flag}")" ] && rm -f ${TMP_SCRIPT_FUNC_PATH}/${filename}
 		done
+		local bind_local=$(config_n_get $flag bind_local 0)
+		local bind="0.0.0.0"
+		[ "$bind_local" = "1" ] && bind="127.0.0.1"
 		local port=$(config_n_get $flag port)
 		local config_file="SOCKS_${flag}.json"
 		local log_file="SOCKS_${flag}.log"
@@ -1121,7 +1129,7 @@ socks_node_switch() {
 		local http_port=$(config_n_get $flag http_port 0)
 		local http_config_file="HTTP2SOCKS_${flag}.json"
 		LOG_FILE="/dev/null"
-		run_socks flag=$flag node=$new_node bind=0.0.0.0 socks_port=$port config_file=$config_file http_port=$http_port http_config_file=$http_config_file log_file=$log_file
+		run_socks flag=$flag node=$new_node bind=$bind socks_port=$port config_file=$config_file http_port=$http_port http_config_file=$http_config_file log_file=$log_file
 		echo $new_node > $TMP_ID_PATH/socks_${flag}
 	}
 }

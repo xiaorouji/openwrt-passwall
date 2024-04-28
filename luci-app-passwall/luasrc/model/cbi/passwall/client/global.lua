@@ -257,7 +257,9 @@ if has_singbox or has_xray then
 	tcp_node_http_port.datatype = "port"
 end
 ]]--
-
+tcp_node_socks_bind_local = s:taboption("Main", Flag, "tcp_node_socks_bind_local", translate("TCP Node") .. " Socks " .. translate("Bind Local"), translate("When selected, it can only be accessed localhost."))
+tcp_node_socks_bind_local.default = "1"
+tcp_node_socks_bind_local:depends({ tcp_node = "nil", ["!reverse"] = true })
 
 s:tab("DNS", translate("DNS"))
 

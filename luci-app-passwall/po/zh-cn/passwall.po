@@ -1324,8 +1324,8 @@ msgstr "接口"
 msgid "Bind Local"
 msgstr "本机监听"
 
-msgid "When selected, it can only be accessed locally, It is recommended to turn on when using reverse proxies or be fallback."
-msgstr "当勾选时，只能由本机访问此端口，当想被反向代理或被回落时建议勾选此项。"
+msgid "When selected, it can only be accessed localhost."
+msgstr "当勾选时，只能本机访问。"
 
 msgid "Accept LAN Access"
 msgstr "接受局域网访问"
