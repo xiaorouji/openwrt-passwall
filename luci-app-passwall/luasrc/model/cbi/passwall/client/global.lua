@@ -449,7 +449,7 @@ o = s:taboption("Proxy", Flag, "localhost_proxy", translate("Localhost Proxy"), 
 o.default = "1"
 o.rmempty = false
 
-o = s:taboption("Proxy", Flag, "client_proxy", translate("Client Proxy"), translate("When selected, devices in LAN can transparent proxy. Otherwise, it will not be proxy."))
+o = s:taboption("Proxy", Flag, "client_proxy", translate("Client Proxy"), translate("When selected, devices in LAN can transparent proxy. Otherwise, it will not be proxy. But you can still use access control to allow the designated device to proxy."))
 o.default = "1"
 o.rmempty = false
 

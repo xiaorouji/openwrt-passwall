@@ -193,38 +193,44 @@ msgstr "清空 IPSET"
 msgid "Try this feature if the rule modification does not take effect."
 msgstr "如果修改规则后没有生效，请尝试此功能。"
 
-msgid "About DNS issues:"
-msgstr "关于DNS问题："
-
-msgid "Some browsers may have built-in DNS, be sure to close. Example: Chrome. Settings - Security and Privacy - Security - Use secure DNS disabled."
-msgstr "部分浏览器可能有内置的DNS，请务必关闭。如：chrome。 设置 - 安全和隐私设置 - 使用安全 DNS 关闭。"
-
-msgid "Sometimes after restart, you can not internet, especially the GFW mode. At this time, close all browsers (important), Windows Client, please `ipconfig /flushdns`. Please close the WiFi on the phone, cut the flight mode and then cut back."
-msgstr "有时候重启后，上不了，尤其是GFW模式。这时请先关闭所有浏览器（重要），Windows客户端请`ipconfig /flushdns`。手机端请关闭WIFI，切一下飞行模式再切回来。"
-
-msgid "The client DNS and the default gateway must point to this router."
-msgstr "客户端DNS和默认网关必须指向本路由器。"
-
-msgid "If you have a wrong DNS process, the consequences are at your own risk!"
-msgstr "如果你自行配置了错误的DNS流程，后果自负！"
-
-msgid "You can use load balancing for failover."
-msgstr "可以使用负载均衡实现故障切换功能。"
-
-msgid "Restore the default configuration method. Input example in the address bar:"
-msgstr "恢复默认配置方法，地址栏输入例："
-
-msgid "Hide menu method, input example in the address bar:"
-msgstr "隐藏菜单方法，地址栏输入例："
-
-msgid "After the hidden to the display, input example in the address bar:"
-msgstr "当你隐藏后想再次显示，地址栏输入例："
-
 msgid "Are you sure to reset?"
 msgstr "你确定要恢复吗？"
 
 msgid "Are you sure to hide?"
 msgstr "你确定要隐藏吗？"
+
+msgid "DNS related issues:"
+msgstr "DNS相关问题："
+
+msgid "Certain browsers such as Chrome have built-in DNS service, which may affect DNS resolution settings. You can go to 'Settings -> Privacy and security -> Use secure DNS' menu to turn it off."
+msgstr "某些浏览器如Chrome等内置此功能,这会影响设置的DNS解析。您可以进入 '设置->私隐和安全->使用安全DNS' 菜单,将其关闭。"
+
+msgid "If you are unable to access the internet after reboot, please try clearing the cache of your terminal devices (make sure to close all open browser application windows first, this step is especially important):"
+msgstr "如果在重启后无法上网,请尝试清除终端设备的缓存（先关闭所有正在使用的浏览器应用程序，这一步尤其重要）："
+
+msgid "For Windows systems, open Command Prompt and run the command 'ipconfig /flushdns'."
+msgstr "对于Windows系统,请在命令提示符中运行命令 'ipconfig /flushdns'."
+
+msgid "For Mac systems, open Terminal and run the command 'sudo killall -HUP mDNSResponder'."
+msgstr "对于Mac系统，在终端中运行命令 'sudo killall -HUP mDNSResponder'."
+
+msgid "For mobile devices, you can clear it by reconnecting to the network, such as toggling Airplane Mode and reconnecting to WiFi."
+msgstr "对于移动设备,可通过重新接入网络的方式清除。比如开关一次飞行模式,重新连接WiFi。"
+
+msgid "Please make sure your device's network settings point both the DNS server and default gateway to this router, to ensure DNS queries are properly routed."
+msgstr "请确认您设备的网络设置,客户端DNS服务器和默认网关应均指向本路由器,以确保DNS查询正确路由。"
+
+msgid "Restore to default configuration:"
+msgstr "恢复默认配置："
+
+msgid "Browser access:"
+msgstr "浏览器访问："
+
+msgid "Hide in main menu:"
+msgstr "在主菜单中隐藏："
+
+msgid "Show in main menu:"
+msgstr "在主菜单中显示："
 
 msgid "DNS Export Of Multi WAN"
 msgstr "国内DNS指定解析出口"
@@ -292,8 +298,8 @@ msgstr "当勾选时，路由器本机可以透明代理。"
 msgid "Client Proxy"
 msgstr "客户端代理"
 
-msgid "When selected, devices in LAN can transparent proxy. Otherwise, it will not be proxy."
-msgstr "当勾选时，局域网内的设备可以透明代理。否则，将不代理。"
+msgid "When selected, devices in LAN can transparent proxy. Otherwise, it will not be proxy. But you can still use access control to allow the designated device to proxy."
+msgstr "当勾选时，局域网内的设备可以透明代理。否则，将不代理。但您仍然可以使用访问控制允许指定的设备代理。"
 
 msgid "Want different devices to use different proxy modes/ports/nodes? Please use access control."
 msgstr "希望不同设备使用不同的代理模式/端口/节点？请使用访问控制。"
