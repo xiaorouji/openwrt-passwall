@@ -158,7 +158,7 @@ if has_xray then
 
 	o = s_xray:option(Flag, "fragment", translate("Fragment"), translate("TCP fragments, which can deceive the censorship system in some cases, such as bypassing SNI blacklists."))
 	o.default = 0
-	
+
 	o = s_xray:option(ListValue, "fragment_packets", translate("Fragment Packets"), translate("\"1-3\" is for segmentation at TCP layer, applying to the beginning 1 to 3 data writes by the client. \"tlshello\" is for TLS client hello packet fragmentation."))
 	o.default = "tlshello"
 	o:value("tlshello", "tlshello")
@@ -166,16 +166,16 @@ if has_xray then
 	o:value("1-3", "1-3")
 	o:value("1-5", "1-5")
 	o:depends("fragment", true)
-	
+
 	o = s_xray:option(Value, "fragment_length", translate("Fragment Length"), translate("Fragmented packet length (byte)"))
 	o.default = "100-200"
 	o:depends("fragment", true)
-	
+
 	o = s_xray:option(Value, "fragment_interval", translate("Fragment Interval"), translate("Fragmentation interval (ms)"))
 	o.default = "10-20"
 	o:depends("fragment", true)
-	
-	o = s_xray:option(Flag, "sniffing", translate("Sniffing"), translate("When using the shunt, must be enabled, otherwise the shunt will invalid."))
+
+	o = s_xray:option(Flag, "sniffing", translate("Sniffing"), translate("When using the shunt, this option will be forced to be enabled."))
 	o.default = 1
 	o.rmempty = false
 

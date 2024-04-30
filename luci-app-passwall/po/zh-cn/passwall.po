@@ -691,11 +691,11 @@ msgstr "劫持ICMPv6 (IPv6 PING)"
 msgid "Sniffing"
 msgstr "流量嗅探"
 
-msgid "When using the shunt, must be enabled, otherwise the shunt will invalid."
-msgstr "使用分流时，必须启用，否则分流将无效。"
+msgid "When using the shunt, this option will be forced to be enabled."
+msgstr "使用分流时，将强制启用此选项。"
 
 msgid "Sniffing Route Only"
-msgstr "流量嗅探只供路由使用"
+msgstr "流量嗅探仅供路由使用"
 
 msgid "TCP Proxy Way"
 msgstr "TCP 代理方式"
