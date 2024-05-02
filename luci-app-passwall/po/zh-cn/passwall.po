@@ -691,12 +691,6 @@ msgstr "劫持ICMPv6 (IPv6 PING)"
 msgid "Sniffing"
 msgstr "流量嗅探"
 
-msgid "When using the shunt, this option will be forced to be enabled."
-msgstr "使用分流时，将强制启用此选项。"
-
-msgid "Sniffing Route Only"
-msgstr "流量嗅探仅供路由使用"
-
 msgid "TCP Proxy Way"
 msgstr "TCP 代理方式"
 
@@ -1501,11 +1495,11 @@ msgstr "无子连接时的健康检查"
 msgid "Initial Windows Size"
 msgstr "初始窗口大小"
 
-msgid "No Sniffing Lists"
-msgstr "不进行流量嗅探的域名列表"
+msgid "Excluded Domains"
+msgstr "排除域名"
 
-msgid "Hosts added into No Sniffing Lists will not resolve again on server."
-msgstr "加入的域名不会再次在服务器解析。"
+msgid "If the traffic sniffing result is in this list, the destination address will not be overridden."
+msgstr "如果流量嗅探结果在此列表中，则不会覆盖目标地址。"
 
 msgid "Buffer Size"
 msgstr "缓冲区大小"
