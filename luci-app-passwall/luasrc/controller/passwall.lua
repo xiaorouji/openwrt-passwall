@@ -16,7 +16,7 @@ function index()
 	entry({"admin", "services", appname, "show"}, call("show_menu")).leaf = true
 	entry({"admin", "services", appname, "hide"}, call("hide_menu")).leaf = true
 	if not nixio.fs.access("/etc/config/passwall") then return end
-	if ucic:get(appname, "@global[0]", "show_menu") == "1" then
+	if nixio.fs.access("/etc/config/passwall_show") then
 		e = entry({"admin", "services", appname}, alias("admin", "services", appname, "settings"), _("Pass Wall"), -1)
 		e.dependent = true
 		e.acl_depends = { "luci-app-passwall" }
@@ -91,16 +91,14 @@ function reset_config()
 end
 
 function show_menu()
-	ucic:set(appname, "@global[0]", "show_menu","1")
-	ucic:commit(appname)
+	luci.sys.call("touch /etc/config/passwall_show")
 	luci.sys.call("rm -rf /tmp/luci-*")
 	luci.sys.call("/etc/init.d/rpcd restart >/dev/null")
 	luci.http.redirect(api.url())
 end
 
 function hide_menu()
-	ucic:set(appname, "@global[0]", "show_menu","0")
-	ucic:commit(appname)
+	luci.sys.call("rm -rf /etc/config/passwall_show")
 	luci.sys.call("rm -rf /tmp/luci-*")
 	luci.sys.call("/etc/init.d/rpcd restart >/dev/null")
 	luci.http.redirect(luci.dispatcher.build_url("admin", "status", "overview"))
