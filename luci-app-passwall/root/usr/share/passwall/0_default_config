@@ -1,5 +1,6 @@
 
 config global
+	option show_menu '1'
 	option enabled '0'
 	option socks_enabled '0'
 	option tcp_node 'nil'
