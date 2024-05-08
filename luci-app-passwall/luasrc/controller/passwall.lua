@@ -105,8 +105,8 @@ function show_menu()
 end
 
 function hide_menu()
-	ucic:set(appname, "@global[0]", "hide_from_luci","1")
-	ucic:commit(appname)
+	uci:set(appname, "@global[0]", "hide_from_luci","1")
+	uci:commit(appname)
 	luci.sys.call("rm -rf /tmp/luci-*")
 	luci.sys.call("/etc/init.d/rpcd restart >/dev/null")
 	luci.http.redirect(luci.dispatcher.build_url("admin", "status", "overview"))
