@@ -47,8 +47,7 @@ config global_forwarding
 	option ipv6_tproxy '0'
 
 config global_xray
-	option sniffing '1'
-	option route_only '0'
+	option sniffing_override_dest '0'
 
 config global_singbox
 	option sniff_override_destination '0'
