@@ -29,27 +29,29 @@ jobs:
     outputs:
       passwall_version: ${{ steps.check_version.outputs.latest_version }}
       has_update: ${{ steps.check_version.outputs.has_update }}
+      prerelease: ${{ steps.check_version.outputs.prerelease }}
     steps:
       - name: Checkout
         uses: actions/checkout@main
         with:
           fetch-depth: 0
-          ref: 'main'
+          ref: ${{ github.ref_name }}
 
       - name: Check version
         id: check_version
         env:
-          url_release: https://api.github.com/repos/${{ env.passwall }}/releases/latest
+          url_tags: https://api.github.com/repos/${{ env.passwall }}/tags
         run: |
           cd luci-app-passwall
-          latest_version=$(awk -F ':=' '/PKG_VERSION|PKG_RELEASE/ {print $2}' Makefile | sed ':a;N;s/\n$//;s/\n/-/;ba')
-          latest_release=$(wget -qO- -t1 -T2 ${{env.url_release}} | awk -F '"' '/tag_name/{print $4}')
-          has_update=$([ "${latest_version}" != "${latest_release}" ] && echo true || echo false)
+          latest_version=$(awk -F ':=' '/PKG_VERSION|PKG_RELEASE/ {print $2}' Makefile | sed ':a;N;s/\$(PKG_VERSION)-//;s/\n$//;s/\n/-/;ba')
+          has_update=$([ -z "$(wget -qO- -t1 -T2 ${{env.url_tags}} | grep \"${latest_version}\")" ] && echo true || echo false)
+          prerelease=$([ "${{ github.ref_name }}" == "main" ] && echo false || echo true)
           echo "latest_version=${latest_version}" >> $GITHUB_OUTPUT
           echo "has_update=${has_update}" >> $GITHUB_OUTPUT
+          echo "prerelease=${prerelease}" >> $GITHUB_OUTPUT
           echo "latest_version: ${latest_version}"
-          echo "latest_release: ${latest_release}"
           echo "has_update: ${has_update}"
+          echo "prerelease: ${prerelease}"
 
       - name: Prepare release
         if: steps.check_version.outputs.has_update == 'true'
@@ -67,6 +69,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{steps.check_version.outputs.latest_version}}
+          target_commitish: ${{ github.ref_name }}
+          prerelease: ${{steps.check_version.outputs.prerelease}}
           body_path: release.txt
 
 
@@ -116,55 +120,38 @@ jobs:
           echo "src-git luci https://github.com/openwrt/luci.git;openwrt-${{ matrix.luci_ver }}" >> feeds.conf
           echo "src-git routing https://git.openwrt.org/feed/routing.git;openwrt-${{ matrix.sdk_ver }}"  >> feeds.conf
           echo "src-git passwall_packages https://github.com/${{ env.packages }}.git;main" >> feeds.conf
-          echo "src-git passwall https://github.com/${{ env.passwall }}.git;main" >> feeds.conf
+          echo "src-git passwall https://github.com/${{ env.passwall }}.git;${{ github.ref_name }}" >> feeds.conf
           ./scripts/feeds update -a
           echo "CONFIG_PACKAGE_luci-app-passwall=m" > .config
           ./scripts/feeds install -d n luci-app-passwall
-          make download -j8
+          make package/luci-app-passwall/download -j8
 
-      - name: Configure passwall
+      - name: Update passwall feeds
+        if: steps.cache-sdk.outputs.cache-hit == 'true'
         run: |
           cd sdk
+          sed -i '6s/main/${{ github.ref_name }}/' feeds.conf
           ./scripts/feeds update passwall_packages
           ./scripts/feeds update passwall
           ./scripts/feeds install luci-app-passwall
+
+      - name: Compile passwall
+        id: compile
+        run: |
+          cd sdk
           echo "CONFIG_ALL_NONSHARED=n" > .config
           echo "CONFIG_ALL_KMODS=n" >> .config
           echo "CONFIG_ALL=n" >> .config
           echo "CONFIG_AUTOREMOVE=n" >> .config
           echo "CONFIG_LUCI_LANG_zh_Hans=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-passwall=m" >> .config
-          echo "CONFIG_PACKAGE_luci-app-passwall_Iptables_Transparent_Proxy=n" >> .config
-          echo "CONFIG_PACKAGE_luci-app-passwall_Nftables_Transparent_Proxy=n" >> .config
-          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ChinaDNS_NG=n" >> .config
-          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Haproxy=n" >> .config
-          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Hysteria=n" >> .config
-          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_NaiveProxy=n" >> .config
-          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Libev_Client=n" >> .config
-          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Libev_Server=n" >> .config
-          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Rust_Client=n" >> .config
-          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Rust_Server=n" >> .config
-          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ShadowsocksR_Libev_Client=n" >> .config
-          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ShadowsocksR_Libev_Server=n" >> .config
-          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Simple_Obfs=n" >> .config
-          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_SingBox=n" >> .config
-          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Trojan_Plus=n" >> .config
-          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_tuic_client=n" >> .config
-          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_V2ray_Geodata=n" >> .config
-          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_V2ray_Plugin=n" >> .config
-          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Xray=n" >> .config
-          echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Xray_Plugin=n" >> .config
           make defconfig
-
-      - name: Compile passwall
-        id: compile
-        run: |
-          cd sdk
           echo "make package/luci-app-passwall/{clean,compile} -j$(nproc)"
           make package/luci-app-passwall/{clean,compile} -j$(nproc)
           mv bin/packages/x86_64/passwall/ ../
           make clean
           rm .config .config.old
+          rm -rf feeds/passwall feeds/passwall.*
           cd ../passwall
           for i in $(ls); do mv $i luci-${{ matrix.luci_ver }}_$i; done
           cd ..
@@ -182,7 +169,7 @@ jobs:
 
 
   job_auto_compile:
-    if: needs.job_check.outputs.has_update == 'true'
+    if: ${{ needs.job_check.outputs.has_update == 'true' && needs.job_check.outputs.prerelease == 'false' }}
     needs: job_check
     runs-on: ubuntu-latest
     name: build (${{ matrix.platform }})
@@ -278,7 +265,7 @@ jobs:
           ./scripts/feeds install luci-app-passwall
 
           rm -rf feeds/packages/lang/golang
-          git clone https://github.com/sbwml/packages_lang_golang -b 22.x feeds/packages/lang/golang          
+          git clone https://github.com/sbwml/packages_lang_golang -b 22.x feeds/packages/lang/golang
 
           echo "CONFIG_ALL_NONSHARED=n" > .config
           echo "CONFIG_ALL_KMODS=n" >> .config
