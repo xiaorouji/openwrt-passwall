@@ -767,8 +767,8 @@ function gen_config(var)
 		end
 
 		if node.protocol == "_shunt" then
-			local proxy_node_id = node["main_node"]
-			local proxy_tag = "main"
+			local proxy_tag = node.preproxy_enabled == "1" and "main" or nil
+			local proxy_node_id = proxy_tag and node["main_node"] or nil
 			local proxy_balancer_tag
 			local proxy_nodes
 
@@ -862,7 +862,6 @@ function gen_config(var)
 					end
 					return outbound_tag, nil
 				elseif _node.protocol == "_balancing" then
-
 					return nil, gen_balancer(_node, rule_name)
 				elseif _node.protocol == "_iface" then
 					if _node.iface then
@@ -884,7 +883,7 @@ function gen_config(var)
 			end
 
 			--proxy_node
-			if node.preproxy_enabled == "1" and proxy_node_id then
+			if proxy_tag and proxy_node_id then
 				local proxy_outbound_tag
 				proxy_outbound_tag, proxy_balancer_tag = gen_shunt_node(proxy_tag, proxy_node_id)
 				if proxy_balancer_tag then
