@@ -255,8 +255,14 @@ function connect_status()
 	local chn_list = uci:get(appname, "@global[0]", "chn_list")
 	local socks_port = uci:get(appname, "@global[0]", "tcp_node_socks_port")
 	if pw_switch ~= 0 then
-		if is_baidu == nil or chn_list ~= "proxy" then
-			url = "--socks5 127.0.0.1:" .. socks_port .. " " .. url
+		if chn_list == "proxy" then
+			if is_baidu ~= nil then
+				url = "--socks5 127.0.0.1:" .. socks_port .. " " .. url
+			end
+		else
+			if is_baidu == nil then
+				url = "--socks5 127.0.0.1:" .. socks_port .. " " .. url
+			end
 		end
 	end
 	local result = luci.sys.exec('curl --connect-timeout 3 -o /dev/null -I -sk -w "%{http_code}:%{time_appconnect}" ' .. url)
