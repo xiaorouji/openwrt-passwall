@@ -1178,9 +1178,11 @@ start_crontab() {
 	autoupdate=$(config_t_get global_rules auto_update)
 	weekupdate=$(config_t_get global_rules week_update)
 	dayupdate=$(config_t_get global_rules time_update)
+	hourupdate=$(config_t_get global_rules interval_update)
 	if [ "$autoupdate" = "1" ]; then
 		local t="0 $dayupdate * * $weekupdate"
 		[ "$weekupdate" = "7" ] && t="0 $dayupdate * * *"
+		[ "$weekupdate" = "8" ] && t="0 */$hourupdate * * *"
 		echo "$t lua $APP_PATH/rule_update.lua log > /dev/null 2>&1 &" >>/etc/crontabs/root
 		echolog "配置定时任务：自动更新规则。"
 	fi
@@ -1193,7 +1195,8 @@ start_crontab() {
 			remark=$(config_n_get $item remark)
 			week_update=$(config_n_get $item week_update)
 			time_update=$(config_n_get $item time_update)
-			echo "$cfgid" >> $TMP_SUB_PATH/${week_update}_${time_update}
+			hour_update=$(config_n_get $item interval_update)
+			echo "$cfgid" >> $TMP_SUB_PATH/${week_update}_${time_update}_${hour_update}
 			echolog "配置定时任务：自动更新【$remark】订阅。"
 		fi
 	done
@@ -1202,8 +1205,10 @@ start_crontab() {
 		for name in $(ls ${TMP_SUB_PATH}); do
 			week_update=$(echo $name | awk -F '_' '{print $1}')
 			time_update=$(echo $name | awk -F '_' '{print $2}')
+			hour_update=$(echo $name | awk -F '_' '{print $3}')
 			local t="0 $time_update * * $week_update"
 			[ "$week_update" = "7" ] && t="0 $time_update * * *"
+			[ "$week_update" = "8" ] && t="0 */$hour_update * * *"
 			cfgids=$(echo -n $(cat ${TMP_SUB_PATH}/${name}) | sed 's# #,#g')
 			echo "$t lua $APP_PATH/subscribe.lua start $cfgids > /dev/null 2>&1 &" >>/etc/crontabs/root
 		done
