@@ -1182,7 +1182,7 @@ start_crontab() {
 	if [ "$autoupdate" = "1" ]; then
 		local t="0 $dayupdate * * $weekupdate"
 		[ "$weekupdate" = "7" ] && t="0 $dayupdate * * *"
-		[ "$weekupdate" = "8" ] && t="0 */$hourupdate * * *"
+		[ "$weekupdate" = "8" ] && t="*/$(($hourupdate*60)) * * * *"
 		echo "$t lua $APP_PATH/rule_update.lua log > /dev/null 2>&1 &" >>/etc/crontabs/root
 		echolog "配置定时任务：自动更新规则。"
 	fi
@@ -1208,7 +1208,7 @@ start_crontab() {
 			hour_update=$(echo $name | awk -F '_' '{print $3}')
 			local t="0 $time_update * * $week_update"
 			[ "$week_update" = "7" ] && t="0 $time_update * * *"
-			[ "$week_update" = "8" ] && t="0 */$hour_update * * *"
+			[ "$week_update" = "8" ] && t="*/$(($hour_update*60)) * * * *"
 			cfgids=$(echo -n $(cat ${TMP_SUB_PATH}/${name}) | sed 's# #,#g')
 			echo "$t lua $APP_PATH/subscribe.lua start $cfgids > /dev/null 2>&1 &" >>/etc/crontabs/root
 		done
