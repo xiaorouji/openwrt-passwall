@@ -250,6 +250,21 @@ function connect_status()
 	local e = {}
 	e.use_time = ""
 	local url = luci.http.formvalue("url")
+	local is_baidu = string.find(url, "baidu")
+	local pw_switch = uci:get(appname, "@global[0]", "enabled")
+	local chn_list = uci:get(appname, "@global[0]", "chn_list")
+	local socks_port = uci:get(appname, "@global[0]", "tcp_node_socks_port")
+	if pw_switch ~= 0 then
+		if chn_list == "proxy" then
+			if is_baidu ~= nil then
+				url = "--socks5 127.0.0.1:" .. socks_port .. " " .. url
+			end
+		else
+			if is_baidu == nil then
+				url = "--socks5 127.0.0.1:" .. socks_port .. " " .. url
+			end
+		end
+	end
 	local result = luci.sys.exec('curl --connect-timeout 3 -o /dev/null -I -sk -w "%{http_code}:%{time_appconnect}" ' .. url)
 	local code = tonumber(luci.sys.exec("echo -n '" .. result .. "' | awk -F ':' '{print $1}'") or "0")
 	if code ~= 0 then
