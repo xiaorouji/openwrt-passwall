@@ -1143,6 +1143,7 @@ clean_log() {
 }
 
 clean_crontab() {
+	[ -f "/var/lock/passwall_cron.lock" ] && return
 	touch /etc/crontabs/root
 	#sed -i "/${CONFIG}/d" /etc/crontabs/root >/dev/null 2>&1
 	sed -i "/$(echo "/etc/init.d/${CONFIG}" | sed 's#\/#\\\/#g')/d" /etc/crontabs/root >/dev/null 2>&1
@@ -1151,11 +1152,26 @@ clean_crontab() {
 }
 
 start_crontab() {
+	if [ "$ENABLED_DEFAULT_ACL" == 1 ] || [ "$ENABLED_ACLS" == 1 ]; then
+		start_daemon=$(config_t_get global_delay start_daemon 0)
+		[ "$start_daemon" = "1" ] && $APP_PATH/monitor.sh > /dev/null 2>&1 &
+	else
+		echolog "运行于非代理模式，仅允许服务启停的定时任务。"
+	fi
+
+	[ -f "/var/lock/passwall_cron.lock" ] && {
+		rm -rf "/var/lock/passwall_cron.lock"
+		echolog "当前为计划任务自动运行，不重新配置定时任务。"
+		return
+	}
+
 	clean_crontab
+
 	[ "$ENABLED" != 1 ] && {
 		/etc/init.d/cron restart
 		return
 	}
+
 	auto_on=$(config_t_get global_delay auto_on 0)
 	if [ "$auto_on" = "1" ]; then
 		time_off=$(config_t_get global_delay time_off)
@@ -1182,8 +1198,8 @@ start_crontab() {
 	if [ "$autoupdate" = "1" ]; then
 		local t="0 $dayupdate * * $weekupdate"
 		[ "$weekupdate" = "7" ] && t="0 $dayupdate * * *"
-		[ "$weekupdate" = "8" ] && t="*/$(($hourupdate*60)) * * * *"
-		echo "$t lua $APP_PATH/rule_update.lua log > /dev/null 2>&1 &" >>/etc/crontabs/root
+		[ "$weekupdate" = "8" ] && t="0 */$hourupdate * * *"
+		echo "$t lua $APP_PATH/rule_update.lua log all cron > /dev/null 2>&1 &" >>/etc/crontabs/root
 		echolog "配置定时任务：自动更新规则。"
 	fi
 
@@ -1208,24 +1224,19 @@ start_crontab() {
 			hour_update=$(echo $name | awk -F '_' '{print $3}')
 			local t="0 $time_update * * $week_update"
 			[ "$week_update" = "7" ] && t="0 $time_update * * *"
-			[ "$week_update" = "8" ] && t="*/$(($hour_update*60)) * * * *"
+			[ "$week_update" = "8" ] && t="0 */$hour_update * * *"
 			cfgids=$(echo -n $(cat ${TMP_SUB_PATH}/${name}) | sed 's# #,#g')
-			echo "$t lua $APP_PATH/subscribe.lua start $cfgids > /dev/null 2>&1 &" >>/etc/crontabs/root
+			echo "$t lua $APP_PATH/subscribe.lua start $cfgids cron > /dev/null 2>&1 &" >>/etc/crontabs/root
 		done
 		rm -rf $TMP_SUB_PATH
 	}
 
-	if [ "$ENABLED_DEFAULT_ACL" == 1 ] || [ "$ENABLED_ACLS" == 1 ]; then
-		start_daemon=$(config_t_get global_delay start_daemon 0)
-		[ "$start_daemon" = "1" ] && $APP_PATH/monitor.sh > /dev/null 2>&1 &
-	else
-		echolog "运行于非代理模式，仅允许服务启停的定时任务。"
-	fi
 
 	/etc/init.d/cron restart
 }
 
 stop_crontab() {
+	[ -f "/var/lock/passwall_cron.lock" ] && return
 	clean_crontab
 	/etc/init.d/cron restart
 	#echolog "清除定时执行命令。"
