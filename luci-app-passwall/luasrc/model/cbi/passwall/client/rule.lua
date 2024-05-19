@@ -80,7 +80,7 @@ o.rmempty = true
 
 ---- Interval Update
 o = s:option(ListValue, "interval_update", translate("Update Interval(hour)"))
-for t = 1, 24 do o:value(t, t .. " " .. translate("hour")) end
+for t = 1, 23 do o:value(t, t .. " " .. translate("hour")) end
 o.default = 2
 o:depends("week_update", "8")
 o.rmempty = true
