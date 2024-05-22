@@ -1158,8 +1158,6 @@ start_crontab() {
 	if [ "$ENABLED_DEFAULT_ACL" == 1 ] || [ "$ENABLED_ACLS" == 1 ]; then
 		start_daemon=$(config_t_get global_delay start_daemon 0)
 		[ "$start_daemon" = "1" ] && $APP_PATH/monitor.sh > /dev/null 2>&1 &
-	else
-		echolog "运行于非代理模式，仅允许服务启停的定时任务。"
 	fi
 
 	[ -f "/tmp/lock/${CONFIG}_cron.lock" ] && {
@@ -1237,10 +1235,14 @@ start_crontab() {
 		rm -rf $TMP_SUB_PATH
 	}
 
-	[ "$update_loop" = "1" ] && {
-		$APP_PATH/tasks.sh > /dev/null 2>&1 &
-		echolog "自动更新：启动循环更新进程。"
-	}
+	if [ "$ENABLED_DEFAULT_ACL" == 1 ] || [ "$ENABLED_ACLS" == 1 ]; then
+		[ "$update_loop" = "1" ] && {
+			$APP_PATH/tasks.sh > /dev/null 2>&1 &
+			echolog "自动更新：启动循环更新进程。"
+		}
+	else
+		echolog "运行于非代理模式，仅允许服务启停的定时任务。"
+	fi
 
 	/etc/init.d/cron restart
 }

@@ -6,7 +6,7 @@ CONFIG=passwall
 APP_PATH=/usr/share/$CONFIG
 TMP_PATH=/tmp/etc/$CONFIG
 LOCK_FILE=/tmp/lock/${CONFIG}_tasks.lock
-CFG_UPDATE_INT=10
+CFG_UPDATE_INT=0
 
 config_n_get() {
 	local ret=$(uci -q get "${CONFIG}.${1}.${2}" 2>/dev/null)
