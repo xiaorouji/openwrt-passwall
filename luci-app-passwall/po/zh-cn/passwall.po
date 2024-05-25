@@ -838,23 +838,44 @@ msgstr "规则版本"
 msgid "Enable auto update rules"
 msgstr "开启自动更新规则"
 
-msgid "Week update rules"
-msgstr "更新时间星期"
+msgid "Update Time(every day)"
+msgstr "更新时间(每天)"
 
-msgid "Day update rules"
-msgstr "更新时间小时"
+msgid "Update Interval(hour)"
+msgstr "更新间隔(小时)"
+
+msgid "Update Mode"
+msgstr "更新模式"
+
+msgid "Loop Mode"
+msgstr "循环"
 
 msgid "Every day"
 msgstr "每天"
 
-msgid "day"
-msgstr "日"
+msgid "Every Monday"
+msgstr "每周一"
 
-msgid "Week"
-msgstr "周"
+msgid "Every Tuesday"
+msgstr "每周二"
 
-msgid "oclock"
-msgstr "点"
+msgid "Every Wednesday"
+msgstr "每周三"
+
+msgid "Every Thursday"
+msgstr "每周四"
+
+msgid "Every Friday"
+msgstr "每周五"
+
+msgid "Every Saturday"
+msgstr "每周六"
+
+msgid "Every Sunday"
+msgstr "每周日"
+
+msgid "hour"
+msgstr "小时"
 
 msgid "Location of V2ray/Xray asset"
 msgstr "V2ray/Xray 资源文件目录"

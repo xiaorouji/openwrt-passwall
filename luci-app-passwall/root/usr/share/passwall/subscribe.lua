@@ -1164,6 +1164,16 @@ local function update_node(manual)
 
 		uci:commit(appname)
 	end
+
+	if arg[3] == "cron" then
+		local f = io.open("/var/lock/" .. appname .. ".lock", "r")
+		if f == nil then
+			luci.sys.call("touch /tmp/lock/" .. appname .. "_cron.lock")
+		else
+			f:close()
+		end
+	end
+
 	luci.sys.call("/etc/init.d/" .. appname .. " restart > /dev/null 2>&1 &")
 end
 

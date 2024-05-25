@@ -8,6 +8,8 @@ local jsonc = require "luci.jsonc"
 local name = 'passwall'
 local api = require ("luci.passwall.api")
 local arg1 = arg[1]
+local arg2 = arg[2]
+local arg3 = arg[3]
 
 local rule_path = "/usr/share/" .. name .. "/rules"
 local reboot = 0
@@ -34,6 +36,10 @@ local geoip_api =  "https://api.github.com/repos/Loyalsoldier/v2ray-rules-dat/re
 local geosite_api =  "https://api.github.com/repos/Loyalsoldier/v2ray-rules-dat/releases/latest"
 local asset_location = ucic:get_first(name, 'global_rules', "v2ray_location_asset", "/usr/share/v2ray/")
 local use_nft = ucic:get(name, "@global_forwarding[0]", "use_nft") or "0"
+
+if arg3 == "cron" then
+	arg2 = nil
+end
 
 local log = function(...)
 	if arg1 then
@@ -369,8 +375,8 @@ local function fetch_geosite()
 	return 0
 end
 
-if arg[2] then
-	string.gsub(arg[2], '[^' .. "," .. ']+', function(w)
+if arg2 then
+	string.gsub(arg2, '[^' .. "," .. ']+', function(w)
 		if w == "gfwlist" then
 			gfwlist_update = 1
 		end
@@ -459,6 +465,15 @@ ucic:save(name)
 luci.sys.call("uci commit " .. name)
 
 if reboot == 1 then
+	if arg3 == "cron" then
+		local f = io.open("/var/lock/" .. name .. ".lock", "r")
+		if f == nil then
+			luci.sys.call("touch /tmp/lock/" .. name .. "_cron.lock")
+		else
+			f:close()
+		end
+	end
+
 	log("重启服务，应用新的规则。")
 	if use_nft == "1" then
 		luci.sys.call("sh /usr/share/" .. name .. "/nftables.sh flush_nftset_reload > /dev/null 2>&1 &")
