@@ -1166,11 +1166,8 @@ local function update_node(manual)
 	end
 
 	if arg[3] == "cron" then
-		local f = io.open("/var/lock/" .. appname .. ".lock", "r")
-		if f == nil then
+		if not nixio.fs.access("/var/lock/" .. appname .. ".lock") then
 			luci.sys.call("touch /tmp/lock/" .. appname .. "_cron.lock")
-		else
-			f:close()
 		end
 	end
 
