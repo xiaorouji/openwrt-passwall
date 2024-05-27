@@ -466,11 +466,8 @@ luci.sys.call("uci commit " .. name)
 
 if reboot == 1 then
 	if arg3 == "cron" then
-		local f = io.open("/var/lock/" .. name .. ".lock", "r")
-		if f == nil then
+		if not nixio.fs.access("/var/lock/" .. name .. ".lock") then
 			luci.sys.call("touch /tmp/lock/" .. name .. "_cron.lock")
-		else
-			f:close()
 		end
 	end
 
