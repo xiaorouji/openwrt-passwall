@@ -68,14 +68,7 @@ o.rmempty = true
 o = s:option(ListValue, "time_update", translate("Update Time(every day)"))
 for t = 0, 23 do o:value(t, t .. ":00") end
 o.default = 0
-o:depends("week_update", "0")
-o:depends("week_update", "1")
-o:depends("week_update", "2")
-o:depends("week_update", "3")
-o:depends("week_update", "4")
-o:depends("week_update", "5")
-o:depends("week_update", "6")
-o:depends("week_update", "7")
+o:depends({week_update = "8", ["!reverse"] = true})
 o.rmempty = true
 
 ---- Interval Update
