@@ -5,7 +5,6 @@ local has_singbox = api.finded_com("singbox")
 local has_xray = api.finded_com("xray")
 
 m = Map(appname)
-api.set_apply_on_parse(m)
 
 local nodes_table = {}
 for k, e in ipairs(api.get_valid_nodes()) do

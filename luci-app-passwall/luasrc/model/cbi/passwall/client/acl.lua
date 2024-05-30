@@ -3,7 +3,6 @@ local appname = "passwall"
 local sys = api.sys
 
 m = Map(appname)
-api.set_apply_on_parse(m)
 
 s = m:section(TypedSection, "global", translate("ACLs"), "<font color='red'>" .. translate("ACLs is a tools which used to designate specific IP proxy mode.") .. "</font>")
 s.anonymous = true
