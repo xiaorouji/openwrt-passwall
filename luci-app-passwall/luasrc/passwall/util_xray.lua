@@ -942,19 +942,27 @@ function gen_config(var)
 					end
 					local domains = nil
 					if e.domain_list then
+						local i = 0
 						domains = {}
 						string.gsub(e.domain_list, '[^' .. "\r\n" .. ']+', function(w)
-							if w:find("#") == 1 then return end
-							table.insert(domains, w)
+							local s = w:gsub("^%s*(.-)%s*$", "%1")
+							if s:find("#") == 1 or s == "" then return end
+							table.insert(domains, s)
+							i = i + 1
 						end)
+						if i == 0 then domains = nil end
 					end
 					local ip = nil
 					if e.ip_list then
+						local i = 0
 						ip = {}
 						string.gsub(e.ip_list, '[^' .. "\r\n" .. ']+', function(w)
-							if w:find("#") == 1 then return end
-							table.insert(ip, w)
+							local s = w:gsub("^%s*(.-)%s*$", "%1")
+							if s:find("#") == 1 or s == "" then return end
+							table.insert(ip, s)
+							i = i + 1
 						end)
+						if i == 0 then ip = nil end
 					end
 					local source = nil
 					if e.source then
