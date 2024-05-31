@@ -4,6 +4,7 @@ local datatypes = api.datatypes
 
 m = Map(appname, "Sing-Box/Xray " .. translate("Shunt Rule"))
 m.redirect = api.url()
+api.set_apply_on_parse(m)
 
 s = m:section(NamedSection, arg[1], "shunt_rules", "")
 s.addremove = false
@@ -104,7 +105,12 @@ domain_list.rows = 10
 domain_list.wrap = "off"
 domain_list.validate = function(self, value)
 	local hosts= {}
-	string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(hosts, w) end)
+	string.gsub(value, '[^' .. "\r\n" .. ']+', function(w)
+		local s = w:gsub("^%s*(.-)%s*$", "%1")
+		if s == "" then return end
+		table.insert(hosts, s)
+	end)
+	local re_value = ""
 	for index, host in ipairs(hosts) do
 		local flag = 1
 		local tmp_host = host
@@ -126,8 +132,9 @@ domain_list.validate = function(self, value)
 				return nil, tmp_host .. " " .. translate("Not valid domain name, please re-enter!")
 			end
 		end
+		if host ~= "" then re_value = re_value .. host .. "\n" end
 	end
-	return value
+	return re_value
 end
 domain_list.description = "<br /><ul><li>" .. translate("Plaintext: If this string matches any part of the targeting domain, this rule takes effet. Example: rule 'sina.com' matches targeting domain 'sina.com', 'sina.com.cn' and 'www.sina.com', but not 'sina.cn'.")
 .. "</li><li>" .. translate("Regular expression: Begining with 'regexp:', the rest is a regular expression. When the regexp matches targeting domain, this rule takes effect. Example: rule 'regexp:\\.goo.*\\.com$' matches 'www.google.com' and 'fonts.googleapis.com', but not 'google.com'.")
@@ -141,7 +148,12 @@ ip_list.rows = 10
 ip_list.wrap = "off"
 ip_list.validate = function(self, value)
 	local ipmasks= {}
-	string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(ipmasks, w) end)
+	string.gsub(value, '[^' .. "\r\n" .. ']+', function(w)
+		local s = w:gsub("^%s*(.-)%s*$", "%1")
+		if s == "" then return end
+		table.insert(ipmasks, s)
+	end)
+	local re_value = ""
 	for index, ipmask in ipairs(ipmasks) do
 		if ipmask:find("geoip:") and ipmask:find("geoip:") == 1 then
 		elseif ipmask:find("ext:") and ipmask:find("ext:") == 1 then
@@ -151,8 +163,9 @@ ip_list.validate = function(self, value)
 				return nil, ipmask .. " " .. translate("Not valid IP format, please re-enter!")
 			end
 		end
+		if ipmask ~= "" then re_value = re_value .. ipmask .. "\n" end
 	end
-	return value
+	return re_value
 end
 ip_list.description = "<br /><ul><li>" .. translate("IP: such as '127.0.0.1'.")
 .. "</li><li>" .. translate("CIDR: such as '127.0.0.0/8'.")
