@@ -104,11 +104,13 @@ domain_list.rows = 10
 domain_list.wrap = "off"
 domain_list.validate = function(self, value)
 	local hosts= {}
-	string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(hosts, w) end)
+	value = value:gsub("^%s+", ""):gsub("%s+$","\n"):gsub("\r\n","\n"):gsub("[ \t]*\n[ \t]*", "\n")
+	string.gsub(value, "[^\r\n]+", function(w) table.insert(hosts, w) end)
 	for index, host in ipairs(hosts) do
 		local flag = 1
 		local tmp_host = host
-		if host:find("regexp:") and host:find("regexp:") == 1 then
+		if not host:find("#") and host:find("%s") then
+		elseif host:find("regexp:") and host:find("regexp:") == 1 then
 			flag = 0
 		elseif host:find("domain:.") and host:find("domain:.") == 1 then
 			tmp_host = host:gsub("domain:", "")
@@ -141,10 +143,11 @@ ip_list.rows = 10
 ip_list.wrap = "off"
 ip_list.validate = function(self, value)
 	local ipmasks= {}
-	string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(ipmasks, w) end)
+	value = value:gsub("^%s+", ""):gsub("%s+$","\n"):gsub("\r\n","\n"):gsub("[ \t]*\n[ \t]*", "\n")
+	string.gsub(value, "[^\r\n]+", function(w) table.insert(ipmasks, w) end)
 	for index, ipmask in ipairs(ipmasks) do
-		if ipmask:find("geoip:") and ipmask:find("geoip:") == 1 then
-		elseif ipmask:find("ext:") and ipmask:find("ext:") == 1 then
+		if ipmask:find("geoip:") and ipmask:find("geoip:") == 1 and not ipmask:find("%s") then
+		elseif ipmask:find("ext:") and ipmask:find("ext:") == 1 and not ipmask:find("%s") then
 		elseif ipmask:find("#") and ipmask:find("#") == 1 then
 		else
 			if not (datatypes.ipmask4(ipmask) or datatypes.ipmask6(ipmask)) then
