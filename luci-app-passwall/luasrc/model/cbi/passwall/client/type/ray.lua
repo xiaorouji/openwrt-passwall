@@ -109,11 +109,11 @@ o.default = "leastPing"
 -- Fallback Node
 if api.compare_versions(xray_version, ">=", "1.8.10") then
 	local o = s:option(ListValue, option_name("fallback_node"), translate("Fallback Node"))
-	if api.compare_versions(xray_version, "<", "1.8.12") then
+	if api.compare_versions(xray_version, ">=", "1.8.12") then
+		o:depends({ [option_name("protocol")] = "_balancing" })
+	else
 		o:depends({ [option_name("balancingStrategy")] = "leastPing" })
 	end
-	o:value("",translate("Null"))
-	o.default = ""
 	local function check_fallback_chain(fb)
 		for k, v in pairs(fallback_table) do
 			if v.fallback == fb then
@@ -131,21 +131,28 @@ if api.compare_versions(xray_version, ">=", "1.8.10") then
 end
 
 -- 探测地址
-local o = s:option(Flag, option_name("useCustomProbeUrl"), translate("Use Custome Probe URL"), translate("By default the built-in probe URL will be used, enable this option to use a custom probe URL."))
-o:depends({ [option_name("balancingStrategy")] = "leastPing" })
-o:depends({ [option_name("fallback_node")] = "", ["!reverse"] = true })
+local ucpu = s:option(Flag, option_name("useCustomProbeUrl"), translate("Use Custome Probe URL"), translate("By default the built-in probe URL will be used, enable this option to use a custom probe URL."))
+ucpu:depends({ [option_name("balancingStrategy")] = "leastPing" })
 
-local o = s:option(Value, option_name("probeUrl"), translate("Probe URL"))
-o:depends({ [option_name("useCustomProbeUrl")] = true })
-o.default = "https://www.google.com/generate_204"
-o.description = translate("The URL used to detect the connection status.")
+local pu = s:option(Value, option_name("probeUrl"), translate("Probe URL"))
+pu:depends({ [option_name("useCustomProbeUrl")] = true })
+pu.default = "https://www.google.com/generate_204"
+pu.description = translate("The URL used to detect the connection status.")
 
 -- 探测间隔
-local o = s:option(Value, option_name("probeInterval"), translate("Probe Interval"))
-o:depends({ [option_name("balancingStrategy")] = "leastPing" })
-o:depends({ [option_name("fallback_node")] = "", ["!reverse"] = true })
-o.default = "1m"
-o.description = translate("The interval between initiating probes. Every time this time elapses, a server status check is performed on a server. The time format is numbers + units, such as '10s', '2h45m', and the supported time units are <code>ns</code>, <code>us</code>, <code>ms</code>, <code>s</code>, <code>m</code>, <code>h</code>, which correspond to nanoseconds, microseconds, milliseconds, seconds, minutes, and hours, respectively.")
+local pi = s:option(Value, option_name("probeInterval"), translate("Probe Interval"))
+pi:depends({ [option_name("balancingStrategy")] = "leastPing" })
+pi.default = "1m"
+pi.description = translate("The interval between initiating probes. Every time this time elapses, a server status check is performed on a server. The time format is numbers + units, such as '10s', '2h45m', and the supported time units are <code>ns</code>, <code>us</code>, <code>ms</code>, <code>s</code>, <code>m</code>, <code>h</code>, which correspond to nanoseconds, microseconds, milliseconds, seconds, minutes, and hours, respectively.")
+
+if api.compare_versions(xray_version, ">=", "1.8.12") then
+	ucpu:depends({ [option_name("protocol")] = "_balancing" })
+	pi:depends({ [option_name("protocol")] = "_balancing" })
+else
+	ucpu:depends({ [option_name("balancingStrategy")] = "leastPing" })
+	pi:depends({ [option_name("balancingStrategy")] = "leastPing" })
+end
+
 
 -- [[ 分流模块 ]]
 if #nodes_table > 0 then
