@@ -136,6 +136,12 @@ ucpu:depends({ [option_name("balancingStrategy")] = "leastPing" })
 
 local pu = s:option(Value, option_name("probeUrl"), translate("Probe URL"))
 pu:depends({ [option_name("useCustomProbeUrl")] = true })
+pu:value("https://cp.cloudflare.com/", "Cloudflare")
+pu:value("https://www.gstatic.com/generate_204", "Gstatic")
+pu:value("https://www.google.com/generate_204", "Google")
+pu:value("https://www.youtube.com/generate_204", "YouTube")
+pu:value("https://connect.rom.miui.com/generate_204", "MIUI (CN)")
+pu:value("https://connectivitycheck.platform.hicloud.com/generate_204", "HiCloud (CN)")
 pu.default = "https://www.google.com/generate_204"
 pu.description = translate("The URL used to detect the connection status.")
 
