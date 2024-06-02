@@ -423,5 +423,5 @@ if not fs.access(CACHE_DNS_FILE) then
 	f_out:close()
 end
 fs.symlink(CACHE_DNS_FILE, SMARTDNS_CONF)
-sys.call(string.format('echo "conf-file %s" >> /etc/smartdns/custom.conf', SMARTDNS_CONF))
+sys.call(string.format('echo "conf-file %s" >> /etc/smartdns/custom.conf', string.gsub(SMARTDNS_CONF, appname, appname .. "*")))
 log("  - 请让SmartDNS作为Dnsmasq的上游或重定向！")
