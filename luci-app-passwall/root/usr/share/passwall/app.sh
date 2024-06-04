@@ -499,6 +499,12 @@ run_chinadns_ng() {
 		filter-qtype 65
 	EOF
 
+	dnsmasq_filter_aaaa=$(uci get dhcp.@dnsmasq[0].filter_aaaa)
+	[ "${dnsmasq_filter_aaaa}" = "1" ] && {
+		echo "no-ipv6" >> ${_CONF_FILE}
+		echolog "  - 已在 DHCP 服务中启用 IPv6 过滤，ChinaDNS-NG 将不再处理 IPv6 请求"
+	}
+
 	[ "${_use_direct_list}" = "1" ] && [ -s "${RULES_PATH}/direct_host" ] && {
 		local whitelist4_set="passwall_whitelist"
 		local whitelist6_set="passwall_whitelist6"
@@ -527,7 +533,7 @@ run_chinadns_ng() {
 			group-upstream ${_dns_trust}
 			group-ipset ${blacklist4_set},${blacklist6_set}
 		EOF
-		[ "${_no_ipv6_trust}" = "1" ] && echo "no-ipv6 tag:proxylist" >> ${_CONF_FILE}
+		[ "${dnsmasq_filter_aaaa}" != "1" ] && [ "${_no_ipv6_trust}" = "1" ] && echo "no-ipv6 tag:proxylist" >> ${_CONF_FILE}
 	}
 
 	[ "${_gfwlist}" = "1" ] && [ -s "${RULES_PATH}/gfwlist" ] && {
@@ -541,7 +547,7 @@ run_chinadns_ng() {
 			gfwlist-file ${RULES_PATH}/gfwlist
 			add-taggfw-ip ${gfwlist4_set},${gfwlist6_set}
 		EOF
-		[ "${_no_ipv6_trust}" = "1" ] && echo "no-ipv6 tag:gfw" >> ${_CONF_FILE}
+		[ "${dnsmasq_filter_aaaa}" != "1" ] && [ "${_no_ipv6_trust}" = "1" ] && echo "no-ipv6 tag:gfw" >> ${_CONF_FILE}
 	}
 
 	[ "${_chnlist}" != "0" ] && [ -s "${RULES_PATH}/chnlist" ] && {
@@ -570,7 +576,7 @@ run_chinadns_ng() {
 				group-upstream ${_dns_trust}
 				group-ipset ${chnroute4_set},${chnroute6_set}
 			EOF
-			[ "${_no_ipv6_trust}" = "1" ] && echo "no-ipv6 tag:chn_proxy" >> ${_CONF_FILE}
+			[ "${dnsmasq_filter_aaaa}" != "1" ] && [ "${_no_ipv6_trust}" = "1" ] && echo "no-ipv6 tag:chn_proxy" >> ${_CONF_FILE}
 		}
 	}
 
@@ -581,7 +587,7 @@ run_chinadns_ng() {
 	#全局模式，默认使用远程DNS
 	[ "${_default_mode}" = "proxy" ] && [ "${_chnlist}" = "0" ] && [ "${_gfwlist}" = "0" ] && {
 		_default_tag="gfw"
-		[ "${_no_ipv6_trust}" = "1" ] && echo "no-ipv6" >> ${_CONF_FILE}
+		[ "${dnsmasq_filter_aaaa}" != "1" ] && [ "${_no_ipv6_trust}" = "1" ] && echo "no-ipv6" >> ${_CONF_FILE}
 	}
 
 	([ -z "${_default_tag}" ] || [ "${_default_tag}" = "smart" ]) && _default_tag="none"
