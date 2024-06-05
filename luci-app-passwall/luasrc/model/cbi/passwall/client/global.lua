@@ -73,7 +73,7 @@ local doh_validate = function(self, value, t)
 		for i = 1, #val do
 			local v = val[i]
 			if v then
-				if not datatypes.ipmask4(v) then
+				if not datatypes.ipmask4(v) and not datatypes.ipmask6(v) then
 					flag = 1
 				end
 			end
