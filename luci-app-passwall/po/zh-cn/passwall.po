@@ -187,8 +187,17 @@ msgstr "实验性功能。"
 msgid "Use FakeDNS work in the shunt domain that proxy."
 msgstr "需要代理的分流规则域名使用 FakeDNS。"
 
+msgid "Redirect"
+msgstr "重定向
+
+msgid "Force Router DNS server to all local devices."
+msgstr "强制所有本地设备使用路由器 DNS。"
+
 msgid "Clear IPSET"
 msgstr "清空 IPSET"
+
+msgid "Clear NFTSET"
+msgstr "清空 NFTSET"
 
 msgid "Try this feature if the rule modification does not take effect."
 msgstr "如果修改规则后没有生效，请尝试此功能。"
