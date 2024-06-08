@@ -188,7 +188,7 @@ msgid "Use FakeDNS work in the shunt domain that proxy."
 msgstr "需要代理的分流规则域名使用 FakeDNS。"
 
 msgid "Redirect"
-msgstr "重定向
+msgstr "重定向"
 
 msgid "Force Router DNS server to all local devices."
 msgstr "强制所有本地设备使用路由器 DNS。"
