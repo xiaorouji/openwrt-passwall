@@ -34,6 +34,8 @@ local trojan_type_default = uci:get(appname, "@global_subscribe[0]", "trojan_typ
 local vmess_type_default = uci:get(appname, "@global_subscribe[0]", "vmess_type") or "xray"
 local vless_type_default = uci:get(appname, "@global_subscribe[0]", "vless_type") or "xray"
 local hysteria2_type_default = uci:get(appname, "@global_subscribe[0]", "hysteria2_type") or "hysteria2"
+local domain_strategy_default = uci:get(appname, "@global_subscribe[0]", "domain_strategy") or ""
+local domain_strategy_node = ""
 -- 判断是否过滤节点关键字
 local filter_keyword_mode_default = uci:get(appname, "@global_subscribe[0]", "filter_keyword_mode") or "0"
 local filter_keyword_discard_list_default = uci:get(appname, "@global_subscribe[0]", "filter_discard_list") or {}
@@ -1124,6 +1126,10 @@ local function update_node(manual)
 			local cfgid = uci:section(appname, "nodes", api.gen_short_uuid())
 			for kkk, vvv in pairs(vv) do
 				uci:set(appname, cfgid, kkk, vvv)
+				-- sing-box 域名解析策略
+				if kkk == "type" and vvv == "sing-box" then
+					uci:set(appname, cfgid, "domain_strategy", domain_strategy_node)
+				end
 			end
 		end
 	end
@@ -1316,6 +1322,12 @@ local execute = function()
 			local hysteria2_type = value.hysteria2_type or "global"
 			if hysteria2_type ~= "global" then
 				hysteria2_type_default = hysteria2_type
+			end
+			local domain_strategy = value.domain_strategy or "global"
+			if domain_strategy ~= "global" then
+				domain_strategy_node = domain_strategy
+			else
+				domain_strategy_node = domain_strategy_default
 			end
 			local ua = value.user_agent
 			log('正在订阅:【' .. remark .. '】' .. url)

@@ -1635,3 +1635,6 @@ msgstr "仅支持一层代理。"
 
 msgid "Only work with using the %s node."
 msgstr "与使用 %s 节点时生效。"
+
+msgid "Set the default domain resolution strategy for the sing-box node."
+msgstr "为 sing-box 节点设置默认的域名解析策略。"
