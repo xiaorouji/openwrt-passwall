@@ -191,7 +191,7 @@ msgid "Do not accept: Wait and use Remote DNS Reply."
 msgstr "不接受：等待并使用远程 DNS 的响应。"
 
 msgid "Accept: Trust the Reply, using this option can improve DNS resolution speeds for some mainland IPv4-only sites."
-msgstr "不接受：信任空响应，使用此选项可以提升部分大陆仅 IPv4 站点的 DNS 解析速度。"
+msgstr "接受：信任空响应，使用此选项可以提升部分大陆仅 IPv4 站点的 DNS 解析速度。"
 
 msgid "Filter Proxy Host IPv6"
 msgstr "过滤代理域名 IPv6"
