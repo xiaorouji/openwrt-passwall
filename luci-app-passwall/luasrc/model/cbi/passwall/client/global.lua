@@ -380,10 +380,10 @@ end
 
 o = s:taboption("DNS", ListValue, "chinadns_ng_default_tag", translate("ChinaDNS-NG Domain Default Tag"))
 o.default = "none"
-o:value("none", translate("Smart, Do not accept no-ip reply from Direct DNS"))
-o:value("none_noip", translate("Smart, Accept no-ip reply from Direct DNS"))
 o:value("gfw", translate("Remote DNS"))
 o:value("chn", translate("Direct DNS"))
+o:value("none", translate("Smart, Do not accept no-ip reply from Direct DNS"))
+o:value("none_noip", translate("Smart, Accept no-ip reply from Direct DNS"))
 o.description = "<ul>"
 		.. "<li>" .. translate("When not matching any domain name list:") .. "</li>"
 		.. "<li>" .. translate("Remote DNS: Can avoid more DNS leaks, but some domestic domain names maybe to proxy!") .. "</li>"
