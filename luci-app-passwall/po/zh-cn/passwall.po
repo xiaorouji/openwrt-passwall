@@ -178,6 +178,12 @@ msgstr "ChinaDNS-NG 域名默认标签"
 msgid "Default: Forward to both direct and remote DNS, if the direct DNS resolution result is a mainland China ip, then use the direct result, otherwise use the remote result."
 msgstr "默认：同时转发给直连和远程DNS，如果直连DNS解析结果是大陆ip，则使用直连结果，否则使用远程结果。"
 
+msgid "allow no-ip reply from chinadns"
+msgstr "接受中国 DNS 空响应"
+
+msgid "Enable to improve DNS resolution speed for some China IPv4 Only domain names."
+msgstr "开启后可提升部分 China IPv4 Only 域名的 DNS 解析速度。"
+
 msgid "Filter Proxy Host IPv6"
 msgstr "过滤代理域名 IPv6"
 
