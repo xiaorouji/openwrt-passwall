@@ -588,6 +588,9 @@ run_chinadns_ng() {
 	([ -z "${_default_tag}" ] || [ "${_default_tag}" = "smart" ]) && _default_tag="none"
 	echo "default-tag ${_default_tag}" >> ${_CONF_FILE}
 
+	local _chinadns_ng_allow_noip=$(config_t_get global chinadns_ng_allow_noip "0")
+	[ "${_chinadns_ng_allow_noip}" = "1" ] && echo "noip-as-chnip" >> ${_CONF_FILE}
+
 	ln_run "$(first_type chinadns-ng)" chinadns-ng "${_LOG_FILE}" -C ${_CONF_FILE}
 }
 
