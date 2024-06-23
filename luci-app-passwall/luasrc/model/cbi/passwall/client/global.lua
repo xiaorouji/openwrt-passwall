@@ -391,6 +391,10 @@ o.description = "<ul>"
 		.. "</ul>"
 o:depends({dns_shunt = "chinadns-ng", tcp_proxy_mode = "proxy", chn_list = "direct"})
 
+o = s:taboption("DNS", Flag, "chinadns_ng_allow_noip", "ChinaDNS-NG " .. translate("allow no-ip reply from chinadns"), translate("Enable to improve DNS resolution speed for some China IPv4 Only domain names."))
+o.default = "0"
+o:depends({dns_shunt = "chinadns-ng", tcp_proxy_mode = "proxy", chn_list = "direct"})
+
 o = s:taboption("DNS", ListValue, "use_default_dns", translate("Default DNS"))
 o.default = "direct"
 o:value("remote", translate("Remote DNS"))
