@@ -172,9 +172,6 @@ msgstr "远程DNS：可以避免更多的DNS泄露，但会导致规则列表外
 msgid "Direct DNS: Internet experience may be better, but DNS will be leaked!"
 msgstr "直连DNS：上网体验可能会更佳，但是会泄露DNS！"
 
-msgid "ChinaDNS-NG Domain Default Tag"
-msgstr "ChinaDNS-NG 域名默认标签"
-
 msgid "Smart, Do not accept no-ip reply from Direct DNS"
 msgstr "智能，不接受直连 DNS 空响应"
 
