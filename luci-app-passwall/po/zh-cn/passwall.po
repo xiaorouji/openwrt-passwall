@@ -131,7 +131,7 @@ msgid "Resolver For The List Proxied"
 msgstr "解析被代理的域名列表"
 
 msgid "Requery DNS By %s"
-msgstr "通过%s请求DNS"
+msgstr "通过 %s 请求 DNS"
 
 msgid "Socks Server"
 msgstr "Socks 服务器"
@@ -161,16 +161,16 @@ msgid "The effect is better, recommend."
 msgstr "效果更好，推荐使用。"
 
 msgid "Default DNS"
-msgstr "默认DNS"
+msgstr "默认 DNS"
 
 msgid "When not matching any domain name list:"
 msgstr "当不匹配任何域名列表时："
 
 msgid "Remote DNS: Can avoid more DNS leaks, but some domestic domain names maybe to proxy!"
-msgstr "远程DNS：可以避免更多的DNS泄露，但会导致规则列表外的某些国内域名可能会走代理！"
+msgstr "远程 DNS：可以避免更多的DNS泄露，但会导致规则列表外的某些国内域名可能会走代理！"
 
 msgid "Direct DNS: Internet experience may be better, but DNS will be leaked!"
-msgstr "直连DNS：上网体验可能会更佳，但是会泄露DNS！"
+msgstr "直连 DNS：上网体验可能会更佳，但是会泄露 DNS！"
 
 msgid "Smart, Do not accept no-ip reply from Direct DNS"
 msgstr "智能，不接受直连 DNS 空响应"
