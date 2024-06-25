@@ -68,10 +68,10 @@ msgid "Google Connection"
 msgstr "谷歌连接"
 
 msgid "GitHub Connection"
-msgstr "GitHub连接"
+msgstr "GitHub 连接"
 
 msgid "Instagram Connection"
-msgstr "Instagram连接"
+msgstr "Instagram 连接"
 
 msgid "Node Check"
 msgstr "节点检测"
@@ -104,10 +104,10 @@ msgid "Listen Port"
 msgstr "监听端口"
 
 msgid "0 is not use"
-msgstr "0为不使用"
+msgstr "0 为不使用"
 
 msgid "Same as the tcp node"
-msgstr "与TCP节点相同"
+msgstr "与 TCP 节点相同"
 
 msgid "Current node: %s"
 msgstr "当前节点：%s"
@@ -140,7 +140,7 @@ msgid "Misconfigured"
 msgstr "配置不当"
 
 msgid "Make sure socks service is available on this address."
-msgstr "请确保此Socks服务可用。"
+msgstr "请确保此 Socks 服务可用。"
 
 msgid "Format must be:"
 msgstr "格式必须为："
