@@ -221,25 +221,25 @@ msgid "Are you sure to hide?"
 msgstr "你确定要隐藏吗？"
 
 msgid "DNS related issues:"
-msgstr "DNS相关问题："
+msgstr "DNS 相关问题："
 
 msgid "Certain browsers such as Chrome have built-in DNS service, which may affect DNS resolution settings. You can go to 'Settings -> Privacy and security -> Use secure DNS' menu to turn it off."
-msgstr "某些浏览器如Chrome等内置此功能,这会影响设置的DNS解析。您可以进入 '设置->私隐和安全->使用安全DNS' 菜单,将其关闭。"
+msgstr "某些浏览器如 Chrome 等内置此功能，这会影响设置的 DNS 解析。您可以进入 '设置->私隐和安全->使用安全 DNS' 菜单,将其关闭。"
 
 msgid "If you are unable to access the internet after reboot, please try clearing the cache of your terminal devices (make sure to close all open browser application windows first, this step is especially important):"
-msgstr "如果在重启后无法上网,请尝试清除终端设备的缓存（先关闭所有正在使用的浏览器应用程序，这一步尤其重要）："
+msgstr "如果在重启后无法上网，请尝试清除终端设备的缓存（先关闭所有正在使用的浏览器应用程序，这一步尤其重要）："
 
 msgid "For Windows systems, open Command Prompt and run the command 'ipconfig /flushdns'."
-msgstr "对于Windows系统,请在命令提示符中运行命令 'ipconfig /flushdns'."
+msgstr "对于Windows系统，请在命令提示符中运行命令 'ipconfig /flushdns'."
 
 msgid "For Mac systems, open Terminal and run the command 'sudo killall -HUP mDNSResponder'."
 msgstr "对于Mac系统，在终端中运行命令 'sudo killall -HUP mDNSResponder'."
 
 msgid "For mobile devices, you can clear it by reconnecting to the network, such as toggling Airplane Mode and reconnecting to WiFi."
-msgstr "对于移动设备,可通过重新接入网络的方式清除。比如开关一次飞行模式,重新连接WiFi。"
+msgstr "对于移动设备，可通过重新接入网络的方式清除。比如开关一次飞行模式，重新连接 WiFi。"
 
 msgid "Please make sure your device's network settings point both the DNS server and default gateway to this router, to ensure DNS queries are properly routed."
-msgstr "请确认您设备的网络设置,客户端DNS服务器和默认网关应均指向本路由器,以确保DNS查询正确路由。"
+msgstr "请确认您设备的网络设置，客户端 DNS 服务器和默认网关应均指向本路由器，以确保 DNS 查询正确路由。"
 
 msgid "Restore to default configuration:"
 msgstr "恢复默认配置："
@@ -254,7 +254,7 @@ msgid "Show in main menu:"
 msgstr "在主菜单中显示："
 
 msgid "DNS Export Of Multi WAN"
-msgstr "国内DNS指定解析出口"
+msgstr "国内 DNS 指定解析出口"
 
 msgid "Node Export Of Multi WAN"
 msgstr "节点指定出口"
