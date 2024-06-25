@@ -1076,7 +1076,7 @@ msgid "Configure routing etc/hosts file, if you don't know what you are doing, p
 msgstr "配置路由 etc/hosts 文件，如果你不知道自己在做什么，请不要改动内容。"
 
 msgid "These had been joined ip addresses will be block. Please input the ip address or ip address segment, every line can input only one ip address."
-msgstr "加入的 IP 段将屏蔽。可输入IP地址或地址段，每个地址段一行。"
+msgstr "加入的 IP 段将屏蔽。可输入 IP 地址或地址段，每个地址段一行。"
 
 msgid "Inbound Tag"
 msgstr "入站标签"
@@ -1088,13 +1088,13 @@ msgid "Not valid domain name, please re-enter!"
 msgstr "不是有效域名，请重新输入！"
 
 msgid "Not valid IP format, please re-enter!"
-msgstr "不是有效IP格式，请重新输入！"
+msgstr "不是有效 IP 格式，请重新输入！"
 
 msgid "Not valid IPv4 format, please re-enter!"
-msgstr "不是有效IPv4格式，请重新输入！"
+msgstr "不是有效 IPv4 格式，请重新输入！"
 
 msgid "Not valid IPv6 format, please re-enter!"
-msgstr "不是有效IPv6格式，请重新输入！"
+msgstr "不是有效 IPv6 格式，请重新输入！"
 
 msgid "Not true format, please re-enter!"
 msgstr "不是正确的格式，请重新输入！"
@@ -1178,10 +1178,10 @@ msgid "Plugin Arguments"
 msgstr "插件参数"
 
 msgid "Naiveproxy Protocol"
-msgstr "Naiveproxy协议"
+msgstr "Naiveproxy 协议"
 
 msgid "V2ray Protocol"
-msgstr "V2ray协议"
+msgstr "V2ray 协议"
 
 msgid "User Level"
 msgstr "用户等级(level)"
@@ -1232,19 +1232,19 @@ msgid "%s Node Use Type"
 msgstr "%s 节点使用类型"
 
 msgid "Set the TUIC proxy server ip address"
-msgstr "指定远程TUIC服务器IP"
+msgstr "指定远程 TUIC 服务器 IP"
 
 msgid "TUIC User Password For Connect Remote Server"
-msgstr "用于远程TUIC服务器连接的密码"
+msgstr "用于远程 TUIC 服务器连接的密码"
 
 msgid "TUIC UserName For Local Socks"
-msgstr "用于本地Socks服务器连接的用户名"
+msgstr "用于本地 Socks 服务器连接的用户名"
 
 msgid "TUIC Password For Local Socks"
-msgstr "用于本地Socks服务器连接的密码"
+msgstr "用于本地 Socks 服务器连接的密码"
 
 msgid "UDP relay mode"
-msgstr "UDP中继模式"
+msgstr "UDP 中继模式"
 
 msgid "Congestion control algorithm"
 msgstr "拥塞控制算法"
@@ -1256,13 +1256,13 @@ msgid "Timeout for establishing a connection to server(second)"
 msgstr "连接超时时间（单位：秒）"
 
 msgid "Garbage collection interval(second)"
-msgstr "UDP数据包片残片清理间隔（单位：秒）"
+msgstr "UDP 数据包片残片清理间隔（单位：秒）"
 
 msgid "Garbage collection lifetime(second)"
-msgstr "UDP数据包残片在服务器的保留时间（单位：秒）"
+msgstr "UDP 数据包残片在服务器的保留时间（单位：秒）"
 
 msgid "Disable SNI"
-msgstr "关闭SNI服务器名称指示"
+msgstr "关闭 SNI 服务器名称指示"
 
 msgid "Enable 0-RTT QUIC handshake"
 msgstr "客户端启用 0-RTT QUIC 连接握手"
@@ -1307,13 +1307,13 @@ msgid "Node Number"
 msgstr "节点数量"
 
 msgid "You can only set up a maximum of %s nodes for the time being, Used for access control."
-msgstr "目前最多只能设置%s个节点，用于给访问控制使用。"
+msgstr "目前最多只能设置 %s 个节点，用于给访问控制使用。"
 
 msgid "Firewall tools"
 msgstr "防火墙工具"
 
 msgid "IPv6 TProxy"
-msgstr "IPv6透明代理(TProxy)"
+msgstr "IPv6 透明代理(TProxy)"
 
 msgid "Experimental feature. Make sure that your node supports IPv6."
 msgstr "实验特性，请确保你的节点支持IPv6"
@@ -1328,7 +1328,7 @@ msgid "Show node check"
 msgstr "显示节点检测"
 
 msgid "Show Show IP111"
-msgstr "显示IP111"
+msgstr "显示 IP111"
 
 msgid "Destination protocol"
 msgstr "目标协议"
@@ -1373,7 +1373,7 @@ msgid "Enable Remote"
 msgstr "启用转发"
 
 msgid "You can forward to Nginx/Caddy/V2ray/Xray WebSocket and more."
-msgstr "您可以转发到Nginx/Caddy/V2ray/Xray WebSocket等。"
+msgstr "您可以转发到 Nginx/Caddy/V2ray/Xray WebSocket等。"
 
 msgid "Remote Address"
 msgstr "远程地址"
@@ -1562,16 +1562,16 @@ msgid "Additional ports for hysteria hop"
 msgstr "端口跳跃额外端口"
 
 msgid "Custom geoip Path"
-msgstr "自定义geoip文件路径"
+msgstr "自定义 geoip 文件路径"
 
 msgid "Custom geoip URL"
-msgstr "自定义geoip文件更新链接"
+msgstr "自定义 geoip 文件更新链接"
 
 msgid "Custom geosite Path"
-msgstr "自定义geosite文件路径"
+msgstr "自定义 geosite 文件路径"
 
 msgid "Custom geosite URL"
-msgstr "自定义geosite文件更新链接"
+msgstr "自定义 geosite 文件更新链接"
 
 msgid "Remove resource files"
 msgstr "删除资源文件"
@@ -1592,7 +1592,7 @@ msgid "Override the connection destination address with the sniffed domain."
 msgstr "用探测出的域名覆盖连接目标地址。"
 
 msgid "Protocol parameter. Will waste traffic randomly if enabled."
-msgstr "协议参数。 如果启用会随机浪费流量。"
+msgstr "协议参数。如果启用会随机浪费流量。"
 
 msgid "Protocol parameter. Enable length block encryption."
 msgstr "协议参数。启用长度块加密。"
