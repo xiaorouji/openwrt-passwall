@@ -1373,7 +1373,7 @@ msgid "Enable Remote"
 msgstr "启用转发"
 
 msgid "You can forward to Nginx/Caddy/V2ray/Xray WebSocket and more."
-msgstr "您可以转发到 Nginx/Caddy/V2ray/Xray WebSocket等。"
+msgstr "您可以转发到 Nginx/Caddy/V2ray/Xray WebSocket 等。"
 
 msgid "Remote Address"
 msgstr "远程地址"
