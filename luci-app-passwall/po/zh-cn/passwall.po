@@ -172,11 +172,23 @@ msgstr "远程DNS：可以避免更多的DNS泄露，但会导致规则列表外
 msgid "Direct DNS: Internet experience may be better, but DNS will be leaked!"
 msgstr "直连DNS：上网体验可能会更佳，但是会泄露DNS！"
 
-msgid "ChinaDNS-NG Domain Default Tag"
-msgstr "ChinaDNS-NG 域名默认标签"
+msgid "Smart, Do not accept no-ip reply from Direct DNS"
+msgstr "智能，不接受直连 DNS 空响应"
 
-msgid "Default: Forward to both direct and remote DNS, if the direct DNS resolution result is a mainland China ip, then use the direct result, otherwise use the remote result."
-msgstr "默认：同时转发给直连和远程DNS，如果直连DNS解析结果是大陆ip，则使用直连结果，否则使用远程结果。"
+msgid "Smart, Accept no-ip reply from Direct DNS"
+msgstr "智能，接受直连 DNS 空响应"
+
+msgid "Smart: Forward to both direct and remote DNS, if the direct DNS resolution result is a mainland China IP, then use the direct result, otherwise use the remote result."
+msgstr "智能：同时转发给直连和远程 DNS，如果直连 DNS 解析结果是大陆 IP，则使用直连结果，否则使用远程结果。"
+
+msgid "In smart mode, no-ip reply from Direct DNS:"
+msgstr "使用智能模式，直连 DNS 返回空响应时:"
+
+msgid "Do not accept: Wait and use Remote DNS Reply."
+msgstr "不接受：等待并使用远程 DNS 的响应。"
+
+msgid "Accept: Trust the Reply, using this option can improve DNS resolution speeds for some mainland IPv4-only sites."
+msgstr "接受：信任空响应，使用此选项可以提升部分大陆仅 IPv4 站点的 DNS 解析速度。"
 
 msgid "Filter Proxy Host IPv6"
 msgstr "过滤代理域名 IPv6"
