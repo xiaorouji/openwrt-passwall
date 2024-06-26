@@ -820,7 +820,7 @@ local function processData(szType, content, add_mode, add_from)
 		end
 		result.remarks = UrlDecode(alias)
 		
-		local dat = split(content, '%?')
+		local dat = split(content:gsub("/%?", "?"), '%?')
 		local host_port = dat[1]
 		local params = {}
 		for _, v in pairs(split(dat[2], '&')) do
