@@ -177,7 +177,7 @@ o.rmempty = true
 
 o = s:option(Value, "user_agent", translate("User-Agent"))
 o.default = "v2rayN/9.99"
-o:value("curl", "Curl Default")
+o:value("curl", "Curl")
 o:value("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0", "Edge for Linux")
 o:value("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0", "Edge for Windows")
 o:value("Passwall/OpenWrt", "PassWall")
