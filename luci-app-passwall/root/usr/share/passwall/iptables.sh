@@ -1111,7 +1111,7 @@ add_firewall_rule() {
 		$ip6t_m -I OUTPUT $(comment "mangle-OUTPUT-PSW") -o lo -j RETURN
 		insert_rule_before "$ip6t_m" "OUTPUT" "mwan3" "$(comment mangle-OUTPUT-PSW) -m mark --mark 1 -j RETURN"
 
-		[ $(config_t_get global dns_redirect) == "1" ] && {
+		[ $(config_t_get global dns_redirect "0") = "1" ] && {
 			$ipt_m -A PSW -p udp --dport 53 -j RETURN	
 			$ip6t_m -A PSW -p udp --dport 53 -j RETURN
 			$ipt_n -I PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 53 -m comment --comment "PSW_DNS_Hijack" 2>/dev/null

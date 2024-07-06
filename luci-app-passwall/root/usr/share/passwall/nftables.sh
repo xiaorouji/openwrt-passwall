@@ -1152,7 +1152,7 @@ add_firewall_rule() {
 		nft "add rule inet fw4 mangle_output oif lo counter return comment \"PSW_OUTPUT_MANGLE\""
 		nft "add rule inet fw4 mangle_output meta mark 1 counter return comment \"PSW_OUTPUT_MANGLE\""
 
-		[ $(config_t_get global dns_redirect) == "1" ] && {
+		[ $(config_t_get global dns_redirect "0") = "1" ] && {
 			nft "add rule inet fw4 PSW_MANGLE ip protocol udp udp dport 53 counter return"	
 			nft "add rule inet fw4 PSW_MANGLE_V6 meta l4proto udp udp dport 53 counter return"
 			nft insert rule inet fw4 dstnat position 0 tcp dport 53 counter redirect to :53 comment \"PSW_DNS_Hijack\" 2>/dev/null
