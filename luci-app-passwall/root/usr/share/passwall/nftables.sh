@@ -916,7 +916,8 @@ add_firewall_rule() {
 
 	WAN_IP=$(get_wan_ip)
 	if [ -n "${WAN_IP}" ]; then
-		[ -n "${is_tproxy}" ] && nft "add rule inet fw4 PSW_MANGLE ip daddr ${WAN_IP} counter return comment \"WAN_IP_RETURN\"" || nft "add rule inet fw4 PSW_NAT ip daddr ${WAN_IP} counter return comment \"WAN_IP_RETURN\""
+		nft "add rule inet fw4 PSW_MANGLE ip daddr ${WAN_IP} counter return comment \"WAN_IP_RETURN\""
+		[ -z "${is_tproxy}" ] && nft "add rule inet fw4 PSW_NAT ip daddr ${WAN_IP} counter return comment \"WAN_IP_RETURN\""
 	fi
 	unset WAN_IP
 
