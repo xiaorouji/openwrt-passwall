@@ -266,6 +266,30 @@ dns_shunt = s:taboption("DNS", ListValue, "dns_shunt", "DNS " .. translate("Shun
 dns_shunt:value("dnsmasq", "Dnsmasq")
 dns_shunt:value("chinadns-ng", "Dnsmasq + ChinaDNS-NG")
 
+o = s:taboption("DNS", ListValue, "direct_dns_mode", translate("Direct DNS") .. " " .. translate("Request protocol"))
+o.default = ""
+o:value("", translate("Auto"))
+o:value("udp", "UDP")
+o:value("tcp", "TCP")
+--TO DO
+--o:value("dot", "DoT")
+--o:value("doh", "DoH")
+o:depends({dns_shunt = "dnsmasq"})
+o:depends({dns_shunt = "chinadns-ng"})
+
+o = s:taboption("DNS", Value, "direct_dns", translate("Direct DNS"))
+o.datatype = "or(ipaddr,ipaddrport)"
+o.default = "223.5.5.5"
+o:value("223.5.5.5")
+o:value("223.6.6.6")
+o:value("114.114.114.114")
+o:value("119.29.29.29")
+o:value("180.76.76.76")
+o:value("1.12.12.12")
+o:value("120.53.53.53")
+o:depends({direct_dns_mode = "udp"})
+o:depends({direct_dns_mode = "tcp"})
+
 o = s:taboption("DNS", Flag, "filter_proxy_ipv6", translate("Filter Proxy Host IPv6"), translate("Experimental feature."))
 o.default = "0"
 
