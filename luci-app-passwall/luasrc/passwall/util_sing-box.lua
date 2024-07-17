@@ -1167,8 +1167,7 @@ function gen_config(var)
 							elseif w:find("full:") == 1 then
 								table.insert(domain_table.domain, w:sub(1 + #"full:"))
 							elseif w:find("domain:") == 1 then
-								table.insert(domain_table.domain, w:sub(1 + #"domain:"))
-								table.insert(domain_table.domain_suffix, "." .. w:sub(1 + #"domain:"))
+								table.insert(domain_table.domain_suffix, w:sub(1 + #"domain:"))
 							else
 								table.insert(domain_table.domain_keyword, w)
 							end
