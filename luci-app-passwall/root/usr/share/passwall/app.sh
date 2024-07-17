@@ -907,14 +907,8 @@ run_redir() {
 				resolve_dns_port=${dns_listen_port}
 				_args="${_args} dns_listen_port=${resolve_dns_port}"
 
-				case "$(config_t_get global direct_dns_mode "auto")" in
-					udp)
-						_args="${_args} direct_dns_udp_server=$(config_t_get global direct_dns 223.5.5.5)"
-					;;
-					tcp)
-						_args="${_args} direct_dns_tcp_server=$(config_t_get global direct_dns 223.5.5.5)"
-					;;
-				esac
+				local local_dns=$(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n1)
+				_args="${_args} direct_dns_udp_server=${local_dns}"
 
 				local v2ray_dns_mode=$(config_t_get global v2ray_dns_mode tcp)
 				_args="${_args} remote_dns_protocol=${v2ray_dns_mode}"
@@ -1300,24 +1294,6 @@ stop_crontab() {
 start_dns() {
 	echolog "DNS域名解析："
 
-	local direct_dns_mode=$(config_t_get global direct_dns_mode "auto")
-	case "$direct_dns_mode" in
-		udp)
-			LOCAL_DNS=$(config_t_get global direct_dns 223.5.5.5 | sed 's/:/#/g')
-		;;
-		tcp)
-			LOCAL_DNS="127.0.0.1#${dns_listen_port}"
-			dns_listen_port=$(expr $dns_listen_port + 1)
-			DIRECT_DNS=$(config_t_get global direct_dns 223.5.5.5 | sed 's/:/#/g')
-			ln_run "$(first_type dns2tcp)" dns2tcp "/dev/null" -L "${LOCAL_DNS}" -R "$(get_first_dns DIRECT_DNS 53)" -v
-			echolog "  - dns2tcp(${LOCAL_DNS}) -> tcp://$(get_first_dns DIRECT_DNS 53 | sed 's/#/:/g')"
-		;;
-		auto)
-			#Automatic logic is already done by default
-			:
-		;;
-	esac
-
 	TUN_DNS="127.0.0.1#${dns_listen_port}"
 	[ "${resolve_dns}" == "1" ] && TUN_DNS="127.0.0.1#${resolve_dns_port}"
 
@@ -1427,18 +1403,7 @@ start_dns() {
 			echolog "  * 注意：当前 ChinaDNS-NG 版本为[ ${chinadns_ng_now//-/.} ]，请更新到[ ${chinadns_ng_min//-/.} ]或以上版本，否则 DNS 有可能无法正常工作！"
 		fi
 		
-		local direct_dns_mode=$(config_t_get global direct_dns_mode "auto")
-		case "$direct_dns_mode" in
-			udp)
-				china_ng_local_dns="udp://$(config_t_get global direct_dns 223.5.5.5 | sed 's/:/#/g')"
-			;;
-			tcp)
-				china_ng_local_dns="tcp://$(config_t_get global direct_dns 223.5.5.5 | sed 's/:/#/g')"
-			;;
-			auto)
-				china_ng_local_dns=$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2  | awk -v prefix="udp://" '{ for (i=1; i<=NF; i++) print prefix $i }') | tr " " ",") \
-			;;
-		esac
+		local china_ng_local_dns=$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2  | awk -v prefix="udp://" '{ for (i=1; i<=NF; i++) print prefix $i }') | tr " " ",")
 
 		[ "$FILTER_PROXY_IPV6" = "1" ] && DNSMASQ_FILTER_PROXY_IPV6=0
 		[ -z "${china_ng_listen_port}" ] && local china_ng_listen_port=$(expr $dns_listen_port + 1)
@@ -1618,11 +1583,12 @@ acl_app() {
 								[ "$filter_proxy_ipv6" = "1" ] && dnsmasq_filter_proxy_ipv6=0
 								chinadns_port=$(expr $chinadns_port + 1)
 								_china_ng_listen="127.0.0.1#${chinadns_port}"
+								_chinadns_local_dns=$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2  | awk -v prefix="udp://" '{ for (i=1; i<=NF; i++) print prefix $i }') | tr " " ",")
 
 								run_chinadns_ng \
 									_flag="$sid" \
 									_listen_port=${chinadns_port} \
-									_dns_local=$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2  | awk -v prefix="udp://" '{ for (i=1; i<=NF; i++) print prefix $i }') | tr " " ",") \
+									_dns_local=${_chinadns_local_dns} \
 									_dns_trust=127.0.0.1#${_dns_port} \
 									_no_ipv6_trust=${filter_proxy_ipv6} \
 									_use_direct_list=${use_direct_list} \
@@ -1770,7 +1736,7 @@ acl_app() {
 			[ -n "$redirect_dns_port" ] && echo "${redirect_dns_port}" > $TMP_ACL_PATH/$sid/var_redirect_dns_port
 			unset enabled sid remarks sources use_global_config tcp_node udp_node use_direct_list use_proxy_list use_block_list use_gfw_list chn_list tcp_proxy_mode udp_proxy_mode filter_proxy_ipv6 dns_mode remote_dns v2ray_dns_mode remote_dns_doh dns_client_ip
 			unset _ip _mac _iprange _ipset _ip_or_mac rule_list tcp_port udp_port config_file _extra_param
-			unset _china_ng_listen chinadns_ng_default_tag dnsmasq_filter_proxy_ipv6
+			unset _china_ng_listen _chinadns_local_dns chinadns_ng_default_tag dnsmasq_filter_proxy_ipv6
 			unset redirect_dns_port
 		done
 		unset socks_port redir_port dns_port dnsmasq_port chinadns_port
@@ -1910,6 +1876,9 @@ DEFAULT_DNSMASQ_CFGID=$(uci show dhcp.@dnsmasq[0] |  awk -F '.' '{print $2}' | a
 DEFAULT_DNS=$(uci show dhcp.@dnsmasq[0] | grep "\.server=" | awk -F '=' '{print $2}' | sed "s/'//g" | tr ' ' '\n' | grep -v "\/" | head -2 | sed ':label;N;s/\n/,/;b label')
 [ -z "${DEFAULT_DNS}" ] && [ "$(echo $ISP_DNS | tr ' ' '\n' | wc -l)" -le 2 ] && DEFAULT_DNS=$(echo -n $ISP_DNS | tr ' ' '\n' | head -2 | tr '\n' ',')
 LOCAL_DNS="${DEFAULT_DNS:-119.29.29.29,223.5.5.5}"
+DIRECT_DNS=$(config_t_get global direct_dns "auto")
+#Automatic logic is already done by default
+[ "${DIRECT_DNS}" != "auto" ] && LOCAL_DNS=$(echo ${DIRECT_DNS} | sed 's/:/#/g')
 
 DNS_QUERY_STRATEGY="UseIP"
 [ "$FILTER_PROXY_IPV6" = "1" ] && DNS_QUERY_STRATEGY="UseIPv4"
