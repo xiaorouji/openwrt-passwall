@@ -500,6 +500,26 @@ run_chinadns_ng() {
 		filter-qtype 65
 	EOF
 
+	# This function may be called multiple times, so add a condition here to avoid repeated execution.
+	[ ! -f "${TMP_PATH}/vpslist" ] && {
+		servers=$(uci show "${CONFIG}" | grep ".address=" | cut -d "'" -f 2 | grep -v "engage.cloudflareclient.com")
+		hosts_foreach "servers" host_from_url | grep '[a-zA-Z]$' | sort -u > "${TMP_PATH}/vpslist"
+	}
+	[ -s "${TMP_PATH}/vpslist" ] && {
+		local vpslist4_set="passwall_vpslist"
+		local vpslist6_set="passwall_vpslist6"
+		[ "$nftflag" = "1" ] && {
+			vpslist4_set="inet@fw4@${vpslist4_set}"
+			vpslist6_set="inet@fw4@${vpslist6_set}"
+		}
+		cat <<-EOF >> ${_CONF_FILE}
+			group vpslist
+			group-dnl ${TMP_PATH}/vpslist
+			group-upstream ${_dns_local}
+			group-ipset ${vpslist4_set},${vpslist6_set}
+		EOF
+	}
+
 	[ "${_use_direct_list}" = "1" ] && [ -s "${RULES_PATH}/direct_host" ] && {
 		local whitelist4_set="passwall_whitelist"
 		local whitelist6_set="passwall_whitelist6"
@@ -1377,7 +1397,7 @@ start_dns() {
 		run_chinadns_ng \
 			_flag="default" \
 			_listen_port=${china_ng_listen_port} \
-			_dns_local=$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2) | tr " " ",") \
+			_dns_local=$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2  | awk -v prefix="udp://" '{ for (i=1; i<=NF; i++) print prefix $i }') | tr " " ",") \
 			_dns_trust=${china_ng_trust_dns} \
 			_no_ipv6_trust=${FILTER_PROXY_IPV6} \
 			_use_direct_list=${USE_DIRECT_LIST} \
@@ -1551,7 +1571,7 @@ acl_app() {
 								run_chinadns_ng \
 									_flag="$sid" \
 									_listen_port=${chinadns_port} \
-									_dns_local=$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2) | tr " " ",") \
+									_dns_local=$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2  | awk -v prefix="udp://" '{ for (i=1; i<=NF; i++) print prefix $i }') | tr " " ",") \
 									_dns_trust=127.0.0.1#${_dns_port} \
 									_no_ipv6_trust=${filter_proxy_ipv6} \
 									_use_direct_list=${use_direct_list} \
