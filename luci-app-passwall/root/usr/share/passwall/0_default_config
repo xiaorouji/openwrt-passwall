@@ -97,7 +97,7 @@ config nodes 'myshunt'
 	option DirectGame '_direct'
 	option ProxyGame '_default'
 	option AIGC '_default'
-	option StreamingMedia '_default'
+	option Streaming '_default'
 	option Proxy '_default'
 	option Direct '_direct'
 	option default_node 'nil'
@@ -179,8 +179,8 @@ domain:proactivebackend-pa.googleapis.com
 domain:generativeai.google
 domain:meta.ai'
 
-config shunt_rules 'StreamingMedia'
-	option remarks 'StreamingMedia'
+config shunt_rules 'Streaming'
+	option remarks 'Streaming'
 	option domain_list 'geosite:netflix
 geosite:disney'
 
