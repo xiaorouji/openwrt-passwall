@@ -96,9 +96,9 @@ config nodes 'myshunt'
 	option protocol '_shunt'
 	option DirectGame '_direct'
 	option ProxyGame '_default'
+	option AIGC '_default'
+	option Streaming '_default'
 	option Proxy '_default'
-	option Netflix '_default'
-	option OpenAI '_default'
 	option Direct '_direct'
 	option default_node 'nil'
 	option domainStrategy 'IPOnDemand'
@@ -161,9 +161,28 @@ config shunt_rules 'ProxyGame'
 	option domain_list 'geosite:category-games
 domain:store.steampowered.com'
 
-config shunt_rules 'OpenAI'
-	option remarks 'OpenAI'
-	option domain_list 'geosite:openai'
+config shunt_rules 'AIGC'
+	option remarks 'AIGC'
+	option domain_list 'geosite:openai
+geosite:anthropic
+domain:aistudio.google.com
+domain:ai.google.dev
+domain:gemini.google.com
+domain:generativelanguage.googleapis.com
+domain:makersuite.google.com
+domain:alkalicore-pa.clients6.google.com
+domain:alkalimakersuite-pa.clients6.google.com
+domain:deepmind.com
+domain:deepmind.google
+domain:geller-pa.googleapis.com
+domain:proactivebackend-pa.googleapis.com
+domain:generativeai.google
+domain:meta.ai'
+
+config shunt_rules 'Streaming'
+	option remarks 'Streaming'
+	option domain_list 'geosite:netflix
+geosite:disney'
 
 config shunt_rules 'Proxy'
 	option remarks 'Proxy'
@@ -191,10 +210,6 @@ config shunt_rules 'Proxy'
 2001:4860:4860::8844
 2606:4700:4700::1111
 2606:4700:4700::1001'
-
-config shunt_rules 'Netflix'
-	option remarks 'Netflix'
-	option domain_list 'geosite:netflix'
 
 config shunt_rules 'Direct'
 	option remarks 'Direct'
