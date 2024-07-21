@@ -616,6 +616,10 @@ run_chinadns_ng() {
 	([ -z "${_default_tag}" ] || [ "${_default_tag}" = "smart" ] || [ "${_default_tag}" = "none_noip" ]) && _default_tag="none"
 	echo "default-tag ${_default_tag}" >> ${_CONF_FILE}
 
+	[ "${_flag}" = "default" ] && [ "${_default_tag}" = "none" ] && {
+		echo "verdict-cache 4096" >> ${_CONF_FILE}
+	}
+
 	ln_run "$(first_type chinadns-ng)" chinadns-ng "${_LOG_FILE}" -C ${_CONF_FILE}
 }
 
