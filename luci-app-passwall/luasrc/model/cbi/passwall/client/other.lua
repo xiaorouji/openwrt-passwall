@@ -203,8 +203,10 @@ if has_singbox then
 	o.rmempty = false
 
 	o = s:option(Value, "geoip_url", translate("Custom geoip URL"))
-	o.default = "https://github.com/SagerNet/sing-geoip/releases/latest/download/geoip.db"
-	o:value("https://github.com/SagerNet/sing-geoip/releases/latest/download/geoip.db")
+	o.default = "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.db"
+	o:value("https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.db")
+	o:value("https://github.com/1715173329/sing-geoip/releases/latest/download/geoip.db")
+	o:value("https://github.com/lyc8503/sing-box-rules/releases/latest/download/geoip.db")
 	o.rmempty = false
 
 	o = s:option(Value, "geosite_path", translate("Custom geosite Path"))
@@ -212,8 +214,10 @@ if has_singbox then
 	o.rmempty = false
 
 	o = s:option(Value, "geosite_url", translate("Custom geosite URL"))
-	o.default = "https://github.com/SagerNet/sing-geosite/releases/latest/download/geosite.db"
-	o:value("https://github.com/SagerNet/sing-geosite/releases/latest/download/geosite.db")
+	o.default = "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.db"
+	o:value("https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.db")
+	o:value("https://github.com/1715173329/sing-geosite/releases/latest/download/geosite.db")
+	o:value("https://github.com/lyc8503/sing-box-rules/releases/latest/download/geosite.db")
 	o.rmempty = false
 
 	o = s:option(Button, "_remove_resource", translate("Remove resource files"))
