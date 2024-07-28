@@ -1298,6 +1298,38 @@ stop_crontab() {
 start_dns() {
 	echolog "DNS域名解析："
 
+	local direct_dns_mode=$(config_t_get global direct_dns_mode "auto")
+	case "$direct_dns_mode" in
+		udp)
+			LOCAL_DNS=$(config_t_get global direct_dns_udp 223.5.5.5 | sed 's/:/#/g')
+		;;
+		tcp)
+			LOCAL_DNS="127.0.0.1#${dns_listen_port}"
+			dns_listen_port=$(expr $dns_listen_port + 1)
+			local DIRECT_DNS=$(config_t_get global direct_dns_tcp 223.5.5.5 | sed 's/:/#/g')
+			ln_run "$(first_type dns2tcp)" dns2tcp "/dev/null" -L "${LOCAL_DNS}" -R "$(get_first_dns DIRECT_DNS 53)" -v
+			echolog "  - dns2tcp(${LOCAL_DNS}) -> tcp://$(get_first_dns DIRECT_DNS 53 | sed 's/#/:/g')"
+			echolog "  * 请确保上游直连 DNS 支持 TCP 查询。"
+		;;
+		dot)
+			if [ "$(chinadns-ng -V | grep -i wolfssl)" != "nil" ]; then
+				LOCAL_DNS="127.0.0.1#${dns_listen_port}"
+				local cdns_listen_port=${dns_listen_port}
+				dns_listen_port=$(expr $dns_listen_port + 1)
+				local DIRECT_DNS=$(config_t_get global direct_dns_dot "tls://dot.pub@1.12.12.12")
+				ln_run "$(first_type chinadns-ng)" chinadns-ng "/dev/null" -b 127.0.0.1 -l ${cdns_listen_port}@udp -c ${DIRECT_DNS} -d chn
+				echolog "  - ChinaDNS-NG(${LOCAL_DNS}) -> ${DIRECT_DNS}"
+				echolog "  * 请确保上游直连 DNS 支持 DoT 查询。"
+			else
+				echolog "  - 你的ChinaDNS-NG版本不支持DoT，直连DNS将使用默认UDP地址。"
+			fi
+		;;
+		auto)
+			#Automatic logic is already done by default
+			:
+		;;
+	esac
+
 	TUN_DNS="127.0.0.1#${dns_listen_port}"
 	[ "${resolve_dns}" == "1" ] && TUN_DNS="127.0.0.1#${resolve_dns_port}"
 
@@ -1880,9 +1912,6 @@ DEFAULT_DNSMASQ_CFGID=$(uci show dhcp.@dnsmasq[0] |  awk -F '.' '{print $2}' | a
 DEFAULT_DNS=$(uci show dhcp.@dnsmasq[0] | grep "\.server=" | awk -F '=' '{print $2}' | sed "s/'//g" | tr ' ' '\n' | grep -v "\/" | head -2 | sed ':label;N;s/\n/,/;b label')
 [ -z "${DEFAULT_DNS}" ] && [ "$(echo $ISP_DNS | tr ' ' '\n' | wc -l)" -le 2 ] && DEFAULT_DNS=$(echo -n $ISP_DNS | tr ' ' '\n' | head -2 | tr '\n' ',')
 LOCAL_DNS="${DEFAULT_DNS:-119.29.29.29,223.5.5.5}"
-DIRECT_DNS=$(config_t_get global direct_dns "auto")
-#Automatic logic is already done by default
-[ "${DIRECT_DNS}" != "auto" ] && LOCAL_DNS=$(echo ${DIRECT_DNS} | sed 's/:/#/g')
 
 DNS_QUERY_STRATEGY="UseIP"
 [ "$FILTER_PROXY_IPV6" = "1" ] && DNS_QUERY_STRATEGY="UseIPv4"

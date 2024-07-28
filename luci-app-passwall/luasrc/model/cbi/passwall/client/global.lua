@@ -85,6 +85,35 @@ local doh_validate = function(self, value, t)
 	return nil, translate("DoH request address") .. " " .. translate("Format must be:") .. " URL,IP"
 end
 
+local chinadns_dot_validate = function(self, value, t)
+	if value ~= "" then
+		value = api.trim(value)
+		-- Define patterns for IPv4, IPv6, domain, and port
+		local ipv4_pattern = "(%d+%.%d+%.%d+%.%d+)"
+		local ipv6_pattern = "([%[%]a-fA-F0-9:]+)"  -- IPv6 addresses are wrapped in []
+		local domain_pattern = "([%w-_%.]+)"
+		local port_pattern = "(%d+)"
+		-- Define patterns for the different formats
+		local patterns = {
+		"^tls://" .. domain_pattern .. "@" .. ipv4_pattern .. "#" .. port_pattern .. "$", -- tls://域名@ip#端口
+		"^tls://" .. ipv4_pattern .. "#" .. port_pattern .. "$",                          -- tls://ip#端口
+		"^tls://" .. domain_pattern .. "@" .. ipv4_pattern .. "$",                        -- tls://域名@ip
+		"^tls://" .. ipv4_pattern .. "$",                                                 -- tls://ip
+		"^tls://" .. domain_pattern .. "@" .. ipv6_pattern .. "#" .. port_pattern .. "$", -- tls://域名@[IPv6]#端口
+		"^tls://" .. ipv6_pattern .. "#" .. port_pattern .. "$",                          -- tls://[IPv6]#端口
+		"^tls://" .. domain_pattern .. "@" .. ipv6_pattern .. "$",                        -- tls://域名@[IPv6]
+		"^tls://" .. ipv6_pattern .. "$"                                                  -- tls://[IPv6]
+		}
+		-- Check if the string matches any of the patterns
+		for _, pattern in ipairs(patterns) do
+			if value:match(pattern) then
+				return value
+			end
+		end
+		return nil, translate("Direct DNS") .. " DoT " .. translate("Format must be:") .. " tls://Domain@IP(#Port) or tls://IP(#Port)"
+	end
+end
+
 m:append(Template(appname .. "/global/status"))
 
 s = m:section(TypedSection, "global")
@@ -266,19 +295,47 @@ dns_shunt = s:taboption("DNS", ListValue, "dns_shunt", "DNS " .. translate("Shun
 dns_shunt:value("dnsmasq", "Dnsmasq")
 dns_shunt:value("chinadns-ng", "Dnsmasq + ChinaDNS-NG")
 
-o = s:taboption("DNS", Value, "direct_dns", translate("Direct DNS"))
-o.datatype = "or(ipaddr,ipaddrport)"
+o = s:taboption("DNS", ListValue, "direct_dns_mode", translate("Direct DNS") .. " " .. translate("Request protocol"))
 o.default = ""
 o:value("", translate("Auto"))
-o:value("223.5.5.5")
-o:value("223.6.6.6")
-o:value("114.114.114.114")
-o:value("119.29.29.29")
-o:value("180.76.76.76")
-o:value("1.12.12.12")
-o:value("120.53.53.53")
+o:value("udp", "UDP")
+o:value("tcp", "TCP")
+if os.execute("chinadns-ng -V | grep -i wolfssl >/dev/null") == 0 then
+	o:value("dot", "DoT")
+end
+--TO DO
+--o:value("doh", "DoH")
 o:depends({dns_shunt = "dnsmasq"})
 o:depends({dns_shunt = "chinadns-ng"})
+
+o = s:taboption("DNS", Value, "direct_dns_udp", translate("Direct DNS"))
+o.datatype = "or(ipaddr,ipaddrport)"
+o.default = "223.5.5.5"
+o:value("223.5.5.5")
+o:value("223.6.6.6")
+o:value("119.29.29.29")
+o:value("180.184.1.1")
+o:value("180.184.2.2")
+o:value("114.114.114.114")
+o:depends("direct_dns_mode", "udp")
+
+o = s:taboption("DNS", Value, "direct_dns_tcp", translate("Direct DNS"))
+o.datatype = "or(ipaddr,ipaddrport)"
+o.default = "223.5.5.5"
+o:value("223.5.5.5")
+o:value("223.6.6.6")
+o:value("180.184.1.1")
+o:value("180.184.2.2")
+o:depends("direct_dns_mode", "tcp")
+
+o = s:taboption("DNS", Value, "direct_dns_dot", translate("Direct DNS"))
+o.default = "tls://dot.pub@1.12.12.12"
+o:value("tls://dot.pub@1.12.12.12")
+o:value("tls://dot.pub@120.53.53.53")
+o:value("tls://dot.360.cn@36.99.170.86")
+o:value("tls://dot.360.cn@101.198.191.4")
+o.validate = chinadns_dot_validate
+o:depends("direct_dns_mode", "dot")
 
 o = s:taboption("DNS", Flag, "filter_proxy_ipv6", translate("Filter Proxy Host IPv6"), translate("Experimental feature."))
 o.default = "0"
