@@ -217,6 +217,30 @@ check_depends() {
 	fi
 }
 
+check_ver() {
+	local version1="$1"
+	local version2="$2"
+	local i v1 v1_1 v1_2 v1_3 v2 v2_1 v2_2 v2_3
+	IFS='.'; set -- $version1; v1_1=${1:-0}; v1_2=${2:-0}; v1_3=${3:-0}
+	IFS='.'; set -- $version2; v2_1=${1:-0}; v2_2=${2:-0}; v2_3=${3:-0}
+	IFS=
+	for i in 1 2 3; do
+		eval v1=\$v1_$i
+		eval v2=\$v2_$i
+		if [ "$v1" -gt "$v2" ]; then
+			# $1 大于 $2
+			echo 0
+			return
+		elif [ "$v1" -lt "$v2" ]; then
+			# $1 小于 $2
+			echo 1
+			return
+		fi
+	done
+	# $1 等于 $2
+	echo 255
+}
+
 get_new_port() {
 	port=$1
 	[ "$port" == "auto" ] && port=2082
@@ -1317,7 +1341,7 @@ start_dns() {
 				local cdns_listen_port=${dns_listen_port}
 				dns_listen_port=$(expr $dns_listen_port + 1)
 				local DIRECT_DNS=$(config_t_get global direct_dns_dot "tls://dot.pub@1.12.12.12")
-				ln_run "$(first_type chinadns-ng)" chinadns-ng "/dev/null" -b 127.0.0.1 -l ${cdns_listen_port}@udp -c ${DIRECT_DNS} -d chn
+				ln_run "$(first_type chinadns-ng)" chinadns-ng "/dev/null" -b 127.0.0.1 -l ${cdns_listen_port} -c ${DIRECT_DNS} -d chn
 				echolog "  - ChinaDNS-NG(${LOCAL_DNS}) -> ${DIRECT_DNS}"
 				echolog "  * 请确保上游直连 DNS 支持 DoT 查询。"
 			else
@@ -1433,10 +1457,10 @@ start_dns() {
 	[ "${use_udp_node_resolve_dns}" = "1" ] && echolog "  * 请确认上游 DNS 支持 UDP 查询并已使用 UDP 节点，如上游 DNS 非直连地址，确保 UDP 代理打开，并且已经正确转发！"
 
 	[ "$DNS_SHUNT" = "chinadns-ng" ] && [ -n "$(first_type chinadns-ng)" ] && {
-		chinadns_ng_min=2024-04-13
-		chinadns_ng_now=$(chinadns-ng -V | grep -i "ChinaDNS-NG " | awk '{print $2}' | awk 'BEGIN{FS=".";OFS="-"};{print $1,$2,$3}')
-		if [ $(date -d "$chinadns_ng_now" +%s) -lt $(date -d "$chinadns_ng_min" +%s) ]; then
-			echolog "  * 注意：当前 ChinaDNS-NG 版本为[ ${chinadns_ng_now//-/.} ]，请更新到[ ${chinadns_ng_min//-/.} ]或以上版本，否则 DNS 有可能无法正常工作！"
+		chinadns_ng_min=2024.04.13
+		chinadns_ng_now=$(chinadns-ng -V | grep -i "ChinaDNS-NG " | awk '{print $2}')
+		if [ $(check_ver "$chinadns_ng_now" "$chinadns_ng_min") = 1 ]; then
+			echolog "  * 注意：当前 ChinaDNS-NG 版本为[ $chinadns_ng_now ]，请更新到[ $chinadns_ng_min ]或以上版本，否则 DNS 有可能无法正常工作！"
 		fi
 		
 		local china_ng_local_dns=$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2  | awk -v prefix="udp://" '{ for (i=1; i<=NF; i++) print prefix $i }') | tr " " ",")
@@ -1610,10 +1634,10 @@ acl_app() {
 							}
 
 							[ "$dns_shunt" = "chinadns-ng" ] && [ -n "$(first_type chinadns-ng)" ] && {
-								chinadns_ng_min=2024-04-13
-								chinadns_ng_now=$(chinadns-ng -V | grep -i "ChinaDNS-NG " | awk '{print $2}' | awk 'BEGIN{FS=".";OFS="-"};{print $1,$2,$3}')
-								if [ $(date -d "$chinadns_ng_now" +%s) -lt $(date -d "$chinadns_ng_min" +%s) ]; then
-									echolog "  * 注意：当前 ChinaDNS-NG 版本为[ ${chinadns_ng_now//-/.} ]，请更新到[ ${chinadns_ng_min//-/.} ]或以上版本，否则 DNS 有可能无法正常工作！"
+								chinadns_ng_min=2024.04.13
+								chinadns_ng_now=$(chinadns-ng -V | grep -i "ChinaDNS-NG " | awk '{print $2}')
+								if [ $(check_ver "$chinadns_ng_now" "$chinadns_ng_min") = 1 ]; then
+									echolog "  * 注意：当前 ChinaDNS-NG 版本为[ $chinadns_ng_now ]，请更新到[ $chinadns_ng_min ]或以上版本，否则 DNS 有可能无法正常工作！"
 								fi
 
 								[ "$filter_proxy_ipv6" = "1" ] && dnsmasq_filter_proxy_ipv6=0
