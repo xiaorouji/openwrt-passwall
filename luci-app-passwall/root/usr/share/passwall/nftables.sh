@@ -1252,10 +1252,11 @@ flush_include() {
 }
 
 gen_include() {
+	flush_include
 	local nft_chain_file=$TMP_PATH/PSW_RULE.nft
 	local nft_set_file=$TMP_PATH/PSW_SETS.nft
-	echo "#!/usr/sbin/nft -f" > $nft_chain_file
-	echo "#!/usr/sbin/nft -f" > $nft_set_file
+	echo '#!/usr/sbin/nft -f' > $nft_chain_file
+	echo '#!/usr/sbin/nft -f' > $nft_set_file
 	for chain in $(nft -a list chains | grep -E "chain PSW_" | awk -F ' ' '{print$2}'); do
 		nft list chain inet fw4 ${chain} >> $nft_chain_file
 	done
