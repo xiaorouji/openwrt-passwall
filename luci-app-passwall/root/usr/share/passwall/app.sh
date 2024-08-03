@@ -1338,15 +1338,18 @@ stop_crontab() {
 start_dns() {
 	echolog "DNS域名解析："
 
+	local china_ng_local_dns=${LOCAL_DNS}
 	local direct_dns_mode=$(config_t_get global direct_dns_mode "auto")
 	case "$direct_dns_mode" in
 		udp)
 			LOCAL_DNS=$(config_t_get global direct_dns_udp 223.5.5.5 | sed 's/:/#/g')
+			china_ng_local_dns=${LOCAL_DNS}
 		;;
 		tcp)
 			LOCAL_DNS="127.0.0.1#${dns_listen_port}"
 			dns_listen_port=$(expr $dns_listen_port + 1)
 			local DIRECT_DNS=$(config_t_get global direct_dns_tcp 223.5.5.5 | sed 's/:/#/g')
+			china_ng_local_dns="tcp://${DIRECT_DNS}"
 			ln_run "$(first_type dns2tcp)" dns2tcp "/dev/null" -L "${LOCAL_DNS}" -R "$(get_first_dns DIRECT_DNS 53)" -v
 			echolog "  - dns2tcp(${LOCAL_DNS}) -> tcp://$(get_first_dns DIRECT_DNS 53 | sed 's/#/:/g')"
 			echolog "  * 请确保上游直连 DNS 支持 TCP 查询。"
@@ -1357,11 +1360,12 @@ start_dns() {
 				local cdns_listen_port=${dns_listen_port}
 				dns_listen_port=$(expr $dns_listen_port + 1)
 				local DIRECT_DNS=$(config_t_get global direct_dns_dot "tls://dot.pub@1.12.12.12")
+				china_ng_local_dns=${DIRECT_DNS}
 				ln_run "$(first_type chinadns-ng)" chinadns-ng "/dev/null" -b 127.0.0.1 -l ${cdns_listen_port} -c ${DIRECT_DNS} -d chn
 				echolog "  - ChinaDNS-NG(${LOCAL_DNS}) -> ${DIRECT_DNS}"
 				echolog "  * 请确保上游直连 DNS 支持 DoT 查询。"
 			else
-				echolog "  - 你的ChinaDNS-NG版本不支持DoT，直连DNS将使用默认UDP地址。"
+				echolog "  - 你的ChinaDNS-NG版本不支持DoT，直连DNS将使用默认地址。"
 			fi
 		;;
 		auto)
@@ -1478,8 +1482,6 @@ start_dns() {
 		if [ $(check_ver "$chinadns_ng_now" "$chinadns_ng_min") = 1 ]; then
 			echolog "  * 注意：当前 ChinaDNS-NG 版本为[ $chinadns_ng_now ]，请更新到[ $chinadns_ng_min ]或以上版本，否则 DNS 有可能无法正常工作！"
 		fi
-		
-		local china_ng_local_dns=$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2  | awk -v prefix="udp://" '{ for (i=1; i<=NF; i++) print prefix $i }') | tr " " ",")
 
 		[ "$FILTER_PROXY_IPV6" = "1" ] && DNSMASQ_FILTER_PROXY_IPV6=0
 		[ -z "${china_ng_listen_port}" ] && local china_ng_listen_port=$(expr $dns_listen_port + 1)
@@ -1659,7 +1661,22 @@ acl_app() {
 								[ "$filter_proxy_ipv6" = "1" ] && dnsmasq_filter_proxy_ipv6=0
 								chinadns_port=$(expr $chinadns_port + 1)
 								_china_ng_listen="127.0.0.1#${chinadns_port}"
-								_chinadns_local_dns=$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n2  | awk -v prefix="udp://" '{ for (i=1; i<=NF; i++) print prefix $i }') | tr " " ",")
+
+								local _chinadns_local_dns=${LOCAL_DNS}
+								local _direct_dns_mode=$(config_t_get global direct_dns_mode "auto")
+								case "${_direct_dns_mode}" in
+									udp)
+										_chinadns_local_dns=$(config_t_get global direct_dns_udp 223.5.5.5 | sed 's/:/#/g')
+									;;
+									tcp)
+										_chinadns_local_dns="tcp://$(config_t_get global direct_dns_tcp 223.5.5.5 | sed 's/:/#/g')"
+									;;
+									dot)
+										if [ "$(chinadns-ng -V | grep -i wolfssl)" != "nil" ]; then
+											_chinadns_local_dns=$(config_t_get global direct_dns_dot "tls://dot.pub@1.12.12.12")
+										fi
+									;;
+								esac
 
 								run_chinadns_ng \
 									_flag="$sid" \
