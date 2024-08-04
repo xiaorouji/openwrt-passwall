@@ -718,6 +718,7 @@ local default_file_tree = {
 	aarch64 = "arm64",
 	rockchip = "arm64",
 	mips    = "mips",
+	mips64  = "mips64",
 	mipsel  = "mipsel",
 	armv5   = "arm.*5",
 	armv6   = "arm.*6[^4]*",
