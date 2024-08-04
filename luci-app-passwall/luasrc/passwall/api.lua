@@ -314,7 +314,9 @@ function get_valid_nodes()
 		e.id = e[".name"]
 		if e.type and e.remarks then
 			if e.protocol and (e.protocol == "_balancing" or e.protocol == "_shunt" or e.protocol == "_iface") then
-				e["remark"] = "%s：[%s] " % {e.type .. " " .. i18n.translatef(e.protocol), e.remarks}
+				local type = e.type
+				if type == "sing-box" then type = "Sing-Box" end
+				e["remark"] = "%s：[%s] " % {type .. " " .. i18n.translatef(e.protocol), e.remarks}
 				e["node_type"] = "special"
 				nodes[#nodes + 1] = e
 			end
@@ -328,9 +330,20 @@ function get_valid_nodes()
 							protocol = "VMess"
 						elseif protocol == "vless" then
 							protocol = "VLESS"
+						elseif protocol == "shadowsocks" then
+							protocol = "SS"
+						elseif protocol == "shadowsocksr" then
+							protocol = "SSR"
+						elseif protocol == "wireguard" then
+							protocol = "WG"
+						elseif protocol == "hysteria" then
+							protocol = "HY"
+						elseif protocol == "hysteria2" then
+							protocol = "HY2"
 						else
 							protocol = protocol:gsub("^%l",string.upper)
 						end
+						if type == "sing-box" then type = "Sing-Box" end
 						type = type .. " " .. protocol
 					end
 					if is_ipv6(address) then address = get_ipv6_full(address) end

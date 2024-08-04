@@ -108,9 +108,20 @@ o.cfgvalue = function(t, n)
 			protocol = "VMess"
 		elseif protocol == "vless" then
 			protocol = "VLESS"
+		elseif protocol == "shadowsocks" then
+			protocol = "SS"
+		elseif protocol == "shadowsocksr" then
+			protocol = "SSR"
+		elseif protocol == "wireguard" then
+			protocol = "WG"
+		elseif protocol == "hysteria" then
+			protocol = "HY"
+		elseif protocol == "hysteria2" then
+			protocol = "HY2"
 		else
 			protocol = protocol:gsub("^%l",string.upper)
 		end
+		if type == "sing-box" then type = "Sing-Box" end
 		type = type .. " " .. protocol
 	end
 	local address = m:get(n, "address") or ""
