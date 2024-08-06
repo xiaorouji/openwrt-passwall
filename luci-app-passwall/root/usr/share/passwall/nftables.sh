@@ -865,12 +865,19 @@ add_firewall_rule() {
 	nft "flush chain inet fw4 PSW_OUTPUT_MANGLE"
 	nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip daddr @$NFTSET_LANLIST counter return"
 	nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip daddr @$NFTSET_VPSLIST counter return"
-	[ -n "$LOCAL_DNS" ] && {
-		for local_dns in $(echo $LOCAL_DNS | tr ',' ' '); do
-			local dns_address=$(echo $local_dns | awk -F '#' '{print $1}')
-			local dns_port=$(echo $local_dns | awk -F '#' '{print $2}')
-			nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip protocol udp ip daddr ${dns_address} $(factor ${dns_port:-53} "udp dport") counter return"
-			echolog "  - [$?]追加直连DNS到nftables：${dns_address}:${dns_port:-53}"
+	[ -n "$FW_APPEND_DNS" ] && {
+		for local_dns in $(echo $FW_APPEND_DNS | tr ',' ' '); do
+			local dns_address=$(echo "$local_dns" | sed -E 's/(@|\[)?([0-9a-fA-F:.]+)(@|#|$).*/\2/')
+			local dns_port=$(echo "$local_dns" | sed -nE 's/.*#([0-9]+)$/\1/p')
+			if echo "$dns_address" | grep -q ':'; then
+				nft "add rule inet fw4 PSW_OUTPUT_MANGLE_V6 meta l4proto udp ip6 daddr ${dns_address} $(factor ${dns_port:-53} "udp dport") counter return"
+				nft "add rule inet fw4 PSW_OUTPUT_MANGLE_V6 meta l4proto tcp ip6 daddr ${dns_address} $(factor ${dns_port:-53} "tcp dport") counter return"
+				echolog "  - [$?]追加直连DNS到nftables：[${dns_address}]:${dns_port:-53}"
+			else
+				nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip protocol udp ip daddr ${dns_address} $(factor ${dns_port:-53} "udp dport") counter return"
+				nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip protocol tcp ip daddr ${dns_address} $(factor ${dns_port:-53} "tcp dport") counter return"
+				echolog "  - [$?]追加直连DNS到nftables：${dns_address}:${dns_port:-53}"
+			fi
 		done
 	}
 	[ "${USE_DIRECT_LIST}" = "1" ] && nft "add rule inet fw4 PSW_OUTPUT_MANGLE ip daddr @$NFTSET_WHITELIST counter return"
