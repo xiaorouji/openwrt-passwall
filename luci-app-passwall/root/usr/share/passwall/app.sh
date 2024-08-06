@@ -354,7 +354,7 @@ run_ipt2socks() {
 
 run_singbox() {
 	local flag type node tcp_redir_port udp_redir_port socks_address socks_port socks_username socks_password http_address http_port http_username http_password
-	local dns_listen_port direct_dns_port direct_dns_udp_server direct_dns_tcp_server remote_dns_protocol remote_dns_udp_server remote_dns_tcp_server remote_dns_doh remote_fakedns remote_dns_query_strategy dns_cache dns_socks_address dns_socks_port
+	local dns_listen_port direct_dns_port direct_dns_udp_server direct_dns_tcp_server direct_dns_dot_server remote_dns_protocol remote_dns_udp_server remote_dns_tcp_server remote_dns_doh remote_fakedns remote_dns_query_strategy dns_cache dns_socks_address dns_socks_port
 	local loglevel log_file config_file server_host server_port
 	local _extra_param=""
 	eval_set_val $@
@@ -395,17 +395,21 @@ run_singbox() {
 	[ -n "$dns_listen_port" ] && _extra_param="${_extra_param} -dns_listen_port ${dns_listen_port}"
 	[ -n "$dns_cache" ] && _extra_param="${_extra_param} -dns_cache ${dns_cache}"
 
-	[ -n "$direct_dns_udp_server" ] && direct_dns_port=$(echo ${direct_dns_udp_server} | awk -F '#' '{print $2}')
-	[ -n "$direct_dns_tcp_server" ] && direct_dns_port=$(echo ${direct_dns_tcp_server} | awk -F '#' '{print $2}')
-	[ -z "$direct_dns_udp_server" ] && [ -z "$direct_dns_tcp_server" ] && {
+	if [ -n "$direct_dns_udp_server" ]; then
+		direct_dns_port=$(echo ${direct_dns_udp_server} | awk -F '#' '{print $2}')
+		_extra_param="${_extra_param} -direct_dns_udp_server $(echo ${direct_dns_udp_server} | awk -F '#' '{print $1}')"
+	elif [ -n "$direct_dns_tcp_server" ]; then
+		direct_dns_port=$(echo ${direct_dns_tcp_server} | awk -F '#' '{print $2}')
+		_extra_param="${_extra_param} -direct_dns_tcp_server $(echo ${direct_dns_tcp_server} | awk -F '#' '{print $1}')"
+	elif [ -n "$direct_dns_dot_server" ]; then
+		direct_dns_port=$(echo ${direct_dns_dot_server} | awk -F '#' '{print $2}')
+		_extra_param="${_extra_param} -direct_dns_dot_server $(echo ${direct_dns_dot_server} | awk -F '#' '{print $1}')"
+	else
 		local local_dns=$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n1) | tr " " ",")
-		direct_dns_udp_server=$(echo ${local_dns} | awk -F '#' '{print $1}')
+		_extra_param="${_extra_param} -direct_dns_udp_server $(echo ${local_dns} | awk -F '#' '{print $1}')"
 		direct_dns_port=$(echo ${local_dns} | awk -F '#' '{print $2}')
-	}
-	[ -z "$direct_dns_port" ] && direct_dns_port=53
-	[ -n "$direct_dns_udp_server" ] && _extra_param="${_extra_param} -direct_dns_udp_server ${direct_dns_udp_server}"
-	[ -n "$direct_dns_tcp_server" ] && _extra_param="${_extra_param} -direct_dns_tcp_server ${direct_dns_tcp_server}"
-	[ -n "$direct_dns_port" ] && _extra_param="${_extra_param} -direct_dns_port ${direct_dns_port}"
+	fi
+	_extra_param="${_extra_param} -direct_dns_port ${direct_dns_port:-53}"
 	_extra_param="${_extra_param} -direct_dns_query_strategy UseIP"
 
 	[ -n "$remote_dns_query_strategy" ] && _extra_param="${_extra_param} -remote_dns_query_strategy ${remote_dns_query_strategy}"
@@ -944,8 +948,22 @@ run_redir() {
 				[ "${DNS_CACHE}" == "0" ] && _args="${_args} dns_cache=0"
 				resolve_dns_port=${dns_listen_port}
 				_args="${_args} dns_listen_port=${resolve_dns_port}"
-				local local_dns=$(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n1)
-				_args="${_args} direct_dns_udp_server=${local_dns}"
+
+				case "$(config_t_get global direct_dns_mode "auto")" in
+					udp)
+						_args="${_args} direct_dns_udp_server=$(config_t_get global direct_dns_udp 223.5.5.5 | sed 's/:/#/g')
+					;;
+					tcp)
+						_args="${_args} direct_dns_tcp_server=$(config_t_get global direct_dns_tcp 223.5.5.5 | sed 's/:/#/g')
+					;;
+					dot)
+						local tmp_dot_dns=$(config_t_get global direct_dns_dot "tls://dot.pub@1.12.12.12")
+						local tmp_dot_ip=$(echo "$tmp_dot_dns" | sed -n 's/.*:\/\/\([^@#]*@\)*\([^@#]*\).*/\2/p')
+						local tmp_dot_port=$(echo "$tmp_dot_dns" | sed -n 's/.*#\([0-9]\+\).*/\1/p')
+						_args="${_args} direct_dns_dot_server=$tmp_dot_ip#${tmp_dot_port:-853}"
+					;;
+				esac
+
 				_args="${_args} remote_dns_protocol=${v2ray_dns_mode}"
 				case "$v2ray_dns_mode" in
 					tcp)
@@ -1339,17 +1357,20 @@ start_dns() {
 	echolog "DNS域名解析："
 
 	local china_ng_local_dns=${LOCAL_DNS}
+	local sing_box_local_dns=
 	local direct_dns_mode=$(config_t_get global direct_dns_mode "auto")
 	case "$direct_dns_mode" in
 		udp)
 			LOCAL_DNS=$(config_t_get global direct_dns_udp 223.5.5.5 | sed 's/:/#/g')
 			china_ng_local_dns=${LOCAL_DNS}
+			sing_box_local_dns="direct_dns_udp_server=${LOCAL_DNS}"
 		;;
 		tcp)
 			LOCAL_DNS="127.0.0.1#${dns_listen_port}"
 			dns_listen_port=$(expr $dns_listen_port + 1)
 			local DIRECT_DNS=$(config_t_get global direct_dns_tcp 223.5.5.5 | sed 's/:/#/g')
 			china_ng_local_dns="tcp://${DIRECT_DNS}"
+			sing_box_local_dns="direct_dns_tcp_server=${DIRECT_DNS}"
 			ln_run "$(first_type dns2tcp)" dns2tcp "/dev/null" -L "${LOCAL_DNS}" -R "$(get_first_dns DIRECT_DNS 53)" -v
 			echolog "  - dns2tcp(${LOCAL_DNS}) -> tcp://$(get_first_dns DIRECT_DNS 53 | sed 's/#/:/g')"
 			echolog "  * 请确保上游直连 DNS 支持 TCP 查询。"
@@ -1364,6 +1385,10 @@ start_dns() {
 				ln_run "$(first_type chinadns-ng)" chinadns-ng "/dev/null" -b 127.0.0.1 -l ${cdns_listen_port} -c ${DIRECT_DNS} -d chn
 				echolog "  - ChinaDNS-NG(${LOCAL_DNS}) -> ${DIRECT_DNS}"
 				echolog "  * 请确保上游直连 DNS 支持 DoT 查询。"
+
+				local tmp_dot_ip=$(echo "$DIRECT_DNS" | sed -n 's/.*:\/\/\([^@#]*@\)*\([^@#]*\).*/\2/p')
+				local tmp_dot_port=$(echo "$DIRECT_DNS" | sed -n 's/.*#\([0-9]\+\).*/\1/p')
+				sing_box_local_dns="direct_dns_dot_server=$tmp_dot_ip#${tmp_dot_port:-853}"
 			else
 				echolog "  - 你的ChinaDNS-NG版本不支持DoT，直连DNS将使用默认地址。"
 			fi
@@ -1420,6 +1445,7 @@ start_dns() {
 				;;
 			esac
 			_args="${_args} dns_socks_address=127.0.0.1 dns_socks_port=${tcp_node_socks_port}"
+			[ -n "${sing_box_local_dns}" ] && _args="${_args} ${sing_box_local_dns}"
 			run_singbox ${_args}
 		}
 	;;

@@ -754,6 +754,8 @@ function gen_config(var)
 	local dns_listen_port = var["-dns_listen_port"]
 	local direct_dns_port = var["-direct_dns_port"]
 	local direct_dns_udp_server = var["-direct_dns_udp_server"]
+	local direct_dns_tcp_server = var["-direct_dns_tcp_server"]
+	local direct_dns_dot_server = var["-direct_dns_dot_server"]
 	local direct_dns_query_strategy = var["-direct_dns_query_strategy"]
 	local remote_dns_port = var["-remote_dns_port"]
 	local remote_dns_udp_server = var["-remote_dns_udp_server"]
@@ -1316,7 +1318,7 @@ function gen_config(var)
 			}
 		end
 	
-		if direct_dns_udp_server then
+		if direct_dns_udp_server or direct_dns_tcp_server or direct_dns_dot_server then
 			local domain = {}
 			local nodes_domain_text = sys.exec('uci show passwall | grep ".address=" | cut -d "\'" -f 2 | grep "[a-zA-Z]$" | sort -u')
 			string.gsub(nodes_domain_text, '[^' .. "\r\n" .. ']+', function(w)
@@ -1335,12 +1337,26 @@ function gen_config(var)
 			elseif direct_dns_query_strategy == "UseIPv6" then
 				direct_strategy = "ipv6_only"
 			end
-	
-			local port = tonumber(direct_dns_port) or 53
+
+			local direct_dns_server, port
+			if direct_dns_udp_server then
+				port = tonumber(direct_dns_port) or 53
+				direct_dns_server = "udp://" .. direct_dns_udp_server .. ":" .. port
+			elseif direct_dns_tcp_server then
+				port = tonumber(direct_dns_port) or 53
+				direct_dns_server = "tcp://" .. direct_dns_tcp_server .. ":" .. port
+			elseif direct_dns_dot_server then
+				port = tonumber(direct_dns_port) or 853
+				if direct_dns_dot_server:find(":") == nil then
+					direct_dns_server = "tls://" .. direct_dns_dot_server .. ":" .. port
+				else
+					direct_dns_server = "tls://[" .. direct_dns_dot_server .. "]:" .. port
+				end
+			end
 	
 			table.insert(dns.servers, {
 				tag = "direct",
-				address = "udp://" .. direct_dns_udp_server .. ":" .. port,
+				address = direct_dns_server,
 				address_strategy = "prefer_ipv6",
 				strategy = direct_strategy,
 				detour = "direct",
