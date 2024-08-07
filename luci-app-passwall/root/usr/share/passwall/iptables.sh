@@ -841,21 +841,24 @@ add_firewall_rule() {
 	$ipt_m -N PSW_OUTPUT
 	$ipt_m -A PSW_OUTPUT $(dst $IPSET_LANLIST) -j RETURN
 	$ipt_m -A PSW_OUTPUT $(dst $IPSET_VPSLIST) -j RETURN
-	[ -n "$FW_APPEND_DNS" ] && {
-		for local_dns in $(echo $FW_APPEND_DNS | tr ',' ' '); do
-			local dns_address=$(echo "$local_dns" | sed -E 's/(@|\[)?([0-9a-fA-F:.]+)(@|#|$).*/\2/')
-			local dns_port=$(echo "$local_dns" | sed -nE 's/.*#([0-9]+)$/\1/p')
-			if echo "$dns_address" | grep -q ':'; then
-				$ip6t_m -A PSW_OUTPUT -p udp -d ${dns_address} --dport ${dns_port:-53} -j RETURN
-				$ip6t_m -A PSW_OUTPUT -p tcp -d ${dns_address} --dport ${dns_port:-53} -j RETURN
-				echolog "  - [$?]追加直连DNS到iptables：[${dns_address}]:${dns_port:-53}"
-			else
+
+	[ -n "$IPT_APPEND_DNS" ] && {
+		local local_dns dns_address dns_port
+		for local_dns in $(echo $IPT_APPEND_DNS | tr ',' ' '); do
+			dns_address=$(echo "$local_dns" | sed -E 's/(@|\[)?([0-9a-fA-F:.]+)(@|#|$).*/\2/')
+			dns_port=$(echo "$local_dns" | sed -nE 's/.*#([0-9]+)$/\1/p')
+			if echo "$dns_address" | grep -q -v ':'; then
 				$ipt_m -A PSW_OUTPUT -p udp -d ${dns_address} --dport ${dns_port:-53} -j RETURN
 				$ipt_m -A PSW_OUTPUT -p tcp -d ${dns_address} --dport ${dns_port:-53} -j RETURN
 				echolog "  - [$?]追加直连DNS到iptables：${dns_address}:${dns_port:-53}"
+			else
+				$ip6t_m -A PSW_OUTPUT -p udp -d ${dns_address} --dport ${dns_port:-53} -j RETURN
+				$ip6t_m -A PSW_OUTPUT -p tcp -d ${dns_address} --dport ${dns_port:-53} -j RETURN
+				echolog "  - [$?]追加直连DNS到iptables：[${dns_address}]:${dns_port:-53}"
 			fi
 		done
 	}
+
 	[ "${USE_DIRECT_LIST}" = "1" ] && $ipt_m -A PSW_OUTPUT $(dst $IPSET_WHITELIST) -j RETURN
 	$ipt_m -A PSW_OUTPUT -m mark --mark 0xff -j RETURN
 	[ "${USE_BLOCK_LIST}" = "1" ] && $ipt_m -A PSW_OUTPUT $(dst $IPSET_BLOCKLIST) -j DROP

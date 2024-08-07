@@ -24,7 +24,7 @@ DNS_PORT=15353
 TUN_DNS="127.0.0.1#${DNS_PORT}"
 LOCAL_DNS=119.29.29.29,223.5.5.5
 DEFAULT_DNS=
-FW_APPEND_DNS=
+IPT_APPEND_DNS=
 ENABLED_DEFAULT_ACL=0
 PROXY_IPV6=0
 PROXY_IPV6_UDP=0
@@ -1357,7 +1357,7 @@ stop_crontab() {
 start_dns() {
 	echolog "DNS域名解析："
 
-	local china_ng_local_dns=${LOCAL_DNS}
+	local china_ng_local_dns=$(IFS=','; set -- $LOCAL_DNS; [ "${1%%[#:]*}" = "127.0.0.1" ] && echo "$1" || ([ -n "$2" ] && echo "$1,$2" || echo "$1"))
 	local sing_box_local_dns=
 	local direct_dns_mode=$(config_t_get global direct_dns_mode "auto")
 	case "$direct_dns_mode" in
@@ -1365,7 +1365,7 @@ start_dns() {
 			LOCAL_DNS=$(config_t_get global direct_dns_udp 223.5.5.5 | sed 's/:/#/g')
 			china_ng_local_dns=${LOCAL_DNS}
 			sing_box_local_dns="direct_dns_udp_server=${LOCAL_DNS}"
-			FW_APPEND_DNS=${LOCAL_DNS}
+			IPT_APPEND_DNS=${LOCAL_DNS}
 		;;
 		tcp)
 			LOCAL_DNS="127.0.0.1#${dns_listen_port}"
@@ -1373,7 +1373,7 @@ start_dns() {
 			local DIRECT_DNS=$(config_t_get global direct_dns_tcp 223.5.5.5 | sed 's/:/#/g')
 			china_ng_local_dns="tcp://${DIRECT_DNS}"
 			sing_box_local_dns="direct_dns_tcp_server=${DIRECT_DNS}"
-			FW_APPEND_DNS="${LOCAL_DNS},${DIRECT_DNS}"
+			IPT_APPEND_DNS="${LOCAL_DNS},${DIRECT_DNS}"
 			ln_run "$(first_type dns2tcp)" dns2tcp "/dev/null" -L "${LOCAL_DNS}" -R "$(get_first_dns DIRECT_DNS 53)" -v
 			echolog "  - dns2tcp(${LOCAL_DNS}) -> tcp://$(get_first_dns DIRECT_DNS 53 | sed 's/#/:/g')"
 			echolog "  * 请确保上游直连 DNS 支持 TCP 查询。"
@@ -1392,7 +1392,7 @@ start_dns() {
 				local tmp_dot_ip=$(echo "$DIRECT_DNS" | sed -n 's/.*:\/\/\([^@#]*@\)*\([^@#]*\).*/\2/p')
 				local tmp_dot_port=$(echo "$DIRECT_DNS" | sed -n 's/.*#\([0-9]\+\).*/\1/p')
 				sing_box_local_dns="direct_dns_dot_server=$tmp_dot_ip#${tmp_dot_port:-853}"
-				FW_APPEND_DNS="${LOCAL_DNS},$tmp_dot_ip#${tmp_dot_port:-853}"
+				IPT_APPEND_DNS="${LOCAL_DNS},$tmp_dot_ip#${tmp_dot_port:-853}"
 			else
 				echolog "  - 你的ChinaDNS-NG版本不支持DoT，直连DNS将使用默认地址。"
 			fi
@@ -1692,7 +1692,7 @@ acl_app() {
 								chinadns_port=$(expr $chinadns_port + 1)
 								_china_ng_listen="127.0.0.1#${chinadns_port}"
 
-								_chinadns_local_dns=${LOCAL_DNS}
+								_chinadns_local_dns=$(IFS=','; set -- $LOCAL_DNS; [ "${1%%[#:]*}" = "127.0.0.1" ] && echo "$1" || ([ -n "$2" ] && echo "$1,$2" || echo "$1"))
 								_direct_dns_mode=$(config_t_get global direct_dns_mode "auto")
 								case "${_direct_dns_mode}" in
 									udp)
@@ -1999,7 +1999,7 @@ DEFAULT_DNSMASQ_CFGID=$(uci show dhcp.@dnsmasq[0] |  awk -F '.' '{print $2}' | a
 DEFAULT_DNS=$(uci show dhcp.@dnsmasq[0] | grep "\.server=" | awk -F '=' '{print $2}' | sed "s/'//g" | tr ' ' '\n' | grep -v "\/" | head -2 | sed ':label;N;s/\n/,/;b label')
 [ -z "${DEFAULT_DNS}" ] && [ "$(echo $ISP_DNS | tr ' ' '\n' | wc -l)" -le 2 ] && DEFAULT_DNS=$(echo -n $ISP_DNS | tr ' ' '\n' | head -2 | tr '\n' ',')
 LOCAL_DNS="${DEFAULT_DNS:-119.29.29.29,223.5.5.5}"
-FW_APPEND_DNS=${LOCAL_DNS}
+IPT_APPEND_DNS=${LOCAL_DNS}
 
 DNS_QUERY_STRATEGY="UseIP"
 [ "$FILTER_PROXY_IPV6" = "1" ] && DNS_QUERY_STRATEGY="UseIPv4"
