@@ -201,25 +201,27 @@ if not fs.access(CACHE_DNS_PATH) then
 		end
 	end
 
+	local fwd_dns
+	local ipset_flag
+	local no_ipv6
+
 	--始终用国内DNS解析节点域名
 	if true then
+		fwd_dns = LOCAL_DNS
 		if USE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" then
+			fwd_dns = nil
 		else
 			uci:foreach(appname, "nodes", function(t)
 				local address = t.address
 				if address == "engage.cloudflareclient.com" then return end
 				if datatypes.hostname(address) then
-					set_domain_dns(address, LOCAL_DNS)
+					set_domain_dns(address, fwd_dns)
 					set_domain_ipset(address, setflag_4 .. "passwall_vpslist," .. setflag_6 .. "passwall_vpslist6")
 				end
 			end)
 		end
-		log(string.format("  - 节点列表中的域名(vpslist)：%s", LOCAL_DNS or "默认"))
+		log(string.format("  - 节点列表中的域名(vpslist)：%s", fwd_dns or "默认"))
 	end
-
-	local fwd_dns
-	local ipset_flag
-	local no_ipv6
 
 	--直连（白名单）列表
 	if USE_DIRECT_LIST == "1" then
