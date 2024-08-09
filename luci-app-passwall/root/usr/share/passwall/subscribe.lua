@@ -618,6 +618,14 @@ local function processData(szType, content, add_mode, add_from)
 			end
 		end
 	elseif szType == "trojan" then
+		if trojan_type_default == "trojan-plus" and has_trojan_plus then
+			result.type = "Trojan-Plus"
+		elseif trojan_type_default == "sing-box" and has_singbox then
+			result.type = 'sing-box'
+		elseif trojan_type_default == "xray" and has_xray then
+			result.type = 'Xray'
+		end
+		result.protocol = 'trojan'
 		local alias = ""
 		if content:find("#") then
 			local idx_sp = content:find("#")
@@ -625,7 +633,6 @@ local function processData(szType, content, add_mode, add_from)
 			content = content:sub(0, idx_sp - 1)
 		end
 		result.remarks = UrlDecode(alias)
-		result.type = "Trojan-Plus"
 		if content:find("@") then
 			local Info = split(content, "@")
 			result.password = UrlDecode(Info[1])
@@ -658,8 +665,10 @@ local function processData(szType, content, add_mode, add_from)
 			if params.peer then peer = params.peer end
 			sni = params.sni and params.sni or ""
 			result.port = port
+
 			result.tls = '1'
 			result.tls_serverName = peer and peer or sni
+
 			if params.allowinsecure then
 				if params.allowinsecure == "1" or params.allowinsecure == "0" then
 					result.tls_allowInsecure = params.allowinsecure
@@ -670,16 +679,75 @@ local function processData(szType, content, add_mode, add_from)
 			else
 				result.tls_allowInsecure = allowInsecure_default and "1" or "0"
 			end
+
+			if not params.type then
+				params.type = "tcp"
+			end
+			params.type = string.lower(params.type)
+			result.transport = params.type
+			if params.type == 'ws' then
+				result.ws_host = params.host
+				result.ws_path = params.path
+				if result.type == "sing-box" and params.path then
+					local ws_path_dat = split(params.path, "?")
+					local ws_path = ws_path_dat[1]
+					local ws_path_params = {}
+					for _, v in pairs(split(ws_path_dat[2], '&')) do
+						local t = split(v, '=')
+						ws_path_params[t[1]] = t[2]
+					end
+					if ws_path_params.ed and tonumber(ws_path_params.ed) then
+						result.ws_path = ws_path
+						result.ws_enableEarlyData = "1"
+						result.ws_maxEarlyData = tonumber(ws_path_params.ed)
+						result.ws_earlyDataHeaderName = "Sec-WebSocket-Protocol"
+					end
+				end
+			end
+			if params.type == 'h2' or params.type == 'http' then
+				if result.type == "sing-box" then
+					result.transport = "http"
+					result.http_host = params.host
+					result.http_path = params.path
+				elseif result.type == "xray" then
+					result.transport = "h2"
+					result.h2_host = params.host
+					result.h2_path = params.path
+				end
+			end
+			if params.type == 'tcp' then
+				result.tcp_guise = params.headerType or "none"
+				result.tcp_guise_http_host = params.host
+				result.tcp_guise_http_path = params.path
+			end
+			if params.type == 'kcp' or params.type == 'mkcp' then
+				result.transport = "mkcp"
+				result.mkcp_guise = params.headerType or "none"
+				result.mkcp_mtu = 1350
+				result.mkcp_tti = 50
+				result.mkcp_uplinkCapacity = 5
+				result.mkcp_downlinkCapacity = 20
+				result.mkcp_readBufferSize = 2
+				result.mkcp_writeBufferSize = 2
+				result.mkcp_seed = params.seed
+			end
+			if params.type == 'quic' then
+				result.quic_guise = params.headerType or "none"
+				result.quic_key = params.key
+				result.quic_security = params.quicSecurity or "none"
+			end
+			if params.type == 'grpc' then
+				if params.path then result.grpc_serviceName = params.path end
+				if params.serviceName then result.grpc_serviceName = params.serviceName end
+				result.grpc_mode = params.mode
+			end
+			
+			result.encryption = params.encryption or "none"
+
+			result.flow = params.flow or nil
+
 		end
-		if trojan_type_default == "trojan-plus" and has_trojan_plus then
-			result.type = "Trojan-Plus"
-		elseif trojan_type_default == "sing-box" and has_singbox then
-			result.type = 'sing-box'
-			result.protocol = 'trojan'
-		elseif trojan_type_default == "xray" and has_xray then
-			result.type = 'Xray'
-			result.protocol = 'trojan'
-		end
+
 	elseif szType == "ssd" then
 		result.type = "SS"
 		result.address = content.server
@@ -762,9 +830,15 @@ local function processData(szType, content, add_mode, add_from)
 				end
 			end
 			if params.type == 'h2' or params.type == 'http' then
-				params.type = "h2"
-				result.h2_host = params.host
-				result.h2_path = params.path
+				if result.type == "sing-box" then
+					result.transport = "http"
+					result.http_host = params.host
+					result.http_path = params.path
+				elseif result.type == "xray" then
+					result.transport = "h2"
+					result.h2_host = params.host
+					result.h2_path = params.path
+				end
 			end
 			if params.type == 'tcp' then
 				result.tcp_guise = params.headerType or "none"
@@ -772,7 +846,7 @@ local function processData(szType, content, add_mode, add_from)
 				result.tcp_guise_http_path = params.path
 			end
 			if params.type == 'kcp' or params.type == 'mkcp' then
-				params.type = "mkcp"
+				result.transport = "mkcp"
 				result.mkcp_guise = params.headerType or "none"
 				result.mkcp_mtu = 1350
 				result.mkcp_tti = 50

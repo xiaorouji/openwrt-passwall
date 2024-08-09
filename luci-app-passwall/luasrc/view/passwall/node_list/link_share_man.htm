@@ -354,8 +354,36 @@ local api = require "luci.passwall.api"
 			var params = "";
 			if (opt.get(dom_prefix + "tls").checked) {
 				params += opt.query("sni", dom_prefix + "tls_serverName");
-				params += "&tls=1"
+				params += "&security=tls"
 				params += opt.query("allowinsecure", dom_prefix + "tls_allowInsecure");
+			}
+			// 获取transport参数并设置type
+			var transport = opt.get(dom_prefix + "transport").value || "";
+			switch (transport.toLowerCase()) {
+				case 'tcp':
+					params += "&type=tcp";
+					break;
+				case 'ws':
+					params += "&type=ws";
+					break;
+				case 'kcp':
+					params += "&type=kcp";
+					break;
+				case 'mkcp':
+					params += "&type=kcp";
+					break;
+				case 'http':
+					params += "&type=http";
+					break;
+				case 'h2':
+					params += "&type=h2";
+					break;
+				case 'grpc':
+					params += "&type=grpc";
+					break;
+				default:
+					// 默认不添加type参数
+					break;
 			}
 			params += "#" + encodeURI(v_alias.value);
 			if (params[0] == "&") {
@@ -679,7 +707,7 @@ local api = require "luci.passwall.api"
 				var queryParams = query[1];
 				var queryArray = queryParams.split('&');
 				var params;
-				for (i = 0; i < queryArray.length; i++) {
+				for (var i = 0; i < queryArray.length; i++) {
 					params = queryArray[i].split('=');
 					queryParam[decodeURIComponent(params[0]).toLowerCase()] = decodeURIComponent(params[1] || '');
 				}
@@ -687,9 +715,36 @@ local api = require "luci.passwall.api"
 			opt.set(dom_prefix + 'address', m.hostname);
 			opt.set(dom_prefix + 'port', m.port || "443");
 			opt.set(dom_prefix + 'password', decodeURIComponent(password));
-			opt.set(dom_prefix + 'tls', queryParam.tls === "1");
+			opt.set(dom_prefix + 'tls', queryParam.security === "tls" ? "1" : "0");
 			opt.set(dom_prefix + 'tls_serverName', queryParam.peer || queryParam.sni || '');
 			opt.set(dom_prefix + 'tls_allowInsecure', queryParam.allowinsecure === '1');
+			// 根据type参数设置transport
+			var transportType = queryParam.type || "";
+			switch (transportType.toLowerCase()) {
+				case 'tcp':
+					opt.set(dom_prefix + 'transport', 'tcp');
+					break;
+				case 'ws':
+					opt.set(dom_prefix + 'transport', 'ws');
+					break;
+				case 'kcp':
+					opt.set(dom_prefix + 'transport', 'mkcp');
+					break;
+				case 'mkcp':
+					opt.set(dom_prefix + 'transport', 'mkcp');
+					break;
+				case 'http':
+					opt.set(dom_prefix + 'transport', 'http');
+					break;
+				case 'h2':
+					opt.set(dom_prefix + 'transport', 'h2');
+					break;
+				case 'grpc':
+					opt.set(dom_prefix + 'transport', 'grpc');
+					break;
+				default:
+					opt.set(dom_prefix + 'transport', ''); // 默认清空transport
+			}
 			if (m.hash) {
 				opt.set('remarks', decodeURI(m.hash.substr(1)));
 			}
