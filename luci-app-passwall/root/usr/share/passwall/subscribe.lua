@@ -866,6 +866,10 @@ local function processData(szType, content, add_mode, add_from)
 				if params.serviceName then result.grpc_serviceName = params.serviceName end
 				result.grpc_mode = params.mode
 			end
+			if params.type == 'splithttp' then
+				result.splithttp_host = params.host
+				result.splithttp_path = params.path
+			end
 			
 			result.encryption = params.encryption or "none"
 
@@ -875,6 +879,7 @@ local function processData(szType, content, add_mode, add_from)
 			if params.security == "tls" or params.security == "reality" then
 				result.tls = "1"
 				result.tls_serverName = (params.sni and params.sni ~= "") and params.sni or params.host
+				result.alpn = params.alpn
 				result.fingerprint = (params.fp and params.fp ~= "") and params.fp or "chrome"
 				if params.security == "reality" then
 					result.reality = "1"

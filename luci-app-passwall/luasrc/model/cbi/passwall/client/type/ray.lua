@@ -341,9 +341,12 @@ o:depends({ [option_name("tls")] = true, [option_name("transport")] = "grpc" })
 o = s:option(ListValue, option_name("alpn"), translate("alpn"))
 o.default = "default"
 o:value("default", translate("Default"))
-o:value("h2,http/1.1")
+o:value("h3")
 o:value("h2")
+o:value("h3,h2")
 o:value("http/1.1")
+o:value("h2,http/1.1")
+o:value("h3,h2,http/1.1")
 o:depends({ [option_name("tls")] = true, [option_name("reality")] = false })
 
 -- o = s:option(Value, option_name("minversion"), translate("minversion"))
@@ -397,6 +400,7 @@ o:value("ds", "DomainSocket")
 o:value("quic", "QUIC")
 o:value("grpc", "gRPC")
 o:value("httpupgrade", "HttpUpgrade")
+o:value("splithttp", "SplitHTTP")
 o:depends({ [option_name("protocol")] = "vmess" })
 o:depends({ [option_name("protocol")] = "vless" })
 o:depends({ [option_name("protocol")] = "socks" })
@@ -561,6 +565,14 @@ o:depends({ [option_name("transport")] = "httpupgrade" })
 o = s:option(Value, option_name("httpupgrade_path"), translate("HttpUpgrade Path"))
 o.placeholder = "/"
 o:depends({ [option_name("transport")] = "httpupgrade" })
+
+-- [[ SplitHTTP部分 ]]--
+o = s:option(Value, option_name("splithttp_host"), translate("SplitHTTP Host"))
+o:depends({ [option_name("transport")] = "splithttp" })
+
+o = s:option(Value, option_name("splithttp_path"), translate("SplitHTTP Path"))
+o.placeholder = "/"
+o:depends({ [option_name("transport")] = "splithttp" })
 
 -- [[ Mux ]]--
 o = s:option(Flag, option_name("mux"), translate("Mux"))

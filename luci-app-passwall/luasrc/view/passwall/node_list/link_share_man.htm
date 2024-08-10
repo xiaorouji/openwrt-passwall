@@ -310,6 +310,10 @@ local api = require "luci.passwall.api"
 				params += opt.query("path", dom_prefix + "grpc_serviceName");
 				params += opt.query("serviceName", dom_prefix + "grpc_serviceName");
 				params += opt.query("mode", dom_prefix + "grpc_mode");
+			} else if (v_transport === "splithttp") {
+				v_transport = "splithttp";
+				params += opt.query("host", dom_prefix + "splithttp_host");
+				params += opt.query("path", dom_prefix + "splithttp_path");
 			}
 			params += "&type=" + v_transport;
 
@@ -336,6 +340,7 @@ local api = require "luci.passwall.api"
 					params += "&flow=" + v_flow;
 				}
 				params += "&security=" + v_security;
+				params += opt.query("alpn", dom_prefix + "alpn");
 				params += opt.query("sni", dom_prefix + "tls_serverName");
 			}
 
@@ -859,6 +864,7 @@ local api = require "luci.passwall.api"
 					opt.set(dom_prefix + 'tls', true);
 					opt.set(dom_prefix + 'reality', false)
 					opt.set(dom_prefix + 'flow', queryParam.flow || '');
+					opt.set(dom_prefix + 'alpn', queryParam.alpn || '');
 					opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
 					opt.set(dom_prefix + 'tls_allowInsecure', true);
 					if (queryParam.allowinsecure === '0') {
@@ -929,6 +935,9 @@ local api = require "luci.passwall.api"
 			} else if (queryParam.type === "grpc") {
 				opt.set(dom_prefix + 'grpc_serviceName', (queryParam.serviceName || queryParam.path) || "");
 				opt.set(dom_prefix + 'grpc_mode', queryParam.mode);
+			} else if (queryParam.type === "splithttp") {
+				opt.set(dom_prefix + 'splithttp_host', queryParam.host || "");
+				opt.set(dom_prefix + 'splithttp_path', queryParam.path || "");
 			}
 
 			if (m.hash) {
