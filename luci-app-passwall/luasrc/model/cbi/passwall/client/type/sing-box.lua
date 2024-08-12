@@ -364,13 +364,17 @@ o:depends({ [option_name("protocol")] = "vmess" })
 o:depends({ [option_name("protocol")] = "vless" })
 o:depends({ [option_name("protocol")] = "http" })
 o:depends({ [option_name("protocol")] = "trojan" })
+o:depends({ [option_name("protocol")] = "shadowsocks" })
 
 o = s:option(ListValue, option_name("alpn"), translate("alpn"))
 o.default = "default"
 o:value("default", translate("Default"))
-o:value("h2,http/1.1")
+o:value("h3")
 o:value("h2")
+o:value("h3,h2")
 o:value("http/1.1")
+o:value("h2,http/1.1")
+o:value("h3,h2,http/1.1")
 o:depends({ [option_name("tls")] = true })
 
 o = s:option(Value, option_name("tls_serverName"), translate("Domain"))
@@ -378,6 +382,7 @@ o:depends({ [option_name("tls")] = true })
 o:depends({ [option_name("protocol")] = "hysteria"})
 o:depends({ [option_name("protocol")] = "tuic" })
 o:depends({ [option_name("protocol")] = "hysteria2" })
+o:depends({ [option_name("protocol")] = "shadowsocks" })
 
 o = s:option(Flag, option_name("tls_allowInsecure"), translate("allowInsecure"), translate("Whether unsafe connections are allowed. When checked, Certificate validation will be skipped."))
 o.default = "0"
@@ -385,6 +390,7 @@ o:depends({ [option_name("tls")] = true })
 o:depends({ [option_name("protocol")] = "hysteria"})
 o:depends({ [option_name("protocol")] = "tuic" })
 o:depends({ [option_name("protocol")] = "hysteria2" })
+o:depends({ [option_name("protocol")] = "shadowsocks" })
 
 if singbox_tags:find("with_ech") then
 	o = s:option(Flag, option_name("ech"), translate("ECH"))

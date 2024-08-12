@@ -200,6 +200,63 @@ local api = require "luci.passwall.api"
 					}
 					params += "&plugin=" + encodeURIComponent(v_plugin);
 				}
+			} else {
+				var v_transport = opt.get(dom_prefix + "transport").value;
+				if (v_transport === "ws") {
+					params += opt.query("host", dom_prefix + "ws_host");
+					params += opt.query("path", dom_prefix + "ws_path");
+					if (v_type == "sing-box" && opt.get(dom_prefix + "ws_enableEarlyData").checked) {
+						var ws_maxEarlyData = opt.get(dom_prefix + "ws_maxEarlyData").value;
+						params += "?ed=" + ws_maxEarlyData;
+					}
+				} else if (v_transport === "h2") {
+					v_transport = "http";
+					params += opt.query("host", dom_prefix + "h2_host");
+					params += opt.query("path", dom_prefix + "h2_path");
+				} else if (v_transport === "tcp") {
+					params += opt.query("headerType", dom_prefix + "tcp_guise");
+					params += opt.query("host", dom_prefix + "tcp_guise_http_host");
+					params += opt.query("path", dom_prefix + "tcp_guise_http_path");
+				} else if (v_transport === "mkcp") {
+					v_transport = "kcp";
+					params += opt.query("headerType", dom_prefix + "mkcp_guise");
+				} else if (v_transport === "quic") {
+					params += opt.query("headerType", dom_prefix + "quic_guise");
+					params += opt.query("key", dom_prefix + "quic_key");
+					params += opt.query("quicSecurity", dom_prefix + "quic_security");
+				} else if (v_transport === "grpc") {
+					params += opt.query("path", dom_prefix + "grpc_serviceName");
+					params += opt.query("serviceName", dom_prefix + "grpc_serviceName");
+					params += opt.query("mode", dom_prefix + "grpc_mode");
+				}
+				params += "&type=" + v_transport;
+
+				params += opt.query("encryption", dom_prefix + "encryption");
+
+				if (opt.get(dom_prefix + "tls").checked) {
+					var v_security = "tls";
+					if (opt.get(dom_prefix + "fingerprint") && opt.get(dom_prefix + "fingerprint").value != "") {
+						let v_fp = opt.get(dom_prefix + "fingerprint").value;
+						params += "&fp=" + v_fp;
+					}
+					if (opt.get(dom_prefix + "reality") && opt.get(dom_prefix + "reality").checked) {
+						v_security = "reality";
+						if (opt.get(dom_prefix + "fingerprint") && opt.get(dom_prefix + "fingerprint").value != "") {
+							let v_fp = opt.get(dom_prefix + "fingerprint").value;
+							params += "&fp=" + v_fp;
+						}
+						params += opt.query("pbk", dom_prefix + "reality_publicKey");
+						params += opt.query("sid", dom_prefix + "reality_shortId");
+						params += opt.query("spx", dom_prefix + "reality_spiderX");
+					}
+					if (opt.get(dom_prefix + "flow") && opt.get(dom_prefix + "flow").value) {
+						let v_flow = opt.get(dom_prefix + "flow").value;
+						params += "&flow=" + v_flow;
+					}
+					params += "&security=" + v_security;
+					params += opt.query("alpn", dom_prefix + "alpn");
+					params += opt.query("sni", dom_prefix + "tls_serverName");
+				}
 			}
 			params += "&group="
 			params += "#" + encodeURIComponent(v_alias.value);
@@ -357,38 +414,61 @@ local api = require "luci.passwall.api"
 				"@" + _address +
 				":" + v_port.value + "/?";
 			var params = "";
-			if (opt.get(dom_prefix + "tls").checked) {
-				params += opt.query("sni", dom_prefix + "tls_serverName");
-				params += "&security=tls"
-				params += opt.query("allowinsecure", dom_prefix + "tls_allowInsecure");
+			var v_transport = opt.get(dom_prefix + "transport").value;
+			if (v_transport === "ws") {
+				params += opt.query("host", dom_prefix + "ws_host");
+				params += opt.query("path", dom_prefix + "ws_path");
+				if (v_type == "sing-box" && opt.get(dom_prefix + "ws_enableEarlyData").checked) {
+					var ws_maxEarlyData = opt.get(dom_prefix + "ws_maxEarlyData").value;
+					params += "?ed=" + ws_maxEarlyData;
+				}
+			} else if (v_transport === "h2") {
+				v_transport = "http";
+				params += opt.query("host", dom_prefix + "h2_host");
+				params += opt.query("path", dom_prefix + "h2_path");
+			} else if (v_transport === "tcp") {
+				params += opt.query("headerType", dom_prefix + "tcp_guise");
+				params += opt.query("host", dom_prefix + "tcp_guise_http_host");
+				params += opt.query("path", dom_prefix + "tcp_guise_http_path");
+			} else if (v_transport === "mkcp") {
+				v_transport = "kcp";
+				params += opt.query("headerType", dom_prefix + "mkcp_guise");
+			} else if (v_transport === "quic") {
+				params += opt.query("headerType", dom_prefix + "quic_guise");
+				params += opt.query("key", dom_prefix + "quic_key");
+				params += opt.query("quicSecurity", dom_prefix + "quic_security");
+			} else if (v_transport === "grpc") {
+				params += opt.query("path", dom_prefix + "grpc_serviceName");
+				params += opt.query("serviceName", dom_prefix + "grpc_serviceName");
+				params += opt.query("mode", dom_prefix + "grpc_mode");
 			}
-			// 获取transport参数并设置type
-			var transport = opt.get(dom_prefix + "transport").value || "";
-			switch (transport.toLowerCase()) {
-				case 'tcp':
-					params += "&type=tcp";
-					break;
-				case 'ws':
-					params += "&type=ws";
-					break;
-				case 'kcp':
-					params += "&type=kcp";
-					break;
-				case 'mkcp':
-					params += "&type=kcp";
-					break;
-				case 'http':
-					params += "&type=http";
-					break;
-				case 'h2':
-					params += "&type=h2";
-					break;
-				case 'grpc':
-					params += "&type=grpc";
-					break;
-				default:
-					// 默认不添加type参数
-					break;
+			params += "&type=" + v_transport;
+
+			params += opt.query("encryption", dom_prefix + "encryption");
+
+			if (opt.get(dom_prefix + "tls").checked) {
+				var v_security = "tls";
+				if (opt.get(dom_prefix + "fingerprint") && opt.get(dom_prefix + "fingerprint").value != "") {
+					let v_fp = opt.get(dom_prefix + "fingerprint").value;
+					params += "&fp=" + v_fp;
+				}
+				if (opt.get(dom_prefix + "reality") && opt.get(dom_prefix + "reality").checked) {
+					v_security = "reality";
+					if (opt.get(dom_prefix + "fingerprint") && opt.get(dom_prefix + "fingerprint").value != "") {
+						let v_fp = opt.get(dom_prefix + "fingerprint").value;
+						params += "&fp=" + v_fp;
+					}
+					params += opt.query("pbk", dom_prefix + "reality_publicKey");
+					params += opt.query("sid", dom_prefix + "reality_shortId");
+					params += opt.query("spx", dom_prefix + "reality_spiderX");
+				}
+				if (opt.get(dom_prefix + "flow") && opt.get(dom_prefix + "flow").value) {
+					let v_flow = opt.get(dom_prefix + "flow").value;
+					params += "&flow=" + v_flow;
+				}
+				params += "&security=" + v_security;
+				params += opt.query("alpn", dom_prefix + "alpn");
+				params += opt.query("sni", dom_prefix + "tls_serverName");
 			}
 			params += "#" + encodeURI(v_alias.value);
 			if (params[0] == "&") {
@@ -614,17 +694,26 @@ local api = require "luci.passwall.api"
 			if (sipIndex !== -1) {
 				// SIP002
 				var userInfo = b64decsafe(url0.substr(0, sipIndex));
-				var temp = url0.substr(sipIndex + 1).split("/?");
+				var temp = url0.substr(sipIndex + 1).replace('/?', '?').split('?');
 				var serverInfo = temp[0].split(":");
 				var server = serverInfo[0];
 				var port = serverInfo[1];
 				var method, password, plugin, pluginOpts;
+				var queryParam = {};
 				if (temp[1]) {
-					var pluginInfo = decodeURIComponent(temp[1]);
-					var pluginIndex = pluginInfo.indexOf(";");
-					var pluginNameInfo = pluginInfo.substr(0, pluginIndex);
-					plugin = pluginNameInfo.substr(pluginNameInfo.indexOf("=") + 1)
-					pluginOpts = pluginInfo.substr(pluginIndex + 1).split("&")[0];
+					var queryArray = temp[1].split('&');
+					var params;
+					for (var i = 0; i < queryArray.length; i++) {
+						params = queryArray[i].split('=');
+						queryParam[decodeURIComponent(params[0])] = decodeURIComponent(params[1] || '');
+					}
+					if (queryParam.plugin) {
+						var pluginInfo = decodeURIComponent(temp[1]);
+						var pluginIndex = pluginInfo.indexOf(";");
+						var pluginNameInfo = pluginInfo.substr(0, pluginIndex);
+						plugin = pluginNameInfo.substr(pluginNameInfo.indexOf("=") + 1)
+						pluginOpts = pluginInfo.substr(pluginIndex + 1).split("&")[0];
+					}
 				}
 				var userInfoSplitIndex = userInfo.indexOf(":");
 				if (userInfoSplitIndex !== -1) {
@@ -652,12 +741,94 @@ local api = require "luci.passwall.api"
 				opt.set(dom_prefix + 'port', port);
 				opt.set(dom_prefix + 'password', password || "");
 				opt.set(dom_prefix + 'method', method || "");
+				opt.set(dom_prefix + 'ss_method', method || "");
 				opt.set(dom_prefix + 'plugin', plugin || "none");
 				if (plugin && plugin != "none") {
 					opt.set(dom_prefix + 'plugin_opts', pluginOpts || "");
+					opt.set(dom_prefix + 'plugin_enabled', true);
 				}
 				if (param !== undefined) {
-					opt.set('remarks', decodeURI(param));
+					opt.set('remarks', decodeURIComponent(param));
+				}
+				if (!queryParam.plugin && (dom_prefix == "singbox_" || dom_prefix == "xray_")) {
+					opt.set(dom_prefix + 'encryption', queryParam.encryption);
+					if (queryParam.security) {
+						if (queryParam.security == "tls") {
+							opt.set(dom_prefix + 'tls', true);
+							opt.set(dom_prefix + 'reality', false)
+							opt.set(dom_prefix + 'flow', queryParam.flow || '');
+							opt.set(dom_prefix + 'alpn', queryParam.alpn || '');
+							opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
+							opt.set(dom_prefix + 'tls_allowInsecure', true);
+							if (queryParam.allowinsecure === '0') {
+								opt.set(dom_prefix + 'tls_allowInsecure', false);
+							}
+							if (queryParam.fp && queryParam.fp.trim() != "") {
+								opt.set(dom_prefix + 'fingerprint', queryParam.fp);
+							}
+						}
+
+						if (queryParam.security == "reality") {
+							opt.set(dom_prefix + 'tls', true);
+							opt.set(dom_prefix + 'reality', true)
+							opt.set(dom_prefix + 'flow', queryParam.flow || '');
+							opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
+							if (queryParam.fp && queryParam.fp.trim() != "") {
+								opt.set(dom_prefix + 'fingerprint', queryParam.fp);
+							}
+							opt.set(dom_prefix + 'reality_publicKey', queryParam.pbk || '');
+							opt.set(dom_prefix + 'reality_shortId', queryParam.sid || '');
+							opt.set(dom_prefix + 'reality_spiderX', queryParam.spx || '');
+						}
+
+					}
+
+					queryParam.type = queryParam.type.toLowerCase();
+					if (queryParam.type === "kcp" || queryParam.type === "mkcp")
+						queryParam.type = "mkcp"
+					if (queryParam.type === "h2" || queryParam.type === "http")
+						queryParam.type = "h2"
+					opt.set(dom_prefix + 'transport', queryParam.type);
+					if (queryParam.type === "tcp") {
+						opt.set(dom_prefix + 'tcp_guise', queryParam.headerType || "none");
+						if (queryParam.headerType && queryParam.headerType != "none") {
+							opt.set(dom_prefix + 'tcp_guise_http_host', queryParam.host || "");
+							opt.set(dom_prefix + 'tcp_guise_http_path', queryParam.path || "");
+						}
+					} else if (queryParam.type === "ws") {
+						opt.set(dom_prefix + 'ws_host', queryParam.host || "");
+						opt.set(dom_prefix + 'ws_path', queryParam.path || "");
+						if (dom_prefix == "singbox_" && queryParam.path && queryParam.path.length > 1) {
+							var ws_path_params = {};
+							var ws_path_dat = queryParam.path.split('?');
+							var ws_path = ws_path_dat[0];
+							var ws_path_params = {};
+							var ws_path_params_array = (ws_path_dat[1] || '').split('&');
+							for (i = 0; i < ws_path_params_array.length; i++) {
+								var kv = ws_path_params_array[i].split('=');
+								ws_path_params[decodeURIComponent(kv[0]).toLowerCase()] = decodeURIComponent(kv[1] || '');
+							}
+							
+							if (ws_path_params.ed) {
+								opt.set(dom_prefix + 'ws_path', ws_path);
+								opt.set(dom_prefix + 'ws_enableEarlyData', true);
+								opt.set(dom_prefix + 'ws_maxEarlyData', ws_path_params.ed);
+								opt.set(dom_prefix + 'ws_earlyDataHeaderName', 'Sec-WebSocket-Protocol');
+							}
+						}
+					} else if (queryParam.type === "h2" || queryParam.type === "http") {
+						opt.set(dom_prefix + 'h2_host', queryParam.host || "");
+						opt.set(dom_prefix + 'h2_path', queryParam.path || "");
+					} else if (queryParam.type === "quic") {
+						opt.set(dom_prefix + 'quic_guise', queryParam.headerType || "none");
+						opt.set(dom_prefix + 'quic_security', queryParam.quicSecurity);
+						opt.set(dom_prefix + 'quic_key', queryParam.key);
+					} else if (queryParam.type === "kcp" || queryParam.type === "mkcp") {
+						opt.set(dom_prefix + 'mkcp_guise', queryParam.headerType || "none");
+					} else if (queryParam.type === "grpc") {
+						opt.set(dom_prefix + 'grpc_serviceName', (queryParam.serviceName || queryParam.path) || "");
+						opt.set(dom_prefix + 'grpc_mode', queryParam.mode);
+					}
 				}
 			} else {
 				if (has_singbox) {
@@ -680,10 +851,11 @@ local api = require "luci.passwall.api"
 				opt.set(dom_prefix + 'port', part2[1]);
 				opt.set(dom_prefix + 'password', part1[1]);
 				opt.set(dom_prefix + 'method', part1[0]);
+				opt.set(dom_prefix + 'ss_method', part1[0]);
 				opt.set(dom_prefix + 'plugin', "none");
 				//opt.set(dom_prefix + 'plugin_opts', "");
 				if (param !== undefined) {
-					opt.set('remarks', decodeURI(param));
+					opt.set('remarks', decodeURIComponent(param));
 				}
 			}
 		}
@@ -708,7 +880,7 @@ local api = require "luci.passwall.api"
 			}
 			var queryParam = {};
 			if (m.search.length > 1) {
-				var query = m.search.split('?');
+				var query = m.search.replace('/?', '?').split('?');
 				var queryParams = query[1];
 				var queryArray = queryParams.split('&');
 				var params;
@@ -720,38 +892,56 @@ local api = require "luci.passwall.api"
 			opt.set(dom_prefix + 'address', m.hostname);
 			opt.set(dom_prefix + 'port', m.port || "443");
 			opt.set(dom_prefix + 'password', decodeURIComponent(password));
-			opt.set(dom_prefix + 'tls', queryParam.security === "tls" ? "1" : "0");
-			opt.set(dom_prefix + 'tls_serverName', queryParam.peer || queryParam.sni || '');
-			opt.set(dom_prefix + 'tls_allowInsecure', queryParam.allowinsecure === '1');
-			// 根据type参数设置transport
-			var transportType = queryParam.type || "";
-			switch (transportType.toLowerCase()) {
-				case 'tcp':
-					opt.set(dom_prefix + 'transport', 'tcp');
-					break;
-				case 'ws':
-					opt.set(dom_prefix + 'transport', 'ws');
-					break;
-				case 'kcp':
-					opt.set(dom_prefix + 'transport', 'mkcp');
-					break;
-				case 'mkcp':
-					opt.set(dom_prefix + 'transport', 'mkcp');
-					break;
-				case 'http':
-					opt.set(dom_prefix + 'transport', 'http');
-					break;
-				case 'h2':
-					opt.set(dom_prefix + 'transport', 'h2');
-					break;
-				case 'grpc':
-					opt.set(dom_prefix + 'transport', 'grpc');
-					break;
-				default:
-					opt.set(dom_prefix + 'transport', ''); // 默认清空transport
+
+			queryParam.type = queryParam.type.toLowerCase();
+			if (queryParam.type === "kcp" || queryParam.type === "mkcp")
+				queryParam.type = "mkcp"
+			if (queryParam.type === "h2" || queryParam.type === "http")
+				queryParam.type = "h2"
+			opt.set(dom_prefix + 'transport', queryParam.type);
+			if (queryParam.type === "tcp") {
+				opt.set(dom_prefix + 'tcp_guise', queryParam.headerType || "none");
+				if (queryParam.headerType && queryParam.headerType != "none") {
+					opt.set(dom_prefix + 'tcp_guise_http_host', queryParam.host || "");
+					opt.set(dom_prefix + 'tcp_guise_http_path', queryParam.path || "");
+				}
+			} else if (queryParam.type === "ws") {
+				opt.set(dom_prefix + 'ws_host', queryParam.host || "");
+				opt.set(dom_prefix + 'ws_path', queryParam.path || "");
+				if (dom_prefix == "singbox_" && queryParam.path && queryParam.path.length > 1) {
+					var ws_path_params = {};
+					var ws_path_dat = queryParam.path.split('?');
+					var ws_path = ws_path_dat[0];
+					var ws_path_params = {};
+					var ws_path_params_array = (ws_path_dat[1] || '').split('&');
+					for (i = 0; i < ws_path_params_array.length; i++) {
+						var kv = ws_path_params_array[i].split('=');
+						ws_path_params[decodeURIComponent(kv[0]).toLowerCase()] = decodeURIComponent(kv[1] || '');
+					}
+					
+					if (ws_path_params.ed) {
+						opt.set(dom_prefix + 'ws_path', ws_path);
+						opt.set(dom_prefix + 'ws_enableEarlyData', true);
+						opt.set(dom_prefix + 'ws_maxEarlyData', ws_path_params.ed);
+						opt.set(dom_prefix + 'ws_earlyDataHeaderName', 'Sec-WebSocket-Protocol');
+					}
+				}
+			} else if (queryParam.type === "h2" || queryParam.type === "http") {
+				opt.set(dom_prefix + 'h2_host', queryParam.host || "");
+				opt.set(dom_prefix + 'h2_path', queryParam.path || "");
+			} else if (queryParam.type === "quic") {
+				opt.set(dom_prefix + 'quic_guise', queryParam.headerType || "none");
+				opt.set(dom_prefix + 'quic_security', queryParam.quicSecurity);
+				opt.set(dom_prefix + 'quic_key', queryParam.key);
+			} else if (queryParam.type === "kcp" || queryParam.type === "mkcp") {
+				opt.set(dom_prefix + 'mkcp_guise', queryParam.headerType || "none");
+			} else if (queryParam.type === "grpc") {
+				opt.set(dom_prefix + 'grpc_serviceName', (queryParam.serviceName || queryParam.path) || "");
+				opt.set(dom_prefix + 'grpc_mode', queryParam.mode);
 			}
+
 			if (m.hash) {
-				opt.set('remarks', decodeURI(m.hash.substr(1)));
+				opt.set('remarks', decodeURIComponent(m.hash.substr(1)));
 			}
 		}
 		if (ssu[0] === "vmess") {
@@ -802,7 +992,7 @@ local api = require "luci.passwall.api"
 					var ws_path_dat = ssm.path.split('?');
 					var ws_path = ws_path_dat[0];
 					var ws_path_params = {};
-					var ws_path_params_array = ws_path_dat[1].split('&');
+					var ws_path_params_array = (ws_path_dat[1] || '').split('&');
 					for (i = 0; i < ws_path_params_array.length; i++) {
 						var kv = ws_path_params_array[i].split('=');
 						ws_path_params[decodeURIComponent(kv[0]).toLowerCase()] = decodeURIComponent(kv[1] || '');
@@ -848,7 +1038,7 @@ local api = require "luci.passwall.api"
 			opt.set(dom_prefix + 'port', m.port || "443");
 			var queryParam = {};
 			if (m.search.length > 1) {
-				var query = m.search.split('?');
+				var query = m.search.replace('/?', '?').split('?')
 				var queryParams = query[1];
 				var queryArray = queryParams.split('&');
 				var params;
@@ -910,7 +1100,7 @@ local api = require "luci.passwall.api"
 					var ws_path_dat = queryParam.path.split('?');
 					var ws_path = ws_path_dat[0];
 					var ws_path_params = {};
-					var ws_path_params_array = ws_path_dat[1].split('&');
+					var ws_path_params_array = (ws_path_dat[1] || '').split('&');
 					for (i = 0; i < ws_path_params_array.length; i++) {
 						var kv = ws_path_params_array[i].split('=');
 						ws_path_params[decodeURIComponent(kv[0]).toLowerCase()] = decodeURIComponent(kv[1] || '');
@@ -941,7 +1131,7 @@ local api = require "luci.passwall.api"
 			}
 
 			if (m.hash) {
-				opt.set('remarks', decodeURI(m.hash.substr(1)));
+				opt.set('remarks', decodeURIComponent(m.hash.substr(1)));
 			}
 		}
 		if (ssu[0] === "hysteria2" || ssu[0] === "hy2") {
@@ -953,7 +1143,7 @@ local api = require "luci.passwall.api"
 			}
 			var queryParam = {};
 			if (m.search.length > 1) {
-				var query = m.search.split('?');
+				var query = m.search.replace('/?', '?').split('?')
 				var queryParams = query[1];
 				var queryArray = queryParams.split('&');
 				var params;
@@ -992,7 +1182,7 @@ local api = require "luci.passwall.api"
 				opt.set(dom_prefix + 'tls_allowInsecure', true);
 			}
 			if (m.hash) {
-				opt.set('remarks', decodeURI(m.hash.substr(1)));
+				opt.set('remarks', decodeURIComponent(m.hash.substr(1)));
 			}
 		}
 		if (dom_prefix && dom_prefix != null) {

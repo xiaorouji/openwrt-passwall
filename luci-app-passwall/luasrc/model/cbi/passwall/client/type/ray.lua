@@ -17,7 +17,7 @@ local function option_name(name)
 	return option_prefix .. name
 end
 
-local x_ss_encrypt_method_list = {
+local ss_method_list = {
 	"aes-128-gcm", "aes-256-gcm", "chacha20-poly1305", "xchacha20-poly1305", "2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305"
 }
 
@@ -298,16 +298,16 @@ o.default = "none"
 o:value("none")
 o:depends({ [option_name("protocol")] = "vless" })
 
-o = s:option(ListValue, option_name("x_ss_encrypt_method"), translate("Encrypt Method"))
+o = s:option(ListValue, option_name("ss_method"), translate("Encrypt Method"))
 o.rewrite_option = "method"
-for a, t in ipairs(x_ss_encrypt_method_list) do o:value(t) end
+for a, t in ipairs(ss_method_list) do o:value(t) end
 o:depends({ [option_name("protocol")] = "shadowsocks" })
 
 o = s:option(Flag, option_name("iv_check"), translate("IV Check"))
-o:depends({ [option_name("protocol")] = "shadowsocks", [option_name("x_ss_encrypt_method")] = "aes-128-gcm" })
-o:depends({ [option_name("protocol")] = "shadowsocks", [option_name("x_ss_encrypt_method")] = "aes-256-gcm" })
-o:depends({ [option_name("protocol")] = "shadowsocks", [option_name("x_ss_encrypt_method")] = "chacha20-poly1305" })
-o:depends({ [option_name("protocol")] = "shadowsocks", [option_name("x_ss_encrypt_method")] = "xchacha20-poly1305" })
+o:depends({ [option_name("protocol")] = "shadowsocks", [option_name("ss_method")] = "aes-128-gcm" })
+o:depends({ [option_name("protocol")] = "shadowsocks", [option_name("ss_method")] = "aes-256-gcm" })
+o:depends({ [option_name("protocol")] = "shadowsocks", [option_name("ss_method")] = "chacha20-poly1305" })
+o:depends({ [option_name("protocol")] = "shadowsocks", [option_name("ss_method")] = "xchacha20-poly1305" })
 
 o = s:option(Flag, option_name("uot"), translate("UDP over TCP"))
 o:depends({ [option_name("protocol")] = "shadowsocks" })
