@@ -185,8 +185,8 @@ if USE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" then
 	dnsmasq_default_dns = CHINADNS_DNS
 end
 
-local setflag_4= (NFTFLAG == "1") and "4#inet#fw4#" or ""
-local setflag_6= (NFTFLAG == "1") and "6#inet#fw4#" or ""
+local setflag_4= (NFTFLAG == "1") and "4#inet#passwall#" or ""
+local setflag_6= (NFTFLAG == "1") and "6#inet#passwall#" or ""
 
 if not fs.access(CACHE_DNS_PATH) then
 	fs.mkdir("/tmp/dnsmasq.d")

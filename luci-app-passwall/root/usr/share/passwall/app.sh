@@ -543,8 +543,8 @@ run_chinadns_ng() {
 		local vpslist4_set="passwall_vpslist"
 		local vpslist6_set="passwall_vpslist6"
 		[ "$nftflag" = "1" ] && {
-			vpslist4_set="inet@fw4@${vpslist4_set}"
-			vpslist6_set="inet@fw4@${vpslist6_set}"
+			vpslist4_set="inet@passwall@${vpslist4_set}"
+			vpslist6_set="inet@passwall@${vpslist6_set}"
 		}
 		cat <<-EOF >> ${_CONF_FILE}
 			group vpslist
@@ -558,8 +558,8 @@ run_chinadns_ng() {
 		local whitelist4_set="passwall_whitelist"
 		local whitelist6_set="passwall_whitelist6"
 		[ "$nftflag" = "1" ] && {
-			whitelist4_set="inet@fw4@${whitelist4_set}"
-			whitelist6_set="inet@fw4@${whitelist6_set}"
+			whitelist4_set="inet@passwall@${whitelist4_set}"
+			whitelist6_set="inet@passwall@${whitelist6_set}"
 		}
 		cat <<-EOF >> ${_CONF_FILE}
 			group directlist
@@ -573,8 +573,8 @@ run_chinadns_ng() {
 		local blacklist4_set="passwall_blacklist"
 		local blacklist6_set="passwall_blacklist6"
 		[ "$nftflag" = "1" ] && {
-			blacklist4_set="inet@fw4@${blacklist4_set}"
-			blacklist6_set="inet@fw4@${blacklist6_set}"
+			blacklist4_set="inet@passwall@${blacklist4_set}"
+			blacklist6_set="inet@passwall@${blacklist6_set}"
 		}
 		cat <<-EOF >> ${_CONF_FILE}
 			group proxylist
@@ -589,8 +589,8 @@ run_chinadns_ng() {
 		local gfwlist4_set="passwall_gfwlist"
 		local gfwlist6_set="passwall_gfwlist6"
 		[ "$nftflag" = "1" ] && {
-			gfwlist4_set="inet@fw4@${gfwlist4_set}"
-			gfwlist6_set="inet@fw4@${gfwlist6_set}"
+			gfwlist4_set="inet@passwall@${gfwlist4_set}"
+			gfwlist6_set="inet@passwall@${gfwlist6_set}"
 		}
 		cat <<-EOF >> ${_CONF_FILE}
 			gfwlist-file ${RULES_PATH}/gfwlist
@@ -603,8 +603,8 @@ run_chinadns_ng() {
 		local chnroute4_set="passwall_chnroute"
 		local chnroute6_set="passwall_chnroute6"
 		[ "$nftflag" = "1" ] && {
-			chnroute4_set="inet@fw4@${chnroute4_set}"
-			chnroute6_set="inet@fw4@${chnroute6_set}"
+			chnroute4_set="inet@passwall@${chnroute4_set}"
+			chnroute6_set="inet@passwall@${chnroute6_set}"
 		}
 
 		[ "${_chnlist}" = "direct" ] && {
