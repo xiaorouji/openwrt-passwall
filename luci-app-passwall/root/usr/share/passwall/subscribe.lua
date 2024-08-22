@@ -1081,6 +1081,59 @@ local function processData(szType, content, add_mode, add_from)
 				result.hysteria2_obfs_password = params["obfs-password"]
 			end
 		end
+	elseif szType == 'tuic' then
+		local alias = ""
+		if content:find("#") then
+			local idx_sp = content:find("#")
+			alias = content:sub(idx_sp + 1, -1)
+			content = content:sub(0, idx_sp - 1)
+		end
+		result.remarks = UrlDecode(alias)
+		local Info = content
+		if content:find("@") then
+			local contents = split(content, "@")
+			if contents[1]:find(":") then
+				local userinfo = split(contents[1], ":")
+				result.uuid = UrlDecode(userinfo[1])
+				result.password = UrlDecode(userinfo[2])
+			end
+			Info = (contents[2] or ""):gsub("/%?", "?")
+		end
+		local query = split(Info, "?")
+		local host_port = query[1]
+		local params = {}
+		for _, v in pairs(split(query[2], '&')) do
+			local t = split(v, '=')
+			if #t > 1 then
+				params[string.lower(t[1])] = UrlDecode(t[2])
+			end
+		end
+		if host_port:find(":") then
+			local sp = split(host_port, ":")
+			result.port = sp[#sp]
+			if api.is_ipv6addrport(host_port) then
+				result.address = api.get_ipv6_only(host_port)
+			else
+				result.address = sp[1]
+			end
+		else
+			result.address = host_port
+		end
+		result.tls_serverName = params.sni
+		result.tuic_alpn = params.alpn or "default"
+		result.tuic_congestion_control = params.congestion_control or "cubic"
+		if params.allowinsecure then
+			if params.allowinsecure == "1" or params.allowinsecure == "0" then
+				result.tls_allowInsecure = params.allowinsecure
+			else
+				result.tls_allowInsecure = string.lower(params.allowinsecure) == "true" and "1" or "0"
+			end
+			--log(result.remarks .. ' 使用节点AllowInsecure设定: '.. result.tls_allowInsecure)
+		else
+			result.tls_allowInsecure = allowInsecure_default and "1" or "0"
+		end
+		result.type = 'sing-box'
+		result.protocol = "tuic"
 	else
 		log('暂时不支持' .. szType .. "类型的节点订阅，跳过此节点。")
 		return nil

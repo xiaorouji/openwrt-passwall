@@ -334,7 +334,15 @@ if singbox_tags:find("with_quic") then
 	o.default = "3"
 	o:depends({ [option_name("protocol")] = "tuic" })
 
-	o = s:option(Value, option_name("tuic_alpn"), translate("QUIC TLS ALPN"))
+	o = s:option(ListValue, option_name("tuic_alpn"), translate("QUIC TLS ALPN"))
+	o.default = "default"
+	o:value("default", translate("Default"))
+	o:value("h3")
+	o:value("h2")
+	o:value("h3,h2")
+	o:value("http/1.1")
+	o:value("h2,http/1.1")
+	o:value("h3,h2,http/1.1")
 	o:depends({ [option_name("protocol")] = "tuic" })
 end
 

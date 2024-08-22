@@ -508,6 +508,27 @@ local api = require "luci.passwall.api"
 			if (v_password) {
 				url = encodeURIComponent(v_password.value) + "@" + url
 			}
+		} else if (v_type === "sing-box" && opt.get(dom_prefix + "protocol").value === "tuic") {
+			protocol = "tuic";
+			var v_username = opt.get(dom_prefix + "uuid");
+			var v_password = opt.get(dom_prefix + "password");
+			var v_port = opt.get(dom_prefix + "port");
+			url = encodeURIComponent(v_username.value) +
+				":" + encodeURIComponent(v_password.value) +
+				"@" + _address +
+				":" + v_port.value + "?";
+
+			var params = "";
+			params += opt.query("sni", dom_prefix + "tls_serverName");
+			params += opt.query("alpn", dom_prefix + "tuic_alpn");
+			params += opt.query("congestion_control", dom_prefix + "tuic_congestion_control");
+			params += opt.query("allowinsecure", dom_prefix + "tls_allowInsecure");
+
+			params += "#" + encodeURI(v_alias.value);
+			if (params[0] == "&") {
+				params = params.substring(1);
+			}
+			url += params;
 		}
 		if (url) {
 			url = protocol.toLowerCase() + "://" + url;
@@ -1183,6 +1204,45 @@ local api = require "luci.passwall.api"
 			}
 			if (m.hash) {
 				opt.set('remarks', decodeURIComponent(m.hash.substr(1)));
+			}
+		}
+		if (ssu[0] === "tuic") {
+			if (has_singbox) {
+				dom_prefix = "singbox_"
+				opt.set('type', "sing-box");
+			}
+			opt.set(dom_prefix + 'protocol', "tuic");
+			var _parsedUrl = new URL("http://" + ssu[1]);
+			var username = _parsedUrl.username;
+			var password = _parsedUrl.password;
+			var hostname = _parsedUrl.hostname;
+			var port = _parsedUrl.port;
+			var search = _parsedUrl.search;
+			var hash = _parsedUrl.hash;
+			opt.set(dom_prefix + 'uuid', decodeURIComponent(username));
+			opt.set(dom_prefix + 'password', decodeURIComponent(password));
+			opt.set(dom_prefix + 'address', hostname);
+			opt.set(dom_prefix + 'port', port || "443");
+			var queryParam = {};
+			if (search.length > 1) {
+				var query = search.split('?')
+				var queryParams = query[1];
+				var queryArray = queryParams.split('&');
+				var params;
+				for (i = 0; i < queryArray.length; i++) {
+					params = queryArray[i].split('=');
+					queryParam[decodeURIComponent(params[0])] = decodeURIComponent(params[1] || '');
+				}
+			}
+			opt.set(dom_prefix + 'tuic_congestion_control', queryParam.congestion_control || 'cubic');
+			opt.set(dom_prefix + 'tuic_alpn', queryParam.alpn || 'default');
+			opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
+			opt.set(dom_prefix + 'tls_allowInsecure', true);
+			if (queryParam.allowinsecure === '0') {
+				opt.set(dom_prefix + 'tls_allowInsecure', false);
+			}
+			if (hash) {
+				opt.set('remarks', decodeURIComponent(hash.substr(1)));
 			}
 		}
 		if (dom_prefix && dom_prefix != null) {
