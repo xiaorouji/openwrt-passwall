@@ -18,7 +18,7 @@ end
 m = Map(appname)
 
 -- [[ Haproxy Settings ]]--
-s = m:section(TypedSection, "global_haproxy")
+s = m:section(TypedSection, "global_haproxy", translate("Basic Settings"))
 s.anonymous = true
 
 s:append(Template(appname .. "/haproxy/status"))
@@ -56,6 +56,18 @@ o:value("tcp", "TCP")
 o:value("passwall_logic", translate("URL Test") .. string.format("(passwall %s)", translate("Inner implement")))
 o:depends("balancing_enable", true)
 
+---- Passwall Inner implement Probe URL
+o = s:option(Value, "health_probe_url", translate("Probe URL"))
+o.default = "https://www.google.com/generate_204"
+o:value("https://cp.cloudflare.com/", "Cloudflare")
+o:value("https://www.gstatic.com/generate_204", "Gstatic")
+o:value("https://www.google.com/generate_204", "Google")
+o:value("https://www.youtube.com/generate_204", "YouTube")
+o:value("https://connect.rom.miui.com/generate_204", "MIUI (CN)")
+o:value("https://connectivitycheck.platform.hicloud.com/generate_204", "HiCloud (CN)")
+o.description = translate("The URL used to detect the connection status.")
+o:depends("health_check_type", "passwall_logic")
+
 ---- Health Check Inter
 o = s:option(Value, "health_check_inter", translate("Health Check Inter"), translate("Units:seconds"))
 o.default = "60"
@@ -69,7 +81,7 @@ end
 o:depends("health_check_type", "passwall_logic")
 
 -- [[ Balancing Settings ]]--
-s = m:section(TypedSection, "haproxy_config", "",
+s = m:section(TypedSection, "haproxy_config", translate("Node List"),
 			  "<font color='red'>" ..
 			  translate("Add a node, Export Of Multi WAN Only support Multi Wan. Load specific gravity range 1-256. Multiple primary servers can be load balanced, standby will only be enabled when the primary server is offline! Multiple groups can be set, Haproxy port same one for each group.") ..
 			  "\n" .. translate("Note that the node configuration parameters for load balancing must be consistent when use TCP health check type, otherwise it cannot be used normally!") ..
