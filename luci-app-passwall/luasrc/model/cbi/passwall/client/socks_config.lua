@@ -112,6 +112,12 @@ o:depends("enable_autoswitch", true)
 
 o = s:option(Value, "autoswitch_probe_url", translate("Probe URL"), translate("The URL used to detect the connection status."))
 o.default = "https://www.google.com/generate_204"
+o:value("https://cp.cloudflare.com/", "Cloudflare")
+o:value("https://www.gstatic.com/generate_204", "Gstatic")
+o:value("https://www.google.com/generate_204", "Google")
+o:value("https://www.youtube.com/generate_204", "YouTube")
+o:value("https://connect.rom.miui.com/generate_204", "MIUI (CN)")
+o:value("https://connectivitycheck.platform.hicloud.com/generate_204", "HiCloud (CN)")
 o:depends("enable_autoswitch", true)
 
 for k, v in pairs(nodes_table) do
