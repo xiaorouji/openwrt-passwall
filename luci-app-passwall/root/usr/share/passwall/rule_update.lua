@@ -333,14 +333,14 @@ local function fetch_geosite()
 		local json = jsonc.parse(content)
 		if json.tag_name and json.assets then
 			for _, v in ipairs(json.assets) do
-				if v.name and v.name == "geosite.dat.sha256sum" then
+				if v.name and (v.name == "geosite.dat.sha256sum" or v.name == "dlc.dat.sha256sum") then
 					local sret = curl(v.browser_download_url, "/tmp/geosite.dat.sha256sum")
 					if sret == 200 then
 						local f = io.open("/tmp/geosite.dat.sha256sum", "r")
 						local content = f:read()
 						f:close()
 						f = io.open("/tmp/geosite.dat.sha256sum", "w")
-						f:write(content:gsub("geosite.dat", "/tmp/geosite.dat"), "")
+						f:write(content:gsub("[^%s]+.dat", "/tmp/geosite.dat"), "")
 						f:close()
 
 						if nixio.fs.access(asset_location .. "geosite.dat") then
@@ -351,7 +351,7 @@ local function fetch_geosite()
 							end
 						end
 						for _2, v2 in ipairs(json.assets) do
-							if v2.name and v2.name == "geosite.dat" then
+							if v2.name and (v2.name == "geosite.dat" or v2.name == "dlc.dat") then
 								sret = curl(v2.browser_download_url, "/tmp/geosite.dat")
 								if luci.sys.call('sha256sum -c /tmp/geosite.dat.sha256sum > /dev/null 2>&1') == 0 then
 									luci.sys.call(string.format("mkdir -p %s && cp -f %s %s", asset_location, "/tmp/geosite.dat", asset_location .. "geosite.dat"))
