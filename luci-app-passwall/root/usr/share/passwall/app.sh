@@ -1434,6 +1434,7 @@ start_dns() {
 				doh)
 					remote_dns_doh=$(config_t_get global remote_dns_doh "https://1.1.1.1/dns-query")
 					_args="${_args} remote_dns_doh=${remote_dns_doh}"
+					echolog "  - Sing-Box DNS(${TUN_DNS}) -> ${remote_dns_doh}"
 
 					local _doh_url=$(echo $remote_dns_doh | awk -F ',' '{print $1}')
 					local _doh_host_port=$(lua_api "get_domain_from_url(\"${_doh_url}\")")
@@ -1445,7 +1446,6 @@ start_dns() {
 					[ "${_is_ip}" = "true" ] && _doh_bootstrap=${_doh_host}
 					[ -n "${_doh_bootstrap}" ] && REMOTE_DNS=${_doh_bootstrap}:${_doh_port}
 					unset _doh_url _doh_host_port _doh_host _is_ip _doh_port _doh_bootstrap
-					echolog "  - Sing-Box DNS(${TUN_DNS}) -> ${remote_dns_doh}"
 				;;
 			esac
 			_args="${_args} dns_socks_address=127.0.0.1 dns_socks_port=${tcp_node_socks_port}"
@@ -1472,6 +1472,17 @@ start_dns() {
 				remote_dns_doh=$(config_t_get global remote_dns_doh "https://1.1.1.1/dns-query")
 				_args="${_args} remote_dns_doh=${remote_dns_doh}"
 				echolog "  - Xray DNS(${TUN_DNS}) -> (${remote_dns_doh})(A/AAAA) + tcp://${REMOTE_DNS}"
+
+				local _doh_url=$(echo $remote_dns_doh | awk -F ',' '{print $1}')
+				local _doh_host_port=$(lua_api "get_domain_from_url(\"${_doh_url}\")")
+				local _doh_host=$(echo $_doh_host_port | awk -F ':' '{print $1}')
+				local _is_ip=$(lua_api "is_ip(\"${_doh_host}\")")
+				local _doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
+				[ -z "${_doh_port}" ] && _doh_port=443
+				local _doh_bootstrap=$(echo $remote_dns_doh | cut -d ',' -sf 2-)
+				[ "${_is_ip}" = "true" ] && _doh_bootstrap=${_doh_host}
+				[ -n "${_doh_bootstrap}" ] && REMOTE_DNS=${REMOTE_DNS},${_doh_bootstrap}:${_doh_port}
+				unset _doh_url _doh_host_port _doh_host _is_ip _doh_port _doh_bootstrap
 			else
 				echolog "  - Xray DNS(${TUN_DNS}) -> tcp://${REMOTE_DNS}"
 			fi
