@@ -142,6 +142,9 @@ msgstr "配置不当"
 msgid "Make sure socks service is available on this address."
 msgstr "请确保此 Socks 服务可用。"
 
+msgid "%s request address"
+msgstr "%s 请求地址"
+
 msgid "Format must be:"
 msgstr "格式必须为："
 

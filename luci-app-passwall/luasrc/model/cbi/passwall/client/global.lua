@@ -82,66 +82,34 @@ local doh_validate = function(self, value, t)
 			return value
 		end
 	end
-	return nil, translate("DoH request address") .. " " .. translate("Format must be:") .. " URL,IP"
+	return nil, translatef("%s request address","DoH") .. " " .. translate("Format must be:") .. " URL,IP"
 end
 
 local chinadns_dot_validate = function(self, value, t)
 	local function isValidDoTString(s)
-		local prefix = "tls://"
-		if s:sub(1, #prefix) ~= prefix then
-			return false
-		end
-		local address = s:sub(#prefix + 1)
+		if s:sub(1, 6) ~= "tls://" then return false end
+		local address = s:sub(7)
 		local at_index = address:find("@")
 		local hash_index = address:find("#")
-		local domain, ip, port
-		if at_index then
-			if hash_index then
-				domain = address:sub(1, at_index - 1)
-				ip = address:sub(at_index + 1, hash_index - 1)
-				port = address:sub(hash_index + 1)
-			else
-				domain = address:sub(1, at_index - 1)
-				ip = address:sub(at_index + 1)
-				port = nil
-			end
-		else
-			if hash_index then
-				ip = address:sub(1, hash_index - 1)
-				port = address:sub(hash_index + 1)
-			else
-				ip = address
-				port = nil
-			end
-		end
-		local function isValidPort(port)
-			if not port then return true end
-			local num = tonumber(port)
-			return num and num > 0 and num < 65536
-		end
-		local function isValidDomain(domain)
-			if not domain then return true end
-			return #domain > 0
-		end
-		local function isValidIP(ip)
-			return datatypes.ipaddr(ip) or datatypes.ip6addr(ip)
-		end
-		if not isValidIP(ip) or not isValidPort(port) then
-			return false
-		end
-		if not isValidDomain(domain) then
+		local ip, port
+		local domain = at_index and address:sub(1, at_index - 1) or nil
+		ip = at_index and address:sub(at_index + 1, (hash_index or 0) - 1) or address:sub(1, (hash_index or 0) - 1)
+		port = hash_index and address:sub(hash_index + 1) or nil
+		local num_port = tonumber(port)
+		if (port and (not num_port or num_port <= 0 or num_port >= 65536)) or 
+		   (domain and domain == "") or 
+		   (not datatypes.ipaddr(ip) and not datatypes.ip6addr(ip)) then
 			return false
 		end
 		return true
 	end
-
 	if value ~= "" then
 		value = api.trim(value)
 		if isValidDoTString(value) then
 			return value
 		end
 	end
-	return nil, translate("Direct DNS") .. " DoT " .. translate("Format must be:") .. " tls://Domain@IP(#Port) or tls://IP(#Port)"
+	return nil, translatef("%s request address","DoT") .. " " .. translate("Format must be:") .. " tls://" .. translate("Domain") .. "@IP[#Port] | tls://IP[#Port]"
 end
 
 m:append(Template(appname .. "/global/status"))
