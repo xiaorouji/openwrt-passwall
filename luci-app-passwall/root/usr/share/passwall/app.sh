@@ -328,6 +328,33 @@ lua_api() {
 	echo $(lua -e "local api = require 'luci.passwall.api' print(api.${func})")
 }
 
+parse_doh() {
+	local __doh=$1 __url_var=$2 __host_var=$3 __port_var=$4 __bootstrap_var=$5
+	__doh=$(echo -e "$__doh" | tr -d ' \t\n')
+	local __url=${__doh%%,*}
+	local __bootstrap=${__doh#*,}
+	local __host_port=$(lua_api "get_domain_from_url(\"${__url}\")")
+	local __host __port
+	if echo "${__host_port}" | grep -q '^\[.*\]:[0-9]\+$'; then
+		__host=${__host_port%%]:*}]
+		__port=${__host_port##*:}
+	elif echo "${__host_port}" | grep -q ':[0-9]\+$'; then
+		__host=${__host_port%:*}
+		__port=${__host_port##*:}
+	else
+		__host=${__host_port}
+		__port=443
+	fi
+	__host=${__host#[}
+	__host=${__host%]}
+	if [ "$(lua_api "is_ip(\"${__host}\")")" = "true" ]; then
+		__bootstrap=${__host}
+	fi
+	__bootstrap=${__bootstrap#[}
+	__bootstrap=${__bootstrap%]}
+	eval "${__url_var}='${__url}' ${__host_var}='${__host}' ${__port_var}='${__port}' ${__bootstrap_var}='${__bootstrap}'"
+}
+
 run_ipt2socks() {
 	local flag proto tcp_tproxy local_port socks_address socks_port socks_username socks_password log_file
 	local _extra_param=""
@@ -422,15 +449,8 @@ run_singbox() {
 			_extra_param="${_extra_param} -remote_dns_server ${_dns_address} -remote_dns_port ${_dns_port} -remote_dns_tcp_server tcp://${_dns}"
 		;;
 		doh)
-			local _doh_url=$(echo $remote_dns_doh | awk -F ',' '{print $1}')
-			local _doh_host_port=$(lua_api "get_domain_from_url(\"${_doh_url}\")")
-			#local _doh_host_port=$(echo $_doh_url | sed "s/https:\/\///g" | awk -F '/' '{print $1}')
-			local _doh_host=$(echo $_doh_host_port | awk -F ':' '{print $1}')
-			local is_ip=$(lua_api "is_ip(\"${_doh_host}\")")
-			local _doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
-			[ -z "${_doh_port}" ] && _doh_port=443
-			local _doh_bootstrap=$(echo $remote_dns_doh | cut -d ',' -sf 2-)
-			[ "${is_ip}" = "true" ] && _doh_bootstrap=${_doh_host}
+			local _doh_url _doh_host _doh_port _doh_bootstrap
+			parse_doh "$remote_dns_doh" _doh_url _doh_host _doh_port _doh_bootstrap
 			[ -n "$_doh_bootstrap" ] && _extra_param="${_extra_param} -remote_dns_server ${_doh_bootstrap}"
 			_extra_param="${_extra_param} -remote_dns_port ${_doh_port} -remote_dns_doh_url ${_doh_url} -remote_dns_doh_host ${_doh_host}"
 		;;
@@ -481,15 +501,8 @@ run_xray() {
 		_extra_param="${_extra_param} -remote_dns_tcp_server ${_dns_address} -remote_dns_tcp_port ${_dns_port}"
 	}
 	[ -n "${remote_dns_doh}" ] && {
-		local _doh_url=$(echo $remote_dns_doh | awk -F ',' '{print $1}')
-		local _doh_host_port=$(lua_api "get_domain_from_url(\"${_doh_url}\")")
-		#local _doh_host_port=$(echo $_doh_url | sed "s/https:\/\///g" | awk -F '/' '{print $1}')
-		local _doh_host=$(echo $_doh_host_port | awk -F ':' '{print $1}')
-		local is_ip=$(lua_api "is_ip(\"${_doh_host}\")")
-		local _doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
-		[ -z "${_doh_port}" ] && _doh_port=443
-		local _doh_bootstrap=$(echo $remote_dns_doh | cut -d ',' -sf 2-)
-		[ "${is_ip}" = "true" ] && _doh_bootstrap=${_doh_host}
+		local _doh_url _doh_host _doh_port _doh_bootstrap
+		parse_doh "$remote_dns_doh" _doh_url _doh_host _doh_port _doh_bootstrap
 		[ -n "$_doh_bootstrap" ] && _extra_param="${_extra_param} -remote_dns_doh_ip ${_doh_bootstrap}"
 		_extra_param="${_extra_param} -remote_dns_doh_port ${_doh_port} -remote_dns_doh_url ${_doh_url} -remote_dns_doh_host ${_doh_host}"
 	}
@@ -1436,16 +1449,9 @@ start_dns() {
 					_args="${_args} remote_dns_doh=${remote_dns_doh}"
 					echolog "  - Sing-Box DNS(${TUN_DNS}) -> ${remote_dns_doh}"
 
-					local _doh_url=$(echo $remote_dns_doh | awk -F ',' '{print $1}')
-					local _doh_host_port=$(lua_api "get_domain_from_url(\"${_doh_url}\")")
-					local _doh_host=$(echo $_doh_host_port | awk -F ':' '{print $1}')
-					local _is_ip=$(lua_api "is_ip(\"${_doh_host}\")")
-					local _doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
-					[ -z "${_doh_port}" ] && _doh_port=443
-					local _doh_bootstrap=$(echo $remote_dns_doh | cut -d ',' -sf 2-)
-					[ "${_is_ip}" = "true" ] && _doh_bootstrap=${_doh_host}
-					[ -n "${_doh_bootstrap}" ] && REMOTE_DNS=${_doh_bootstrap}:${_doh_port}
-					unset _doh_url _doh_host_port _doh_host _is_ip _doh_port _doh_bootstrap
+					local _doh_url _doh_host _doh_port _doh_bootstrap
+					parse_doh "$remote_dns_doh" _doh_url _doh_host _doh_port _doh_bootstrap
+					[ -n "${_doh_bootstrap}" ] && REMOTE_DNS="${_doh_bootstrap}#${_doh_port}"
 				;;
 			esac
 			_args="${_args} dns_socks_address=127.0.0.1 dns_socks_port=${tcp_node_socks_port}"
@@ -1473,16 +1479,9 @@ start_dns() {
 				_args="${_args} remote_dns_doh=${remote_dns_doh}"
 				echolog "  - Xray DNS(${TUN_DNS}) -> (${remote_dns_doh})(A/AAAA) + tcp://${REMOTE_DNS}"
 
-				local _doh_url=$(echo $remote_dns_doh | awk -F ',' '{print $1}')
-				local _doh_host_port=$(lua_api "get_domain_from_url(\"${_doh_url}\")")
-				local _doh_host=$(echo $_doh_host_port | awk -F ':' '{print $1}')
-				local _is_ip=$(lua_api "is_ip(\"${_doh_host}\")")
-				local _doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
-				[ -z "${_doh_port}" ] && _doh_port=443
-				local _doh_bootstrap=$(echo $remote_dns_doh | cut -d ',' -sf 2-)
-				[ "${_is_ip}" = "true" ] && _doh_bootstrap=${_doh_host}
-				[ -n "${_doh_bootstrap}" ] && REMOTE_DNS=${REMOTE_DNS},${_doh_bootstrap}:${_doh_port}
-				unset _doh_url _doh_host_port _doh_host _is_ip _doh_port _doh_bootstrap
+				local _doh_url _doh_host _doh_port _doh_bootstrap
+				parse_doh "$remote_dns_doh" _doh_url _doh_host _doh_port _doh_bootstrap
+				[ -n "${_doh_bootstrap}" ] && REMOTE_DNS="${REMOTE_DNS},${_doh_bootstrap}#${_doh_port}"
 			else
 				echolog "  - Xray DNS(${TUN_DNS}) -> tcp://${REMOTE_DNS}"
 			fi
