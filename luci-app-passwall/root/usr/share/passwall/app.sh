@@ -1370,6 +1370,7 @@ stop_crontab() {
 start_dns() {
 	echolog "DNS域名解析："
 
+	local chinadns_tls=$(chinadns-ng -V | grep -i wolfssl)
 	local china_ng_local_dns=$(IFS=','; set -- $LOCAL_DNS; [ "${1%%[#:]*}" = "127.0.0.1" ] && echo "$1" || ([ -n "$2" ] && echo "$1,$2" || echo "$1"))
 	local sing_box_local_dns=
 	local direct_dns_mode=$(config_t_get global direct_dns_mode "auto")
@@ -1392,7 +1393,7 @@ start_dns() {
 			echolog "  * 请确保上游直连 DNS 支持 TCP 查询。"
 		;;
 		dot)
-			if [ "$(chinadns-ng -V | grep -i wolfssl)" != "nil" ]; then
+			if [ "$chinadns_tls" != "nil" ]; then
 				LOCAL_DNS="127.0.0.1#${dns_listen_port}"
 				local cdns_listen_port=${dns_listen_port}
 				dns_listen_port=$(expr $dns_listen_port + 1)
@@ -1488,6 +1489,39 @@ start_dns() {
 			_args="${_args} dns_socks_address=127.0.0.1 dns_socks_port=${tcp_node_socks_port}"
 			run_xray ${_args}
 		}
+	;;
+	dot)
+		use_tcp_node_resolve_dns=1
+		if [ "$chinadns_tls" != "nil" ]; then
+			if [ "$DNS_SHUNT" = "chinadns-ng" ] && [ -n "$(first_type chinadns-ng)" ]; then
+				local china_ng_listen_port=${dns_listen_port}
+				local china_ng_trust_dns=$(config_t_get global remote_dns_dot "tls://dns.google@8.8.4.4")
+				local tmp_dot_ip=$(echo "$china_ng_trust_dns" | sed -n 's/.*:\/\/\([^@#]*@\)*\([^@#]*\).*/\2/p')
+				local tmp_dot_port=$(echo "$china_ng_trust_dns" | sed -n 's/.*#\([0-9]\+\).*/\1/p')
+				REMOTE_DNS="$tmp_dot_ip#${tmp_dot_port:-853}"
+			else
+				local china_ng_listen_port=${dns_listen_port}
+				local china_ng_trust_dns=$(config_t_get global remote_dns_dot "tls://dns.google@8.8.4.4")
+				ln_run "$(first_type chinadns-ng)" chinadns-ng "/dev/null" -b 127.0.0.1 -l ${china_ng_listen_port} -t ${china_ng_trust_dns} -d gfw
+				echolog "  - ChinaDNS-NG(${TUN_DNS}) -> ${china_ng_trust_dns}"
+
+				local tmp_dot_ip=$(echo "$china_ng_trust_dns" | sed -n 's/.*:\/\/\([^@#]*@\)*\([^@#]*\).*/\2/p')
+				local tmp_dot_port=$(echo "$china_ng_trust_dns" | sed -n 's/.*#\([0-9]\+\).*/\1/p')
+				REMOTE_DNS="$tmp_dot_ip#${tmp_dot_port:-853}"
+			fi
+		else
+			echolog "  - 你的ChinaDNS-NG版本不支持DoT，远程DNS将默认使用tcp://1.1.1.1"
+
+			if [ "$DNS_SHUNT" = "chinadns-ng" ] && [ -n "$(first_type chinadns-ng)" ]; then
+				local china_ng_listen_port=${dns_listen_port}
+				local china_ng_trust_dns="tcp://1.1.1.1"
+				REMOTE_DNS="1.1.1.1"
+			else
+				REMOTE_DNS="1.1.1.1"
+				ln_run "$(first_type dns2tcp)" dns2tcp "/dev/null" -L "${TUN_DNS}" -R "$(get_first_dns REMOTE_DNS 53)" -v
+				echolog "  - dns2tcp(${TUN_DNS}) -> tcp://$(get_first_dns REMOTE_DNS 53 | sed 's/#/:/g')"
+			fi
+		fi
 	;;
 	udp)
 		use_udp_node_resolve_dns=1

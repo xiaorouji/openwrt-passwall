@@ -124,6 +124,9 @@ msgstr "TCP 节点必须是 '%s' 类型才能使用 FakeDNS。"
 msgid "Direct DNS"
 msgstr "直连 DNS"
 
+msgid "Direct DNS DoT"
+msgstr "直连 DNS DoT"
+
 msgid "Remote DNS"
 msgstr "远程 DNS"
 
@@ -153,6 +156,9 @@ msgstr "请求协议"
 
 msgid "Remote DNS DoH"
 msgstr "远程 DNS DoH"
+
+msgid "Remote DNS DoT"
+msgstr "远程 DNS DoT"
 
 msgid "Notify the DNS server when the DNS query is notified, the location of the client (cannot be a private IP address)."
 msgstr "用于 DNS 查询时通知 DNS 服务器，客户端所在的地理位置（不能是私有 IP 地址）。"

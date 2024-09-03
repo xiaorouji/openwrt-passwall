@@ -7,6 +7,7 @@ local has_xray = api.finded_com("xray")
 local has_gfwlist = api.fs.access("/usr/share/passwall/rules/gfwlist")
 local has_chnlist = api.fs.access("/usr/share/passwall/rules/chnlist")
 local has_chnroute = api.fs.access("/usr/share/passwall/rules/chnroute")
+local chinadns_tls = os.execute("chinadns-ng -V | grep -i wolfssl >/dev/null")
 
 m = Map(appname)
 
@@ -63,8 +64,8 @@ uci:foreach(appname, "socks", function(s)
 end)
 
 local doh_validate = function(self, value, t)
+	value = value:gsub("%s+", "")
 	if value ~= "" then
-		value = api.trim(value)
 		local flag = 0
 		local util = require "luci.util"
 		local val = util.split(value, ",")
@@ -103,8 +104,8 @@ local chinadns_dot_validate = function(self, value, t)
 		end
 		return true
 	end
+	value = value:gsub("%s+", "")
 	if value ~= "" then
-		value = api.trim(value)
 		if isValidDoTString(value) then
 			return value
 		end
@@ -298,7 +299,7 @@ o.default = ""
 o:value("", translate("Auto"))
 o:value("udp", translatef("Requery DNS By %s", "UDP"))
 o:value("tcp", translatef("Requery DNS By %s", "TCP"))
-if os.execute("chinadns-ng -V | grep -i wolfssl >/dev/null") == 0 then
+if chinadns_tls == 0 then
 	o:value("dot", translatef("Requery DNS By %s", "DoT"))
 end
 --TO DO
@@ -326,7 +327,7 @@ o:value("180.184.1.1")
 o:value("180.184.2.2")
 o:depends("direct_dns_mode", "tcp")
 
-o = s:taboption("DNS", Value, "direct_dns_dot", translate("Direct DNS"))
+o = s:taboption("DNS", Value, "direct_dns_dot", translate("Direct DNS DoT"))
 o.default = "tls://dot.pub@1.12.12.12"
 o:value("tls://dot.pub@1.12.12.12")
 o:value("tls://dot.pub@120.53.53.53")
@@ -344,6 +345,9 @@ o.default = "0"
 dns_mode = s:taboption("DNS", ListValue, "dns_mode", translate("Filter Mode"))
 dns_mode:value("udp", translatef("Requery DNS By %s", "UDP"))
 dns_mode:value("tcp", translatef("Requery DNS By %s", "TCP"))
+if chinadns_tls == 0 then
+	dns_mode:value("dot", translatef("Requery DNS By %s", "DoT"))
+end
 if api.is_finded("dns2socks") then
 	dns_mode:value("dns2socks", "dns2socks")
 end
@@ -399,8 +403,8 @@ o:value("1.1.1.1", "1.1.1.1 (CloudFlare)")
 o:value("1.1.1.2", "1.1.1.2 (CloudFlare-Security)")
 o:value("8.8.4.4", "8.8.4.4 (Google)")
 o:value("8.8.8.8", "8.8.8.8 (Google)")
-o:value("9.9.9.9", "9.9.9.9 (Quad9-Recommended)")
-o:value("149.112.112.112", "149.112.112.112 (Quad9-Recommended)")
+o:value("9.9.9.9", "9.9.9.9 (Quad9)")
+o:value("149.112.112.112", "149.112.112.112 (Quad9)")
 o:value("208.67.220.220", "208.67.220.220 (OpenDNS)")
 o:value("208.67.222.222", "208.67.222.222 (OpenDNS)")
 o:depends({dns_mode = "dns2socks"})
@@ -410,19 +414,35 @@ o:depends({xray_dns_mode = "tcp"})
 o:depends({xray_dns_mode = "tcp+doh"})
 o:depends({singbox_dns_mode = "tcp"})
 
+---- DoT
+o = s:taboption("DNS", Value, "remote_dns_dot", translate("Remote DNS DoT"))
+o.default = "tls://dns.google@8.8.4.4"
+o:value("tls://1dot1dot1dot1.cloudflare-dns.com@1.0.0.1", "1.0.0.1 (CloudFlare)")
+o:value("tls://1dot1dot1dot1.cloudflare-dns.com@1.1.1.1", "1.1.1.1 (CloudFlare)")
+o:value("tls://dns.google@8.8.4.4", "8.8.4.4 (Google)")
+o:value("tls://dns.google@8.8.8.8", "8.8.8.8 (Google)")
+o:value("tls://dns.quad9.net@9.9.9.9", "9.9.9.9 (Quad9)")
+o:value("tls://dns.quad9.net@149.112.112.112", "149.112.112.112 (Quad9)")
+o:value("tls://dns.adguard.com@94.140.14.14", "94.140.14.14 (AdGuard)")
+o:value("tls://dns.adguard.com@94.140.15.15", "94.140.15.15 (AdGuard)")
+o:value("tls://dns.opendns.com@208.67.222.222", "208.67.222.222 (OpenDNS)")
+o:value("tls://dns.opendns.com@208.67.220.220", "208.67.220.220 (OpenDNS)")
+o.validate = chinadns_dot_validate
+o:depends("dns_mode", "dot")
+
 ---- DoH
 o = s:taboption("DNS", Value, "remote_dns_doh", translate("Remote DNS DoH"))
 o.default = "https://1.1.1.1/dns-query"
-o:value("https://1.1.1.1/dns-query", "CloudFlare")
-o:value("https://1.1.1.2/dns-query", "CloudFlare-Security")
-o:value("https://8.8.4.4/dns-query", "Google 8844")
-o:value("https://8.8.8.8/dns-query", "Google 8888")
-o:value("https://9.9.9.9/dns-query", "Quad9-Recommended 9.9.9.9")
-o:value("https://149.112.112.112/dns-query", "Quad9-Recommended 149.112.112.112")
-o:value("https://208.67.222.222/dns-query", "OpenDNS")
-o:value("https://dns.adguard.com/dns-query,176.103.130.130", "AdGuard")
-o:value("https://doh.libredns.gr/dns-query,116.202.176.26", "LibreDNS")
-o:value("https://doh.libredns.gr/ads,116.202.176.26", "LibreDNS (No Ads)")
+o:value("https://1.1.1.1/dns-query", "1.1.1.1 (CloudFlare)")
+o:value("https://1.1.1.2/dns-query", "1.1.1.2 (CloudFlare-Security)")
+o:value("https://8.8.4.4/dns-query", "8.8.4.4 (Google)")
+o:value("https://8.8.8.8/dns-query", "8.8.8.8 (Google)")
+o:value("https://9.9.9.9/dns-query", "9.9.9.9 (Quad9)")
+o:value("https://149.112.112.112/dns-query", "149.112.112.112 (Quad9)")
+o:value("https://208.67.222.222/dns-query", "208.67.222.222 (OpenDNS)")
+o:value("https://dns.adguard.com/dns-query,94.140.14.14", "94.140.14.14 (AdGuard)")
+o:value("https://doh.libredns.gr/dns-query,116.202.176.26", "116.202.176.26 (LibreDNS)")
+o:value("https://doh.libredns.gr/ads,116.202.176.26", "116.202.176.26 (LibreDNS-NoAds)")
 o.validate = doh_validate
 o:depends({xray_dns_mode = "tcp+doh"})
 o:depends({singbox_dns_mode = "doh"})
