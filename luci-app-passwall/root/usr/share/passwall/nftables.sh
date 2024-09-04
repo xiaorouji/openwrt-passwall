@@ -662,9 +662,10 @@ filter_vps_addr() {
 }
 
 filter_vpsip() {
-	insert_nftset $NFTSET_VPSLIST "-1" $(uci show $CONFIG | grep ".address=" | cut -d "'" -f 2 | grep -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}" | sed -e "/^$/d")
+	insert_nftset $NFTSET_VPSLIST "-1" $(uci show $CONFIG | grep ".address=" | cut -d "'" -f 2 | grep -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}" | grep -v "^127\.0\.0\.1$" | sed -e "/^$/d")
+	echolog "  - [$?]加入所有IPv4节点到nftset[$NFTSET_VPSLIST]直连完成"
 	insert_nftset $NFTSET_VPSLIST6 "-1" $(uci show $CONFIG | grep ".address=" | cut -d "'" -f 2 | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "/^$/d")
-	echolog "  - [$?]加入所有节点到nftset[$NFTSET_VPSLIST]直连完成"
+	echolog "  - [$?]加入所有IPv6节点到nftset[$NFTSET_VPSLIST6]直连完成"
 }
 
 filter_node() {
@@ -947,8 +948,9 @@ add_firewall_rule() {
 
 	WAN_IP=$(get_wan_ip)
 	if [ -n "${WAN_IP}" ]; then
-		nft "add rule $NFTABLE_NAME PSW_MANGLE ip daddr ${WAN_IP} counter return comment \"WAN_IP_RETURN\""
 		[ -z "${is_tproxy}" ] && nft "add rule $NFTABLE_NAME PSW_NAT ip daddr ${WAN_IP} counter return comment \"WAN_IP_RETURN\""
+		nft "add rule $NFTABLE_NAME PSW_MANGLE ip daddr ${WAN_IP} counter return comment \"WAN_IP_RETURN\""
+		echolog "  - [$?]追加WAN IP到nftables：${WAN_IP}"
 	fi
 	unset WAN_IP
 
