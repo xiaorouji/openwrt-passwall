@@ -858,7 +858,7 @@ add_firewall_rule() {
 
 	#  过滤所有节点IP
 	filter_vpsip > /dev/null 2>&1 &
-	filter_haproxy > /dev/null 2>&1 &
+	# filter_haproxy > /dev/null 2>&1 &
 	# Prevent some conditions
 	filter_vps_addr $(config_n_get $TCP_NODE address) $(config_n_get $UDP_NODE address) > /dev/null 2>&1 &
 
