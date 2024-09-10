@@ -492,6 +492,10 @@ local function processData(szType, content, add_mode, add_from)
 			result.splithttp_host = info.host
 			result.splithttp_path = info.path
 		end
+		if info.net == 'httpupgrade' then
+			result.httpupgrade_host = info.host
+			result.httpupgrade_path = info.path
+		end
 		if not info.security then result.security = "auto" end
 		if info.tls == "tls" or info.tls == "1" then
 			result.tls = "1"
@@ -835,7 +839,11 @@ local function processData(szType, content, add_mode, add_from)
 				result.splithttp_host = params.host
 				result.splithttp_path = params.path
 			end
-			
+			if params.type == 'httpupgrade' then
+				result.httpupgrade_host = params.host
+				result.httpupgrade_path = params.path
+			end
+
 			result.encryption = params.encryption or "none"
 
 			result.flow = params.flow or nil
@@ -967,6 +975,10 @@ local function processData(szType, content, add_mode, add_from)
 			if params.type == 'splithttp' then
 				result.splithttp_host = params.host
 				result.splithttp_path = params.path
+			end
+			if params.type == 'httpupgrade' then
+				result.httpupgrade_host = params.host
+				result.httpupgrade_path = params.path
 			end
 			
 			result.encryption = params.encryption or "none"

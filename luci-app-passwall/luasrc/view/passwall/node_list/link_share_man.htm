@@ -371,6 +371,10 @@ local api = require "luci.passwall.api"
 				v_transport = "splithttp";
 				params += opt.query("host", dom_prefix + "splithttp_host");
 				params += opt.query("path", dom_prefix + "splithttp_path");
+			} else if (v_transport === "httpupgrade") {
+				v_transport = "httpupgrade";
+				params += opt.query("host", dom_prefix + "httpupgrade_host");
+				params += opt.query("path", dom_prefix + "httpupgrade_path");
 			}
 			params += "&type=" + v_transport;
 
@@ -1149,6 +1153,9 @@ local api = require "luci.passwall.api"
 			} else if (queryParam.type === "splithttp") {
 				opt.set(dom_prefix + 'splithttp_host', queryParam.host || "");
 				opt.set(dom_prefix + 'splithttp_path', queryParam.path || "");
+			} else if (queryParam.type === "httpupgrade") {
+				opt.set(dom_prefix + 'httpupgrade_host', queryParam.host || "");
+				opt.set(dom_prefix + 'httpupgrade_path', queryParam.path || "");
 			}
 
 			if (m.hash) {
