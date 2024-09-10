@@ -843,6 +843,7 @@ local function processData(szType, content, add_mode, add_from)
 				result.httpupgrade_host = params.host
 				result.httpupgrade_path = params.path
 			end
+
 			result.encryption = params.encryption or "none"
 
 			result.flow = params.flow or nil
