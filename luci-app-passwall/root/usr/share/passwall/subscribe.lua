@@ -505,7 +505,7 @@ local function processData(szType, content, add_mode, add_from)
 			result.tls = "0"
 		end
 
-		if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "splithttp" or result.transport == "httpupgrade") then
+		if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "splithttp") then
 			log("跳过节点:" .. result.remarks .."，因Sing-Box不支持" .. szType .. "协议的" .. result.transport .. "传输方式，需更换Xray。")
 			return nil
 		end
@@ -847,7 +847,7 @@ local function processData(szType, content, add_mode, add_from)
 
 			result.flow = params.flow or nil
 
-			if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "splithttp" or result.transport == "httpupgrade") then
+			if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "splithttp") then
 				log("跳过节点:" .. result.remarks .."，因Sing-Box不支持" .. szType .. "协议的" .. result.transport .. "传输方式，需更换Xray。")
 				return nil
 			end
@@ -1001,7 +1001,7 @@ local function processData(szType, content, add_mode, add_from)
 			result.port = port
 			result.tls_allowInsecure = allowInsecure_default and "1" or "0"
 
-			if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "splithttp" or result.transport == "httpupgrade") then
+			if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "splithttp") then
 				log("跳过节点:" .. result.remarks .."，因Sing-Box不支持" .. szType .. "协议的" .. result.transport .. "传输方式，需更换Xray。")
 				return nil
 			end
