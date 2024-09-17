@@ -619,22 +619,26 @@ function gen_config_server(node)
 	end
 
 	if node.protocol == "tuic" then
-		tls.alpn = (node.tuic_alpn and node.tuic_alpn ~= "") and {
-			node.tuic_alpn
-		} or nil
-		protocol_table = {
-			users = {
-				{
-					name = "user1",
-					uuid = node.uuid,
+		if node.uuid then
+			local users = {}
+			for i = 1, #node.uuid do
+				users[i] = {
+					name = node.uuid[i],
+					uuid = node.uuid[i],
 					password = node.password
 				}
-			},
-			congestion_control = node.tuic_congestion_control or "cubic",
-			zero_rtt_handshake = (node.tuic_zero_rtt_handshake == "1") and true or false,
-			heartbeat = node.tuic_heartbeat .. "s",
-			tls = tls
-		}
+			end
+			tls.alpn = (node.tuic_alpn and node.tuic_alpn ~= "") and {
+				node.tuic_alpn
+			} or nil
+			protocol_table = {
+				users = users,
+				congestion_control = node.tuic_congestion_control or "cubic",
+				zero_rtt_handshake = (node.tuic_zero_rtt_handshake == "1") and true or false,
+				heartbeat = node.tuic_heartbeat .. "s",
+				tls = tls
+			}
+		end
 	end
 
 	if node.protocol == "hysteria2" then
