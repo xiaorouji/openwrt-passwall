@@ -1048,6 +1048,12 @@ msgstr "例："
 msgid "IP range"
 msgstr "IP 范围"
 
+msgid "Source Interface"
+msgstr "源接口"
+
+msgid "Use Interface With ACLs"
+msgstr "使用接口控制"
+
 msgid "Remarks"
 msgstr "备注"
 
