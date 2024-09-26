@@ -174,7 +174,7 @@ if has_xray then
 	o.default = "10-20"
 	o:depends("fragment", true)
 
-	o = s_xray:option(Flag, "noise", translate("Noise"), translate("UDP noise. Under some circumstances it can bypass some udp based protocol restrictions."))
+	o = s_xray:option(Flag, "noise", translate("Noise"), translate("UDP noise, Under some circumstances it can bypass some UDP based protocol restrictions."))
 	o.default = 0
 
 	o = s_xray:option(Flag, "sniffing_override_dest", translate("Override the connection destination address"), translate("Override the connection destination address with the sniffed domain."))
