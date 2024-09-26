@@ -174,6 +174,9 @@ if has_xray then
 	o.default = "10-20"
 	o:depends("fragment", true)
 
+	o = s_xray:option(Flag, "noise", translate("Noise"), translate("UDP noise. Under some circumstances it can bypass some udp based protocol restrictions."))
+	o.default = 0
+
 	o = s_xray:option(Flag, "sniffing_override_dest", translate("Override the connection destination address"), translate("Override the connection destination address with the sniffed domain."))
 	o.default = 0
 
@@ -187,6 +190,41 @@ if has_xray then
 
 	o = s_xray:option(Value, "buffer_size", translate("Buffer Size"), translate("Buffer size for every connection (kB)"))
 	o.datatype = "uinteger"
+
+	s_xray_noise = m:section(TypedSection, "xray_noise_packets", translate("Xray Noise Packets"),"<font color='red'>" .. translate("To send noise packets, select \"Noise\" in Xray Settings.") .. "</font>")
+	s_xray_noise.template = "cbi/tblsection"
+	s_xray_noise.sortable = true
+	s_xray_noise.anonymous = true
+	s_xray_noise.addremove = true
+
+	s_xray_noise.create = function(e, t)
+		TypedSection.create(e, api.gen_short_uuid())
+	end
+
+	s_xray_noise.remove = function(self, section)
+		for k, v in pairs(self.children) do
+			v.rmempty = true
+			v.validate = nil
+		end
+		TypedSection.remove(self, section)
+	end
+
+	o = s_xray_noise:option(Flag, "enabled", translate("Enable"))
+	o.default = 1
+	o.rmempty = false
+
+	o = s_xray_noise:option(ListValue, "type", translate("Type"))
+	o:value("rand", "rand")
+	o:value("str", "str")
+	o:value("base64", "base64")
+
+	o = s_xray_noise:option(Value, "packet", translate("Packet"))
+	o.datatype = "minlength(1)"
+	o.rmempty = false
+
+	o = s_xray_noise:option(Value, "delay", translate("Delay (ms)"))
+	o.datatype = "or(uinteger,portrange)"
+	o.rmempty = false
 end
 
 if has_singbox then

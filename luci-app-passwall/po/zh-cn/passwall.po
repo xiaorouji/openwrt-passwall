@@ -1657,6 +1657,24 @@ msgstr "分片间隔"
 msgid "Fragmentation interval (ms)"
 msgstr "分片间隔（ms）"
 
+msgid "Noise"
+msgstr "噪声"
+
+msgid "UDP noise. Under some circumstances it can bypass some udp based protocol restrictions."
+msgstr "UDP噪声。在某些情况下，它可以绕过一些针对UDP协议的限制。"
+
+msgid "To send noise packets, select \"Noise\" in Xray Settings."
+msgstr "在 Xray 设置中勾选 “噪声” 以发送噪声包。"
+
+msgid "Xray Noise Packets"
+msgstr "Xray 噪声数据包"
+
+msgid "Packet"
+msgstr "数据包"
+
+msgid "Delay (ms)"
+msgstr "延迟（ms）"
+
 msgid "If is domain name, The requested domain name will be resolved to IP before connect."
 msgstr "如果是域名，域名将在请求发出之前解析为 IP。"
 
