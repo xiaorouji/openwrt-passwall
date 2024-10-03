@@ -105,8 +105,7 @@ config nodes 'myshunt'
 
 config shunt_rules 'DirectGame'
 	option remarks 'DirectGame'
-	option domain_list 'api.steampowered.com
-regexp:\.cm.steampowered.com$
+	option domain_list 'regexp:\.cm.steampowered.com$
 regexp:\.steamserver.net$
 geosite:category-games@cn'
 	option ip_list '103.10.124.0/24
