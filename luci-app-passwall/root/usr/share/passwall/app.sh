@@ -890,6 +890,7 @@ run_redir() {
 		esac
 	;;
 	TCP)
+		[ "$TCP_UDP" = "1" ] && echolog "UDP节点：与TCP节点相同"
 		tcp_node_socks=1
 		tcp_node_socks_bind_local=$(config_t_get global tcp_node_socks_bind_local 1)
 		tcp_node_socks_bind="127.0.0.1"
@@ -2008,10 +2009,12 @@ TCP_NODE=$(config_t_get global tcp_node nil)
 UDP_REDIR_PORT=1051
 UDP_NODE=$(config_t_get global udp_node nil)
 TCP_UDP=0
-[ "$UDP_NODE" == "tcp" ] && {
+if [ "$UDP_NODE" == "tcp" ]; then
 	UDP_NODE=$TCP_NODE
 	TCP_UDP=1
-}
+elif [ "$UDP_NODE" == "$TCP_NODE" ]; then
+	TCP_UDP=1
+fi
 [ "$ENABLED" == 1 ] && {
 	[ "$TCP_NODE" != "nil" ] && [ "$(config_get_type $TCP_NODE nil)" != "nil" ] && ENABLED_DEFAULT_ACL=1
 	[ "$UDP_NODE" != "nil" ] && [ "$(config_get_type $UDP_NODE nil)" != "nil" ] && ENABLED_DEFAULT_ACL=1
