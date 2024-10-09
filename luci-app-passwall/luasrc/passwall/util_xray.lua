@@ -885,7 +885,11 @@ function gen_config(var)
 					local outbound_tag
 					if outbound then
 						set_outbound_detour(_node, outbound, outbounds, rule_name)
-						table.insert(outbounds, outbound)
+						if rule_name == "default" then
+							table.insert(outbounds, 1, outbound)
+						else
+							table.insert(outbounds, outbound)
+						end
 						outbound_tag = outbound.tag
 					end
 					return outbound_tag, nil
