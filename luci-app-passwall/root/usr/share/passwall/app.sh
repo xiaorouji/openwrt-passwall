@@ -15,7 +15,8 @@ TMP_ACL_PATH=$TMP_PATH/acl
 TMP_IFACE_PATH=$TMP_PATH/iface
 TMP_PATH2=/tmp/etc/${CONFIG}_tmp
 DNSMASQ_PATH=/etc/dnsmasq.d
-TMP_DNSMASQ_PATH=/tmp/dnsmasq.d/passwall
+DNSMASQ_CONF_DIR=/tmp/dnsmasq.d
+TMP_DNSMASQ_PATH=${DNSMASQ_CONF_DIR}/${CONFIG}
 LOG_FILE=/tmp/log/$CONFIG.log
 APP_PATH=/usr/share/$CONFIG
 RULES_PATH=/usr/share/${CONFIG}/rules
@@ -353,6 +354,17 @@ parse_doh() {
 	__bootstrap=${__bootstrap#[}
 	__bootstrap=${__bootstrap%]}
 	eval "${__url_var}='${__url}' ${__host_var}='${__host}' ${__port_var}='${__port}' ${__bootstrap_var}='${__bootstrap}'"
+}
+
+get_dnsmasq_conf_dir() {
+	local dnsmasq_conf_path=$(grep -l "^conf-dir=" /tmp/etc/dnsmasq.conf.${DEFAULT_DNSMASQ_CFGID})
+	[ -n "$dnsmasq_conf_path" ] && {
+		local dnsmasq_conf_dir=$(grep '^conf-dir=' "$dnsmasq_conf_path" | cut -d'=' -f2 | head -n 1)
+		[ -n "$dnsmasq_conf_dir" ] && {
+			DNSMASQ_CONF_DIR=$dnsmasq_conf_dir
+			TMP_DNSMASQ_PATH=${DNSMASQ_CONF_DIR}/${CONFIG}
+		}
+	}
 }
 
 run_ipt2socks() {
@@ -1602,8 +1614,8 @@ start_dns() {
 		[ "$(expr $dnsmasq_version \>= 2.87)" == 0 ] && echolog "Dnsmasq版本低于2.87，有可能无法正常使用！！！"
 	}
 	source $APP_PATH/helper_dnsmasq.sh stretch
-	lua $APP_PATH/helper_dnsmasq_add.lua -FLAG "default" -TMP_DNSMASQ_PATH ${TMP_DNSMASQ_PATH} \
-		-DNSMASQ_CONF_FILE "/tmp/dnsmasq.d/dnsmasq-passwall.conf" -DEFAULT_DNS ${DEFAULT_DNS} -LOCAL_DNS ${LOCAL_DNS} \
+	lua $APP_PATH/helper_dnsmasq_add.lua -FLAG "default" -TMP_DNSMASQ_PATH ${TMP_DNSMASQ_PATH} -DNSMASQ_CONF_DIR ${DNSMASQ_CONF_DIR} \
+		-DNSMASQ_CONF_FILE "${DNSMASQ_CONF_DIR}/dnsmasq-${CONFIG}.conf" -DEFAULT_DNS ${DEFAULT_DNS} -LOCAL_DNS ${LOCAL_DNS} \
 		-TUN_DNS ${TUN_DNS} -REMOTE_FAKEDNS ${fakedns:-0} -USE_DEFAULT_DNS "${USE_DEFAULT_DNS:-direct}" -CHINADNS_DNS ${china_ng_listen:-0} \
 		-USE_DIRECT_LIST "${USE_DIRECT_LIST}" -USE_PROXY_LIST "${USE_PROXY_LIST}" -USE_BLOCK_LIST "${USE_BLOCK_LIST}" -USE_GFW_LIST "${USE_GFW_LIST}" -CHN_LIST "${CHN_LIST}" \
 		-TCP_NODE ${TCP_NODE} -DEFAULT_PROXY_MODE ${TCP_PROXY_MODE} -NO_PROXY_IPV6 ${DNSMASQ_FILTER_PROXY_IPV6:-0} -NFTFLAG ${nftflag:-0} \
@@ -1807,7 +1819,7 @@ acl_app() {
 								dnsmasq_version=$(dnsmasq -v | grep -i "Dnsmasq version " | awk '{print $3}')
 								[ "$(expr $dnsmasq_version \>= 2.87)" == 0 ] && echolog "Dnsmasq版本低于2.87，有可能无法正常使用！！！"
 							}
-							lua $APP_PATH/helper_dnsmasq_add.lua -FLAG ${sid} -TMP_DNSMASQ_PATH $TMP_ACL_PATH/$sid/dnsmasq.d \
+							lua $APP_PATH/helper_dnsmasq_add.lua -FLAG ${sid} -TMP_DNSMASQ_PATH $TMP_ACL_PATH/$sid/dnsmasq.d -DNSMASQ_CONF_DIR ${DNSMASQ_CONF_DIR} \
 								-DNSMASQ_CONF_FILE $TMP_ACL_PATH/$sid/dnsmasq.conf -DEFAULT_DNS $DEFAULT_DNS -LOCAL_DNS $LOCAL_DNS \
 								-USE_DIRECT_LIST "${use_direct_list}" -USE_PROXY_LIST "${use_proxy_list}" -USE_BLOCK_LIST "${use_block_list}" -USE_GFW_LIST "${use_gfw_list}" -CHN_LIST "${chn_list}" \
 								-TUN_DNS "127.0.0.1#${_dns_port}" -REMOTE_FAKEDNS 0 -USE_DEFAULT_DNS "${use_default_dns:-direct}" -CHINADNS_DNS ${_china_ng_listen:-0} \
@@ -2073,6 +2085,8 @@ IPT_APPEND_DNS=${LOCAL_DNS}
 DNS_QUERY_STRATEGY="UseIP"
 [ "$FILTER_PROXY_IPV6" = "1" ] && DNS_QUERY_STRATEGY="UseIPv4"
 DNSMASQ_FILTER_PROXY_IPV6=${FILTER_PROXY_IPV6}
+
+get_dnsmasq_conf_dir
 
 export V2RAY_LOCATION_ASSET=$(config_t_get global_rules v2ray_location_asset "/usr/share/v2ray/")
 export XRAY_LOCATION_ASSET=$V2RAY_LOCATION_ASSET

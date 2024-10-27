@@ -65,7 +65,7 @@ restart() {
 }
 
 del() {
-	rm -rf /tmp/dnsmasq.d/dnsmasq-$CONFIG.conf
+	rm -rf $DNSMASQ_CONF_DIR/dnsmasq-$CONFIG.conf
 	rm -rf $DNSMASQ_PATH/dnsmasq-$CONFIG.conf
 	rm -rf $TMP_DNSMASQ_PATH
 }
