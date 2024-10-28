@@ -291,9 +291,19 @@ if singbox_tags:find("with_ech") then
 	o:depends({ [option_name("protocol")] = "tuic" })
 	o:depends({ [option_name("protocol")] = "hysteria2" })
 
-	o = s:option(Value, option_name("ech_key"), translate("ECH Key"))
+	o = s:option(TextValue, option_name("ech_key"), translate("ECH Key"))
 	o.default = ""
+	o.rows = 5
+	o.wrap = "off"
 	o:depends({ [option_name("ech")] = true })
+	o.validate = function(self, value)
+		value = value:gsub("^%s+", ""):gsub("%s+$","\n"):gsub("\r\n","\n"):gsub("[ \t]*\n[ \t]*", "\n")
+		value = value:gsub("^%s*\n", "")
+		if value:sub(-1) == "\n" then  
+			value = value:sub(1, -2)  
+		end
+		return value
+	end
 
 	o = s:option(Flag, option_name("pq_signature_schemes_enabled"), translate("PQ signature schemes"))
 	o.default = "0"
