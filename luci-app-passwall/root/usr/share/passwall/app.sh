@@ -981,10 +981,10 @@ run_redir() {
 
 				case "$(config_t_get global direct_dns_mode "auto")" in
 					udp)
-						_args="${_args} direct_dns_udp_server=$(config_t_get global direct_dns_udp 223.5.5.5 | sed 's/:/#/g')
+						_args="${_args} direct_dns_udp_server=$(config_t_get global direct_dns_udp 223.5.5.5 | sed 's/:/#/g')"
 					;;
 					tcp)
-						_args="${_args} direct_dns_tcp_server=$(config_t_get global direct_dns_tcp 223.5.5.5 | sed 's/:/#/g')
+						_args="${_args} direct_dns_tcp_server=$(config_t_get global direct_dns_tcp 223.5.5.5 | sed 's/:/#/g')"
 					;;
 					dot)
 						local tmp_dot_dns=$(config_t_get global direct_dns_dot "tls://dot.pub@1.12.12.12")
