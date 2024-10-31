@@ -361,7 +361,7 @@ get_dnsmasq_conf_dir() {
 	[ -n "$dnsmasq_conf_path" ] && {
 		local dnsmasq_conf_dir=$(grep '^conf-dir=' "$dnsmasq_conf_path" | cut -d'=' -f2 | head -n 1)
 		[ -n "$dnsmasq_conf_dir" ] && {
-			DNSMASQ_CONF_DIR=$dnsmasq_conf_dir
+			DNSMASQ_CONF_DIR=${dnsmasq_conf_dir%*/}
 			TMP_DNSMASQ_PATH=${DNSMASQ_CONF_DIR}/${CONFIG}
 		}
 	}
