@@ -196,6 +196,7 @@ if not fs.access(CACHE_DNS_PATH) then
 	--屏蔽列表
 	if USE_BLOCK_LIST == "1" then
 		for line in io.lines("/usr/share/passwall/rules/block_host") do
+			line = api.get_std_domain(line)
 			if line ~= "" and not line:find("#") then
 				set_domain_address(line, "")
 			end
@@ -234,6 +235,7 @@ if not fs.access(CACHE_DNS_PATH) then
 			if fwd_dns then
 				--始终用国内DNS解析直连（白名单）列表
 				for line in io.lines("/usr/share/passwall/rules/direct_host") do
+					line = api.get_std_domain(line)
 					if line ~= "" and not line:find("#") then
 						add_excluded_domain(line)
 						set_domain_dns(line, fwd_dns)
@@ -255,6 +257,7 @@ if not fs.access(CACHE_DNS_PATH) then
 			if fwd_dns then
 				--始终使用远程DNS解析代理（黑名单）列表
 				for line in io.lines("/usr/share/passwall/rules/proxy_host") do
+					line = api.get_std_domain(line)
 					if line ~= "" and not line:find("#") then
 						add_excluded_domain(line)
 						local ipset_flag = setflag_4 .. "passwall_blacklist," .. setflag_6 .. "passwall_blacklist6"

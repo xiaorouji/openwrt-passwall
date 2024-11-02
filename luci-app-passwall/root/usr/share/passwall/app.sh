@@ -546,6 +546,8 @@ run_chinadns_ng() {
 	local _flag _listen_port _dns_local _dns_trust _no_ipv6_trust _use_direct_list _use_proxy_list _gfwlist _chnlist _default_mode _default_tag
 	eval_set_val $@
 
+	lua $APP_PATH/helper_chinadns_add.lua -FLAG $_flag -USE_DIRECT_LIST $_use_direct_list -USE_PROXY_LIST $_use_proxy_list
+
 	local _CONF_FILE=$TMP_ACL_PATH/$_flag/chinadns_ng.conf
 	local _LOG_FILE=$TMP_ACL_PATH/$_flag/chinadns_ng.log
 	_LOG_FILE="/dev/null"
@@ -579,7 +581,7 @@ run_chinadns_ng() {
 		EOF
 	}
 
-	[ "${_use_direct_list}" = "1" ] && [ -s "${RULES_PATH}/direct_host" ] && {
+	[ "${_use_direct_list}" = "1" ] && [ -s "${TMP_PATH}/direct_host" ] && {
 		local whitelist4_set="passwall_whitelist"
 		local whitelist6_set="passwall_whitelist6"
 		[ "$nftflag" = "1" ] && {
@@ -588,13 +590,13 @@ run_chinadns_ng() {
 		}
 		cat <<-EOF >> ${_CONF_FILE}
 			group directlist
-			group-dnl ${RULES_PATH}/direct_host
+			group-dnl ${TMP_PATH}/direct_host
 			group-upstream ${_dns_local}
 			group-ipset ${whitelist4_set},${whitelist6_set}
 		EOF
 	}
 
-	[ "${_use_proxy_list}" = "1" ] && [ -s "${RULES_PATH}/proxy_host" ] && {
+	[ "${_use_proxy_list}" = "1" ] && [ -s "${TMP_PATH}/proxy_host" ] && {
 		local blacklist4_set="passwall_blacklist"
 		local blacklist6_set="passwall_blacklist6"
 		[ "$nftflag" = "1" ] && {
@@ -603,7 +605,7 @@ run_chinadns_ng() {
 		}
 		cat <<-EOF >> ${_CONF_FILE}
 			group proxylist
-			group-dnl ${RULES_PATH}/proxy_host
+			group-dnl ${TMP_PATH}/proxy_host
 			group-upstream ${_dns_trust}
 			group-ipset ${blacklist4_set},${blacklist6_set}
 		EOF

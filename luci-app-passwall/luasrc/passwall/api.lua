@@ -1079,3 +1079,24 @@ function luci_types(id, m, s, type_name, option_prefix)
 		end
 	end
 end
+
+function get_std_domain(domain)
+	domain = trim(domain)
+	if domain == "" or domain:find("#") then return "" end
+	-- 删除首尾所有的 .
+	domain = domain:gsub("^[%.]+", ""):gsub("[%.]+$", "")
+	-- 如果 domain 包含 '*'，则分割并删除包含 '*' 的部分及其前面的部分
+	if domain:find("%*") then
+		local parts = {}
+		for part in domain:gmatch("[^%.]+") do
+			table.insert(parts, part)
+		end
+		for i = #parts, 1, -1 do
+			if parts[i]:find("%*") then
+				-- 删除包含 '*' 的部分及其前面的部分
+				return parts[i + 1] and parts[i + 1] .. "." .. table.concat(parts, ".", i + 2) or ""
+			end
+		end
+	end
+	return domain
+end
