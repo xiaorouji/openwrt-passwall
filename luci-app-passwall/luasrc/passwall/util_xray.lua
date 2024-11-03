@@ -288,6 +288,18 @@ function gen_outbound(flag, node, tag, proxy_table)
 				result.streamSettings.tlsSettings.alpn = alpn
 			end
 		end
+
+		local xmux = {}
+		if node.splithttp_xmux then
+			xmux.maxConcurrency = node.maxConcurrency and (string.find(node.maxConcurrency, "-") and node.maxConcurrency or tonumber(node.maxConcurrency)) or 0
+			xmux.maxConnections = node.maxConnections and (string.find(node.maxConnections, "-") and node.maxConnections or tonumber(node.maxConnections)) or 0
+			xmux.cMaxReuseTimes = node.cMaxReuseTimes and (string.find(node.cMaxReuseTimes, "-") and node.cMaxReuseTimes or tonumber(node.cMaxReuseTimes)) or 0
+			xmux.cMaxLifetimeMs = node.cMaxLifetimeMs and (string.find(node.cMaxLifetimeMs, "-") and node.cMaxLifetimeMs or tonumber(node.cMaxLifetimeMs)) or 0
+			if result.streamSettings.splithttpSettings then
+				result.streamSettings.splithttpSettings.xmux = xmux
+			end
+		end
+
 	end
 	return result
 end

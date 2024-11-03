@@ -574,8 +574,23 @@ o = s:option(Value, option_name("splithttp_path"), translate("SplitHTTP Path"))
 o.placeholder = "/"
 o:depends({ [option_name("transport")] = "splithttp" })
 
--- [[ Mux ]]--
-o = s:option(Flag, option_name("mux"), translate("Mux"))
+o = s:option(Flag, option_name("splithttp_xmux"), "XMUX", translate("Enable SplitHTTP XMUX. It's not recommended to enable Mux.Cool at the same time."))
+o:depends({ [option_name("transport")] = "splithttp" })
+
+o = s:option(Value, option_name("maxConcurrency"), translate("XMUX Max Concurrency"))
+o:depends({ [option_name("splithttp_xmux")] = true })
+
+o = s:option(Value, option_name("maxConnections"), translate("XMUX Max Connections"))
+o:depends({ [option_name("splithttp_xmux")] = true })
+
+o = s:option(Value, option_name("cMaxReuseTimes"), translate("XMUX Connection Max Reuse Times"))
+o:depends({ [option_name("splithttp_xmux")] = true })
+
+o = s:option(Value, option_name("cMaxLifetimeMs"), translate("XMUX Connection Max Lifetime (ms)"))
+o:depends({ [option_name("splithttp_xmux")] = true })
+
+-- [[ Mux.Cool ]]--
+o = s:option(Flag, option_name("mux"), "Mux", translate("Enable Mux.Cool"))
 o:depends({ [option_name("protocol")] = "vmess" })
 o:depends({ [option_name("protocol")] = "vless", [option_name("flow")] = "" })
 o:depends({ [option_name("protocol")] = "http" })
@@ -588,7 +603,7 @@ o.default = 8
 o:depends({ [option_name("mux")] = true })
 
 -- [[ XUDP Mux ]]--
-o = s:option(Flag, option_name("xmux"), translate("xMux"))
+o = s:option(Flag, option_name("xmux"), "XUDP Mux")
 o.default = 1
 o:depends({ [option_name("protocol")] = "vless", [option_name("flow")] = "xtls-rprx-vision" })
 

@@ -1519,6 +1519,24 @@ msgstr "客户端文件不适合当前设备。"
 msgid "Can't move new file to path: %s"
 msgstr "无法移动新文件到：%s"
 
+msgid "Enable SplitHTTP XMUX. It's not recommended to enable Mux.Cool at the same time."
+msgstr "启用 SplitHTTP XMUX。不建议与 Mux.Cool 同时启用。"
+
+msgid "XMUX Max Concurrency"
+msgstr "XMUX 连接最大复用流数"
+
+msgid "XMUX Max Connections"
+msgstr "XMUX 最大连接数"
+
+msgid "XMUX Connection Max Reuse Times"
+msgstr "XMUX 连接最多复用次数"
+
+msgid "XMUX Connection Max Lifetime (ms)"
+msgstr "XMUX 连接最大存活时间（ms）"
+
+msgid "Enable Mux.Cool"
+msgstr "启用 Mux.Cool"
+
 msgid "Mux concurrency"
 msgstr "最大并发连接数"
 
