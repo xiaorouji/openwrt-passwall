@@ -174,6 +174,12 @@ define Package/$(PKG_NAME)/conffiles
 /www/luci-static/resources/qrcode.min.js
 endef
 
+define Package/$(PKG_NAME)/postrm
+#!/bin/sh
+rm -f $${IPKG_INSTROOT}/usr/share/passwall/rules/*.nft
+exit 0
+endef
+
 include $(TOPDIR)/feeds/luci/luci.mk
 
 # call BuildPackage - OpenWrt buildroot signature
