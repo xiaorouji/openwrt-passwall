@@ -544,141 +544,18 @@ run_dns2socks() {
 
 run_chinadns_ng() {
 	local _flag _listen_port _dns_local _dns_trust _no_ipv6_trust _use_direct_list _use_proxy_list _gfwlist _chnlist _default_mode _default_tag
+	local _extra_param=""
 	eval_set_val $@
-
-	lua $APP_PATH/helper_chinadns_add.lua -FLAG $_flag -USE_DIRECT_LIST $_use_direct_list -USE_PROXY_LIST $_use_proxy_list
 
 	local _CONF_FILE=$TMP_ACL_PATH/$_flag/chinadns_ng.conf
 	local _LOG_FILE=$TMP_ACL_PATH/$_flag/chinadns_ng.log
 	_LOG_FILE="/dev/null"
 
-	cat <<-EOF > ${_CONF_FILE}
-		verbose
-		bind-addr 127.0.0.1
-		bind-port ${_listen_port}
-		china-dns ${_dns_local}
-		trust-dns ${_dns_trust}
-		filter-qtype 65
-	EOF
+	_extra_param="-FLAG ${_flag} -LISTEN_PORT ${_listen_port} -DNS_LOCAL ${_dns_local} -DNS_TRUST ${_dns_trust}"
+	_extra_param="${_extra_param} -USE_DIRECT_LIST ${_use_direct_list} -USE_PROXY_LIST ${_use_proxy_list} -GFWLIST ${_gfwlist} -CHNLIST ${_chnlist}"
+	_extra_param="${_extra_param} -NO_IPV6_TRUST ${_no_ipv6_trust} -DEFAULT_MODE ${_default_mode} -DEFAULT_TAG ${_default_tag} -NFTFLAG ${nftflag}"
 
-	# This function may be called multiple times, so add a condition here to avoid repeated execution.
-	[ ! -f "${TMP_PATH}/vpslist" ] && {
-		servers=$(uci show "${CONFIG}" | grep ".address=" | cut -d "'" -f 2 | grep -v "engage.cloudflareclient.com")
-		hosts_foreach "servers" host_from_url | grep '[a-zA-Z]$' | sort -u > "${TMP_PATH}/vpslist"
-	}
-	[ -s "${TMP_PATH}/vpslist" ] && {
-		local vpslist4_set="passwall_vpslist"
-		local vpslist6_set="passwall_vpslist6"
-		[ "$nftflag" = "1" ] && {
-			vpslist4_set="inet@passwall@${vpslist4_set}"
-			vpslist6_set="inet@passwall@${vpslist6_set}"
-		}
-		cat <<-EOF >> ${_CONF_FILE}
-			group vpslist
-			group-dnl ${TMP_PATH}/vpslist
-			group-upstream ${_dns_local}
-			group-ipset ${vpslist4_set},${vpslist6_set}
-		EOF
-	}
-
-	[ "${_use_direct_list}" = "1" ] && [ -s "${TMP_PATH}/direct_host" ] && {
-		local whitelist4_set="passwall_whitelist"
-		local whitelist6_set="passwall_whitelist6"
-		[ "$nftflag" = "1" ] && {
-			whitelist4_set="inet@passwall@${whitelist4_set}"
-			whitelist6_set="inet@passwall@${whitelist6_set}"
-		}
-		cat <<-EOF >> ${_CONF_FILE}
-			group directlist
-			group-dnl ${TMP_PATH}/direct_host
-			group-upstream ${_dns_local}
-			group-ipset ${whitelist4_set},${whitelist6_set}
-		EOF
-	}
-
-	[ "${_use_proxy_list}" = "1" ] && [ -s "${TMP_PATH}/proxy_host" ] && {
-		local blacklist4_set="passwall_blacklist"
-		local blacklist6_set="passwall_blacklist6"
-		[ "$nftflag" = "1" ] && {
-			blacklist4_set="inet@passwall@${blacklist4_set}"
-			blacklist6_set="inet@passwall@${blacklist6_set}"
-		}
-		cat <<-EOF >> ${_CONF_FILE}
-			group proxylist
-			group-dnl ${TMP_PATH}/proxy_host
-			group-upstream ${_dns_trust}
-			group-ipset ${blacklist4_set},${blacklist6_set}
-		EOF
-		[ "${_no_ipv6_trust}" = "1" ] && echo "no-ipv6 tag:proxylist" >> ${_CONF_FILE}
-	}
-
-	[ "${_gfwlist}" = "1" ] && [ -s "${RULES_PATH}/gfwlist" ] && {
-		local gfwlist4_set="passwall_gfwlist"
-		local gfwlist6_set="passwall_gfwlist6"
-		[ "$nftflag" = "1" ] && {
-			gfwlist4_set="inet@passwall@${gfwlist4_set}"
-			gfwlist6_set="inet@passwall@${gfwlist6_set}"
-		}
-		cat <<-EOF >> ${_CONF_FILE}
-			gfwlist-file ${RULES_PATH}/gfwlist
-			add-taggfw-ip ${gfwlist4_set},${gfwlist6_set}
-		EOF
-		[ "${_no_ipv6_trust}" = "1" ] && echo "no-ipv6 tag:gfw" >> ${_CONF_FILE}
-	}
-
-	[ "${_chnlist}" != "0" ] && [ -s "${RULES_PATH}/chnlist" ] && {
-		local chnroute4_set="passwall_chnroute"
-		local chnroute6_set="passwall_chnroute6"
-		[ "$nftflag" = "1" ] && {
-			chnroute4_set="inet@passwall@${chnroute4_set}"
-			chnroute6_set="inet@passwall@${chnroute6_set}"
-		}
-
-		[ "${_chnlist}" = "direct" ] && {
-			cat <<-EOF >> ${_CONF_FILE}
-				chnlist-file ${RULES_PATH}/chnlist
-				ipset-name4 ${chnroute4_set}
-				ipset-name6 ${chnroute6_set}
-				add-tagchn-ip
-				chnlist-first
-			EOF
-		}
-
-		#回中国模式
-		[ "${_chnlist}" = "proxy" ] && {
-			cat <<-EOF >> ${_CONF_FILE}
-				group chn_proxy
-				group-dnl ${RULES_PATH}/chnlist
-				group-upstream ${_dns_trust}
-				group-ipset ${chnroute4_set},${chnroute6_set}
-			EOF
-			[ "${_no_ipv6_trust}" = "1" ] && echo "no-ipv6 tag:chn_proxy" >> ${_CONF_FILE}
-		}
-	}
-
-	#只使用gfwlist模式，GFW列表以外的域名及默认使用本地DNS
-	[ "${_gfwlist}" = "1" ] && [ "${_chnlist}" = "0" ] && _default_tag="chn"
-	#回中国模式，中国列表以外的域名及默认使用本地DNS
-	[ "${_chnlist}" = "proxy" ] && _default_tag="chn"
-	#全局模式，默认使用远程DNS
-	[ "${_default_mode}" = "proxy" ] && [ "${_chnlist}" = "0" ] && [ "${_gfwlist}" = "0" ] && {
-		_default_tag="gfw"
-		[ "${_no_ipv6_trust}" = "1" ] && echo "no-ipv6" >> ${_CONF_FILE}
-	}
-
-	# 是否接受直连 DNS 空响应
-	[ "${_default_tag}" = "none_noip" ] && echo "noip-as-chnip" >> ${_CONF_FILE}
-	
-	([ -z "${_default_tag}" ] || [ "${_default_tag}" = "smart" ] || [ "${_default_tag}" = "none_noip" ]) && _default_tag="none"
-	echo "default-tag ${_default_tag}" >> ${_CONF_FILE}
-
-	echo "cache 4096" >> ${_CONF_FILE}
-	echo "cache-stale 3600" >> ${_CONF_FILE}
-
-	[ "${_flag}" = "default" ] && [ "${_default_tag}" = "none" ] && {
-		echo "verdict-cache 5000" >> ${_CONF_FILE}
-	}
-
+	lua $APP_PATH/helper_chinadns_add.lua ${_extra_param} > ${_CONF_FILE}
 	ln_run "$(first_type chinadns-ng)" chinadns-ng "${_LOG_FILE}" -C ${_CONF_FILE}
 }
 
