@@ -337,6 +337,7 @@ o.default = 0
 o:depends({ [option_name("tls")] = true, [option_name("transport")] = "tcp" })
 o:depends({ [option_name("tls")] = true, [option_name("transport")] = "h2" })
 o:depends({ [option_name("tls")] = true, [option_name("transport")] = "grpc" })
+o:depends({ [option_name("tls")] = true, [option_name("transport")] = "splithttp" })
 
 o = s:option(ListValue, option_name("alpn"), translate("alpn"))
 o.default = "default"
@@ -566,7 +567,7 @@ o = s:option(Value, option_name("httpupgrade_path"), translate("HttpUpgrade Path
 o.placeholder = "/"
 o:depends({ [option_name("transport")] = "httpupgrade" })
 
--- [[ SplitHTTP部分 ]]--
+-- [[ XHTTP(SplitHTTP)部分 ]]--
 o = s:option(Value, option_name("splithttp_host"), translate("SplitHTTP Host"))
 o:depends({ [option_name("transport")] = "splithttp" })
 
@@ -574,20 +575,101 @@ o = s:option(Value, option_name("splithttp_path"), translate("SplitHTTP Path"))
 o.placeholder = "/"
 o:depends({ [option_name("transport")] = "splithttp" })
 
-o = s:option(Flag, option_name("splithttp_xmux"), "XMUX", translate("Enable SplitHTTP XMUX. It's not recommended to enable Mux.Cool at the same time."))
+-- XHTTP XMUX
+o = s:option(Flag, option_name("xhttp_xmux"), "XMUX", translate("Enable XHTTP XMUX. It's not recommended to enable Mux.Cool at the same time."))
 o:depends({ [option_name("transport")] = "splithttp" })
 
 o = s:option(Value, option_name("maxConcurrency"), translate("XMUX Max Concurrency"))
-o:depends({ [option_name("splithttp_xmux")] = true })
+o:depends({ [option_name("xhttp_xmux")] = true })
 
 o = s:option(Value, option_name("maxConnections"), translate("XMUX Max Connections"))
-o:depends({ [option_name("splithttp_xmux")] = true })
+o:depends({ [option_name("xhttp_xmux")] = true })
 
 o = s:option(Value, option_name("cMaxReuseTimes"), translate("XMUX Connection Max Reuse Times"))
-o:depends({ [option_name("splithttp_xmux")] = true })
+o:depends({ [option_name("xhttp_xmux")] = true })
 
 o = s:option(Value, option_name("cMaxLifetimeMs"), translate("XMUX Connection Max Lifetime (ms)"))
-o:depends({ [option_name("splithttp_xmux")] = true })
+o:depends({ [option_name("xhttp_xmux")] = true })
+
+-- XHTTP 下行
+o = s:option(Flag, option_name("xhttp_download"), string.format('<a style="color:red">%s</a>', translate("XHTTP download splitting")))
+o:depends({ [option_name("transport")] = "splithttp" })
+
+o = s:option(Value, option_name("xhttp_download_address"), string.format('<a style="color:red">%s</a>', translate("Address")))
+o:depends({ [option_name("xhttp_download")] = true })
+
+o = s:option(Value, option_name("xhttp_download_port"), string.format('<a style="color:red">%s</a>', translate("Port")))
+o:depends({ [option_name("xhttp_download")] = true })
+
+o = s:option(Value, option_name("xhttp_download_path"), string.format('<a style="color:red">%s</a>', "XHTTP Path"), translate("Must be the same as upload path."))
+o.placeholder = "/"
+o:depends({ [option_name("xhttp_download")] = true })
+
+o = s:option(Flag, option_name("xhttp_download_tls"), string.format('<a style="color:red">%s</a>', "TLS"))
+o:depends({ [option_name("xhttp_download")] = true })
+o.default = 0
+
+o = s:option(Flag, option_name("xhttp_download_reality"), string.format('<a style="color:red">%s</a>', "REALITY"))
+o.default = 0
+o:depends({ [option_name("xhttp_download_tls")] = true })
+
+o = s:option(ListValue, option_name("xhttp_download_alpn"), string.format('<a style="color:red">%s</a>', "alpn"))
+o.default = "default"
+o:value("default", translate("Default"))
+o:value("h3")
+o:value("h2")
+o:value("h3,h2")
+o:value("http/1.1")
+o:value("h2,http/1.1")
+o:value("h3,h2,http/1.1")
+o:depends({ [option_name("xhttp_download_tls")] = true, [option_name("xhttp_download_reality")] = false })
+
+o = s:option(Value, option_name("xhttp_download_tls_serverName"), string.format('<a style="color:red">%s</a>', translate("Domain")))
+o:depends({ [option_name("xhttp_download_tls")] = true })
+
+o = s:option(Value, option_name("xhttp_download_reality_publicKey"), string.format('<a style="color:red">%s</a>', translate("Public Key")))
+o:depends({ [option_name("xhttp_download_tls")] = true, [option_name("xhttp_download_reality")] = true })
+
+o = s:option(Value, option_name("xhttp_download_reality_shortId"), string.format('<a style="color:red">%s</a>', translate("Short Id")))
+o:depends({ [option_name("xhttp_download_tls")] = true, [option_name("xhttp_download_reality")] = true })
+
+o = s:option(Value, option_name("xhttp_download_reality_spiderX"), string.format('<a style="color:red">%s</a>', "Spider X"))
+o.placeholder = "/"
+o:depends({ [option_name("xhttp_download_tls")] = true, [option_name("xhttp_download_reality")] = true })
+
+o = s:option(Flag, option_name("xhttp_download_utls"), string.format('<a style="color:red">%s</a>', "uTLS"))
+o.default = "0"
+o:depends({ [option_name("xhttp_download_tls")] = true, [option_name("xhttp_download_reality")] = false })
+
+o = s:option(ListValue, option_name("xhttp_download_fingerprint"), string.format('<a style="color:red">%s</a>', translate("Finger Print")))
+o:value("chrome")
+o:value("firefox")
+o:value("edge")
+o:value("safari")
+o:value("360")
+o:value("qq")
+o:value("ios")
+o:value("android")
+o:value("random")
+o:value("randomized")
+o.default = "chrome"
+o:depends({ [option_name("xhttp_download_tls")] = true, [option_name("xhttp_download_utls")] = true })
+o:depends({ [option_name("xhttp_download_tls")] = true, [option_name("xhttp_download_reality")] = true })
+
+o = s:option(Flag, option_name("xhttp_download_xmux"), string.format('<a style="color:red">%s</a>', "XMUX"), translate("Enable XHTTP XMUX. It's not recommended to enable Mux.Cool at the same time."))
+o:depends({ [option_name("xhttp_download")] = true })
+
+o = s:option(Value, option_name("download_maxConcurrency"), string.format('<a style="color:red">%s</a>', translate("XMUX Max Concurrency")))
+o:depends({ [option_name("xhttp_download_xmux")] = true })
+
+o = s:option(Value, option_name("download_maxConnections"), string.format('<a style="color:red">%s</a>', translate("XMUX Max Connections")))
+o:depends({ [option_name("xhttp_download_xmux")] = true })
+
+o = s:option(Value, option_name("download_cMaxReuseTimes"), string.format('<a style="color:red">%s</a>', translate("XMUX Connection Max Reuse Times")))
+o:depends({ [option_name("xhttp_download_xmux")] = true })
+
+o = s:option(Value, option_name("download_cMaxLifetimeMs"), string.format('<a style="color:red">%s</a>', translate("XMUX Connection Max Lifetime (ms)")))
+o:depends({ [option_name("xhttp_download_xmux")] = true })
 
 -- [[ Mux.Cool ]]--
 o = s:option(Flag, option_name("mux"), "Mux", translate("Enable Mux.Cool"))
