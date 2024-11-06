@@ -14,6 +14,8 @@ local CHNLIST = var["-CHNLIST"]
 local NO_IPV6_TRUST = var["-NO_IPV6_TRUST"]
 local DEFAULT_MODE = var["-DEFAULT_MODE"]
 local DEFAULT_TAG = var["-DEFAULT_TAG"]
+local NO_LOGIC_LOG = var["-NO_LOGIC_LOG"]
+local TCP_NODE = var["-TCP_NODE"]
 local NFTFLAG = var["-NFTFLAG"]
 
 local uci = api.uci
@@ -27,6 +29,13 @@ local RULES_PATH = "/usr/share/" .. appname .. "/rules"
 local config_lines = {}
 local tmp_lines = {}
 
+local function log(...)
+	if NO_LOGIC_LOG == "1" then
+		return
+	end
+	api.log(...)
+end
+
 local function is_file_nonzero(path)
 	if path and #path > 1 then
 		if sys.exec('[ -s "%s" ] && echo -n 1' % path) == "1" then
@@ -34,6 +43,13 @@ local function is_file_nonzero(path)
 		end
 	end
 	return nil
+end
+
+local function insert_unique(dest_table, value, lookup_table)
+	if not lookup_table[value] then
+		table.insert(dest_table, value)
+		lookup_table[value] = true
+	end
 end
 
 local function merge_array(lines1, lines2)
@@ -60,15 +76,15 @@ config_lines = {
 --始终用国内DNS解析节点域名
 local file_vpslist = TMP_ACL_PATH .. "/vpslist"
 if not is_file_nonzero(file_vpslist) then
-	local vpslist_out = io.open(file_vpslist, "w")
+	local f_out = io.open(file_vpslist, "w")
 	uci:foreach(appname, "nodes", function(t)
 		local address = t.address
 		if address == "engage.cloudflareclient.com" then return end
 		if datatypes.hostname(address) then
-			vpslist_out:write(address .. "\n")
+			f_out:write(address .. "\n")
 		end
 	end)
-	vpslist_out:close()
+	f_out:close()
 end
 if is_file_nonzero(file_vpslist) then
 	tmp_lines = {
@@ -78,24 +94,26 @@ if is_file_nonzero(file_vpslist) then
 		"group-ipset " .. setflag .. "passwall_vpslist," .. setflag .. "passwall_vpslist6"
 	}
 	merge_array(config_lines, tmp_lines)
+	log(string.format("  - 节点列表中的域名(vpslist)：%s", DNS_LOCAL or "默认"))
 end
 
 --直连（白名单）列表
 local file_direct_host = TMP_ACL_PATH .. "/direct_host"
 if USE_DIRECT_LIST == "1" and not fs.access(file_direct_host) then   --对自定义列表进行清洗
 	local direct_domain = {}
+	local lookup_direct_domain = {}
 	for line in io.lines(RULES_PATH .. "/direct_host") do
 		line = api.get_std_domain(line)
 		if line ~= "" and not line:find("#") then
-			table.insert(direct_domain, line)
+			insert_unique(direct_domain, line, lookup_direct_domain)
 		end
 	end
 	if #direct_domain > 0 then
-		local direct_out = io.open(file_direct_host, "w")
+		local f_out = io.open(file_direct_host, "w")
 		for i = 1, #direct_domain do
-			direct_out:write(direct_domain[i] .. "\n")
+			f_out:write(direct_domain[i] .. "\n")
 		end
-		direct_out:close()
+		f_out:close()
 	end
 end
 if USE_DIRECT_LIST == "1" and is_file_nonzero(file_direct_host) then
@@ -106,24 +124,26 @@ if USE_DIRECT_LIST == "1" and is_file_nonzero(file_direct_host) then
 		"group-ipset " .. setflag .. "passwall_whitelist," .. setflag .. "passwall_whitelist6"
 	}
 	merge_array(config_lines, tmp_lines)
+	log(string.format("  - 域名白名单(whitelist)：%s", DNS_LOCAL or "默认"))
 end
 
 --代理（黑名单）列表
 local file_proxy_host = TMP_ACL_PATH .. "/proxy_host"
 if USE_PROXY_LIST == "1" and not fs.access(file_proxy_host) then   --对自定义列表进行清洗
 	local proxy_domain = {}
+	local lookup_proxy_domain = {}
 	for line in io.lines(RULES_PATH .. "/proxy_host") do
 		line = api.get_std_domain(line)
 		if line ~= "" and not line:find("#") then
-			table.insert(proxy_domain, line)
+			insert_unique(proxy_domain, line, lookup_proxy_domain)
 		end
 	end
 	if #proxy_domain > 0 then
-		local proxy_out = io.open(file_proxy_host, "w")
+		local f_out = io.open(file_proxy_host, "w")
 		for i = 1, #proxy_domain do
-			proxy_out:write(proxy_domain[i] .. "\n")
+			f_out:write(proxy_domain[i] .. "\n")
 		end
-		proxy_out:close()
+		f_out:close()
 	end
 end
 if USE_PROXY_LIST == "1" and is_file_nonzero(file_proxy_host) then
@@ -135,6 +155,7 @@ if USE_PROXY_LIST == "1" and is_file_nonzero(file_proxy_host) then
 	}
 	merge_array(config_lines, tmp_lines)
 	if NO_IPV6_TRUST == "1" then table.insert(config_lines, "no-ipv6 tag:proxylist") end
+	log(string.format("  - 代理域名表(blacklist)：%s", DNS_TRUST or "默认"))
 end
 
 --GFW列表
@@ -145,6 +166,7 @@ if GFWLIST == "1" and is_file_nonzero(RULES_PATH .. "/gfwlist") then
 	}
 	merge_array(config_lines, tmp_lines)
 	if NO_IPV6_TRUST == "1" then table.insert(config_lines, "no-ipv6 tag:gfw") end
+	log(string.format("  - 防火墙域名表(gfwlist)：%s", DNS_TRUST or "默认"))
 end
 
 --中国列表
@@ -158,6 +180,7 @@ if CHNLIST ~= "0" and is_file_nonzero(RULES_PATH .. "/chnlist") then
 			"chnlist-first"
 		}
 		merge_array(config_lines, tmp_lines)
+		log(string.format("  - 中国域名表(chnroute)：%s", DNS_LOCAL or "默认"))
 	end
 
 	--回中国模式
@@ -170,6 +193,92 @@ if CHNLIST ~= "0" and is_file_nonzero(RULES_PATH .. "/chnlist") then
 		}
 		merge_array(config_lines, tmp_lines)
 		if NO_IPV6_TRUST == "1" then table.insert(config_lines, "no-ipv6 tag:chn_proxy") end
+		log(string.format("  - 中国域名表(chnroute)：%s", DNS_TRUST or "默认"))
+	end
+end
+
+--分流规则
+if uci:get(appname, TCP_NODE, "protocol") == "_shunt" then
+	local white_domain = {}
+	local shunt_domain = {}
+	local lookup_white_domain = {}
+	local lookup_shunt_domain = {}
+	local file_white_host = TMP_ACL_PATH .. "/white_host"
+	local file_shunt_host = TMP_ACL_PATH .. "/shunt_host"
+
+	local t = uci:get_all(appname, TCP_NODE)
+	local default_node_id = t["default_node"] or "_direct"
+	uci:foreach(appname, "shunt_rules", function(s)
+		local _node_id = t[s[".name"]] or "nil"
+		if _node_id ~= "nil" and _node_id ~= "_blackhole" then
+			if _node_id == "_default" then
+				_node_id = default_node_id
+			end
+
+			local domain_list = s.domain_list or ""
+			for line in string.gmatch(domain_list, "[^\r\n]+") do
+				if line ~= "" and not line:find("#") and not line:find("regexp:") and not line:find("geosite:") and not line:find("ext:") then
+					if line:find("domain:") or line:find("full:") then
+						line = string.match(line, ":([^:]+)$")
+					end
+					line = api.get_std_domain(line)
+					if _node_id == "_direct" then
+						if line ~= "" and not line:find("#") then
+							insert_unique(white_domain, line, lookup_white_domain)
+						end
+					else
+						if line ~= "" and not line:find("#") then
+							insert_unique(shunt_domain, line, lookup_shunt_domain)
+						end
+					end
+				end
+			end
+
+			if _node_id ~= "_direct" then
+				log(string.format("  - Sing-Box/Xray分流规则(%s)：%s", s.remarks, DNS_TRUST or "默认"))
+			end
+		end
+	end)
+
+	if is_file_nonzero(file_white_host) == nil then
+		if #white_domain > 0 then
+			local f_out = io.open(file_white_host, "w")
+			for i = 1, #white_domain do
+				f_out:write(white_domain[i] .. "\n")
+			end
+			f_out:close()
+		end
+	end
+
+	if is_file_nonzero(file_shunt_host) == nil then
+		if #shunt_domain > 0 then
+			local f_out = io.open(file_shunt_host, "w")
+			for i = 1, #shunt_domain do
+				f_out:write(shunt_domain[i] .. "\n")
+			end
+			f_out:close()
+		end
+	end
+
+	if is_file_nonzero(file_white_host) then
+		tmp_lines = {
+			"group whitelist",
+			"group-dnl " .. file_white_host,
+			"group-upstream " .. DNS_LOCAL,
+			"group-ipset " .. setflag .. "passwall_whitelist," .. setflag .. "passwall_whitelist6"
+		}
+		merge_array(config_lines, tmp_lines)
+	end
+
+	if is_file_nonzero(file_shunt_host) then
+		tmp_lines = {
+			"group shuntlist",
+			"group-dnl " .. file_shunt_host,
+			"group-upstream " .. DNS_TRUST,
+			"group-ipset " .. setflag .. "passwall_shuntlist," .. setflag .. "passwall_shuntlist6"
+		}
+		merge_array(config_lines, tmp_lines)
+		if NO_IPV6_TRUST == "1" then table.insert(config_lines, "no-ipv6 tag:shuntlist") end
 	end
 end
 

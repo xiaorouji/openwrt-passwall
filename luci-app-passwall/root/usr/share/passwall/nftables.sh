@@ -830,6 +830,8 @@ add_firewall_rule() {
 	#分流规则的IP列表
 	local node_protocol=$(config_n_get $TCP_NODE protocol)
 	if [ "$node_protocol" = "_shunt" ]; then
+		USE_DIRECT_LIST = "1" 
+		USE_BLOCK_LIST = "1" 
 		local default_node_id=$(config_n_get $TCP_NODE default_node "_direct")
 		local shunt_ids=$(uci show $CONFIG | grep "=shunt_rules" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}')
 		for shunt_id in $shunt_ids; do

@@ -221,8 +221,8 @@ if not fs.access(CACHE_DNS_PATH) then
 					set_domain_ipset(address, setflag_4 .. "passwall_vpslist," .. setflag_6 .. "passwall_vpslist6")
 				end
 			end)
+			log(string.format("  - 节点列表中的域名(vpslist)：%s", fwd_dns or "默认"))
 		end
-		log(string.format("  - 节点列表中的域名(vpslist)：%s", fwd_dns or "默认"))
 	end
 
 	--直连（白名单）列表
@@ -242,8 +242,8 @@ if not fs.access(CACHE_DNS_PATH) then
 						set_domain_ipset(line, setflag_4 .. "passwall_whitelist," .. setflag_6 .. "passwall_whitelist6")
 					end
 				end
+				log(string.format("  - 域名白名单(whitelist)：%s", fwd_dns or "默认"))
 			end
-			log(string.format("  - 域名白名单(whitelist)：%s", fwd_dns or "默认"))
 		end
 	end
 
@@ -272,8 +272,8 @@ if not fs.access(CACHE_DNS_PATH) then
 						set_domain_ipset(line, ipset_flag)
 					end
 				end
+				log(string.format("  - 代理域名表(blacklist)：%s", fwd_dns or "默认"))
 			end
-			log(string.format("  - 代理域名表(blacklist)：%s", fwd_dns or "默认"))
 		end
 	end
 
@@ -306,8 +306,8 @@ if not fs.access(CACHE_DNS_PATH) then
 						set_domain_ipset(line, ipset_flag)
 					end
 				end
+				log(string.format("  - 防火墙域名表(gfwlist)：%s", fwd_dns or "默认"))
 			end
-			log(string.format("  - 防火墙域名表(gfwlist)：%s", fwd_dns or "默认"))
 		end
 	end
 
@@ -348,13 +348,13 @@ if not fs.access(CACHE_DNS_PATH) then
 						set_domain_ipset(line, ipset_flag)
 					end
 				end
+				log(string.format("  - 中国域名表(chnroute)：%s", fwd_dns or "默认"))
 			end
-			log(string.format("  - 中国域名表(chnroute)：%s", fwd_dns or "默认"))
 		end
 	end
 
 	--分流规则
-	if uci:get(appname, TCP_NODE, "protocol") == "_shunt" then
+	if uci:get(appname, TCP_NODE, "protocol") == "_shunt" and USE_DEFAULT_DNS ~= "chinadns_ng" and CHINADNS_DNS == "0" then
 		local t = uci:get_all(appname, TCP_NODE)
 		local default_node_id = t["default_node"] or "_direct"
 		uci:foreach(appname, "shunt_rules", function(s)
@@ -391,6 +391,7 @@ if not fs.access(CACHE_DNS_PATH) then
 						if line:find("domain:") or line:find("full:") then
 							line = string.match(line, ":([^:]+)$")
 						end
+						line = api.get_std_domain(line)
 						add_excluded_domain(line)
 
 						if no_ipv6 then
@@ -401,7 +402,7 @@ if not fs.access(CACHE_DNS_PATH) then
 					end
 				end
 				if _node_id ~= "_direct" then
-					log(string.format("  - V2ray/Xray分流规则(%s)：%s", s.remarks, fwd_dns or "默认"))
+					log(string.format("  - Sing-Box/Xray分流规则(%s)：%s", s.remarks, fwd_dns or "默认"))
 				end
 			end
 		end)
