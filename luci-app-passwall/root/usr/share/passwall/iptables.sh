@@ -726,7 +726,7 @@ add_firewall_rule() {
 	echolog "开始加载防火墙规则..."
 	ipset -! create $IPSET_LANLIST nethash maxelem 1048576
 	ipset -! create $IPSET_VPSLIST nethash maxelem 1048576
-	ipset -! create $IPSET_SHUNTLIST nethash maxelem 1048576
+	ipset -! create $IPSET_SHUNTLIST nethash maxelem 1048576 timeout 172800
 	ipset -! create $IPSET_GFW nethash maxelem 1048576 timeout 172800
 	ipset -! create $IPSET_CHN nethash maxelem 1048576 timeout 172800
 	ipset -! create $IPSET_BLACKLIST nethash maxelem 1048576 timeout 172800
@@ -735,7 +735,7 @@ add_firewall_rule() {
 
 	ipset -! create $IPSET_LANLIST6 nethash family inet6 maxelem 1048576
 	ipset -! create $IPSET_VPSLIST6 nethash family inet6 maxelem 1048576
-	ipset -! create $IPSET_SHUNTLIST6 nethash family inet6 maxelem 1048576
+	ipset -! create $IPSET_SHUNTLIST6 nethash family inet6 maxelem 1048576 timeout 172800
 	ipset -! create $IPSET_GFW6 nethash family inet6 maxelem 1048576 timeout 172800
 	ipset -! create $IPSET_CHN6 nethash family inet6 maxelem 1048576 timeout 172800
 	ipset -! create $IPSET_BLACKLIST6 nethash family inet6 maxelem 1048576 timeout 172800
@@ -745,8 +745,6 @@ add_firewall_rule() {
 	#分流规则的IP列表
 	local node_protocol=$(config_n_get $TCP_NODE protocol)
 	if [ "$node_protocol" = "_shunt" ]; then
-		USE_DIRECT_LIST = "1" 
-		USE_BLOCK_LIST = "1" 
 		local default_node_id=$(config_n_get $TCP_NODE default_node "_direct")
 		local shunt_ids=$(uci show $CONFIG | grep "=shunt_rules" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}')
 		for shunt_id in $shunt_ids; do
@@ -761,7 +759,7 @@ add_firewall_rule() {
 					config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "s/^/add $IPSET_WHITELIST6 &/g" -e "s/$/ timeout 0/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
 				else
 					config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e "s/^/add $IPSET_SHUNTLIST &/g" -e "s/$/ timeout 0/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
-					[ "$PROXY_IPV6" != "1" ] && {
+					[ "$PROXY_IPV6" = "1" ] && {
 						config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "s/^/add $IPSET_SHUNTLIST6 &/g" -e "s/$/ timeout 0/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
 					}
 				fi
