@@ -1270,32 +1270,51 @@ start_dns() {
 	local china_ng_local_dns=$(IFS=','; set -- $LOCAL_DNS; [ "${1%%[#:]*}" = "127.0.0.1" ] && echo "$1" || ([ -n "$2" ] && echo "$1,$2" || echo "$1"))
 	local sing_box_local_dns=
 	local direct_dns_mode=$(config_t_get global direct_dns_mode "auto")
+
+	#获取访问控制节点所使用的DNS分流模式
+	local ACL_RULE_DNSMASQ=0
+	for acl_section in $(uci show ${CONFIG} | grep "=acl_rule" | cut -d '.' -sf 2 | cut -d '=' -sf 1); do
+		if [ "$(config_n_get $acl_section enabled)" = "1" ] && \
+		   [ "$(config_n_get $acl_section dns_shunt)" = "dnsmasq" ]; then
+			ACL_RULE_DNSMASQ=1
+			break
+		fi
+	done
+
 	case "$direct_dns_mode" in
 		udp)
 			LOCAL_DNS=$(config_t_get global direct_dns_udp 223.5.5.5 | sed 's/:/#/g')
 			china_ng_local_dns=${LOCAL_DNS}
 			sing_box_local_dns="direct_dns_udp_server=${LOCAL_DNS}"
 		;;
-		tcp)
-			LOCAL_DNS="127.0.0.1#${dns_listen_port}"
-			dns_listen_port=$(expr $dns_listen_port + 1)
+		tcp)	
 			local DIRECT_DNS=$(config_t_get global direct_dns_tcp 223.5.5.5 | sed 's/:/#/g')
 			china_ng_local_dns="tcp://${DIRECT_DNS}"
 			sing_box_local_dns="direct_dns_tcp_server=${DIRECT_DNS}"
-			ln_run "$(first_type dns2tcp)" dns2tcp "/dev/null" -L "${LOCAL_DNS}" -R "$(get_first_dns DIRECT_DNS 53)" -v
-			echolog "  - dns2tcp(${LOCAL_DNS}) -> tcp://$(get_first_dns DIRECT_DNS 53 | sed 's/#/:/g')"
-			echolog "  * 请确保上游直连 DNS 支持 TCP 查询。"
+
+			#当全局（包括访问控制节点）开启chinadns-ng时，不启用dns2tcp
+			[ "$DNS_SHUNT" != "chinadns-ng" ] || [ "$ACL_RULE_DNSMASQ" = "1" ] && {
+				LOCAL_DNS="127.0.0.1#${dns_listen_port}"
+				dns_listen_port=$(expr $dns_listen_port + 1)
+				ln_run "$(first_type dns2tcp)" dns2tcp "/dev/null" -L "${LOCAL_DNS}" -R "$(get_first_dns DIRECT_DNS 53)" -v
+				echolog "  - dns2tcp(${LOCAL_DNS}) -> tcp://$(get_first_dns DIRECT_DNS 53 | sed 's/#/:/g')"
+				echolog "  * 请确保上游直连 DNS 支持 TCP 查询。"
+			}
 		;;
 		dot)
 			if [ "$chinadns_tls" != "nil" ]; then
-				LOCAL_DNS="127.0.0.1#${dns_listen_port}"
-				local cdns_listen_port=${dns_listen_port}
-				dns_listen_port=$(expr $dns_listen_port + 1)
 				local DIRECT_DNS=$(config_t_get global direct_dns_dot "tls://dot.pub@1.12.12.12")
 				china_ng_local_dns=${DIRECT_DNS}
-				ln_run "$(first_type chinadns-ng)" chinadns-ng "/dev/null" -b 127.0.0.1 -l ${cdns_listen_port} -c ${DIRECT_DNS} -d chn
-				echolog "  - ChinaDNS-NG(${LOCAL_DNS}) -> ${DIRECT_DNS}"
-				echolog "  * 请确保上游直连 DNS 支持 DoT 查询。"
+
+				#当全局（包括访问控制节点）开启chinadns-ng时，不启用dns2dot
+				[ "$DNS_SHUNT" != "chinadns-ng" ] || [ "$ACL_RULE_DNSMASQ" = "1" ] && {
+					LOCAL_DNS="127.0.0.1#${dns_listen_port}"
+					local cdns_listen_port=${dns_listen_port}
+					dns_listen_port=$(expr $dns_listen_port + 1)
+					ln_run "$(first_type chinadns-ng)" chinadns-ng "/dev/null" -b 127.0.0.1 -l ${cdns_listen_port} -c ${DIRECT_DNS} -d chn
+					echolog "  - ChinaDNS-NG(${LOCAL_DNS}) -> ${DIRECT_DNS}"
+					echolog "  * 请确保上游直连 DNS 支持 DoT 查询。"
+				}
 
 				local tmp_dot_ip=$(echo "$DIRECT_DNS" | sed -n 's/.*:\/\/\([^@#]*@\)*\([^@#]*\).*/\2/p')
 				local tmp_dot_port=$(echo "$DIRECT_DNS" | sed -n 's/.*#\([0-9]\+\).*/\1/p')
@@ -1456,7 +1475,7 @@ start_dns() {
 
 	[ -n "${resolve_dns_log}" ] && echolog "  - ${resolve_dns_log}"
 
-	[ "${use_tcp_node_resolve_dns}" = "1" ] && echolog "  * 请确认上游 DNS 支持 TCP 查询，如非直连地址，确保 TCP 代理打开，并且已经正确转发！"
+	[ "${use_tcp_node_resolve_dns}" = "1" ] && echolog "  * 请确认上游 DNS 支持 TCP/DoT/DoH 查询，如非直连地址，确保 TCP 代理打开，并且已经正确转发！"
 	[ "${use_udp_node_resolve_dns}" = "1" ] && echolog "  * 请确认上游 DNS 支持 UDP 查询并已使用 UDP 节点，如上游 DNS 非直连地址，确保 UDP 代理打开，并且已经正确转发！"
 
 	[ "$DNS_SHUNT" = "chinadns-ng" ] && [ -n "$(first_type chinadns-ng)" ] && {
