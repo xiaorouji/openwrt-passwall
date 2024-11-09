@@ -354,7 +354,7 @@ if not fs.access(CACHE_DNS_PATH) then
 	end
 
 	--分流规则
-	if uci:get(appname, TCP_NODE, "protocol") == "_shunt" and USE_DEFAULT_DNS ~= "chinadns_ng" and CHINADNS_DNS == "0" then
+	if uci:get(appname, TCP_NODE, "protocol") == "_shunt" and (USE_DEFAULT_DNS ~= "chinadns_ng" or CHINADNS_DNS == "0") then
 		local t = uci:get_all(appname, TCP_NODE)
 		local default_node_id = t["default_node"] or "_direct"
 		uci:foreach(appname, "shunt_rules", function(s)
@@ -476,7 +476,9 @@ if DNSMASQ_CONF_FILE ~= "nil" then
 		conf_out:write("no-poll\n")
 		conf_out:write("no-resolv\n")
 		conf_out:close()
-		log(string.format("  - 默认：%s", dnsmasq_default_dns))
+		if USE_DEFAULT_DNS ~= "chinadns_ng" or CHINADNS_DNS == "0" then
+			log(string.format("  - 默认：%s", dnsmasq_default_dns))
+		end
 
 		if FLAG == "default" then
 			local f_out = io.open("/tmp/etc/passwall/default_DNS", "a")

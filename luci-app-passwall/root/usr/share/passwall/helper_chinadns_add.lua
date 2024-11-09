@@ -307,6 +307,14 @@ if DEFAULT_TAG == "none" then
 	table.insert(config_lines, "verdict-cache 5000")
 end
 
+if DEFAULT_TAG == "chn" then
+	log(string.format("  - 默认：%s", DNS_LOCAL))
+elseif  DEFAULT_TAG == "gfw" then
+	log(string.format("  - 默认：%s", DNS_TRUST))
+else
+	log(string.format("  - 默认：%s", "127.0.0.1#" .. LISTEN_PORT))
+end
+
 --输出配置文件
 if #config_lines > 0 then
 	for i = 1, #config_lines do
