@@ -169,6 +169,9 @@ msgstr "此功能需要 DNS 服务器支持 EDNS Client Subnet（RFC7871）。"
 msgid "The effect is better, recommend."
 msgstr "效果更好，推荐使用。"
 
+msgid "ChinaDNS-NG (recommended)"
+msgstr "ChinaDNS-NG (推荐)"
+
 msgid "Default DNS"
 msgstr "默认 DNS"
 

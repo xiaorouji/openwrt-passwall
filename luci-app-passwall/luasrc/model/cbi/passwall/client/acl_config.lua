@@ -279,7 +279,7 @@ o:depends({ tcp_node = "",  ['!reverse'] = true })
 o = s:option(ListValue, "dns_shunt", "DNS " .. translate("Shunt"))
 o:depends({ tcp_node = "",  ['!reverse'] = true })
 o:value("dnsmasq", "Dnsmasq")
-o:value("chinadns-ng", "Dnsmasq + ChinaDNS-NG")
+o:value("chinadns-ng", translate("ChinaDNS-NG (recommended)"))
 
 o = s:option(Flag, "filter_proxy_ipv6", translate("Filter Proxy Host IPv6"), translate("Experimental feature."))
 o.default = "0"

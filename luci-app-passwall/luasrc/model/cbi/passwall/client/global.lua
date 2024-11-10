@@ -292,7 +292,7 @@ s:tab("DNS", translate("DNS"))
 
 dns_shunt = s:taboption("DNS", ListValue, "dns_shunt", "DNS " .. translate("Shunt"))
 dns_shunt:value("dnsmasq", "Dnsmasq")
-dns_shunt:value("chinadns-ng", "Dnsmasq + ChinaDNS-NG")
+dns_shunt:value("chinadns-ng", translate("ChinaDNS-NG (recommended)"))
 
 o = s:taboption("DNS", ListValue, "direct_dns_mode", translate("Direct DNS") .. " " .. translate("Request protocol"))
 o.default = ""

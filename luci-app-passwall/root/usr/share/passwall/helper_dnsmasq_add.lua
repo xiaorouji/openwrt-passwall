@@ -194,11 +194,13 @@ if not fs.access(CACHE_DNS_PATH) then
 	fs.mkdir(CACHE_DNS_PATH)
 
 	--屏蔽列表
-	if USE_BLOCK_LIST == "1" then
-		for line in io.lines("/usr/share/passwall/rules/block_host") do
-			line = api.get_std_domain(line)
-			if line ~= "" and not line:find("#") then
-				set_domain_address(line, "")
+	if USE_DEFAULT_DNS ~= "chinadns_ng" or CHINADNS_DNS == "0" then
+		if USE_BLOCK_LIST == "1" then
+			for line in io.lines("/usr/share/passwall/rules/block_host") do
+				line = api.get_std_domain(line)
+				if line ~= "" and not line:find("#") then
+					set_domain_address(line, "")
+				end
 			end
 		end
 	end
@@ -488,4 +490,6 @@ if DNSMASQ_CONF_FILE ~= "nil" then
 	end
 end
 
-log("  - PassWall必须依赖于Dnsmasq，如果你自行配置了错误的DNS流程，将会导致域名(直连/代理域名)分流失效！！！")
+if USE_DEFAULT_DNS ~= "chinadns_ng" or CHINADNS_DNS == "0" then
+	log("  - PassWall必须依赖于Dnsmasq，如果你自行配置了错误的DNS流程，将会导致域名(直连/代理域名)分流失效！！！")
+end
