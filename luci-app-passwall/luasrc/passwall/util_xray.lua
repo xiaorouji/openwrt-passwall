@@ -239,6 +239,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 						network = "xhttp",
 						xhttpSettings = {
 							path = node.xhttp_download_path,
+							host = node.xhttp_download_host,
 						},
 						security = node.xhttp_download_stream_security,
 						tlsSettings = (node.xhttp_download_stream_security == "tls") and {
@@ -340,8 +341,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 			xmux_download.maxConnections = node.download_maxConnections and (string.find(node.download_maxConnections, "-") and node.download_maxConnections or tonumber(node.download_maxConnections)) or 0
 			xmux_download.cMaxReuseTimes = node.download_cMaxReuseTimes and (string.find(node.download_cMaxReuseTimes, "-") and node.download_cMaxReuseTimes or tonumber(node.download_cMaxReuseTimes)) or 0
 			xmux_download.cMaxLifetimeMs = node.download_cMaxLifetimeMs and (string.find(node.download_cMaxLifetimeMs, "-") and node.download_cMaxLifetimeMs or tonumber(node.download_cMaxLifetimeMs)) or 0
-			if result.streamSettings.splithttpSettings.downloadSettings then
-				result.streamSettings.splithttpSettings.downloadSettings.xmux = xmux_download
+			if result.streamSettings.splithttpSettings.downloadSettings.xhttpSettings then
+				result.streamSettings.splithttpSettings.downloadSettings.xhttpSettings.xmux = xmux_download
 			end
 		end
 

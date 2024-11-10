@@ -601,6 +601,9 @@ o:depends({ [option_name("xhttp_download")] = true })
 o = s:option(Value, option_name("xhttp_download_port"), string.format('<a style="color:red">%s</a>', translate("Port")))
 o:depends({ [option_name("xhttp_download")] = true })
 
+o = s:option(Value, option_name("xhttp_download_host"), string.format('<a style="color:red">%s</a>', "XHTTP Host"))
+o:depends({ [option_name("xhttp_download")] = true })
+
 o = s:option(Value, option_name("xhttp_download_path"), string.format('<a style="color:red">%s</a>', "XHTTP Path"), translate("Must be the same as upload path."))
 o.placeholder = "/"
 o:depends({ [option_name("xhttp_download")] = true })
