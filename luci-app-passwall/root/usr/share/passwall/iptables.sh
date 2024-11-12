@@ -751,10 +751,7 @@ add_firewall_rule() {
 			local _node_id=$(config_n_get $TCP_NODE $shunt_id "nil")
 			[ "$_node_id" != "nil" ] && {
 				[ "$_node_id" = "_default" ] && _node_id=$default_node_id
-				if [ "$_node_id" = "_blackhole" ]; then
-					config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e "s/^/add $IPSET_BLOCKLIST &/g" -e "s/$/ timeout 0/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
-					config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "s/^/add $IPSET_BLOCKLIST6 &/g" -e "s/$/ timeout 0/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
-				elif [ "$_node_id" = "_direct" ]; then
+				if [ "$_node_id" = "_direct" ]; then
 					config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e "s/^/add $IPSET_WHITELIST &/g" -e "s/$/ timeout 0/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
 					config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "s/^/add $IPSET_WHITELIST6 &/g" -e "s/$/ timeout 0/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
 				else

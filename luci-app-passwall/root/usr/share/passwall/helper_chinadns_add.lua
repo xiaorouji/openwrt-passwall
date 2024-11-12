@@ -224,10 +224,8 @@ end
 if uci:get(appname, TCP_NODE, "protocol") == "_shunt" then
 	local white_domain, lookup_white_domain = {}, {}
 	local shunt_domain, lookup_shunt_domain = {}, {}
-	local blackhole_domain, lookup_blackhole_domain = {}, {}
 	local file_white_host = TMP_ACL_PATH .. "/white_host"
 	local file_shunt_host = TMP_ACL_PATH .. "/shunt_host"
-	local file_blackhole_host = TMP_ACL_PATH .. "/blackhole_host"
 
 	local t = uci:get_all(appname, TCP_NODE)
 	local default_node_id = t["default_node"] or "_direct"
@@ -246,11 +244,7 @@ if uci:get(appname, TCP_NODE, "protocol") == "_shunt" then
 					end
 					line = api.get_std_domain(line)
 
-					if _node_id == "_blackhole" then
-						if line ~= "" and not line:find("#") then
-							insert_unique(blackhole_domain, line, lookup_blackhole_domain)
-						end
-					elseif _node_id == "_direct" then
+					if _node_id == "_direct" then
 						if line ~= "" and not line:find("#") then
 							insert_unique(white_domain, line, lookup_white_domain)
 						end
@@ -267,16 +261,6 @@ if uci:get(appname, TCP_NODE, "protocol") == "_shunt" then
 			end
 		end
 	end)
-
-	if is_file_nonzero(file_blackhole_host) == nil then
-		if #blackhole_domain > 0 then
-			local f_out = io.open(file_blackhole_host, "w")
-			for i = 1, #blackhole_domain do
-				f_out:write(blackhole_domain[i] .. "\n")
-			end
-			f_out:close()
-		end
-	end
 
 	if is_file_nonzero(file_white_host) == nil then
 		if #white_domain > 0 then
@@ -295,15 +279,6 @@ if uci:get(appname, TCP_NODE, "protocol") == "_shunt" then
 				f_out:write(shunt_domain[i] .. "\n")
 			end
 			f_out:close()
-		end
-	end
-
-	if is_file_nonzero(file_blackhole_host) then
-		for i, v in ipairs(config_lines) do   --添加到屏蔽组一同处理
-			if v == "group-dnl " .. file_block_host then
-				config_lines[i] = "group-dnl " .. file_block_host .. "," .. file_blackhole_host
-				break
-			end
 		end
 	end
 
