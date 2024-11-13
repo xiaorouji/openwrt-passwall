@@ -34,7 +34,8 @@ _M.singbox = {
 	default_path = "/usr/bin/sing-box",
 	match_fmt_str = "linux%%-%s",
 	file_tree = {
-		x86_64 = "amd64"
+		x86_64 = "amd64",
+		mips64el = "mips64le"
 	}
 }
 
@@ -50,7 +51,8 @@ _M.xray = {
 		x86_64 = "64",
 		x86    = "32",
 		mips   = "mips32",
-		mipsel = "mips32le"
+		mipsel = "mips32le",
+		mips64el = "mips64le"
 	}
 }
 
@@ -68,6 +70,7 @@ _M["chinadns-ng"] = {
 		mips    = "wolfssl@mips%-.*mips32%+soft_float@",
 		mips64  = "wolfssl@mips64%-.*mips64%+soft_float@",
 		mipsel  = "wolfssl@mipsel.*mips32%+soft_float@",
+		mips64el = "wolfssl@mips64el%-.*mips64%+soft_float@",
 		aarch64 = "wolfssl_noasm@aarch64.*v8a",
 		rockchip = "wolfssl@aarch64.*v8a",
 		armv5   = "wolfssl@arm.*v5te",

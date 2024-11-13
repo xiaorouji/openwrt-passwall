@@ -720,6 +720,7 @@ local default_file_tree = {
 	mips    = "mips",
 	mips64  = "mips64",
 	mipsel  = "mipsel",
+	mips64el = "mips64el",
 	armv5   = "arm.*5",
 	armv6   = "arm.*6[^4]*",
 	armv7   = "arm.*7",
