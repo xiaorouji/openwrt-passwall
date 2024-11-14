@@ -743,26 +743,31 @@ add_firewall_rule() {
 	ipset -! create $IPSET_BLOCKLIST6 nethash family inet6 maxelem 1048576 timeout 172800
 
 	#分流规则的IP列表
-	local node_protocol=$(config_n_get $TCP_NODE protocol)
-	if [ "$node_protocol" = "_shunt" ]; then
-		local default_node_id=$(config_n_get $TCP_NODE default_node "_direct")
-		local shunt_ids=$(uci show $CONFIG | grep "=shunt_rules" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}')
-		for shunt_id in $shunt_ids; do
-			local _node_id=$(config_n_get $TCP_NODE $shunt_id "nil")
-			[ "$_node_id" != "nil" ] && {
-				[ "$_node_id" = "_default" ] && _node_id=$default_node_id
-				if [ "$_node_id" = "_direct" ]; then
-					config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e "s/^/add $IPSET_WHITELIST &/g" -e "s/$/ timeout 0/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
-					config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "s/^/add $IPSET_WHITELIST6 &/g" -e "s/$/ timeout 0/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
-				else
-					config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e "s/^/add $IPSET_SHUNTLIST &/g" -e "s/$/ timeout 0/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
-					[ "$PROXY_IPV6" = "1" ] && {
-						config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "s/^/add $IPSET_SHUNTLIST6 &/g" -e "s/$/ timeout 0/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
-					}
-				fi
-			}
-		done
-	fi
+	process_shunt_rules() {
+		local _node=$1
+		local node_protocol=$(config_n_get $_node protocol)
+		if [ "$node_protocol" = "_shunt" ]; then
+			local default_node_id=$(config_n_get $_node default_node "_direct")
+			local shunt_ids=$(uci show $CONFIG | grep "=shunt_rules" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}')
+			for shunt_id in $shunt_ids; do
+				local _node_id=$(config_n_get $_node $shunt_id "nil")
+				[ "$_node_id" != "nil" ] && {
+					[ "$_node_id" = "_default" ] && _node_id=$default_node_id
+					if [ "$_node_id" = "_direct" ]; then
+						config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e "s/^/add $IPSET_WHITELIST &/g" -e "s/$/ timeout 0/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
+						config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "s/^/add $IPSET_WHITELIST6 &/g" -e "s/$/ timeout 0/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
+					else
+						config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e "s/^/add $IPSET_SHUNTLIST &/g" -e "s/$/ timeout 0/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
+						[ "$PROXY_IPV6" = "1" ] && {
+							config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "s/^/add $IPSET_SHUNTLIST6 &/g" -e "s/$/ timeout 0/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
+						}
+					fi
+				}
+			done
+		fi
+	}
+	[ "$TCP_NODE" ] && process_shunt_rules $TCP_NODE
+	[ "$UDP_NODE" ] && [ "$TCP_UDP" = "0" ] && process_shunt_rules $UDP_NODE
 
 	cat $RULES_PATH/chnroute | tr -s '\n' | grep -v "^#" | sed -e "/^$/d" | sed -e "s/^/add $IPSET_CHN &/g" -e "s/$/ timeout 0/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
 	cat $RULES_PATH/proxy_ip | tr -s '\n' | grep -v "^#" | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e "s/^/add $IPSET_BLACKLIST &/g" -e "s/$/ timeout 0/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
@@ -1228,7 +1233,7 @@ del_firewall_rule() {
 
 	destroy_ipset $IPSET_LANLIST
 	destroy_ipset $IPSET_VPSLIST
-	#destroy_ipset $IPSET_SHUNTLIST
+	destroy_ipset $IPSET_SHUNTLIST
 	#destroy_ipset $IPSET_GFW
 	#destroy_ipset $IPSET_CHN
 	#destroy_ipset $IPSET_BLACKLIST
@@ -1237,7 +1242,7 @@ del_firewall_rule() {
 
 	destroy_ipset $IPSET_LANLIST6
 	destroy_ipset $IPSET_VPSLIST6
-	#destroy_ipset $IPSET_SHUNTLIST6
+	destroy_ipset $IPSET_SHUNTLIST6
 	#destroy_ipset $IPSET_GFW6
 	#destroy_ipset $IPSET_CHN6
 	#destroy_ipset $IPSET_BLACKLIST6
