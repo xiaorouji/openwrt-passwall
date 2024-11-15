@@ -166,9 +166,8 @@ insert_nftset() {
 		fi
 		mkdir -p $TMP_PATH2/nftset
 		cat > "$TMP_PATH2/nftset/$nftset_name" <<-EOF
-			#define $nftset_name = {$nftset_elements}	
-			#add element $NFTABLE_NAME $nftset_name \$$nftset_name
-			add element $NFTABLE_NAME $nftset_name {$nftset_elements}
+			define $nftset_name = {$nftset_elements}	
+			add element $NFTABLE_NAME $nftset_name \$$nftset_name
 		EOF
 		nft -f "$TMP_PATH2/nftset/$nftset_name"
 		rm -rf "$TMP_PATH2/nftset"
@@ -828,32 +827,30 @@ add_firewall_rule() {
 	gen_nftset $NFTSET_BLOCKLIST6 ipv6_addr "2d" 0 $(cat $RULES_PATH/block_ip | tr -s '\n' | grep -v "^#" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
 	gen_nftset $NFTSET_SHUNTLIST6 ipv6_addr "2d" 0
 
-	#分流规则的IP列表
-	process_shunt_rules() {
-		local _node=$1
-		local node_protocol=$(config_n_get $_node protocol)
-		if [ "$node_protocol" = "_shunt" ]; then
-			local default_node_id=$(config_n_get $_node default_node "_direct")
-			local shunt_ids=$(uci show $CONFIG | grep "=shunt_rules" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}')
-			for shunt_id in $shunt_ids; do
-				local _node_id=$(config_n_get $_node $shunt_id "nil")
-				[ "$_node_id" != "nil" ] && {
-					[ "$_node_id" = "_default" ] && _node_id=$default_node_id
-					if [ "$_node_id" = "_direct" ]; then
-						insert_nftset $NFTSET_WHITELIST "0" $(config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
-						insert_nftset $NFTSET_WHITELIST6 "0" $(config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
-					else
-						insert_nftset $NFTSET_SHUNTLIST "0" $(config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
-						[ "$PROXY_IPV6" = "1" ] && {
-							insert_nftset $NFTSET_SHUNTLIST6 "0" $(config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
-						}
-					fi
-				}
+	#分流规则的IP列表(使用分流节点时导入)
+	local USE_SHUNT_NODE=0
+	for _node in $TCP_NODE $UDP_NODE; do
+		node_protocol=$(config_n_get $_node protocol)
+		[ "$node_protocol" = "_shunt" ] && { USE_SHUNT_NODE=1; break; }
+	done
+	[ "$USE_SHUNT_NODE" = "0" ] && {
+		for acl_section in $(uci show ${CONFIG} | grep "=acl_rule" | cut -d '.' -sf 2 | cut -d '=' -sf 1); do
+			[ "$(config_n_get $acl_section enabled)" != "1" ] && continue
+			for _node in $(config_n_get $acl_section tcp_node) $(config_n_get $acl_section udp_node); do
+				node_protocol=$(config_n_get $_node protocol)
+				[ "$node_protocol" = "_shunt" ] && { USE_SHUNT_NODE=1; break 2; }
 			done
-		fi
+		done
 	}
-	[ "$TCP_NODE" ] && process_shunt_rules $TCP_NODE
-	[ "$UDP_NODE" ] && [ "$TCP_UDP" = "0" ] && process_shunt_rules $UDP_NODE
+	[ "$USE_SHUNT_NODE" = "1" ] && {
+		local shunt_ids=$(uci show $CONFIG | grep "=shunt_rules" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}')
+		for shunt_id in $shunt_ids; do
+			insert_nftset $NFTSET_SHUNTLIST "0" $(config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
+			[ "$PROXY_IPV6" = "1" ] && {
+				insert_nftset $NFTSET_SHUNTLIST6 "0" $(config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
+			}
+		done
+	}
 
 	# 忽略特殊IP段
 	local lan_ifname lan_ip
