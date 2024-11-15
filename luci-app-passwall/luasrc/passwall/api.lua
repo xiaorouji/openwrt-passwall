@@ -987,7 +987,11 @@ function to_move(app_name,file)
 end
 
 function get_version()
-	return sys.exec("echo -n $(opkg list-installed luci-app-passwall |awk '{print $3}')")
+	local version = sys.exec("opkg list-installed luci-app-passwall 2>/dev/null | awk '{print $3}'")
+	if not version or #version == 0 then
+		version = sys.exec("apk info luci-app-passwall 2>/dev/null | awk '{print $2}'")
+	end
+	return version or ""
 end
 
 function to_check_self()
