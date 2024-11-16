@@ -22,30 +22,23 @@ function gen_outbound(flag, node, tag, proxy_table)
 	local result = nil
 	if node and node ~= "nil" then
 		local node_id = node[".name"]
-		if tag == nil then
-			tag = node_id
-		end
+		local node_remarks = node.remarks
 
-		local proxy = 0
-		local proxy_tag = "nil"
+		local proxy_tag = nil
 		if proxy_table ~= nil and type(proxy_table) == "table" then
-			proxy = proxy_table.proxy or 0
-			proxy_tag = proxy_table.tag or "nil"
-		end
-
-		if node.type == "sing-box" then
-			proxy = 0
-			if proxy_tag ~= "nil" then
-				node.detour = proxy_tag
-			end
+			proxy_tag = proxy_table.tag or nil
 		end
 
 		if node.type ~= "sing-box" then
+			local config_tag = tag
+			if config_tag == nil then
+				config_tag = node_id
+			end
 			local relay_port = node.port
 			new_port = get_new_port()
-			local config_file = string.format("%s_%s_%s.json", flag, tag, new_port)
-			if tag and node_id and tag ~= node_id then
-				config_file = string.format("%s_%s_%s_%s.json", flag, tag, node_id, new_port)
+			local config_file = string.format("%s_%s_%s.json", flag, config_tag, new_port)
+			if config_tag and node_id and config_tag ~= node_id then
+				config_file = string.format("%s_%s_%s_%s.json", flag, config_tag, node_id, new_port)
 			end
 			sys.call(string.format('/usr/share/%s/app.sh run_socks "%s"> /dev/null',
 				appname,
@@ -55,7 +48,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 					"127.0.0.1", --bind
 					new_port, --socks port
 					config_file, --config file
-					(proxy == 1 and relay_port) and tostring(relay_port) or "" --relay port
+					(proxy_tag and proxy_tag ~= "nil" and relay_port) and tostring(relay_port) or "" --relay port
 					)
 				)
 			)
@@ -64,11 +57,19 @@ function gen_outbound(flag, node, tag, proxy_table)
 				address = "127.0.0.1",
 				port = new_port
 			}
+		else
+			if proxy_tag and proxy_tag ~= "nil" then
+				node.detour = proxy_tag
+			end
+		end
+
+		if tag == nil then
+			tag = node_id .. "_" .. node_remarks
 		end
 
 		result = {
-			_flag_tag = node_id,
-			_flag_proxy = proxy,
+			_id = node_id,
+			_flag = flag,
 			_flag_proxy_tag = proxy_tag,
 			tag = tag,
 			type = node.protocol,
@@ -778,6 +779,7 @@ function gen_config(var)
 	local dns = nil
 	local inbounds = {}
 	local outbounds = {}
+	local COMMON = {}
 
 	local singbox_settings = uci:get_all(appname, "@global_singbox[0]") or {}
 
@@ -797,7 +799,6 @@ function gen_config(var)
 
 	local experimental = nil
 
-	local default_outTag = nil
 	if node_id then
 		local node = uci:get_all(appname, node_id)
 		if node then
@@ -1000,7 +1001,7 @@ function gen_config(var)
 						local proxy = preproxy_enabled and node[rule_name .. "_proxy_tag"] == preproxy_tag and _node_id ~= preproxy_node_id
 						local copied_outbound
 						for index, value in ipairs(outbounds) do
-							if value["_flag_tag"] == _node_id and value["_flag_proxy_tag"] == preproxy_tag then
+							if value["_id"] == _node_id and value["_flag_proxy_tag"] == preproxy_tag then
 								copied_outbound = api.clone(value)
 								break
 							end
@@ -1036,23 +1037,23 @@ function gen_config(var)
 									})
 								end
 							end
-							local _outbound = gen_outbound(flag, _node, rule_name, { proxy = proxy and 1 or 0, tag = proxy and preproxy_tag or nil })
+							local outbound_tag = rule_name .. ":" .. _node.remarks
+							local _outbound = gen_outbound(flag, _node, outbound_tag, { tag = proxy and preproxy_tag or nil })
 							if _outbound then
-								set_outbound_detour(_node, _outbound, outbounds, rule_name)
+								rule_outboundTag = set_outbound_detour(_node, _outbound, outbounds, outbound_tag)
 								table.insert(outbounds, _outbound)
-								rule_outboundTag = rule_name
 							end
 						end
 					elseif _node.protocol == "_iface" then
 						if _node.iface then
 							local _outbound = {
 								type = "direct",
-								tag = rule_name,
+								tag = rule_name .. ":" .. _node.remarks,
 								bind_interface = _node.iface,
 								routing_mark = 255,
 							}
 							table.insert(outbounds, _outbound)
-							rule_outboundTag = rule_name
+							rule_outboundTag = _outbound.tag
 							sys.call("touch /tmp/etc/passwall/iface/" .. _node.iface)
 						end
 					end
@@ -1211,8 +1212,7 @@ function gen_config(var)
 			end)
 
 			if default_outboundTag then
-				route.final = default_outboundTag
-				default_outTag = default_outboundTag
+				COMMON.default_outbound_tag = default_outboundTag
 			end
 
 			for index, value in ipairs(rules) do
@@ -1222,23 +1222,25 @@ function gen_config(var)
 			if node.iface then
 				local outbound = {
 					type = "direct",
-					tag = node_id,
+					tag = node.remarks or node_id,
 					bind_interface = node.iface,
 					routing_mark = 255,
 				}
 				table.insert(outbounds, outbound)
-				default_outTag = outbound.tag
-				route.final = default_outTag
+				COMMON.default_outbound_tag = outbound.tag
 				sys.call("touch /tmp/etc/passwall/iface/" .. node.iface)
 			end
 		else
 			local outbound = gen_outbound(flag, node)
 			if outbound then
-				default_outTag = set_outbound_detour(node, outbound, outbounds)
+				COMMON.default_outbound_tag = set_outbound_detour(node, outbound, outbounds)
 				table.insert(outbounds, outbound)
-				route.final = default_outTag
 			end
 		end
+	end
+
+	if COMMON.default_outbound_tag then
+		route.final = COMMON.default_outbound_tag
 	end
 
 	if dns_listen_port then
@@ -1265,6 +1267,8 @@ function gen_config(var)
 				server = dns_socks_address,
 				server_port = tonumber(dns_socks_port)
 			})
+		else 
+			default_outTag = COMMON.default_outbound_tag
 		end
 
 		local remote_strategy = "prefer_ipv6"
@@ -1406,7 +1410,7 @@ function gen_config(var)
 					}
 					if value.outboundTag ~= "block" and value.outboundTag ~= "direct" then
 						dns_rule.server = "remote"
-						if value.outboundTag ~= "default" and remote_server.address then
+						if value.outboundTag ~= COMMON.default_outbound_tag and remote_server.address then
 							local remote_dns_server = api.clone(remote_server)
 							remote_dns_server.tag = value.outboundTag
 							remote_dns_server.detour = value.outboundTag
