@@ -65,7 +65,14 @@ function gen_config(var)
 		transport = {
 			type = node.protocol or "udp",
 			udp = {
-				hopInterval = node.hysteria2_hop_interval and node.hysteria2_hop_interval .. "s" or "30s"
+				hopInterval = (function()
+							local HopIntervalStr = tostring(node.hysteria2_hop_interval or "30s")
+							local HopInterval = tonumber(HopIntervalStr:match("^%d+"))
+							if HopInterval and HopInterval >= 5 then
+								return tostring(HopInterval) .. "s"
+							end
+							return "30s"
+						end)(),
 			}
 		},
 		obfs = (node.hysteria2_obfs) and {
@@ -83,7 +90,14 @@ function gen_config(var)
 		quic = {
 			initStreamReceiveWindow = (node.hysteria2_recv_window) and tonumber(node.hysteria2_recv_window) or nil,
 			initConnReceiveWindow = (node.hysteria2_recv_window_conn) and tonumber(node.hysteria2_recv_window_conn) or nil,
-			maxIdleTimeout = (node.hysteria2_idle_timeout) and tonumber(node.hysteria2_idle_timeout) or nil,
+			maxIdleTimeout = (function()
+						local timeoutStr = tostring(node.hysteria2_idle_timeout or "")
+						local timeout = tonumber(timeoutStr:match("^%d+"))
+						if timeout and timeout >= 4 and timeout <= 120 then
+							return tostring(timeout) .. "s"
+						end
+						return nil
+					end)(),
 			disablePathMTUDiscovery = (node.hysteria2_disable_mtu_discovery) and true or false,
 		},
 		bandwidth = (node.hysteria2_up_mbps or node.hysteria2_down_mbps) and {
