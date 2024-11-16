@@ -22,7 +22,9 @@ function gen_outbound(flag, node, tag, proxy_table)
 	local result = nil
 	if node and node ~= "nil" then
 		local node_id = node[".name"]
-		local node_remarks = node.remarks
+		if tag == nil then
+			tag = node_id
+		end
 
 		local proxy_tag = nil
 		if proxy_table ~= nil and type(proxy_table) == "table" then
@@ -30,15 +32,11 @@ function gen_outbound(flag, node, tag, proxy_table)
 		end
 
 		if node.type ~= "sing-box" then
-			local config_tag = tag
-			if config_tag == nil then
-				config_tag = node_id
-			end
 			local relay_port = node.port
 			new_port = get_new_port()
-			local config_file = string.format("%s_%s_%s.json", flag, config_tag, new_port)
-			if config_tag and node_id and config_tag ~= node_id then
-				config_file = string.format("%s_%s_%s_%s.json", flag, config_tag, node_id, new_port)
+			local config_file = string.format("%s_%s_%s.json", flag, tag, new_port)
+			if tag and node_id and tag ~= node_id then
+				config_file = string.format("%s_%s_%s_%s.json", flag, tag, node_id, new_port)
 			end
 			sys.call(string.format('/usr/share/%s/app.sh run_socks "%s"> /dev/null',
 				appname,
@@ -61,10 +59,6 @@ function gen_outbound(flag, node, tag, proxy_table)
 			if proxy_tag and proxy_tag ~= "nil" then
 				node.detour = proxy_tag
 			end
-		end
-
-		if tag == nil then
-			tag = node_id .. "_" .. node_remarks
 		end
 
 		result = {
@@ -934,37 +928,10 @@ function gen_config(var)
 			local rules = {}
 
 			local preproxy_enabled = node.preproxy_enabled == "1"
+			local preproxy_rule_name = "main"
 			local preproxy_tag = "main"
 			local preproxy_node_id = node["main_node"]
 			local preproxy_node = preproxy_enabled and preproxy_node_id and uci:get_all(appname, preproxy_node_id) or nil
-
-			if preproxy_node_id and preproxy_node_id:find("Socks_") then
-				local socks_id = preproxy_node_id:sub(1 + #"Socks_")
-				local socks_node = uci:get_all(appname, socks_id) or nil
-				if socks_node then
-					local _node = {
-						type = "sing-box",
-						protocol = "socks",
-						address = "127.0.0.1",
-						port = socks_node.port,
-						uot = "1",
-					}
-					local preproxy_outbound = gen_outbound(flag, _node, preproxy_tag)
-					if preproxy_outbound then
-						table.insert(outbounds, preproxy_outbound)
-					else
-						preproxy_enabled = false
-					end
-				end
-			elseif preproxy_node and api.is_normal_node(preproxy_node) then
-				local preproxy_outbound = gen_outbound(flag, preproxy_node, preproxy_tag)
-				if preproxy_outbound then
-					set_outbound_detour(preproxy_node, preproxy_outbound, outbounds, preproxy_tag)
-					table.insert(outbounds, preproxy_outbound)
-				else
-					preproxy_enabled = false
-				end
-			end
 
 			local function gen_shunt_node(rule_name, _node_id)
 				if not rule_name then return nil, nil end
@@ -989,8 +956,9 @@ function gen_config(var)
 						}
 						local _outbound = gen_outbound(flag, _node, rule_name)
 						if _outbound then
+							_outbound.tag = _outbound.tag .. ":" .. _node.remarks
 							table.insert(outbounds, _outbound)
-							rule_outboundTag = rule_name
+							rule_outboundTag = _outbound.tag
 						end
 					end
 				elseif _node_id ~= "nil" then
@@ -998,7 +966,7 @@ function gen_config(var)
 					if not _node then return nil, nil end
 
 					if api.is_normal_node(_node) then
-						local proxy = preproxy_enabled and node[rule_name .. "_proxy_tag"] == preproxy_tag and _node_id ~= preproxy_node_id
+						local proxy = preproxy_enabled and node[rule_name .. "_proxy_tag"] == preproxy_rule_name and _node_id ~= preproxy_node_id
 						local copied_outbound
 						for index, value in ipairs(outbounds) do
 							if value["_id"] == _node_id and value["_flag_proxy_tag"] == preproxy_tag then
@@ -1007,9 +975,9 @@ function gen_config(var)
 							end
 						end
 						if copied_outbound then
-							copied_outbound.tag = rule_name
+							copied_outbound.tag = rule_name .. ":" .. _node.remarks
 							table.insert(outbounds, copied_outbound)
-							rule_outboundTag = rule_name
+							rule_outboundTag = copied_outbound.tag
 						else
 							if proxy then
 								local pre_proxy = nil
@@ -1037,10 +1005,11 @@ function gen_config(var)
 									})
 								end
 							end
-							local outbound_tag = rule_name .. ":" .. _node.remarks
-							local _outbound = gen_outbound(flag, _node, outbound_tag, { tag = proxy and preproxy_tag or nil })
+							
+							local _outbound = gen_outbound(flag, _node, rule_name, { tag = proxy and preproxy_tag or nil })
 							if _outbound then
-								rule_outboundTag = set_outbound_detour(_node, _outbound, outbounds, outbound_tag)
+								_outbound.tag = _outbound.tag .. ":" .. _node.remarks
+								rule_outboundTag = set_outbound_detour(_node, _outbound, outbounds, rule_name)
 								table.insert(outbounds, _outbound)
 							end
 						end
@@ -1060,15 +1029,24 @@ function gen_config(var)
 				end
 				return rule_outboundTag
 			end
+
+			if preproxy_node then
+				local preproxy_outboundTag = gen_shunt_node(preproxy_rule_name, preproxy_node_id)
+				if preproxy_outboundTag then
+					preproxy_tag = preproxy_outboundTag
+				else
+					preproxy_node = nil
+				end
+			end
 			--default_node
 			local default_node_id = node.default_node or "_direct"
-			local default_outboundTag = gen_shunt_node("default", default_node_id)
+			COMMON.default_outbound_tag = gen_shunt_node("default", default_node_id)
 			--shunt rule
 			uci:foreach(appname, "shunt_rules", function(e)
 				local outboundTag = gen_shunt_node(e[".name"])
 				if outboundTag and e.remarks then
 					if outboundTag == "default" then
-						outboundTag = default_outboundTag
+						outboundTag = COMMON.default_outbound_tag
 					end
 					local protocols = nil
 					if e["protocol"] and e["protocol"] ~= "" then
@@ -1211,10 +1189,6 @@ function gen_config(var)
 				end
 			end)
 
-			if default_outboundTag then
-				COMMON.default_outbound_tag = default_outboundTag
-			end
-
 			for index, value in ipairs(rules) do
 				table.insert(route.rules, rules[index])
 			end
@@ -1233,6 +1207,7 @@ function gen_config(var)
 		else
 			local outbound = gen_outbound(flag, node)
 			if outbound then
+				outbound.tag = outbound.tag .. ":" .. node.remarks
 				COMMON.default_outbound_tag = set_outbound_detour(node, outbound, outbounds)
 				table.insert(outbounds, outbound)
 			end

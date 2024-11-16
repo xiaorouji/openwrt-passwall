@@ -50,7 +50,9 @@ function gen_outbound(flag, node, tag, proxy_table)
 	local result = nil
 	if node and node ~= "nil" then
 		local node_id = node[".name"]
-		local node_remarks = node.remarks
+		if tag == nil then
+			tag = node_id
+		end
 
 		local proxy_tag = nil
 		local fragment = nil
@@ -66,15 +68,11 @@ function gen_outbound(flag, node, tag, proxy_table)
 				node.protocol = "socks"
 				node.transport = "tcp"
 			else
-				local config_tag = tag
-				if config_tag == nil then
-					config_tag = node_id
-				end
 				local relay_port = node.port
 				new_port = get_new_port()
-				local config_file = string.format("%s_%s_%s.json", flag, config_tag, new_port)
-				if config_tag and node_id and config_tag ~= node_id then
-					config_file = string.format("%s_%s_%s_%s.json", flag, config_tag, node_id, new_port)
+				local config_file = string.format("%s_%s_%s.json", flag, tag, new_port)
+				if tag and node_id and tag ~= node_id then
+					config_file = string.format("%s_%s_%s_%s.json", flag, tag, node_id, new_port)
 				end
 				sys.call(string.format('/usr/share/%s/app.sh run_socks "%s"> /dev/null',
 					appname,
@@ -137,10 +135,6 @@ function gen_outbound(flag, node, tag, proxy_table)
 				end
 			end
 			node.wireguard_reserved = #bytes > 0 and bytes or nil
-		end
-
-		if tag == nil then
-			tag = node_id .. "_" .. node_remarks
 		end
 
 		result = {
@@ -767,6 +761,7 @@ function gen_config(var)
 					local blc_node = uci:get_all(appname, blc_node_id)
 					local outbound = gen_outbound(flag, blc_node, blc_node_tag, { fragment = xray_settings.fragment == "1" or nil, noise = xray_settings.noise == "1" or nil })
 					if outbound then
+						outbound.tag = outbound.tag .. ":" .. blc_node.remarks
 						table.insert(outbounds, outbound)
 						valid_nodes[#valid_nodes + 1] = blc_node_tag
 					end
@@ -790,6 +785,7 @@ function gen_config(var)
 					if fallback_node.protocol ~= "_balancing" then
 						local outbound = gen_outbound(flag, fallback_node, fallback_node_id, { fragment = xray_settings.fragment == "1" or nil, noise = xray_settings.noise == "1" or nil })
 						if outbound then
+							outbound.tag = outbound.tag .. ":" .. fallback_node.remarks
 							table.insert(outbounds, outbound)
 						else
 							fallback_node_id = nil
@@ -851,10 +847,11 @@ function gen_config(var)
 		end
 
 		if node.protocol == "_shunt" then
-			local proxy_tag = node.preproxy_enabled == "1" and "main" or nil
-			local proxy_node_id = proxy_tag and node["main_node"] or nil
-			local proxy_balancer_tag
-			local proxy_nodes
+			local preproxy_rule_name = node.preproxy_enabled == "1" and "main" or nil
+			local preproxy_tag = preproxy_rule_name
+			local preproxy_node_id = preproxy_rule_name and node["main_node"] or nil
+			local preproxy_outbound_tag, preproxy_balancer_tag
+			local preproxy_nodes
 
 			local function gen_shunt_node(rule_name, _node_id)
 				if not rule_name then return nil, nil end
@@ -894,11 +891,11 @@ function gen_config(var)
 				if not _node then return nil, nil end
 
 				if api.is_normal_node(_node) then
-					local use_proxy = proxy_tag and node[rule_name .. "_proxy_tag"] == proxy_tag and _node_id ~= proxy_node_id
-					if use_proxy and proxy_balancer_tag and proxy_nodes[_node_id] then use_proxy = false end
+					local use_proxy = preproxy_tag and node[rule_name .. "_proxy_tag"] == preproxy_rule_name and _node_id ~= preproxy_node_id
+					if use_proxy and preproxy_balancer_tag and preproxy_nodes[_node_id] then use_proxy = false end
 					local copied_outbound
 					for index, value in ipairs(outbounds) do
-						if value["_id"] == _node_id and value["_flag_proxy_tag"] == (use_proxy and proxy_tag or nil) then
+						if value["_id"] == _node_id and value["_flag_proxy_tag"] == (use_proxy and preproxy_tag or nil) then
 							copied_outbound = api.clone(value)
 							break
 						end
@@ -925,12 +922,12 @@ function gen_config(var)
 						_node.port = new_port
 						table.insert(rules, 1, {
 							inboundTag = {"proxy_" .. rule_name},
-							outboundTag = not proxy_balancer_tag and proxy_tag or nil,
-							balancerTag = proxy_balancer_tag
+							outboundTag = not preproxy_balancer_tag and preproxy_tag or nil,
+							balancerTag = preproxy_balancer_tag
 						})
 					end
 					local proxy_table = {
-						tag = use_proxy and proxy_tag or nil
+						tag = use_proxy and preproxy_tag or nil
 					}
 					if not proxy_table.tag then
 						if xray_settings.fragment == "1" then
@@ -940,16 +937,16 @@ function gen_config(var)
 							proxy_table.noise = true
 						end
 					end
-					local outbound = gen_outbound(flag, _node, rule_name .. ":" .. _node.remarks, proxy_table)
+					local outbound = gen_outbound(flag, _node, rule_name, proxy_table)
 					local outbound_tag
 					if outbound then
-						set_outbound_detour(_node, outbound, outbounds, rule_name)
+						outbound.tag = outbound.tag .. ":" .. _node.remarks
+						outbound_tag = set_outbound_detour(_node, outbound, outbounds, rule_name)
 						if rule_name == "default" then
 							table.insert(outbounds, 1, outbound)
 						else
 							table.insert(outbounds, outbound)
 						end
-						outbound_tag = outbound.tag
 					end
 					return outbound_tag, nil
 				elseif _node.protocol == "_balancing" then
@@ -973,26 +970,24 @@ function gen_config(var)
 				end
 			end
 
-			--proxy_node
-			if proxy_tag and proxy_node_id then
-				local proxy_outbound_tag
-				proxy_outbound_tag, proxy_balancer_tag = gen_shunt_node(proxy_tag, proxy_node_id)
-				if proxy_balancer_tag then
-					local _node_id = proxy_node_id
-					proxy_nodes = {}
+			if preproxy_tag and preproxy_node_id then
+				preproxy_outbound_tag, preproxy_balancer_tag = gen_shunt_node(preproxy_rule_name, preproxy_node_id)
+				if preproxy_balancer_tag then
+					local _node_id = preproxy_node_id
+					preproxy_nodes = {}
 					while _node_id do
 						_node = uci:get_all(appname, _node_id)
 						if not _node then break end
 						if _node.protocol ~= "_balancing" then
-							proxy_nodes[_node_id] = true
+							preproxy_nodes[_node_id] = true
 							break
 						end
 						local _blc_nodes = _node.balancing_node
-						for i = 1, #_blc_nodes do proxy_nodes[_blc_nodes[i]] = true end
+						for i = 1, #_blc_nodes do preproxy_nodes[_blc_nodes[i]] = true end
 						_node_id = _node.fallback_node
 					end
 				else
-					proxy_tag = proxy_outbound_tag
+					preproxy_tag = preproxy_outbound_tag
 				end
 			end
 			--default_node
@@ -1133,6 +1128,7 @@ function gen_config(var)
 		else
 			local outbound = gen_outbound(flag, node, nil, { fragment = xray_settings.fragment == "1" or nil, noise = xray_settings.fragment == "1" or nil })
 			if outbound then
+				outbound.tag = outbound.tag .. ":" .. node.remarks
 				COMMON.default_outbound_tag = set_outbound_detour(node, outbound, outbounds)
 				table.insert(outbounds, outbound)
 			end
