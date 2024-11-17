@@ -53,10 +53,34 @@ local function insert_unique(dest_table, value, lookup_table)
 	end
 end
 
-local function merge_array(lines1, lines2)
-	for i, line in ipairs(lines2) do
-		table.insert(lines1, #lines1 + 1, line)
+local function merge_array(array1, array2)
+	for i, line in ipairs(array2) do
+		table.insert(array1, #array1 + 1, line)
 	end
+end
+
+local function insert_array_before(array1, array2, target) --将array2插入到array1的target前面，target不存在则追加
+	for i, line in ipairs(array1) do
+		if line == target then
+			for j = #array2, 1, -1 do
+				table.insert(array1, i, array2[j])
+			end
+			return
+		end
+	end
+	merge_array(array1, array2)
+end
+
+local function insert_array_after(array1, array2, target) --将array2插入到array1的target后面，target不存在则追加
+	for i, line in ipairs(array1) do
+		if line == target then
+			for j = 1, #array2 do
+				table.insert(array1, i + j, array2[j])
+			end
+			return
+		end
+	end
+	merge_array(array1, array2)
 end
 
 if not fs.access(TMP_ACL_PATH) then
@@ -74,6 +98,7 @@ config_lines = {
 	"filter-qtype 65"
 }
 
+--内置组(chn/gfw)优先级在自定义组后
 --GFW列表
 if GFWLIST == "1" and is_file_nonzero(RULES_PATH .. "/gfwlist") then
 	tmp_lines = {
@@ -114,35 +139,6 @@ if CHNLIST ~= "0" and is_file_nonzero(RULES_PATH .. "/chnlist") then
 end
 
 --自定义规则组，后声明的组具有更高优先级
---直连（白名单）列表
-local file_direct_host = TMP_ACL_PATH .. "/direct_host"
-if USE_DIRECT_LIST == "1" and not fs.access(file_direct_host) then   --对自定义列表进行清洗
-	local direct_domain, lookup_direct_domain = {}, {}
-	for line in io.lines(RULES_PATH .. "/direct_host") do
-		line = api.get_std_domain(line)
-		if line ~= "" and not line:find("#") then
-			insert_unique(direct_domain, line, lookup_direct_domain)
-		end
-	end
-	if #direct_domain > 0 then
-		local f_out = io.open(file_direct_host, "w")
-		for i = 1, #direct_domain do
-			f_out:write(direct_domain[i] .. "\n")
-		end
-		f_out:close()
-	end
-end
-if USE_DIRECT_LIST == "1" and is_file_nonzero(file_direct_host) then
-	tmp_lines = {
-		"group directlist",
-		"group-dnl " .. file_direct_host,
-		"group-upstream " .. DNS_LOCAL,
-		"group-ipset " .. setflag .. "passwall_whitelist," .. setflag .. "passwall_whitelist6"
-	}
-	merge_array(config_lines, tmp_lines)
-	log(string.format("  - 域名白名单(whitelist)：%s", DNS_LOCAL or "默认"))
-end
-
 --代理（黑名单）列表
 local file_proxy_host = TMP_ACL_PATH .. "/proxy_host"
 if USE_PROXY_LIST == "1" and not fs.access(file_proxy_host) then   --对自定义列表进行清洗
@@ -171,6 +167,35 @@ if USE_PROXY_LIST == "1" and is_file_nonzero(file_proxy_host) then
 	merge_array(config_lines, tmp_lines)
 	if NO_IPV6_TRUST == "1" then table.insert(config_lines, "no-ipv6 tag:proxylist") end
 	log(string.format("  - 代理域名表(blacklist)：%s", DNS_TRUST or "默认"))
+end
+
+--直连（白名单）列表
+local file_direct_host = TMP_ACL_PATH .. "/direct_host"
+if USE_DIRECT_LIST == "1" and not fs.access(file_direct_host) then   --对自定义列表进行清洗
+	local direct_domain, lookup_direct_domain = {}, {}
+	for line in io.lines(RULES_PATH .. "/direct_host") do
+		line = api.get_std_domain(line)
+		if line ~= "" and not line:find("#") then
+			insert_unique(direct_domain, line, lookup_direct_domain)
+		end
+	end
+	if #direct_domain > 0 then
+		local f_out = io.open(file_direct_host, "w")
+		for i = 1, #direct_domain do
+			f_out:write(direct_domain[i] .. "\n")
+		end
+		f_out:close()
+	end
+end
+if USE_DIRECT_LIST == "1" and is_file_nonzero(file_direct_host) then
+	tmp_lines = {
+		"group directlist",
+		"group-dnl " .. file_direct_host,
+		"group-upstream " .. DNS_LOCAL,
+		"group-ipset " .. setflag .. "passwall_whitelist," .. setflag .. "passwall_whitelist6"
+	}
+	merge_array(config_lines, tmp_lines)
+	log(string.format("  - 域名白名单(whitelist)：%s", DNS_LOCAL or "默认"))
 end
 
 --屏蔽列表
@@ -299,15 +324,8 @@ if uci:get(appname, TCP_NODE, "protocol") == "_shunt" then
 			"group-ipset " .. setflag .. "passwall_shuntlist," .. setflag .. "passwall_shuntlist6"
 		}
 		if NO_IPV6_TRUST == "1" then table.insert(tmp_lines, "no-ipv6 tag:shuntlist") end
-		-- 在 "filter-qtype 65" 后插入 tmp_lines （shuntlist优先级最低）
-		for i, line in ipairs(config_lines) do
-			if line == "filter-qtype 65" then
-				for j, tmp_line in ipairs(tmp_lines) do
-					table.insert(config_lines, i + j, tmp_line)
-				end
-				break
-			end
-		end
+		-- 在 "filter-qtype 65" 后插入 tmp_lines (shuntlist在自定义组中优先级最低)
+		insert_array_after(config_lines, tmp_lines, "filter-qtype 65")
 	end
 
 end
