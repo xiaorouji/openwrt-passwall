@@ -321,7 +321,7 @@ o = s:option(ListValue, option_name("flow"), translate("flow"))
 o.default = ""
 o:value("", translate("Disable"))
 o:value("xtls-rprx-vision")
-o:depends({ [option_name("protocol")] = "vless", [option_name("tls")] = true, [option_name("transport")] = "tcp" })
+o:depends({ [option_name("protocol")] = "vless", [option_name("tls")] = true, [option_name("transport")] = "raw" })
 
 o = s:option(Flag, option_name("tls"), translate("TLS"))
 o.default = 0
