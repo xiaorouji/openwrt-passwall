@@ -267,7 +267,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 								level = 0,
 								security = (node.protocol == "vmess") and node.security or nil,
 								encryption = node.encryption or "none",
-								flow = (node.protocol == "vless" and node.tls == "1" and node.transport == "tcp" and node.flow and node.flow ~= "") and node.flow or nil
+								flow = (node.protocol == "vless" and node.tls == "1" and node.transport == "raw" and node.flow and node.flow ~= "") and node.flow or nil
 							}
 						}
 					}
@@ -370,7 +370,7 @@ function gen_config_server(node)
 			for i = 1, #node.uuid do
 				clients[i] = {
 					id = node.uuid[i],
-					flow = ("vless" == node.protocol and "1" == node.tls and "tcp" == node.transport and node.flow and node.flow ~= "") and node.flow or nil
+					flow = ("vless" == node.protocol and "1" == node.tls and "raw" == node.transport and node.flow and node.flow ~= "") and node.flow or nil
 				}
 			end
 			settings = {
