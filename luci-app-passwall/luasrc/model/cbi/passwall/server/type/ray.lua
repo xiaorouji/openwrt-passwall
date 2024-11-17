@@ -109,7 +109,7 @@ o = s:option(ListValue, option_name("flow"), translate("flow"))
 o.default = ""
 o:value("", translate("Disable"))
 o:value("xtls-rprx-vision")
-o:depends({ [option_name("protocol")] = "vless", [option_name("tls")] = true, [option_name("transport")] = "tcp" })
+o:depends({ [option_name("protocol")] = "vless", [option_name("tls")] = true, [option_name("transport")] = "RAW" })
 
 o = s:option(Flag, option_name("tls"), translate("TLS"))
 o.default = 0
@@ -198,7 +198,7 @@ o.validate = function(self, value, t)
 end
 
 o = s:option(ListValue, option_name("transport"), translate("Transport"))
-o:value("tcp", "TCP")
+o:value("raw", "RAW")
 o:value("mkcp", "mKCP")
 o:value("ws", "WebSocket")
 o:value("h2", "HTTP/2")
@@ -206,7 +206,7 @@ o:value("ds", "DomainSocket")
 o:value("quic", "QUIC")
 o:value("grpc", "gRPC")
 o:value("httpupgrade", "HttpUpgrade")
-o:value("splithttp", "SplitHTTP")
+o:value("xhttp", "XHTTP")
 o:depends({ [option_name("protocol")] = "vmess" })
 o:depends({ [option_name("protocol")] = "vless" })
 o:depends({ [option_name("protocol")] = "socks" })
@@ -230,12 +230,20 @@ o.placeholder = "/"
 o:depends({ [option_name("transport")] = "httpupgrade" })
 
 -- [[ SplitHTTP部分 ]]--
-o = s:option(Value, option_name("splithttp_host"), translate("SplitHTTP Host"))
-o:depends({ [option_name("transport")] = "splithttp" })
+o = s:option(Value, option_name("xhttp_host"), translate("XHTTP Host"))
+o:depends({ [option_name("transport")] = "xhttp" })
 
-o = s:option(Value, option_name("splithttp_path"), translate("SplitHTTP Path"))
+o = s:option(Value, option_name("xhttp_path"), translate("XHTTP Path"))
 o.placeholder = "/"
-o:depends({ [option_name("transport")] = "splithttp" })
+o:depends({ [option_name("transport")] = "xhttp" })
+
+o = s:option(Value, option_name("xhttp_maxuploadsize"), translate("maxUploadSize"))
+o.default = "1000000"
+o:depends({ [option_name("transport")] = "xhttp" })
+
+o = s:option(Value, option_name("xhttp_maxconcurrentuploads"), translate("maxConcurrentUploads"))
+o.default = "10"
+o:depends({ [option_name("transport")] = "xhttp" })
 
 -- [[ HTTP/2部分 ]]--
 
@@ -251,7 +259,7 @@ o:depends({ [option_name("transport")] = "h2" })
 o = s:option(ListValue, option_name("tcp_guise"), translate("Camouflage Type"))
 o:value("none", "none")
 o:value("http", "http")
-o:depends({ [option_name("transport")] = "tcp" })
+o:depends({ [option_name("transport")] = "raw" })
 
 -- HTTP域名
 o = s:option(DynamicList, option_name("tcp_guise_http_host"), translate("HTTP Host"))
@@ -325,8 +333,8 @@ o.default = "0"
 
 -- [[ Fallback部分 ]]--
 o = s:option(Flag, option_name("fallback"), translate("Fallback"))
-o:depends({ [option_name("protocol")] = "vless", [option_name("transport")] = "tcp" })
-o:depends({ [option_name("protocol")] = "trojan", [option_name("transport")] = "tcp" })
+o:depends({ [option_name("protocol")] = "vless", [option_name("transport")] = "raw" })
+o:depends({ [option_name("protocol")] = "trojan", [option_name("transport")] = "raw" })
 
 --[[
 o = s:option(Value, option_name("fallback_alpn"), "Fallback alpn")

@@ -334,10 +334,10 @@ o:depends({ [option_name("protocol")] = "shadowsocks" })
 
 o = s:option(Flag, option_name("reality"), translate("REALITY"), translate("Only recommend to use with VLESS-TCP-XTLS-Vision."))
 o.default = 0
-o:depends({ [option_name("tls")] = true, [option_name("transport")] = "tcp" })
+o:depends({ [option_name("tls")] = true, [option_name("transport")] = "raw" })
 o:depends({ [option_name("tls")] = true, [option_name("transport")] = "h2" })
 o:depends({ [option_name("tls")] = true, [option_name("transport")] = "grpc" })
-o:depends({ [option_name("tls")] = true, [option_name("transport")] = "splithttp" })
+o:depends({ [option_name("tls")] = true, [option_name("transport")] = "xhttp" })
 
 o = s:option(ListValue, option_name("alpn"), translate("alpn"))
 o.default = "default"
@@ -393,7 +393,7 @@ o:depends({ [option_name("tls")] = true, [option_name("utls")] = true })
 o:depends({ [option_name("tls")] = true, [option_name("reality")] = true })
 
 o = s:option(ListValue, option_name("transport"), translate("Transport"))
-o:value("tcp", "TCP")
+o:value("raw", "RAW")
 o:value("mkcp", "mKCP")
 o:value("ws", "WebSocket")
 o:value("h2", "HTTP/2")
@@ -401,7 +401,7 @@ o:value("ds", "DomainSocket")
 o:value("quic", "QUIC")
 o:value("grpc", "gRPC")
 o:value("httpupgrade", "HttpUpgrade")
-o:value("splithttp", "SplitHTTP")
+o:value("xhttp", "XHTTP")
 o:depends({ [option_name("protocol")] = "vmess" })
 o:depends({ [option_name("protocol")] = "vless" })
 o:depends({ [option_name("protocol")] = "socks" })
@@ -433,13 +433,13 @@ o = s:option(Value, option_name("wireguard_keepAlive"), translate("Keep Alive"))
 o.default = "0"
 o:depends({ [option_name("protocol")] = "wireguard" })
 
--- [[ TCP部分 ]]--
+-- [[ RAW部分 ]]--
 
 -- TCP伪装
 o = s:option(ListValue, option_name("tcp_guise"), translate("Camouflage Type"))
 o:value("none", "none")
 o:value("http", "http")
-o:depends({ [option_name("transport")] = "tcp" })
+o:depends({ [option_name("transport")] = "raw" })
 
 -- HTTP域名
 o = s:option(DynamicList, option_name("tcp_guise_http_host"), translate("HTTP Host"))
@@ -567,17 +567,17 @@ o = s:option(Value, option_name("httpupgrade_path"), translate("HttpUpgrade Path
 o.placeholder = "/"
 o:depends({ [option_name("transport")] = "httpupgrade" })
 
--- [[ XHTTP(SplitHTTP)部分 ]]--
-o = s:option(Value, option_name("splithttp_host"), translate("SplitHTTP Host"))
-o:depends({ [option_name("transport")] = "splithttp" })
+-- [[ XHTTP部分 ]]--
+o = s:option(Value, option_name("xhttp_host"), translate("XHTTP Host"))
+o:depends({ [option_name("transport")] = "xhttp" })
 
-o = s:option(Value, option_name("splithttp_path"), translate("SplitHTTP Path"))
+o = s:option(Value, option_name("xhttp_path"), translate("XHTTP Path"))
 o.placeholder = "/"
-o:depends({ [option_name("transport")] = "splithttp" })
+o:depends({ [option_name("transport")] = "xhttp" })
 
 -- XHTTP XMUX
 o = s:option(Flag, option_name("xhttp_xmux"), "XMUX", translate("Enable XHTTP XMUX. It's not recommended to enable Mux.Cool at the same time."))
-o:depends({ [option_name("transport")] = "splithttp" })
+o:depends({ [option_name("transport")] = "xhttp" })
 
 o = s:option(Value, option_name("maxConcurrency"), translate("XMUX Max Concurrency"))
 o:depends({ [option_name("xhttp_xmux")] = true })
@@ -593,7 +593,7 @@ o:depends({ [option_name("xhttp_xmux")] = true })
 
 -- XHTTP 下行
 o = s:option(Flag, option_name("xhttp_download"), string.format('<a style="color:red">%s</a>', translate("XHTTP download splitting")))
-o:depends({ [option_name("transport")] = "splithttp" })
+o:depends({ [option_name("transport")] = "xhttp" })
 
 o = s:option(Value, option_name("xhttp_download_address"), string.format('<a style="color:red">%s</a>', translate("Address")))
 o:depends({ [option_name("xhttp_download")] = true })

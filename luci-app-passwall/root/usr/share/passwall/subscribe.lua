@@ -470,7 +470,7 @@ local function processData(szType, content, add_mode, add_from)
 			result.h2_host = info.host
 			result.h2_path = info.path
 		end
-		if info.net == 'tcp' then
+		if info.net == 'raw' or info.net == 'tcp' then
 			if info.type and info.type ~= "http" then
 				info.type = "none"
 			end
@@ -497,9 +497,9 @@ local function processData(szType, content, add_mode, add_from)
 		if info.net == 'grpc' then
 			result.grpc_serviceName = info.path
 		end
-		if info.net == 'splithttp' then
-			result.splithttp_host = info.host
-			result.splithttp_path = info.path
+		if info.net == 'xhttp' or info.net == 'splithttp' then
+			result.xhttp_host = info.host
+			result.xhttp_path = info.path
 		end
 		if info.net == 'httpupgrade' then
 			result.httpupgrade_host = info.host
@@ -514,7 +514,7 @@ local function processData(szType, content, add_mode, add_from)
 			result.tls = "0"
 		end
 
-		if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "splithttp") then
+		if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "xhttp" or result.transport == "raw" or result.transport == "splithttp") then
 			log("跳过节点:" .. result.remarks .."，因Sing-Box不支持" .. szType .. "协议的" .. result.transport .. "传输方式，需更换Xray。")
 			return nil
 		end
@@ -675,7 +675,7 @@ local function processData(szType, content, add_mode, add_from)
 							result.h2_path = params.path
 						end
 					end
-					if params.type == 'tcp' then
+					if params.type == 'raw' or params.type == 'tcp' then
 						result.tcp_guise = params.headerType or "none"
 						result.tcp_guise_http_host = params.host
 						result.tcp_guise_http_path = params.path
@@ -818,7 +818,7 @@ local function processData(szType, content, add_mode, add_from)
 					result.h2_path = params.path
 				end
 			end
-			if params.type == 'tcp' then
+			if params.type == 'raw' or params.type == 'tcp' then
 				result.tcp_guise = params.headerType or "none"
 				result.tcp_guise_http_host = params.host
 				result.tcp_guise_http_path = params.path
@@ -844,9 +844,9 @@ local function processData(szType, content, add_mode, add_from)
 				if params.serviceName then result.grpc_serviceName = params.serviceName end
 				result.grpc_mode = params.mode
 			end
-			if params.type == 'splithttp' then
-				result.splithttp_host = params.host
-				result.splithttp_path = params.path
+			if info.net == 'xhttp' or info.net == 'splithttp' then
+				result.xhttp_host = params.host
+				result.xhttp_path = params.path
 			end
 			if params.type == 'httpupgrade' then
 				result.httpupgrade_host = params.host
@@ -857,7 +857,7 @@ local function processData(szType, content, add_mode, add_from)
 
 			result.flow = params.flow or nil
 
-			if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "splithttp") then
+			if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "xhttp" or result.transport == "raw" or result.transport == "splithttp") then
 				log("跳过节点:" .. result.remarks .."，因Sing-Box不支持" .. szType .. "协议的" .. result.transport .. "传输方式，需更换Xray。")
 				return nil
 			end
@@ -955,7 +955,7 @@ local function processData(szType, content, add_mode, add_from)
 					result.h2_path = params.path
 				end
 			end
-			if params.type == 'tcp' then
+			if params.type == 'raw' or params.type == 'tcp' then
 				result.tcp_guise = params.headerType or "none"
 				result.tcp_guise_http_host = params.host
 				result.tcp_guise_http_path = params.path
@@ -981,9 +981,9 @@ local function processData(szType, content, add_mode, add_from)
 				if params.serviceName then result.grpc_serviceName = params.serviceName end
 				result.grpc_mode = params.mode
 			end
-			if params.type == 'splithttp' then
-				result.splithttp_host = params.host
-				result.splithttp_path = params.path
+			if info.net == 'xhttp' or info.net == 'splithttp' then
+				result.xhttp_host = params.host
+				result.xhttp_path = params.path
 			end
 			if params.type == 'httpupgrade' then
 				result.httpupgrade_host = params.host
@@ -1011,7 +1011,7 @@ local function processData(szType, content, add_mode, add_from)
 			result.port = port
 			result.tls_allowInsecure = allowInsecure_default and "1" or "0"
 
-			if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "splithttp") then
+			if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "xhttp" or result.transport == "raw" or result.transport == "splithttp") then
 				log("跳过节点:" .. result.remarks .."，因Sing-Box不支持" .. szType .. "协议的" .. result.transport .. "传输方式，需更换Xray。")
 				return nil
 			end
