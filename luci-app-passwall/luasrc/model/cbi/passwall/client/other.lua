@@ -161,6 +161,7 @@ if has_xray then
 	o = s_xray:option(ListValue, "fragment_packets", translate("Fragment Packets"), translate("\"1-3\" is for segmentation at TCP layer, applying to the beginning 1 to 3 data writes by the client. \"tlshello\" is for TLS client hello packet fragmentation."))
 	o.default = "tlshello"
 	o:value("tlshello", "tlshello")
+	o:value("1-1", "1-1")
 	o:value("1-2", "1-2")
 	o:value("1-3", "1-3")
 	o:value("1-5", "1-5")
