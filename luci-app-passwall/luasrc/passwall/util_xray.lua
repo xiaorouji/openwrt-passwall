@@ -966,6 +966,7 @@ function gen_config(var)
 				elseif _node.protocol == "_balancing" then
 					return nil, gen_balancer(_node, rule_name)
 				elseif _node.protocol == "_iface" then
+					local outbound_tag
 					if _node.iface then
 						local outbound = {
 							protocol = "freedom",
@@ -977,10 +978,11 @@ function gen_config(var)
 								}
 							}
 						}
+						outbound_tag = outbound.tag
 						table.insert(outbounds, outbound)
 						sys.call("touch /tmp/etc/passwall/iface/" .. _node.iface)
-						return outbound.tag, nil
 					end
+					return outbound_tag, nil
 				end
 			end
 
@@ -1006,16 +1008,16 @@ function gen_config(var)
 			end
 			--default_node
 			local default_node_id = node.default_node or "_direct"
-			local default_outbound_tag, default_balancer_tag = gen_shunt_node("default", default_node_id)
-			COMMON.default_outbound_tag = default_outbound_tag
-			COMMON.default_balancer_tag = default_balancer_tag
+			local default_outboundTag, default_balancerTag = gen_shunt_node("default", default_node_id)
+			COMMON.default_outbound_tag = default_outboundTag
+			COMMON.default_balancer_tag = default_balancerTag
 			--shunt rule
 			uci:foreach(appname, "shunt_rules", function(e)
 				local outbound_tag, balancer_tag = gen_shunt_node(e[".name"])
 				if outbound_tag or balancer_tag and e.remarks then
 					if outbound_tag == "default" then
-						outbound_tag = default_outbound_tag
-						balancer_tag = default_balancer_tag
+						outbound_tag = default_outboundTag
+						balancer_tag = default_balancerTag
 					end
 					local protocols = nil
 					if e["protocol"] and e["protocol"] ~= "" then
@@ -1095,16 +1097,6 @@ function gen_config(var)
 				end
 			end)
 
-		--[[
-			if default_outbound_tag or default_balancer_tag then
-				table.insert(rules, {
-					outboundTag = default_outbound_tag,
-					balancerTag = default_balancer_tag,
-					network = "tcp,udp"
-				})
-			end
-		]]--
-
 			routing = {
 				domainStrategy = node.domainStrategy or "AsIs",
 				domainMatcher = node.domainMatcher or "hybrid",
@@ -1151,6 +1143,11 @@ function gen_config(var)
 				domainMatcher = "hybrid",
 				rules = {}
 			}
+			table.insert(routing.rules, {
+				ruleTag = "default",
+				outboundTag = COMMON.default_outbound_tag,
+				network = "tcp,udp"
+			})
 		end
 	end
 
@@ -1320,7 +1317,7 @@ function gen_config(var)
 
 		local default_rule_index = #routing.rules > 0 and #routing.rules or 1
 		for index, value in ipairs(routing.rules) do
-			if value["_flag"] == "default" then
+			if value.ruleTag == "default" then
 				default_rule_index = index
 				break
 			end
@@ -1398,7 +1395,7 @@ function gen_config(var)
 			})
 		end
 
-		table.insert(outbounds, {
+		local direct_outbound = {
 			protocol = "freedom",
 			tag = "direct",
 			settings = {
@@ -1409,11 +1406,23 @@ function gen_config(var)
 					mark = 255
 				}
 			}
-		})
-		table.insert(outbounds, {
+		}
+		if COMMON.default_outbound_tag == "direct" then
+			table.insert(outbounds, 1, direct_outbound)
+		else
+			table.insert(outbounds, direct_outbound)
+		end
+
+		local blackhole_outbound = {
 			protocol = "blackhole",
 			tag = "blackhole"
-		})
+		}
+		if COMMON.default_outbound_tag == "blackhole" then
+			table.insert(outbounds, 1, blackhole_outbound)
+		else
+			table.insert(outbounds, blackhole_outbound)
+		end
+
 		for index, value in ipairs(config.outbounds) do
 			for k, v in pairs(config.outbounds[index]) do
 				if k:find("_") == 1 then
