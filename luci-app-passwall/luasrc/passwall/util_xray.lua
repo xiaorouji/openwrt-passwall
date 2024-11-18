@@ -758,16 +758,15 @@ function gen_config(var)
 			end
 			-- new balancer
 			local blc_nodes = _node.balancing_node
-			local length = #blc_nodes
 			local valid_nodes = {}
-			for i = 1, length do
+			for i = 1, #blc_nodes do
 				local blc_node_id = blc_nodes[i]
 				local blc_node_tag = "blc-" .. blc_node_id
 				local is_new_blc_node = true
 				for _, outbound in ipairs(outbounds) do
-					if outbound.tag == blc_node_tag then
+					if outbound.tag:find("^" .. blc_node_tag) == 1 then
 						is_new_blc_node = false
-						valid_nodes[#valid_nodes + 1] = blc_node_tag
+						valid_nodes[#valid_nodes + 1] = outbound.tag
 						break
 					end
 				end
@@ -777,7 +776,7 @@ function gen_config(var)
 					if outbound then
 						outbound.tag = outbound.tag .. ":" .. blc_node.remarks
 						table.insert(outbounds, outbound)
-						valid_nodes[#valid_nodes + 1] = blc_node_tag
+						valid_nodes[#valid_nodes + 1] = outbound.tag
 					end
 				end
 			end
@@ -1241,7 +1240,9 @@ function gen_config(var)
 				}
 			})
 		else
-			if COMMON.default_outbound_tag then
+			if COMMON.default_balancer_tag then
+				dns_outbound_tag = nil
+			elseif COMMON.default_outbound_tag then
 				dns_outbound_tag = COMMON.default_outbound_tag
 			end
 		end
@@ -1262,9 +1263,9 @@ function gen_config(var)
 			table.insert(outbounds, {
 				tag = "dns-out",
 				protocol = "dns",
-				proxySettings = {
+				proxySettings = dns_outbound_tag and {
 					tag = dns_outbound_tag
-				},
+				} or nil,
 				settings = {
 					address = remote_dns_tcp_server,
 					port = tonumber(remote_dns_tcp_port),
@@ -1288,6 +1289,7 @@ function gen_config(var)
 				remote_dns_tcp_server
 			},
 			port = tonumber(remote_dns_tcp_port),
+			balancerTag = COMMON.default_balancer_tag,
 			outboundTag = dns_outbound_tag
 		})
 		if _remote_dns_host then
@@ -1299,6 +1301,7 @@ function gen_config(var)
 					_remote_dns_host
 				},
 				port = tonumber(remote_dns_doh_port),
+				balancerTag = COMMON.default_balancer_tag,
 				outboundTag = dns_outbound_tag
 			})
 		end
@@ -1311,6 +1314,7 @@ function gen_config(var)
 					remote_dns_doh_ip
 				},
 				port = tonumber(remote_dns_doh_port),
+				balancerTag = COMMON.default_balancer_tag,
 				outboundTag = dns_outbound_tag
 			})
 		end

@@ -927,11 +927,9 @@ function gen_config(var)
 		if node.protocol == "_shunt" then
 			local rules = {}
 
-			local preproxy_enabled = node.preproxy_enabled == "1"
-			local preproxy_rule_name = "main"
-			local preproxy_tag = "main"
-			local preproxy_node_id = node["main_node"]
-			local preproxy_node = preproxy_enabled and preproxy_node_id and uci:get_all(appname, preproxy_node_id) or nil
+			local preproxy_rule_name = node.preproxy_enabled == "1" and "main" or nil
+			local preproxy_tag = preproxy_rule_name
+			local preproxy_node_id = preproxy_rule_name and node["main_node"] or nil
 
 			local function gen_shunt_node(rule_name, _node_id)
 				if not rule_name then return nil, nil end
@@ -956,7 +954,6 @@ function gen_config(var)
 						}
 						local _outbound = gen_outbound(flag, _node, rule_name)
 						if _outbound then
-							_outbound.tag = _outbound.tag .. ":" .. _node.remarks
 							table.insert(outbounds, _outbound)
 							rule_outboundTag = _outbound.tag
 						end
@@ -966,10 +963,10 @@ function gen_config(var)
 					if not _node then return nil, nil end
 
 					if api.is_normal_node(_node) then
-						local proxy = preproxy_enabled and node[rule_name .. "_proxy_tag"] == preproxy_rule_name and _node_id ~= preproxy_node_id
+						local use_proxy = preproxy_tag and node[rule_name .. "_proxy_tag"] == preproxy_rule_name and _node_id ~= preproxy_node_id
 						local copied_outbound
 						for index, value in ipairs(outbounds) do
-							if value["_id"] == _node_id and value["_flag_proxy_tag"] == preproxy_tag then
+							if value["_id"] == _node_id and value["_flag_proxy_tag"] == (use_proxy and preproxy_tag or nil) then
 								copied_outbound = api.clone(value)
 								break
 							end
@@ -979,7 +976,7 @@ function gen_config(var)
 							table.insert(outbounds, copied_outbound)
 							rule_outboundTag = copied_outbound.tag
 						else
-							if proxy then
+							if use_proxy then
 								local pre_proxy = nil
 								if _node.type ~= "sing-box" then
 									pre_proxy = true
@@ -1006,7 +1003,7 @@ function gen_config(var)
 								end
 							end
 							
-							local _outbound = gen_outbound(flag, _node, rule_name, { tag = proxy and preproxy_tag or nil })
+							local _outbound = gen_outbound(flag, _node, rule_name, { tag = use_proxy and preproxy_tag or nil })
 							if _outbound then
 								_outbound.tag = _outbound.tag .. ":" .. _node.remarks
 								rule_outboundTag = set_outbound_detour(_node, _outbound, outbounds, rule_name)
@@ -1030,12 +1027,10 @@ function gen_config(var)
 				return rule_outboundTag
 			end
 
-			if preproxy_node then
+			if preproxy_tag and preproxy_node_id then
 				local preproxy_outboundTag = gen_shunt_node(preproxy_rule_name, preproxy_node_id)
 				if preproxy_outboundTag then
 					preproxy_tag = preproxy_outboundTag
-				else
-					preproxy_node = nil
 				end
 			end
 			--default_node
