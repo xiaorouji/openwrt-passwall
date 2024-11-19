@@ -43,7 +43,7 @@ jobs:
           url_tags: https://api.github.com/repos/${{ env.passwall }}/tags
         run: |
           cd luci-app-passwall
-          latest_version=$(awk -F ':=' '/PKG_VERSION|PKG_RELEASE/ {print $2}' Makefile | sed ':a;N;s/\$(PKG_VERSION)-//;s/\n$//;s/\n/-/;ba')
+          latest_version=$(awk -F ':=' '/PKG_VERSION|PKG_RELEASE/ {print $2}' Makefile | sed ':a;N;s/\$(PKG_VERSION).//;s/\n$//;s/\n/-/;ba')
           has_update=$([ -z "$(wget -qO- -t1 -T2 ${{env.url_tags}} | grep \"${latest_version}\")" ] && echo true || echo false)
           prerelease=$([ "${{ github.ref_name }}" == "main" ] && echo false || echo true)
           echo "latest_version=${latest_version}" >> $GITHUB_OUTPUT
