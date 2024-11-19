@@ -989,7 +989,7 @@ end
 function get_version()
 	local version = sys.exec("opkg list-installed luci-app-passwall 2>/dev/null | awk '{print $3}'")
 	if not version or #version == 0 then
-		version = sys.exec("apk info luci-app-passwall 2>/dev/null | awk '{print $2}'")
+		version = sys.exec("apk info luci-app-passwall 2>/dev/null | awk 'NR == 1 {print $1}' | cut -d'-' -f4-")
 	end
 	return version or ""
 end
