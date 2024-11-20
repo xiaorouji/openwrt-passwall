@@ -27,6 +27,7 @@ local CACHE_PATH = api.CACHE_PATH
 local CACHE_FLAG = "dnsmasq_" .. FLAG
 local CACHE_DNS_PATH = CACHE_PATH .. "/" .. CACHE_FLAG
 local CACHE_TEXT_FILE = CACHE_DNS_PATH .. ".txt"
+local USE_CHINADNS_NG = "0"
 
 local uci = api.uci
 local sys = api.sys
@@ -184,6 +185,7 @@ if DEFAULT_PROXY_MODE == "proxy" and CHN_LIST == "0" and USE_GFW_LIST == "0" the
 end
 if USE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" then
 	dnsmasq_default_dns = CHINADNS_DNS
+	USE_CHINADNS_NG = "1"
 end
 
 local setflag_4= (NFTFLAG == "1") and "4#inet#passwall#" or ""
@@ -194,7 +196,7 @@ if not fs.access(CACHE_DNS_PATH) then
 	fs.mkdir(CACHE_DNS_PATH)
 
 	--屏蔽列表
-	if USE_DEFAULT_DNS ~= "chinadns_ng" or CHINADNS_DNS == "0" then
+	if USE_CHINADNS_NG == "0" then
 		if USE_BLOCK_LIST == "1" then
 			for line in io.lines("/usr/share/passwall/rules/block_host") do
 				line = api.get_std_domain(line)
@@ -212,7 +214,7 @@ if not fs.access(CACHE_DNS_PATH) then
 	--始终用国内DNS解析节点域名
 	if true then
 		fwd_dns = LOCAL_DNS
-		if USE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" then
+		if USE_CHINADNS_NG == "1" then
 			fwd_dns = nil
 		else
 			uci:foreach(appname, "nodes", function(t)
@@ -231,7 +233,7 @@ if not fs.access(CACHE_DNS_PATH) then
 	if USE_DIRECT_LIST == "1" then
 		if fs.access("/usr/share/passwall/rules/direct_host") then
 			fwd_dns = LOCAL_DNS
-			if USE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" then
+			if USE_CHINADNS_NG == "1" then
 				fwd_dns = nil
 			end
 			if fwd_dns then
@@ -253,7 +255,7 @@ if not fs.access(CACHE_DNS_PATH) then
 	if USE_PROXY_LIST == "1" then
 		if fs.access("/usr/share/passwall/rules/proxy_host") then
 			fwd_dns = TUN_DNS
-			if USE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" then
+			if USE_CHINADNS_NG == "1" then
 				fwd_dns = nil
 			end
 			if fwd_dns then
@@ -283,7 +285,7 @@ if not fs.access(CACHE_DNS_PATH) then
 	if USE_GFW_LIST == "1" then
 		if fs.access("/usr/share/passwall/rules/gfwlist") then
 			fwd_dns = TUN_DNS
-			if USE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" then
+			if USE_CHINADNS_NG == "1" then
 				fwd_dns = nil
 			end
 			if fwd_dns then
@@ -323,7 +325,7 @@ if not fs.access(CACHE_DNS_PATH) then
 			if CHN_LIST == "proxy" then
 				fwd_dns = TUN_DNS
 			end
-			if USE_DEFAULT_DNS == "chinadns_ng" and CHINADNS_DNS ~= "0" then
+			if USE_CHINADNS_NG == "1" then
 				fwd_dns = nil
 			end
 			if fwd_dns then
@@ -356,7 +358,7 @@ if not fs.access(CACHE_DNS_PATH) then
 	end
 
 	--分流规则
-	if uci:get(appname, TCP_NODE, "protocol") == "_shunt" and (USE_DEFAULT_DNS ~= "chinadns_ng" or CHINADNS_DNS == "0") then
+	if uci:get(appname, TCP_NODE, "protocol") == "_shunt" and USE_CHINADNS_NG == "0" then
 		local t = uci:get_all(appname, TCP_NODE)
 		local default_node_id = t["default_node"] or "_direct"
 		uci:foreach(appname, "shunt_rules", function(s)
@@ -460,16 +462,20 @@ if not fs.access(CACHE_DNS_PATH) then
 	f_out:close()
 end
 
-if api.is_install("procd\\-ujail") then
-	fs.copyr(CACHE_DNS_PATH, TMP_DNSMASQ_PATH)
-else
-	api.remove(TMP_DNSMASQ_PATH)
-	fs.symlink(CACHE_DNS_PATH, TMP_DNSMASQ_PATH)
+if USE_CHINADNS_NG == "0" then
+	if api.is_install("procd\\-ujail") then
+		fs.copyr(CACHE_DNS_PATH, TMP_DNSMASQ_PATH)
+	else
+		api.remove(TMP_DNSMASQ_PATH)
+		fs.symlink(CACHE_DNS_PATH, TMP_DNSMASQ_PATH)
+	end
 end
 
 if DNSMASQ_CONF_FILE ~= "nil" then
 	local conf_out = io.open(DNSMASQ_CONF_FILE, "a")
-	conf_out:write(string.format("conf-dir=%s\n", TMP_DNSMASQ_PATH))
+	if USE_CHINADNS_NG == "0" then
+		conf_out:write(string.format("conf-dir=%s\n", TMP_DNSMASQ_PATH))
+	end
 	if dnsmasq_default_dns then
 		for s in string.gmatch(dnsmasq_default_dns, '[^' .. "," .. ']+') do
 			conf_out:write(string.format("server=%s\n", s))
@@ -478,7 +484,7 @@ if DNSMASQ_CONF_FILE ~= "nil" then
 		conf_out:write("no-poll\n")
 		conf_out:write("no-resolv\n")
 		conf_out:close()
-		if USE_DEFAULT_DNS ~= "chinadns_ng" or CHINADNS_DNS == "0" then
+		if USE_CHINADNS_NG == "0" then
 			log(string.format("  - 默认：%s", dnsmasq_default_dns))
 		end
 
@@ -490,6 +496,6 @@ if DNSMASQ_CONF_FILE ~= "nil" then
 	end
 end
 
-if USE_DEFAULT_DNS ~= "chinadns_ng" or CHINADNS_DNS == "0" then
+if USE_CHINADNS_NG == "0" then
 	log("  - PassWall必须依赖于Dnsmasq，如果你自行配置了错误的DNS流程，将会导致域名(直连/代理域名)分流失效！！！")
 end
