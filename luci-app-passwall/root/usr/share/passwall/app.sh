@@ -1615,32 +1615,31 @@ acl_app() {
 		for item in $items; do
 			sid=$(uci -q show "${CONFIG}.${item}" | grep "=acl_rule" | awk -F '=' '{print $1}' | awk -F '.' '{print $2}')
 			eval $(uci -q show "${CONFIG}.${item}" | cut -d'.' -sf 3-)
+
 			[ "$enabled" = "1" ] || continue
 
-			[ -z "${sources}" ] && [ -z "${interface}" ] && continue
 			for s in $sources; do
+				local s2
 				is_iprange=$(lua_api "iprange(\"${s}\")")
 				if [ "${is_iprange}" = "true" ]; then
-					rule_list="${rule_list}\niprange:${s}"
+					s2="iprange:${s}"
 				elif [ -n "$(echo ${s} | grep '^ipset:')" ]; then
-					rule_list="${rule_list}\nipset:${s}"
+					s2="ipset:${s}"
 				else
 					_ip_or_mac=$(lua_api "ip_or_mac(\"${s}\")")
 					if [ "${_ip_or_mac}" = "ip" ]; then
-						rule_list="${rule_list}\nip:${s}"
+						s2="ip:${s}"
 					elif [ "${_ip_or_mac}" = "mac" ]; then
-						rule_list="${rule_list}\nmac:${s}"
+						s2="mac:${s}"
 					fi
 				fi
+				[ -n "${s2}" ] && source_list="${source_list}\n${s2}"
+				unset s2
 			done
-			for i in $interface; do
-				interface_list="${interface_list}\n$i"
-			done
-			[ -z "${rule_list}" ] && [ -z "${interface_list}" ] && continue
+
 			mkdir -p $TMP_ACL_PATH/$sid
 
-			[ ! -z "${rule_list}" ] && echo -e "${rule_list}" | sed '/^$/d' > $TMP_ACL_PATH/$sid/rule_list
-			[ ! -z "${interface_list}" ] && echo -e "${interface_list}" | sed '/^$/d' > $TMP_ACL_PATH/$sid/interface_list
+			[ ! -z "${source_list}" ] && echo -e "${source_list}" | sed '/^$/d' > $TMP_ACL_PATH/$sid/source_list
 
 			use_global_config=${use_global_config:-0}
 			tcp_node=${tcp_node:-nil}
@@ -1872,7 +1871,7 @@ acl_app() {
 			}
 			[ -n "$redirect_dns_port" ] && echo "${redirect_dns_port}" > $TMP_ACL_PATH/$sid/var_redirect_dns_port
 			unset enabled sid remarks sources interface use_global_config tcp_node udp_node use_direct_list use_proxy_list use_block_list use_gfw_list chn_list tcp_proxy_mode udp_proxy_mode filter_proxy_ipv6 dns_mode remote_dns v2ray_dns_mode remote_dns_doh dns_client_ip
-			unset _ip _mac _iprange _ipset _ip_or_mac rule_list tcp_port udp_port config_file _extra_param interface_list
+			unset _ip _mac _iprange _ipset _ip_or_mac source_list tcp_port udp_port config_file _extra_param
 			unset _china_ng_listen _chinadns_local_dns _direct_dns_mode chinadns_ng_default_tag dnsmasq_filter_proxy_ipv6
 			unset redirect_dns_port
 		done
