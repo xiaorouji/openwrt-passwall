@@ -84,7 +84,7 @@ local function insert_array_after(array1, array2, target) --将array2插入到ar
 end
 
 if not fs.access(TMP_ACL_PATH) then
-	fs.mkdir(TMP_ACL_PATH, 493)
+	fs.mkdir(TMP_ACL_PATH)
 end
 
 local setflag = (NFTFLAG == "1") and "inet@passwall@" or ""
@@ -345,7 +345,9 @@ if CHNLIST == "proxy" then DEFAULT_TAG = "chn" end
 --全局模式，默认使用远程DNS
 if DEFAULT_MODE == "proxy" and CHNLIST == "0" and GFWLIST == "0" then
 	DEFAULT_TAG = "gfw"
-	if NO_IPV6_TRUST == "1" then table.insert(config_lines, "no-ipv6") end
+	if NO_IPV6_TRUST == "1" and uci:get(appname, TCP_NODE, "protocol") ~= "_shunt" then 
+		table.insert(config_lines, "no-ipv6")
+	end
 end
 
 --是否接受直连 DNS 空响应
@@ -368,7 +370,7 @@ if DEFAULT_TAG == "chn" then
 elseif  DEFAULT_TAG == "gfw" then
 	log(string.format("  - 默认：%s", DNS_TRUST))
 else
-	log(string.format("  - 默认：%s", "127.0.0.1#" .. LISTEN_PORT))
+	log(string.format("  - 默认：%s", "智能匹配"))
 end
 
 --输出配置文件
