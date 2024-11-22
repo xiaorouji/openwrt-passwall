@@ -120,6 +120,7 @@ if true then
 	string.gsub(TUN_DNS, '[^' .. "|" .. ']+', function(w)
 		local server_dns = w
 		local server_param = string.format("server %s -group %s -proxy %s", "%s", REMOTE_GROUP, proxy_server_name)
+		server_param = server_param .. " -exclude-default-group"
 
 		local isHTTPS = w:find("https://")
 		if isHTTPS and isHTTPS == 1 then
