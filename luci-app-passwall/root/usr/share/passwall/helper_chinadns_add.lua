@@ -27,6 +27,7 @@ local datatypes = api.datatypes
 local TMP_PATH = "/tmp/etc/" .. appname
 local TMP_ACL_PATH = TMP_PATH .. "/acl"
 local RULES_PATH = "/usr/share/" .. appname .. "/rules"
+local FLAG_PATH = TMP_ACL_PATH .. "/" .. FLAG
 local config_lines = {}
 local tmp_lines = {}
 
@@ -83,8 +84,8 @@ local function insert_array_after(array1, array2, target) --将array2插入到ar
 	merge_array(array1, array2)
 end
 
-if not fs.access(TMP_ACL_PATH) then
-	fs.mkdir(TMP_ACL_PATH)
+if not fs.access(FLAG_PATH) then
+	fs.mkdir(FLAG_PATH)
 end
 
 local setflag = (NFTFLAG == "1") and "inet@passwall@" or ""
@@ -256,8 +257,8 @@ end
 if uci:get(appname, TCP_NODE, "protocol") == "_shunt" then
 	local white_domain, lookup_white_domain = {}, {}
 	local shunt_domain, lookup_shunt_domain = {}, {}
-	local file_white_host = TMP_ACL_PATH .. "/white_host"
-	local file_shunt_host = TMP_ACL_PATH .. "/shunt_host"
+	local file_white_host = FLAG_PATH .. "/shunt_direct_host"
+	local file_shunt_host = FLAG_PATH .. "/shunt_proxy_host"
 
 	local t = uci:get_all(appname, TCP_NODE)
 	local default_node_id = t["default_node"] or "_direct"
