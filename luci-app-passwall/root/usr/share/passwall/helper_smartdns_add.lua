@@ -104,19 +104,42 @@ if LOCAL_GROUP == "nil" then
 	log("  * 注意：国内分组名未设置，可能会导致 DNS 分流错误！")
 else
 	--从smartdns配置中读取参数
+	local custom_conf_path = "/etc/smartdns/custom.conf"
 	local options = {
-		{key = "dualstack_ip_selection", value = "1", arg = "-d no", invert = true},
-		{key = "speed_check_mode", prefix = "-c "},
-		{key = "serve_expired", value = "1", arg = "-no-serve-expired", invert = true},
-		{key = "response_mode", prefix = "-r "},
-		{key = "rr_ttl", prefix = "-rr-ttl "},
-		{key = "rr_ttl_min", prefix = "-rr-ttl-min "},
-		{key = "rr_ttl_max", prefix = "-rr-ttl-max "}
+		{key = "dualstack_ip_selection", config_key = "dualstack-ip-selection", yes_no = true, arg_yes = "-d yes", arg_no = "-d no", default = "yes"},
+		{key = "speed_check_mode", config_key = "speed-check-mode", prefix = "-c ", default = "ping,tcp:80,tcp:443"},
+		{key = "serve_expired", config_key = "serve-expired", yes_no = true, arg_yes = "", arg_no = "-no-serve-expired", default = "yes"},
+		{key = "response_mode", config_key = "response-mode", prefix = "-r ", default = "first-ping"},
+		{key = "rr_ttl", config_key = "rr-ttl", prefix = "-rr-ttl "},
+		{key = "rr_ttl_min", config_key = "rr-ttl-min", prefix = "-rr-ttl-min "},
+		{key = "rr_ttl_max", config_key = "rr-ttl-max", prefix = "-rr-ttl-max "}
 	}
+	-- 从 custom.conf 中读取值，以最后出现的值为准
+	local custom_config = {}
+	local f_in = io.open(custom_conf_path, "r")
+	if f_in then
+		for line in f_in:lines() do
+			line = line:match("^%s*(.-)%s*$")
+			if line ~= "" and not line:match("^#") then
+				local param, value = line:match("^(%S+)%s+(%S+)$")
+				if param and value then custom_config[param] = value end
+			end
+		end
+		f_in:close()
+	end
+	-- 从 smartdns 配置中读取值，优先级以 custom.conf 为准
 	for _, opt in ipairs(options) do
-		local val = uci:get("smartdns", "@smartdns[0]", opt.key)
-		if val and (not opt.value or (opt.invert and val ~= opt.value) or (not opt.invert and val == opt.value)) then
-			LOCAL_EXTEND_ARG = LOCAL_EXTEND_ARG .. (LOCAL_EXTEND_ARG ~= "" and " " or "") .. (opt.prefix or "") .. (opt.arg or val)
+		local val = custom_config[opt.config_key] or uci:get("smartdns", "@smartdns[0]", opt.key) or opt.default
+		if val == "yes" then val = "1" elseif val == "no" then val = "0" end
+		if opt.yes_no then
+			local arg = (val == "1" and opt.arg_yes or opt.arg_no)
+			if arg and arg ~= "" then
+				LOCAL_EXTEND_ARG = LOCAL_EXTEND_ARG .. (LOCAL_EXTEND_ARG ~= "" and " " or "") .. arg
+			end
+		else
+			if val and (not opt.value or (opt.invert and val ~= opt.value) or (not opt.invert and val == opt.value)) then
+				LOCAL_EXTEND_ARG = LOCAL_EXTEND_ARG .. (LOCAL_EXTEND_ARG ~= "" and " " or "") .. (opt.prefix or "") .. (opt.arg or val)
+			end
 		end
 	end
 end
