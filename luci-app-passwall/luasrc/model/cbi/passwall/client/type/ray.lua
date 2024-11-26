@@ -7,6 +7,7 @@ if not api.finded_com("xray") then
 end
 
 local appname = "passwall"
+local jsonc = api.jsonc
 local uci = api.uci
 
 local type_name = "Xray"
@@ -393,7 +394,7 @@ o:depends({ [option_name("tls")] = true, [option_name("utls")] = true })
 o:depends({ [option_name("tls")] = true, [option_name("reality")] = true })
 
 o = s:option(ListValue, option_name("transport"), translate("Transport"))
-o:value("raw", "RAW")
+o:value("raw", "RAW (TCP)")
 o:value("mkcp", "mKCP")
 o:value("ws", "WebSocket")
 o:value("h2", "HTTP/2")
@@ -401,7 +402,7 @@ o:value("ds", "DomainSocket")
 o:value("quic", "QUIC")
 o:value("grpc", "gRPC")
 o:value("httpupgrade", "HttpUpgrade")
-o:value("xhttp", "XHTTP")
+o:value("xhttp", "XHTTP (SplitHTTP)")
 o:depends({ [option_name("protocol")] = "vmess" })
 o:depends({ [option_name("protocol")] = "vless" })
 o:depends({ [option_name("protocol")] = "socks" })
@@ -568,6 +569,13 @@ o.placeholder = "/"
 o:depends({ [option_name("transport")] = "httpupgrade" })
 
 -- [[ XHTTP部分 ]]--
+o = s:option(ListValue, option_name("xhttp_mode"), "XHTTP " .. translate("Mode"))
+o:depends({ [option_name("transport")] = "xhttp" })
+o.default = "auto"
+o:value("auto")
+o:value("packet-up")
+o:value("stream-up")
+
 o = s:option(Value, option_name("xhttp_host"), translate("XHTTP Host"))
 o:depends({ [option_name("transport")] = "xhttp" })
 
@@ -575,104 +583,28 @@ o = s:option(Value, option_name("xhttp_path"), translate("XHTTP Path"))
 o.placeholder = "/"
 o:depends({ [option_name("transport")] = "xhttp" })
 
--- XHTTP XMUX
-o = s:option(Flag, option_name("xhttp_xmux"), "XMUX", translate("Enable XHTTP XMUX. It's not recommended to enable Mux.Cool at the same time."))
+o = s:option(TextValue, option_name("xhttp_extra"), translate("XHTTP Extra"), translate("An <a target='_blank' href='https://xtls.github.io/config/transports/splithttp.html#extra'>XHTTP extra object</a> in raw json"))
 o:depends({ [option_name("transport")] = "xhttp" })
-
-o = s:option(Value, option_name("maxConcurrency"), translate("XMUX Max Concurrency"))
-o:depends({ [option_name("xhttp_xmux")] = true })
-
-o = s:option(Value, option_name("maxConnections"), translate("XMUX Max Connections"))
-o:depends({ [option_name("xhttp_xmux")] = true })
-
-o = s:option(Value, option_name("cMaxReuseTimes"), translate("XMUX Connection Max Reuse Times"))
-o:depends({ [option_name("xhttp_xmux")] = true })
-
-o = s:option(Value, option_name("cMaxLifetimeMs"), translate("XMUX Connection Max Lifetime (ms)"))
-o:depends({ [option_name("xhttp_xmux")] = true })
-
--- XHTTP 下行
-o = s:option(Flag, option_name("xhttp_download"), string.format('<a style="color:red">%s</a>', translate("XHTTP download splitting")))
-o:depends({ [option_name("transport")] = "xhttp" })
-
-o = s:option(Value, option_name("xhttp_download_address"), string.format('<a style="color:red">%s</a>', translate("Address")))
-o:depends({ [option_name("xhttp_download")] = true })
-
-o = s:option(Value, option_name("xhttp_download_port"), string.format('<a style="color:red">%s</a>', translate("Port")))
-o:depends({ [option_name("xhttp_download")] = true })
-
-o = s:option(Value, option_name("xhttp_download_host"), string.format('<a style="color:red">%s</a>', "XHTTP Host"))
-o:depends({ [option_name("xhttp_download")] = true })
-
-o = s:option(Value, option_name("xhttp_download_path"), string.format('<a style="color:red">%s</a>', "XHTTP Path"), translate("Must be the same as upload path."))
-o.placeholder = "/"
-o:depends({ [option_name("xhttp_download")] = true })
-
-o = s:option(Flag, option_name("xhttp_download_tls"), string.format('<a style="color:red">%s</a>', "TLS"))
-o:depends({ [option_name("xhttp_download")] = true })
-o.default = 0
-
-o = s:option(Flag, option_name("xhttp_download_reality"), string.format('<a style="color:red">%s</a>', "REALITY"))
-o.default = 0
-o:depends({ [option_name("xhttp_download_tls")] = true })
-
-o = s:option(ListValue, option_name("xhttp_download_alpn"), string.format('<a style="color:red">%s</a>', "alpn"))
-o.default = "default"
-o:value("default", translate("Default"))
-o:value("h3")
-o:value("h2")
-o:value("h3,h2")
-o:value("http/1.1")
-o:value("h2,http/1.1")
-o:value("h3,h2,http/1.1")
-o:depends({ [option_name("xhttp_download_tls")] = true, [option_name("xhttp_download_reality")] = false })
-
-o = s:option(Value, option_name("xhttp_download_tls_serverName"), string.format('<a style="color:red">%s</a>', translate("Domain")))
-o:depends({ [option_name("xhttp_download_tls")] = true })
-
-o = s:option(Value, option_name("xhttp_download_reality_publicKey"), string.format('<a style="color:red">%s</a>', translate("Public Key")))
-o:depends({ [option_name("xhttp_download_tls")] = true, [option_name("xhttp_download_reality")] = true })
-
-o = s:option(Value, option_name("xhttp_download_reality_shortId"), string.format('<a style="color:red">%s</a>', translate("Short Id")))
-o:depends({ [option_name("xhttp_download_tls")] = true, [option_name("xhttp_download_reality")] = true })
-
-o = s:option(Value, option_name("xhttp_download_reality_spiderX"), string.format('<a style="color:red">%s</a>', "Spider X"))
-o.placeholder = "/"
-o:depends({ [option_name("xhttp_download_tls")] = true, [option_name("xhttp_download_reality")] = true })
-
-o = s:option(Flag, option_name("xhttp_download_utls"), string.format('<a style="color:red">%s</a>', "uTLS"))
-o.default = "0"
-o:depends({ [option_name("xhttp_download_tls")] = true, [option_name("xhttp_download_reality")] = false })
-
-o = s:option(ListValue, option_name("xhttp_download_fingerprint"), string.format('<a style="color:red">%s</a>', translate("Finger Print")))
-o:value("chrome")
-o:value("firefox")
-o:value("edge")
-o:value("safari")
-o:value("360")
-o:value("qq")
-o:value("ios")
-o:value("android")
-o:value("random")
-o:value("randomized")
-o.default = "chrome"
-o:depends({ [option_name("xhttp_download_tls")] = true, [option_name("xhttp_download_utls")] = true })
-o:depends({ [option_name("xhttp_download_tls")] = true, [option_name("xhttp_download_reality")] = true })
-
-o = s:option(Flag, option_name("xhttp_download_xmux"), string.format('<a style="color:red">%s</a>', "XMUX"), translate("Enable XHTTP XMUX. It's not recommended to enable Mux.Cool at the same time."))
-o:depends({ [option_name("xhttp_download")] = true })
-
-o = s:option(Value, option_name("download_maxConcurrency"), string.format('<a style="color:red">%s</a>', translate("XMUX Max Concurrency")))
-o:depends({ [option_name("xhttp_download_xmux")] = true })
-
-o = s:option(Value, option_name("download_maxConnections"), string.format('<a style="color:red">%s</a>', translate("XMUX Max Connections")))
-o:depends({ [option_name("xhttp_download_xmux")] = true })
-
-o = s:option(Value, option_name("download_cMaxReuseTimes"), string.format('<a style="color:red">%s</a>', translate("XMUX Connection Max Reuse Times")))
-o:depends({ [option_name("xhttp_download_xmux")] = true })
-
-o = s:option(Value, option_name("download_cMaxLifetimeMs"), string.format('<a style="color:red">%s</a>', translate("XMUX Connection Max Lifetime (ms)")))
-o:depends({ [option_name("xhttp_download_xmux")] = true })
+o.rows = 15
+o.wrap = "off"
+o.custom_write = function(self, section, value)
+	m:set(section, self.option:sub(1 + #option_prefix), value)
+	local data = value and value ~= "" and jsonc.parse(value)
+	local address = (data and data.extra and data.extra.downloadSettings and data.extra.downloadSettings.address)
+			or (data and data.downloadSettings and data.downloadSettings.address)
+	if address and address ~= "" then
+		m:set(section, "download_address", address)
+	else
+		m:del(section, "download_address")
+	end
+end
+o.validate = function(self, value)
+	value = value:gsub("\r\n", "\n"):gsub("^[ \t]*\n", ""):gsub("\n[ \t]*$", ""):gsub("\n[ \t]*\n", "\n")
+	if value:sub(-1) == "\n" then
+		value = value:sub(1, -2)
+	end
+	return value
+end
 
 -- [[ Mux.Cool ]]--
 o = s:option(Flag, option_name("mux"), "Mux", translate("Enable Mux.Cool"))

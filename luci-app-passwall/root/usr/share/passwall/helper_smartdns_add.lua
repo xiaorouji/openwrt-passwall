@@ -254,11 +254,14 @@ local file_vpslist = TMP_ACL_PATH .. "/vpslist"
 if not is_file_nonzero(file_vpslist) then
 	local f_out = io.open(file_vpslist, "w")
 	uci:foreach(appname, "nodes", function(t)
-		local address = t.address
-		if address == "engage.cloudflareclient.com" then return end
-		if datatypes.hostname(address) then
-			f_out:write(address .. "\n")
+		local function process_address(address)
+			if address == "engage.cloudflareclient.com" then return end
+			if datatypes.hostname(address) then
+				f_out:write(address .. "\n")
+			end
 		end
+		process_address(t.address)
+		process_address(t.download_address)
 	end)
 	f_out:close()
 end
