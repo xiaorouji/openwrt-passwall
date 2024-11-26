@@ -220,7 +220,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 					mode = node.xhttp_mode or "auto",
 					path = node.xhttp_path or node.splithttp_path or "/",
 					host = node.xhttp_host or node.splithttp_host,
-					extra = node.xhttp_extra and jsonc.parse(node.xhttp_extra) or nil
+					-- 如果包含 "extra" 节，取 "extra" 内的内容，否则直接赋值给 extra
+					extra = node.xhttp_extra and (jsonc.parse(node.xhttp_extra).extra or jsonc.parse(node.xhttp_extra)) or nil
 				} or nil,
 			} or nil,
 			settings = {

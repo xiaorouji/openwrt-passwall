@@ -583,21 +583,27 @@ o = s:option(Value, option_name("xhttp_path"), translate("XHTTP Path"))
 o.placeholder = "/"
 o:depends({ [option_name("transport")] = "xhttp" })
 
-o = s:option(TextValue, "xhttp_extra", translate("XHTTP Extra"), translate("An <a target='_blank' href='https://xtls.github.io/config/transports/splithttp.html#extra'>XHTTP extra object</a> in raw json"))
+o = s:option(TextValue, option_name("xhttp_extra"), translate("XHTTP Extra"), translate("An <a target='_blank' href='https://xtls.github.io/config/transports/splithttp.html#extra'>XHTTP extra object</a> in raw json"))
 o:depends({ [option_name("transport")] = "xhttp" })
 o.rows = 15
 o.wrap = "off"
-function o.write(self, section, value)
-    AbstractValue.write(self, section, value)
-
-    local extra = value and value ~= "" and jsonc.parse(value)
-    local address = extra and extra.downloadSettings.address
-
-    if address and address ~= "" then
-        m.uci:set(appname, section, "download_address", address)
-    else
-        m.uci:delete(appname, section, "download_address")
-    end
+o.custom_write = function(self, section, value)
+	m:set(section, self.option:sub(1 + #option_prefix), value)
+	local data = value and value ~= "" and jsonc.parse(value)
+	local address = (data and data.extra and data.extra.downloadSettings and data.extra.downloadSettings.address)
+			or (data and data.downloadSettings and data.downloadSettings.address)
+	if address and address ~= "" then
+		m:set(section, "download_address", address)
+	else
+		m:del(section, "download_address")
+	end
+end
+o.validate = function(self, value)
+	value = value:gsub("\r\n", "\n"):gsub("^[ \t]*\n", ""):gsub("\n[ \t]*$", ""):gsub("\n[ \t]*\n", "\n")
+	if value:sub(-1) == "\n" then
+		value = value:sub(1, -2)
+	end
+	return value
 end
 
 -- [[ Mux.Cool ]]--
