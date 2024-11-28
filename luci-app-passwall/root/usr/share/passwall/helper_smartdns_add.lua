@@ -500,7 +500,7 @@ if uci:get(appname, TCP_NODE, "protocol") == "_shunt" then
 		end
 		domain_rules_str = domain_rules_str .. (LOCAL_EXTEND_ARG ~= "" and " " .. LOCAL_EXTEND_ARG or "")
 		table.insert(tmp_lines, domain_rules_str)
-		insert_array_after(config_lines, tmp_lines, "#--3")
+		insert_array_after(config_lines, tmp_lines, "#--4")
 	end
 
 	if is_file_nonzero(file_shunt_host) then
@@ -518,7 +518,7 @@ if uci:get(appname, TCP_NODE, "protocol") == "_shunt" then
 			domain_rules_str = domain_rules_str .. " -d no " .. set_type .. " #4:" .. setflag .. "passwall_shuntlist" .. ",#6:" .. setflag .. "passwall_shuntlist6"
 		end
 		table.insert(tmp_lines, domain_rules_str)
-		insert_array_after(config_lines, tmp_lines, "#--4")
+		insert_array_after(config_lines, tmp_lines, "#--3")
 	end
 
 end
