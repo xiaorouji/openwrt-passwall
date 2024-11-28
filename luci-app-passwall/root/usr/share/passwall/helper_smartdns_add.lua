@@ -180,7 +180,7 @@ if true then
 					if s2 and #s2 > 1 then
 						http_host = s2[1]
 						port = s2[2]
-					end 
+					end
 					url = url:gsub(http_host, dns_ip)
 				end
 			end
@@ -195,7 +195,7 @@ if true then
 end
 
 --设置默认 DNS 分组(托底组)
-local DEFAULT_DNS_GROUP = (USE_DEFAULT_DNS == "direct" and LOCAL_GROUP) or 
+local DEFAULT_DNS_GROUP = (USE_DEFAULT_DNS == "direct" and LOCAL_GROUP) or
                           (USE_DEFAULT_DNS == "remote" and REMOTE_GROUP)
 local only_global = (DEFAULT_PROXY_MODE == "proxy" and CHN_LIST == "0" and USE_GFW_LIST == "0") and 1 --没有启用中国列表和GFW列表时(全局)
 if only_global == 1 then
@@ -461,18 +461,6 @@ if uci:get(appname, TCP_NODE, "protocol") == "_shunt" then
 		end
 	end
 
-	if is_file_nonzero(file_white_host) then
-		local domain_set_name = "passwall-whitehost"
-		tmp_lines = {
-			string.format("domain-set -name %s -file %s", domain_set_name, file_white_host)
-		}
-		local domain_rules_str = string.format('domain-rules /domain-set:%s/ %s', domain_set_name, LOCAL_GROUP and "-nameserver " .. LOCAL_GROUP or "")
-		domain_rules_str = domain_rules_str .. " " .. set_type .. " #4:" .. setflag .. "passwall_whitelist,#6:" .. setflag .. "passwall_whitelist6"
-		domain_rules_str = domain_rules_str .. (LOCAL_EXTEND_ARG ~= "" and " " .. LOCAL_EXTEND_ARG or "")
-		table.insert(tmp_lines, domain_rules_str)
-		insert_array_after(config_lines, tmp_lines, "#--3")
-	end
-
 	if is_file_nonzero(file_shunt_host) then
 		local domain_set_name = "passwall-shuntlist"
 		tmp_lines = {
@@ -487,6 +475,18 @@ if uci:get(appname, TCP_NODE, "protocol") == "_shunt" then
 		else
 			domain_rules_str = domain_rules_str .. " -d no " .. set_type .. " #4:" .. setflag .. "passwall_shuntlist" .. ",#6:" .. setflag .. "passwall_shuntlist6"
 		end
+		table.insert(tmp_lines, domain_rules_str)
+		insert_array_after(config_lines, tmp_lines, "#--3")
+	end
+
+	if is_file_nonzero(file_white_host) then
+		local domain_set_name = "passwall-whitehost"
+		tmp_lines = {
+			string.format("domain-set -name %s -file %s", domain_set_name, file_white_host)
+		}
+		local domain_rules_str = string.format('domain-rules /domain-set:%s/ %s', domain_set_name, LOCAL_GROUP and "-nameserver " .. LOCAL_GROUP or "")
+		domain_rules_str = domain_rules_str .. " " .. set_type .. " #4:" .. setflag .. "passwall_whitelist,#6:" .. setflag .. "passwall_whitelist6"
+		domain_rules_str = domain_rules_str .. (LOCAL_EXTEND_ARG ~= "" and " " .. LOCAL_EXTEND_ARG or "")
 		table.insert(tmp_lines, domain_rules_str)
 		insert_array_after(config_lines, tmp_lines, "#--4")
 	end
