@@ -495,6 +495,10 @@ o = s:option(Value, option_name("ws_path"), translate("WebSocket Path"))
 o.placeholder = "/"
 o:depends({ [option_name("transport")] = "ws" })
 
+o = s:option(Value, option_name("ws_heartbeatPeriod"), translate("HeartbeatPeriod(second)"))
+o.datatype = "integer"
+o:depends({ [option_name("transport")] = "ws" })
+
 -- [[ HTTP/2部分 ]]--
 o = s:option(Value, option_name("h2_host"), translate("HTTP/2 Host"))
 o:depends({ [option_name("transport")] = "h2" })
@@ -584,7 +588,8 @@ o = s:option(Value, option_name("xhttp_path"), translate("XHTTP Path"))
 o.placeholder = "/"
 o:depends({ [option_name("transport")] = "xhttp" })
 
-o = s:option(Value, option_name("xhttp_keep_alive"), "XHTTP " .. translate("KeepAlivePeriodt"))
+o = s:option(Value, option_name("xhttp_keepAlivePeriod"), translate("KeepAlivePeriod(second)"))
+o.datatype = "integer"
 o:depends({ [option_name("transport")] = "xhttp" })
 
 o = s:option(TextValue, option_name("xhttp_extra"), translate("XHTTP Extra"), translate("An <a target='_blank' href='https://xtls.github.io/config/transports/splithttp.html#extra'>XHTTP extra object</a> in raw json"))

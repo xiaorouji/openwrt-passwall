@@ -189,7 +189,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 					headers = (node.ws_host ~= nil) and
 						{Host = node.ws_host} or nil,
 					maxEarlyData = tonumber(node.ws_maxEarlyData) or nil,
-					earlyDataHeaderName = (node.ws_earlyDataHeaderName) and node.ws_earlyDataHeaderName or nil
+					earlyDataHeaderName = (node.ws_earlyDataHeaderName) and node.ws_earlyDataHeaderName or nil,
+					heartbeatPeriod = tonumber(node.ws_heartbeatPeriod) or nil
 				} or nil,
 				httpSettings = (node.transport == "h2") and {
 					path = node.h2_path or "/",
@@ -228,7 +229,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 						end)() and "stream-up") or (node.xhttp_mode or "auto"),
 					path = node.xhttp_path or node.splithttp_path or "/",
 					host = node.xhttp_host or node.splithttp_host,
-					keepAlivePeriod = tonumber(node.xhttp_keep_alive) or nil,
+					keepAlivePeriod = tonumber(node.xhttp_keepAlivePeriod) or nil,
 					-- 如果包含 "extra" 节，取 "extra" 内的内容，否则直接赋值给 extra
 					extra = node.xhttp_extra and (function()
 						local success, parsed = pcall(jsonc.parse, node.xhttp_extra)

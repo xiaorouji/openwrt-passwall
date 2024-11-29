@@ -1609,8 +1609,11 @@ msgstr "端口跳跃时间 "
 msgid "Additional ports for hysteria hop"
 msgstr "端口跳跃额外端口"
 
-msgid "KeepAlivePeriod"
-msgstr "保持活动周期"
+msgid "KeepAlivePeriod(second)"
+msgstr "保活周期（单位：秒）"
+
+msgid "KeepAlivePeriod(second)"
+msgstr "心跳周期（单位：秒）"
 
 msgid "Custom geoip Path"
 msgstr "自定义 geoip 文件路径"
