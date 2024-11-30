@@ -218,18 +218,9 @@ function gen_outbound(flag, node, tag, proxy_table)
 					host = node.httpupgrade_host
 				} or nil,
 				xhttpSettings = (node.transport == "xhttp" or node.transport == "splithttp") and {
-					mode = (node.xhttp_extra and
-						(function()
-							local success, parsed = pcall(jsonc.parse, node.xhttp_extra)
-							if success then
-								return (parsed.extra and parsed.extra.downloadSettings) or parsed.downloadSettings
-							else
-								return nil
-							end
-						end)() and "stream-up") or (node.xhttp_mode or "auto"),
+					mode = node.xhttp_mode or "auto",
 					path = node.xhttp_path or node.splithttp_path or "/",
 					host = node.xhttp_host or node.splithttp_host,
-					keepAlivePeriod = tonumber(node.xhttp_keepAlivePeriod) or nil,
 					-- 如果包含 "extra" 节，取 "extra" 内的内容，否则直接赋值给 extra
 					extra = node.xhttp_extra and (function()
 						local success, parsed = pcall(jsonc.parse, node.xhttp_extra)

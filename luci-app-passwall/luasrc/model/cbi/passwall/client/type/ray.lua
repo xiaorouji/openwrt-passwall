@@ -588,10 +588,6 @@ o = s:option(Value, option_name("xhttp_path"), translate("XHTTP Path"))
 o.placeholder = "/"
 o:depends({ [option_name("transport")] = "xhttp" })
 
-o = s:option(Value, option_name("xhttp_keepAlivePeriod"), translate("KeepAlivePeriod(second)"))
-o.datatype = "integer"
-o:depends({ [option_name("transport")] = "xhttp" })
-
 o = s:option(TextValue, option_name("xhttp_extra"), translate("XHTTP Extra"), translate("An <a target='_blank' href='https://xtls.github.io/config/transports/splithttp.html#extra'>XHTTP extra object</a> in raw json"))
 o:depends({ [option_name("transport")] = "xhttp" })
 o.rows = 15
@@ -608,9 +604,6 @@ o.custom_write = function(self, section, value)
 			m:set(section, "download_address", address)
 		else
 			m:del(section, "download_address")
-		end
-		if (data.extra and data.extra.downloadSettings) or (data.downloadSettings) then
-			m:set(section, "xhttp_mode", "stream-up")
 		end
 	else
 		m:del(section, "download_address")
