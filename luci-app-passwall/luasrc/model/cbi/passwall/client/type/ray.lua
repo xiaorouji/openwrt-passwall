@@ -495,6 +495,10 @@ o = s:option(Value, option_name("ws_path"), translate("WebSocket Path"))
 o.placeholder = "/"
 o:depends({ [option_name("transport")] = "ws" })
 
+o = s:option(Value, option_name("ws_heartbeatPeriod"), translate("HeartbeatPeriod(second)"))
+o.datatype = "integer"
+o:depends({ [option_name("transport")] = "ws" })
+
 -- [[ HTTP/2部分 ]]--
 o = s:option(Value, option_name("h2_host"), translate("HTTP/2 Host"))
 o:depends({ [option_name("transport")] = "h2" })
@@ -575,6 +579,7 @@ o.default = "auto"
 o:value("auto")
 o:value("packet-up")
 o:value("stream-up")
+o:value("stream-one")
 
 o = s:option(Value, option_name("xhttp_host"), translate("XHTTP Host"))
 o:depends({ [option_name("transport")] = "xhttp" })
@@ -588,12 +593,18 @@ o:depends({ [option_name("transport")] = "xhttp" })
 o.rows = 15
 o.wrap = "off"
 o.custom_write = function(self, section, value)
+
 	m:set(section, self.option:sub(1 + #option_prefix), value)
-	local data = value and value ~= "" and jsonc.parse(value)
-	local address = (data and data.extra and data.extra.downloadSettings and data.extra.downloadSettings.address)
-			or (data and data.downloadSettings and data.downloadSettings.address)
-	if address and address ~= "" then
-		m:set(section, "download_address", address)
+
+	local success, data = pcall(jsonc.parse, value)
+	if success and data then
+		local address = (data.extra and data.extra.downloadSettings and data.extra.downloadSettings.address)
+			or (data.downloadSettings and data.downloadSettings.address)
+		if address and address ~= "" then
+			m:set(section, "download_address", address)
+		else
+			m:del(section, "download_address")
+		end
 	else
 		m:del(section, "download_address")
 	end

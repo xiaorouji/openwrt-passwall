@@ -1609,6 +1609,9 @@ msgstr "端口跳跃时间 "
 msgid "Additional ports for hysteria hop"
 msgstr "端口跳跃额外端口"
 
+msgid "HeartbeatPeriod(second)"
+msgstr "心跳周期（单位：秒）"
+
 msgid "Custom geoip Path"
 msgstr "自定义 geoip 文件路径"
 

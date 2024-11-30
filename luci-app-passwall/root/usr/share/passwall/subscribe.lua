@@ -1000,10 +1000,14 @@ local function processData(szType, content, add_mode, add_from)
 				result.xhttp_path = params.path
 				result.xhttp_mode = params.mode or "auto"
 				result.xhttp_extra = params.extra
-				local Data = params.extra and params.extra ~= "" and jsonParse(params.extra)
-				local address = (Data and Data.extra and Data.extra.downloadSettings and Data.extra.downloadSettings.address)
-						or (Data and Data.downloadSettings and Data.downloadSettings.address)
-				result.download_address = address and address ~= "" and address or nil
+				local success, Data = pcall(jsonParse, params.extra)
+				if success and Data then
+					local address = (Data.extra and Data.extra.downloadSettings and Data.extra.downloadSettings.address)
+							or (Data.downloadSettings and Data.downloadSettings.address)
+					result.download_address = address and address ~= "" and address or nil
+				else
+					result.download_address = nil
+				end
 			end
 			if params.type == 'httpupgrade' then
 				result.httpupgrade_host = params.host
