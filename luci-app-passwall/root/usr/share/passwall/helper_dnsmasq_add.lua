@@ -377,7 +377,11 @@ if not fs.access(CACHE_DNS_PATH) then
 
 				if _node_id == "_direct" then
 					fwd_dns = LOCAL_DNS
-					ipset_flag = setflag_4 .. "passwall_whitelist," .. setflag_6 .. "passwall_whitelist6"
+					if USE_DIRECT_LIST == "1" then
+						ipset_flag = setflag_4 .. "passwall_whitelist," .. setflag_6 .. "passwall_whitelist6"
+					else
+						ipset_flag = setflag_4 .. "passwall_shuntlist," .. setflag_6 .. "passwall_shuntlist6"
+					end
 				else
 					fwd_dns = TUN_DNS
 					ipset_flag = setflag_4 .. "passwall_shuntlist," .. setflag_6 .. "passwall_shuntlist6"
