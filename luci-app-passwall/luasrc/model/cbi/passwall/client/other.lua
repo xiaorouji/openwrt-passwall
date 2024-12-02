@@ -178,8 +178,9 @@ if has_xray then
 	o = s_xray:option(Flag, "noise", translate("Noise"), translate("UDP noise, Under some circumstances it can bypass some UDP based protocol restrictions."))
 	o.default = 0
 
-	o = s_xray:option(Flag, "sniffing_override_dest", translate("Override the connection destination address"), translate("Override the connection destination address with the sniffed domain."))
+	o = s_xray:option(Flag, "sniffing_override_dest", translate("Override the connection destination address"))
 	o.default = 0
+	o.description = translate("Override the connection destination address with the sniffed domain.<br />When enabled, traffic will match only by domain, ignoring IP rules.<br />If using shunt nodes, configure the domain shunt rules correctly.")
 
 	local domains_excluded = string.format("/usr/share/%s/rules/domains_excluded", appname)
 	o = s_xray:option(TextValue, "excluded_domains", translate("Excluded Domains"), translate("If the traffic sniffing result is in this list, the destination address will not be overridden."))
@@ -233,9 +234,10 @@ if has_singbox then
 	s.anonymous = true
 	s.addremove = false
 
-	o = s:option(Flag, "sniff_override_destination", translate("Override the connection destination address"), translate("Override the connection destination address with the sniffed domain."))
+	o = s:option(Flag, "sniff_override_destination", translate("Override the connection destination address"))
 	o.default = 0
 	o.rmempty = false
+	o.description = translate("Override the connection destination address with the sniffed domain.<br />When enabled, traffic will match only by domain, ignoring IP rules.<br />If using shunt nodes, configure the domain shunt rules correctly.")
 
 	o = s:option(Value, "geoip_path", translate("Custom geoip Path"))
 	o.default = "/usr/share/singbox/geoip.db"

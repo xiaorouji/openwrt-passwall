@@ -1639,8 +1639,8 @@ msgstr "握手服务器"
 msgid "Handshake Server Port"
 msgstr "握手服务器端口"
 
-msgid "Override the connection destination address with the sniffed domain."
-msgstr "用探测出的域名覆盖连接目标地址。"
+msgid "Override the connection destination address with the sniffed domain.<br />When enabled, traffic will match only by domain, ignoring IP rules.<br />If using shunt nodes, configure the domain shunt rules correctly."
+msgstr "用探测出的域名覆盖连接目标地址。<br />启用后仅使用域名进行流量匹配，将忽略IP规则。<br />如使用分流节点，请正确设置域名分流规则。"
 
 msgid "Protocol parameter. Will waste traffic randomly if enabled."
 msgstr "协议参数。如果启用会随机浪费流量。"
