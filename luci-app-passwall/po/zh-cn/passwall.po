@@ -1009,6 +1009,9 @@ msgstr "订阅备注（机场）"
 msgid "Subscribe URL"
 msgstr "订阅网址"
 
+msgid "Subscribe URL Access Method"
+msgstr "订阅网址访问方式"
+
 msgid "Please input the subscription url first, save and submit before manual subscription."
 msgstr "请输入订阅网址保存应用后再手动订阅。"
 
