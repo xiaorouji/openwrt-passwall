@@ -81,7 +81,7 @@ function domainToIPv4(domain, dns)
 	local Dns = dns or "223.5.5.5"
 	local IPs = luci.sys.exec('nslookup %s %s | awk \'/^Name:/{getline; if ($1 == "Address:") print $2}\'' % { domain, Dns })
 	for IP in string.gmatch(IPs, "%S+") do
-		if not datatypes.ip6addr(IP) then return IP end
+		if datatypes.ipaddr(IP) and not datatypes.ip6addr(IP) then return IP end
 	end
 	return nil
 end
