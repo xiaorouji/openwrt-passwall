@@ -253,7 +253,7 @@ get_geoip() {
 		"ipv6") geoip_type_flag="-ipv4=false" ;;
 	esac
 	if type geoview &> /dev/null; then
-		geoview -input "$geoip_path" -list "$geoip_code" $geoip_type_flag
+		geoview -input "$geoip_path" -list "$geoip_code" $geoip_type_flag -lowmem=true
 	else
 		echo ""
 	fi
