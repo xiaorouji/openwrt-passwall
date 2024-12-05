@@ -385,8 +385,10 @@ load_acl() {
 						if [ -n "${is_tproxy}" ]; then
 							msg2="${msg2}(TPROXY:${tcp_port})"
 							ipt_tmp=$ipt_m
+							ipt_j="-j PSW_RULE"
 						else
 							msg2="${msg2}(REDIRECT:${tcp_port})"
+							ipt_j="$(REDIRECT $tcp_port)"
 						fi
 						
 						[ "$accept_icmp" = "1" ] && {
@@ -405,23 +407,15 @@ load_acl() {
 							[ "${use_shunt_tcp}" = "1" ] && $ip6t_n -A PSW $(comment "$remarks") -p ipv6-icmp ${_ipt_source} $(dst $IPSET_SHUNTLIST6) $(REDIRECT) 2>/dev/null
 							[ "${tcp_proxy_mode}" != "disable" ] && $ip6t_n -A PSW $(comment "$remarks") -p ipv6-icmp ${_ipt_source} $(REDIRECT) 2>/dev/null
 						}
-						
-						if [ -z "${is_tproxy}" ]; then
-							$ipt_n -A PSW $(comment "$remarks") -p tcp ${_ipt_source} -d $FAKE_IP $(REDIRECT $tcp_port)
-							[ "${use_proxy_list}" = "1" ] && $ipt_n -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_BLACKLIST) $(REDIRECT $tcp_port)
-							[ "${use_gfw_list}" = "1" ] && $ipt_n -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_GFW) $(REDIRECT $tcp_port)
-							[ "${chn_list}" != "0" ] && $ipt_n -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_CHN) $(get_jump_ipt ${chn_list} $tcp_port)
-							[ "${use_shunt_tcp}" = "1" ] && $ipt_n -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_SHUNTLIST) $(REDIRECT $tcp_port)
-							[ "${tcp_proxy_mode}" != "disable" ] && $ipt_n -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(REDIRECT $tcp_port)
-						else
-							$ipt_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} -d $FAKE_IP -j PSW_RULE
-							[ "${use_proxy_list}" = "1" ] && $ipt_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_BLACKLIST) -j PSW_RULE
-							[ "${use_gfw_list}" = "1" ] && $ipt_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_GFW) -j PSW_RULE
-							[ "${chn_list}" != "0" ] && $ipt_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_CHN) $(get_jump_ipt ${chn_list} "-j PSW_RULE")
-							[ "${use_shunt_tcp}" = "1" ] && $ipt_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_SHUNTLIST) -j PSW_RULE
-							[ "${tcp_proxy_mode}" != "disable" ] && $ipt_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") -j PSW_RULE
-							$ipt_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(REDIRECT $tcp_port TPROXY)
-						fi
+
+						$ipt_tmp -A PSW $(comment "$remarks") -p tcp ${_ipt_source} -d $FAKE_IP ${ipt_j}
+						[ "${use_proxy_list}" = "1" ] && $ipt_tmp -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_BLACKLIST) ${ipt_j}
+						[ "${use_gfw_list}" = "1" ] && $ipt_tmp -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_GFW) ${ipt_j}
+						[ "${chn_list}" != "0" ] && $ipt_tmp -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_CHN) $(get_jump_ipt ${chn_list} "${ipt_j}")
+						[ "${use_shunt_tcp}" = "1" ] && $ipt_tmp -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_SHUNTLIST) ${ipt_j}
+						[ "${tcp_proxy_mode}" != "disable" ] && $ipt_tmp -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") ${ipt_j}
+						[ -n "${is_tproxy}" ] && $ipt_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(REDIRECT $tcp_port TPROXY)
+
 						[ "$PROXY_IPV6" == "1" ] && {
 							[ "${use_proxy_list}" = "1" ] && $ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_BLACKLIST6) -j PSW_RULE 2>/dev/null
 							[ "${use_gfw_list}" = "1" ] && $ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(dst $IPSET_GFW6) -j PSW_RULE 2>/dev/null
@@ -467,7 +461,7 @@ load_acl() {
 				}
 				$ip6t_m -A PSW $(comment "$remarks") ${_ipt_source} -p udp -j RETURN 2>/dev/null
 				$ipt_m -A PSW $(comment "$remarks") ${_ipt_source} -p udp -j RETURN
-				unset ipt_tmp _ipt_source msg msg2
+				unset ipt_tmp ipt_j _ipt_source msg msg2
 			done
 			unset enabled sid remarks sources use_global_config use_direct_list use_proxy_list use_block_list use_gfw_list chn_list tcp_proxy_mode udp_proxy_mode tcp_no_redir_ports udp_no_redir_ports tcp_proxy_drop_ports udp_proxy_drop_ports tcp_redir_ports udp_redir_ports tcp_node udp_node interface
 			unset tcp_port udp_port tcp_node_remark udp_node_remark _acl_list use_shunt_tcp use_shunt_udp
@@ -551,8 +545,10 @@ load_acl() {
 				msg2="${msg}使用 TCP 节点[$(config_n_get $TCP_NODE remarks)]"
 				if [ -n "${is_tproxy}" ]; then
 					msg2="${msg2}(TPROXY:${TCP_REDIR_PORT})"
+					ipt_j="-j PSW_RULE"
 				else
 					msg2="${msg2}(REDIRECT:${TCP_REDIR_PORT})"
+					ipt_j="$(REDIRECT $TCP_REDIR_PORT)"
 				fi
 				
 				[ "$accept_icmp" = "1" ] && {
@@ -571,23 +567,14 @@ load_acl() {
 					[ "${USE_SHUNT_TCP}" = "1" ] && $ip6t_n -A PSW $(comment "默认") -p ipv6-icmp $(dst $IPSET_SHUNTLIST6) $(REDIRECT)
 					[ "${TCP_PROXY_MODE}" != "disable" ] && $ip6t_n -A PSW $(comment "默认") -p ipv6-icmp $(REDIRECT)
 				}
-				
-				if [ -z "${is_tproxy}" ]; then
-					$ipt_n -A PSW $(comment "默认") -p tcp -d $FAKE_IP $(REDIRECT $TCP_REDIR_PORT)
-					[ "${USE_PROXY_LIST}" = "1" ] && $ipt_n -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST) $(REDIRECT $TCP_REDIR_PORT)
-					[ "${USE_GFW_LIST}" = "1" ] && $ipt_n -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_GFW) $(REDIRECT $TCP_REDIR_PORT)
-					[ "${CHN_LIST}" != "0" ] && $ipt_n -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_CHN) $(get_jump_ipt ${CHN_LIST} $TCP_REDIR_PORT)
-					[ "${USE_SHUNT_TCP}" = "1" ] && $ipt_n -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST) $(REDIRECT $TCP_REDIR_PORT)
-					[ "${TCP_PROXY_MODE}" != "disable" ] && $ipt_n -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(REDIRECT $TCP_REDIR_PORT)
-				else
-					$ipt_m -A PSW $(comment "默认") -p tcp -d $FAKE_IP -j PSW_RULE
-					[ "${USE_PROXY_LIST}" = "1" ] && $ipt_m -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST) -j PSW_RULE
-					[ "${USE_GFW_LIST}" = "1" ] && $ipt_m -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_GFW) -j PSW_RULE
-					[ "${CHN_LIST}" != "0" ] && $ipt_m -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_CHN) $(get_jump_ipt ${CHN_LIST} "-j PSW_RULE")
-					[ "${USE_SHUNT_TCP}" = "1" ] && $ipt_m -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST) -j PSW_RULE
-					[ "${TCP_PROXY_MODE}" != "disable" ] && $ipt_m -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") -j PSW_RULE
-					$ipt_m -A PSW $(comment "默认") -p tcp $(REDIRECT $TCP_REDIR_PORT TPROXY)
-				fi
+
+				$ipt_tmp -A PSW $(comment "默认") -p tcp -d $FAKE_IP ${ipt_j}
+				[ "${USE_PROXY_LIST}" = "1" ] && $ipt_tmp -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST) ${ipt_j}
+				[ "${USE_GFW_LIST}" = "1" ] && $ipt_tmp -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_GFW) ${ipt_j}
+				[ "${CHN_LIST}" != "0" ] && $ipt_tmp -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_CHN) $(get_jump_ipt ${CHN_LIST} "${ipt_j}")
+				[ "${USE_SHUNT_TCP}" = "1" ] && $ipt_tmp -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST) ${ipt_j}
+				[ "${TCP_PROXY_MODE}" != "disable" ] && $ipt_tmp -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") ${ipt_j}
+				[ -n "${is_tproxy}" ]&& $ipt_tmp -A PSW $(comment "默认") -p tcp $(REDIRECT $TCP_REDIR_PORT TPROXY)
 
 				[ "$PROXY_IPV6" == "1" ] && {
 					[ "${USE_PROXY_LIST}" = "1" ] && $ip6t_m -A PSW $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST6) -j PSW_RULE
@@ -1048,7 +1035,12 @@ add_firewall_rule() {
 		done
 		
 		local ipt_tmp=$ipt_n
-		[ -n "${is_tproxy}" ] && ipt_tmp=$ipt_m
+		if [ -n "${is_tproxy}" ]; then
+			ipt_tmp=$ipt_m
+			ipt_j="-j PSW_RULE"
+		else
+			ipt_j="$(REDIRECT $TCP_REDIR_PORT)"
+		fi
 		
 		msg="【路由器本机】，"
 		[ "$TCP_NO_REDIR_PORTS" != "disable" ] && {
@@ -1144,29 +1136,20 @@ add_firewall_rule() {
 				[ -n "${LOCALHOST_TCP_PROXY_MODE}" ] && [ "${LOCALHOST_TCP_PROXY_MODE}" != "disable" ] && $ip6t_n -A PSW_OUTPUT -p ipv6-icmp $(REDIRECT)
 			}
 
-			if [ -z "${is_tproxy}" ]; then
-				[ -n "${LOCALHOST_TCP_PROXY_MODE}" ] && {
-					$ipt_n -A PSW_OUTPUT -p tcp -d $FAKE_IP $(REDIRECT $TCP_REDIR_PORT)
-					[ "${USE_PROXY_LIST}" = "1" ] && $ipt_n -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST) $(REDIRECT $TCP_REDIR_PORT)
-					[ "${USE_GFW_LIST}" = "1" ] && $ipt_n -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_GFW) $(REDIRECT $TCP_REDIR_PORT)
-					[ "${CHN_LIST}" != "0" ] && $ipt_n -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_CHN) $(get_jump_ipt ${CHN_LIST} $TCP_REDIR_PORT)
-					[ "${USE_SHUNT_TCP}" = "1" ] && $ipt_n -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST) $(REDIRECT $TCP_REDIR_PORT)
-					[ "${LOCALHOST_TCP_PROXY_MODE}" != "disable" ] && $ipt_n -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(REDIRECT $TCP_REDIR_PORT)
-				}
-				$ipt_n -A OUTPUT -p tcp -j PSW_OUTPUT
-			else
-				[ -n "${LOCALHOST_TCP_PROXY_MODE}" ] && {
-					$ipt_m -A PSW_OUTPUT -p tcp -d $FAKE_IP -j PSW_RULE
-					[ "${USE_PROXY_LIST}" = "1" ] && $ipt_m -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST) -j PSW_RULE
-					[ "${USE_GFW_LIST}" = "1" ] && $ipt_m -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_GFW) -j PSW_RULE
-					[ "${CHN_LIST}" != "0" ] && $ipt_m -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_CHN) $(get_jump_ipt ${CHN_LIST} "-j PSW_RULE")
-					[ "${USE_SHUNT_TCP}" = "1" ] && $ipt_m -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST) -j PSW_RULE
-					[ "${LOCALHOST_TCP_PROXY_MODE}" != "disable" ] && $ipt_m -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") -j PSW_RULE
-					$ipt_m -A PSW $(comment "本机") -p tcp -i lo $(REDIRECT $TCP_REDIR_PORT TPROXY)
-				}
+			[ -n "${LOCALHOST_TCP_PROXY_MODE}" ] && {
+				$ipt_tmp -A PSW_OUTPUT -p tcp -d $FAKE_IP ${ipt_j}
+				[ "${USE_PROXY_LIST}" = "1" ] && $ipt_tmp -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_BLACKLIST) ${ipt_j}
+				[ "${USE_GFW_LIST}" = "1" ] && $ipt_tmp -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_GFW) ${ipt_j}
+				[ "${CHN_LIST}" != "0" ] && $ipt_tmp -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_CHN) $(get_jump_ipt ${CHN_LIST} "${ipt_j}")
+				[ "${USE_SHUNT_TCP}" = "1" ] && $ipt_tmp -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(dst $IPSET_SHUNTLIST) ${ipt_j}
+				[ "${LOCALHOST_TCP_PROXY_MODE}" != "disable" ] && $ipt_tmp -A PSW_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") ${ipt_j}
+				[ -n "${is_tproxy}" ] && $ipt_m -A PSW $(comment "本机") -p tcp -i lo $(REDIRECT $TCP_REDIR_PORT TPROXY)
+			}
+			[ -z "${is_tproxy}" ] && $ipt_n -A OUTPUT -p tcp -j PSW_OUTPUT
+			[ -n "${is_tproxy}" ] && {
 				$ipt_m -A PSW $(comment "本机") -p tcp -i lo -j RETURN
 				insert_rule_before "$ipt_m" "OUTPUT" "mwan3" "$(comment mangle-OUTPUT-PSW) -p tcp -j PSW_OUTPUT"
-			fi
+			}
 
 			[ "$PROXY_IPV6" == "1" ] && {
 				[ -n "${LOCALHOST_TCP_PROXY_MODE}" ] && {
