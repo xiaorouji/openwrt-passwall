@@ -41,7 +41,7 @@ o.validate = function(self, value)
 	value = value:gsub("^%s+", ""):gsub("%s+$","\n"):gsub("\r\n","\n"):gsub("[ \t]*\n[ \t]*", "\n")
 	string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(hosts, w) end)
 	for index, host in ipairs(hosts) do
-		if host:sub(1, 1) == "#" then
+		if host:sub(1, 1) == "#" or host:sub(1, 8) == "geosite:" then
 			return value
 		end
 		if not datatypes.hostname(host) then
@@ -70,7 +70,7 @@ o.validate = function(self, value)
 	value = value:gsub("^%s+", ""):gsub("%s+$","\n"):gsub("\r\n","\n"):gsub("[ \t]*\n[ \t]*", "\n")
 	string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(ipmasks, w) end)
 	for index, ipmask in ipairs(ipmasks) do
-		if ipmask:sub(1, 1) == "#" then
+		if ipmask:sub(1, 1) == "#" or ipmask:sub(1, 6) == "geoip:" then
 			return value
 		end
 		if not ( datatypes.ipmask4(ipmask) or datatypes.ipmask6(ipmask) ) then
@@ -101,7 +101,7 @@ o.validate = function(self, value)
 	value = value:gsub("^%s+", ""):gsub("%s+$","\n"):gsub("\r\n","\n"):gsub("[ \t]*\n[ \t]*", "\n")
 	string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(hosts, w) end)
 	for index, host in ipairs(hosts) do
-		if host:sub(1, 1) == "#" then
+		if host:sub(1, 1) == "#" or host:sub(1, 8) == "geosite:" then
 			return value
 		end
 		if not datatypes.hostname(host) then
@@ -130,7 +130,7 @@ o.validate = function(self, value)
 	value = value:gsub("^%s+", ""):gsub("%s+$","\n"):gsub("\r\n","\n"):gsub("[ \t]*\n[ \t]*", "\n")
 	string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(ipmasks, w) end)
 	for index, ipmask in ipairs(ipmasks) do
-		if ipmask:sub(1, 1) == "#" then
+		if ipmask:sub(1, 1) == "#" or ipmask:sub(1, 6) == "geoip:" then
 			return value
 		end
 		if not ( datatypes.ipmask4(ipmask) or datatypes.ipmask6(ipmask) ) then
@@ -159,7 +159,7 @@ o.validate = function(self, value)
 	value = value:gsub("^%s+", ""):gsub("%s+$","\n"):gsub("\r\n","\n"):gsub("[ \t]*\n[ \t]*", "\n")
 	string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(hosts, w) end)
 	for index, host in ipairs(hosts) do
-		if host:sub(1, 1) == "#" then
+		if host:sub(1, 1) == "#" or host:sub(1, 8) == "geosite:" then
 			return value
 		end
 		if not datatypes.hostname(host) then
@@ -188,7 +188,7 @@ o.validate = function(self, value)
 	value = value:gsub("^%s+", ""):gsub("%s+$","\n"):gsub("\r\n","\n"):gsub("[ \t]*\n[ \t]*", "\n")
 	string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(ipmasks, w) end)
 	for index, ipmask in ipairs(ipmasks) do
-		if ipmask:sub(1, 1) == "#" then
+		if ipmask:sub(1, 1) == "#" or ipmask:sub(1, 6) == "geoip:" then
 			return value
 		end
 		if not ( datatypes.ipmask4(ipmask) or datatypes.ipmask6(ipmask) ) then
