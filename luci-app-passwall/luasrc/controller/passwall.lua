@@ -217,11 +217,11 @@ function index_status()
 	if dns_shunt == "smartdns" then
 		e.dns_mode_status = luci.sys.call("pidof smartdns >/dev/null") == 0
 	elseif dns_shunt == "chinadns-ng" then
-		local port = string.match(luci.sys.exec("cat /tmp/etc/passwall/acl/default/chinadns_ng.conf"), "bind%-port%s*(%d+)") or "65353"
-		e.dns_mode_status = luci.sys.call(string.format("netstat -apn | grep ':%s ' >/dev/null", port)) == 0
+		e.dns_mode_status = luci.sys.call("/bin/busybox top -bn1 | grep -v 'grep' | grep '/tmp/etc/passwall/bin/' | grep 'default' | grep 'chinadns_ng' >/dev/null") == 0
 	else
 		e.dns_mode_status = luci.sys.call("netstat -apn | grep ':15353 ' >/dev/null") == 0
 	end
+
 	e.haproxy_status = luci.sys.call(string.format("/bin/busybox top -bn1 | grep -v grep | grep '%s/bin/' | grep haproxy >/dev/null", appname)) == 0
 	e["tcp_node_status"] = luci.sys.call("/bin/busybox top -bn1 | grep -v 'grep' | grep '/tmp/etc/passwall/bin/' | grep 'default' | grep 'TCP' >/dev/null") == 0
 
