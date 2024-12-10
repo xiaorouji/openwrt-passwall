@@ -1725,3 +1725,12 @@ msgstr "与使用 %s 节点时生效。"
 
 msgid "Set the default domain resolution strategy for the sing-box node."
 msgstr "为 sing-box 节点设置默认的域名解析策略。"
+
+msgid "Total Lines"
+msgstr "总行数："
+
+msgid "Displayed Lines"
+msgstr "展示行数："
+
+msgid "%d lines"
+msgstr "%d 行"
