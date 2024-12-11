@@ -216,6 +216,7 @@ load_acl() {
 			[ -s "${TMP_ACL_PATH}/${sid}/var_udp_node" ] && udp_node=$(cat ${TMP_ACL_PATH}/${sid}/var_udp_node)
 			[ -s "${TMP_ACL_PATH}/${sid}/var_tcp_port" ] && tcp_port=$(cat ${TMP_ACL_PATH}/${sid}/var_tcp_port)
 			[ -s "${TMP_ACL_PATH}/${sid}/var_udp_port" ] && udp_port=$(cat ${TMP_ACL_PATH}/${sid}/var_udp_port)
+			[ -s "${TMP_ACL_PATH}/${sid}/var_redirect_dns_port" ] && dns_redirect_port=$(cat ${TMP_ACL_PATH}/${sid}/var_redirect_dns_port)
 
 			use_shunt_tcp=0
 			use_shunt_udp=0
@@ -244,6 +245,7 @@ load_acl() {
 				udp_proxy_mode=${UDP_PROXY_MODE}
 				use_shunt_tcp=${USE_SHUNT_TCP}
 				use_shunt_udp=${USE_SHUNT_UDP}
+				dns_redirect_port=${DNS_REDIRECT_PORT}
 			}
 
 			_acl_list=${TMP_ACL_PATH}/${sid}/source_list
@@ -318,7 +320,25 @@ load_acl() {
 						echolog "     - ${msg}不代理所有 UDP 端口"
 					fi
 				}
-				
+
+				if ([ -n "$tcp_port" ] && [ -n "${tcp_proxy_mode}" ]) || ([ -n "$udp_port" ] && [ -n "${udp_proxy_mode}" ]); then
+					[ -n "$dns_redirect_port" ] && {
+						$ipt_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j RETURN
+						$ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j RETURN 2>/dev/null
+						$ipt_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j RETURN
+						$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j RETURN 2>/dev/null
+						$ipt_n -A PSW_REDIRECT $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j REDIRECT --to-ports $dns_redirect_port
+						$ip6t_n -A PSW_REDIRECT $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j REDIRECT --to-ports $dns_redirect_port 2>/dev/null
+						$ipt_n -A PSW_REDIRECT $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j REDIRECT --to-ports $dns_redirect_port
+						$ip6t_n -A PSW_REDIRECT $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j REDIRECT --to-ports $dns_redirect_port 2>/dev/null
+					}
+				else
+					$ipt_n -A PSW_REDIRECT $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j RETURN
+					$ip6t_n -A PSW_REDIRECT $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j RETURN 2>/dev/null
+					$ipt_n -A PSW_REDIRECT $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j RETURN
+					$ip6t_n -A PSW_REDIRECT $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j RETURN 2>/dev/null
+				fi
+
 				[ -n "$tcp_port" -o -n "$udp_port" ] && {
 					[ "${use_direct_list}" = "1" ] && $ipt_n -A PSW $(comment "$remarks") ${_ipt_source} $(dst $IPSET_WHITELIST) -j RETURN
 					[ "${use_direct_list}" = "1" ] && $ipt_m -A PSW $(comment "$remarks") ${_ipt_source} $(dst $IPSET_WHITELIST) -j RETURN
@@ -365,7 +385,6 @@ load_acl() {
 				
 				[ -n "$tcp_port" ] && {
 					if [ -n "${tcp_proxy_mode}" ]; then
-						[ -s "${TMP_ACL_PATH}/${sid}/var_redirect_dns_port" ] && $ipt_n -A PSW_REDIRECT $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j REDIRECT --to-ports $(cat ${TMP_ACL_PATH}/${sid}/var_redirect_dns_port)
 						msg2="${msg}使用 TCP 节点[$tcp_node_remark]"
 						if [ -n "${is_tproxy}" ]; then
 							msg2="${msg2}(TPROXY:${tcp_port})"
@@ -448,7 +467,7 @@ load_acl() {
 				$ipt_m -A PSW $(comment "$remarks") ${_ipt_source} -p udp -j RETURN
 				unset ipt_tmp ipt_j _ipt_source msg msg2
 			done
-			unset enabled sid remarks sources use_global_config use_direct_list use_proxy_list use_block_list use_gfw_list chn_list tcp_proxy_mode udp_proxy_mode tcp_no_redir_ports udp_no_redir_ports tcp_proxy_drop_ports udp_proxy_drop_ports tcp_redir_ports udp_redir_ports tcp_node udp_node interface
+			unset enabled sid remarks sources use_global_config use_direct_list use_proxy_list use_block_list use_gfw_list chn_list tcp_proxy_mode udp_proxy_mode dns_redirect_port tcp_no_redir_ports udp_no_redir_ports tcp_proxy_drop_ports udp_proxy_drop_ports tcp_redir_ports udp_redir_ports tcp_node udp_node interface
 			unset tcp_port udp_port tcp_node_remark udp_node_remark _acl_list use_shunt_tcp use_shunt_udp
 		done
 	}
@@ -479,6 +498,19 @@ load_acl() {
 				echolog "     - ${msg}不代理所有 UDP 端口"
 			fi
 		}
+
+		if ([ "$TCP_NODE" != "nil" ] && [ -n "${TCP_PROXY_MODE}" ]) || ([ "$UDP_NODE" != "nil" ] && [ -n "${UDP_PROXY_MODE}" ]); then
+			[ -n "$DNS_REDIRECT_PORT" ] && {
+				$ipt_m -A PSW $(comment "默认") -p udp --dport 53 -j RETURN
+				$ip6t_m -A PSW $(comment "默认") -p udp --dport 53 -j RETURN 2>/dev/null
+				$ipt_m -A PSW $(comment "默认") -p tcp --dport 53 -j RETURN
+				$ip6t_m -A PSW $(comment "默认") -p tcp --dport 53 -j RETURN 2>/dev/null
+				$ipt_n -A PSW_REDIRECT $(comment "默认") -p udp --dport 53 -j REDIRECT --to-ports $DNS_REDIRECT_PORT
+				$ip6t_n -A PSW_REDIRECT $(comment "默认") -p udp --dport 53 -j REDIRECT --to-ports $DNS_REDIRECT_PORT 2>/dev/null
+				$ipt_n -A PSW_REDIRECT $(comment "默认") -p tcp --dport 53 -j REDIRECT --to-ports $DNS_REDIRECT_PORT
+				$ip6t_n -A PSW_REDIRECT $(comment "默认") -p tcp --dport 53 -j REDIRECT --to-ports $DNS_REDIRECT_PORT 2>/dev/null
+			}
+		fi
 
 		[ -n "${TCP_PROXY_MODE}" -o -n "${UDP_PROXY_MODE}" ] && {
 			[ "${USE_DIRECT_LIST}" = "1" ] && $ipt_n -A PSW $(comment "默认") $(dst $IPSET_WHITELIST) -j RETURN
@@ -726,20 +758,6 @@ filter_node() {
 		#echolog "  - 普通节点（${proxy_type}）..."
 		filter_rules "$proxy_node" "$stream"
 	fi
-}
-
-dns_hijack() {
-	[ $(config_t_get global dns_redirect "0") = "1" ] && {
-		$ipt_m -A PSW -p udp --dport 53 -j RETURN
-		$ipt_m -A PSW -p tcp --dport 53 -j RETURN
-		$ip6t_m -A PSW -p udp --dport 53 -j RETURN
-		$ip6t_m -A PSW -p tcp --dport 53 -j RETURN
-		$ipt_n -I PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 53 -m comment --comment "PSW_DNS_Hijack" 2>/dev/null
-		$ipt_n -I PREROUTING -p tcp --dport 53 -j REDIRECT --to-ports 53 -m comment --comment "PSW_DNS_Hijack" 2>/dev/null
-		$ip6t_n -I PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 53 -m comment --comment "PSW_DNS_Hijack" 2>/dev/null
-		$ip6t_n -I PREROUTING -p tcp --dport 53 -j REDIRECT --to-ports 53 -m comment --comment "PSW_DNS_Hijack" 2>/dev/null
-		echolog "  - 开启 DNS 重定向"
-	}
 }
 
 add_firewall_rule() {
@@ -993,6 +1011,9 @@ add_firewall_rule() {
 		$ip6t_n -A PSW_OUTPUT -m mark --mark 0xff -j RETURN
 	}
 
+	$ip6t_n -N PSW_REDIRECT
+	$ip6t_n -I PREROUTING 1 -j PSW_REDIRECT
+
 	$ip6t_m -N PSW_DIVERT
 	$ip6t_m -A PSW_DIVERT -j MARK --set-mark 1
 	$ip6t_m -A PSW_DIVERT -j ACCEPT
@@ -1094,7 +1115,16 @@ add_firewall_rule() {
 				echolog "  - ${msg}不代理所有 UDP 端口"
 			fi
 		}
-		
+
+		if ([ "$TCP_NODE" != "nil" ] && [ -n "${LOCALHOST_TCP_PROXY_MODE}" ]) || ([ "$UDP_NODE" != "nil" ] && [ -n "${LOCALHOST_UDP_PROXY_MODE}" ]); then
+			[ -n "$DNS_REDIRECT_PORT" ] && {
+				$ipt_n -A OUTPUT $(comment "PSW") -p udp -o lo --dport 53 -j REDIRECT --to-ports $DNS_REDIRECT_PORT
+				$ip6t_n -A OUTPUT $(comment "PSW") -p udp -o lo --dport 53 -j REDIRECT --to-ports $DNS_REDIRECT_PORT 2>/dev/null
+				$ipt_n -A OUTPUT $(comment "PSW") -p tcp -o lo --dport 53 -j REDIRECT --to-ports $DNS_REDIRECT_PORT
+				$ip6t_n -A OUTPUT $(comment "PSW") -p tcp -o lo --dport 53 -j REDIRECT --to-ports $DNS_REDIRECT_PORT 2>/dev/null
+			}
+		fi
+
 		[ -n "${LOCALHOST_TCP_PROXY_MODE}" -o -n "${LOCALHOST_UDP_PROXY_MODE}" ] && {
 			[ "$TCP_PROXY_DROP_PORTS" != "disable" ] && {
 				$ipt_m -A PSW_OUTPUT -p tcp $(factor $TCP_PROXY_DROP_PORTS "-m multiport --dport") -d $FAKE_IP -j DROP
@@ -1252,9 +1282,6 @@ add_firewall_rule() {
 		
 		$ip6t_m -I OUTPUT $(comment "mangle-OUTPUT-PSW") -o lo -j RETURN
 		insert_rule_before "$ip6t_m" "OUTPUT" "mwan3" "$(comment mangle-OUTPUT-PSW) -m mark --mark 1 -j RETURN"
-
-		dns_hijack
-
 	}
 
 	#  加载ACLS

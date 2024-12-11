@@ -4,7 +4,6 @@ local appname = "passwall"
 
 local var = api.get_args(arg)
 local FLAG = var["-FLAG"]
-local DNSMASQ_CONF_DIR = var["-DNSMASQ_CONF_DIR"]
 local TMP_DNSMASQ_PATH = var["-TMP_DNSMASQ_PATH"]
 local DNSMASQ_CONF_FILE = var["-DNSMASQ_CONF_FILE"]
 local DEFAULT_DNS = var["-DEFAULT_DNS"]
@@ -192,7 +191,6 @@ local setflag_4= (NFTFLAG == "1") and "4#inet#passwall#" or ""
 local setflag_6= (NFTFLAG == "1") and "6#inet#passwall#" or ""
 
 if not fs.access(CACHE_DNS_PATH) then
-	fs.mkdir(DNSMASQ_CONF_DIR)
 	fs.mkdir(CACHE_DNS_PATH)
 
 	--屏蔽列表

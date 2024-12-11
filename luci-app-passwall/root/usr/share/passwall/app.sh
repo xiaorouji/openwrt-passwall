@@ -14,13 +14,10 @@ TMP_ROUTE_PATH=$TMP_PATH/route
 TMP_ACL_PATH=$TMP_PATH/acl
 TMP_IFACE_PATH=$TMP_PATH/iface
 TMP_PATH2=/tmp/etc/${CONFIG}_tmp
-DNSMASQ_PATH=/etc/dnsmasq.d
-DNSMASQ_CONF_DIR=/tmp/dnsmasq.d
-TMP_DNSMASQ_PATH=${DNSMASQ_CONF_DIR}/${CONFIG}
+GLOBAL_ACL_PATH=${TMP_ACL_PATH}/default
 LOG_FILE=/tmp/log/$CONFIG.log
 APP_PATH=/usr/share/$CONFIG
 RULES_PATH=/usr/share/${CONFIG}/rules
-DNS_N=dnsmasq
 DNS_PORT=15353
 TUN_DNS="127.0.0.1#${DNS_PORT}"
 LOCAL_DNS=119.29.29.29,223.5.5.5
@@ -721,9 +718,9 @@ run_redir() {
 	local node proto bind local_port config_file log_file
 	eval_set_val $@
 	local tcp_node_socks_flag tcp_node_http_flag
-	[ -n "$config_file" ] && [ -z "$(echo ${config_file} | grep $TMP_PATH)" ] && config_file=${TMP_ACL_PATH}/default/${config_file}
+	[ -n "$config_file" ] && [ -z "$(echo ${config_file} | grep $TMP_PATH)" ] && config_file=${GLOBAL_ACL_PATH}/${config_file}
 	if [ -n "$log_file" ] && [ -z "$(echo ${log_file} | grep $TMP_PATH)" ]; then
-		log_file=${TMP_ACL_PATH}/default/${log_file}
+		log_file=${GLOBAL_ACL_PATH}/${log_file}
 	else
 		log_file="/dev/null"
 	fi
@@ -1067,7 +1064,7 @@ run_redir() {
 
 		[ "$tcp_node_socks" = "1" ] && {
 			TCP_SOCKS_server="127.0.0.1:$tcp_node_socks_port"
-			echo "${TCP_SOCKS_server}" > $TMP_ACL_PATH/default/TCP_SOCKS_server
+			echo "${TCP_SOCKS_server}" > ${GLOBAL_ACL_PATH}/TCP_SOCKS_server
 		}
 	;;
 	esac
@@ -1086,7 +1083,7 @@ start_redir() {
 		local port=$(echo $(get_new_port $current_port $proto))
 		eval ${proto}_REDIR=$port
 		run_redir node=$node proto=${proto} bind=0.0.0.0 local_port=$port config_file=$config_file log_file=$log_file
-		echo $node > $TMP_ACL_PATH/default/${proto}.id
+		echo $node > ${GLOBAL_ACL_PATH}/${proto}.id
 	else
 		[ "${proto}" = "UDP" ] && [ "$TCP_UDP" = "1" ] && return
 		echolog "${proto}节点没有选择或为空，不代理${proto}。"
@@ -1550,13 +1547,20 @@ start_dns() {
 		dnsmasq_version=$(dnsmasq -v | grep -i "Dnsmasq version " | awk '{print $3}')
 		[ "$(expr $dnsmasq_version \>= 2.87)" == 0 ] && echolog "Dnsmasq版本低于2.87，有可能无法正常使用！！！"
 	}
-	source $APP_PATH/helper_dnsmasq.sh stretch
-	lua $APP_PATH/helper_dnsmasq_add.lua -FLAG "default" -TMP_DNSMASQ_PATH ${TMP_DNSMASQ_PATH} -DNSMASQ_CONF_DIR ${DNSMASQ_CONF_DIR} \
-		-DNSMASQ_CONF_FILE "${DNSMASQ_CONF_DIR}/dnsmasq-${CONFIG}.conf" -DEFAULT_DNS ${DEFAULT_DNS} -LOCAL_DNS ${LOCAL_DNS} \
+
+	GLOBAL_DNSMASQ_PORT=$(get_new_port 11400)
+	local GLOBAL_DNSMASQ_CONF=${GLOBAL_ACL_PATH}/dnsmasq.conf
+	local GLOBAL_DNSMASQ_CONF_PATH=${GLOBAL_ACL_PATH}/dnsmasq.d
+	source $APP_PATH/helper_dnsmasq.sh copy_instance listen_port=$GLOBAL_DNSMASQ_PORT dnsmasq_conf="${GLOBAL_DNSMASQ_CONF}" dnsmasq_conf_path="${GLOBAL_DNSMASQ_CONF_PATH}"
+	lua $APP_PATH/helper_dnsmasq_add.lua -FLAG "default" -TMP_DNSMASQ_PATH ${GLOBAL_DNSMASQ_CONF_PATH} \
+		-DNSMASQ_CONF_FILE ${GLOBAL_DNSMASQ_CONF} -DEFAULT_DNS ${DEFAULT_DNS} -LOCAL_DNS ${LOCAL_DNS} \
 		-TUN_DNS ${TUN_DNS} -REMOTE_FAKEDNS ${fakedns:-0} -USE_DEFAULT_DNS "${USE_DEFAULT_DNS:-direct}" -CHINADNS_DNS ${china_ng_listen:-0} \
 		-USE_DIRECT_LIST "${USE_DIRECT_LIST}" -USE_PROXY_LIST "${USE_PROXY_LIST}" -USE_BLOCK_LIST "${USE_BLOCK_LIST}" -USE_GFW_LIST "${USE_GFW_LIST}" -CHN_LIST "${CHN_LIST}" \
 		-TCP_NODE ${TCP_NODE} -DEFAULT_PROXY_MODE ${TCP_PROXY_MODE} -NO_PROXY_IPV6 ${DNSMASQ_FILTER_PROXY_IPV6:-0} -NFTFLAG ${nftflag:-0} \
 		-NO_LOGIC_LOG ${NO_LOGIC_LOG:-0}
+	ln_run "$(first_type dnsmasq)" "dnsmasq_default" "/dev/null" -C ${GLOBAL_DNSMASQ_CONF} -x ${GLOBAL_ACL_PATH}/dnsmasq.pid
+	echo "${GLOBAL_DNSMASQ_PORT}" > ${GLOBAL_ACL_PATH}/var_redirect_dns_port
+	DNS_REDIRECT_PORT=${GLOBAL_DNSMASQ_PORT}
 }
 
 add_ip2route() {
@@ -1616,6 +1620,7 @@ acl_app() {
 		redir_port=11200
 		dns_port=11300
 		dnsmasq_port=11400
+		[ -n "${GLOBAL_DNSMASQ_PORT}" ] && dnsmasq_port=$(get_new_port $GLOBAL_DNSMASQ_PORT)
 		chinadns_port=11500
 		for item in $items; do
 			sid=$(uci -q show "${CONFIG}.${item}" | grep "=acl_rule" | awk -F '=' '{print $1}' | awk -F '.' '{print $2}')
@@ -1642,9 +1647,10 @@ acl_app() {
 				unset s2
 			done
 
-			mkdir -p $TMP_ACL_PATH/$sid
+			local acl_path=${TMP_ACL_PATH}/$sid
+			mkdir -p ${acl_path}
 
-			[ ! -z "${source_list}" ] && echo -e "${source_list}" | sed '/^$/d' > $TMP_ACL_PATH/$sid/source_list
+			[ ! -z "${source_list}" ] && echo -e "${source_list}" | sed '/^$/d' > ${acl_path}/source_list
 
 			use_global_config=${use_global_config:-0}
 			tcp_node=${tcp_node:-nil}
@@ -1743,28 +1749,17 @@ acl_app() {
 							}
 
 							dnsmasq_port=$(get_new_port $(expr $dnsmasq_port + 1))
-							redirect_dns_port=$dnsmasq_port
-							mkdir -p $TMP_ACL_PATH/$sid/dnsmasq.d
-							[ -s "/tmp/etc/dnsmasq.conf.${DEFAULT_DNSMASQ_CFGID}" ] && {
-								cp -r /tmp/etc/dnsmasq.conf.${DEFAULT_DNSMASQ_CFGID} $TMP_ACL_PATH/$sid/dnsmasq.conf
-								sed -i "/ubus/d" $TMP_ACL_PATH/$sid/dnsmasq.conf
-								sed -i "/dhcp/d" $TMP_ACL_PATH/$sid/dnsmasq.conf
-								sed -i "/port=/d" $TMP_ACL_PATH/$sid/dnsmasq.conf
-								sed -i "/conf-dir/d" $TMP_ACL_PATH/$sid/dnsmasq.conf
-								sed -i "/server/d" $TMP_ACL_PATH/$sid/dnsmasq.conf
-							}
-							echo "port=${dnsmasq_port}" >> $TMP_ACL_PATH/$sid/dnsmasq.conf
-							[ "$use_default_dns" = "remote" ] && {
-								dnsmasq_version=$(dnsmasq -v | grep -i "Dnsmasq version " | awk '{print $3}')
-								[ "$(expr $dnsmasq_version \>= 2.87)" == 0 ] && echolog "Dnsmasq版本低于2.87，有可能无法正常使用！！！"
-							}
-							lua $APP_PATH/helper_dnsmasq_add.lua -FLAG ${sid} -TMP_DNSMASQ_PATH $TMP_ACL_PATH/$sid/dnsmasq.d -DNSMASQ_CONF_DIR ${DNSMASQ_CONF_DIR} \
-								-DNSMASQ_CONF_FILE $TMP_ACL_PATH/$sid/dnsmasq.conf -DEFAULT_DNS $DEFAULT_DNS -LOCAL_DNS $LOCAL_DNS \
+							local dnsmasq_conf=${acl_path}/dnsmasq.conf
+							local dnsmasq_conf_path=${acl_path}/dnsmasq.d
+							source $APP_PATH/helper_dnsmasq.sh copy_instance listen_port=$dnsmasq_port dnsmasq_conf="${dnsmasq_conf}" dnsmasq_conf_path="${dnsmasq_conf_path}"
+							lua $APP_PATH/helper_dnsmasq_add.lua -FLAG ${sid} -TMP_DNSMASQ_PATH ${dnsmasq_conf_path} \
+								-DNSMASQ_CONF_FILE ${dnsmasq_conf} -DEFAULT_DNS $DEFAULT_DNS -LOCAL_DNS $LOCAL_DNS \
 								-USE_DIRECT_LIST "${use_direct_list}" -USE_PROXY_LIST "${use_proxy_list}" -USE_BLOCK_LIST "${use_block_list}" -USE_GFW_LIST "${use_gfw_list}" -CHN_LIST "${chn_list}" \
 								-TUN_DNS "127.0.0.1#${_dns_port}" -REMOTE_FAKEDNS 0 -USE_DEFAULT_DNS "${use_default_dns:-direct}" -CHINADNS_DNS ${_china_ng_listen:-0} \
 								-TCP_NODE $tcp_node -DEFAULT_PROXY_MODE ${tcp_proxy_mode} -NO_PROXY_IPV6 ${dnsmasq_filter_proxy_ipv6:-0} -NFTFLAG ${nftflag:-0} \
 								-NO_LOGIC_LOG 1
-							ln_run "$(first_type dnsmasq)" "dnsmasq_${sid}" "/dev/null" -C $TMP_ACL_PATH/$sid/dnsmasq.conf -x $TMP_ACL_PATH/$sid/dnsmasq.pid
+							ln_run "$(first_type dnsmasq)" "dnsmasq_${sid}" "/dev/null" -C ${dnsmasq_conf} -x ${acl_path}/dnsmasq.pid
+							echo "${dnsmasq_port}" > ${acl_path}/var_redirect_dns_port
 							eval node_${tcp_node}_$(echo -n "${tcp_proxy_mode}${remote_dns}" | md5sum | cut -d " " -f1)=${dnsmasq_port}
 						}
 						_redir_port=$(eval echo \${node_${tcp_node}_redir_port})
@@ -1777,7 +1772,7 @@ acl_app() {
 								_dns_port=$(eval echo \${node_${tcp_node}_$(echo -n "${remote_dns}" | md5sum | cut -d " " -f1)})
 								run_dns ${_dns_port}
 							else
-								redirect_dns_port=${_dnsmasq_port}
+								[ -n "${_dnsmasq_port}" ] && echo "${_dnsmasq_port}" > ${acl_path}/var_redirect_dns_port
 							fi
 						else
 							socks_port=$(get_new_port $(expr $socks_port + 1))
@@ -1815,10 +1810,10 @@ acl_app() {
 							fi
 							run_dns ${_dns_port}
 						fi
-						echo "${tcp_node}" > $TMP_ACL_PATH/$sid/var_tcp_node
+						echo "${tcp_node}" > ${acl_path}/var_tcp_node
 					}
 				fi
-				echo "${tcp_port}" > $TMP_ACL_PATH/$sid/var_tcp_port
+				echo "${tcp_port}" > ${acl_path}/var_tcp_port
 			}
 			[ "$udp_node" != "nil" ] && {
 				[ "$udp_node" = "tcp" ] && udp_node=$tcp_node
@@ -1867,18 +1862,16 @@ acl_app() {
 									run_ipt2socks flag=acl_${udp_node} local_port=$redir_port socks_address=127.0.0.1 socks_port=$socks_port log_file=$log_file
 								fi
 							fi
-							echo "${udp_node}" > $TMP_ACL_PATH/$sid/var_udp_node
+							echo "${udp_node}" > ${acl_path}/var_udp_node
 						fi
 					}
 				fi
-				echo "${udp_port}" > $TMP_ACL_PATH/$sid/var_udp_port
+				echo "${udp_port}" > ${acl_path}/var_udp_port
 				udp_flag=1
 			}
-			[ -n "$redirect_dns_port" ] && echo "${redirect_dns_port}" > $TMP_ACL_PATH/$sid/var_redirect_dns_port
 			unset enabled sid remarks sources interface use_global_config tcp_node udp_node use_direct_list use_proxy_list use_block_list use_gfw_list chn_list tcp_proxy_mode udp_proxy_mode filter_proxy_ipv6 dns_mode remote_dns v2ray_dns_mode remote_dns_doh dns_client_ip
 			unset _ip _mac _iprange _ipset _ip_or_mac source_list tcp_port udp_port config_file _extra_param
 			unset _china_ng_listen _chinadns_local_dns _direct_dns_mode chinadns_ng_default_tag dnsmasq_filter_proxy_ipv6
-			unset redirect_dns_port
 		done
 		unset socks_port redir_port dns_port dnsmasq_port chinadns_port
 	}
@@ -1921,13 +1914,12 @@ start() {
 	}
 
 	[ "$ENABLED_DEFAULT_ACL" == 1 ] && {
-		mkdir -p $TMP_ACL_PATH/default
+		mkdir -p ${GLOBAL_ACL_PATH}
 		start_redir TCP
 		start_redir UDP
 		start_dns
 	}
 	[ -n "$USE_TABLES" ] && source $APP_PATH/${USE_TABLES}.sh start
-	[ "$ENABLED_DEFAULT_ACL" == 1 ] && source $APP_PATH/helper_${DNS_N}.sh logic_restart
 	start_crontab
 	echolog "运行完成！\n"
 }
@@ -1944,8 +1936,6 @@ stop() {
 	unset XRAY_LOCATION_ASSET
 	stop_crontab
 	source $APP_PATH/helper_smartdns.sh del
-	source $APP_PATH/helper_dnsmasq.sh del
-	source $APP_PATH/helper_dnsmasq.sh restart no_log=1
 	[ -s "$TMP_PATH/bridge_nf_ipt" ] && sysctl -w net.bridge.bridge-nf-call-iptables=$(cat $TMP_PATH/bridge_nf_ipt) >/dev/null 2>&1
 	[ -s "$TMP_PATH/bridge_nf_ip6t" ] && sysctl -w net.bridge.bridge-nf-call-ip6tables=$(cat $TMP_PATH/bridge_nf_ip6t) >/dev/null 2>&1
 	rm -rf ${TMP_PATH}
@@ -2015,17 +2005,6 @@ RESOLVFILE=/tmp/resolv.conf.d/resolv.conf.auto
 
 ISP_DNS=$(cat $RESOLVFILE 2>/dev/null | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | sort -u | grep -v 0.0.0.0 | grep -v 127.0.0.1)
 ISP_DNS6=$(cat $RESOLVFILE 2>/dev/null | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | awk -F % '{print $1}' | awk -F " " '{print $2}'| sort -u | grep -v -Fx ::1 | grep -v -Fx ::)
-
-DEFAULT_DNSMASQ_CFGID="$(uci -q show "dhcp.@dnsmasq[0]" | awk 'NR==1 {split($0, conf, /[.=]/); print conf[2]}')"
-if [ -f "/tmp/etc/dnsmasq.conf.$DEFAULT_DNSMASQ_CFGID" ]; then
-        DNSMASQ_CONF_DIR="$(awk -F '=' '/^conf-dir=/ {print $2}' "/tmp/etc/dnsmasq.conf.$DEFAULT_DNSMASQ_CFGID")"
-	if [ -n "$DNSMASQ_CONF_DIR" ]; then
-		DNSMASQ_CONF_DIR=${DNSMASQ_CONF_DIR%*/}
-		TMP_DNSMASQ_PATH=${DNSMASQ_CONF_DIR}/${CONFIG}
-	else
-		DNSMASQ_CONF_DIR="/tmp/dnsmasq.d"
-	fi
-fi
 
 DEFAULT_DNS=$(uci show dhcp.@dnsmasq[0] | grep "\.server=" | awk -F '=' '{print $2}' | sed "s/'//g" | tr ' ' '\n' | grep -v "\/" | head -2 | sed ':label;N;s/\n/,/;b label')
 [ -z "${DEFAULT_DNS}" ] && [ "$(echo $ISP_DNS | tr ' ' '\n' | wc -l)" -le 2 ] && DEFAULT_DNS=$(echo -n $ISP_DNS | tr ' ' '\n' | head -2 | tr '\n' ',')

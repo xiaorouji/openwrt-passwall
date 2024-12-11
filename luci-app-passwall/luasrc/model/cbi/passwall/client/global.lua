@@ -557,9 +557,6 @@ if api.is_finded("smartdns") then
 	o:depends({dns_shunt = "smartdns", tcp_proxy_mode = "proxy", chn_list = "direct"})
 end
 
-o = s:taboption("DNS", Flag, "dns_redirect", "DNS " .. translate("Redirect"), translate("Force Router DNS server to all local devices."))
-o.default = "0"
-
 if (uci:get(appname, "@global_forwarding[0]", "use_nft") or "0") == "1" then
 	o = s:taboption("DNS", Button, "clear_ipset", translate("Clear NFTSET"), translate("Try this feature if the rule modification does not take effect."))
 else

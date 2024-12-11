@@ -276,6 +276,7 @@ load_acl() {
 			[ -s "${TMP_ACL_PATH}/${sid}/var_udp_node" ] && udp_node=$(cat ${TMP_ACL_PATH}/${sid}/var_udp_node)
 			[ -s "${TMP_ACL_PATH}/${sid}/var_tcp_port" ] && tcp_port=$(cat ${TMP_ACL_PATH}/${sid}/var_tcp_port)
 			[ -s "${TMP_ACL_PATH}/${sid}/var_udp_port" ] && udp_port=$(cat ${TMP_ACL_PATH}/${sid}/var_udp_port)
+			[ -s "${TMP_ACL_PATH}/${sid}/var_redirect_dns_port" ] && dns_redirect_port=$(cat ${TMP_ACL_PATH}/${sid}/var_redirect_dns_port)
 
 			use_shunt_tcp=0
 			use_shunt_udp=0
@@ -304,6 +305,7 @@ load_acl() {
 				udp_proxy_mode=${UDP_PROXY_MODE}
 				use_shunt_tcp=${USE_SHUNT_TCP}
 				use_shunt_udp=${USE_SHUNT_UDP}
+				dns_redirect_port=${DNS_REDIRECT_PORT}
 			}
 
 			_acl_list=${TMP_ACL_PATH}/${sid}/source_list
@@ -368,7 +370,25 @@ load_acl() {
 						echolog "     - ${msg}不代理所有 UDP 端口"
 					fi
 				}
-				
+
+				if ([ -n "$tcp_port" ] && [ -n "${tcp_proxy_mode}" ]) || ([ -n "$udp_port" ] && [ -n "${udp_proxy_mode}" ]); then
+					[ -n "$dns_redirect_port" ] && {
+						nft "add rule $NFTABLE_NAME PSW_MANGLE ip protocol udp ${_ipt_source} udp dport 53 counter return comment \"$remarks\""
+						nft "add rule $NFTABLE_NAME PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} udp dport 53 counter return comment \"$remarks\""
+						nft "add rule $NFTABLE_NAME PSW_MANGLE ip protocol tcp ${_ipt_source} tcp dport 53 counter return comment \"$remarks\""
+						nft "add rule $NFTABLE_NAME PSW_MANGLE_V6 meta l4proto tcp ${_ipt_source} tcp dport 53 counter return comment \"$remarks\""
+						nft "add rule $NFTABLE_NAME PSW_REDIRECT ip protocol udp ${_ipt_source} udp dport 53 counter redirect to :$dns_redirect_port comment \"$remarks\""
+						nft "add rule $NFTABLE_NAME PSW_REDIRECT ip protocol tcp ${_ipt_source} tcp dport 53 counter redirect to :$dns_redirect_port comment \"$remarks\""
+						nft "add rule $NFTABLE_NAME PSW_REDIRECT meta l4proto udp ${_ipt_source} udp dport 53 counter redirect to :$dns_redirect_port comment \"$remarks\""
+						nft "add rule $NFTABLE_NAME PSW_REDIRECT meta l4proto tcp ${_ipt_source} tcp dport 53 counter redirect to :$dns_redirect_port comment \"$remarks\""
+					}
+				else
+					nft "add rule $NFTABLE_NAME PSW_REDIRECT ip protocol udp ${_ipt_source} udp dport 53 counter return comment \"$remarks\""
+					nft "add rule $NFTABLE_NAME PSW_REDIRECT ip protocol tcp ${_ipt_source} tcp dport 53 counter return comment \"$remarks\""
+					nft "add rule $NFTABLE_NAME PSW_REDIRECT meta l4proto udp ${_ipt_source} udp dport 53 counter return comment \"$remarks\""
+					nft "add rule $NFTABLE_NAME PSW_REDIRECT meta l4proto tcp ${_ipt_source} tcp dport 53 counter return comment \"$remarks\""
+				fi
+
 				[ -n "$tcp_port" -o -n "$udp_port" ] && {
 					[ "${use_direct_list}" = "1" ] && nft "add rule $NFTABLE_NAME PSW_MANGLE ${_ipt_source} ip daddr @$NFTSET_WHITELIST counter return comment \"$remarks\""
 					[ "${use_direct_list}" = "1" ] && [ -z "${is_tproxy}" ] && nft "add rule $NFTABLE_NAME PSW_NAT ${_ipt_source} ip daddr @$NFTSET_WHITELIST counter return comment \"$remarks\""
@@ -416,7 +436,6 @@ load_acl() {
 
 				[ -n "$tcp_port" ] && {
 					if [ -n "${tcp_proxy_mode}" ]; then
-						[ -s "${TMP_ACL_PATH}/${sid}/var_redirect_dns_port" ] && nft "add rule $NFTABLE_NAME PSW_REDIRECT ip protocol udp ${_ipt_source} udp dport 53 counter redirect to $(cat ${TMP_ACL_PATH}/${sid}/var_redirect_dns_port) comment \"$remarks\""
 						msg2="${msg}使用 TCP 节点[$tcp_node_remark]"
 						if [ -n "${is_tproxy}" ]; then
 							msg2="${msg2}(TPROXY:${tcp_port})"
@@ -504,7 +523,7 @@ load_acl() {
 				nft "add rule $NFTABLE_NAME PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} counter return comment \"$remarks\"" 2>/dev/null
 				unset nft_chain nft_j _ipt_source msg msg2
 			done
-			unset enabled sid remarks sources use_global_config use_direct_list use_proxy_list use_block_list use_gfw_list chn_list tcp_proxy_mode udp_proxy_mode tcp_no_redir_ports udp_no_redir_ports tcp_proxy_drop_ports udp_proxy_drop_ports tcp_redir_ports udp_redir_ports tcp_node udp_node interface
+			unset enabled sid remarks sources use_global_config use_direct_list use_proxy_list use_block_list use_gfw_list chn_list tcp_proxy_mode udp_proxy_mode dns_redirect_port tcp_no_redir_ports udp_no_redir_ports tcp_proxy_drop_ports udp_proxy_drop_ports tcp_redir_ports udp_redir_ports tcp_node udp_node interface
 			unset tcp_port udp_port tcp_node_remark udp_node_remark _acl_list use_shunt_tcp use_shunt_udp
 		done
 	}
@@ -532,6 +551,19 @@ load_acl() {
 				echolog "     - ${msg}不代理所有 UDP 端口"
 			fi
 		}
+
+		if ([ "$TCP_NODE" != "nil" ] && [ -n "${TCP_PROXY_MODE}" ]) || ([ "$UDP_NODE" != "nil" ] && [ -n "${UDP_PROXY_MODE}" ]); then
+			[ -n "$DNS_REDIRECT_PORT" ] && {
+				nft "add rule $NFTABLE_NAME PSW_MANGLE ip protocol udp udp dport 53 counter return comment \"默认\""
+				nft "add rule $NFTABLE_NAME PSW_MANGLE_V6 meta l4proto udp udp dport 53 counter return comment \"默认\""
+				nft "add rule $NFTABLE_NAME PSW_MANGLE ip protocol tcp tcp dport 53 counter return comment \"默认\""
+				nft "add rule $NFTABLE_NAME PSW_MANGLE_V6 meta l4proto tcp tcp dport 53 counter return comment \"默认\""
+				nft "add rule $NFTABLE_NAME PSW_REDIRECT ip protocol udp udp dport 53 counter redirect to :$DNS_REDIRECT_PORT comment \"默认\""
+				nft "add rule $NFTABLE_NAME PSW_REDIRECT ip protocol tcp tcp dport 53 counter redirect to :$DNS_REDIRECT_PORT comment \"默认\""
+				nft "add rule $NFTABLE_NAME PSW_REDIRECT meta l4proto udp udp dport 53 counter redirect to :$DNS_REDIRECT_PORT comment \"默认\""
+				nft "add rule $NFTABLE_NAME PSW_REDIRECT meta l4proto tcp tcp dport 53 counter redirect to :$DNS_REDIRECT_PORT comment \"默认\""
+			}
+		fi
 
 		[ -n "${TCP_PROXY_MODE}" -o -n "${UDP_PROXY_MODE}" ] && {
 			[ "${USE_DIRECT_LIST}" = "1" ] && nft "add rule $NFTABLE_NAME PSW_MANGLE ip daddr @$NFTSET_WHITELIST counter return comment \"默认\""
@@ -793,22 +825,6 @@ filter_node() {
 		#echolog "  - 普通节点（${proxy_type}）..."
 		filter_rules "$proxy_node" "$stream"
 	fi
-}
-
-dns_hijack() {
-	[ $(config_t_get global dns_redirect "0") = "1" ] && {
-		nft "add rule $NFTABLE_NAME PSW_MANGLE ip protocol udp udp dport 53 counter return"
-		nft "add rule $NFTABLE_NAME PSW_MANGLE ip protocol tcp tcp dport 53 counter return"
-		nft "add rule $NFTABLE_NAME PSW_MANGLE_V6 meta l4proto udp udp dport 53 counter return"
-		nft "add rule $NFTABLE_NAME PSW_MANGLE_V6 meta l4proto tcp tcp dport 53 counter return"
-		nft insert rule $NFTABLE_NAME dstnat position 0 tcp dport 53 counter redirect to :53 comment \"PSW_DNS_Hijack\" 2>/dev/null
-		nft insert rule $NFTABLE_NAME dstnat position 0 udp dport 53 counter redirect to :53 comment \"PSW_DNS_Hijack\" 2>/dev/null
-		nft insert rule $NFTABLE_NAME dstnat position 0 meta nfproto {ipv6} tcp dport 53 counter redirect to :53 comment \"PSW_DNS_Hijack\" 2>/dev/null
-		nft insert rule $NFTABLE_NAME dstnat position 0 meta nfproto {ipv6} udp dport 53 counter redirect to :53 comment \"PSW_DNS_Hijack\" 2>/dev/null
-		uci -q set dhcp.@dnsmasq[0].dns_redirect='0' 2>/dev/null
-		uci commit dhcp 2>/dev/null
-		echolog "  - 开启 DNS 重定向"
-	}
 }
 
 add_firewall_rule() {
@@ -1166,7 +1182,16 @@ add_firewall_rule() {
 				echolog "  - ${msg}不代理所有 UDP 端口"
 			fi
 		}
-		
+
+		if ([ "$TCP_NODE" != "nil" ] && [ -n "${LOCALHOST_TCP_PROXY_MODE}" ]) || ([ "$UDP_NODE" != "nil" ] && [ -n "${LOCALHOST_UDP_PROXY_MODE}" ]); then
+			[ -n "$DNS_REDIRECT_PORT" ] && {
+				nft "add rule $NFTABLE_NAME nat_output ip protocol udp oif lo udp dport 53 counter redirect to :$DNS_REDIRECT_PORT comment \"PSW\""
+				nft "add rule $NFTABLE_NAME nat_output ip protocol tcp oif lo tcp dport 53 counter redirect to :$DNS_REDIRECT_PORT comment \"PSW\""
+				nft "add rule $NFTABLE_NAME nat_output meta l4proto udp oif lo udp dport 53 counter redirect to :$DNS_REDIRECT_PORT comment \"PSW\""
+				nft "add rule $NFTABLE_NAME nat_output meta l4proto tcp oif lo tcp dport 53 counter redirect to :$DNS_REDIRECT_PORT comment \"PSW\""
+			}
+		fi
+
 		[ -n "${LOCALHOST_TCP_PROXY_MODE}" -o -n "${LOCALHOST_UDP_PROXY_MODE}" ] && {
 			[ "$TCP_PROXY_DROP_PORTS" != "disable" ] && {
 				nft add rule $NFTABLE_NAME $nft_output_chain ip protocol tcp ip daddr $FAKE_IP $(factor $TCP_PROXY_DROP_PORTS "tcp dport") counter drop
@@ -1324,8 +1349,6 @@ add_firewall_rule() {
 
 		nft "add rule $NFTABLE_NAME mangle_output oif lo counter return comment \"PSW_OUTPUT_MANGLE\""
 		nft "add rule $NFTABLE_NAME mangle_output meta mark 1 counter return comment \"PSW_OUTPUT_MANGLE\""
-
-		dns_hijack
 	}
 
 	#  加载ACLS
