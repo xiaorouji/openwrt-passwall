@@ -612,8 +612,15 @@ function gen_config(var)
 				port = tonumber(local_socks_port),
 				protocol = "socks",
 				settings = {auth = "noauth", udp = true},
-				sniffing = {enabled = true, destOverride = {"http", "tls", "quic"}}
+				sniffing = {
+					enabled = xray_settings.sniffing_override_dest == "1" or node.protocol == "_shunt"
+				}
 			}
+			if inbound.sniffing.enabled == true then
+				inbound.sniffing.destOverride = {"http", "tls", "quic"}
+				inbound.sniffing.routeOnly = xray_settings.sniffing_override_dest ~= "1" or nil
+				inbound.sniffing.domainsExcluded = xray_settings.sniffing_override_dest == "1" and get_domain_excluded() or nil
+			end
 			if local_socks_username and local_socks_password and local_socks_username ~= "" and local_socks_password ~= "" then
 				inbound.settings.auth = "password"
 				inbound.settings.accounts = {
@@ -649,13 +656,15 @@ function gen_config(var)
 				settings = {network = "tcp,udp", followRedirect = true},
 				streamSettings = {sockopt = {tproxy = "tproxy"}},
 				sniffing = {
-					enabled = xray_settings.sniffing_override_dest == "1" or node.protocol == "_shunt",
-					destOverride = {"http", "tls", "quic"},
-					metadataOnly = false,
-					routeOnly = node.protocol == "_shunt" and xray_settings.sniffing_override_dest ~= "1" or nil,
-					domainsExcluded = xray_settings.sniffing_override_dest == "1" and get_domain_excluded() or nil
+					enabled = xray_settings.sniffing_override_dest == "1" or node.protocol == "_shunt"
 				}
 			}
+			if inbound.sniffing.enabled == true then
+				inbound.sniffing.destOverride = {"http", "tls", "quic", (remote_dns_fake) and "fakedns"}
+				inbound.sniffing.metadataOnly = false
+				inbound.sniffing.routeOnly = xray_settings.sniffing_override_dest ~= "1" or nil
+				inbound.sniffing.domainsExcluded = xray_settings.sniffing_override_dest == "1" and get_domain_excluded() or nil
+			end
 
 			if tcp_redir_port then
 				local tcp_inbound = api.clone(inbound)
