@@ -976,6 +976,18 @@ local api = require "luci.passwall.api"
 				opt.set(dom_prefix + 'grpc_mode', queryParam.mode || "gun");
 			}
 
+			opt.set(dom_prefix + 'tls', queryParam.security === "tls");
+			if (queryParam.security === "tls") {
+				var tls_serverName = queryParam.peer;
+				if (queryParam.sni) {
+					tls_serverName = queryParam.sni
+				}
+				opt.set(dom_prefix + 'tls_serverName', tls_serverName);
+			}
+			if (queryParam.allowinsecure === '1') {
+				opt.set(dom_prefix + 'tls_allowInsecure', true);
+			}
+
 			if (m.hash) {
 				opt.set('remarks', decodeURIComponent(m.hash.substr(1)));
 			}
