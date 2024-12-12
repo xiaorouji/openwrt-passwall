@@ -359,6 +359,23 @@ parse_doh() {
 	eval "${__url_var}='${__url}' ${__host_var}='${__host}' ${__port_var}='${__port}' ${__bootstrap_var}='${__bootstrap}'"
 }
 
+get_geoip() {
+	local geoip_code="$1"
+	local geoip_type_flag=""
+	local geoip_path="$(config_t_get global_rules v2ray_location_asset)"
+	geoip_path="${geoip_path%*/}/geoip.dat"
+	[ -e "$geoip_path" ] || { echo ""; return; }
+	case "$2" in
+		"ipv4") geoip_type_flag="-ipv6=false" ;;
+		"ipv6") geoip_type_flag="-ipv4=false" ;;
+	esac
+	if type geoview &> /dev/null; then
+		geoview -input "$geoip_path" -list "$geoip_code" $geoip_type_flag -lowmem=true
+	else
+		echo ""
+	fi
+}
+
 run_ipt2socks() {
 	local flag proto tcp_tproxy local_port socks_address socks_port socks_username socks_password log_file
 	local _extra_param=""
