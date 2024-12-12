@@ -77,6 +77,11 @@ function index()
 	entry({"admin", "services", appname, "delete_select_nodes"}, call("delete_select_nodes")).leaf = true
 	entry({"admin", "services", appname, "update_rules"}, call("update_rules")).leaf = true
 
+	--[[rule_list]]
+	entry({"admin", "services", appname, "read_gfwlist"}, call("read_rulelist", "gfw")).leaf = true
+	entry({"admin", "services", appname, "read_chnlist"}, call("read_rulelist", "chn")).leaf = true
+	entry({"admin", "services", appname, "read_chnroute"}, call("read_rulelist", "chnroute")).leaf = true
+
 	--[[Components update]]
 	entry({"admin", "services", appname, "check_passwall"}, call("app_check")).leaf = true
 	local coms = require "luci.passwall.com"
@@ -475,3 +480,19 @@ function com_update(comname)
 
 	http_write_json(json)
 end
+
+function read_rulelist(list)
+	local rule_path
+	if list == "gfw" then
+		rule_path = "/usr/share/passwall/rules/gfwlist"
+	elseif list == "chn" then
+		rule_path = "/usr/share/passwall/rules/chnlist"
+	else
+		rule_path = "/usr/share/passwall/rules/chnroute"
+	end
+	if api.fs.access(rule_path) then
+		luci.http.prepare_content("text/plain")
+		luci.http.write(api.fs.readfile(rule_path))
+	end
+end
+

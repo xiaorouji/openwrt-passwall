@@ -1729,8 +1729,5 @@ msgstr "为 sing-box 节点设置默认的域名解析策略。"
 msgid "Total Lines"
 msgstr "总行数："
 
-msgid "Displayed Lines"
-msgstr "展示行数："
-
-msgid "%d lines"
-msgstr "%d 行"
+msgid "Read List"
+msgstr "读取列表"

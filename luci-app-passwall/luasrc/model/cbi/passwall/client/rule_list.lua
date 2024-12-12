@@ -273,71 +273,41 @@ end
 
 if api.fs.access(gfwlist_path) then
 	s:tab("gfw_list", translate("GFW List"))
-	o = s:taboption("gfw_list", TextValue, "gfw_list", "")
-	o.readonly = true
-	o.rows = 45
-	o.wrap = "off"
-	o.cfgvalue = function(self, section)
-		local limit = 100 -- 限制行数
-		local cmd = string.format("head -n %d %s", limit, gfwlist_path)
-		return api.sys.exec(cmd) or ""
-		-- return fs.readfile(gfwlist_path) or ""
-	end
-    local total_lines_cmd = string.format("wc -l < %s", gfwlist_path)
-    local total_lines = tonumber(api.sys.exec(total_lines_cmd)) or 0
-    local displayed_lines = 100
-
-    local total_lines_label = s:taboption("gfw_list", DummyValue, "total_lines", translate("Total Lines"))
-    total_lines_label.value = translatef("%d lines", total_lines)
-
-    local displayed_lines_label = s:taboption("gfw_list", DummyValue, "displayed_lines", translate("Displayed Lines"))
-    displayed_lines_label.value = translatef("%d lines", displayed_lines)
+	o = s:taboption("gfw_list", DummyValue, "_gfw_fieldset")
+	o.rawhtml = true
+	o.default = string.format([[
+		<div style="display: flex; align-items: center;">
+			<input class="btn cbi-button cbi-button-add" type="button" onclick="read_gfw()" value="%s" />
+			<label id="gfw_total_lines" style="margin-left: auto; margin-right: 10px;"></label>
+		</div>
+		<textarea id="gfw_textarea" class="cbi-input-textarea" style="width: 100%%; margin-top: 10px;" rows="40" wrap="off" readonly="readonly"></textarea>
+	]], translate("Read List"))
 end
 
 if api.fs.access(chnlist_path) then
 	s:tab("chn_list", translate("China List") .. "(" .. translate("Domain") .. ")")
-	o = s:taboption("chn_list", TextValue, "chn_list", "")
-	o.readonly = true
-	o.rows = 45
-	o.wrap = "off"
-	o.cfgvalue = function(self, section)
-		local limit = 100 -- 限制行数
-		local cmd = string.format("head -n %d %s", limit, chnlist_path)
-		return api.sys.exec(cmd) or ""
-		-- return fs.readfile(chnlist_path) or ""
-	end
-	local total_lines_cmd = string.format("wc -l < %s", chnlist_path)
-    local total_lines = tonumber(api.sys.exec(total_lines_cmd)) or 0
-    local displayed_lines = 100
-
-    local total_lines_label = s:taboption("chn_list", DummyValue, "total_lines", translate("Total Lines"))
-    total_lines_label.value = translatef("%d lines", total_lines)
-
-    local displayed_lines_label = s:taboption("chn_list", DummyValue, "displayed_lines", translate("Displayed Lines"))
-    displayed_lines_label.value = translatef("%d lines", displayed_lines)
+	o = s:taboption("chn_list", DummyValue, "_chn_fieldset")
+	o.rawhtml = true
+	o.default = string.format([[
+		<div style="display: flex; align-items: center;">
+			<input class="btn cbi-button cbi-button-add" type="button" onclick="read_chn()" value="%s" />
+			<label id="chn_total_lines" style="margin-left: auto; margin-right: 10px;"></label>
+		</div>
+		<textarea id="chn_textarea" class="cbi-input-textarea" style="width: 100%%; margin-top: 10px;" rows="40" wrap="off" readonly="readonly"></textarea>
+	]], translate("Read List"))
 end
 
 if api.fs.access(chnroute_path) then
 	s:tab("chnroute_list", translate("China List") .. "(IP)")
-	o = s:taboption("chnroute_list", TextValue, "chnroute_list", "")
-	o.readonly = true
-	o.rows = 45
-	o.wrap = "off"
-	o.cfgvalue = function(self, section)
-		local limit = 100 -- 限制行数
-		local cmd = string.format("head -n %d %s", limit, chnroute_path)
-		return api.sys.exec(cmd) or ""
-		-- return fs.readfile(chnroute_path) or ""
-	end
-	local total_lines_cmd = string.format("wc -l < %s", chnroute_path)
-    local total_lines = tonumber(api.sys.exec(total_lines_cmd)) or 0
-    local displayed_lines = 100
-
-    local total_lines_label = s:taboption("chnroute_list", DummyValue, "total_lines", translate("Total Lines"))
-    total_lines_label.value = translatef("%d lines", total_lines)
-
-    local displayed_lines_label = s:taboption("chnroute_list", DummyValue, "displayed_lines", translate("Displayed Lines"))
-    displayed_lines_label.value = translatef("%d lines", displayed_lines)
+	o = s:taboption("chnroute_list", DummyValue, "_chnroute_fieldset")
+	o.rawhtml = true
+	o.default = string.format([[
+		<div style="display: flex; align-items: center;">
+			<input class="btn cbi-button cbi-button-add" type="button" onclick="read_chnroute()" value="%s" />
+			<label id="chnroute_total_lines" style="margin-left: auto; margin-right: 10px;"></label>
+		</div>
+		<textarea id="chnroute_textarea" class="cbi-input-textarea" style="width: 100%%; margin-top: 10px;" rows="40" wrap="off" readonly="readonly"></textarea>
+	]], translate("Read List"))
 end
 
 m:append(Template(appname .. "/rule_list/js"))

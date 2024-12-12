@@ -1,18 +1,47 @@
 <%
 local api = require "luci.passwall.api"
+local translate = luci.i18n.translate
+local total_lines_text = translate("Total Lines")
 -%>
 <script type="text/javascript">
 	//<![CDATA[
-	let dom = document.getElementById("cbi-passwall-global_rules");
-	if (dom) {
-		let textareas = dom.getElementsByTagName("textarea");
-		for (let i = 0; i < textareas.length; i++) {
-			let o = textareas[i];
-			if (o.readOnly) {
-				o.removeAttribute("name");
-				o.removeAttribute("id");
-			}
-		}
+	function read_gfw() {
+		fetch('<%= api.url("read_gfwlist") %>')
+			.then(response => response.text())
+			.then(data => {
+				var total_lines = data.split("\n").length;
+				var textarea = document.getElementById('gfw_textarea');
+				textarea.innerHTML = data;
+				//textarea.scrollTop = textarea.scrollHeight;
+				var totalLinesLabel = document.getElementById('gfw_total_lines');
+				totalLinesLabel.innerHTML = "<%= total_lines_text %> " + total_lines;
+			})
+	}
+
+	function read_chn() {
+		fetch('<%= api.url("read_chnlist") %>')
+			.then(response => response.text())
+			.then(data => {
+				var total_lines = data.split("\n").length;
+				var textarea = document.getElementById('chn_textarea');
+				textarea.innerHTML = data;
+				//textarea.scrollTop = textarea.scrollHeight;
+				var totalLinesLabel = document.getElementById('chn_total_lines');
+				totalLinesLabel.innerHTML = "<%= total_lines_text %> " + total_lines;
+			})
+	}
+
+	function read_chnroute() {
+		fetch('<%= api.url("read_chnroute") %>')
+			.then(response => response.text())
+			.then(data => {
+				var total_lines = data.split("\n").length;
+				var textarea = document.getElementById('chnroute_textarea');
+				textarea.innerHTML = data;
+				//textarea.scrollTop = textarea.scrollHeight;
+				var totalLinesLabel = document.getElementById('chnroute_total_lines');
+				totalLinesLabel.innerHTML = "<%= total_lines_text %> " + total_lines;
+			})
 	}
 	//]]>
 </script>
