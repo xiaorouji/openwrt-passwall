@@ -1120,8 +1120,7 @@ function gen_config(var)
 
 		local _remote_dns = {
 			--_flag = "remote",
-			address = "tcp://" .. remote_dns_tcp_server,
-			port = tonumber(remote_dns_tcp_port)
+			address = "tcp://" .. remote_dns_tcp_server .. ":" .. tonumber(remote_dns_tcp_port) or 53
 		}
 
 		local _remote_dns_host
