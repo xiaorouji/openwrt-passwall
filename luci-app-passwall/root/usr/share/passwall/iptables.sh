@@ -327,16 +327,16 @@ load_acl() {
 						$ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j RETURN 2>/dev/null
 						$ipt_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j RETURN
 						$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j RETURN 2>/dev/null
-						$ipt_n -A PSW_REDIRECT $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j REDIRECT --to-ports $dns_redirect_port
-						$ip6t_n -A PSW_REDIRECT $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j REDIRECT --to-ports $dns_redirect_port 2>/dev/null
-						$ipt_n -A PSW_REDIRECT $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j REDIRECT --to-ports $dns_redirect_port
-						$ip6t_n -A PSW_REDIRECT $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j REDIRECT --to-ports $dns_redirect_port 2>/dev/null
+						$ipt_n -A PSW_DNS $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j REDIRECT --to-ports $dns_redirect_port
+						$ip6t_n -A PSW_DNS $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j REDIRECT --to-ports $dns_redirect_port 2>/dev/null
+						$ipt_n -A PSW_DNS $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j REDIRECT --to-ports $dns_redirect_port
+						$ip6t_n -A PSW_DNS $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j REDIRECT --to-ports $dns_redirect_port 2>/dev/null
 					}
 				else
-					$ipt_n -A PSW_REDIRECT $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j RETURN
-					$ip6t_n -A PSW_REDIRECT $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j RETURN 2>/dev/null
-					$ipt_n -A PSW_REDIRECT $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j RETURN
-					$ip6t_n -A PSW_REDIRECT $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j RETURN 2>/dev/null
+					$ipt_n -A PSW_DNS $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j RETURN
+					$ip6t_n -A PSW_DNS $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j RETURN 2>/dev/null
+					$ipt_n -A PSW_DNS $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j RETURN
+					$ip6t_n -A PSW_DNS $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j RETURN 2>/dev/null
 				fi
 
 				[ -n "$tcp_port" -o -n "$udp_port" ] && {
@@ -505,10 +505,10 @@ load_acl() {
 				$ip6t_m -A PSW $(comment "默认") -p udp --dport 53 -j RETURN 2>/dev/null
 				$ipt_m -A PSW $(comment "默认") -p tcp --dport 53 -j RETURN
 				$ip6t_m -A PSW $(comment "默认") -p tcp --dport 53 -j RETURN 2>/dev/null
-				$ipt_n -A PSW_REDIRECT $(comment "默认") -p udp --dport 53 -j REDIRECT --to-ports $DNS_REDIRECT_PORT
-				$ip6t_n -A PSW_REDIRECT $(comment "默认") -p udp --dport 53 -j REDIRECT --to-ports $DNS_REDIRECT_PORT 2>/dev/null
-				$ipt_n -A PSW_REDIRECT $(comment "默认") -p tcp --dport 53 -j REDIRECT --to-ports $DNS_REDIRECT_PORT
-				$ip6t_n -A PSW_REDIRECT $(comment "默认") -p tcp --dport 53 -j REDIRECT --to-ports $DNS_REDIRECT_PORT 2>/dev/null
+				$ipt_n -A PSW_DNS $(comment "默认") -p udp --dport 53 -j REDIRECT --to-ports $DNS_REDIRECT_PORT
+				$ip6t_n -A PSW_DNS $(comment "默认") -p udp --dport 53 -j REDIRECT --to-ports $DNS_REDIRECT_PORT 2>/dev/null
+				$ipt_n -A PSW_DNS $(comment "默认") -p tcp --dport 53 -j REDIRECT --to-ports $DNS_REDIRECT_PORT
+				$ip6t_n -A PSW_DNS $(comment "默认") -p tcp --dport 53 -j REDIRECT --to-ports $DNS_REDIRECT_PORT 2>/dev/null
 			}
 		fi
 
@@ -943,8 +943,8 @@ add_firewall_rule() {
 	[ "${USE_DIRECT_LIST}" = "1" ] && $ipt_n -A PSW_OUTPUT $(dst $IPSET_WHITELIST) -j RETURN
 	$ipt_n -A PSW_OUTPUT -m mark --mark 0xff -j RETURN
 
-	$ipt_n -N PSW_REDIRECT
-	$ipt_n -I PREROUTING 1 -j PSW_REDIRECT
+	$ipt_n -N PSW_DNS
+	$ipt_n -I PREROUTING 1 -j PSW_DNS
 
 	$ipt_m -N PSW_DIVERT
 	$ipt_m -A PSW_DIVERT -j MARK --set-mark 1
@@ -1011,8 +1011,8 @@ add_firewall_rule() {
 		$ip6t_n -A PSW_OUTPUT -m mark --mark 0xff -j RETURN
 	}
 
-	$ip6t_n -N PSW_REDIRECT
-	$ip6t_n -I PREROUTING 1 -j PSW_REDIRECT
+	$ip6t_n -N PSW_DNS
+	$ip6t_n -I PREROUTING 1 -j PSW_DNS
 
 	$ip6t_m -N PSW_DIVERT
 	$ip6t_m -A PSW_DIVERT -j MARK --set-mark 1
@@ -1316,7 +1316,7 @@ del_firewall_rule() {
 				$ipt -D $chain $index 2>/dev/null
 			done
 		done
-		for chain in "PSW" "PSW_OUTPUT" "PSW_DIVERT" "PSW_REDIRECT" "PSW_RULE"; do
+		for chain in "PSW" "PSW_OUTPUT" "PSW_DIVERT" "PSW_DNS" "PSW_RULE"; do
 			$ipt -F $chain 2>/dev/null
 			$ipt -X $chain 2>/dev/null
 		done

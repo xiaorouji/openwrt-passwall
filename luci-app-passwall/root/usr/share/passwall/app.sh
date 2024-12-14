@@ -1913,6 +1913,14 @@ start() {
 		[ "$(expr $dnsmasq_version \>= 2.90)" == 0 ] && echolog "Dnsmasq版本低于2.90，建议升级至2.90及以上版本以避免部分情况下Dnsmasq崩溃问题！"
 	}
 
+	if [ "$ENABLED_DEFAULT_ACL" == 1 ] || [ "$ENABLED_ACLS" == 1 ]; then
+		[ "$(uci -q get dhcp.@dnsmasq[0].dns_redirect)" == "1" ] && {
+			uci -q set dhcp.@dnsmasq[0].dns_redirect='0' 2>/dev/null
+			uci commit dhcp 2>/dev/null
+			/etc/init.d/dnsmasq restart >/dev/null 2>&1
+		}
+	fi
+
 	[ "$ENABLED_DEFAULT_ACL" == 1 ] && {
 		mkdir -p ${GLOBAL_ACL_PATH}
 		start_redir TCP
