@@ -441,11 +441,11 @@ if not fs.access(CACHE_DNS_PATH) then
 				if key == "#" then
 					domain = key
 				end
-				address_out:write(string.format("address=/%s/%s\n", domain, value.address))
+				address_out:write(string.format("address=/%s/%s", domain, value.address) .. "\n")
 			end
 			if value.dns and #value.dns > 0 then
 				for i, dns in ipairs(value.dns) do
-					server_out:write(string.format("server=/.%s/%s\n", key, dns))
+					server_out:write(string.format("server=/.%s/%s", key, dns) .. "\n")
 				end
 			end
 			if value.ipsets and #value.ipsets > 0 then
@@ -454,7 +454,7 @@ if not fs.access(CACHE_DNS_PATH) then
 					ipsets_str = ipsets_str .. ipset .. ","
 				end
 				ipsets_str = ipsets_str:sub(1, #ipsets_str - 1)
-				ipset_out:write(string.format("%s=/.%s/%s\n", set_name, key, ipsets_str))
+				ipset_out:write(string.format("%s=/.%s/%s", set_name, key, ipsets_str) .. "\n")
 			end
 		end
 		address_out:close()
@@ -479,15 +479,15 @@ end
 if DNSMASQ_CONF_FILE ~= "nil" then
 	local conf_out = io.open(DNSMASQ_CONF_FILE, "a")
 	if USE_CHINADNS_NG == "0" then
-		conf_out:write(string.format("conf-dir=%s\n", TMP_DNSMASQ_PATH))
+		conf_out:write(string.format("conf-dir=%s", TMP_DNSMASQ_PATH) .. "\n")
 	end
 	if dnsmasq_default_dns then
 		for s in string.gmatch(dnsmasq_default_dns, '[^' .. "," .. ']+') do
-			conf_out:write(string.format("server=%s\n", s))
+			conf_out:write(string.format("server=%s", s) .. "\n")
 		end
-		conf_out:write("all-servers\n")
-		conf_out:write("no-poll\n")
-		conf_out:write("no-resolv\n")
+		conf_out:write("all-servers" .. "\n")
+		conf_out:write("no-poll" .. "\n")
+		conf_out:write("no-resolv" .. "\n")
 		conf_out:close()
 		if USE_CHINADNS_NG == "0" then
 			log(string.format("  - 默认：%s", dnsmasq_default_dns))
