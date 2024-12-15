@@ -324,6 +324,7 @@ load_acl() {
 				}
 				
 				local dns_redirect
+				[ $(config_t_get global dns_redirect "1") = "1" ] && dns_redirect=53
 				if ([ -n "$tcp_port" ] && [ -n "${tcp_proxy_mode}" ]) || ([ -n "$udp_port" ] && [ -n "${udp_proxy_mode}" ]); then
 					[ -n "${dns_redirect_port}" ] && dns_redirect=${dns_redirect_port}
 				else
@@ -334,10 +335,10 @@ load_acl() {
 					$ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j RETURN 2>/dev/null
 					$ipt_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j RETURN
 					$ip6t_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j RETURN 2>/dev/null
-					$ipt_n -A PSW_DNS $(comment "$remarks") -p udp ${_ipt_source} $(dst $IPSET_LOCALLIST) --dport 53 -j REDIRECT --to-ports ${dns_redirect}
-					$ip6t_n -A PSW_DNS $(comment "$remarks") -p udp ${_ipt_source} $(dst $IPSET_LOCALLIST) --dport 53 -j REDIRECT --to-ports ${dns_redirect} 2>/dev/null
-					$ipt_n -A PSW_DNS $(comment "$remarks") -p tcp ${_ipt_source} $(dst $IPSET_LOCALLIST) --dport 53 -j REDIRECT --to-ports ${dns_redirect}
-					$ip6t_n -A PSW_DNS $(comment "$remarks") -p tcp ${_ipt_source} $(dst $IPSET_LOCALLIST) --dport 53 -j REDIRECT --to-ports ${dns_redirect} 2>/dev/null
+					$ipt_n -A PSW_DNS $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j REDIRECT --to-ports ${dns_redirect}
+					$ip6t_n -A PSW_DNS $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j REDIRECT --to-ports ${dns_redirect} 2>/dev/null
+					$ipt_n -A PSW_DNS $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j REDIRECT --to-ports ${dns_redirect}
+					$ip6t_n -A PSW_DNS $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j REDIRECT --to-ports ${dns_redirect} 2>/dev/null
 				fi
 
 				[ -n "$tcp_port" -o -n "$udp_port" ] && {
@@ -499,19 +500,24 @@ load_acl() {
 				echolog "     - ${msg}不代理所有 UDP 端口"
 			fi
 		}
-
+		
+		local DNS_REDIRECT
+		[ $(config_t_get global dns_redirect "1") = "1" ] && DNS_REDIRECT=53
 		if ([ "$TCP_NODE" != "nil" ] && [ -n "${TCP_PROXY_MODE}" ]) || ([ "$UDP_NODE" != "nil" ] && [ -n "${UDP_PROXY_MODE}" ]); then
-			[ -n "$DNS_REDIRECT_PORT" ] && {
-				$ipt_m -A PSW $(comment "默认") -p udp --dport 53 -j RETURN
-				$ip6t_m -A PSW $(comment "默认") -p udp --dport 53 -j RETURN 2>/dev/null
-				$ipt_m -A PSW $(comment "默认") -p tcp --dport 53 -j RETURN
-				$ip6t_m -A PSW $(comment "默认") -p tcp --dport 53 -j RETURN 2>/dev/null
-				#Only hijack when dest address is local IP
-				$ipt_n -A PSW_DNS $(comment "默认") -p udp $(dst $IPSET_LOCALLIST) --dport 53 -j REDIRECT --to-ports $DNS_REDIRECT_PORT
-				$ip6t_n -A PSW_DNS $(comment "默认") -p udp $(dst $IPSET_LOCALLIST6) --dport 53 -j REDIRECT --to-ports $DNS_REDIRECT_PORT 2>/dev/null
-				$ipt_n -A PSW_DNS $(comment "默认") -p tcp $(dst $IPSET_LOCALLIST) --dport 53 -j REDIRECT --to-ports $DNS_REDIRECT_PORT
-				$ip6t_n -A PSW_DNS $(comment "默认") -p tcp $(dst $IPSET_LOCALLIST6) --dport 53 -j REDIRECT --to-ports $DNS_REDIRECT_PORT 2>/dev/null
-			}
+			[ -n "${DNS_REDIRECT_PORT}" ] && DNS_REDIRECT=${DNS_REDIRECT_PORT}
+		else
+			[ -n "${DIRECT_DNSMASQ_PORT}" ] && DNS_REDIRECT=${DIRECT_DNSMASQ_PORT}
+		fi
+		
+		if [ -n "${DNS_REDIRECT}" ]; then
+			$ipt_m -A PSW $(comment "默认") -p udp --dport 53 -j RETURN
+			$ip6t_m -A PSW $(comment "默认") -p udp --dport 53 -j RETURN 2>/dev/null
+			$ipt_m -A PSW $(comment "默认") -p tcp --dport 53 -j RETURN
+			$ip6t_m -A PSW $(comment "默认") -p tcp --dport 53 -j RETURN 2>/dev/null
+			$ipt_n -A PSW_DNS $(comment "默认") -p udp --dport 53 -j REDIRECT --to-ports ${DNS_REDIRECT}
+			$ip6t_n -A PSW_DNS $(comment "默认") -p udp --dport 53 -j REDIRECT --to-ports ${DNS_REDIRECT} 2>/dev/null
+			$ipt_n -A PSW_DNS $(comment "默认") -p tcp --dport 53 -j REDIRECT --to-ports ${DNS_REDIRECT}
+			$ip6t_n -A PSW_DNS $(comment "默认") -p tcp --dport 53 -j REDIRECT --to-ports ${DNS_REDIRECT} 2>/dev/null
 		fi
 
 		[ -n "${TCP_PROXY_MODE}" -o -n "${UDP_PROXY_MODE}" ] && {
@@ -956,7 +962,12 @@ add_firewall_rule() {
 	$ipt_n -A PSW_OUTPUT -m mark --mark 0xff -j RETURN
 
 	$ipt_n -N PSW_DNS
-	$ipt_n -I PREROUTING 1 -j PSW_DNS
+	if [ $(config_t_get global dns_redirect "1") = "0" ]; then
+		#Only hijack when dest address is local IP
+		$ipt_n -I PREROUTING $(dst $IPSET_LOCALLIST) -j PSW_DNS
+	else
+		$ipt_n -I PREROUTING 1 -j PSW_DNS
+	fi
 
 	$ipt_m -N PSW_DIVERT
 	$ipt_m -A PSW_DIVERT -j MARK --set-mark 1
@@ -1024,7 +1035,12 @@ add_firewall_rule() {
 	}
 
 	$ip6t_n -N PSW_DNS
-	$ip6t_n -I PREROUTING 1 -j PSW_DNS
+	if [ $(config_t_get global dns_redirect "1") = "0" ]; then
+		#Only hijack when dest address is local IP
+		$ip6t_n -I PREROUTING $(dst $IPSET_LOCALLIST6) -j PSW_DNS
+	else
+		$ip6t_n -I PREROUTING 1 -j PSW_DNS
+	fi
 
 	$ip6t_m -N PSW_DIVERT
 	$ip6t_m -A PSW_DIVERT -j MARK --set-mark 1
@@ -1130,7 +1146,6 @@ add_firewall_rule() {
 
 		if ([ "$TCP_NODE" != "nil" ] && [ -n "${LOCALHOST_TCP_PROXY_MODE}" ]) || ([ "$UDP_NODE" != "nil" ] && [ -n "${LOCALHOST_UDP_PROXY_MODE}" ]); then
 			[ -n "$DNS_REDIRECT_PORT" ] && {
-				#Only hijack when dest address is local IP
 				$ipt_n -A OUTPUT $(comment "PSW") -p udp -o lo --dport 53 -j REDIRECT --to-ports $DNS_REDIRECT_PORT
 				$ip6t_n -A OUTPUT $(comment "PSW") -p udp -o lo --dport 53 -j REDIRECT --to-ports $DNS_REDIRECT_PORT 2>/dev/null
 				$ipt_n -A OUTPUT $(comment "PSW") -p tcp -o lo --dport 53 -j REDIRECT --to-ports $DNS_REDIRECT_PORT

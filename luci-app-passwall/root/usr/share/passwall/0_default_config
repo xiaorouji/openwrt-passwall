@@ -12,6 +12,7 @@ config global
 	list smartdns_remote_dns 'https://1.1.1.1/dns-query'
 	option use_default_dns 'direct'
 	option chinadns_ng_default_tag 'none'
+	option dns_redirect '1'
 	option use_direct_list '1'
 	option use_proxy_list '1'
 	option use_block_list '1'
