@@ -16,8 +16,9 @@ OPENWRT_ARCH = nil
 DISTRIB_ARCH = nil
 OPENWRT_BOARD = nil
 
-LOG_FILE = "/tmp/log/" .. appname .. ".log"
 CACHE_PATH = "/tmp/etc/" .. appname .. "_tmp"
+LOG_FILE = "/tmp/log/" .. appname .. ".log"
+TMP_PATH = "/tmp/etc/" .. appname
 
 function log(...)
 	local result = os.date("%Y-%m-%d %H:%M:%S: ") .. table.concat({...}, " ")
