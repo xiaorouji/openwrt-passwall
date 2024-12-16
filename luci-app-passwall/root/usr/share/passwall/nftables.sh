@@ -957,7 +957,7 @@ add_firewall_rule() {
 		nft "insert rule $NFTABLE_NAME dstnat ip daddr @${NFTSET_LOCALLIST} jump PSW_DNS"
 		nft "insert rule $NFTABLE_NAME dstnat ip6 daddr @${NFTSET_LOCALLIST6} jump PSW_DNS"
 	else
-		nft "insert rule $NFTABLE_NAME dstnat jump PSW2_DNS"
+		nft "insert rule $NFTABLE_NAME dstnat jump PSW_DNS"
 	fi
 
 	# for ipv4 ipv6 tproxy mark
