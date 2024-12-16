@@ -688,7 +688,7 @@ function gen_config_server(node)
 				bind_interface = node.outbound_node_iface,
 				routing_mark = 255,
 			}
-			sys.call("mkdir -p /tmp/etc/passwall/iface && touch /tmp/etc/passwall/iface/" .. node.outbound_node_iface)
+			sys.call(string.format("mkdir -p %s && touch %s/%s", api.TMP_IFACE_PATH, api.TMP_IFACE_PATH, node.outbound_node_iface))
 		else
 			local outbound_node_t = uci:get_all("passwall", node.outbound_node)
 			if node.outbound_node == "_socks" or node.outbound_node == "_http" then
@@ -1020,7 +1020,7 @@ function gen_config(var)
 							}
 							table.insert(outbounds, _outbound)
 							rule_outboundTag = _outbound.tag
-							sys.call("touch /tmp/etc/passwall/iface/" .. _node.iface)
+							sys.call(string.format("mkdir -p %s && touch %s/%s", api.TMP_IFACE_PATH, api.TMP_IFACE_PATH, _node.iface))
 						end
 					end
 				end
@@ -1197,7 +1197,7 @@ function gen_config(var)
 				}
 				table.insert(outbounds, outbound)
 				COMMON.default_outbound_tag = outbound.tag
-				sys.call("touch /tmp/etc/passwall/iface/" .. node.iface)
+				sys.call(string.format("mkdir -p %s && touch %s/%s", api.TMP_IFACE_PATH, api.TMP_IFACE_PATH, node.iface))
 			end
 		else
 			local outbound = gen_outbound(flag, node)
@@ -1452,6 +1452,9 @@ function gen_config(var)
 			tag = "block"
 		})
 		for index, value in ipairs(config.outbounds) do
+			if (not value["_flag_proxy_tag"] or value["_flag_proxy_tag"] == "nil") and not value.detour and value["_id"] and value.server and value.server_port then
+				sys.call(string.format("echo '%s' >> %s", value["_id"], api.TMP_PATH .. "/direct_node_list"))
+			end
 			for k, v in pairs(config.outbounds[index]) do
 				if k:find("_") == 1 then
 					config.outbounds[index][k] = nil

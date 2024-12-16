@@ -19,6 +19,7 @@ OPENWRT_BOARD = nil
 CACHE_PATH = "/tmp/etc/" .. appname .. "_tmp"
 LOG_FILE = "/tmp/log/" .. appname .. ".log"
 TMP_PATH = "/tmp/etc/" .. appname
+TMP_IFACE_PATH = TMP_PATH .. "/iface"
 
 function log(...)
 	local result = os.date("%Y-%m-%d %H:%M:%S: ") .. table.concat({...}, " ")
@@ -27,6 +28,16 @@ function log(...)
 		f:write(result .. "\n")
 		f:close()
 	end
+end
+
+function set_cache_var(key, val)
+	sys.call(string.format('/usr/share/passwall/app.sh set_cache_var %s "%s"', key, val))
+end
+
+function get_cache_var(key)
+	local val = sys.exec(string.format('echo -n $(/usr/share/passwall/app.sh get_cache_var %s)', key))
+	if val == "" then val = nil end
+	return val
 end
 
 function exec_call(cmd)
@@ -98,8 +109,8 @@ end
 
 function curl_proxy(url, file, args)
 	--使用代理
-	local socks_server = luci.sys.exec("[ -f /tmp/etc/passwall/acl/default/TCP_SOCKS_server ] && echo -n $(cat /tmp/etc/passwall/acl/default/TCP_SOCKS_server) || echo -n ''")
-	if socks_server ~= "" then
+	local socks_server = get_cache_var("GLOBAL_TCP_SOCKS_server")
+	if socks_server and socks_server ~= "" then
 		if not args then args = {} end
 		local tmp_args = clone(args)
 		tmp_args[#tmp_args + 1] = "-x socks5h://" .. socks_server

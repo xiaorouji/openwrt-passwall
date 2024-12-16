@@ -166,13 +166,13 @@ end
 function get_now_use_node()
 	local path = "/tmp/etc/passwall/acl/default"
 	local e = {}
-	local data, code, msg = nixio.fs.readfile(path .. "/TCP.id")
-	if data then
-		e["TCP"] = util.trim(data)
+	local tcp_node = api.get_cache_var("GLOBAL_TCP_node")
+	if tcp_node then
+		e["TCP"] = tcp_node
 	end
-	local data, code, msg = nixio.fs.readfile(path .. "/UDP.id")
-	if data then
-		e["UDP"] = util.trim(data)
+	local udp_node = api.get_cache_var("GLOBAL_UDP_node")
+	if udp_node then
+		e["UDP"] = udp_node
 	end
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
@@ -269,8 +269,8 @@ function connect_status()
 	local chn_list = uci:get(appname, "@global[0]", "chn_list") or "direct"
 	local gfw_list = uci:get(appname, "@global[0]", "use_gfw_list") or "1"
 	local proxy_mode = uci:get(appname, "@global[0]", "tcp_proxy_mode") or "proxy"
-	local socks_server = luci.sys.exec("[ -f /tmp/etc/passwall/acl/default/TCP_SOCKS_server ] && echo -n $(cat /tmp/etc/passwall/acl/default/TCP_SOCKS_server) || echo -n ''")
-	if socks_server ~= "" then
+	local socks_server = api.get_cache_var("GLOBAL_TCP_SOCKS_server")
+	if socks_server and socks_server ~= "" then
 		if (chn_list == "proxy" and gfw_list == "0" and proxy_mode ~= "proxy" and baidu ~= nil) or (chn_list == "0" and gfw_list == "0" and proxy_mode == "proxy") then
 		-- 中国列表+百度 or 全局
 			url = "-x socks5h://" .. socks_server .. " " .. url

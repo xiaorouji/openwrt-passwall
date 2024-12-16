@@ -417,7 +417,7 @@ function gen_config_server(node)
 					}
 				}
 			}
-			sys.call("mkdir -p /tmp/etc/passwall/iface && touch /tmp/etc/passwall/iface/" .. node.outbound_node_iface)
+			sys.call(string.format("mkdir -p %s && touch %s/%s", api.TMP_IFACE_PATH, api.TMP_IFACE_PATH, node.outbound_node_iface))
 		else
 			local outbound_node_t = uci:get_all("passwall", node.outbound_node)
 			if node.outbound_node == "_socks" or node.outbound_node == "_http" then
@@ -926,7 +926,7 @@ function gen_config(var)
 						}
 						outbound_tag = outbound.tag
 						table.insert(outbounds, outbound)
-						sys.call("touch /tmp/etc/passwall/iface/" .. _node.iface)
+						sys.call(string.format("mkdir -p %s && touch %s/%s", api.TMP_IFACE_PATH, api.TMP_IFACE_PATH, _node.iface))
 					end
 					return outbound_tag, nil
 				end
@@ -1075,7 +1075,7 @@ function gen_config(var)
 				}
 				table.insert(outbounds, outbound)
 				COMMON.default_outbound_tag = outbound.tag
-				sys.call("touch /tmp/etc/passwall/iface/" .. node.iface)
+				sys.call(string.format("mkdir -p %s && touch %s/%s", api.TMP_IFACE_PATH, api.TMP_IFACE_PATH, node.iface))
 			end
 		else
 			local outbound = gen_outbound(flag, node, nil, { fragment = xray_settings.fragment == "1" or nil, noise = xray_settings.fragment == "1" or nil })
@@ -1369,6 +1369,9 @@ function gen_config(var)
 		end
 
 		for index, value in ipairs(config.outbounds) do
+			if (not value["_flag_proxy_tag"] or value["_flag_proxy_tag"] == "nil") and value["_id"] and value.server and value.server_port then
+				sys.call(string.format("echo '%s' >> %s", value["_id"], api.TMP_PATH .. "/direct_node_list"))
+			end
 			for k, v in pairs(config.outbounds[index]) do
 				if k:find("_") == 1 then
 					config.outbounds[index][k] = nil

@@ -214,11 +214,11 @@ load_acl() {
 			[ "$tcp_redir_ports" = "default" ] && tcp_redir_ports=$TCP_REDIR_PORTS
 			[ "$udp_redir_ports" = "default" ] && udp_redir_ports=$UDP_REDIR_PORTS
 
-			[ -s "${TMP_ACL_PATH}/${sid}/var_tcp_node" ] && tcp_node=$(cat ${TMP_ACL_PATH}/${sid}/var_tcp_node)
-			[ -s "${TMP_ACL_PATH}/${sid}/var_udp_node" ] && udp_node=$(cat ${TMP_ACL_PATH}/${sid}/var_udp_node)
-			[ -s "${TMP_ACL_PATH}/${sid}/var_tcp_port" ] && tcp_port=$(cat ${TMP_ACL_PATH}/${sid}/var_tcp_port)
-			[ -s "${TMP_ACL_PATH}/${sid}/var_udp_port" ] && udp_port=$(cat ${TMP_ACL_PATH}/${sid}/var_udp_port)
-			[ -s "${TMP_ACL_PATH}/${sid}/var_redirect_dns_port" ] && dns_redirect_port=$(cat ${TMP_ACL_PATH}/${sid}/var_redirect_dns_port)
+			[ -n $(get_cache_var "ACL_${sid}_tcp_node") ] && tcp_node=$(get_cache_var "ACL_${sid}_tcp_node")
+			[ -n $(get_cache_var "ACL_${sid}_udp_node") ] && udp_node=$(get_cache_var "ACL_${sid}_udp_node")
+			[ -n $(get_cache_var "ACL_${sid}_tcp_port") ] && tcp_port=$(get_cache_var "ACL_${sid}_tcp_port")
+			[ -n $(get_cache_var "ACL_${sid}_udp_port") ] && udp_port=$(get_cache_var "ACL_${sid}_udp_port")
+			[ -n $(get_cache_var "ACL_${sid}_dns_port") ] && dns_redirect_port=$(get_cache_var "ACL_${sid}_dns_port")
 
 			use_shunt_tcp=0
 			use_shunt_udp=0
@@ -663,109 +663,48 @@ filter_vpsip() {
 	echolog "  - [$?]加入所有IPv6节点到ipset[$IPSET_VPSLIST6]直连完成"
 }
 
+filter_server_port() {
+	local address=${1}
+	local port=${2}
+	local stream=${3}
+	stream=$(echo ${3} | tr 'A-Z' 'a-z')
+	local _is_tproxy ipt_tmp
+	ipt_tmp=$ipt_n
+	_is_tproxy=${is_tproxy}
+	[ "$stream" == "udp" ] && _is_tproxy="TPROXY"
+	[ -n "${_is_tproxy}" ] && ipt_tmp=$ipt_m
+
+	for _ipt in 4 6; do
+		[ "$_ipt" == "4" ] && _ipt=$ipt_tmp
+		[ "$_ipt" == "6" ] && _ipt=$ip6t_m
+		$_ipt -n -L PSW_OUTPUT | grep -q "${address}:${port}"
+		if [ $? -ne 0 ]; then
+			$_ipt -I PSW_OUTPUT $(comment "${address}:${port}") -p $stream -d $address --dport $port -j RETURN 2>/dev/null
+		fi
+	done
+}
+
 filter_node() {
-	local proxy_node=${1}
-	local stream=$(echo ${2} | tr 'A-Z' 'a-z')
-	local proxy_port=${3}
-
-	filter_rules() {
-		local node=${1}
-		local stream=${2}
-		local _proxy=${3}
-		local _port=${4}
-		local _is_tproxy ipt_tmp msg msg2
-
-		if [ -n "$node" ] && [ "$node" != "nil" ]; then
-			local type=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
-			local address=$(config_n_get $node address)
-			local port=$(config_n_get $node port)
-			[ -z "$address" ] && [ -z "$port" ] && {
-				echolog "  - 节点配置不正常，略过"
-				return 1
-			}
-			ipt_tmp=$ipt_n
-			_is_tproxy=${is_tproxy}
-			[ "$stream" == "udp" ] && _is_tproxy="TPROXY"
-			if [ -n "${_is_tproxy}" ]; then
-				ipt_tmp=$ipt_m
-				msg="TPROXY"
-			else
-				msg="REDIRECT"
-			fi
-		else
-			echolog "  - 节点配置不正常，略过"
+	local node=${1}
+	local stream=${2}
+	if [ -n "$node" ] && [ "$node" != "nil" ]; then
+		local address=$(config_n_get $node address)
+		local port=$(config_n_get $node port)
+		[ -z "$address" ] && [ -z "$port" ] && {
 			return 1
-		fi
-
-		local ADD_INDEX=$FORCE_INDEX
-		for _ipt in 4 6; do
-			[ "$_ipt" == "4" ] && _ipt=$ipt_tmp && _set_name=$IPSET_VPSLIST
-			[ "$_ipt" == "6" ] && _ipt=$ip6t_m && _set_name=$IPSET_VPSLIST6
-			$_ipt -n -L PSW_OUTPUT | grep -q "${address}:${port}"
-			if [ $? -ne 0 ]; then
-				local dst_rule="-j PSW_RULE"
-				msg2="按规则路由(${msg})"
-				[ "$_ipt" == "$ipt_m" -o "$_ipt" == "$ip6t_m" ] || {
-					dst_rule=$(REDIRECT $_port)
-					msg2="套娃使用(${msg}:${port} -> ${_port})"
-				}
-				[ -n "$_proxy" ] && [ "$_proxy" == "1" ] && [ -n "$_port" ] || {
-					ADD_INDEX=$(RULE_LAST_INDEX "$_ipt" PSW_OUTPUT "$_set_name" $FORCE_INDEX)
-					dst_rule=" -j RETURN"
-					msg2="直连代理"
-				}
-				$_ipt -I PSW_OUTPUT $ADD_INDEX $(comment "${address}:${port}") -p $stream -d $address --dport $port $dst_rule 2>/dev/null
-			else
-				msg2="已配置过的节点，"
-			fi
-		done
-		msg="[$?]$(echo ${2} | tr 'a-z' 'A-Z')${msg2}使用链${ADD_INDEX}，节点（${type}）：${address}:${port}"
-		#echolog "  - ${msg}"
-	}
-
-	local proxy_protocol=$(config_n_get $proxy_node protocol)
-	local proxy_type=$(echo $(config_n_get $proxy_node type nil) | tr 'A-Z' 'a-z')
-	[ "$proxy_type" == "nil" ] && echolog "  - 节点配置不正常，略过！：${proxy_node}" && return 1
-	if [ "$proxy_protocol" == "_balancing" ]; then
-		#echolog "  - 多节点负载均衡（${proxy_type}）..."
-		proxy_node=$(config_n_get $proxy_node balancing_node)
-		for _node in $proxy_node; do
-			filter_rules "$_node" "$stream"
-		done
-	elif [ "$proxy_protocol" == "_shunt" ]; then
-		#echolog "  - 按请求目的地址分流（${proxy_type}）..."
-		local preproxy_enabled=$(config_n_get $proxy_node preproxy_enabled 0)
-		[ "$preproxy_enabled" == "1" ] && {
-			local preproxy_node=$(config_n_get $proxy_node main_node nil)
-			[ "$preproxy_node" != "nil" ] && {
-				local preproxy_node_address=$(config_n_get $preproxy_node address)
-				if [ -n "$preproxy_node_address" ]; then
-					filter_rules $preproxy_node $stream
-				else
-					preproxy_enabled=0
-				fi
-			}
 		}
-		local default_node=$(config_n_get $proxy_node default_node _direct)
-		if [ "$default_node" != "_direct" ] && [ "$default_node" != "_blackhole" ]; then
-			local default_proxy_tag=$(config_n_get $proxy_node default_proxy_tag nil)
-			[ "$default_proxy_tag" == "main" ] && [ "$preproxy_enabled" == "0" ] && default_proxy_tag="nil"
-			[ "$default_proxy_tag" == "nil" ] && filter_rules $default_node $stream
-		fi
-		local shunt_ids=$(uci show $CONFIG | grep "=shunt_rules" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}')
-		for shunt_id in $shunt_ids; do
-			local shunt_node=$(config_n_get $proxy_node "${shunt_id}" nil)
-			[ "$shunt_node" == "nil" -o "$shunt_node" == "_default" -o "$shunt_node" == "_direct" -o "$shunt_node" == "_blackhole" ] && continue
-			local shunt_node_address=$(config_n_get $shunt_node address)
-			[ -z "$shunt_node_address" ] && continue
-			local shunt_proxy_tag=$(config_n_get $proxy_node "${shunt_id}_proxy_tag" nil)
-			[ "$shunt_proxy_tag" == "main" ] && [ "$preproxy_enabled" == "0" ] && shunt_proxy_tag="nil"
-			[ "$shunt_proxy_tag" == "nil" ] && filter_rules $shunt_node $stream
-		done
-	else
-		#echolog "  - 普通节点（${proxy_type}）..."
-		filter_rules "$proxy_node" "$stream"
+		filter_server_port $address $port $stream
+		filter_server_port $address $port $stream
 	fi
+}
+
+filter_direct_node_list() {
+	[ ! -s "$TMP_PATH/direct_node_list" ] && return
+	for _node_id in $(cat $TMP_PATH/direct_node_list | awk '!seen[$0]++'); do
+		filter_node "$_node_id" TCP
+		filter_node "$_node_id" UDP
+		unset _node_id
+	done
 }
 
 add_firewall_rule() {
@@ -1075,44 +1014,10 @@ add_firewall_rule() {
 	ip -6 route add local ::/0 dev lo table 100
 	
 	[ "$TCP_UDP" = "1" ] && [ "$UDP_NODE" = "nil" ] && UDP_NODE=$TCP_NODE
-	
-	# 过滤Socks节点
-	[ "$SOCKS_ENABLED" = "1" ] && {
-		local ids=$(uci show $CONFIG | grep "=socks" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}')
-		#echolog "分析 Socks 服务所使用节点..."
-		local id enabled node port msg num
-		for id in $ids; do
-			enabled=$(config_n_get $id enabled 0)
-			[ "$enabled" == "1" ] || continue
-			node=$(config_n_get $id node nil)
-			port=$(config_n_get $id port 0)
-			msg="Socks 服务 [:${port}]"
-			if [ "$node" == "nil" ] || [ "$port" == "0" ]; then
-				msg="${msg} 未配置完全，略过"
-			else
-				filter_node $node TCP > /dev/null 2>&1 &
-				filter_node $node UDP > /dev/null 2>&1 &
-			fi
-			#echolog "  - ${msg}"
-		done
-	}
+
+	filter_direct_node_list
 
 	[ "$ENABLED_DEFAULT_ACL" == 1 ] && {
-		# 处理轮换节点的分流或套娃
-		local node port stream switch
-		for stream in TCP UDP; do
-			eval "node=\${${stream}_NODE}"
-			eval "port=\${${stream}_REDIR_PORT}"
-			#echolog "分析 $stream 代理自动切换..."
-			[ "$stream" == "UDP" ] && [ "$node" == "tcp" ] && {
-				eval "node=\${TCP_NODE}"
-				eval "port=\${TCP_REDIR_PORT}"
-			}
-			if [ "$node" != "nil" ] && [ "$(config_get_type $node nil)" != "nil" ]; then
-				filter_node $node $stream $port > /dev/null 2>&1 &
-			fi
-		done
-		
 		local ipt_tmp=$ipt_n
 		if [ -n "${is_tproxy}" ]; then
 			ipt_tmp=$ipt_m
@@ -1315,21 +1220,23 @@ add_firewall_rule() {
 	#  加载ACLS
 	load_acl
 
-	for iface in $(ls ${TMP_IFACE_PATH}); do
-		$ipt_n -I PSW_OUTPUT -o $iface -j RETURN
-		$ipt_m -I PSW_OUTPUT -o $iface -j RETURN
-	done
+	[ -d "${TMP_IFACE_PATH}" ] && {
+		for iface in $(ls ${TMP_IFACE_PATH}); do
+			$ipt_n -I PSW_OUTPUT -o $iface -j RETURN
+			$ipt_m -I PSW_OUTPUT -o $iface -j RETURN
+		done
+	}
 
 	$ipt_n -I PREROUTING $(comment "PSW") -m mark --mark 1 -j RETURN
 	$ip6t_n -I PREROUTING $(comment "PSW") -m mark --mark 1 -j RETURN
 
 	[ -n "${is_tproxy}" -o -n "${udp_flag}" ] && {
 		bridge_nf_ipt=$(sysctl -e -n net.bridge.bridge-nf-call-iptables)
-		echo -n $bridge_nf_ipt > $TMP_PATH/bridge_nf_ipt
+		set_cache_var "origin_bridge_nf_ipt" "$bridge_nf_ipt"
 		sysctl -w net.bridge.bridge-nf-call-iptables=0 >/dev/null 2>&1
 		[ "$PROXY_IPV6" == "1" ] && {
 			bridge_nf_ip6t=$(sysctl -e -n net.bridge.bridge-nf-call-ip6tables)
-			echo -n $bridge_nf_ip6t > $TMP_PATH/bridge_nf_ip6t
+			set_cache_var "origin_bridge_nf_ip6t" "$bridge_nf_ip6t"
 			sysctl -w net.bridge.bridge-nf-call-ip6tables=0 >/dev/null 2>&1
 		}
 	}
@@ -1527,6 +1434,9 @@ get_wan_ip)
 	;;
 get_wan6_ip)
 	get_wan6_ip
+	;;
+filter_direct_node_list)
+	filter_direct_node_list
 	;;
 stop)
 	stop

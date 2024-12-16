@@ -90,8 +90,8 @@ end
 
 function logic_restart(var)
 	local LOG = var["-LOG"]
-	local file = io.open(api.TMP_PATH .. "/default_DNS", "r")
-	if file then
+	local DEFAULT_DNS = api.get_cache_var("DEFAULT_DNS")
+	if DEFAULT_DNS then
 		backup_servers()
 		--sys.call("sed -i '/list server/d' /etc/config/dhcp >/dev/null 2>&1")
 		local dns_table = {}
@@ -646,9 +646,7 @@ function add_rule(var)
 			end
 
 			if FLAG == "default" then
-				local f_out = io.open("/tmp/etc/passwall/default_DNS", "a")
-				f_out:write(DEFAULT_DNS)
-				f_out:close()
+				api.set_cache_var("DEFAULT_DNS", DEFAULT_DNS)
 			end
 		end
 		if #conf_lines > 0 then

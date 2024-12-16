@@ -21,9 +21,8 @@ o.default = 1
 o.rmempty = false
 
 local auto_switch_tip
-local current_node_file = string.format("/tmp/etc/%s/id/socks_%s", appname, arg[1])
-local current_node = luci.sys.exec(string.format("[ -f '%s' ] && echo -n $(cat %s)", current_node_file, current_node_file))
-if current_node and current_node ~= "" and current_node ~= "nil" then
+local current_node = api.get_cache_var("socks_" .. arg[1])
+if current_node then
 	local n = uci:get_all(appname, current_node)
 	if n then
 		if tonumber(m:get(arg[1], "enable_autoswitch") or 0) == 1 then

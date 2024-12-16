@@ -221,6 +221,10 @@ table td, .table .td {
 						dom.title = "当前TCP节点";
 						//var v = "<a style='color: red'>当前TCP节点：</a>" + document.getElementById("cbid.passwall." + id + ".remarks").value;
 						//document.getElementById("cbi-passwall-" + id + "-remarks").innerHTML = v;
+						var tds = dom.getElementsByTagName("td")
+						for (var j = 0; j < tds.length; j++) {
+							tds[j].classList.add("_now_use");
+						}
 					}
 				}
 				id = result["UDP"];
@@ -229,6 +233,10 @@ table td, .table .td {
 					if (dom) {
 						dom.classList.add("_now_use");
 						dom.title = "当前UDP节点";
+						var tds = dom.getElementsByTagName("td")
+						for (var j = 0; j < tds.length; j++) {
+							tds[j].classList.add("_now_use");
+						}
 					}
 				}
 			}
@@ -295,8 +303,6 @@ table td, .table .td {
 			);
 		}
 	}
-	
-	get_now_use_node();
 
 	/* 自动Ping */
 	if (auto_detection_time == "icmp" || auto_detection_time == "tcping") {
@@ -417,6 +423,8 @@ table td, .table .td {
 			console.error(err);
 		}
 	}
+	
+	get_now_use_node();
 
 	if (true) {
 		var str = "";
