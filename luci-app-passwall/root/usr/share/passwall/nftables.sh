@@ -702,7 +702,6 @@ load_acl() {
 				}
 
 				echolog "     - ${msg2}"
-				udp_flag=1
 			}
 		fi
 	}
@@ -1080,8 +1079,6 @@ add_firewall_rule() {
 	
 	[ "$TCP_UDP" = "1" ] && [ "$UDP_NODE" = "nil" ] && UDP_NODE=$TCP_NODE
 
-	filter_direct_node_list
-
 	[ "$ENABLED_DEFAULT_ACL" == 1 ] && {
 		msg="【路由器本机】，"
 		
@@ -1278,6 +1275,8 @@ add_firewall_rule() {
 	#  加载ACLS
 	load_acl
 
+	filter_direct_node_list
+
 	[ -d "${TMP_IFACE_PATH}" ] && {
 		for iface in $(ls ${TMP_IFACE_PATH}); do
 			nft "insert rule $NFTABLE_NAME $nft_output_chain oif $iface counter return"
@@ -1285,16 +1284,6 @@ add_firewall_rule() {
 		done
 	}
 
-	[ -n "${is_tproxy}" -o -n "${udp_flag}" ] && {
-		bridge_nf_ipt=$(sysctl -e -n net.bridge.bridge-nf-call-iptables)
-		set_cache_var "origin_bridge_nf_ipt" "$bridge_nf_ipt"
-		sysctl -w net.bridge.bridge-nf-call-iptables=0 >/dev/null 2>&1
-		[ "$PROXY_IPV6" == "1" ] && {
-			bridge_nf_ip6t=$(sysctl -e -n net.bridge.bridge-nf-call-ip6tables)
-			set_cache_var "origin_bridge_nf_ip6t" "$bridge_nf_ip6t"
-			sysctl -w net.bridge.bridge-nf-call-ip6tables=0 >/dev/null 2>&1
-		}
-	}
 	echolog "防火墙规则加载完成！"
 }
 

@@ -1908,7 +1908,6 @@ acl_app() {
 					}
 				fi
 				set_cache_var "ACL_${sid}_udp_port" "${udp_port}"
-				udp_flag=1
 			}
 			unset enabled sid remarks sources interface use_global_config tcp_node udp_node use_direct_list use_proxy_list use_block_list use_gfw_list chn_list tcp_proxy_mode udp_proxy_mode filter_proxy_ipv6 dns_mode remote_dns v2ray_dns_mode remote_dns_doh dns_client_ip
 			unset _ip _mac _iprange _ipset _ip_or_mac source_list tcp_port udp_port config_file _extra_param
@@ -1971,6 +1970,16 @@ start() {
 	[ -n "$USE_TABLES" ] && source $APP_PATH/${USE_TABLES}.sh start
 	set_cache_var "USE_TABLES" "$USE_TABLES"
 	[ -z $(get_cache_var "ACL_default_dns_port") ] && lua $APP_PATH/helper_dnsmasq.lua logic_restart -LOG 1
+	if [ "$ENABLED_DEFAULT_ACL" == 1 ] || [ "$ENABLED_ACLS" == 1 ]; then
+		bridge_nf_ipt=$(sysctl -e -n net.bridge.bridge-nf-call-iptables)
+		set_cache_var "bak_bridge_nf_ipt" "$bridge_nf_ipt"
+		sysctl -w net.bridge.bridge-nf-call-iptables=0 >/dev/null 2>&1
+		[ "$PROXY_IPV6" == "1" ] && {
+			bridge_nf_ip6t=$(sysctl -e -n net.bridge.bridge-nf-call-ip6tables)
+			set_cache_var "bak_bridge_nf_ip6t" "$bridge_nf_ip6t"
+			sysctl -w net.bridge.bridge-nf-call-ip6tables=0 >/dev/null 2>&1
+		}
+	fi
 	
 	start_crontab
 	echolog "运行完成！\n"
@@ -1991,10 +2000,10 @@ stop() {
 	rm -rf $GLOBAL_DNSMASQ_CONF
 	rm -rf $GLOBAL_DNSMASQ_CONF_PATH
 	[ -z $(get_cache_var "ACL_default_dns_port") ] && lua $APP_PATH/helper_dnsmasq.lua restart -LOG 0
-	origin_bridge_nf_ipt=$(get_cache_var "origin_bridge_nf_ipt")
-	[ -n "${origin_bridge_nf_ipt}" ] && sysctl -w net.bridge.bridge-nf-call-iptables=${origin_bridge_nf_ipt} >/dev/null 2>&1
-	origin_bridge_nf_ip6t=$(get_cache_var "origin_bridge_nf_ip6t")
-	[ -n "${origin_bridge_nf_ip6t}" ] && sysctl -w net.bridge.bridge-nf-call-ip6tables=${origin_bridge_nf_ip6t} >/dev/null 2>&1
+	bak_bridge_nf_ipt=$(get_cache_var "bak_bridge_nf_ipt")
+	[ -n "${bak_bridge_nf_ipt}" ] && sysctl -w net.bridge.bridge-nf-call-iptables=${bak_bridge_nf_ipt} >/dev/null 2>&1
+	bak_bridge_nf_ip6t=$(get_cache_var "bak_bridge_nf_ip6t")
+	[ -n "${bak_bridge_nf_ip6t}" ] && sysctl -w net.bridge.bridge-nf-call-ip6tables=${bak_bridge_nf_ip6t} >/dev/null 2>&1
 	rm -rf $TMP_PATH
 	rm -rf /tmp/lock/${CONFIG}_socks_auto_switch*
 	echolog "清空并关闭相关程序和缓存完成。"
