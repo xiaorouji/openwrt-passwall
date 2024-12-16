@@ -646,12 +646,26 @@ o.default = 0
 o = s:option(Flag, option_name("tcpNoDelay"), "tcpNoDelay")
 o.default = 0
 
-o = s:option(ListValue, option_name("to_node"), translate("Landing node"), translate("Only support a layer of proxy."))
-o.default = ""
+o = s:option(ListValue, option_name("chain_proxy"), translate("Chain Proxy"))
 o:value("", translate("Close(Not use)"))
+o:value("1", translate("Preproxy Node"))
+o:value("2", translate("Landing Node"))
+for i, v in ipairs(s.fields[option_name("protocol")].keylist) do
+	if not v:find("_") then
+		o:depends({ [option_name("protocol")] = v })
+	end
+end
+
+o = s:option(ListValue, option_name("preproxy_node"), translate("Preproxy Node"), translate("Only support a layer of proxy."))
+o:depends({ [option_name("chain_proxy")] = "1" })
+
+o = s:option(ListValue, option_name("to_node"), translate("Landing Node"), translate("Only support a layer of proxy."))
+o:depends({ [option_name("chain_proxy")] = "2" })
+
 for k, v in pairs(nodes_table) do
-	if v.type == "Xray" then
-		o:value(v.id, v.remark)
+	if v.type == "Xray" and v.id ~= arg[1] then
+		s.fields[option_name("preproxy_node")]:value(v.id, v.remark)
+		s.fields[option_name("to_node")]:value(v.id, v.remark)
 	end
 end
 
@@ -659,7 +673,7 @@ for i, v in ipairs(s.fields[option_name("protocol")].keylist) do
 	if not v:find("_") then
 		s.fields[option_name("tcpMptcp")]:depends({ [option_name("protocol")] = v })
 		s.fields[option_name("tcpNoDelay")]:depends({ [option_name("protocol")] = v })
-		s.fields[option_name("to_node")]:depends({ [option_name("protocol")] = v })
+		s.fields[option_name("chain_proxy")]:depends({ [option_name("protocol")] = v })
 	end
 end
 

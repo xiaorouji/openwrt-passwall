@@ -677,17 +677,26 @@ o:depends({ [option_name("protocol")] = "vless" })
 o:depends({ [option_name("protocol")] = "tuic" })
 o:depends({ [option_name("protocol")] = "hysteria2" })
 
-o = s:option(ListValue, option_name("to_node"), translate("Landing node"), translate("Only support a layer of proxy."))
-o.default = ""
+o = s:option(ListValue, option_name("chain_proxy"), translate("Chain Proxy"))
 o:value("", translate("Close(Not use)"))
-for k, v in pairs(nodes_table) do
-	if v.type == "sing-box" then
-		o:value(v.id, v.remark)
-	end
-end
+o:value("1", translate("Preproxy Node"))
+o:value("2", translate("Landing Node"))
 for i, v in ipairs(s.fields[option_name("protocol")].keylist) do
 	if not v:find("_") then
 		o:depends({ [option_name("protocol")] = v })
+	end
+end
+
+o = s:option(ListValue, option_name("preproxy_node"), translate("Preproxy Node"), translate("Only support a layer of proxy."))
+o:depends({ [option_name("chain_proxy")] = "1" })
+
+o = s:option(ListValue, option_name("to_node"), translate("Landing Node"), translate("Only support a layer of proxy."))
+o:depends({ [option_name("chain_proxy")] = "2" })
+
+for k, v in pairs(nodes_table) do
+	if v.type == "sing-box" and v.id ~= arg[1] then
+		s.fields[option_name("preproxy_node")]:value(v.id, v.remark)
+		s.fields[option_name("to_node")]:value(v.id, v.remark)
 	end
 end
 
