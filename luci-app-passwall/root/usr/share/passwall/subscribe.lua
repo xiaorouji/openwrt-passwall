@@ -327,6 +327,23 @@ do
 				}
 			end
 		else
+			--前置代理节点
+			local currentNode = uci:get_all(appname, node_id) or nil
+			if currentNode and currentNode.preproxy_node then
+				CONFIG[#CONFIG + 1] = {
+					log = true,
+					id = node_id,
+					remarks = "节点[" .. node_id .. "]前置代理节点",
+					currentNode = uci:get_all(appname, currentNode.preproxy_node) or nil,
+					set = function(o, server)
+						uci:set(appname, node_id, "preproxy_node", server)
+						o.newNodeId = server
+					end,
+					delete = function(o)
+						uci:delete(appname, node_id, "preproxy_node")
+					end
+				}
+			end
 			--落地节点
 			local currentNode = uci:get_all(appname, node_id) or nil
 			if currentNode and currentNode.to_node then
