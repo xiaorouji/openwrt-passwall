@@ -1969,7 +1969,7 @@ start() {
 	}
 	[ -n "$USE_TABLES" ] && source $APP_PATH/${USE_TABLES}.sh start
 	set_cache_var "USE_TABLES" "$USE_TABLES"
-	[ -z $(get_cache_var "ACL_default_dns_port") ] && lua $APP_PATH/helper_dnsmasq.lua logic_restart -LOG 1
+	[ -z "$(get_cache_var "ACL_default_dns_port")" ] && lua $APP_PATH/helper_dnsmasq.lua logic_restart -LOG 1
 	if [ "$ENABLED_DEFAULT_ACL" == 1 ] || [ "$ENABLED_ACLS" == 1 ]; then
 		bridge_nf_ipt=$(sysctl -e -n net.bridge.bridge-nf-call-iptables)
 		set_cache_var "bak_bridge_nf_ipt" "$bridge_nf_ipt"
@@ -1999,7 +1999,7 @@ stop() {
 	source $APP_PATH/helper_smartdns.sh del
 	rm -rf $GLOBAL_DNSMASQ_CONF
 	rm -rf $GLOBAL_DNSMASQ_CONF_PATH
-	[ -z $(get_cache_var "ACL_default_dns_port") ] && lua $APP_PATH/helper_dnsmasq.lua restart -LOG 0
+	[ -z "$(get_cache_var "ACL_default_dns_port")" ] && lua $APP_PATH/helper_dnsmasq.lua restart -LOG 0
 	bak_bridge_nf_ipt=$(get_cache_var "bak_bridge_nf_ipt")
 	[ -n "${bak_bridge_nf_ipt}" ] && sysctl -w net.bridge.bridge-nf-call-iptables=${bak_bridge_nf_ipt} >/dev/null 2>&1
 	bak_bridge_nf_ip6t=$(get_cache_var "bak_bridge_nf_ip6t")

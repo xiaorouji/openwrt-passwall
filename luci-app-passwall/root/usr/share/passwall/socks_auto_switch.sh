@@ -82,7 +82,7 @@ test_auto_switch() {
 	local b_nodes=$1
 	local now_node=$2
 	[ -z "$now_node" ] && {
-		if [ -n $(/usr/share/${CONFIG}/app.sh get_cache_var "socks_${id}") ]; then
+		if [ -n "$(/usr/share/${CONFIG}/app.sh get_cache_var "socks_${id}")" ]; then
 			now_node=$(/usr/share/${CONFIG}/app.sh get_cache_var "socks_${id}")
 		else
 			#echolog "自动切换检测：未知错误"
