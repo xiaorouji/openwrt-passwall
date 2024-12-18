@@ -10,7 +10,7 @@ local type_name = "SS"
 
 local option_prefix = "ss_"
 
-local function option_name(name)
+local function _n(name)
 	return option_prefix .. name
 end
 
@@ -27,23 +27,23 @@ local ss_encrypt_method_list = {
 
 s.fields["type"]:value(type_name, translate("Shadowsocks"))
 
-o = s:option(Value, option_name("port"), translate("Listen Port"))
+o = s:option(Value, _n("port"), translate("Listen Port"))
 o.datatype = "port"
 
-o = s:option(Value, option_name("password"), translate("Password"))
+o = s:option(Value, _n("password"), translate("Password"))
 o.password = true
 
-o = s:option(ListValue, option_name("method"), translate("Encrypt Method"))
+o = s:option(ListValue, _n("method"), translate("Encrypt Method"))
 for a, t in ipairs(ss_encrypt_method_list) do o:value(t) end
 
-o = s:option(Value, option_name("timeout"), translate("Connection Timeout"))
+o = s:option(Value, _n("timeout"), translate("Connection Timeout"))
 o.datatype = "uinteger"
 o.default = 300
 
-o = s:option(Flag, option_name("tcp_fast_open"), "TCP " .. translate("Fast Open"))
+o = s:option(Flag, _n("tcp_fast_open"), "TCP " .. translate("Fast Open"))
 o.default = "0"
 
-o = s:option(Flag, option_name("log"), translate("Log"))
+o = s:option(Flag, _n("log"), translate("Log"))
 o.default = "1"
 o.rmempty = false
 

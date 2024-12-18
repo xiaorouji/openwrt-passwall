@@ -10,7 +10,7 @@ local type_name = "SSR"
 
 local option_prefix = "ssr_"
 
-local function option_name(name)
+local function _n(name)
 	return option_prefix .. name
 end
 
@@ -37,37 +37,37 @@ local ssr_obfs_list = {
 
 s.fields["type"]:value(type_name, translate("ShadowsocksR"))
 
-o = s:option(Value, option_name("port"), translate("Listen Port"))
+o = s:option(Value, _n("port"), translate("Listen Port"))
 o.datatype = "port"
 
-o = s:option(Value, option_name("password"), translate("Password"))
+o = s:option(Value, _n("password"), translate("Password"))
 o.password = true
 
-o = s:option(ListValue, option_name("method"), translate("Encrypt Method"))
+o = s:option(ListValue, _n("method"), translate("Encrypt Method"))
 for a, t in ipairs(ssr_encrypt_method_list) do o:value(t) end
 
-o = s:option(ListValue, option_name("protocol"), translate("Protocol"))
+o = s:option(ListValue, _n("protocol"), translate("Protocol"))
 for a, t in ipairs(ssr_protocol_list) do o:value(t) end
 
-o = s:option(Value, option_name("protocol_param"), translate("Protocol_param"))
+o = s:option(Value, _n("protocol_param"), translate("Protocol_param"))
 
-o = s:option(ListValue, option_name("obfs"), translate("Obfs"))
+o = s:option(ListValue, _n("obfs"), translate("Obfs"))
 for a, t in ipairs(ssr_obfs_list) do o:value(t) end
 
-o = s:option(Value, option_name("obfs_param"), translate("Obfs_param"))
+o = s:option(Value, _n("obfs_param"), translate("Obfs_param"))
 
-o = s:option(Value, option_name("timeout"), translate("Connection Timeout"))
+o = s:option(Value, _n("timeout"), translate("Connection Timeout"))
 o.datatype = "uinteger"
 o.default = 300
 
-o = s:option(Flag, option_name("tcp_fast_open"), "TCP " .. translate("Fast Open"))
+o = s:option(Flag, _n("tcp_fast_open"), "TCP " .. translate("Fast Open"))
 o.default = "0"
 
-o = s:option(Flag, option_name("udp_forward"), translate("UDP Forward"))
+o = s:option(Flag, _n("udp_forward"), translate("UDP Forward"))
 o.default = "1"
 o.rmempty = false
 
-o = s:option(Flag, option_name("log"), translate("Log"))
+o = s:option(Flag, _n("log"), translate("Log"))
 o.default = "1"
 o.rmempty = false
 

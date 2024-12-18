@@ -258,8 +258,6 @@ load_acl() {
 			udp_proxy_drop_ports=${udp_proxy_drop_ports:-default}
 			tcp_redir_ports=${tcp_redir_ports:-default}
 			udp_redir_ports=${udp_redir_ports:-default}
-			tcp_node=${tcp_node:-nil}
-			udp_node=${udp_node:-nil}
 			use_direct_list=${use_direct_list:-1}
 			use_proxy_list=${use_proxy_list:-1}
 			use_block_list=${use_block_list:-1}
@@ -275,25 +273,17 @@ load_acl() {
 			[ "$udp_redir_ports" = "default" ] && udp_redir_ports=$UDP_REDIR_PORTS
 
 			[ -n "$(get_cache_var "ACL_${sid}_tcp_node")" ] && tcp_node=$(get_cache_var "ACL_${sid}_tcp_node")
+			[ -n "$(get_cache_var "ACL_${sid}_tcp_redir_port")" ] && tcp_port=$(get_cache_var "ACL_${sid}_tcp_redir_port")
 			[ -n "$(get_cache_var "ACL_${sid}_udp_node")" ] && udp_node=$(get_cache_var "ACL_${sid}_udp_node")
-			[ -n "$(get_cache_var "ACL_${sid}_tcp_port")" ] && tcp_port=$(get_cache_var "ACL_${sid}_tcp_port")
-			[ -n "$(get_cache_var "ACL_${sid}_udp_port")" ] && udp_port=$(get_cache_var "ACL_${sid}_udp_port")
+			[ -n "$(get_cache_var "ACL_${sid}_udp_redir_port")" ] && udp_port=$(get_cache_var "ACL_${sid}_udp_redir_port")
 			[ -n "$(get_cache_var "ACL_${sid}_dns_port")" ] && dns_redirect_port=$(get_cache_var "ACL_${sid}_dns_port")
+			[ -n "$tcp_node" ] && tcp_node_remark=$(config_n_get $tcp_node remarks)
+			[ -n "$udp_node" ] && udp_node_remark=$(config_n_get $udp_node remarks)
 
 			use_shunt_tcp=0
 			use_shunt_udp=0
-			[ "$tcp_node" != "nil" ] && {
-				tcp_node_remark=$(config_n_get $tcp_node remarks)
-				[ "$(config_n_get $tcp_node protocol)" = "_shunt" ] && use_shunt_tcp=1
-			}
-			[ "$udp_node" != "nil" ] && {
-				udp_node_remark=$(config_n_get $udp_node remarks)
-				[ "$(config_n_get $udp_node protocol)" = "_shunt" ] && use_shunt_udp=1
-			}
-			[ "$udp_node" == "tcp" ] && {
-				udp_node_remark=$tcp_node_remark
-				use_shunt_udp=$use_shunt_tcp
-			}
+			[ -n "$tcp_node" ] && [ "$(config_n_get $tcp_node protocol)" = "_shunt" ] && use_shunt_tcp=1
+			[ -n "$udp_node" ] && [ "$(config_n_get $udp_node protocol)" = "_shunt" ] && use_shunt_udp=1
 
 			[ "${use_global_config}" = "1" ] && { 
 				tcp_node_remark=$(config_n_get $TCP_NODE remarks)

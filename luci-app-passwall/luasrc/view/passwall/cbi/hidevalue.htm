@@ -1,0 +1,3 @@
+<div id="cbi-<%=self.config.."-"..section.."-"..self.option%>" data-index="<%=self.index%>" data-depends="<%=pcdata(self:deplist2json(section))%>" style="display: none !important">
+	<input type="hidden" id="<%=cbid%>" value="<%=pcdata(self:cfgvalue(section) or self.default or "")%>" />
+</div>

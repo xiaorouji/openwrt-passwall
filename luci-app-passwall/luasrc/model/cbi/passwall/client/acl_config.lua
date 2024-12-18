@@ -52,7 +52,7 @@ o.rmempty = false
 ---- Remarks
 o = s:option(Value, "remarks", translate("Remarks"))
 o.default = arg[1]
-o.rmempty = true
+o.rmempty = false
 
 o = s:option(ListValue, "interface", translate("Source Interface"))
 o:value("", translate("All"))
@@ -148,97 +148,117 @@ sources.write = dynamicList_write
 ---- TCP No Redir Ports
 local TCP_NO_REDIR_PORTS = uci:get(appname, "@global_forwarding[0]", "tcp_no_redir_ports")
 o = s:option(Value, "tcp_no_redir_ports", translate("TCP No Redir Ports"))
-o.default = "default"
+o:value("", translate("Use global config") .. "(" .. TCP_NO_REDIR_PORTS .. ")")
 o:value("disable", translate("No patterns are used"))
-o:value("default", translate("Use global config") .. "(" .. TCP_NO_REDIR_PORTS .. ")")
 o:value("1:65535", translate("All"))
 o.validate = port_validate
 
 ---- UDP No Redir Ports
 local UDP_NO_REDIR_PORTS = uci:get(appname, "@global_forwarding[0]", "udp_no_redir_ports")
 o = s:option(Value, "udp_no_redir_ports", translate("UDP No Redir Ports"),
-			 "<font color='red'>" .. translate(
-				 "Fill in the ports you don't want to be forwarded by the agent, with the highest priority.") ..
-				 "</font>")
-o.default = "default"
+	"<font color='red'>" .. 
+		translate("Fill in the ports you don't want to be forwarded by the agent, with the highest priority.") ..
+	"</font>")
+o:value("", translate("Use global config") .. "(" .. UDP_NO_REDIR_PORTS .. ")")
 o:value("disable", translate("No patterns are used"))
-o:value("default", translate("Use global config") .. "(" .. UDP_NO_REDIR_PORTS .. ")")
 o:value("1:65535", translate("All"))
 o.validate = port_validate
+
+o = s:option(DummyValue, "_hide_node_option", "")
+o.template = "passwall/cbi/hidevalue"
+o.value = "1"
+o:depends({ tcp_no_redir_ports = "1:65535", udp_no_redir_ports = "1:65535" })
+if TCP_NO_REDIR_PORTS == "1:65535" and UDP_NO_REDIR_PORTS == "1:65535" then
+	o:depends({ tcp_no_redir_ports = "", udp_no_redir_ports = "" })
+end
 
 o = s:option(Flag, "use_global_config", translatef("Use global config"))
 o.default = "0"
 o.rmempty = false
+o:depends({ _hide_node_option = "1",  ['!reverse'] = true })
 
-tcp_node = s:option(ListValue, "tcp_node", "<a style='color: red'>" .. translate("TCP Node") .. "</a>")
-tcp_node.default = ""
-tcp_node:value("", translate("Close"))
-tcp_node:depends("use_global_config", false)
+o = s:option(ListValue, "tcp_node", "<a style='color: red'>" .. translate("TCP Node") .. "</a>")
+o.default = ""
+o:depends({ _hide_node_option = false, use_global_config = false })
 
-udp_node = s:option(ListValue, "udp_node", "<a style='color: red'>" .. translate("UDP Node") .. "</a>")
-udp_node.default = ""
-udp_node:value("", translate("Close"))
-udp_node:value("tcp", translate("Same as the tcp node"))
-udp_node:depends({ tcp_node = "",  ['!reverse'] = true })
+o = s:option(DummyValue, "_tcp_node_bool", "")
+o.template = "passwall/cbi/hidevalue"
+o.value = "1"
+o:depends({ tcp_node = "",  ['!reverse'] = true })
+
+o = s:option(ListValue, "udp_node", "<a style='color: red'>" .. translate("UDP Node") .. "</a>")
+o.default = ""
+o:value("", translate("Close"))
+o:value("tcp", translate("Same as the tcp node"))
+o:depends({ _tcp_node_bool = "1" })
 
 for k, v in pairs(nodes_table) do
-	tcp_node:value(v.id, v["remark"])
-	udp_node:value(v.id, v["remark"])
+	s.fields["tcp_node"]:value(v.id, v["remark"])
+	s.fields["udp_node"]:value(v.id, v["remark"])
 end
+
+o = s:option(DummyValue, "_udp_node_bool", "")
+o.template = "passwall/cbi/hidevalue"
+o.value = "1"
+o:depends({ udp_node = "",  ['!reverse'] = true })
 
 ---- TCP Proxy Drop Ports
 local TCP_PROXY_DROP_PORTS = uci:get(appname, "@global_forwarding[0]", "tcp_proxy_drop_ports")
 o = s:option(Value, "tcp_proxy_drop_ports", translate("TCP Proxy Drop Ports"))
-o.default = "default"
+o:value("", translate("Use global config") .. "(" .. TCP_PROXY_DROP_PORTS .. ")")
 o:value("disable", translate("No patterns are used"))
-o:value("default", translate("Use global config") .. "(" .. TCP_PROXY_DROP_PORTS .. ")")
 o.validate = port_validate
+o:depends({ use_global_config = true })
+o:depends({ _tcp_node_bool = "1" })
 
 ---- UDP Proxy Drop Ports
 local UDP_PROXY_DROP_PORTS = uci:get(appname, "@global_forwarding[0]", "udp_proxy_drop_ports")
 o = s:option(Value, "udp_proxy_drop_ports", translate("UDP Proxy Drop Ports"))
-o.default = "default"
+o:value("", translate("Use global config") .. "(" .. UDP_PROXY_DROP_PORTS .. ")")
 o:value("disable", translate("No patterns are used"))
-o:value("default", translate("Use global config") .. "(" .. UDP_PROXY_DROP_PORTS .. ")")
 o:value("443", translate("QUIC"))
 o.validate = port_validate
+o:depends({ use_global_config = true })
+o:depends({ _tcp_node_bool = "1" })
 
 ---- TCP Redir Ports
 local TCP_REDIR_PORTS = uci:get(appname, "@global_forwarding[0]", "tcp_redir_ports")
 o = s:option(Value, "tcp_redir_ports", translate("TCP Redir Ports"), translatef("Only work with using the %s node.", "TCP"))
-o.default = "default"
-o:value("default", translate("Use global config") .. "(" .. TCP_REDIR_PORTS .. ")")
+o:value("", translate("Use global config") .. "(" .. TCP_REDIR_PORTS .. ")")
 o:value("1:65535", translate("All"))
 o:value("80,443", "80,443")
 o:value("80:65535", "80 " .. translate("or more"))
 o:value("1:443", "443 " .. translate("or less"))
 o.validate = port_validate
+o:depends({ use_global_config = true })
+o:depends({ _tcp_node_bool = "1" })
 
 ---- UDP Redir Ports
 local UDP_REDIR_PORTS = uci:get(appname, "@global_forwarding[0]", "udp_redir_ports")
 o = s:option(Value, "udp_redir_ports", translate("UDP Redir Ports"), translatef("Only work with using the %s node.", "UDP"))
-o.default = "default"
-o:value("default", translate("Use global config") .. "(" .. UDP_REDIR_PORTS .. ")")
+o:value("", translate("Use global config") .. "(" .. UDP_REDIR_PORTS .. ")")
 o:value("1:65535", translate("All"))
 o:value("53", "53")
 o.validate = port_validate
+o:depends({ use_global_config = true })
+o:depends({ _udp_node_bool = "1" })
 
 o = s:option(Flag, "use_direct_list", translatef("Use %s", translate("Direct List")))
 o.default = "1"
-o:depends({ tcp_node = "",  ['!reverse'] = true })
+o:depends({ _tcp_node_bool = "1" })
 
 o = s:option(Flag, "use_proxy_list", translatef("Use %s", translate("Proxy List")))
 o.default = "1"
-o:depends({ tcp_node = "",  ['!reverse'] = true })
+o:depends({ _tcp_node_bool = "1" })
 
 o = s:option(Flag, "use_block_list", translatef("Use %s", translate("Block List")))
 o.default = "1"
-o:depends({ tcp_node = "",  ['!reverse'] = true })
+o:depends({ _tcp_node_bool = "1" })
 
 if has_gfwlist then
 	o = s:option(Flag, "use_gfw_list", translatef("Use %s", translate("GFW List")))
 	o.default = "1"
-	o:depends({ tcp_node = "",  ['!reverse'] = true })
+	o:depends({ _tcp_node_bool = "1" })
 end
 
 if has_chnlist or has_chnroute then
@@ -247,36 +267,36 @@ if has_chnlist or has_chnroute then
 	o:value("direct", translate("Direct Connection"))
 	o:value("proxy", translate("Proxy"))
 	o.default = "direct"
-	o:depends({ tcp_node = "",  ['!reverse'] = true })
+	o:depends({ _tcp_node_bool = "1" })
 end
 
 o = s:option(ListValue, "tcp_proxy_mode", "TCP " .. translate("Proxy Mode"))
 o:value("disable", translate("No Proxy"))
 o:value("proxy", translate("Proxy"))
-o:depends({ tcp_node = "",  ['!reverse'] = true })
+o:depends({ _tcp_node_bool = "1" })
 
 o = s:option(ListValue, "udp_proxy_mode", "UDP " .. translate("Proxy Mode"))
 o:value("disable", translate("No Proxy"))
 o:value("proxy", translate("Proxy"))
-o:depends({ udp_node = "",  ['!reverse'] = true })
+o:depends({ _udp_node_bool = "1" })
 
 o = s:option(DummyValue, "switch_mode", " ")
 o.template = appname .. "/global/proxy"
-o:depends({ tcp_node = "",  ['!reverse'] = true })
+o:depends({ _tcp_node_bool = "1" })
 
 ---- DNS
 o = s:option(ListValue, "dns_shunt", "DNS " .. translate("Shunt"))
-o:depends({ tcp_node = "",  ['!reverse'] = true })
+o:depends({ _tcp_node_bool = "1" })
 o:value("dnsmasq", "Dnsmasq")
 o:value("chinadns-ng", translate("ChinaDNS-NG (recommended)"))
 
 o = s:option(Flag, "filter_proxy_ipv6", translate("Filter Proxy Host IPv6"), translate("Experimental feature."))
 o.default = "0"
-o:depends({ tcp_node = "",  ['!reverse'] = true })
+o:depends({ _tcp_node_bool = "1" })
 
 ---- DNS Forward Mode
 o = s:option(ListValue, "dns_mode", translate("Filter Mode"))
-o:depends({ tcp_node = "",  ['!reverse'] = true })
+o:depends({ _tcp_node_bool = "1" })
 if api.is_finded("dns2socks") then
 	o:value("dns2socks", "dns2socks")
 end

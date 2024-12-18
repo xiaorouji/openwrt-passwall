@@ -10,7 +10,7 @@ local type_name = "Trojan-Plus"
 
 local option_prefix = "trojan_plus_"
 
-local function option_name(name)
+local function _n(name)
 	return option_prefix .. name
 end
 
@@ -18,19 +18,19 @@ end
 
 s.fields["type"]:value(type_name, "Trojan-Plus")
 
-o = s:option(Value, option_name("address"), translate("Address (Support Domain Name)"))
+o = s:option(Value, _n("address"), translate("Address (Support Domain Name)"))
 
-o = s:option(Value, option_name("port"), translate("Port"))
+o = s:option(Value, _n("port"), translate("Port"))
 o.datatype = "port"
 
-o = s:option(Value, option_name("password"), translate("Password"))
+o = s:option(Value, _n("password"), translate("Password"))
 o.password = true
 
-o = s:option(ListValue, option_name("tcp_fast_open"), "TCP " .. translate("Fast Open"), translate("Need node support required"))
+o = s:option(ListValue, _n("tcp_fast_open"), "TCP " .. translate("Fast Open"), translate("Need node support required"))
 o:value("false")
 o:value("true")
 
-o = s:option(Flag, option_name("tls"), translate("TLS"))
+o = s:option(Flag, _n("tls"), translate("TLS"))
 o.default = 0
 o.validate = function(self, value, t)
 	if value then
@@ -42,15 +42,15 @@ o.validate = function(self, value, t)
 	end
 end
 
-o = s:option(Flag, option_name("tls_allowInsecure"), translate("allowInsecure"), translate("Whether unsafe connections are allowed. When checked, Certificate validation will be skipped."))
+o = s:option(Flag, _n("tls_allowInsecure"), translate("allowInsecure"), translate("Whether unsafe connections are allowed. When checked, Certificate validation will be skipped."))
 o.default = "0"
-o:depends({ [option_name("tls")] = true })
+o:depends({ [_n("tls")] = true })
 
-o = s:option(Value, option_name("tls_serverName"), translate("Domain"))
-o:depends({ [option_name("tls")] = true })
+o = s:option(Value, _n("tls_serverName"), translate("Domain"))
+o:depends({ [_n("tls")] = true })
 
-o = s:option(Flag, option_name("tls_sessionTicket"), translate("Session Ticket"))
+o = s:option(Flag, _n("tls_sessionTicket"), translate("Session Ticket"))
 o.default = "0"
-o:depends({ [option_name("tls")] = true })
+o:depends({ [_n("tls")] = true })
 
 api.luci_types(arg[1], m, s, type_name, option_prefix)

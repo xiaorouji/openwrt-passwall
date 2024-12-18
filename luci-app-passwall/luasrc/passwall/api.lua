@@ -364,6 +364,26 @@ function get_domain_from_url(url)
 	return url
 end
 
+function get_node_name(node_id)
+	local e
+	if type(node_id) == "table" then
+		e = node_id
+	else
+		e = uci:get_all(appname, node_id)
+	end
+	if e then
+		if e.type and e.remarks then
+			if e.protocol and (e.protocol == "_balancing" or e.protocol == "_shunt" or e.protocol == "_iface") then
+				local type = e.type
+				if type == "sing-box" then type = "Sing-Box" end
+				local remark = "%s：[%s] " % {type .. " " .. i18n.translatef(e.protocol), e.remarks}
+				return remark
+			end
+		end
+	end
+	return ""
+end
+
 function get_valid_nodes()
 	local show_node_info = uci_get_type("global_other", "show_node_info") or "0"
 	local nodes = {}

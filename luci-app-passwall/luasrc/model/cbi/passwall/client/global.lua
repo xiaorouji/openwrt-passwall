@@ -126,13 +126,13 @@ o = s:taboption("Main", Flag, "enabled", translate("Main switch"))
 o.rmempty = false
 
 ---- TCP Node
-tcp_node = s:taboption("Main", ListValue, "tcp_node", "<a style='color: red'>" .. translate("TCP Node") .. "</a>")
-tcp_node:value("nil", translate("Close"))
+o = s:taboption("Main", ListValue, "tcp_node", "<a style='color: red'>" .. translate("TCP Node") .. "</a>")
+o:value("nil", translate("Close"))
 
 ---- UDP Node
-udp_node = s:taboption("Main", ListValue, "udp_node", "<a style='color: red'>" .. translate("UDP Node") .. "</a>")
-udp_node:value("nil", translate("Close"))
-udp_node:value("tcp", translate("Same as the tcp node"))
+o = s:taboption("Main", ListValue, "udp_node", "<a style='color: red'>" .. translate("UDP Node") .. "</a>")
+o:value("nil", translate("Close"))
+o:value("tcp", translate("Same as the tcp node"))
 
 -- 分流
 if (has_singbox or has_xray) and #nodes_table > 0 then
@@ -187,7 +187,7 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 			if (has_singbox and has_xray) or (v.type == "sing-box" and not has_singbox) or (v.type == "Xray" and not has_xray) then
 				type:depends("tcp_node", v.id)
 			else
-				type:depends("tcp_node", "hide") --不存在的依赖，即始终隐藏
+				type:depends("tcp_node", "__hide") --不存在的依赖，即始终隐藏
 			end
 
 			uci:foreach(appname, "shunt_rules", function(e)
@@ -273,36 +273,35 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 	end
 end
 
-tcp_node_socks_port = s:taboption("Main", Value, "tcp_node_socks_port", translate("TCP Node") .. " Socks " .. translate("Listen Port"))
-tcp_node_socks_port.default = 1070
-tcp_node_socks_port.datatype = "port"
-tcp_node_socks_port:depends({ tcp_node = "nil", ["!reverse"] = true })
+o = s:taboption("Main", Value, "tcp_node_socks_port", translate("TCP Node") .. " Socks " .. translate("Listen Port"))
+o.default = 1070
+o.datatype = "port"
+o:depends({ tcp_node = "nil", ["!reverse"] = true })
 --[[
 if has_singbox or has_xray then
-	tcp_node_http_port = s:taboption("Main", Value, "tcp_node_http_port", translate("TCP Node") .. " HTTP " .. translate("Listen Port") .. " " .. translate("0 is not use"))
-	tcp_node_http_port.default = 0
-	tcp_node_http_port.datatype = "port"
+	o = s:taboption("Main", Value, "tcp_node_http_port", translate("TCP Node") .. " HTTP " .. translate("Listen Port") .. " " .. translate("0 is not use"))
+	o.default = 0
+	o.datatype = "port"
 end
 ]]--
-tcp_node_socks_bind_local = s:taboption("Main", Flag, "tcp_node_socks_bind_local", translate("TCP Node") .. " Socks " .. translate("Bind Local"), translate("When selected, it can only be accessed localhost."))
-tcp_node_socks_bind_local.default = "1"
-tcp_node_socks_bind_local:depends({ tcp_node = "nil", ["!reverse"] = true })
+o = s:taboption("Main", Flag, "tcp_node_socks_bind_local", translate("TCP Node") .. " Socks " .. translate("Bind Local"), translate("When selected, it can only be accessed localhost."))
+o.default = "1"
+o:depends({ tcp_node = "nil", ["!reverse"] = true })
 
 s:tab("DNS", translate("DNS"))
 
-dns_shunt = s:taboption("DNS", ListValue, "dns_shunt", "DNS " .. translate("Shunt"))
-dns_shunt:value("dnsmasq", "Dnsmasq")
-dns_shunt:value("chinadns-ng", translate("ChinaDNS-NG (recommended)"))
+o = s:taboption("DNS", ListValue, "dns_shunt", "DNS " .. translate("Shunt"))
+o:value("dnsmasq", "Dnsmasq")
+o:value("chinadns-ng", translate("ChinaDNS-NG (recommended)"))
 if api.is_finded("smartdns") then
-	dns_shunt:value("smartdns", "SmartDNS")
-	group_domestic = s:taboption("DNS", Value, "group_domestic", translate("Domestic group name"))
-	group_domestic.placeholder = "local"
-	group_domestic:depends("dns_shunt", "smartdns")
-	group_domestic.description = translate("You only need to configure domestic DNS packets in SmartDNS and set it redirect or as Dnsmasq upstream, and fill in the domestic DNS group name here.")
+	o:value("smartdns", "SmartDNS")
+	o = s:taboption("DNS", Value, "group_domestic", translate("Domestic group name"))
+	o.placeholder = "local"
+	o:depends("dns_shunt", "smartdns")
+	o.description = translate("You only need to configure domestic DNS packets in SmartDNS and set it redirect or as Dnsmasq upstream, and fill in the domestic DNS group name here.")
 end
 
 o = s:taboption("DNS", ListValue, "direct_dns_mode", translate("Direct DNS") .. " " .. translate("Request protocol"))
-o.default = ""
 o:value("", translate("Auto"))
 o:value("udp", translatef("Requery DNS By %s", "UDP"))
 o:value("tcp", translatef("Requery DNS By %s", "TCP"))
@@ -399,23 +398,23 @@ if api.is_finded("smartdns") then
 end
 
 ---- DNS Forward Mode
-dns_mode = s:taboption("DNS", ListValue, "dns_mode", translate("Filter Mode"))
-dns_mode:value("udp", translatef("Requery DNS By %s", "UDP"))
-dns_mode:value("tcp", translatef("Requery DNS By %s", "TCP"))
+o = s:taboption("DNS", ListValue, "dns_mode", translate("Filter Mode"))
+o:value("udp", translatef("Requery DNS By %s", "UDP"))
+o:value("tcp", translatef("Requery DNS By %s", "TCP"))
 if chinadns_tls == 0 then
-	dns_mode:value("dot", translatef("Requery DNS By %s", "DoT"))
+	o:value("dot", translatef("Requery DNS By %s", "DoT"))
 end
 if api.is_finded("dns2socks") then
-	dns_mode:value("dns2socks", "dns2socks")
+	o:value("dns2socks", "dns2socks")
 end
 if has_singbox then
-	dns_mode:value("sing-box", "Sing-Box")
+	o:value("sing-box", "Sing-Box")
 end
 if has_xray then
-	dns_mode:value("xray", "Xray")
+	o:value("xray", "Xray")
 end
 if api.is_finded("smartdns") then
-	dns_mode:depends({ dns_shunt = "smartdns",  ['!reverse'] = true })
+	o:depends({ dns_shunt = "smartdns",  ['!reverse'] = true })
 end
 
 o = s:taboption("DNS", ListValue, "xray_dns_mode", translate("Request protocol"))
@@ -426,7 +425,7 @@ o.cfgvalue = function(self, section)
 	return m:get(section, "v2ray_dns_mode")
 end
 o.write = function(self, section, value)
-	if dns_mode:formvalue(section) == "xray" then
+	if s.fields["dns_mode"]:formvalue(section) == "xray" then
 		return m:set(section, "v2ray_dns_mode", value)
 	end
 end
@@ -439,7 +438,7 @@ o.cfgvalue = function(self, section)
 	return m:get(section, "v2ray_dns_mode")
 end
 o.write = function(self, section, value)
-	if dns_mode:formvalue(section) == "sing-box" then
+	if s.fields["dns_mode"]:formvalue(section) == "sing-box" then
 		return m:set(section, "v2ray_dns_mode", value)
 	end
 end
@@ -518,8 +517,8 @@ o.default = "0"
 o:depends({dns_mode = "sing-box", dns_shunt = "dnsmasq"})
 o.validate = function(self, value, t)
 	if value and value == "1" then
-		local _dns_mode = dns_mode:formvalue(t)
-		local _tcp_node = tcp_node:formvalue(t)
+		local _dns_mode = s.fields["dns_mode"]:formvalue(t)
+		local _tcp_node = s.fields["tcp_node"]:formvalue(t)
 		if _dns_mode and _tcp_node and _tcp_node ~= "nil" then
 			if m:get(_tcp_node, "type"):lower() ~= _dns_mode then
 				return nil, translatef("TCP node must be '%s' type to use FakeDNS.", _dns_mode)
@@ -597,16 +596,16 @@ if has_chnlist or has_chnroute then
 end
 
 ---- TCP Default Proxy Mode
-tcp_proxy_mode = s:taboption("Proxy", ListValue, "tcp_proxy_mode", "TCP " .. translate("Default Proxy Mode"))
-tcp_proxy_mode:value("disable", translate("No Proxy"))
-tcp_proxy_mode:value("proxy", translate("Proxy"))
-tcp_proxy_mode.default = "proxy"
+o = s:taboption("Proxy", ListValue, "tcp_proxy_mode", "TCP " .. translate("Default Proxy Mode"))
+o:value("disable", translate("No Proxy"))
+o:value("proxy", translate("Proxy"))
+o.default = "proxy"
 
 ---- UDP Default Proxy Mode
-udp_proxy_mode = s:taboption("Proxy", ListValue, "udp_proxy_mode", "UDP " .. translate("Default Proxy Mode"))
-udp_proxy_mode:value("disable", translate("No Proxy"))
-udp_proxy_mode:value("proxy", translate("Proxy"))
-udp_proxy_mode.default = "proxy"
+o = s:taboption("Proxy", ListValue, "udp_proxy_mode", "UDP " .. translate("Default Proxy Mode"))
+o:value("disable", translate("No Proxy"))
+o:value("proxy", translate("Proxy"))
+o.default = "proxy"
 
 o = s:taboption("Proxy", DummyValue, "switch_mode", " ")
 o.template = appname .. "/global/proxy"
@@ -634,20 +633,20 @@ o = s:taboption("log", Flag, "log_udp", translate("Enable") .. " " .. translatef
 o.default = "1"
 o.rmempty = false
 
-loglevel = s:taboption("log", ListValue, "loglevel", "Sing-Box/Xray " .. translate("Log Level"))
-loglevel.default = "warning"
-loglevel:value("debug")
-loglevel:value("info")
-loglevel:value("warning")
-loglevel:value("error")
+o = s:taboption("log", ListValue, "loglevel", "Sing-Box/Xray " .. translate("Log Level"))
+o.default = "warning"
+o:value("debug")
+o:value("info")
+o:value("warning")
+o:value("error")
 
-trojan_loglevel = s:taboption("log", ListValue, "trojan_loglevel", "Trojan " ..  translate("Log Level"))
-trojan_loglevel.default = "2"
-trojan_loglevel:value("0", "all")
-trojan_loglevel:value("1", "info")
-trojan_loglevel:value("2", "warn")
-trojan_loglevel:value("3", "error")
-trojan_loglevel:value("4", "fatal")
+o = s:taboption("log", ListValue, "trojan_loglevel", "Trojan " ..  translate("Log Level"))
+o.default = "2"
+o:value("0", "all")
+o:value("1", "info")
+o:value("2", "warn")
+o:value("3", "error")
+o:value("4", "fatal")
 
 o = s:taboption("log", Flag, "advanced_log_feature", translate("Advanced log feature"), translate("For professionals only."))
 o.default = "0"
@@ -670,30 +669,30 @@ o.template = appname .. "/global/faq"
 o = s:taboption("Main", Flag, "socks_enabled", "Socks " .. translate("Main switch"))
 o.rmempty = false
 
-s = m:section(TypedSection, "socks", translate("Socks Config"))
-s.template = "cbi/tblsection"
-s.anonymous = true
-s.addremove = true
-s.extedit = api.url("socks_config", "%s")
-function s.create(e, t)
+s2 = m:section(TypedSection, "socks", translate("Socks Config"))
+s2.template = "cbi/tblsection"
+s2.anonymous = true
+s2.addremove = true
+s2.extedit = api.url("socks_config", "%s")
+function s2.create(e, t)
 	local uuid = api.gen_short_uuid()
 	t = uuid
 	TypedSection.create(e, t)
 	luci.http.redirect(e.extedit:format(t))
 end
 
-o = s:option(DummyValue, "status", translate("Status"))
+o = s2:option(DummyValue, "status", translate("Status"))
 o.rawhtml = true
 o.cfgvalue = function(t, n)
 	return string.format('<div class="_status" socks_id="%s"></div>', n)
 end
 
 ---- Enable
-o = s:option(Flag, "enabled", translate("Enable"))
+o = s2:option(Flag, "enabled", translate("Enable"))
 o.default = 1
 o.rmempty = false
 
-socks_node = s:option(ListValue, "node", translate("Socks Node"))
+o = s2:option(ListValue, "node", translate("Socks Node"))
 
 local n = 1
 uci:foreach(appname, "socks", function(s)
@@ -703,26 +702,26 @@ uci:foreach(appname, "socks", function(s)
 	n = n + 1
 end)
 
-o = s:option(Value, "port", "Socks " .. translate("Listen Port"))
+o = s2:option(Value, "port", "Socks " .. translate("Listen Port"))
 o.default = n + 1080
 o.datatype = "port"
 o.rmempty = false
 
 if has_singbox or has_xray then
-	o = s:option(Value, "http_port", "HTTP " .. translate("Listen Port") .. " " .. translate("0 is not use"))
+	o = s2:option(Value, "http_port", "HTTP " .. translate("Listen Port") .. " " .. translate("0 is not use"))
 	o.default = 0
 	o.datatype = "port"
 end
 
 for k, v in pairs(nodes_table) do
-	tcp_node:value(v.id, v["remark"])
-	udp_node:value(v.id, v["remark"])
+	s.fields["tcp_node"]:value(v.id, v["remark"])
+	s.fields["udp_node"]:value(v.id, v["remark"])
 	if v.type == "Socks" then
 		if has_singbox or has_xray then
-			socks_node:value(v.id, v["remark"])
+			s2.fields["node"]:value(v.id, v["remark"])
 		end
 	else
-		socks_node:value(v.id, v["remark"])
+		s2.fields["node"]:value(v.id, v["remark"])
 	end
 end
 

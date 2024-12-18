@@ -707,7 +707,7 @@ run_socks() {
 	;;
 	esac
 
-	eval node_${node}_socks_port=$socks_port
+	set_cache_var "node_${node}_socks_port" "${socks_port}"
 
 	# http to socks
 	[ -z "$http_flag" ] && [ "$http_port" != "0" ] && [ -n "$http_config_file" ] && [ "$type" != "sing-box" ] && [ "$type" != "xray" ] && [ "$type" != "socks" ] && {
@@ -755,7 +755,7 @@ run_redir() {
 		}
 	}
 	[ "$bind" != "127.0.0.1" ] && echolog "${PROTO}节点：[$remarks]，监听端口：$local_port"
-	eval ${PROTO}_NODE_PORT=$port
+	set_cache_var "${PROTO}_NODE_PORT" "${port}"
 
 	case "$PROTO" in
 	UDP)
@@ -1085,7 +1085,7 @@ run_redir() {
 	esac
 	unset tcp_node_socks_flag tcp_node_http_flag
 	[ "$type" != "sing-box" ] && [ "$type" != "xray" ] && echo "${node}" >> $TMP_PATH/direct_node_list
-	return 0
+	[ -n "${redir_port}" ] && set_cache_var "node_${node}_${PROTO}_redir_port" "${local_port}"
 }
 
 start_redir() {
@@ -1099,7 +1099,12 @@ start_redir() {
 		local port=$(echo $(get_new_port $current_port $proto))
 		eval ${proto}_REDIR=$port
 		run_redir node=$node proto=${proto} bind=0.0.0.0 local_port=$port config_file=$config_file log_file=$log_file
-		set_cache_var "GLOBAL_${proto}_node" "$node"
+		set_cache_var "ACL_GLOBAL_${proto}_node" "${node}"
+		set_cache_var "ACL_GLOBAL_${proto}_redir_port" "${port}"
+		[ "$TCP_UDP" = "1" ] && {
+			set_cache_var "ACL_GLOBAL_UDP_node" "${node}"
+			set_cache_var "ACL_GLOBAL_UDP_redir_port" "${port}"
+		}
 	else
 		[ "${proto}" = "UDP" ] && [ "$TCP_UDP" = "1" ] && return
 		echolog "${proto}节点没有选择或为空，不代理${proto}。"
@@ -1695,198 +1700,221 @@ acl_app() {
 			[ ! -z "${source_list}" ] && echo -e "${source_list}" | sed '/^$/d' > ${acl_path}/source_list
 
 			use_global_config=${use_global_config:-0}
-			tcp_node=${tcp_node:-nil}
-			udp_node=${udp_node:-nil}
-			use_direct_list=${use_direct_list:-1}
-			use_proxy_list=${use_proxy_list:-1}
-			use_block_list=${use_block_list:-1}
-			use_gfw_list=${use_gfw_list:-1}
-			chn_list=${chn_list:-direct}
-			tcp_proxy_mode=${tcp_proxy_mode:-proxy}
-			udp_proxy_mode=${udp_proxy_mode:-proxy}
-			filter_proxy_ipv6=${filter_proxy_ipv6:-0}
-			dnsmasq_filter_proxy_ipv6=${filter_proxy_ipv6}
-			dns_shunt=${dns_shunt:-dnsmasq}
-			dns_mode=${dns_mode:-dns2socks}
-			remote_dns=${remote_dns:-1.1.1.1}
-			use_default_dns=${use_default_dns:-direct}
-			[ "$dns_mode" = "sing-box" ] && {
-				[ "$v2ray_dns_mode" = "doh" ] && remote_dns=${remote_dns_doh:-https://1.1.1.1/dns-query}
-			}
-
 			[ "${use_global_config}" = "1" ] && {
 				tcp_node="default"
 				udp_node="default"
 			}
+			tcp_no_redir_ports=${tcp_no_redir_ports:-${TCP_NO_REDIR_PORTS}}
+			udp_no_redir_ports=${udp_no_redir_ports:-${UDP_NO_REDIR_PORTS}}
+			if [ "$tcp_no_redir_ports" == "1:65535" ] && [ "$udp_no_redir_ports" == "1:65535" ]; then
+				unset use_global_config
+				unset tcp_node
+				unset udp_node
+			else
+				use_direct_list=${use_direct_list:-1}
+				use_proxy_list=${use_proxy_list:-1}
+				use_block_list=${use_block_list:-1}
+				use_gfw_list=${use_gfw_list:-1}
+				chn_list=${chn_list:-direct}
+				tcp_proxy_mode=${tcp_proxy_mode:-proxy}
+				udp_proxy_mode=${udp_proxy_mode:-proxy}
+				filter_proxy_ipv6=${filter_proxy_ipv6:-0}
+				dnsmasq_filter_proxy_ipv6=${filter_proxy_ipv6}
+				dns_shunt=${dns_shunt:-dnsmasq}
+				dns_mode=${dns_mode:-dns2socks}
+				remote_dns=${remote_dns:-1.1.1.1}
+				use_default_dns=${use_default_dns:-direct}
+				[ "$dns_mode" = "sing-box" ] && {
+					[ "$v2ray_dns_mode" = "doh" ] && remote_dns=${remote_dns_doh:-https://1.1.1.1/dns-query}
+				}
+			fi
 
-			[ "$tcp_node" != "nil" ] && {
+			[ -n "$tcp_node" ] && {
+				local GLOBAL_TCP_NODE=$(get_cache_var "ACL_GLOBAL_TCP_node")
+				echolog "${GLOBAL_TCP_NODE}"
+				[ -n "${GLOBAL_TCP_NODE}" ] && GLOBAL_TCP_redir_port=$(get_cache_var "ACL_GLOBAL_TCP_redir_port")
 				if [ "$tcp_node" = "default" ]; then
-					tcp_node=$TCP_NODE
-					tcp_port=$TCP_REDIR_PORT
+					if [ -n "${GLOBAL_TCP_NODE}" ]; then
+						set_cache_var "ACL_${sid}_tcp_node" "${GLOBAL_TCP_NODE}"
+						set_cache_var "ACL_${sid}_tcp_redir_port" "${GLOBAL_TCP_redir_port}"
+						set_cache_var "ACL_${sid}_dns_port" "${GLOBAL_DNSMASQ_PORT}"
+						set_cache_var "ACL_${sid}_tcp_default" "1"
+					else
+						echolog "  - 全局节点未启用，跳过【${remarks}】"
+					fi
 				else
 					[ "$(config_get_type $tcp_node nil)" = "nodes" ] && {
-						run_dns() {
-							local _dns_port
-							[ -n $1 ] && _dns_port=$1
-							[ -z ${_dns_port} ] && {
-								dns_port=$(get_new_port $(expr $dns_port + 1))
-								_dns_port=$dns_port
-								if [ "$dns_mode" = "dns2socks" ]; then
-									run_dns2socks flag=acl_${sid} socks_address=127.0.0.1 socks_port=$socks_port listen_address=0.0.0.0 listen_port=${_dns_port} dns=$remote_dns cache=1
-								elif [ "$dns_mode" = "sing-box" -o "$dns_mode" = "xray" ]; then
-									config_file=$TMP_ACL_PATH/${tcp_node}_SOCKS_${socks_port}_DNS.json
-									[ "$dns_mode" = "xray" ] && [ "$v2ray_dns_mode" = "tcp+doh" ] && remote_dns_doh=${remote_dns_doh:-https://1.1.1.1/dns-query}
-									local type=${dns_mode}
-									[ "${dns_mode}" = "sing-box" ] && type="singbox"
-									dnsmasq_filter_proxy_ipv6=0
-									run_${type} flag=acl_${sid} type=$dns_mode dns_socks_address=127.0.0.1 dns_socks_port=$socks_port dns_listen_port=${_dns_port} remote_dns_protocol=${v2ray_dns_mode} remote_dns_tcp_server=${remote_dns} remote_dns_doh="${remote_dns_doh}" remote_dns_query_strategy=${DNS_QUERY_STRATEGY} dns_client_ip=${dns_client_ip} dns_query_strategy=${DNS_QUERY_STRATEGY} config_file=$config_file
-								fi
-								eval node_${tcp_node}_$(echo -n "${remote_dns}" | md5sum | cut -d " " -f1)=${_dns_port}
-							}
-
-							[ "$dns_shunt" = "chinadns-ng" ] && [ -n "$(first_type chinadns-ng)" ] && {
-								chinadns_ng_min=2024.04.13
-								chinadns_ng_now=$(chinadns-ng -V | grep -i "ChinaDNS-NG " | awk '{print $2}')
-								if [ $(check_ver "$chinadns_ng_now" "$chinadns_ng_min") = 1 ]; then
-									echolog "  * 注意：当前 ChinaDNS-NG 版本为[ $chinadns_ng_now ]，请更新到[ $chinadns_ng_min ]或以上版本，否则 DNS 有可能无法正常工作！"
-								fi
-
-								[ "$filter_proxy_ipv6" = "1" ] && dnsmasq_filter_proxy_ipv6=0
-								chinadns_port=$(expr $chinadns_port + 1)
-								_china_ng_listen="127.0.0.1#${chinadns_port}"
-
-								_chinadns_local_dns=$(IFS=','; set -- $LOCAL_DNS; [ "${1%%[#:]*}" = "127.0.0.1" ] && echo "$1" || ([ -n "$2" ] && echo "$1,$2" || echo "$1"))
-								_direct_dns_mode=$(config_t_get global direct_dns_mode "auto")
-								case "${_direct_dns_mode}" in
-									udp)
-										_chinadns_local_dns=$(config_t_get global direct_dns_udp 223.5.5.5 | sed 's/:/#/g')
-									;;
-									tcp)
-										_chinadns_local_dns="tcp://$(config_t_get global direct_dns_tcp 223.5.5.5 | sed 's/:/#/g')"
-									;;
-									dot)
-										if [ "$(chinadns-ng -V | grep -i wolfssl)" != "nil" ]; then
-											_chinadns_local_dns=$(config_t_get global direct_dns_dot "tls://dot.pub@1.12.12.12")
-										fi
-									;;
-								esac
-
-								run_chinadns_ng \
-									_flag="$sid" \
-									_listen_port=${chinadns_port} \
-									_dns_local=${_chinadns_local_dns} \
-									_dns_trust=127.0.0.1#${_dns_port} \
-									_no_ipv6_trust=${filter_proxy_ipv6} \
-									_use_direct_list=${use_direct_list} \
-									_use_proxy_list=${use_proxy_list} \
-									_use_block_list=${use_block_list} \
-									_gfwlist=${use_gfw_list} \
-									_chnlist=${chn_list} \
-									_default_mode=${tcp_proxy_mode} \
-									_default_tag=${chinadns_ng_default_tag:-smart} \
-									_no_logic_log=1 \
-									_tcp_node=${tcp_node}
-
-								use_default_dns="chinadns_ng"
-							}
-
-							dnsmasq_port=$(get_new_port $(expr $dnsmasq_port + 1))
-							local dnsmasq_conf=${acl_path}/dnsmasq.conf
-							local dnsmasq_conf_path=${acl_path}/dnsmasq.d
-							lua $APP_PATH/helper_dnsmasq.lua add_rule -FLAG ${sid} -TMP_DNSMASQ_PATH ${dnsmasq_conf_path} -DNSMASQ_CONF_FILE ${dnsmasq_conf} \
-								-LISTEN_PORT ${dnsmasq_port} -DEFAULT_DNS $DEFAULT_DNS -LOCAL_DNS $LOCAL_DNS \
-								-USE_DIRECT_LIST "${use_direct_list}" -USE_PROXY_LIST "${use_proxy_list}" -USE_BLOCK_LIST "${use_block_list}" -USE_GFW_LIST "${use_gfw_list}" -CHN_LIST "${chn_list}" \
-								-TUN_DNS "127.0.0.1#${_dns_port}" -REMOTE_FAKEDNS 0 -USE_DEFAULT_DNS "${use_default_dns:-direct}" -CHINADNS_DNS ${_china_ng_listen:-0} \
-								-TCP_NODE $tcp_node -DEFAULT_PROXY_MODE ${tcp_proxy_mode} -NO_PROXY_IPV6 ${dnsmasq_filter_proxy_ipv6:-0} -NFTFLAG ${nftflag:-0} \
-								-NO_LOGIC_LOG 1
-							ln_run "$(first_type dnsmasq)" "dnsmasq_${sid}" "/dev/null" -C ${dnsmasq_conf} -x ${acl_path}/dnsmasq.pid
-							set_cache_var "ACL_${sid}_dns_port" "${dnsmasq_port}"
-							eval node_${tcp_node}_$(echo -n "${tcp_proxy_mode}${remote_dns}" | md5sum | cut -d " " -f1)=${dnsmasq_port}
-						}
-						_redir_port=$(eval echo \${node_${tcp_node}_redir_port})
-						_socks_port=$(eval echo \${node_${tcp_node}_socks_port})
-						if [ -n "${_socks_port}" ] && [ -n "${_redir_port}" ]; then
-							socks_port=${_socks_port}
-							tcp_port=${_redir_port}
-							_dnsmasq_port=$(eval echo \${node_${tcp_node}_$(echo -n "${tcp_proxy_mode}${remote_dns}" | md5sum | cut -d " " -f1)})
-							if [ -z "${_dnsmasq_port}" ]; then
-								_dns_port=$(eval echo \${node_${tcp_node}_$(echo -n "${remote_dns}" | md5sum | cut -d " " -f1)})
-								run_dns ${_dns_port}
-							else
-								[ -n "${_dnsmasq_port}" ] && set_cache_var "ACL_${sid}_dns_port" "${_dnsmasq_port}"
-							fi
+						if [ -n "${GLOBAL_TCP_NODE}" ] && [ "$tcp_node" = "${GLOBAL_TCP_NODE}" ]; then
+							set_cache_var "ACL_${sid}_tcp_node" "${GLOBAL_TCP_NODE}"
+							set_cache_var "ACL_${sid}_tcp_redir_port" "${GLOBAL_TCP_redir_port}"
+							set_cache_var "ACL_${sid}_dns_port" "${GLOBAL_DNSMASQ_PORT}"
+							set_cache_var "ACL_${sid}_tcp_default" "1"
 						else
-							socks_port=$(get_new_port $(expr $socks_port + 1))
-							eval node_${tcp_node}_socks_port=$socks_port
-							redir_port=$(get_new_port $(expr $redir_port + 1))
-							eval node_${tcp_node}_redir_port=$redir_port
-							tcp_port=$redir_port
-
-							local type=$(echo $(config_n_get $tcp_node type) | tr 'A-Z' 'a-z')
-							if [ -n "${type}" ] && ([ "${type}" = "sing-box" ] || [ "${type}" = "xray" ]); then
-								config_file="acl/${tcp_node}_TCP_${redir_port}.json"
-								_extra_param="socks_address=127.0.0.1 socks_port=$socks_port"
-								if [ "$dns_mode" = "sing-box" ] || [ "$dns_mode" = "xray" ]; then
+							run_dns() {
+								local _dns_port
+								[ -n $1 ] && _dns_port=$1
+								[ -z ${_dns_port} ] && {
 									dns_port=$(get_new_port $(expr $dns_port + 1))
 									_dns_port=$dns_port
-									config_file=$(echo $config_file | sed "s/TCP_/DNS_${_dns_port}_TCP_/g")
-									remote_dns_doh=${remote_dns}
-									dnsmasq_filter_proxy_ipv6=0
-									[ "$dns_mode" = "xray" ] && [ "$v2ray_dns_mode" = "tcp+doh" ] && remote_dns_doh=${remote_dns_doh:-https://1.1.1.1/dns-query}
-									_extra_param="dns_listen_port=${_dns_port} remote_dns_protocol=${v2ray_dns_mode} remote_dns_tcp_server=${remote_dns} remote_dns_doh=${remote_dns_doh} remote_dns_query_strategy=${DNS_QUERY_STRATEGY} dns_client_ip=${dns_client_ip} dns_query_strategy=${DNS_QUERY_STRATEGY}"
-								fi
-								[ "$udp_node" != "nil" ] && ([ "$udp_node" = "tcp" ] || [ "$udp_node" = "$tcp_node" ]) && {
-									config_file=$(echo $config_file | sed "s/TCP_/TCP_UDP_/g")
-									_extra_param="${_extra_param} udp_redir_port=$redir_port"
+									if [ "$dns_mode" = "dns2socks" ]; then
+										run_dns2socks flag=acl_${sid} socks_address=127.0.0.1 socks_port=$socks_port listen_address=0.0.0.0 listen_port=${_dns_port} dns=$remote_dns cache=1
+									elif [ "$dns_mode" = "sing-box" -o "$dns_mode" = "xray" ]; then
+										config_file=$TMP_ACL_PATH/${tcp_node}_SOCKS_${socks_port}_DNS.json
+										[ "$dns_mode" = "xray" ] && [ "$v2ray_dns_mode" = "tcp+doh" ] && remote_dns_doh=${remote_dns_doh:-https://1.1.1.1/dns-query}
+										local type=${dns_mode}
+										[ "${dns_mode}" = "sing-box" ] && type="singbox"
+										dnsmasq_filter_proxy_ipv6=0
+										run_${type} flag=acl_${sid} type=$dns_mode dns_socks_address=127.0.0.1 dns_socks_port=$socks_port dns_listen_port=${_dns_port} remote_dns_protocol=${v2ray_dns_mode} remote_dns_tcp_server=${remote_dns} remote_dns_doh="${remote_dns_doh}" remote_dns_query_strategy=${DNS_QUERY_STRATEGY} dns_client_ip=${dns_client_ip} dns_query_strategy=${DNS_QUERY_STRATEGY} config_file=$config_file
+									fi
+									set_cache_var "node_${tcp_node}_$(echo -n "${remote_dns}" | md5sum | cut -d " " -f1)" "${_dns_port}"
 								}
-								config_file="$TMP_PATH/$config_file"
-								[ "${type}" = "sing-box" ] && type="singbox"
-								run_${type} flag=$tcp_node node=$tcp_node tcp_redir_port=$redir_port ${_extra_param} config_file=$config_file
+
+								[ "$dns_shunt" = "chinadns-ng" ] && [ -n "$(first_type chinadns-ng)" ] && {
+									chinadns_ng_min=2024.04.13
+									chinadns_ng_now=$(chinadns-ng -V | grep -i "ChinaDNS-NG " | awk '{print $2}')
+									if [ $(check_ver "$chinadns_ng_now" "$chinadns_ng_min") = 1 ]; then
+										echolog "  * 注意：当前 ChinaDNS-NG 版本为[ $chinadns_ng_now ]，请更新到[ $chinadns_ng_min ]或以上版本，否则 DNS 有可能无法正常工作！"
+									fi
+
+									[ "$filter_proxy_ipv6" = "1" ] && dnsmasq_filter_proxy_ipv6=0
+									chinadns_port=$(expr $chinadns_port + 1)
+									_china_ng_listen="127.0.0.1#${chinadns_port}"
+
+									_chinadns_local_dns=$(IFS=','; set -- $LOCAL_DNS; [ "${1%%[#:]*}" = "127.0.0.1" ] && echo "$1" || ([ -n "$2" ] && echo "$1,$2" || echo "$1"))
+									_direct_dns_mode=$(config_t_get global direct_dns_mode "auto")
+									case "${_direct_dns_mode}" in
+										udp)
+											_chinadns_local_dns=$(config_t_get global direct_dns_udp 223.5.5.5 | sed 's/:/#/g')
+										;;
+										tcp)
+											_chinadns_local_dns="tcp://$(config_t_get global direct_dns_tcp 223.5.5.5 | sed 's/:/#/g')"
+										;;
+										dot)
+											if [ "$(chinadns-ng -V | grep -i wolfssl)" != "nil" ]; then
+												_chinadns_local_dns=$(config_t_get global direct_dns_dot "tls://dot.pub@1.12.12.12")
+											fi
+										;;
+									esac
+
+									run_chinadns_ng \
+										_flag="$sid" \
+										_listen_port=${chinadns_port} \
+										_dns_local=${_chinadns_local_dns} \
+										_dns_trust=127.0.0.1#${_dns_port} \
+										_no_ipv6_trust=${filter_proxy_ipv6} \
+										_use_direct_list=${use_direct_list} \
+										_use_proxy_list=${use_proxy_list} \
+										_use_block_list=${use_block_list} \
+										_gfwlist=${use_gfw_list} \
+										_chnlist=${chn_list} \
+										_default_mode=${tcp_proxy_mode} \
+										_default_tag=${chinadns_ng_default_tag:-smart} \
+										_no_logic_log=1 \
+										_tcp_node=${tcp_node}
+
+									use_default_dns="chinadns_ng"
+								}
+
+								dnsmasq_port=$(get_new_port $(expr $dnsmasq_port + 1))
+								local dnsmasq_conf=${acl_path}/dnsmasq.conf
+								local dnsmasq_conf_path=${acl_path}/dnsmasq.d
+								lua $APP_PATH/helper_dnsmasq.lua add_rule -FLAG ${sid} -TMP_DNSMASQ_PATH ${dnsmasq_conf_path} -DNSMASQ_CONF_FILE ${dnsmasq_conf} \
+									-LISTEN_PORT ${dnsmasq_port} -DEFAULT_DNS $DEFAULT_DNS -LOCAL_DNS $LOCAL_DNS \
+									-USE_DIRECT_LIST "${use_direct_list}" -USE_PROXY_LIST "${use_proxy_list}" -USE_BLOCK_LIST "${use_block_list}" -USE_GFW_LIST "${use_gfw_list}" -CHN_LIST "${chn_list}" \
+									-TUN_DNS "127.0.0.1#${_dns_port}" -REMOTE_FAKEDNS 0 -USE_DEFAULT_DNS "${use_default_dns:-direct}" -CHINADNS_DNS ${_china_ng_listen:-0} \
+									-TCP_NODE $tcp_node -DEFAULT_PROXY_MODE ${tcp_proxy_mode} -NO_PROXY_IPV6 ${dnsmasq_filter_proxy_ipv6:-0} -NFTFLAG ${nftflag:-0} \
+									-NO_LOGIC_LOG 1
+								ln_run "$(first_type dnsmasq)" "dnsmasq_${sid}" "/dev/null" -C ${dnsmasq_conf} -x ${acl_path}/dnsmasq.pid
+								set_cache_var "ACL_${sid}_dns_port" "${dnsmasq_port}"
+								set_cache_var "node_${tcp_node}_$(echo -n "${tcp_proxy_mode}${remote_dns}" | md5sum | cut -d " " -f1)" "${dnsmasq_port}"
+							}
+							_redir_port=$(get_cache_var "node_${tcp_node}_redir_port")
+							_socks_port=$(get_cache_var "node_${tcp_node}_socks_port")
+							if [ -n "${_socks_port}" ] && [ -n "${_redir_port}" ]; then
+								socks_port=${_socks_port}
+								tcp_port=${_redir_port}
+								_dnsmasq_port=$(get_cache_var "node_${tcp_node}_$(echo -n "${tcp_proxy_mode}${remote_dns}" | md5sum | cut -d " " -f1)")
+								if [ -z "${_dnsmasq_port}" ]; then
+									_dns_port=$(get_cache_var "node_${tcp_node}_$(echo -n "${remote_dns}" | md5sum | cut -d " " -f1)")
+									run_dns ${_dns_port}
+								else
+									[ -n "${_dnsmasq_port}" ] && set_cache_var "ACL_${sid}_dns_port" "${_dnsmasq_port}"
+								fi
 							else
-								config_file="acl/${tcp_node}_SOCKS_${socks_port}.json"
-								run_socks flag=$tcp_node node=$tcp_node bind=127.0.0.1 socks_port=$socks_port config_file=$config_file
-								local log_file=$TMP_ACL_PATH/ipt2socks_${tcp_node}_${redir_port}.log
-								log_file="/dev/null"
-								run_ipt2socks flag=acl_${tcp_node} tcp_tproxy=${is_tproxy} local_port=$redir_port socks_address=127.0.0.1 socks_port=$socks_port log_file=$log_file
+								socks_port=$(get_new_port $(expr $socks_port + 1))
+								set_cache_var "node_${tcp_node}_socks_port" "${socks_port}"
+								redir_port=$(get_new_port $(expr $redir_port + 1))
+								set_cache_var "node_${tcp_node}_redir_port" "${redir_port}"
+								tcp_port=$redir_port
+
+								local type=$(echo $(config_n_get $tcp_node type) | tr 'A-Z' 'a-z')
+								if [ -n "${type}" ] && ([ "${type}" = "sing-box" ] || [ "${type}" = "xray" ]); then
+									config_file="acl/${tcp_node}_TCP_${redir_port}.json"
+									_extra_param="socks_address=127.0.0.1 socks_port=$socks_port"
+									if [ "$dns_mode" = "sing-box" ] || [ "$dns_mode" = "xray" ]; then
+										dns_port=$(get_new_port $(expr $dns_port + 1))
+										_dns_port=$dns_port
+										config_file=$(echo $config_file | sed "s/TCP_/DNS_${_dns_port}_TCP_/g")
+										remote_dns_doh=${remote_dns}
+										dnsmasq_filter_proxy_ipv6=0
+										[ "$dns_mode" = "xray" ] && [ "$v2ray_dns_mode" = "tcp+doh" ] && remote_dns_doh=${remote_dns_doh:-https://1.1.1.1/dns-query}
+										_extra_param="dns_listen_port=${_dns_port} remote_dns_protocol=${v2ray_dns_mode} remote_dns_tcp_server=${remote_dns} remote_dns_doh=${remote_dns_doh} remote_dns_query_strategy=${DNS_QUERY_STRATEGY} dns_client_ip=${dns_client_ip} dns_query_strategy=${DNS_QUERY_STRATEGY}"
+									fi
+									[ "$udp_node" != "nil" ] && ([ "$udp_node" = "tcp" ] || [ "$udp_node" = "$tcp_node" ]) && {
+										config_file=$(echo $config_file | sed "s/TCP_/TCP_UDP_/g")
+										_extra_param="${_extra_param} udp_redir_port=$redir_port"
+									}
+									config_file="$TMP_PATH/$config_file"
+									[ "${type}" = "sing-box" ] && type="singbox"
+									run_${type} flag=$tcp_node node=$tcp_node tcp_redir_port=$redir_port ${_extra_param} config_file=$config_file
+								else
+									config_file="acl/${tcp_node}_SOCKS_${socks_port}.json"
+									run_socks flag=$tcp_node node=$tcp_node bind=127.0.0.1 socks_port=$socks_port config_file=$config_file
+									local log_file=$TMP_ACL_PATH/ipt2socks_${tcp_node}_${redir_port}.log
+									log_file="/dev/null"
+									run_ipt2socks flag=acl_${tcp_node} tcp_tproxy=${is_tproxy} local_port=$redir_port socks_address=127.0.0.1 socks_port=$socks_port log_file=$log_file
+								fi
+								run_dns ${_dns_port}
 							fi
-							run_dns ${_dns_port}
+							set_cache_var "ACL_${sid}_tcp_node" "${tcp_node}"
+							set_cache_var "ACL_${sid}_tcp_redir_port" "${redir_port}"
 						fi
-						set_cache_var "ACL_${sid}_tcp_node" "${tcp_node}"
 					}
 				fi
-				set_cache_var "ACL_${sid}_tcp_port" "${tcp_port}"
 			}
-			[ "$udp_node" != "nil" ] && {
-				[ "$udp_node" = "tcp" ] && udp_node=$tcp_node
+			[ -n "$udp_node" ] && {
 				if [ "$udp_node" = "default" ]; then
-					if [ "$TCP_UDP" = "0" ] && [ "$UDP_NODE" = "nil" ]; then
-						udp_node="nil"
-						unset udp_port
-					elif [ "$TCP_UDP" = "1" ] && [ "$udp_node" = "nil" ]; then
-						udp_node=$TCP_NODE
-						udp_port=$TCP_REDIR_PORT
+					local GLOBAL_UDP_NODE=$(get_cache_var "ACL_GLOBAL_UDP_node")
+					[ -n "${GLOBAL_UDP_NODE}" ] && GLOBAL_UDP_redir_port=$(get_cache_var "ACL_GLOBAL_UDP_redir_port")
+					if [ -n "${GLOBAL_UDP_NODE}" ]; then
+						set_cache_var "ACL_${sid}_udp_node" "${GLOBAL_UDP_NODE}"
+						set_cache_var "ACL_${sid}_udp_redir_port" "${GLOBAL_UDP_redir_port}"
+						set_cache_var "ACL_${sid}_udp_default" "1"
 					else
-						udp_node=$UDP_NODE
-						udp_port=$UDP_REDIR_PORT
+						echolog "  - 全局节点未启用，跳过【${remarks}】"
 					fi
-				elif [ "$udp_node" = "$tcp_node" ]; then
-					udp_node=$tcp_node
-					udp_port=$tcp_port
+				elif [ "$udp_node" = "tcp" ]; then
+					udp_node=$(get_cache_var "ACL_${sid}_tcp_node")
+					udp_port=$(get_cache_var "ACL_${sid}_tcp_port")
+					set_cache_var "ACL_${sid}_udp_node" "${udp_node}"
+					set_cache_var "ACL_${sid}_udp_redir_port" "${udp_port}"
 				else
 					[ "$(config_get_type $udp_node nil)" = "nodes" ] && {
-						if [ "$udp_node" = "$UDP_NODE" ]; then
-							udp_port=$UDP_REDIR_PORT
+						if [ -n "${GLOBAL_UDP_NODE}" ] && [ "$udp_node" = "${GLOBAL_UDP_NODE}" ]; then
+							set_cache_var "ACL_${sid}_udp_node" "${GLOBAL_UDP_NODE}"
+							set_cache_var "ACL_${sid}_udp_redir_port" "${GLOBAL_UDP_redir_port}"
+							set_cache_var "ACL_${sid}_udp_default" "1"
 						else
-							_redir_port=$(eval echo \${node_${udp_node}_redir_port})
-							_socks_port=$(eval echo \${node_${udp_node}_socks_port})
+							_redir_port=$(get_cache_var "node_${udp_node}_redir_port")
+							_socks_port=$(get_cache_var "node_${udp_node}_socks_port")
 							if [ -n "${_socks_port}" ] && [ -n "${_redir_port}" ]; then
 								socks_port=${_socks_port}
 								udp_port=${_redir_port}
 							else
 								socks_port=$(get_new_port $(expr $socks_port + 1))
-								eval node_${udp_node}_socks_port=$socks_port
+								set_cache_var "node_${udp_node}_socks_port" "${socks_port}"
 								redir_port=$(get_new_port $(expr $redir_port + 1))
-								eval node_${udp_node}_redir_port=$redir_port
+								set_cache_var "node_${udp_node}_redir_port" "${redir_port}"
 								udp_port=$redir_port
 
 								local type=$(echo $(config_n_get $udp_node type) | tr 'A-Z' 'a-z')
@@ -1904,12 +1932,12 @@ acl_app() {
 								fi
 							fi
 							set_cache_var "ACL_${sid}_udp_node" "${udp_node}"
+							set_cache_var "ACL_${sid}_udp_redir_port" "${redir_port}"
 						fi
 					}
 				fi
-				set_cache_var "ACL_${sid}_udp_port" "${udp_port}"
 			}
-			unset enabled sid remarks sources interface use_global_config tcp_node udp_node use_direct_list use_proxy_list use_block_list use_gfw_list chn_list tcp_proxy_mode udp_proxy_mode filter_proxy_ipv6 dns_mode remote_dns v2ray_dns_mode remote_dns_doh dns_client_ip
+			unset enabled sid remarks sources interface tcp_no_redir_ports udp_no_redir_ports use_global_config tcp_node udp_node use_direct_list use_proxy_list use_block_list use_gfw_list chn_list tcp_proxy_mode udp_proxy_mode filter_proxy_ipv6 dns_mode remote_dns v2ray_dns_mode remote_dns_doh dns_client_ip
 			unset _ip _mac _iprange _ipset _ip_or_mac source_list tcp_port udp_port config_file _extra_param
 			unset _china_ng_listen _chinadns_local_dns _direct_dns_mode chinadns_ng_default_tag dnsmasq_filter_proxy_ipv6
 		done

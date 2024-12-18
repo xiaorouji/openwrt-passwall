@@ -166,11 +166,11 @@ end
 function get_now_use_node()
 	local path = "/tmp/etc/passwall/acl/default"
 	local e = {}
-	local tcp_node = api.get_cache_var("GLOBAL_TCP_node")
+	local tcp_node = api.get_cache_var("ACL_GLOBAL_TCP_node")
 	if tcp_node then
 		e["TCP"] = tcp_node
 	end
-	local udp_node = api.get_cache_var("GLOBAL_UDP_node")
+	local udp_node = api.get_cache_var("ACL_GLOBAL_UDP_node")
 	if udp_node then
 		e["UDP"] = udp_node
 	end
