@@ -1211,23 +1211,41 @@ start_crontab() {
 		return
 	}
 
-	auto_on=$(config_t_get global_delay auto_on 0)
-	if [ "$auto_on" = "1" ]; then
-		time_off=$(config_t_get global_delay time_off)
-		time_on=$(config_t_get global_delay time_on)
-		time_restart=$(config_t_get global_delay time_restart)
-		[ -z "$time_off" -o "$time_off" != "nil" ] && {
-			echo "0 $time_off * * * /etc/init.d/$CONFIG stop" >>/etc/crontabs/root
-			echolog "配置定时任务：每天 $time_off 点关闭服务。"
-		}
-		[ -z "$time_on" -o "$time_on" != "nil" ] && {
-			echo "0 $time_on * * * /etc/init.d/$CONFIG start" >>/etc/crontabs/root
-			echolog "配置定时任务：每天 $time_on 点开启服务。"
-		}
-		[ -z "$time_restart" -o "$time_restart" != "nil" ] && {
-			echo "0 $time_restart * * * /etc/init.d/$CONFIG restart" >>/etc/crontabs/root
-			echolog "配置定时任务：每天 $time_restart 点重启服务。"
-		}
+	stop_week_mode=$(config_t_get global_delay stop_week_mode)
+	stop_time_mode=$(config_t_get global_delay stop_time_mode)
+	if [ -n "$stop_week_mode" ]; then
+		local t="0 $stop_time_mode * * $stop_week_mode"
+		[ "$stop_week_mode" = "7" ] && t="0 $stop_time_mode * * *"
+		if [ "$stop_week_mode" = "8" ]; then
+			update_loop=1
+		else
+			echo "$t /etc/init.d/$CONFIG stop > /dev/null 2>&1 &" >>/etc/crontabs/root
+		fi
+		echolog "配置定时任务：自动关闭服务。"
+	fi
+	start_week_mode=$(config_t_get global_delay start_week_mode)
+	start_time_mode=$(config_t_get global_delay start_time_mode)
+	if [ -n "$start_week_mode" ]; then
+		local t="0 $start_time_mode * * $start_week_mode"
+		[ "$start_week_mode" = "7" ] && t="0 $start_time_mode * * *"
+		if [ "$start_week_mode" = "8" ]; then
+			update_loop=1
+		else
+			echo "$t /etc/init.d/$CONFIG start > /dev/null 2>&1 &" >>/etc/crontabs/root
+		fi
+		echolog "配置定时任务：自动开启服务。"
+	fi
+	restart_week_mode=$(config_t_get global_delay restart_week_mode)
+	restart_time_mode=$(config_t_get global_delay restart_time_mode)
+	if [ -n "$restart_week_mode" ]; then
+		local t="0 $restart_time_mode * * $restart_week_mode"
+		[ "$restart_week_mode" = "7" ] && t="0 $restart_time_mode * * *"
+		if [ "$restart_week_mode" = "8" ]; then
+			update_loop=1
+		else
+			echo "$t /etc/init.d/$CONFIG restart > /dev/null 2>&1 &" >>/etc/crontabs/root
+		fi
+		echolog "配置定时任务：自动重启服务。"
 	fi
 
 	autoupdate=$(config_t_get global_rules auto_update)

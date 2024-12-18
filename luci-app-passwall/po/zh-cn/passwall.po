@@ -673,17 +673,32 @@ msgstr "单位：秒"
 msgid "Units:minutes"
 msgstr "单位：分钟"
 
-msgid "Open and close automatically"
-msgstr "定时自动开关"
+msgid "stop automatically mode"
+msgstr "定时关闭模式"
 
-msgid "Automatically turn off time"
-msgstr "自动关闭时间"
+msgid "stop Time(Every day)"
+msgstr "关闭时间(每天)"
 
-msgid "Automatically turn on time"
-msgstr "自动开启时间"
+msgid "stop Interval(Hour)"
+msgstr "关闭间隔(小时)"
 
-msgid "Automatically restart time"
-msgstr "自动重启时间"
+msgid "start automatically mode"
+msgstr "定时开启模式"
+
+msgid "start Time(Every day)"
+msgstr "开启时间(每天)"
+
+msgid "start Interval(Hour)"
+msgstr "开启间隔(小时)"
+
+msgid "restart automatically mode"
+msgstr "定时重启模式"
+
+msgid "restart Time(Every day)"
+msgstr "重启时间(每天)"
+
+msgid "restart Interval(Hour)"
+msgstr "重启间隔(小时)"
 
 msgid "Forwarding Settings"
 msgstr "转发配置"
@@ -923,6 +938,9 @@ msgid "Every Sunday"
 msgstr "每周日"
 
 msgid "hour"
+msgstr "小时"
+
+msgid "Hour"
 msgstr "小时"
 
 msgid "Location of V2ray/Xray asset"
