@@ -61,8 +61,8 @@ test_proxy() {
 
 test_node() {
 	local node_id=$1
-	local _type=$(echo $(config_n_get ${node_id} type nil) | tr 'A-Z' 'a-z')
-	[ "${_type}" != "nil" ] && {
+	local _type=$(echo $(config_n_get ${node_id} type) | tr 'A-Z' 'a-z')
+	[ -n "${_type}" ] && {
 		local _tmp_port=$(/usr/share/${CONFIG}/app.sh get_new_port 61080 tcp,udp)
 		/usr/share/${CONFIG}/app.sh run_socks flag="test_node_${node_id}" node=${node_id} bind=127.0.0.1 socks_port=${_tmp_port} config_file=test_node_${node_id}.json
 		local curlx="socks5h://127.0.0.1:${_tmp_port}"
@@ -101,7 +101,7 @@ test_auto_switch() {
 	fi
 
 	#检测主节点是否能使用
-	if [ "$restore_switch" == "1" ] && [ "$main_node" != "nil" ] && [ "$now_node" != "$main_node" ]; then
+	if [ "$restore_switch" == "1" ] && [ -n "$main_node" ] && [ "$now_node" != "$main_node" ]; then
 		test_node ${main_node}
 		[ $? -eq 0 ] && {
 			#主节点正常，切换到主节点
@@ -159,7 +159,7 @@ start() {
 	LOCK_FILE=${LOCK_FILE_DIR}/${CONFIG}_socks_auto_switch_${id}.lock
 	LOG_EVENT_FILTER=$(uci -q get "${CONFIG}.global[0].log_event_filter" 2>/dev/null)
 	LOG_EVENT_CMD=$(uci -q get "${CONFIG}.global[0].log_event_cmd" 2>/dev/null)
-	main_node=$(config_n_get $id node nil)
+	main_node=$(config_n_get $id node)
 	socks_port=$(config_n_get $id port 0)
 	delay=$(config_n_get $id autoswitch_testing_time 30)
 	sleep 5s
@@ -167,8 +167,8 @@ start() {
 	retry_num=$(config_n_get $id autoswitch_retry_num 1)
 	restore_switch=$(config_n_get $id autoswitch_restore_switch 0)
 	probe_url=$(config_n_get $id autoswitch_probe_url "https://www.google.com/generate_204")
-	backup_node=$(config_n_get $id autoswitch_backup_node nil)
-	while [ -n "$backup_node" -a "$backup_node" != "nil" ]; do
+	backup_node=$(config_n_get $id autoswitch_backup_node)
+	while [ -n "$backup_node" ]; do
 		[ -f "$LOCK_FILE" ] && {
 			sleep 6s
 			continue

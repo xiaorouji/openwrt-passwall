@@ -61,15 +61,15 @@ function s.remove(e, t)
 		end
 	end)
 	TypedSection.remove(e, t)
-	local new_node = "nil"
+	local new_node = ""
 	local node0 = m:get("@nodes[0]") or nil
 	if node0 then
 		new_node = node0[".name"]
 	end
-	if (m:get("@global[0]", "tcp_node") or "nil") == t then
+	if (m:get("@global[0]", "tcp_node") or "") == t then
 		m:set('@global[0]', "tcp_node", new_node)
 	end
-	if (m:get("@global[0]", "udp_node") or "nil") == t then
+	if (m:get("@global[0]", "udp_node") or "") == t then
 		m:set('@global[0]', "udp_node", new_node)
 	end
 end

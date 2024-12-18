@@ -108,12 +108,11 @@ if #nodes_table > 0 then
 	for k, v in pairs(nodes_table) do
 		o:value(v.id, v.remark)
 	end
-	o.default = "nil"
 end
 uci:foreach(appname, "shunt_rules", function(e)
 	if e[".name"] and e.remarks then
 		o = s:option(ListValue, _n(e[".name"]), string.format('* <a href="%s" target="_blank">%s</a>', api.url("shunt_rules", e[".name"]), e.remarks))
-		o:value("nil", translate("Close"))
+		o:value("", translate("Close"))
 		o:value("_default", translate("Default"))
 		o:value("_direct", translate("Direct Connection"))
 		o:value("_blackhole", translate("Blackhole"))
@@ -127,9 +126,8 @@ uci:foreach(appname, "shunt_rules", function(e)
 				o:value(v.id, v.remark)
 			end
 			local pt = s:option(ListValue, _n(e[".name"] .. "_proxy_tag"), string.format('* <a style="color:red">%s</a>', e.remarks .. " " .. translate("Preproxy")))
-			pt:value("nil", translate("Close"))
+			pt:value("", translate("Close"))
 			pt:value("main", translate("Preproxy Node"))
-			pt.default = "nil"
 			for k, v in pairs(nodes_table) do
 				o:value(v.id, v.remark)
 				pt:depends({ [_n("protocol")] = "_shunt", [_n("preproxy_enabled")] = true, [_n(e[".name"])] = v.id })
@@ -159,9 +157,8 @@ if #nodes_table > 0 then
 		o:value(v.id, v.remark)
 	end
 	local dpt = s:option(ListValue, _n("default_proxy_tag"), string.format('* <a style="color:red">%s</a>', translate("Default Preproxy")), translate("When using, localhost will connect this node first and then use this node to connect the default node."))
-	dpt:value("nil", translate("Close"))
+	dpt:value("", translate("Close"))
 	dpt:value("main", translate("Preproxy Node"))
-	dpt.default = "nil"
 	for k, v in pairs(nodes_table) do
 		o:value(v.id, v.remark)
 		dpt:depends({ [_n("protocol")] = "_shunt", [_n("preproxy_enabled")] = true, [_n("default_node")] = v.id })

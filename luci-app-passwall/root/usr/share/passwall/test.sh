@@ -56,8 +56,8 @@ test_proxy() {
 url_test_node() {
 	result=0
 	local node_id=$1
-	local _type=$(echo $(config_n_get ${node_id} type nil) | tr 'A-Z' 'a-z')
-	[ "${_type}" != "nil" ] && {
+	local _type=$(echo $(config_n_get ${node_id} type) | tr 'A-Z' 'a-z')
+	[ -n "${_type}" ] && {
 		if [ "${_type}" == "socks" ]; then
 			local _address=$(config_n_get ${node_id} address)
 			local _port=$(config_n_get ${node_id} port)
@@ -85,8 +85,8 @@ url_test_node() {
 
 test_node() {
 	local node_id=$1
-	local _type=$(echo $(config_n_get ${node_id} type nil) | tr 'A-Z' 'a-z')
-	[ "${_type}" != "nil" ] && {
+	local _type=$(echo $(config_n_get ${node_id} type) | tr 'A-Z' 'a-z')
+	[ -n "${_type}" ] && {
 		if [ "${_type}" == "socks" ]; then
 			local _address=$(config_n_get ${node_id} address)
 			local _port=$(config_n_get ${node_id} port)

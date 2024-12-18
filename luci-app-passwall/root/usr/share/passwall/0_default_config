@@ -2,8 +2,6 @@
 config global
 	option enabled '0'
 	option socks_enabled '0'
-	option tcp_node 'nil'
-	option udp_node 'nil'
 	option tcp_node_socks_port '1070'
 	option filter_proxy_ipv6 '1'
 	option dns_shunt 'chinadns-ng'
@@ -102,7 +100,7 @@ config nodes 'myshunt'
 	option Streaming '_default'
 	option Proxy '_default'
 	option Direct '_direct'
-	option default_node 'nil'
+	option default_node '_direct'
 	option domainStrategy 'IPOnDemand'
 
 config shunt_rules 'DirectGame'

@@ -48,7 +48,7 @@ end
 
 function gen_outbound(flag, node, tag, proxy_table)
 	local result = nil
-	if node and node ~= "nil" then
+	if node then
 		local node_id = node[".name"]
 		if tag == nil then
 			tag = node_id
@@ -82,7 +82,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 						"127.0.0.1", --bind
 						new_port, --socks port
 						config_file, --config file
-						(proxy_tag and proxy_tag ~= "nil" and relay_port) and tostring(relay_port) or "" --relay port
+						(proxy_tag and relay_port) and tostring(relay_port) or "" --relay port
 					)
 				))
 				node = {}
@@ -95,7 +95,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 		else
 			if node.flow == "xtls-rprx-vision" then
 			else
-				if proxy_tag and proxy_tag ~= "nil" then
+				if proxy_tag then
 					node.proxySettings = {
 						tag = proxy_tag,
 						transportLayer = true
@@ -404,7 +404,7 @@ function gen_config_server(node)
 		}
 	}
 
-	if node.outbound_node and node.outbound_node ~= "nil" then
+	if node.outbound_node then
 		local outbound = nil
 		if node.outbound_node == "_iface" and node.outbound_node_iface then
 			outbound = {
@@ -735,7 +735,7 @@ function gen_config(var)
 			-- fallback node
 			local fallback_node_tag = nil
 			local fallback_node_id = _node.fallback_node
-			if fallback_node_id == "" or fallback_node_id == "nil" then fallback_node_id = nil end
+			if not fallback_node_id or fallback_node_id == "" then fallback_node_id = nil end
 			if fallback_node_id then
 				local is_new_node = true
 				for _, outbound in ipairs(outbounds) do
@@ -784,7 +784,7 @@ function gen_config(var)
 			local last_insert_outbound
 
 			if node.chain_proxy == "1" and node.preproxy_node then
-				if outbound["_flag_proxy_tag"] and outbound["_flag_proxy_tag"] ~= "nil" then
+				if outbound["_flag_proxy_tag"] then
 					--Ignore
 				else
 					local preproxy_node = uci:get_all(appname, node.preproxy_node)
@@ -1396,7 +1396,7 @@ function gen_config(var)
 		end
 
 		for index, value in ipairs(config.outbounds) do
-			if (not value["_flag_proxy_tag"] or value["_flag_proxy_tag"] == "nil") and value["_id"] and value.server and value.server_port then
+			if not value["_flag_proxy_tag"] and value["_id"] and value.server and value.server_port then
 				sys.call(string.format("echo '%s' >> %s", value["_id"], api.TMP_PATH .. "/direct_node_list"))
 			end
 			for k, v in pairs(config.outbounds[index]) do

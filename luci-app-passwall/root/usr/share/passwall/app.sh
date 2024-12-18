@@ -856,7 +856,7 @@ run_redir() {
 			}
 			[ "$TCP_UDP" = "1" ] && {
 				UDP_REDIR_PORT=$local_port
-				UDP_NODE="nil"
+				unset UDP_NODE
 				_flag="TCP_UDP"
 				_args="${_args} udp_redir_port=${UDP_REDIR_PORT}"
 				config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
@@ -932,7 +932,7 @@ run_redir() {
 			}
 			[ "$TCP_UDP" = "1" ] && {
 				UDP_REDIR_PORT=$local_port
-				UDP_NODE="nil"
+				unset UDP_NODE
 				_flag="TCP_UDP"
 				_args="${_args} udp_redir_port=${UDP_REDIR_PORT}"
 				config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
@@ -974,7 +974,7 @@ run_redir() {
 			[ "$TCP_UDP" = "1" ] && {
 				config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
 				UDP_REDIR_PORT=$TCP_REDIR_PORT
-				UDP_NODE="nil"
+				unset UDP_NODE
 			}
 			local loglevel=$(config_t_get global trojan_loglevel "2")
 			lua $UTIL_TROJAN gen_config -node $node -run_type nat -local_addr "0.0.0.0" -local_port $local_port -loglevel $loglevel $lua_tproxy_arg > $config_file
@@ -989,7 +989,7 @@ run_redir() {
 			[ "$TCP_UDP" = "1" ] && {
 				config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
 				UDP_REDIR_PORT=$TCP_REDIR_PORT
-				UDP_NODE="nil"
+				unset UDP_NODE
 				_extra_param="-u"
 			}
 			lua $UTIL_SS gen_config -node $node -local_addr "0.0.0.0" -local_port $local_port $lua_tproxy_arg > $config_file
@@ -1001,7 +1001,7 @@ run_redir() {
 			[ "$TCP_UDP" = "1" ] && {
 				config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
 				UDP_REDIR_PORT=$TCP_REDIR_PORT
-				UDP_NODE="nil"
+				unset UDP_NODE
 				lua_mode_arg="-mode tcp_and_udp"
 			}
 			lua $UTIL_SS gen_config -node $node -local_addr "0.0.0.0" -local_port $local_port $lua_mode_arg $lua_tproxy_arg > $config_file
@@ -1023,7 +1023,7 @@ run_redir() {
 			[ "$TCP_UDP" = "1" ] && {
 				config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
 				UDP_REDIR_PORT=$TCP_REDIR_PORT
-				UDP_NODE="nil"
+				unset UDP_NODE
 				_extra_param="${_extra_param} -local_udp_redir_port $local_port"
 			}
 			lua $UTIL_SS gen_config -node $node ${_extra_param} > $config_file
@@ -1044,7 +1044,7 @@ run_redir() {
 			[ "$TCP_UDP" = "1" ] && {
 				config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
 				UDP_REDIR_PORT=$TCP_REDIR_PORT
-				UDP_NODE="nil"
+				unset UDP_NODE
 				_extra_param="${_extra_param} -local_udp_redir_port $local_port"
 			}
 			_extra_param="${_extra_param} -tcp_proxy_way $tcp_proxy_way"
@@ -1057,7 +1057,7 @@ run_redir() {
 			[ "$TCP_UDP" = "1" ] && {
 				_flag="TCP_UDP"
 				UDP_REDIR_PORT=$TCP_REDIR_PORT
-				UDP_NODE="nil"
+				unset UDP_NODE
 			}
 			local _socks_tproxy=""
 			[ "$tcp_proxy_way" = "tproxy" ] && _socks_tproxy="1"
@@ -1091,7 +1091,7 @@ run_redir() {
 start_redir() {
 	local proto=${1}
 	eval node=\$${proto}_NODE
-	if [ "$node" != "nil" ]; then
+	if [ -n "$node" ]; then
 		TYPE=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
 		local config_file="${proto}.json"
 		local log_file="${proto}.log"
@@ -1119,8 +1119,8 @@ start_socks() {
 			for id in $ids; do
 				local enabled=$(config_n_get $id enabled 0)
 				[ "$enabled" == "0" ] && continue
-				local node=$(config_n_get $id node nil)
-				[ "$node" == "nil" ] && continue
+				local node=$(config_n_get $id node)
+				[ -z "$node" ] && continue
 				local bind_local=$(config_n_get $id bind_local 0)
 				local bind="0.0.0.0"
 				[ "$bind_local" = "1" ] && bind="127.0.0.1"
@@ -1743,7 +1743,7 @@ acl_app() {
 						echolog "  - 全局节点未启用，跳过【${remarks}】"
 					fi
 				else
-					[ "$(config_get_type $tcp_node nil)" = "nodes" ] && {
+					[ "$(config_get_type $tcp_node)" = "nodes" ] && {
 						if [ -n "${GLOBAL_TCP_NODE}" ] && [ "$tcp_node" = "${GLOBAL_TCP_NODE}" ]; then
 							set_cache_var "ACL_${sid}_tcp_node" "${GLOBAL_TCP_NODE}"
 							set_cache_var "ACL_${sid}_tcp_redir_port" "${GLOBAL_TCP_redir_port}"
@@ -1860,7 +1860,7 @@ acl_app() {
 										[ "$dns_mode" = "xray" ] && [ "$v2ray_dns_mode" = "tcp+doh" ] && remote_dns_doh=${remote_dns_doh:-https://1.1.1.1/dns-query}
 										_extra_param="dns_listen_port=${_dns_port} remote_dns_protocol=${v2ray_dns_mode} remote_dns_tcp_server=${remote_dns} remote_dns_doh=${remote_dns_doh} remote_dns_query_strategy=${DNS_QUERY_STRATEGY} dns_client_ip=${dns_client_ip} dns_query_strategy=${DNS_QUERY_STRATEGY}"
 									fi
-									[ "$udp_node" != "nil" ] && ([ "$udp_node" = "tcp" ] || [ "$udp_node" = "$tcp_node" ]) && {
+									[ -n "$udp_node" ] && ([ "$udp_node" = "tcp" ] || [ "$udp_node" = "$tcp_node" ]) && {
 										config_file=$(echo $config_file | sed "s/TCP_/TCP_UDP_/g")
 										_extra_param="${_extra_param} udp_redir_port=$redir_port"
 									}
@@ -1899,7 +1899,7 @@ acl_app() {
 					set_cache_var "ACL_${sid}_udp_node" "${udp_node}"
 					set_cache_var "ACL_${sid}_udp_redir_port" "${udp_port}"
 				else
-					[ "$(config_get_type $udp_node nil)" = "nodes" ] && {
+					[ "$(config_get_type $udp_node)" = "nodes" ] && {
 						if [ -n "${GLOBAL_UDP_NODE}" ] && [ "$udp_node" = "${GLOBAL_UDP_NODE}" ]; then
 							set_cache_var "ACL_${sid}_udp_node" "${GLOBAL_UDP_NODE}"
 							set_cache_var "ACL_${sid}_udp_redir_port" "${GLOBAL_UDP_redir_port}"
@@ -2041,9 +2041,9 @@ stop() {
 ENABLED=$(config_t_get global enabled 0)
 SOCKS_ENABLED=$(config_t_get global socks_enabled 0)
 TCP_REDIR_PORT=1041
-TCP_NODE=$(config_t_get global tcp_node nil)
+TCP_NODE=$(config_t_get global tcp_node)
 UDP_REDIR_PORT=1051
-UDP_NODE=$(config_t_get global udp_node nil)
+UDP_NODE=$(config_t_get global udp_node)
 TCP_UDP=0
 if [ "$UDP_NODE" == "tcp" ]; then
 	UDP_NODE=$TCP_NODE
@@ -2052,8 +2052,8 @@ elif [ "$UDP_NODE" == "$TCP_NODE" ]; then
 	TCP_UDP=1
 fi
 [ "$ENABLED" == 1 ] && {
-	[ "$TCP_NODE" != "nil" ] && [ "$(config_get_type $TCP_NODE nil)" != "nil" ] && ENABLED_DEFAULT_ACL=1
-	[ "$UDP_NODE" != "nil" ] && [ "$(config_get_type $UDP_NODE nil)" != "nil" ] && ENABLED_DEFAULT_ACL=1
+	[ -n "$TCP_NODE" ] && [ "$(config_get_type $TCP_NODE)" == "nodes" ] && ENABLED_DEFAULT_ACL=1
+	[ -n "$UDP_NODE" ] && [ "$(config_get_type $UDP_NODE)" == "nodes" ] && ENABLED_DEFAULT_ACL=1
 }
 ENABLED_ACLS=$(config_t_get global acl_enable 0)
 [ "$ENABLED_ACLS" == 1 ] && {

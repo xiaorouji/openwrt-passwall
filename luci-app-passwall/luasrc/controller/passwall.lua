@@ -364,8 +364,8 @@ end
 
 function clear_all_nodes()
 	uci:set(appname, '@global[0]', "enabled", "0")
-	uci:set(appname, '@global[0]', "tcp_node", "nil")
-	uci:set(appname, '@global[0]', "udp_node", "nil")
+	uci:delete(appname, '@global[0]', "tcp_node")
+	uci:delete(appname, '@global[0]', "udp_node")
 	uci:foreach(appname, "socks", function(t)
 		uci:delete(appname, t[".name"])
 		uci:set_list(appname, t[".name"], "autoswitch_backup_node", {})
@@ -374,8 +374,8 @@ function clear_all_nodes()
 		uci:delete(appname, t[".name"])
 	end)
 	uci:foreach(appname, "acl_rule", function(t)
-		uci:set(appname, t[".name"], "tcp_node", "nil")
-		uci:set(appname, t[".name"], "udp_node", "nil")
+		uci:delete(appname, t[".name"], "tcp_node")
+		uci:delete(appname, t[".name"], "udp_node")
 	end)
 	uci:foreach(appname, "nodes", function(node)
 		uci:delete(appname, node['.name'])
@@ -388,11 +388,11 @@ end
 function delete_select_nodes()
 	local ids = luci.http.formvalue("ids")
 	string.gsub(ids, '[^' .. "," .. ']+', function(w)
-		if (uci:get(appname, "@global[0]", "tcp_node") or "nil") == w then
-			uci:set(appname, '@global[0]', "tcp_node", "nil")
+		if (uci:get(appname, "@global[0]", "tcp_node") or "") == w then
+			uci:delete(appname, '@global[0]', "tcp_node")
 		end
-		if (uci:get(appname, "@global[0]", "udp_node") or "nil") == w then
-			uci:set(appname, '@global[0]', "udp_node", "nil")
+		if (uci:get(appname, "@global[0]", "udp_node") or "") == w then
+			uci:delete(appname, '@global[0]', "udp_node")
 		end
 		uci:foreach(appname, "socks", function(t)
 			if t["node"] == w then
@@ -413,10 +413,10 @@ function delete_select_nodes()
 		end)
 		uci:foreach(appname, "acl_rule", function(t)
 			if t["tcp_node"] == w then
-				uci:set(appname, t[".name"], "tcp_node", "nil")
+				uci:delete(appname, t[".name"], "tcp_node")
 			end
 			if t["udp_node"] == w then
-				uci:set(appname, t[".name"], "udp_node", "nil")
+				uci:delete(appname, t[".name"], "udp_node")
 			end
 		end)
 		uci:foreach(appname, "nodes", function(t)

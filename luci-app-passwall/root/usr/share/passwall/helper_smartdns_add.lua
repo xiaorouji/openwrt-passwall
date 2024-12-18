@@ -450,8 +450,8 @@ if uci:get(appname, TCP_NODE, "protocol") == "_shunt" then
 	local t = uci:get_all(appname, TCP_NODE)
 	local default_node_id = t["default_node"] or "_direct"
 	uci:foreach(appname, "shunt_rules", function(s)
-		local _node_id = t[s[".name"]] or "nil"
-		if _node_id ~= "nil" and _node_id ~= "_blackhole" then
+		local _node_id = t[s[".name"]]
+		if _node_id and _node_id ~= "_blackhole" then
 			if _node_id == "_default" then
 				_node_id = default_node_id
 			end

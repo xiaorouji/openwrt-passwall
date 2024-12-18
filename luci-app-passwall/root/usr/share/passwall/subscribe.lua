@@ -264,7 +264,7 @@ do
 						currentNode = _node_id and uci:get_all(appname, _node_id) or nil,
 						remarks = "分流" .. e.remarks .. "节点",
 						set = function(o, server)
-							if not server then server = "nil" end
+							if not server then server = "" end
 							uci:set(appname, node_id, e[".name"], server)
 							o.newNodeId = server
 						end
@@ -1263,10 +1263,10 @@ local function truncate_nodes(add_from)
 			if config.currentNode and config.currentNode.add_mode == "2" then
 				if add_from then
 					if config.currentNode.add_from and config.currentNode.add_from == add_from then
-						config.set(config, "nil")
+						config.set(config, "")
 					end
 				else
-					config.set(config, "nil")
+					config.set(config, "")
 				end
 				if config.id then
 					uci:delete(appname, config.id)
@@ -1400,7 +1400,7 @@ local function select_node(nodes, config)
 			config.set(config, server)
 		end
 	else
-		config.set(config, "nil")
+		config.set(config, "")
 	end
 end
 

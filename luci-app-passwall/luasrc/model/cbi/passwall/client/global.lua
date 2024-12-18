@@ -127,18 +127,18 @@ o.rmempty = false
 
 ---- TCP Node
 o = s:taboption("Main", ListValue, "tcp_node", "<a style='color: red'>" .. translate("TCP Node") .. "</a>")
-o:value("nil", translate("Close"))
+o:value("", translate("Close"))
 
 ---- UDP Node
 o = s:taboption("Main", ListValue, "udp_node", "<a style='color: red'>" .. translate("UDP Node") .. "</a>")
-o:value("nil", translate("Close"))
+o:value("", translate("Close"))
 o:value("tcp", translate("Same as the tcp node"))
 
 -- 分流
 if (has_singbox or has_xray) and #nodes_table > 0 then
 	local function get_cfgvalue(shunt_node_id, option)
 		return function(self, section)
-			return m:get(shunt_node_id, option) or "nil"
+			return m:get(shunt_node_id, option)
 		end
 	end
 	local function get_write(shunt_node_id, option)
@@ -198,7 +198,7 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 					o.cfgvalue = get_cfgvalue(v.id, id)
 					o.write = get_write(v.id, id)
 					o:depends("tcp_node", v.id)
-					o:value("nil", translate("Close"))
+					o:value("", translate("Close"))
 					o:value("_default", translate("Default"))
 					o:value("_direct", translate("Direct Connection"))
 					o:value("_blackhole", translate("Blackhole"))
@@ -206,9 +206,8 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 					local pt = s:taboption("Main", ListValue, vid .. "-".. id .. "_proxy_tag", string.format('* <a style="color:red">%s</a>', e.remarks .. " " .. translate("Preproxy")))
 					pt.cfgvalue = get_cfgvalue(v.id, id .. "_proxy_tag")
 					pt.write = get_write(v.id, id .. "_proxy_tag")
-					pt:value("nil", translate("Close"))
+					pt:value("", translate("Close"))
 					pt:value("main", translate("Preproxy Node"))
-					pt.default = "nil"
 					for k1, v1 in pairs(socks_list) do
 						o:value(v1.id, v1.remark)
 					end
@@ -249,7 +248,7 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 			o = s:taboption("Main", ListValue, vid .. "-" .. id, string.format('* <a style="color:red">%s</a>', translate("Default Preproxy")), translate("When using, localhost will connect this node first and then use this node to connect the default node."))
 			o.cfgvalue = get_cfgvalue(v.id, id)
 			o.write = get_write(v.id, id)
-			o:value("nil", translate("Close"))
+			o:value("", translate("Close"))
 			o:value("main", translate("Preproxy Node"))
 			for k1, v1 in pairs(normal_list) do
 				if v1.protocol ~= "_balancing" then
@@ -263,7 +262,7 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 		tips.cfgvalue = function(t, n)
 			return string.format('<a style="color: red">%s</a>', translate("There are no available nodes, please add or subscribe nodes first."))
 		end
-		tips:depends({ tcp_node = "nil", ["!reverse"] = true })
+		tips:depends({ tcp_node = "", ["!reverse"] = true })
 		for k, v in pairs(shunt_list) do
 			tips:depends("udp_node", v.id)
 		end
@@ -276,7 +275,7 @@ end
 o = s:taboption("Main", Value, "tcp_node_socks_port", translate("TCP Node") .. " Socks " .. translate("Listen Port"))
 o.default = 1070
 o.datatype = "port"
-o:depends({ tcp_node = "nil", ["!reverse"] = true })
+o:depends({ tcp_node = "", ["!reverse"] = true })
 --[[
 if has_singbox or has_xray then
 	o = s:taboption("Main", Value, "tcp_node_http_port", translate("TCP Node") .. " HTTP " .. translate("Listen Port") .. " " .. translate("0 is not use"))
@@ -286,7 +285,7 @@ end
 ]]--
 o = s:taboption("Main", Flag, "tcp_node_socks_bind_local", translate("TCP Node") .. " Socks " .. translate("Bind Local"), translate("When selected, it can only be accessed localhost."))
 o.default = "1"
-o:depends({ tcp_node = "nil", ["!reverse"] = true })
+o:depends({ tcp_node = "", ["!reverse"] = true })
 
 s:tab("DNS", translate("DNS"))
 
@@ -519,7 +518,7 @@ o.validate = function(self, value, t)
 	if value and value == "1" then
 		local _dns_mode = s.fields["dns_mode"]:formvalue(t)
 		local _tcp_node = s.fields["tcp_node"]:formvalue(t)
-		if _dns_mode and _tcp_node and _tcp_node ~= "nil" then
+		if _dns_mode and _tcp_node then
 			if m:get(_tcp_node, "type"):lower() ~= _dns_mode then
 				return nil, translatef("TCP node must be '%s' type to use FakeDNS.", _dns_mode)
 			end

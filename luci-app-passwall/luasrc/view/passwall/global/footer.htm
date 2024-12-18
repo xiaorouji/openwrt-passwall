@@ -53,13 +53,13 @@ local api = require "luci.passwall.api"
 									var dom_id = dom.id.split(cbi_id).join(cbi_id.split("-").join(".")).split("cbi.").join("cbid.")
 									var node_select = document.getElementsByName(dom_id)[0];
 									var node_select_value = node_select.value;
-									if (node_select_value && node_select_value != "nil" && node_select_value.indexOf("_default") != 0 && node_select_value.indexOf("_direct") != 0 && node_select_value.indexOf("_blackhole") != 0) {
+									if (node_select_value && node_select_value != "" && node_select_value.indexOf("_default") != 0 && node_select_value.indexOf("_direct") != 0 && node_select_value.indexOf("_blackhole") != 0) {
 										if (global_id != null && node_select_value.indexOf("tcp") == 0) {
 											var d = global_id + "-tcp_node";
 											d = d.replace("cbi-", "cbid-").replace(new RegExp("-", 'g'), ".");
 											var dom = document.getElementsByName(d)[0];
 											var _node_select_value = dom.value;
-											if (_node_select_value && _node_select_value != "nil") {
+											if (_node_select_value && _node_select_value != "") {
 												node_select_value = _node_select_value;
 											}
 										}
@@ -117,7 +117,7 @@ local api = require "luci.passwall.api"
 					var dom_id = dom_id.replace("cbi-", "cbid-").replace(new RegExp("-", 'g'), ".");
 					var node_select = document.getElementsByName(dom_id)[0];
 					var node_select_value = node_select.value;
-					if (node_select_value && node_select_value != "nil") {
+					if (node_select_value && node_select_value != "") {
 						var v = document.getElementById(dom_id + "-" + node_select_value);
 						if (v) {
 							node_select.title = v.text;

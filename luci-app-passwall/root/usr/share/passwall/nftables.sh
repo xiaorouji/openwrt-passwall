@@ -546,7 +546,7 @@ load_acl() {
 
 		local DNS_REDIRECT
 		[ $(config_t_get global dns_redirect "1") = "1" ] && DNS_REDIRECT=53
-		if ([ "$TCP_NODE" != "nil" ] && [ -n "${TCP_PROXY_MODE}" ]) || ([ "$UDP_NODE" != "nil" ] && [ -n "${UDP_PROXY_MODE}" ]); then
+		if ([ -n "$TCP_NODE" ] && [ -n "${TCP_PROXY_MODE}" ]) || ([ -n "$UDP_NODE" ] && [ -n "${UDP_PROXY_MODE}" ]); then
 			[ -n "${DNS_REDIRECT_PORT}" ] && DNS_REDIRECT=${DNS_REDIRECT_PORT}
 		else
 			[ -n "${DIRECT_DNSMASQ_PORT}" ] && DNS_REDIRECT=${DIRECT_DNSMASQ_PORT}
@@ -611,7 +611,7 @@ load_acl() {
 
 		#  加载TCP默认代理模式
 		if [ -n "${TCP_PROXY_MODE}" ]; then
-			[ "$TCP_NODE" != "nil" ] && {
+			[ -n "$TCP_NODE" ] && {
 				msg2="${msg}使用 TCP 节点[$(config_n_get $TCP_NODE remarks)]"
 				if [ -n "${is_tproxy}" ]; then
 					msg2="${msg2}(TPROXY:${TCP_REDIR_PORT})"
@@ -669,7 +669,7 @@ load_acl() {
 
 		#  加载UDP默认代理模式
 		if [ -n "${UDP_PROXY_MODE}" ]; then
-			[ "$UDP_NODE" != "nil" -o "$TCP_UDP" = "1" ] && {
+			[ -n "$UDP_NODE" -o "$TCP_UDP" = "1" ] && {
 				msg2="${msg}使用 UDP 节点[$(config_n_get $UDP_NODE remarks)](TPROXY:${UDP_REDIR_PORT})"
 
 				nft "add rule $NFTABLE_NAME PSW_MANGLE ip protocol udp ip daddr $FAKE_IP counter jump PSW_RULE comment \"默认\""
@@ -743,7 +743,7 @@ filter_server_port() {
 filter_node() {
 	local node=${1}
 	local stream=${2}
-	if [ -n "$node" ] && [ "$node" != "nil" ]; then
+	if [ -n "$node" ]; then
 		local address=$(config_n_get $node address)
 		local port=$(config_n_get $node port)
 		[ -z "$address" ] && [ -z "$port" ] && {
@@ -801,12 +801,12 @@ add_firewall_rule() {
 	local USE_PROXY_LIST_ALL=${USE_PROXY_LIST}
 	local USE_DIRECT_LIST_ALL=${USE_DIRECT_LIST}
 	local USE_BLOCK_LIST_ALL=${USE_BLOCK_LIST}
-	local _TCP_NODE=$(config_t_get global tcp_node nil)
-	local _UDP_NODE=$(config_t_get global udp_node nil)
+	local _TCP_NODE=$(config_t_get global tcp_node)
+	local _UDP_NODE=$(config_t_get global udp_node)
 	local USE_GEOVIEW=$(config_t_get global_rules enable_geoview)
 
-	[ "$_TCP_NODE" != "nil" ] && [ "$(config_n_get $_TCP_NODE protocol)" = "_shunt" ] && USE_SHUNT_TCP=1 && USE_SHUNT_NODE=1
-	[ "$_UDP_NODE" != "nil" ] && [ "$(config_n_get $_UDP_NODE protocol)" = "_shunt" ] && USE_SHUNT_UDP=1 && USE_SHUNT_NODE=1
+	[ -n "$_TCP_NODE" ] && [ "$(config_n_get $_TCP_NODE protocol)" = "_shunt" ] && USE_SHUNT_TCP=1 && USE_SHUNT_NODE=1
+	[ -n "$_UDP_NODE" ] && [ "$(config_n_get $_UDP_NODE protocol)" = "_shunt" ] && USE_SHUNT_UDP=1 && USE_SHUNT_NODE=1
 	[ "$_UDP_NODE" = "tcp" ] && USE_SHUNT_UDP=$USE_SHUNT_TCP
 
 	for acl_section in $(uci show ${CONFIG} | grep "=acl_rule" | cut -d '.' -sf 2 | cut -d '=' -sf 1); do
@@ -1067,7 +1067,7 @@ add_firewall_rule() {
 		ip -6 route add local ::/0 dev lo table 100
 	}
 	
-	[ "$TCP_UDP" = "1" ] && [ "$UDP_NODE" = "nil" ] && UDP_NODE=$TCP_NODE
+	[ "$TCP_UDP" = "1" ] && [ -z "$UDP_NODE" ] && UDP_NODE=$TCP_NODE
 
 	[ "$ENABLED_DEFAULT_ACL" == 1 ] && {
 		msg="【路由器本机】，"
@@ -1094,7 +1094,7 @@ add_firewall_rule() {
 			fi
 		}
 
-		if ([ "$TCP_NODE" != "nil" ] && [ -n "${LOCALHOST_TCP_PROXY_MODE}" ]) || ([ "$UDP_NODE" != "nil" ] && [ -n "${LOCALHOST_UDP_PROXY_MODE}" ]); then
+		if ([ -n "$TCP_NODE" ] && [ -n "${LOCALHOST_TCP_PROXY_MODE}" ]) || ([ -n "$UDP_NODE" ] && [ -n "${LOCALHOST_UDP_PROXY_MODE}" ]); then
 			[ -n "$DNS_REDIRECT_PORT" ] && {
 				nft "add rule $NFTABLE_NAME nat_output ip protocol udp oif lo udp dport 53 counter redirect to :$DNS_REDIRECT_PORT comment \"PSW\""
 				nft "add rule $NFTABLE_NAME nat_output ip protocol tcp oif lo tcp dport 53 counter redirect to :$DNS_REDIRECT_PORT comment \"PSW\""
@@ -1126,7 +1126,7 @@ add_firewall_rule() {
 		}
 
 		# 加载路由器自身代理 TCP
-		if [ "$TCP_NODE" != "nil" ]; then
+		if [ -n "$TCP_NODE" ]; then
 			_proxy_tcp_access() {
 				[ -n "${2}" ] || return 0
 				if echo "${2}" | grep -q -v ':'; then
@@ -1209,7 +1209,7 @@ add_firewall_rule() {
 		fi
 
 		# 加载路由器自身代理 UDP
-		if [ "$UDP_NODE" != "nil" -o "$TCP_UDP" = "1" ]; then
+		if [ -n "$UDP_NODE" -o "$TCP_UDP" = "1" ]; then
 			_proxy_udp_access() {
 				[ -n "${2}" ] || return 0
 				if echo "${2}" | grep -q -v ':'; then

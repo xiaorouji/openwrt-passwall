@@ -371,12 +371,11 @@ for k, e in ipairs(api.get_valid_nodes()) do
 end
 
 o = s:option(ListValue, _n("outbound_node"), translate("outbound node"))
-o:value("nil", translate("Close"))
+o:value("", translate("Close"))
 o:value("_socks", translate("Custom Socks"))
 o:value("_http", translate("Custom HTTP"))
 o:value("_iface", translate("Custom Interface"))
 for k, v in pairs(nodes_table) do o:value(v.id, v.remarks) end
-o.default = "nil"
 
 o = s:option(Value, _n("outbound_node_address"), translate("Address (Support Domain Name)"))
 o:depends({ [_n("outbound_node")] = "_socks"})
