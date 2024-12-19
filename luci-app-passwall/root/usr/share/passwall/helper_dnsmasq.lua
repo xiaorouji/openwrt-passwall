@@ -127,8 +127,9 @@ function copy_instance(var)
 		if line:find("passwall") then filter = true end
 		if line:find("ubus") then filter = true end
 		if line:find("dhcp") then filter = true end
-		if line:find("server") then filter = true end
-		if line:find("port") then filter = true end
+		if line:find("server=") == 1 then filter = true end
+		if line:find("port=") == 1 then filter = true end
+		if line:find("address=") == 1 or (line:find("server=") == 1 and line:find("/")) then filter = nil end
 		if not filter then
 			tinsert(conf_lines, line)
 		end
@@ -621,8 +622,9 @@ function add_rule(var)
 				if line:find("passwall") then filter = true end
 				if line:find("ubus") then filter = true end
 				if line:find("dhcp") then filter = true end
-				if line:find("server") then filter = true end
-				if line:find("port") then filter = true end
+				if line:find("server=") == 1 then filter = true end
+				if line:find("port=") == 1 then filter = true end
+				if line:find("address=") == 1 or (line:find("server=") == 1 and line:find("/")) then filter = nil end
 				if not filter then
 					tinsert(conf_lines, line)
 				end
