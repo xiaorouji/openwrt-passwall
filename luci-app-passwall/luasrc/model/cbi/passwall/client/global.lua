@@ -146,6 +146,11 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 			m:set(shunt_node_id, option, value)
 		end
 	end
+	local function get_remove(shunt_node_id, option)
+		return function(self, section)
+			m:del(shunt_node_id, option)
+		end
+	end
 	if #normal_list > 0 then
 		for k, v in pairs(shunt_list) do
 			local vid = v.id
@@ -197,6 +202,7 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 					o = s:taboption("Main", ListValue, node_option, string.format('* <a href="%s" target="_blank">%s</a>', api.url("shunt_rules", id), e.remarks))
 					o.cfgvalue = get_cfgvalue(v.id, id)
 					o.write = get_write(v.id, id)
+					o.remove = get_remove(v.id, id)
 					o:depends("tcp_node", v.id)
 					o:value("", translate("Close"))
 					o:value("_default", translate("Default"))
@@ -206,6 +212,7 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 					local pt = s:taboption("Main", ListValue, vid .. "-".. id .. "_proxy_tag", string.format('* <a style="color:red">%s</a>', e.remarks .. " " .. translate("Preproxy")))
 					pt.cfgvalue = get_cfgvalue(v.id, id .. "_proxy_tag")
 					pt.write = get_write(v.id, id .. "_proxy_tag")
+					pt.remove = get_remove(v.id, id .. "_proxy_tag")
 					pt:value("", translate("Close"))
 					pt:value("main", translate("Preproxy Node"))
 					for k1, v1 in pairs(socks_list) do
@@ -228,6 +235,7 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 			o = s:taboption("Main", ListValue, vid .. "-" .. id, string.format('* <a style="color:red">%s</a>', translate("Default")))
 			o.cfgvalue = get_cfgvalue(v.id, id)
 			o.write = get_write(v.id, id)
+			o.remove = get_remove(v.id, id)
 			o:depends("tcp_node", v.id)
 			o:value("_direct", translate("Direct Connection"))
 			o:value("_blackhole", translate("Blackhole"))
@@ -248,6 +256,7 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 			o = s:taboption("Main", ListValue, vid .. "-" .. id, string.format('* <a style="color:red">%s</a>', translate("Default Preproxy")), translate("When using, localhost will connect this node first and then use this node to connect the default node."))
 			o.cfgvalue = get_cfgvalue(v.id, id)
 			o.write = get_write(v.id, id)
+			o.remove = get_remove(v.id, id)
 			o:value("", translate("Close"))
 			o:value("main", translate("Preproxy Node"))
 			for k1, v1 in pairs(normal_list) do

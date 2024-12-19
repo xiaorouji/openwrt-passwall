@@ -119,7 +119,6 @@ end
 
 function copy_instance(var)
 	local LISTEN_PORT = var["-LISTEN_PORT"]
-	local DNSMASQ_CONF = var["-DNSMASQ_CONF"]
 	local conf_lines = {}
 	local DEFAULT_DNSMASQ_CFGID = sys.exec("echo -n $(uci -q show dhcp.@dnsmasq[0] | awk 'NR==1 {split($0, conf, /[.=]/); print conf[2]}')")
 	for line in io.lines("/tmp/etc/dnsmasq.conf." .. DEFAULT_DNSMASQ_CFGID) do
@@ -135,7 +134,11 @@ function copy_instance(var)
 		end
 	end
 	tinsert(conf_lines, "port=" .. LISTEN_PORT)
+	if var["-return_table"] == "1" then
+		return conf_lines
+	end
 	if #conf_lines > 0 then
+		local DNSMASQ_CONF = var["-DNSMASQ_CONF"]
 		local conf_out = io.open(DNSMASQ_CONF, "a")
 		conf_out:write(table.concat(conf_lines, "\n"))
 		conf_out:close()
@@ -616,20 +619,7 @@ function add_rule(var)
 		local conf_lines = {}
 		if LISTEN_PORT then
 			--Copy dnsmasq instance
-			local DEFAULT_DNSMASQ_CFGID = sys.exec("echo -n $(uci -q show dhcp.@dnsmasq[0] | awk 'NR==1 {split($0, conf, /[.=]/); print conf[2]}')")
-			for line in io.lines("/tmp/etc/dnsmasq.conf." .. DEFAULT_DNSMASQ_CFGID) do
-				local filter
-				if line:find("passwall") then filter = true end
-				if line:find("ubus") then filter = true end
-				if line:find("dhcp") then filter = true end
-				if line:find("server=") == 1 then filter = true end
-				if line:find("port=") == 1 then filter = true end
-				if line:find("address=") == 1 or (line:find("server=") == 1 and line:find("/")) then filter = nil end
-				if not filter then
-					tinsert(conf_lines, line)
-				end
-			end
-			tinsert(conf_lines, "port=" .. LISTEN_PORT)
+			conf_lines = copy_instance({["-LISTEN_PORT"] = LISTEN_PORT, ["-return_table"] = "1"})
 		else
 			--Modify the default dnsmasq service
 		end
