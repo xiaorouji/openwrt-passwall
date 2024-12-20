@@ -219,7 +219,14 @@ end
 
 function is_install(package)
 	if package and #package > 0 then
-		return sys.call(string.format('opkg list-installed | grep "%s" > /dev/null 2>&1', package)) == 0
+		local file_path = "/usr/lib/opkg/info"
+		local file_ext = ".control"
+		local has = sys.call("[ -d " .. file_path .. " ]")
+		if has == 0 then
+			file_path = "/lib/apk/packages"
+			file_ext = ".list"
+		end
+		return sys.call(string.format('[ -s "%s/%s%s" ]', file_path, package, file_ext)) == 0
 	end
 	return false
 end

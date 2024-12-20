@@ -1589,7 +1589,9 @@ start_dns() {
 		[ "$(expr $dnsmasq_version \>= 2.87)" == 0 ] && echolog "Dnsmasq版本低于2.87，有可能无法正常使用！！！"
 	}
 
+	local DNSMASQ_TUN_DNS=$(get_first_dns TUN_DNS 53 | sed 's/:/#/g')
 	local RUN_NEW_DNSMASQ=1
+	RUN_NEW_DNSMASQ=${DNS_REDIRECT}
 	if [ "${RUN_NEW_DNSMASQ}" == "0" ]; then
 		#The old logic will be removed in the future.
 		#Run a copy dnsmasq instance, DNS hijack that don't need a proxy devices.
@@ -1605,7 +1607,7 @@ start_dns() {
 		#Modify the default dnsmasq service
 		lua $APP_PATH/helper_dnsmasq.lua stretch
 		lua $APP_PATH/helper_dnsmasq.lua add_rule -FLAG "default" -TMP_DNSMASQ_PATH ${GLOBAL_DNSMASQ_CONF_PATH} -DNSMASQ_CONF_FILE ${GLOBAL_DNSMASQ_CONF} \
-			-DEFAULT_DNS ${DEFAULT_DNS} -LOCAL_DNS ${LOCAL_DNS} -TUN_DNS ${TUN_DNS} \
+			-DEFAULT_DNS ${DEFAULT_DNS} -LOCAL_DNS ${LOCAL_DNS} -TUN_DNS ${DNSMASQ_TUN_DNS} \
 			-REMOTE_FAKEDNS ${fakedns:-0} -USE_DEFAULT_DNS "${USE_DEFAULT_DNS:-direct}" -CHINADNS_DNS ${china_ng_listen:-0} \
 			-USE_DIRECT_LIST "${USE_DIRECT_LIST}" -USE_PROXY_LIST "${USE_PROXY_LIST}" -USE_BLOCK_LIST "${USE_BLOCK_LIST}" -USE_GFW_LIST "${USE_GFW_LIST}" -CHN_LIST "${CHN_LIST}" \
 			-TCP_NODE ${TCP_NODE} -DEFAULT_PROXY_MODE ${TCP_PROXY_MODE} -NO_PROXY_IPV6 ${DNSMASQ_FILTER_PROXY_IPV6:-0} -NFTFLAG ${nftflag:-0} \
@@ -1617,7 +1619,7 @@ start_dns() {
 		GLOBAL_DNSMASQ_CONF=${GLOBAL_ACL_PATH}/dnsmasq.conf
 		GLOBAL_DNSMASQ_CONF_PATH=${GLOBAL_ACL_PATH}/dnsmasq.d
 		lua $APP_PATH/helper_dnsmasq.lua add_rule -FLAG "default" -TMP_DNSMASQ_PATH ${GLOBAL_DNSMASQ_CONF_PATH} -DNSMASQ_CONF_FILE ${GLOBAL_DNSMASQ_CONF} \
-			-LISTEN_PORT ${GLOBAL_DNSMASQ_PORT} -DEFAULT_DNS ${DEFAULT_DNS} -LOCAL_DNS ${LOCAL_DNS} -TUN_DNS ${TUN_DNS} \
+			-LISTEN_PORT ${GLOBAL_DNSMASQ_PORT} -DEFAULT_DNS ${DEFAULT_DNS} -LOCAL_DNS ${LOCAL_DNS} -TUN_DNS ${DNSMASQ_TUN_DNS} \
 			-REMOTE_FAKEDNS ${fakedns:-0} -USE_DEFAULT_DNS "${USE_DEFAULT_DNS:-direct}" -CHINADNS_DNS ${china_ng_listen:-0} \
 			-USE_DIRECT_LIST "${USE_DIRECT_LIST}" -USE_PROXY_LIST "${USE_PROXY_LIST}" -USE_BLOCK_LIST "${USE_BLOCK_LIST}" -USE_GFW_LIST "${USE_GFW_LIST}" -CHN_LIST "${CHN_LIST}" \
 			-TCP_NODE ${TCP_NODE} -DEFAULT_PROXY_MODE ${TCP_PROXY_MODE} -NO_PROXY_IPV6 ${DNSMASQ_FILTER_PROXY_IPV6:-0} -NFTFLAG ${nftflag:-0} \
@@ -1684,8 +1686,7 @@ acl_app() {
 		socks_port=11100
 		redir_port=11200
 		dns_port=11300
-		dnsmasq_port=11400
-		[ -n "${GLOBAL_DNSMASQ_PORT}" ] && dnsmasq_port=$(get_new_port $GLOBAL_DNSMASQ_PORT)
+		dnsmasq_port=${GLOBAL_DNSMASQ_PORT:-11400}
 		chinadns_port=11500
 		for item in $items; do
 			sid=$(uci -q show "${CONFIG}.${item}" | grep "=acl_rule" | awk -F '=' '{print $1}' | awk -F '.' '{print $2}')
@@ -1749,7 +1750,6 @@ acl_app() {
 
 			[ -n "$tcp_node" ] && {
 				local GLOBAL_TCP_NODE=$(get_cache_var "ACL_GLOBAL_TCP_node")
-				echolog "${GLOBAL_TCP_NODE}"
 				[ -n "${GLOBAL_TCP_NODE}" ] && GLOBAL_TCP_redir_port=$(get_cache_var "ACL_GLOBAL_TCP_redir_port")
 				if [ "$tcp_node" = "default" ]; then
 					if [ -n "${GLOBAL_TCP_NODE}" ]; then
@@ -2001,8 +2001,10 @@ start() {
 
 	if [ "$ENABLED_DEFAULT_ACL" == 1 ] || [ "$ENABLED_ACLS" == 1 ]; then
 		[ "$(uci -q get dhcp.@dnsmasq[0].dns_redirect)" == "1" ] && {
-			uci -q set dhcp.@dnsmasq[0].dns_redirect='0' 2>/dev/null
-			uci commit dhcp 2>/dev/null
+			uci -q set ${CONFIG}.@global[0].dnsmasq_dns_redirect='1'
+			uci -q commit ${CONFIG}
+			uci -q set dhcp.@dnsmasq[0].dns_redirect='0'
+			uci -q commit dhcp
 			/etc/init.d/dnsmasq restart >/dev/null 2>&1
 		}
 	fi
@@ -2045,11 +2047,23 @@ stop() {
 	source $APP_PATH/helper_smartdns.sh del
 	rm -rf $GLOBAL_DNSMASQ_CONF
 	rm -rf $GLOBAL_DNSMASQ_CONF_PATH
-	[ -z "$(get_cache_var "ACL_default_dns_port")" ] && lua $APP_PATH/helper_dnsmasq.lua restart -LOG 0
-	bak_bridge_nf_ipt=$(get_cache_var "bak_bridge_nf_ipt")
-	[ -n "${bak_bridge_nf_ipt}" ] && sysctl -w net.bridge.bridge-nf-call-iptables=${bak_bridge_nf_ipt} >/dev/null 2>&1
-	bak_bridge_nf_ip6t=$(get_cache_var "bak_bridge_nf_ip6t")
-	[ -n "${bak_bridge_nf_ip6t}" ] && sysctl -w net.bridge.bridge-nf-call-ip6tables=${bak_bridge_nf_ip6t} >/dev/null 2>&1
+	[ "1" = "1" ] && {
+		#restore logic
+		bak_dnsmasq_dns_redirect=$(config_t_get global dnsmasq_dns_redirect)
+		[ -n "${bak_dnsmasq_dns_redirect}" ] && {
+			uci -q set dhcp.@dnsmasq[0].dns_redirect="${bak_dnsmasq_dns_redirect}"
+			uci -q commit dhcp
+			uci -q delete ${CONFIG}.@global[0].dnsmasq_dns_redirect
+			uci -q commit ${CONFIG}
+		}
+		if [ -z "$(get_cache_var "ACL_default_dns_port")" ] || [ -n "${bak_dnsmasq_dns_redirect}" ]; then
+			lua $APP_PATH/helper_dnsmasq.lua restart -LOG 0
+		fi
+		bak_bridge_nf_ipt=$(get_cache_var "bak_bridge_nf_ipt")
+		[ -n "${bak_bridge_nf_ipt}" ] && sysctl -w net.bridge.bridge-nf-call-iptables=${bak_bridge_nf_ipt} >/dev/null 2>&1
+		bak_bridge_nf_ip6t=$(get_cache_var "bak_bridge_nf_ip6t")
+		[ -n "${bak_bridge_nf_ip6t}" ] && sysctl -w net.bridge.bridge-nf-call-ip6tables=${bak_bridge_nf_ip6t} >/dev/null 2>&1
+	}
 	rm -rf $TMP_PATH
 	rm -rf /tmp/lock/${CONFIG}_socks_auto_switch*
 	echolog "清空并关闭相关程序和缓存完成。"
@@ -2108,6 +2122,7 @@ DNS_CACHE=0
 REMOTE_DNS=$(config_t_get global remote_dns 1.1.1.1:53 | sed 's/#/:/g' | sed -E 's/\:([^:]+)$/#\1/g')
 USE_DEFAULT_DNS=$(config_t_get global use_default_dns direct)
 FILTER_PROXY_IPV6=$(config_t_get global filter_proxy_ipv6 0)
+DNS_REDIRECT=$(config_t_get global dns_redirect 1)
 dns_listen_port=${DNS_PORT}
 
 REDIRECT_LIST="socks ss ss-rust ssr sing-box xray trojan-plus naiveproxy hysteria2"
