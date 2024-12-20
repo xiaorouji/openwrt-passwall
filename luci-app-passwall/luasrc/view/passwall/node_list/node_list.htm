@@ -26,17 +26,11 @@ table td, .table .td {
 }
 
 ._now_use {
-	background: #5e72e445 !important;
+	color: red !important;
 }
 
 .ping a:hover{
 	text-decoration : underline;
-}
-
-@media (prefers-color-scheme: dark) {
-    ._now_use {
-        background: #4a90e2 !important;
-    }
 }
 </style>
 
@@ -217,13 +211,12 @@ table td, .table .td {
 				if (id) {
 					var dom = document.getElementById("cbi-passwall-" + id);
 					if (dom) {
-						dom.classList.add("_now_use");
-						dom.title = "当前TCP节点";
+						dom.title = "当前使用的 TCP 节点";
 						//var v = "<a style='color: red'>当前TCP节点：</a>" + document.getElementById("cbid.passwall." + id + ".remarks").value;
 						//document.getElementById("cbi-passwall-" + id + "-remarks").innerHTML = v;
-						var tds = dom.getElementsByTagName("td")
-						for (var j = 0; j < tds.length; j++) {
-							tds[j].classList.add("_now_use");
+						var dom_remarks = document.getElementById("cbi-passwall-" + id + "-remarks");
+						if (dom_remarks) {
+							dom_remarks.classList.add("_now_use");
 						}
 					}
 				}
@@ -231,11 +224,14 @@ table td, .table .td {
 				if (id) {
 					var dom = document.getElementById("cbi-passwall-" + id);
 					if (dom) {
-						dom.classList.add("_now_use");
-						dom.title = "当前UDP节点";
-						var tds = dom.getElementsByTagName("td")
-						for (var j = 0; j < tds.length; j++) {
-							tds[j].classList.add("_now_use");
+						if (result["TCP"] == result["UDP"]) {
+							dom.title = "当前使用的 TCP/UDP 节点";
+						} else {
+							dom.title = "当前使用的 UDP 节点";
+						}
+						var dom_remarks = document.getElementById("cbi-passwall-" + id + "-remarks");
+						if (dom_remarks) {
+							dom_remarks.classList.add("_now_use");
 						}
 					}
 				}
