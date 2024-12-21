@@ -167,11 +167,15 @@ if not is_file_nonzero(file_vpslist) then
 	f_out:close()
 end
 if is_file_nonzero(file_vpslist) then
+	local sets = {
+		setflag .. "passwall_vps",
+		setflag .. "passwall_vps6"
+	}
 	tmp_lines = {
 		"group vpslist",
 		"group-dnl " .. file_vpslist,
 		"group-upstream " .. DNS_LOCAL,
-		"group-ipset " .. setflag .. "passwall_vpslist," .. setflag .. "passwall_vpslist6"
+		"group-ipset " .. table.concat(sets, ",")
 	}
 	insert_array_after(config_lines, tmp_lines, "#--6")
 	log(string.format("  - 节点列表中的域名(vpslist)：%s", DNS_LOCAL or "默认"))
@@ -206,11 +210,15 @@ if USE_DIRECT_LIST == "1" and not fs.access(file_direct_host) then
 	end
 end
 if USE_DIRECT_LIST == "1" and is_file_nonzero(file_direct_host) then
+	local sets = {
+		setflag .. "passwall_white",
+		setflag .. "passwall_white6"
+	}
 	tmp_lines = {
 		"group directlist",
 		"group-dnl " .. file_direct_host,
 		"group-upstream " .. DNS_LOCAL,
-		"group-ipset " .. setflag .. "passwall_whitelist," .. setflag .. "passwall_whitelist6"
+		"group-ipset " .. table.concat(sets, ",")
 	}
 	insert_array_after(config_lines, tmp_lines, "#--4")
 	log(string.format("  - 域名白名单(whitelist)：%s", DNS_LOCAL or "默认"))
@@ -245,11 +253,21 @@ if USE_PROXY_LIST == "1" and not fs.access(file_proxy_host) then
 	end
 end
 if USE_PROXY_LIST == "1" and is_file_nonzero(file_proxy_host) then
+	local sets = {
+		setflag .. "passwall_black",
+		setflag .. "passwall_black6"
+	}
+	if FLAG ~= "default" then
+		sets = {
+			setflag .. "passwall_" .. FLAG .. "_black",
+			setflag .. "passwall_" .. FLAG .. "_black6"
+		}
+	end
 	tmp_lines = {
 		"group proxylist",
 		"group-dnl " .. file_proxy_host,
 		"group-upstream " .. DNS_TRUST,
-		"group-ipset " .. setflag .. "passwall_blacklist," .. setflag .. "passwall_blacklist6"
+		"group-ipset " .. table.concat(sets, ",")
 	}
 	if NO_IPV6_TRUST == "1" then table.insert(tmp_lines, "no-ipv6 tag:proxylist") end
 	insert_array_after(config_lines, tmp_lines, "#--3")
@@ -259,9 +277,19 @@ end
 --内置组(chn/gfw)优先级在自定义组后
 --GFW列表
 if GFWLIST == "1" and is_file_nonzero(RULES_PATH .. "/gfwlist") then
+	local sets = {
+		setflag .. "passwall_gfw",
+		setflag .. "passwall_gfw6"
+	}
+	if FLAG ~= "default" then
+		sets = {
+			setflag .. "passwall_" .. FLAG .. "_gfw",
+			setflag .. "passwall_" .. FLAG .. "_gfw6"
+		}
+	end
 	tmp_lines = {
 		"gfwlist-file " .. RULES_PATH .. "/gfwlist",
-		"add-taggfw-ip " .. setflag .. "passwall_gfwlist," .. setflag .. "passwall_gfwlist6"
+		"add-taggfw-ip " .. table.concat(sets, ",")
 	}
 	if NO_IPV6_TRUST == "1" then table.insert(tmp_lines, "no-ipv6 tag:gfw") end
 	merge_array(config_lines, tmp_lines)
@@ -273,8 +301,8 @@ if CHNLIST ~= "0" and is_file_nonzero(RULES_PATH .. "/chnlist") then
 	if CHNLIST == "direct" then
 		tmp_lines = {
 			"chnlist-file " .. RULES_PATH .. "/chnlist",
-			"ipset-name4 " .. setflag .. "passwall_chnroute",
-			"ipset-name6 " .. setflag .. "passwall_chnroute6",
+			"ipset-name4 " .. setflag .. "passwall_chn",
+			"ipset-name6 " .. setflag .. "passwall_chn6",
 			"add-tagchn-ip",
 			"chnlist-first"
 		}
@@ -288,7 +316,7 @@ if CHNLIST ~= "0" and is_file_nonzero(RULES_PATH .. "/chnlist") then
 			"group chn_proxy",
 			"group-dnl " .. RULES_PATH .. "/chnlist",
 			"group-upstream " .. DNS_TRUST,
-			"group-ipset " .. setflag .. "passwall_chnroute," .. setflag .. "passwall_chnroute6"
+			"group-ipset " .. setflag .. "passwall_chn," .. setflag .. "passwall_chn6"
 		}
 		if NO_IPV6_TRUST == "1" then table.insert(tmp_lines, "no-ipv6 tag:chn_proxy") end
 		insert_array_after(config_lines, tmp_lines, "#--1")
@@ -375,6 +403,17 @@ if uci:get(appname, TCP_NODE, "protocol") == "_shunt" then
 		log("  * 解析[分流节点] Geosite 完成")
 	end
 
+	local sets = {
+		setflag .. "passwall_shunt",
+		setflag .. "passwall_shunt6"
+	}
+	if FLAG ~= "default" then
+		sets = {
+			setflag .. "passwall_" .. FLAG .. "_shunt",
+			setflag .. "passwall_" .. FLAG .. "_shunt6"
+		}
+	end
+
 	if is_file_nonzero(file_white_host) then
 		if USE_DIRECT_LIST == "1" then
 			--当白名单启用时，添加到白名单组一同处理
@@ -390,7 +429,7 @@ if uci:get(appname, TCP_NODE, "protocol") == "_shunt" then
 				"group whitelist",
 				"group-dnl " .. file_white_host,
 				"group-upstream " .. DNS_LOCAL,
-				"group-ipset " .. setflag .. "passwall_shuntlist," .. setflag .. "passwall_shuntlist6"
+				"group-ipset " .. table.concat(sets, ",")
 			}
 			insert_array_after(config_lines, tmp_lines, "#--4")
 		end
@@ -402,7 +441,7 @@ if uci:get(appname, TCP_NODE, "protocol") == "_shunt" then
 			"group shuntlist",
 			"group-dnl " .. file_shunt_host,
 			"group-upstream " .. DNS_TRUST,
-			"group-ipset " .. setflag .. "passwall_shuntlist," .. setflag .. "passwall_shuntlist6"
+			"group-ipset " .. table.concat(sets, ",")
 		}
 		if NO_IPV6_TRUST == "1" then table.insert(tmp_lines, "no-ipv6 tag:shuntlist") end
 		insert_array_after(config_lines, tmp_lines, "#--2")
