@@ -47,15 +47,8 @@ local api = require "luci.passwall.api"
 
 <script>
 	var origin = window.location.origin;
-	var reset_url = origin + "<%=api.url("reset_config")%>";
 	var hide_url = origin + "<%=api.url("hide")%>";
 	var show_url = origin + "<%=api.url("show")%>";
-	
-	function reset(url) {
-		if (confirm('<%:Are you sure to reset?%>') == true) {
-			window.location.href = reset_url;
-		}
-	}
 	
 	function hide(url) {
 		if (confirm('<%:Are you sure to hide?%>') == true) {
@@ -66,7 +59,6 @@ local api = require "luci.passwall.api"
 	var dom = document.getElementById("faq_reset");
     if (dom) {
 		var li = "";
-		li += "<a href='#' class='reset-title' onclick='reset()'>" + "<%: Restore to default configuration:%>"+ "</a>" + "<br />" + " <%: Browser access: %>" + "<a href='#' onclick='reset()'>" + reset_url + "</a>" + "<br />";
 		li += "<a href='#' class='reset-title' onclick='hide()'>" + "<%: Hide in main menu:%>"+ "</a>" + "<br />" + "<%: Browser access: %>" + "<a href='#' onclick='hide()'>" + hide_url + "</a>" + "<br />";
 		li += "<a href='#' class='reset-title'>" + "<%: Show in main menu:%>"+ "</a>" + "<br />" +"<%: Browser access: %>" + "<a href='#'>" + show_url + "</a>" + "<br />";
 		dom.innerHTML = li;

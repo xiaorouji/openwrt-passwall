@@ -8,6 +8,7 @@ local uci = luci.model.uci.cursor()		-- in funtion index()
 local http = require "luci.http"
 local util = require "luci.util"
 local i18n = require "luci.i18n"
+local fs = require "nixio.fs"
 
 function index()
 	if not nixio.fs.access("/etc/config/passwall") then
@@ -46,7 +47,7 @@ function index()
 	entry({"admin", "services", appname, "socks_config"}, cbi(appname .. "/client/socks_config")).leaf = true
 	entry({"admin", "services", appname, "acl"}, cbi(appname .. "/client/acl"), _("Access control"), 98).leaf = true
 	entry({"admin", "services", appname, "acl_config"}, cbi(appname .. "/client/acl_config")).leaf = true
-	entry({"admin", "services", appname, "log"}, form(appname .. "/client/log"), _("Watch Logs"), 999).leaf = true
+	entry({"admin", "services", appname, "log"}, form(appname .. "/client/log"), _("Log Maint"), 999).leaf = true
 
 	--[[ Server ]]
 	entry({"admin", "services", appname, "server"}, cbi(appname .. "/server/index"), _("Server-Side"), 99).leaf = true
@@ -90,6 +91,9 @@ function index()
 		entry({"admin", "services", appname, "check_" .. com}, call("com_check", com)).leaf = true
 		entry({"admin", "services", appname, "update_" .. com}, call("com_update", com)).leaf = true
 	end
+
+	--[[Backup]]
+	entry({"admin", "services", appname, "backup"}, call("create_backup")).leaf = true
 end
 
 local function http_write_json(content)
@@ -500,9 +504,29 @@ function read_rulelist(list)
 	else
 		rule_path = "/usr/share/passwall/rules/chnroute"
 	end
-	if api.fs.access(rule_path) then
-		luci.http.prepare_content("text/plain")
-		luci.http.write(api.fs.readfile(rule_path))
+	if fs.access(rule_path) then
+		http.prepare_content("text/plain")
+		http.write(fs.readfile(rule_path))
 	end
 end
 
+function create_backup()
+	local backup_files = {
+		"/etc/config/passwall",
+		"/etc/config/passwall_server",
+		"/usr/share/passwall/rules/block_host",
+		"/usr/share/passwall/rules/block_ip",
+		"/usr/share/passwall/rules/direct_host",
+		"/usr/share/passwall/rules/direct_ip",
+		"/usr/share/passwall/rules/proxy_host",
+		"/usr/share/passwall/rules/proxy_ip"
+	}
+	local tar_file = "/tmp/passwall-backup.tar.gz"
+	fs.remove(tar_file)
+	local cmd = "tar -czf " .. tar_file .. " " .. table.concat(backup_files, " ")
+	api.sys.call(cmd)
+	http.header("Content-Disposition", "attachment; filename=passwall-backup.tar.gz")
+	http.prepare_content("application/octet-stream")
+	http.write(fs.readfile(tar_file))
+	fs.remove(tar_file)
+end
