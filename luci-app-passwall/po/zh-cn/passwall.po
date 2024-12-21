@@ -52,9 +52,6 @@ msgstr "规则列表"
 msgid "Access control"
 msgstr "访问控制"
 
-msgid "Watch Logs"
-msgstr "查看日志"
-
 msgid "Node Config"
 msgstr "节点配置"
 
@@ -238,9 +235,6 @@ msgstr "清空 NFTSET"
 msgid "Try this feature if the rule modification does not take effect."
 msgstr "如果修改规则后没有生效，请尝试此功能。"
 
-msgid "Are you sure to reset?"
-msgstr "你确定要恢复吗？"
-
 msgid "Are you sure to hide?"
 msgstr "你确定要隐藏吗？"
 
@@ -264,9 +258,6 @@ msgstr "对于移动设备，可通过重新接入网络的方式清除。比如
 
 msgid "Please make sure your device's network settings point both the DNS server and default gateway to this router, to ensure DNS queries are properly routed."
 msgstr "请确认您设备的网络设置，客户端 DNS 服务器和默认网关应均指向本路由器，以确保 DNS 查询正确路由。"
-
-msgid "Restore to default configuration:"
-msgstr "恢复默认配置："
 
 msgid "Browser access:"
 msgstr "浏览器访问："
@@ -1758,3 +1749,42 @@ msgstr "总行数："
 
 msgid "Read List"
 msgstr "读取列表"
+
+msgid "Log Maint"
+msgstr "日志维护"
+
+msgid "Backup and Restore"
+msgstr "备份还原"
+
+msgid "Backup or Restore Client and Server Configurations."
+msgstr "备份或还原客户端及服务端配置。"
+
+msgid "Create Backup File"
+msgstr "创建备份文件"
+
+msgid "Restore Backup File"
+msgstr "恢复备份文件"
+
+msgid "DL Backup"
+msgstr "下载备份"
+
+msgid "RST Backup"
+msgstr "恢复备份"
+
+msgid "UL Restore"
+msgstr "上传恢复"
+
+msgid "CLOSE WIN"
+msgstr "关闭窗口"
+
+msgid "Restore to default configuration"
+msgstr "恢复默认配置"
+
+msgid "Do Reset"
+msgstr "执行重置"
+
+msgid "Do you want to restore the client to default settings?"
+msgstr "是否要恢复客户端默认配置？"
+
+msgid "Are you sure you want to restore the client to default settings?"
+msgstr "是否真的要恢复客户端默认配置？"
