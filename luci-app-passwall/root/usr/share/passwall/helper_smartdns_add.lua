@@ -290,8 +290,12 @@ if is_file_nonzero(file_vpslist) then
 	tmp_lines = {
 		string.format("domain-set -name %s -file %s", domain_set_name, file_vpslist)
 	}
+	local sets = {
+		"#4:" .. setflag .. "passwall_vps",
+		"#6:" .. setflag .. "passwall_vps6"
+	}
 	local domain_rules_str = string.format('domain-rules /domain-set:%s/ %s', domain_set_name, LOCAL_GROUP and "-nameserver " .. LOCAL_GROUP or "")
-	domain_rules_str = domain_rules_str .. " " .. set_type .. " #4:" .. setflag .. "passwall_vpslist,#6:" .. setflag .. "passwall_vpslist6"
+	domain_rules_str = domain_rules_str .. " " .. set_type .. " " .. table.concat(sets, ",")
 	domain_rules_str = domain_rules_str .. (LOCAL_EXTEND_ARG ~= "" and " " .. LOCAL_EXTEND_ARG or "")
 	table.insert(tmp_lines, domain_rules_str)
 	insert_array_after(config_lines, tmp_lines, "#--8")
@@ -331,8 +335,12 @@ if USE_DIRECT_LIST == "1" and is_file_nonzero(file_direct_host) then
 	tmp_lines = {
 		string.format("domain-set -name %s -file %s", domain_set_name, file_direct_host)
 	}
+	local sets = {
+		"#4:" .. setflag .. "passwall_white",
+		"#6:" .. setflag .. "passwall_white6"
+	}
 	local domain_rules_str = string.format('domain-rules /domain-set:%s/ %s', domain_set_name, LOCAL_GROUP and "-nameserver " .. LOCAL_GROUP or "")
-	domain_rules_str = domain_rules_str .. " " .. set_type .. " #4:" .. setflag .. "passwall_whitelist,#6:" .. setflag .. "passwall_whitelist6"
+	domain_rules_str = domain_rules_str .. " " .. set_type .. " " .. table.concat(sets, ",")
 	domain_rules_str = domain_rules_str .. (LOCAL_EXTEND_ARG ~= "" and " " .. LOCAL_EXTEND_ARG or "")
 	table.insert(tmp_lines, domain_rules_str)
 	insert_array_after(config_lines, tmp_lines, "#--6")
@@ -375,11 +383,15 @@ if USE_PROXY_LIST == "1" and is_file_nonzero(file_proxy_host) then
 	local domain_rules_str = string.format('domain-rules /domain-set:%s/ -nameserver %s', domain_set_name, REMOTE_GROUP)
 	domain_rules_str = domain_rules_str .. " -speed-check-mode none"
 	domain_rules_str = domain_rules_str .. " -no-serve-expired"
+	local sets = {
+		"#4:" .. setflag .. "passwall_black"
+	}
 	if NO_PROXY_IPV6 == "1" then
 		domain_rules_str = domain_rules_str .. " -address #6"
-		domain_rules_str = domain_rules_str .. " " .. set_type .. " #4:" .. setflag .. "passwall_blacklist"
+		domain_rules_str = domain_rules_str .. " " .. set_type .. " " .. table.concat(sets, ",")
 	else
-		domain_rules_str = domain_rules_str .. " -d no " .. set_type .. " #4:" .. setflag .. "passwall_blacklist" .. ",#6:" .. setflag .. "passwall_blacklist6"
+		table.insert(sets, "#6:" .. setflag .. "passwall_black6")
+		domain_rules_str = domain_rules_str .. " -d no " .. set_type .. " " .. table.concat(sets, ",")
 	end
 	table.insert(tmp_lines, domain_rules_str)
 	insert_array_after(config_lines, tmp_lines, "#--5")
@@ -395,11 +407,15 @@ if USE_GFW_LIST == "1" and is_file_nonzero(RULES_PATH .. "/gfwlist") then
 	local domain_rules_str = string.format('domain-rules /domain-set:%s/ -nameserver %s', domain_set_name, REMOTE_GROUP)
 	domain_rules_str = domain_rules_str .. " -speed-check-mode none"
 	domain_rules_str = domain_rules_str .. " -no-serve-expired"
+	local sets = {
+		"#4:" .. setflag .. "passwall_gfw"
+	}
 	if NO_PROXY_IPV6 == "1" then
 		domain_rules_str = domain_rules_str .. " -address #6"
-		domain_rules_str = domain_rules_str .. " " .. set_type .. " #4:" .. setflag .. "passwall_gfwlist"
+		domain_rules_str = domain_rules_str .. " " .. set_type .. " " .. table.concat(sets, ",")
 	else
-		domain_rules_str = domain_rules_str .. " -d no " .. set_type .. " #4:" .. setflag .. "passwall_gfwlist" .. ",#6:" .. setflag .. "passwall_gfwlist6"
+		table.insert(sets, "#6:" .. setflag .. "passwall_gfw6")
+		domain_rules_str = domain_rules_str .. " -d no " .. set_type .. " " .. table.concat(sets, ",")
 	end
 	table.insert(tmp_lines, domain_rules_str)
 	insert_array_after(config_lines, tmp_lines, "#--1")
@@ -414,8 +430,12 @@ if CHN_LIST ~= "0" and is_file_nonzero(RULES_PATH .. "/chnlist") then
 	}
 
 	if CHN_LIST == "direct" then
+		local sets = {
+			"#4:" .. setflag .. "passwall_chn",
+			"#6:" .. setflag .. "passwall_chn6"
+		}
 		local domain_rules_str = string.format('domain-rules /domain-set:%s/ %s', domain_set_name, LOCAL_GROUP and "-nameserver " .. LOCAL_GROUP or "")
-		domain_rules_str = domain_rules_str .. " " .. set_type .. " #4:" .. setflag .. "passwall_chnroute,#6:" .. setflag .. "passwall_chnroute6"
+		domain_rules_str = domain_rules_str .. " " .. set_type .. " " .. table.concat(sets, ",")
 		domain_rules_str = domain_rules_str .. (LOCAL_EXTEND_ARG ~= "" and " " .. LOCAL_EXTEND_ARG or "")
 		table.insert(tmp_lines, domain_rules_str)
 		insert_array_after(config_lines, tmp_lines, "#--2")
@@ -427,11 +447,15 @@ if CHN_LIST ~= "0" and is_file_nonzero(RULES_PATH .. "/chnlist") then
 		local domain_rules_str = string.format('domain-rules /domain-set:%s/ -nameserver %s', domain_set_name, REMOTE_GROUP)
 		domain_rules_str = domain_rules_str .. " -speed-check-mode none"
 		domain_rules_str = domain_rules_str .. " -no-serve-expired"
+		local sets = {
+			"#4:" .. setflag .. "passwall_chn"
+		}
 		if NO_PROXY_IPV6 == "1" then
 			domain_rules_str = domain_rules_str .. " -address #6"
-			domain_rules_str = domain_rules_str .. " " .. set_type .. " #4:" .. setflag .. "passwall_chnroute"
+			domain_rules_str = domain_rules_str .. " " .. set_type .. " " .. table.concat(sets, ",")
 		else
-			domain_rules_str = domain_rules_str .. " -d no " .. set_type .. " #4:" .. setflag .. "passwall_chnroute" .. ",#6:" .. setflag .. "passwall_chnroute6"
+			table.insert(sets, "#6:" .. setflag .. "passwall_chn6")
+			domain_rules_str = domain_rules_str .. " -d no " .. set_type .. " " .. table.concat(sets, ",")
 		end
 		table.insert(tmp_lines, domain_rules_str)
 		insert_array_after(config_lines, tmp_lines, "#--2")
@@ -525,9 +549,17 @@ if uci:get(appname, TCP_NODE, "protocol") == "_shunt" then
 		}
 		local domain_rules_str = string.format('domain-rules /domain-set:%s/ %s', domain_set_name, LOCAL_GROUP and "-nameserver " .. LOCAL_GROUP or "")
 		if USE_DIRECT_LIST == "1" then
-			domain_rules_str = domain_rules_str .. " " .. set_type .. " #4:" .. setflag .. "passwall_whitelist,#6:" .. setflag .. "passwall_whitelist6"
+			local sets = {
+				"#4:" .. setflag .. "passwall_white",
+				"#6:" .. setflag .. "passwall_white6"
+			}
+			domain_rules_str = domain_rules_str .. " " .. set_type .. " " .. table.concat(sets, ",")
 		else
-			domain_rules_str = domain_rules_str .. " " .. set_type .. " #4:" .. setflag .. "passwall_shuntlist,#6:" .. setflag .. "passwall_shuntlist6"
+			local sets = {
+				"#4:" .. setflag .. "passwall_shunt",
+				"#6:" .. setflag .. "passwall_shunt6"
+			}
+			domain_rules_str = domain_rules_str .. " " .. set_type .. " " .. table.concat(sets, ",")
 		end
 		domain_rules_str = domain_rules_str .. (LOCAL_EXTEND_ARG ~= "" and " " .. LOCAL_EXTEND_ARG or "")
 		table.insert(tmp_lines, domain_rules_str)
@@ -542,11 +574,15 @@ if uci:get(appname, TCP_NODE, "protocol") == "_shunt" then
 		local domain_rules_str = string.format('domain-rules /domain-set:%s/ -nameserver %s', domain_set_name, REMOTE_GROUP)
 		domain_rules_str = domain_rules_str .. " -speed-check-mode none"
 		domain_rules_str = domain_rules_str .. " -no-serve-expired"
+		local sets = {
+			"#4:" .. setflag .. "passwall_shunt"
+		}
 		if NO_PROXY_IPV6 == "1" then
 			domain_rules_str = domain_rules_str .. " -address #6"
-			domain_rules_str = domain_rules_str .. " " .. set_type .. " #4:" .. setflag .. "passwall_shuntlist"
+			domain_rules_str = domain_rules_str .. " " .. set_type .. " " .. table.concat(sets, ",")
 		else
-			domain_rules_str = domain_rules_str .. " -d no " .. set_type .. " #4:" .. setflag .. "passwall_shuntlist" .. ",#6:" .. setflag .. "passwall_shuntlist6"
+			table.insert(sets, "#6:" .. setflag .. "passwall_shunt6")
+			domain_rules_str = domain_rules_str .. " -d no " .. set_type .. " " .. table.concat(sets, ",")
 		end
 		table.insert(tmp_lines, domain_rules_str)
 		insert_array_after(config_lines, tmp_lines, "#--3")
