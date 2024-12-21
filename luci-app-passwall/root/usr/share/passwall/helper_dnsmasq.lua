@@ -102,10 +102,8 @@ function logic_restart(var)
 					tinsert(dns_table, v)
 				end
 			end
-			if dns_table and #dns_table > 0 then
-				uci:set_list("dhcp", "@dnsmasq[0]", "server", dns_table)
-				uci:commit("dhcp")
-			end
+			uci:set_list("dhcp", "@dnsmasq[0]", "server", dns_table)
+			uci:commit("dhcp")
 		end
 		sys.call("/etc/init.d/dnsmasq restart >/dev/null 2>&1")
 		restore_servers()

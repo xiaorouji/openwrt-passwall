@@ -1612,7 +1612,7 @@ start_dns() {
 			-USE_DIRECT_LIST "${USE_DIRECT_LIST}" -USE_PROXY_LIST "${USE_PROXY_LIST}" -USE_BLOCK_LIST "${USE_BLOCK_LIST}" -USE_GFW_LIST "${USE_GFW_LIST}" -CHN_LIST "${CHN_LIST}" \
 			-TCP_NODE ${TCP_NODE} -DEFAULT_PROXY_MODE ${TCP_PROXY_MODE} -NO_PROXY_IPV6 ${DNSMASQ_FILTER_PROXY_IPV6:-0} -NFTFLAG ${nftflag:-0} \
 			-NO_LOGIC_LOG ${NO_LOGIC_LOG:-0}
-		/etc/init.d/dnsmasq restart >/dev/null 2>&1
+		lua $APP_PATH/helper_dnsmasq.lua logic_restart -LOG 1
 	else
 		#Run a copy dnsmasq instance, DNS hijack for that need proxy devices.
 		GLOBAL_DNSMASQ_PORT=$(get_new_port 11400)
@@ -2017,7 +2017,6 @@ start() {
 	}
 	[ -n "$USE_TABLES" ] && source $APP_PATH/${USE_TABLES}.sh start
 	set_cache_var "USE_TABLES" "$USE_TABLES"
-	[ -z "$(get_cache_var "ACL_default_dns_port")" ] && lua $APP_PATH/helper_dnsmasq.lua logic_restart -LOG 1
 	if [ "$ENABLED_DEFAULT_ACL" == 1 ] || [ "$ENABLED_ACLS" == 1 ]; then
 		bridge_nf_ipt=$(sysctl -e -n net.bridge.bridge-nf-call-iptables)
 		set_cache_var "bak_bridge_nf_ipt" "$bridge_nf_ipt"
