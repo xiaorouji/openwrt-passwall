@@ -222,7 +222,7 @@ function is_install(package)
 		local file_path = "/usr/lib/opkg/info"
 		local file_ext = ".control"
 		local has = sys.call("[ -d " .. file_path .. " ]")
-		if has == 0 then
+		if has ~= 0 then
 			file_path = "/lib/apk/packages"
 			file_ext = ".list"
 		end

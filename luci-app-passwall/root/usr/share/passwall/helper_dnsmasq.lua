@@ -617,12 +617,8 @@ function add_rule(var)
 	end
 
 	if USE_CHINADNS_NG == "0" then
-		if api.is_install("procd\\-ujail") then
-			fs.copyr(CACHE_DNS_PATH, TMP_DNSMASQ_PATH)
-		else
-			api.remove(TMP_DNSMASQ_PATH)
-			fs.symlink(CACHE_DNS_PATH, TMP_DNSMASQ_PATH)
-		end
+		api.remove(TMP_DNSMASQ_PATH)
+		fs.symlink(CACHE_DNS_PATH, TMP_DNSMASQ_PATH)
 	end
 
 	if DNSMASQ_CONF_FILE ~= "nil" then

@@ -1615,6 +1615,8 @@ start_dns() {
 			-USE_DIRECT_LIST "${USE_DIRECT_LIST}" -USE_PROXY_LIST "${USE_PROXY_LIST}" -USE_BLOCK_LIST "${USE_BLOCK_LIST}" -USE_GFW_LIST "${USE_GFW_LIST}" -CHN_LIST "${CHN_LIST}" \
 			-TCP_NODE ${TCP_NODE} -DEFAULT_PROXY_MODE ${TCP_PROXY_MODE} -NO_PROXY_IPV6 ${DNSMASQ_FILTER_PROXY_IPV6:-0} -NFTFLAG ${nftflag:-0} \
 			-NO_LOGIC_LOG ${NO_LOGIC_LOG:-0}
+		uci -q add_list dhcp.@dnsmasq[0].addnmount=${GLOBAL_DNSMASQ_CONF_PATH}
+		uci -q commit dhcp
 		lua $APP_PATH/helper_dnsmasq.lua logic_restart -LOG 1
 	else
 		#Run a copy dnsmasq instance, DNS hijack for that need proxy devices.
@@ -1984,7 +1986,7 @@ start() {
 				USE_TABLES="nftables"
 				nftflag=1
 				config_t_set global_forwarding use_nft 1
-				uci commit ${CONFIG}
+				uci -q commit ${CONFIG}
 			fi
 		fi
 	else
@@ -2009,7 +2011,7 @@ start() {
 			uci -q commit ${CONFIG}
 			uci -q set dhcp.@dnsmasq[0].dns_redirect='0'
 			uci -q commit dhcp
-			/etc/init.d/dnsmasq restart >/dev/null 2>&1
+			lua $APP_PATH/helper_dnsmasq.lua restart -LOG 0
 		}
 	fi
 
@@ -2060,6 +2062,8 @@ stop() {
 			uci -q commit ${CONFIG}
 		}
 		if [ -z "$(get_cache_var "ACL_default_dns_port")" ] || [ -n "${bak_dnsmasq_dns_redirect}" ]; then
+			uci -q del_list dhcp.@dnsmasq[0].addnmount="${GLOBAL_DNSMASQ_CONF_PATH}"
+			uci -q commit dhcp
 			lua $APP_PATH/helper_dnsmasq.lua restart -LOG 0
 		fi
 		bak_bridge_nf_ipt=$(get_cache_var "bak_bridge_nf_ipt")
