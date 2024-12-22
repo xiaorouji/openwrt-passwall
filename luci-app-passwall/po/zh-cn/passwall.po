@@ -1759,6 +1759,9 @@ msgstr "备份还原"
 msgid "Backup or Restore Client and Server Configurations."
 msgstr "备份或还原客户端及服务端配置。"
 
+msgid "Note: Restoring configurations across different versions may cause compatibility issues."
+msgstr "注意：不同版本间的配置恢复可能会导致兼容性问题。"
+
 msgid "Create Backup File"
 msgstr "创建备份文件"
 
