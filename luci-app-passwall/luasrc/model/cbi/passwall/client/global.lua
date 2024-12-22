@@ -518,10 +518,11 @@ o.validate = doh_validate
 o:depends({xray_dns_mode = "tcp+doh"})
 o:depends({singbox_dns_mode = "doh"})
 
-o = s:taboption("DNS", Value, "dns_client_ip", translate("EDNS Client Subnet"))
+o = s:taboption("DNS", Value, "remote_dns_client_ip", translate("EDNS Client Subnet"))
 o.description = translate("Notify the DNS server when the DNS query is notified, the location of the client (cannot be a private IP address).") .. "<br />" ..
 				translate("This feature requires the DNS server to support the Edns Client Subnet (RFC7871).")
 o.datatype = "ipaddr"
+o:depends({dns_mode = "sing-box"})
 o:depends({dns_mode = "xray"})
 
 o = s:taboption("DNS", Flag, "remote_fakedns", "FakeDNS", translate("Use FakeDNS work in the shunt domain that proxy."))

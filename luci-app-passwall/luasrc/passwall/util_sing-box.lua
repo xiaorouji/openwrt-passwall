@@ -762,6 +762,7 @@ function gen_config(var)
 	local remote_dns_tcp_server = var["-remote_dns_tcp_server"]
 	local remote_dns_doh_url = var["-remote_dns_doh_url"]
 	local remote_dns_doh_host = var["-remote_dns_doh_host"]
+	local remote_dns_client_ip = var["-remote_dns_client_ip"]
 	local remote_dns_query_strategy = var["-remote_dns_query_strategy"]
 	local remote_dns_fake = var["-remote_dns_fake"]
 	local dns_cache = var["-dns_cache"]
@@ -1278,6 +1279,7 @@ function gen_config(var)
 			strategy = remote_strategy,
 			address_resolver = "direct",
 			detour = default_outTag,
+			client_subnet = (remote_dns_client_ip and remote_dns_client_ip ~= "") and remote_dns_client_ip or nil,
 		}
 
 		if remote_dns_udp_server then

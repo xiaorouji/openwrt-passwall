@@ -413,7 +413,7 @@ run_ipt2socks() {
 
 run_singbox() {
 	local flag type node tcp_redir_port udp_redir_port socks_address socks_port socks_username socks_password http_address http_port http_username http_password
-	local dns_listen_port direct_dns_port direct_dns_udp_server direct_dns_tcp_server direct_dns_dot_server remote_dns_protocol remote_dns_udp_server remote_dns_tcp_server remote_dns_doh remote_fakedns remote_dns_query_strategy dns_cache dns_socks_address dns_socks_port
+	local dns_listen_port direct_dns_port direct_dns_udp_server direct_dns_tcp_server direct_dns_dot_server remote_dns_protocol remote_dns_udp_server remote_dns_tcp_server remote_dns_doh remote_dns_client_ip remote_fakedns remote_dns_query_strategy dns_cache dns_socks_address dns_socks_port
 	local loglevel log_file config_file server_host server_port
 	local _extra_param=""
 	eval_set_val $@
@@ -486,6 +486,7 @@ run_singbox() {
 			_extra_param="${_extra_param} -remote_dns_port ${_doh_port} -remote_dns_doh_url ${_doh_url} -remote_dns_doh_host ${_doh_host}"
 		;;
 	esac
+	[ -n "$remote_dns_client_ip" ] && _extra_param="${_extra_param} -remote_dns_client_ip ${remote_dns_client_ip}"
 	[ "$remote_fakedns" = "1" ] && _extra_param="${_extra_param} -remote_dns_fake 1"
 	_extra_param="${_extra_param} -tcp_proxy_way $tcp_proxy_way"
 	lua $UTIL_SINGBOX gen_config ${_extra_param} > $config_file
@@ -494,7 +495,7 @@ run_singbox() {
 
 run_xray() {
 	local flag type node tcp_redir_port udp_redir_port socks_address socks_port socks_username socks_password http_address http_port http_username http_password
-	local dns_listen_port remote_dns_udp_server remote_dns_tcp_server remote_dns_doh dns_client_ip dns_query_strategy dns_cache dns_socks_address dns_socks_port
+	local dns_listen_port remote_dns_udp_server remote_dns_tcp_server remote_dns_doh remote_dns_client_ip dns_query_strategy dns_cache dns_socks_address dns_socks_port
 	local loglevel log_file config_file server_host server_port
 	local _extra_param=""
 	eval_set_val $@
@@ -523,7 +524,7 @@ run_xray() {
 	[ -n "$dns_socks_address" ] && [ -n "$dns_socks_port" ] && _extra_param="${_extra_param} -dns_socks_address ${dns_socks_address} -dns_socks_port ${dns_socks_port}"
 	[ -n "$dns_listen_port" ] && _extra_param="${_extra_param} -dns_listen_port ${dns_listen_port}"
 	[ -n "$dns_query_strategy" ] && _extra_param="${_extra_param} -dns_query_strategy ${dns_query_strategy}"
-	[ -n "$dns_client_ip" ] && _extra_param="${_extra_param} -dns_client_ip ${dns_client_ip}"
+	[ -n "$remote_dns_client_ip" ] && _extra_param="${_extra_param} -remote_dns_client_ip ${remote_dns_client_ip}"
 	[ -n "$dns_cache" ] && _extra_param="${_extra_param} -dns_cache ${dns_cache}"
 	[ -n "${remote_dns_tcp_server}" ] && {
 		local _dns=$(get_first_dns remote_dns_tcp_server 53 | sed 's/#/:/g')
@@ -876,6 +877,8 @@ run_redir() {
 				config_file=$(echo $config_file | sed "s/.json/_DNS.json/g")
 				_args="${_args} remote_dns_query_strategy=${DNS_QUERY_STRATEGY}"
 				DNSMASQ_FILTER_PROXY_IPV6=0
+				local _remote_dns_client_ip=$(config_t_get global remote_dns_client_ip)
+				[ -n "${_remote_dns_client_ip}" ] && _args="${_args} remote_dns_client_ip=${_remote_dns_client_ip}"
 				[ "${DNS_CACHE}" == "0" ] && _args="${_args} dns_cache=0"
 				resolve_dns_port=${dns_listen_port}
 				_args="${_args} dns_listen_port=${resolve_dns_port}"
@@ -952,8 +955,8 @@ run_redir() {
 				config_file=$(echo $config_file | sed "s/.json/_DNS.json/g")
 				_args="${_args} dns_query_strategy=${DNS_QUERY_STRATEGY}"
 				DNSMASQ_FILTER_PROXY_IPV6=0
-				local _dns_client_ip=$(config_t_get global dns_client_ip)
-				[ -n "${_dns_client_ip}" ] && _args="${_args} dns_client_ip=${_dns_client_ip}"
+				local _remote_dns_client_ip=$(config_t_get global remote_dns_client_ip)
+				[ -n "${_remote_dns_client_ip}" ] && _args="${_args} remote_dns_client_ip=${_remote_dns_client_ip}"
 				[ "${DNS_CACHE}" == "0" ] && _args="${_args} dns_cache=0"
 				resolve_dns_port=${dns_listen_port}
 				_args="${_args} dns_listen_port=${resolve_dns_port}"
@@ -1437,6 +1440,8 @@ start_dns() {
 			[ "${DNS_CACHE}" == "0" ] && _args="${_args} dns_cache=0"
 			_args="${_args} remote_dns_query_strategy=${DNS_QUERY_STRATEGY}"
 			DNSMASQ_FILTER_PROXY_IPV6=0
+			local _remote_dns_client_ip=$(config_t_get global remote_dns_client_ip)
+			[ -n "${_remote_dns_client_ip}" ] && _args="${_args} remote_dns_client_ip=${_remote_dns_client_ip}"
 			use_tcp_node_resolve_dns=1
 			local v2ray_dns_mode=$(config_t_get global v2ray_dns_mode tcp)
 			_args="${_args} dns_listen_port=${dns_listen_port}"
@@ -1470,8 +1475,8 @@ start_dns() {
 			[ "${DNS_CACHE}" == "0" ] && _args="${_args} dns_cache=0"
 			_args="${_args} dns_query_strategy=${DNS_QUERY_STRATEGY}"
 			DNSMASQ_FILTER_PROXY_IPV6=0
-			local _dns_client_ip=$(config_t_get global dns_client_ip)
-			[ -n "${_dns_client_ip}" ] && _args="${_args} dns_client_ip=${_dns_client_ip}"
+			local _remote_dns_client_ip=$(config_t_get global remote_dns_client_ip)
+			[ -n "${_remote_dns_client_ip}" ] && _args="${_args} remote_dns_client_ip=${_remote_dns_client_ip}"
 			use_tcp_node_resolve_dns=1
 			_args="${_args} dns_listen_port=${dns_listen_port}"
 			_args="${_args} remote_dns_tcp_server=${REMOTE_DNS}"
@@ -1787,7 +1792,7 @@ acl_app() {
 										local type=${dns_mode}
 										[ "${dns_mode}" = "sing-box" ] && type="singbox"
 										dnsmasq_filter_proxy_ipv6=0
-										run_${type} flag=acl_${sid} type=$dns_mode dns_socks_address=127.0.0.1 dns_socks_port=$socks_port dns_listen_port=${_dns_port} remote_dns_protocol=${v2ray_dns_mode} remote_dns_tcp_server=${remote_dns} remote_dns_doh="${remote_dns_doh}" remote_dns_query_strategy=${DNS_QUERY_STRATEGY} dns_client_ip=${dns_client_ip} dns_query_strategy=${DNS_QUERY_STRATEGY} config_file=$config_file
+										run_${type} flag=acl_${sid} type=$dns_mode dns_socks_address=127.0.0.1 dns_socks_port=$socks_port dns_listen_port=${_dns_port} remote_dns_protocol=${v2ray_dns_mode} remote_dns_tcp_server=${remote_dns} remote_dns_doh="${remote_dns_doh}" remote_dns_query_strategy=${DNS_QUERY_STRATEGY} remote_dns_client_ip=${remote_dns_client_ip} dns_query_strategy=${DNS_QUERY_STRATEGY} config_file=$config_file
 									fi
 									set_cache_var "node_${tcp_node}_$(echo -n "${remote_dns}" | md5sum | cut -d " " -f1)" "${_dns_port}"
 								}
@@ -1882,7 +1887,7 @@ acl_app() {
 										remote_dns_doh=${remote_dns}
 										dnsmasq_filter_proxy_ipv6=0
 										[ "$dns_mode" = "xray" ] && [ "$v2ray_dns_mode" = "tcp+doh" ] && remote_dns_doh=${remote_dns_doh:-https://1.1.1.1/dns-query}
-										_extra_param="dns_listen_port=${_dns_port} remote_dns_protocol=${v2ray_dns_mode} remote_dns_tcp_server=${remote_dns} remote_dns_doh=${remote_dns_doh} remote_dns_query_strategy=${DNS_QUERY_STRATEGY} dns_client_ip=${dns_client_ip} dns_query_strategy=${DNS_QUERY_STRATEGY}"
+										_extra_param="dns_listen_port=${_dns_port} remote_dns_protocol=${v2ray_dns_mode} remote_dns_tcp_server=${remote_dns} remote_dns_doh=${remote_dns_doh} remote_dns_query_strategy=${DNS_QUERY_STRATEGY} remote_dns_client_ip=${remote_dns_client_ip} dns_query_strategy=${DNS_QUERY_STRATEGY}"
 									fi
 									[ -n "$udp_node" ] && ([ "$udp_node" = "tcp" ] || [ "$udp_node" = "$tcp_node" ]) && {
 										config_file=$(echo $config_file | sed "s/TCP_/TCP_UDP_/g")
@@ -1961,7 +1966,7 @@ acl_app() {
 					}
 				fi
 			}
-			unset enabled sid remarks sources interface tcp_no_redir_ports udp_no_redir_ports use_global_config tcp_node udp_node use_direct_list use_proxy_list use_block_list use_gfw_list chn_list tcp_proxy_mode udp_proxy_mode filter_proxy_ipv6 dns_mode remote_dns v2ray_dns_mode remote_dns_doh dns_client_ip
+			unset enabled sid remarks sources interface tcp_no_redir_ports udp_no_redir_ports use_global_config tcp_node udp_node use_direct_list use_proxy_list use_block_list use_gfw_list chn_list tcp_proxy_mode udp_proxy_mode filter_proxy_ipv6 dns_mode remote_dns v2ray_dns_mode remote_dns_doh remote_dns_client_ip
 			unset _ip _mac _iprange _ipset _ip_or_mac source_list tcp_port udp_port config_file _extra_param
 			unset _china_ng_listen _chinadns_local_dns _direct_dns_mode chinadns_ng_default_tag dnsmasq_filter_proxy_ipv6
 		done

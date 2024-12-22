@@ -580,7 +580,7 @@ function gen_config(var)
 	local remote_dns_doh_ip = var["-remote_dns_doh_ip"]
 	local remote_dns_doh_port = var["-remote_dns_doh_port"]
 	local dns_cache = var["-dns_cache"]
-	local dns_client_ip = var["-dns_client_ip"]
+	local remote_dns_client_ip = var["-remote_dns_client_ip"]
 	local dns_socks_address = var["-dns_socks_address"]
 	local dns_socks_port = var["-dns_socks_port"]
 	local loglevel = var["-loglevel"] or "warning"
@@ -1141,7 +1141,7 @@ function gen_config(var)
 			disableFallback = true,
 			disableFallbackIfMatch = true,
 			servers = {},
-			clientIp = (dns_client_ip and dns_client_ip ~= "") and dns_client_ip or nil,
+			clientIp = (remote_dns_client_ip and remote_dns_client_ip ~= "") and remote_dns_client_ip or nil,
 			queryStrategy = (dns_query_strategy and dns_query_strategy ~= "") and dns_query_strategy or "UseIPv4"
 		}
 
