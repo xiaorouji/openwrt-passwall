@@ -1276,7 +1276,7 @@ flush_ipset() {
 flush_ipset_reload() {
 	del_firewall_rule
 	flush_ipset
-	rm -rf /tmp/singbox_passwall*
+	rm -rf /tmp/etc/passwall_tmp/singbox*
 	rm -rf /tmp/etc/passwall_tmp/smartdns*
 	rm -rf /tmp/etc/passwall_tmp/dnsmasq*
 	/etc/init.d/passwall reload
