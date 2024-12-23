@@ -2050,7 +2050,7 @@ stop() {
 	delete_ip2route
 	kill_all v2ray-plugin obfs-local
 	pgrep -f "sleep.*(6s|9s|58s)" | xargs kill -9 >/dev/null 2>&1
-	pgrep -af "${CONFIG}/" | awk '! /app\.sh|subscribe\.lua|rule_update\.lua|tasks\.sh/{print $1}' | xargs kill -9 >/dev/null 2>&1
+	pgrep -af "${CONFIG}/" | awk '! /app\.sh|subscribe\.lua|rule_update\.lua|tasks\.sh|ujail/{print $1}' | xargs kill -9 >/dev/null 2>&1
 	unset V2RAY_LOCATION_ASSET
 	unset XRAY_LOCATION_ASSET
 	stop_crontab
