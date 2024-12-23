@@ -201,7 +201,6 @@ o = s:option(ListValue, _n("transport"), translate("Transport"))
 o:value("raw", "RAW")
 o:value("mkcp", "mKCP")
 o:value("ws", "WebSocket")
-o:value("h2", "HTTP/2")
 o:value("ds", "DomainSocket")
 o:value("quic", "QUIC")
 o:value("grpc", "gRPC")
@@ -244,14 +243,6 @@ o:depends({ [_n("transport")] = "xhttp" })
 o = s:option(Value, _n("xhttp_maxconcurrentuploads"), translate("maxConcurrentUploads"))
 o.default = "10"
 o:depends({ [_n("transport")] = "xhttp" })
-
--- [[ HTTP/2部分 ]]--
-
-o = s:option(Value, _n("h2_host"), translate("HTTP/2 Host"))
-o:depends({ [_n("transport")] = "h2" })
-
-o = s:option(Value, _n("h2_path"), translate("HTTP/2 Path"))
-o:depends({ [_n("transport")] = "h2" })
 
 -- [[ TCP部分 ]]--
 

@@ -394,7 +394,6 @@ o = s:option(ListValue, _n("transport"), translate("Transport"))
 o:value("raw", "RAW (TCP)")
 o:value("mkcp", "mKCP")
 o:value("ws", "WebSocket")
-o:value("h2", "HTTP/2")
 o:value("ds", "DomainSocket")
 o:value("quic", "QUIC")
 o:value("grpc", "gRPC")
@@ -495,25 +494,6 @@ o:depends({ [_n("transport")] = "ws" })
 o = s:option(Value, _n("ws_heartbeatPeriod"), translate("HeartbeatPeriod(second)"))
 o.datatype = "integer"
 o:depends({ [_n("transport")] = "ws" })
-
--- [[ HTTP/2部分 ]]--
-o = s:option(Value, _n("h2_host"), translate("HTTP/2 Host"))
-o:depends({ [_n("transport")] = "h2" })
-
-o = s:option(Value, _n("h2_path"), translate("HTTP/2 Path"))
-o.placeholder = "/"
-o:depends({ [_n("transport")] = "h2" })
-
-o = s:option(Flag, _n("h2_health_check"), translate("Health check"))
-o:depends({ [_n("transport")] = "h2" })
-
-o = s:option(Value, _n("h2_read_idle_timeout"), translate("Idle timeout"))
-o.default = "10"
-o:depends({ [_n("h2_health_check")] = true })
-
-o = s:option(Value, _n("h2_health_check_timeout"), translate("Health check timeout"))
-o.default = "15"
-o:depends({ [_n("h2_health_check")] = true })
 
 -- [[ DomainSocket部分 ]]--
 o = s:option(Value, _n("ds_path"), "Path", translate("A legal file path. This file must not exist before running."))
