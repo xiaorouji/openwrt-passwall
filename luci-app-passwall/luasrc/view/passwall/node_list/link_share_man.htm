@@ -810,16 +810,22 @@ local api = require "luci.passwall.api"
 					}
 
 					queryParam.type = queryParam.type.toLowerCase();
-					if (queryParam.type === "kcp" || queryParam.type === "mkcp")
-						queryParam.type = "mkcp"
-					if (queryParam.type === "h2" || queryParam.type === "http")
-						queryParam.type = "h2"
+					if (queryParam.type === "kcp" || queryParam.type === "mkcp") {
+						queryParam.type = "mkcp";
+					}
+					if (queryParam.type === "h2" || queryParam.type === "http") {
+						queryParam.type = "http";
+					}
 					if (dom_prefix == "singbox_" && queryParam.type === "raw") {
 						queryParam.type = "tcp";
 					} else if (dom_prefix == "xray_" && queryParam.type === "tcp") {
 						queryParam.type = "raw";
 					}
-					opt.set(dom_prefix + 'transport', queryParam.type);
+					if (dom_prefix == "xray_" && queryParam.type === "http") {
+						opt.set(dom_prefix + 'transport', "xhttp");
+					} else {
+						opt.set(dom_prefix + 'transport', queryParam.type);
+					}
 					if (queryParam.type === "raw" || queryParam.type === "tcp") {
 						opt.set(dom_prefix + 'tcp_guise', queryParam.headerType || "none");
 						if (queryParam.headerType && queryParam.headerType != "none") {
@@ -848,8 +854,14 @@ local api = require "luci.passwall.api"
 							}
 						}
 					} else if (queryParam.type === "h2" || queryParam.type === "http") {
-						opt.set(dom_prefix + 'h2_host', queryParam.host || "");
-						opt.set(dom_prefix + 'h2_path', queryParam.path || "");
+						if (dom_prefix == "xray_") {
+							opt.set(dom_prefix + 'xhttp_mode', "stream-one");
+							opt.set(dom_prefix + 'xhttp_host', queryParam.host || "");
+							opt.set(dom_prefix + 'xhttp_path', queryParam.path || "");
+						} else {
+							opt.set(dom_prefix + 'http_host', queryParam.host || "");
+							opt.set(dom_prefix + 'http_path', queryParam.path || "");
+						}
 					} else if (queryParam.type === "quic") {
 						opt.set(dom_prefix + 'quic_guise', queryParam.headerType || "none");
 						opt.set(dom_prefix + 'quic_security', queryParam.quicSecurity);
@@ -925,16 +937,22 @@ local api = require "luci.passwall.api"
 			opt.set(dom_prefix + 'password', decodeURIComponent(password));
 
 			queryParam.type = queryParam.type.toLowerCase();
-			if (queryParam.type === "kcp" || queryParam.type === "mkcp")
-				queryParam.type = "mkcp"
-			if (queryParam.type === "h2" || queryParam.type === "http")
-				queryParam.type = "h2"
+			if (queryParam.type === "kcp" || queryParam.type === "mkcp") {
+				queryParam.type = "mkcp";
+			}
+			if (queryParam.type === "h2" || queryParam.type === "http") {
+				queryParam.type = "http";
+			}
 			if (dom_prefix == "singbox_" && queryParam.type === "raw") {
-						queryParam.type = "tcp";
+				queryParam.type = "tcp";
 			} else if (dom_prefix == "xray_" && queryParam.type === "tcp") {
 				queryParam.type = "raw";
 			}
-			opt.set(dom_prefix + 'transport', queryParam.type);
+			if (dom_prefix == "xray_" && queryParam.type === "http") {
+				opt.set(dom_prefix + 'transport', "xhttp");
+			} else {
+				opt.set(dom_prefix + 'transport', queryParam.type);
+			}
 			if (queryParam.type === "raw" || queryParam.type === "tcp") {
 				opt.set(dom_prefix + 'tcp_guise', queryParam.headerType || "none");
 				if (queryParam.headerType && queryParam.headerType != "none") {
@@ -963,8 +981,14 @@ local api = require "luci.passwall.api"
 					}
 				}
 			} else if (queryParam.type === "h2" || queryParam.type === "http") {
-				opt.set(dom_prefix + 'h2_host', queryParam.host || "");
-				opt.set(dom_prefix + 'h2_path', queryParam.path || "");
+				if (dom_prefix == "xray_") {
+					opt.set(dom_prefix + 'xhttp_mode', "stream-one");
+					opt.set(dom_prefix + 'xhttp_host', queryParam.host || "");
+					opt.set(dom_prefix + 'xhttp_path', queryParam.path || "");
+				} else {
+					opt.set(dom_prefix + 'http_host', queryParam.host || "");
+					opt.set(dom_prefix + 'http_path', queryParam.path || "");
+				}
 			} else if (queryParam.type === "quic") {
 				opt.set(dom_prefix + 'quic_guise', queryParam.headerType || "none");
 				opt.set(dom_prefix + 'quic_security', queryParam.quicSecurity);
@@ -1030,7 +1054,14 @@ local api = require "luci.passwall.api"
 			} else if (dom_prefix == "xray_" && ssm.net === "tcp") {
 				ssm.net = "raw";
 			}
-			opt.set(dom_prefix + 'transport', ssm.net);
+			if (ssm.net === "h2" || ssm.net === "http") {
+				ssm.net = "http";
+			}
+			if (dom_prefix == "xray_" && ssm.net === "http") {
+				opt.set(dom_prefix + 'transport', "xhttp");
+			} else {
+				opt.set(dom_prefix + 'transport', ssm.net);
+			}
 			if (ssm.net === "raw" || ssm.net === "tcp") {
 				opt.set(dom_prefix + 'tcp_guise', (ssm.host && ssm.path) ? "http" : "none");
 				if (ssm.host && ssm.path) {
@@ -1058,9 +1089,15 @@ local api = require "luci.passwall.api"
 						opt.set(dom_prefix + 'ws_earlyDataHeaderName', 'Sec-WebSocket-Protocol');
 					}
 				}
-			} else if (ssm.net === "h2") {
-				opt.set(dom_prefix + 'h2_host', ssm.host);
-				opt.set(dom_prefix + 'h2_path', ssm.path);
+			} else if (ssm.net === "http") {
+				if (dom_prefix == "xray_") {
+					opt.set(dom_prefix + 'xhttp_mode', "stream-one");
+					opt.set(dom_prefix + 'xhttp_host', ssm.host || "");
+					opt.set(dom_prefix + 'xhttp_path', ssm.path || "");
+				} else {
+					opt.set(dom_prefix + 'http_host', ssm.host || "");
+					opt.set(dom_prefix + 'http_path', ssm.path || "");
+				}
 			} else if (ssm.net === "quic") {
 				opt.set(dom_prefix + 'quic_security', ssm.securty);
 				opt.set(dom_prefix + 'quic_key', ssm.key);
@@ -1134,16 +1171,22 @@ local api = require "luci.passwall.api"
 			}
 
 			queryParam.type = queryParam.type.toLowerCase();
-			if (queryParam.type === "kcp" || queryParam.type === "mkcp")
-				queryParam.type = "mkcp"
-			if (queryParam.type === "h2" || queryParam.type === "http")
-				queryParam.type = "h2"
+			if (queryParam.type === "kcp" || queryParam.type === "mkcp") {
+				queryParam.type = "mkcp";
+			}
+			if (queryParam.type === "h2" || queryParam.type === "http") {
+				queryParam.type = "http";
+			}
 			if (dom_prefix == "singbox_" && queryParam.type === "raw") {
 				queryParam.type = "tcp";
 			} else if (dom_prefix == "xray_" && queryParam.type === "tcp") {
 				queryParam.type = "raw";
 			}
-			opt.set(dom_prefix + 'transport', queryParam.type);
+			if (dom_prefix == "xray_" && queryParam.type === "http") {
+				opt.set(dom_prefix + 'transport', "xhttp");
+			} else {
+				opt.set(dom_prefix + 'transport', queryParam.type);
+			}
 			if (queryParam.type === "raw" || queryParam.type === "tcp") {
 				opt.set(dom_prefix + 'tcp_guise', queryParam.headerType || "none");
 				if (queryParam.headerType && queryParam.headerType != "none") {
@@ -1172,8 +1215,14 @@ local api = require "luci.passwall.api"
 					}
 				}
 			} else if (queryParam.type === "h2" || queryParam.type === "http") {
-				opt.set(dom_prefix + 'h2_host', queryParam.host || "");
-				opt.set(dom_prefix + 'h2_path', queryParam.path || "");
+				if (dom_prefix == "xray_") {
+					opt.set(dom_prefix + 'xhttp_mode', "stream-one");
+					opt.set(dom_prefix + 'xhttp_host', queryParam.host || "");
+					opt.set(dom_prefix + 'xhttp_path', queryParam.path || "");
+				} else {
+					opt.set(dom_prefix + 'http_host', queryParam.host || "");
+					opt.set(dom_prefix + 'http_path', queryParam.path || "");
+				}
 			} else if (queryParam.type === "quic") {
 				opt.set(dom_prefix + 'quic_guise', queryParam.headerType || "none");
 				opt.set(dom_prefix + 'quic_security', queryParam.quicSecurity);
