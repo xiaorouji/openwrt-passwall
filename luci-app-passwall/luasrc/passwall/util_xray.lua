@@ -581,11 +581,13 @@ function gen_config(var)
 	local remote_dns_doh_port = var["-remote_dns_doh_port"]
 	local dns_cache = var["-dns_cache"]
 	local remote_dns_client_ip = var["-remote_dns_client_ip"]
+	local remote_dns_fake = var["-remote_dns_fake"]
 	local dns_socks_address = var["-dns_socks_address"]
 	local dns_socks_port = var["-dns_socks_port"]
 	local loglevel = var["-loglevel"] or "warning"
 
 	local dns = nil
+	local fakedns = nil
 	local routing = nil
 	local observatory = nil
 	local inbounds = {}
@@ -1146,7 +1148,7 @@ function gen_config(var)
 		}
 
 		local _remote_dns = {
-			--_flag = "remote",
+			_flag = "remote",
 			address = "tcp://" .. remote_dns_tcp_server .. ":" .. tonumber(remote_dns_tcp_port) or 53
 		}
 
@@ -1162,6 +1164,31 @@ function gen_config(var)
 
 		table.insert(dns.servers, _remote_dns)
 
+		if remote_dns_fake then
+			fakedns = {}
+			local fakedns4 = {
+				ipPool = "198.18.0.0/15",
+				poolSize = 65535
+			}
+			local fakedns6 = {
+				ipPool = "fc00::/18",
+				poolSize = 65535
+			}
+			if dns_query_strategy == "UseIP" then
+				table.insert(fakedns, fakedns4)
+				table.insert(fakedns, fakedns6)
+			elseif dns_query_strategy == "UseIPv4" then
+				table.insert(fakedns, fakedns4)
+			elseif dns_query_strategy == "UseIPv6" then
+				table.insert(fakedns, fakedns6)
+			end
+			local _remote_fakedns = {
+				_flag = "remote_fakedns",
+				address = "fakedns",
+			}
+			table.insert(dns.servers, 1, _remote_fakedns)
+		end
+
 	--[[
 		local default_dns_flag = "remote"
 		if (not COMMON.default_balancer_tag and not COMMON.default_outbound_tag) or COMMON.default_outbound_tag == "direct" then
@@ -1172,10 +1199,15 @@ function gen_config(var)
 			local dns_servers = nil
 			for index, value in ipairs(dns.servers) do
 				if not dns_servers and value["_flag"] == default_dns_flag then
+					if value["_flag"] == "remote" and remote_dns_fake then
+						value["_flag"] = "default"
+						break
+					end
 					dns_servers = {
 						_flag = "default",
 						address = value.address,
-						port = value.port
+						port = value.port,
+						queryStrategy = value.queryStrategy
 					}
 					break
 				end
@@ -1317,6 +1349,7 @@ function gen_config(var)
 			},
 			-- DNS
 			dns = dns,
+			fakedns = fakedns,
 			-- 传入连接
 			inbounds = inbounds,
 			-- 传出连接

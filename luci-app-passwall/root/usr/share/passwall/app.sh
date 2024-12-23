@@ -495,7 +495,7 @@ run_singbox() {
 
 run_xray() {
 	local flag type node tcp_redir_port udp_redir_port socks_address socks_port socks_username socks_password http_address http_port http_username http_password
-	local dns_listen_port remote_dns_udp_server remote_dns_tcp_server remote_dns_doh remote_dns_client_ip dns_query_strategy dns_cache dns_socks_address dns_socks_port
+	local dns_listen_port remote_dns_udp_server remote_dns_tcp_server remote_dns_doh remote_dns_client_ip remote_fakedns dns_query_strategy dns_cache dns_socks_address dns_socks_port
 	local loglevel log_file config_file server_host server_port
 	local _extra_param=""
 	eval_set_val $@
@@ -525,6 +525,7 @@ run_xray() {
 	[ -n "$dns_listen_port" ] && _extra_param="${_extra_param} -dns_listen_port ${dns_listen_port}"
 	[ -n "$dns_query_strategy" ] && _extra_param="${_extra_param} -dns_query_strategy ${dns_query_strategy}"
 	[ -n "$remote_dns_client_ip" ] && _extra_param="${_extra_param} -remote_dns_client_ip ${remote_dns_client_ip}"
+	[ "$remote_fakedns" = "1" ] && _extra_param="${_extra_param} -remote_dns_fake 1"
 	[ -n "$dns_cache" ] && _extra_param="${_extra_param} -dns_cache ${dns_cache}"
 	[ -n "${remote_dns_tcp_server}" ] && {
 		local _dns=$(get_first_dns remote_dns_tcp_server 53 | sed 's/#/:/g')
@@ -968,6 +969,12 @@ run_redir() {
 				else
 					resolve_dns_log="Xray DNS(127.0.0.1#${resolve_dns_port}) -> tcp://${REMOTE_DNS}"
 				fi
+				local remote_fakedns=$(config_t_get global remote_fakedns 0)
+				[ "${remote_fakedns}" = "1" ] && {
+					fakedns=1
+					_args="${_args} remote_fakedns=1"
+					resolve_dns_log="${resolve_dns_log} + FakeDNS"
+				}
 				dns_listen_port=$(expr $dns_listen_port + 1)
 			}
 			run_xray flag=$_flag node=$node tcp_redir_port=$local_port config_file=$config_file log_file=$log_file ${_args}
