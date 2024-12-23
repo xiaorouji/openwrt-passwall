@@ -572,16 +572,17 @@ function gen_config(var)
 	local local_http_username = var["-local_http_username"]
 	local local_http_password = var["-local_http_password"]
 	local dns_listen_port = var["-dns_listen_port"]
-	local dns_query_strategy = var["-dns_query_strategy"]
+	local dns_cache = var["-dns_cache"]
+	local direct_dns_query_strategy = var["-direct_dns_query_strategy"]
 	local remote_dns_tcp_server = var["-remote_dns_tcp_server"]
 	local remote_dns_tcp_port = var["-remote_dns_tcp_port"]
 	local remote_dns_doh_url = var["-remote_dns_doh_url"]
 	local remote_dns_doh_host = var["-remote_dns_doh_host"]
 	local remote_dns_doh_ip = var["-remote_dns_doh_ip"]
 	local remote_dns_doh_port = var["-remote_dns_doh_port"]
-	local dns_cache = var["-dns_cache"]
 	local remote_dns_client_ip = var["-remote_dns_client_ip"]
 	local remote_dns_fake = var["-remote_dns_fake"]
+	local remote_dns_query_strategy = var["-remote_dns_query_strategy"]
 	local dns_socks_address = var["-dns_socks_address"]
 	local dns_socks_port = var["-dns_socks_port"]
 	local loglevel = var["-loglevel"] or "warning"
@@ -1144,11 +1145,12 @@ function gen_config(var)
 			disableFallbackIfMatch = true,
 			servers = {},
 			clientIp = (remote_dns_client_ip and remote_dns_client_ip ~= "") and remote_dns_client_ip or nil,
-			queryStrategy = (dns_query_strategy and dns_query_strategy ~= "") and dns_query_strategy or "UseIPv4"
+			queryStrategy = "UseIP"
 		}
 
 		local _remote_dns = {
 			_flag = "remote",
+			queryStrategy = (remote_dns_query_strategy and remote_dns_query_strategy ~= "") and remote_dns_query_strategy or "UseIPv4",
 			address = "tcp://" .. remote_dns_tcp_server .. ":" .. tonumber(remote_dns_tcp_port) or 53
 		}
 
@@ -1174,12 +1176,12 @@ function gen_config(var)
 				ipPool = "fc00::/18",
 				poolSize = 65535
 			}
-			if dns_query_strategy == "UseIP" then
+			if remote_dns_query_strategy == "UseIP" then
 				table.insert(fakedns, fakedns4)
 				table.insert(fakedns, fakedns6)
-			elseif dns_query_strategy == "UseIPv4" then
+			elseif remote_dns_query_strategy == "UseIPv4" then
 				table.insert(fakedns, fakedns4)
-			elseif dns_query_strategy == "UseIPv6" then
+			elseif remote_dns_query_strategy == "UseIPv6" then
 				table.insert(fakedns, fakedns6)
 			end
 			local _remote_fakedns = {
@@ -1404,7 +1406,7 @@ function gen_config(var)
 			protocol = "freedom",
 			tag = "direct",
 			settings = {
-				domainStrategy = (dns_query_strategy and dns_query_strategy ~= "") and dns_query_strategy or "UseIPv4"
+				domainStrategy = (direct_dns_query_strategy and direct_dns_query_strategy ~= "") and direct_dns_query_strategy or "UseIP"
 			},
 			streamSettings = {
 				sockopt = {
