@@ -523,11 +523,13 @@ function create_backup()
 		"/usr/share/passwall/rules/proxy_host",
 		"/usr/share/passwall/rules/proxy_ip"
 	}
-	local tar_file = "/tmp/passwall-backup.tar.gz"
+	local date = os.date("%Y%m%d")
+	local tar_file = "/tmp/passwall-" .. date .. "-backup.tar.gz"
 	fs.remove(tar_file)
 	local cmd = "tar -czf " .. tar_file .. " " .. table.concat(backup_files, " ")
 	api.sys.call(cmd)
-	http.header("Content-Disposition", "attachment; filename=passwall-backup.tar.gz")
+	http.header("Content-Disposition", "attachment; filename=passwall-" .. date .. "-backup.tar.gz")
+	http.header("X-Backup-Filename", "passwall-" .. date .. "-backup.tar.gz")
 	http.prepare_content("application/octet-stream")
 	http.write(fs.readfile(tar_file))
 	fs.remove(tar_file)
