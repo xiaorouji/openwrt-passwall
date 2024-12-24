@@ -1300,14 +1300,14 @@ add_firewall_rule() {
 	#  加载ACLS
 	load_acl
 
-	filter_direct_node_list
-
 	[ -d "${TMP_IFACE_PATH}" ] && {
 		for iface in $(ls ${TMP_IFACE_PATH}); do
 			nft "insert rule $NFTABLE_NAME $nft_output_chain oif $iface counter return"
 			nft "insert rule $NFTABLE_NAME PSW_OUTPUT_MANGLE_V6 oif $iface counter return"
 		done
 	}
+
+	filter_direct_node_list > /dev/null 2>&1 &
 
 	echolog "防火墙规则加载完成！"
 }

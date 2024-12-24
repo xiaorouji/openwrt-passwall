@@ -1240,8 +1240,6 @@ add_firewall_rule() {
 	#  加载ACLS
 	load_acl
 
-	filter_direct_node_list
-
 	[ -d "${TMP_IFACE_PATH}" ] && {
 		for iface in $(ls ${TMP_IFACE_PATH}); do
 			$ipt_n -I PSW_OUTPUT -o $iface -j RETURN
@@ -1251,6 +1249,8 @@ add_firewall_rule() {
 
 	$ipt_n -I PREROUTING $(comment "PSW") -m mark --mark 1 -j RETURN
 	$ip6t_n -I PREROUTING $(comment "PSW") -m mark --mark 1 -j RETURN
+
+	filter_direct_node_list > /dev/null 2>&1 &
 
 	echolog "防火墙规则加载完成！"
 }
