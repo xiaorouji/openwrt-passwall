@@ -9,7 +9,10 @@ local LOCAL_GROUP = var["-LOCAL_GROUP"]
 local REMOTE_GROUP = var["-REMOTE_GROUP"]
 local REMOTE_PROXY_SERVER = var["-REMOTE_PROXY_SERVER"]
 local USE_DEFAULT_DNS = var["-USE_DEFAULT_DNS"]
+local REMOTE_DNS = var["-REMOTE_DNS"]
 local TUN_DNS = var["-TUN_DNS"]
+local DNS_MODE = var["-DNS_MODE"]
+local REMOTE_FAKEDNS = var["-REMOTE_FAKEDNS"]
 local TCP_NODE = var["-TCP_NODE"]
 local USE_DIRECT_LIST = var["-USE_DIRECT_LIST"]
 local USE_PROXY_LIST = var["-USE_PROXY_LIST"]
@@ -156,8 +159,8 @@ end
 
 if not REMOTE_GROUP or REMOTE_GROUP == "nil" then
 	REMOTE_GROUP = "passwall_proxy"
-	if TUN_DNS then
-		TUN_DNS = TUN_DNS:gsub("#", ":")
+	if REMOTE_DNS then
+		REMOTE_DNS = REMOTE_DNS:gsub("#", ":")
 	end
 	sys.call('sed -i "/passwall/d" /etc/smartdns/custom.conf >/dev/null 2>&1')
 end
@@ -166,10 +169,10 @@ local proxy_server_name = "passwall-proxy-server"
 config_lines = {
 	"force-qtype-SOA 65",
 	"server 114.114.114.114 -bootstrap-dns",
-	string.format("proxy-server socks5://%s -name %s", REMOTE_PROXY_SERVER, proxy_server_name)
+	DNS_MODE == "socks" and string.format("proxy-server socks5://%s -name %s", REMOTE_PROXY_SERVER, proxy_server_name) or nil
 }
-if true then
-	string.gsub(TUN_DNS, '[^' .. "|" .. ']+', function(w)
+if DNS_MODE == "socks" then
+	string.gsub(REMOTE_DNS, '[^' .. "|" .. ']+', function(w)
 		local server_dns = w
 		local server_param = string.format("server %s -group %s -proxy %s", "%s", REMOTE_GROUP, proxy_server_name)
 		server_param = server_param .. " -exclude-default-group"
@@ -202,10 +205,15 @@ if true then
 		server_param = string.format(server_param, server_dns)
 		table.insert(config_lines, server_param)
 	end)
+	REMOTE_FAKEDNS = 0
+else
+	local server_param = string.format("server %s -group %s -exclude-default-group", TUN_DNS:gsub("#", ":"), REMOTE_GROUP)
+	table.insert(config_lines, server_param)
+	log("  - " .. DNS_MODE:gsub("^%l",string.upper) .. " " .. TUN_DNS .. " -> " .. REMOTE_GROUP)
 end
 
 --设置默认 DNS 分组(托底组)
-local DEFAULT_DNS_GROUP = (USE_DEFAULT_DNS == "direct" and LOCAL_GROUP) or 
+local DEFAULT_DNS_GROUP = (USE_DEFAULT_DNS == "direct" and LOCAL_GROUP) or
                           (USE_DEFAULT_DNS == "remote" and REMOTE_GROUP)
 local only_global = (DEFAULT_PROXY_MODE == "proxy" and CHN_LIST == "0" and USE_GFW_LIST == "0") and 1 --没有启用中国列表和GFW列表时(全局)
 if only_global == 1 then
@@ -388,10 +396,10 @@ if USE_PROXY_LIST == "1" and is_file_nonzero(file_proxy_host) then
 	}
 	if NO_PROXY_IPV6 == "1" then
 		domain_rules_str = domain_rules_str .. " -address #6"
-		domain_rules_str = domain_rules_str .. " " .. set_type .. " " .. table.concat(sets, ",")
+		domain_rules_str = REMOTE_FAKEDNS ~= "1" and (domain_rules_str .. " " .. set_type .. " " .. table.concat(sets, ",")) or domain_rules_str
 	else
 		table.insert(sets, "#6:" .. setflag .. "passwall_black6")
-		domain_rules_str = domain_rules_str .. " -d no " .. set_type .. " " .. table.concat(sets, ",")
+		domain_rules_str = REMOTE_FAKEDNS ~= "1" and (domain_rules_str .. " -d no " .. set_type .. " " .. table.concat(sets, ",")) or domain_rules_str
 	end
 	table.insert(tmp_lines, domain_rules_str)
 	insert_array_after(config_lines, tmp_lines, "#--5")
@@ -412,10 +420,10 @@ if USE_GFW_LIST == "1" and is_file_nonzero(RULES_PATH .. "/gfwlist") then
 	}
 	if NO_PROXY_IPV6 == "1" then
 		domain_rules_str = domain_rules_str .. " -address #6"
-		domain_rules_str = domain_rules_str .. " " .. set_type .. " " .. table.concat(sets, ",")
+		domain_rules_str = REMOTE_FAKEDNS ~= "1" and (domain_rules_str .. " " .. set_type .. " " .. table.concat(sets, ",")) or domain_rules_str
 	else
 		table.insert(sets, "#6:" .. setflag .. "passwall_gfw6")
-		domain_rules_str = domain_rules_str .. " -d no " .. set_type .. " " .. table.concat(sets, ",")
+		domain_rules_str = REMOTE_FAKEDNS ~= "1" and (domain_rules_str .. " -d no " .. set_type .. " " .. table.concat(sets, ",")) or domain_rules_str
 	end
 	table.insert(tmp_lines, domain_rules_str)
 	insert_array_after(config_lines, tmp_lines, "#--1")
@@ -452,10 +460,10 @@ if CHN_LIST ~= "0" and is_file_nonzero(RULES_PATH .. "/chnlist") then
 		}
 		if NO_PROXY_IPV6 == "1" then
 			domain_rules_str = domain_rules_str .. " -address #6"
-			domain_rules_str = domain_rules_str .. " " .. set_type .. " " .. table.concat(sets, ",")
+			domain_rules_str = REMOTE_FAKEDNS ~= "1" and (domain_rules_str .. " " .. set_type .. " " .. table.concat(sets, ",")) or domain_rules_str
 		else
 			table.insert(sets, "#6:" .. setflag .. "passwall_chn6")
-			domain_rules_str = domain_rules_str .. " -d no " .. set_type .. " " .. table.concat(sets, ",")
+			domain_rules_str = REMOTE_FAKEDNS ~= "1" and (domain_rules_str .. " -d no " .. set_type .. " " .. table.concat(sets, ",")) or domain_rules_str
 		end
 		table.insert(tmp_lines, domain_rules_str)
 		insert_array_after(config_lines, tmp_lines, "#--2")
@@ -579,10 +587,14 @@ if uci:get(appname, TCP_NODE, "protocol") == "_shunt" then
 		}
 		if NO_PROXY_IPV6 == "1" then
 			domain_rules_str = domain_rules_str .. " -address #6"
-			domain_rules_str = domain_rules_str .. " " .. set_type .. " " .. table.concat(sets, ",")
+			domain_rules_str = (not only_global and REMOTE_FAKEDNS == "1")
+					and domain_rules_str
+					or (domain_rules_str .. " " .. set_type .. " " .. table.concat(sets, ","))
 		else
 			table.insert(sets, "#6:" .. setflag .. "passwall_shunt6")
-			domain_rules_str = domain_rules_str .. " -d no " .. set_type .. " " .. table.concat(sets, ",")
+			domain_rules_str = (not only_global and REMOTE_FAKEDNS == "1")
+					and domain_rules_str
+					or (domain_rules_str .. " -d no " .. set_type .. " " .. table.concat(sets, ","))
 		end
 		table.insert(tmp_lines, domain_rules_str)
 		insert_array_after(config_lines, tmp_lines, "#--3")
