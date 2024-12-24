@@ -95,10 +95,15 @@ local api = require "luci.passwall.api"
 			if (!response.ok) {
 				throw new Error("备份失败！");
 			}
-			const filename = response.headers.get("X-Backup-Filename") || "passwall-backup.tar.gz";
+			const filename = response.headers.get("X-Backup-Filename");
+			if (!filename) {
+				return;
+			}
 			return response.blob().then(blob => ({ blob, filename }));
 		})
-		.then(({ blob, filename }) => {
+		.then(result => {
+			if (!result) return;
+			const { blob, filename } = result;
 			const url = window.URL.createObjectURL(blob);
 			const a = document.createElement("a");
 			a.href = url;
