@@ -3,6 +3,7 @@ local com = require "luci.passwall.com"
 bin = require "nixio".bin
 fs = require "nixio.fs"
 sys = require "luci.sys"
+libuci = require "uci".cursor()
 uci = require"luci.model.uci".cursor()
 util = require "luci.util"
 datatypes = require "luci.cbi.datatypes"
@@ -28,6 +29,52 @@ function log(...)
 		f:write(result .. "\n")
 		f:close()
 	end
+end
+
+function uci_set_list(cursor, config, section, option, value)
+	if config and section and option then
+		if not value or #value == 0 then
+			return cursor:delete(config, section, option)
+		end
+		return cursor:set(
+			config, section, option,
+			( type(value) == "table" and value or { value } )
+		)
+	end
+	return false
+end
+
+function uci_section(cursor, config, type, name, values)
+	local stat = true
+	if name then
+		stat = cursor:set(config, name, type)
+	else
+		name = cursor:add(config, type)
+		stat = name and true
+	end
+
+	return stat and name
+end
+
+function sh_uci_get(config, section, option)
+	exec_call(string.format("uci -q get %s.%s.%s", config, section, option))
+	exec_call(string.format("uci -q commit %s", config))
+end
+
+function sh_uci_set(config, section, option, val)
+	exec_call(string.format("uci -q set %s.%s.%s=\"%s\"", config, section, option, val))
+	exec_call(string.format("uci -q commit %s", config))
+end
+
+function sh_uci_del(config, section, option)
+	exec_call(string.format("uci -q delete %s.%s.%s", config, section, option))
+	exec_call(string.format("uci -q commit %s", config))
+end
+
+function sh_uci_add_list(config, section, option, val)
+	exec_call(string.format("uci -q del_list %s.%s.%s=\"%s\"", config, section, option, val))
+	exec_call(string.format("uci -q add_list %s.%s.%s=\"%s\"", config, section, option, val))
+	exec_call(string.format("uci -q commit %s", config))
 end
 
 function set_cache_var(key, val)
