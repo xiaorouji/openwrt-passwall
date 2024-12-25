@@ -92,7 +92,7 @@ local function curl(url, file, valifile)
 	if valifile then
 		args[#args + 1] = "--dump-header " .. valifile
 	end
-	local return_code, result = api.curl_logic(url, nil, args)
+	local return_code, result = api.curl_auto(url, nil, args)
 	return tonumber(result)
 end
 
@@ -285,7 +285,7 @@ end
 local function fetch_geoip()
 	--请求geoip
 	xpcall(function()
-		local return_code, content = api.curl_logic(geoip_api)
+		local return_code, content = api.curl_auto(geoip_api)
 		local json = jsonc.parse(content)
 		if json.tag_name and json.assets then
 			for _, v in ipairs(json.assets) do
@@ -336,7 +336,7 @@ end
 local function fetch_geosite()
 	--请求geosite
 	xpcall(function()
-		local return_code, content = api.curl_logic(geosite_api)
+		local return_code, content = api.curl_auto(geosite_api)
 		local json = jsonc.parse(content)
 		if json.tag_name and json.assets then
 			for _, v in ipairs(json.assets) do
