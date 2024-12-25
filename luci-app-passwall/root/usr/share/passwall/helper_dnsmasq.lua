@@ -505,11 +505,14 @@ function add_rule(var)
 				end
 				if fwd_dns then
 					local sets = {
-						setflag_4 .. "passwall_chn"
+						setflag_4 .. "passwall_chn",
+						setflag_6 .. "passwall_chn6"
 					}
 					if CHN_LIST == "proxy" then
-						if NO_PROXY_IPV6 ~= "1" then
-							table.insert(sets, setflag_6 .. "passwall_chn6")
+						if NO_PROXY_IPV6 == "1" then
+							sets = {
+								setflag_4 .. "passwall_chn"
+							}
 						end
 						if REMOTE_FAKEDNS == "1" then
 							sets = {}
