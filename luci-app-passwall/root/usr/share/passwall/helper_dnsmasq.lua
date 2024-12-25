@@ -1,6 +1,6 @@
 local api = require "luci.passwall.api"
 local appname = "passwall"
-local uci = api.uci
+local uci = api.libuci
 local sys = api.sys
 local fs = api.fs
 local datatypes = api.datatypes
@@ -46,7 +46,7 @@ local function restore_servers()
 		uci:commit(appname)
 	end
 	if dns_table and #dns_table > 0 then
-		uci:set_list("dhcp", "@dnsmasq[0]", "server", dns_table)
+		api.uci_set_list(uci, "dhcp", "@dnsmasq[0]", "server", dns_table)
 		uci:commit("dhcp")
 	end
 end
@@ -102,7 +102,7 @@ function logic_restart(var)
 					tinsert(dns_table, v)
 				end
 			end
-			uci:set_list("dhcp", "@dnsmasq[0]", "server", dns_table)
+			api.uci_set_list(uci, "dhcp", "@dnsmasq[0]", "server", dns_table)
 			uci:commit("dhcp")
 		end
 		sys.call("/etc/init.d/dnsmasq restart >/dev/null 2>&1")
