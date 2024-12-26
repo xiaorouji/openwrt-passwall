@@ -1490,7 +1490,8 @@ start_dns() {
 			else
 				local china_ng_listen_port=${dns_listen_port}
 				local china_ng_trust_dns=$(config_t_get global remote_dns_dot "tls://dns.google@8.8.4.4")
-				ln_run "$(first_type chinadns-ng)" chinadns-ng "/dev/null" -b 127.0.0.1 -l ${china_ng_listen_port} -t ${china_ng_trust_dns} -d gfw
+				[ "$FILTER_PROXY_IPV6" = "1" ] && DNSMASQ_FILTER_PROXY_IPV6=0 && local no_ipv6_trust="-N"
+				ln_run "$(first_type chinadns-ng)" chinadns-ng "/dev/null" -b 127.0.0.1 -l ${china_ng_listen_port} -t ${china_ng_trust_dns} -d gfw ${no_ipv6_trust}
 				echolog "  - ChinaDNS-NG(${TUN_DNS}) -> ${china_ng_trust_dns}"
 
 				local tmp_dot_ip=$(echo "$china_ng_trust_dns" | sed -n 's/.*:\/\/\([^@#]*@\)*\([^@#]*\).*/\2/p')
