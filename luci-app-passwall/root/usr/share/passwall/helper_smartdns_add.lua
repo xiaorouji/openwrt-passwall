@@ -28,7 +28,7 @@ local CACHE_FLAG = "smartdns_" .. FLAG
 local CACHE_DNS_PATH = CACHE_PATH .. "/" .. CACHE_FLAG
 local CACHE_DNS_FILE = CACHE_DNS_PATH .. ".conf"
 
-local uci = api.uci
+local uci = api.libuci
 local sys = api.sys
 local fs = api.fs
 local datatypes = api.datatypes

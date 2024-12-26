@@ -1,12 +1,12 @@
 <%
 local api = require "luci.passwall.api"
 
-local gfwlist_update = api.uci_get_type("global_rules", "gfwlist_update", "1") == "1" and "checked='checked'" or ""
-local chnroute_update = api.uci_get_type("global_rules", "chnroute_update", "1") == "1" and "checked='checked'" or ""
-local chnroute6_update = api.uci_get_type("global_rules", "chnroute6_update", "1") == "1" and "checked='checked'" or ""
-local chnlist_update = api.uci_get_type("global_rules", "chnlist_update", "1") == "1" and "checked='checked'" or ""
-local geoip_update = api.uci_get_type("global_rules", "geoip_update", "1") == "1" and "checked='checked'" or ""
-local geosite_update = api.uci_get_type("global_rules", "geosite_update", "1") == "1" and "checked='checked'" or ""
+local gfwlist_update = api.uci_get_type("@global_rules[0]", "gfwlist_update", "1") == "1" and "checked='checked'" or ""
+local chnroute_update = api.uci_get_type("@global_rules[0]", "chnroute_update", "1") == "1" and "checked='checked'" or ""
+local chnroute6_update = api.uci_get_type("@global_rules[0]", "chnroute6_update", "1") == "1" and "checked='checked'" or ""
+local chnlist_update = api.uci_get_type("@global_rules[0]", "chnlist_update", "1") == "1" and "checked='checked'" or ""
+local geoip_update = api.uci_get_type("@global_rules[0]", "geoip_update", "1") == "1" and "checked='checked'" or ""
+local geosite_update = api.uci_get_type("@global_rules[0]", "geosite_update", "1") == "1" and "checked='checked'" or ""
 -%>
 
 <script type="text/javascript">

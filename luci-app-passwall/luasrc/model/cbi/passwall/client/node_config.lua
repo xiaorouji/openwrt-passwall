@@ -1,7 +1,7 @@
 local api = require "luci.passwall.api"
 local appname = "passwall"
-local uci = api.uci
-local fs = require "nixio.fs"
+local uci = api.libuci
+local fs = api.fs
 local types_dir = "/usr/lib/lua/luci/model/cbi/passwall/client/type/"
 
 if not arg[1] or not uci:get(appname, arg[1]) then

@@ -3,8 +3,6 @@
 ------------------------------------------------
 -- @author William Chan <root@williamchan.me>
 ------------------------------------------------
-require 'nixio'
-require 'luci.model.uci'
 require 'luci.util'
 require 'luci.jsonc'
 require 'luci.sys'
@@ -20,6 +18,7 @@ local split = api.split
 local jsonParse, jsonStringify = luci.jsonc.parse, luci.jsonc.stringify
 local base64Decode = api.base64Decode
 local uci = api.libuci
+local fs = api.fs
 uci:revert(appname)
 
 local has_ss = api.is_finded("ss-redir")
@@ -1505,7 +1504,7 @@ local function update_node(manual)
 	end
 
 	if arg[3] == "cron" then
-		if not nixio.fs.access("/var/lock/" .. appname .. ".lock") then
+		if not fs.access("/var/lock/" .. appname .. ".lock") then
 			luci.sys.call("touch /tmp/lock/" .. appname .. "_cron.lock")
 		end
 	end

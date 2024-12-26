@@ -20,7 +20,7 @@ local TCP_NODE = var["-TCP_NODE"]
 local NFTFLAG = var["-NFTFLAG"]
 local REMOTE_FAKEDNS = var["-REMOTE_FAKEDNS"]
 
-local uci = api.uci
+local uci = api.libuci
 local sys = api.sys
 local fs = api.fs
 local datatypes = api.datatypes

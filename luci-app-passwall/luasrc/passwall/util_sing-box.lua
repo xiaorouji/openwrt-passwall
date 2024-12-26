@@ -1,6 +1,6 @@
 module("luci.passwall.util_sing-box", package.seeall)
 local api = require "luci.passwall.api"
-local uci = api.uci
+local uci = api.libuci
 local sys = api.sys
 local jsonc = api.jsonc
 local appname = "passwall"

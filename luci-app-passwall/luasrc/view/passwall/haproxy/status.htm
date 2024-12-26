@@ -1,6 +1,6 @@
 <%
 local api = require "luci.passwall.api"
-local console_port = api.uci_get_type("global_haproxy", "console_port", "")
+local console_port = api.uci_get_type("@global_haproxy[0]", "console_port", "")
 -%>
 <p id="_status"></p>
 

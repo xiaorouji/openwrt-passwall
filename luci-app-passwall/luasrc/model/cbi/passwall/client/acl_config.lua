@@ -1,6 +1,6 @@
 local api = require "luci.passwall.api"
 local appname = "passwall"
-local uci = api.uci
+local uci = api.libuci
 local sys = api.sys
 local has_singbox = api.finded_com("singbox")
 local has_xray = api.finded_com("xray")

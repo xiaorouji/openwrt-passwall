@@ -8,7 +8,7 @@ end
 
 local appname = "passwall"
 local jsonc = api.jsonc
-local uci = api.uci
+local uci = api.libuci
 
 local type_name = "Xray"
 

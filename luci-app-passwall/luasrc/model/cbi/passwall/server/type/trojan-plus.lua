@@ -6,6 +6,8 @@ if not api.is_finded("trojan-plus") then
 	return
 end
 
+local fs = api.fs
+
 local type_name = "Trojan-Plus"
 
 local option_prefix = "trojan_plus_"
@@ -50,7 +52,7 @@ o.default = m:get(s.section, "tls_certificateFile") or "/etc/config/ssl/" .. arg
 o:depends({ [_n("tls")] = true })
 o.validate = function(self, value, t)
 	if value and value ~= "" then
-		if not nixio.fs.access(value) then
+		if not fs.access(value) then
 			return nil, translate("Can't find this file!")
 		else
 			return value
@@ -64,7 +66,7 @@ o.default = m:get(s.section, "tls_keyFile") or "/etc/config/ssl/" .. arg[1] .. "
 o:depends({ [_n("tls")] = true })
 o.validate = function(self, value, t)
 	if value and value ~= "" then
-		if not nixio.fs.access(value) then
+		if not fs.access(value) then
 			return nil, translate("Can't find this file!")
 		else
 			return value

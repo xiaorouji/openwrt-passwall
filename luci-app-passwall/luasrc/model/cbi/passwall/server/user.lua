@@ -1,5 +1,5 @@
 local api = require "luci.passwall.api"
-local fs = require "nixio.fs"
+local fs = api.fs
 local types_dir = "/usr/lib/lua/luci/model/cbi/passwall/server/type/"
 
 m = Map("passwall_server", translate("Server Config"))

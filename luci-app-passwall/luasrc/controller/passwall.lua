@@ -5,10 +5,10 @@ module("luci.controller.passwall", package.seeall)
 local api = require "luci.passwall.api"
 local appname = "passwall"			-- not available
 local uci = api.libuci		        -- in funtion index()
+local fs = api.fs
 local http = require "luci.http"
 local util = require "luci.util"
 local i18n = require "luci.i18n"
-local fs = require "nixio.fs"
 
 function index()
 	if not nixio.fs.access("/etc/config/passwall") then
@@ -19,6 +19,7 @@ function index()
 	local api = require "luci.passwall.api"
 	local appname = "passwall"			-- global definitions not available
 	local uci = api.libuci		        -- in function index()
+	local fs = api.fs
 	entry({"admin", "services", appname}).dependent = true
 	entry({"admin", "services", appname, "reset_config"}, call("reset_config")).leaf = true
 	entry({"admin", "services", appname, "show"}, call("show_menu")).leaf = true
@@ -36,7 +37,7 @@ function index()
 	entry({"admin", "services", appname, "node_list"}, cbi(appname .. "/client/node_list"), _("Node List"), 2).dependent = true
 	entry({"admin", "services", appname, "node_subscribe"}, cbi(appname .. "/client/node_subscribe"), _("Node Subscribe"), 3).dependent = true
 	entry({"admin", "services", appname, "other"}, cbi(appname .. "/client/other", {autoapply = true}), _("Other Settings"), 92).leaf = true
-	if nixio.fs.access("/usr/sbin/haproxy") then
+	if fs.access("/usr/sbin/haproxy") then
 		entry({"admin", "services", appname, "haproxy"}, cbi(appname .. "/client/haproxy"), _("Load Balancing"), 93).leaf = true
 	end
 	entry({"admin", "services", appname, "app_update"}, cbi(appname .. "/client/app_update"), _("App Update"), 95).leaf = true
@@ -186,10 +187,10 @@ function get_redir_log()
 	local proto = luci.http.formvalue("proto")
 	local path = "/tmp/etc/passwall/acl/" .. name
 	proto = proto:upper()
-	if proto == "UDP" and (uci:get(appname, "@global[0]", "udp_node") or "nil") == "tcp" and not nixio.fs.access(path .. "/" .. proto .. ".log") then
+	if proto == "UDP" and (uci:get(appname, "@global[0]", "udp_node") or "nil") == "tcp" and not fs.access(path .. "/" .. proto .. ".log") then
 		proto = "TCP"
 	end
-	if nixio.fs.access(path .. "/" .. proto .. ".log") then
+	if fs.access(path .. "/" .. proto .. ".log") then
 		local content = luci.sys.exec("cat ".. path .. "/" .. proto .. ".log")
 		content = content:gsub("\n", "<br />")
 		luci.http.write(content)
@@ -201,7 +202,7 @@ end
 function get_socks_log()
 	local name = luci.http.formvalue("name")
 	local path = "/tmp/etc/passwall/SOCKS_" .. name .. ".log"
-	if nixio.fs.access(path) then
+	if fs.access(path) then
 		local content = luci.sys.exec("cat ".. path)
 		content = content:gsub("\n", "<br />")
 		luci.http.write(content)
@@ -453,7 +454,7 @@ end
 
 function server_user_log()
 	local id = luci.http.formvalue("id")
-	if nixio.fs.access("/tmp/etc/passwall_server/" .. id .. ".log") then
+	if fs.access("/tmp/etc/passwall_server/" .. id .. ".log") then
 		local content = luci.sys.exec("cat /tmp/etc/passwall_server/" .. id .. ".log")
 		content = content:gsub("\n", "<br />")
 		luci.http.write(content)

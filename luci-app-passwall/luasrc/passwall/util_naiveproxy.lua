@@ -1,6 +1,6 @@
 module("luci.passwall.util_naiveproxy", package.seeall)
 local api = require "luci.passwall.api"
-local uci = api.uci
+local uci = api.libuci
 local jsonc = api.jsonc
 
 function gen_config(var)

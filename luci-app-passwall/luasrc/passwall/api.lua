@@ -4,7 +4,6 @@ bin = require "nixio".bin
 fs = require "nixio.fs"
 sys = require "luci.sys"
 libuci = require "uci".cursor()
-uci = require"luci.model.uci".cursor()
 util = require "luci.util"
 datatypes = require "luci.cbi.datatypes"
 jsonc = require "luci.jsonc"
@@ -176,7 +175,7 @@ end
 
 function curl_direct(url, file, args)
 	--直连访问
-	local chn_list = uci:get(appname, "@global[0]", "chn_list") or "direct"
+	local chn_list = libuci:get(appname, "@global[0]", "chn_list") or "direct"
 	local Dns = (chn_list == "proxy") and "1.1.1.1" or "223.5.5.5"
 	if not args then args = {} end
 	local tmp_args = clone(args)
@@ -425,7 +424,7 @@ function get_node_name(node_id)
 	if type(node_id) == "table" then
 		e = node_id
 	else
-		e = uci:get_all(appname, node_id)
+		e = libuci:get_all(appname, node_id)
 	end
 	if e then
 		if e.type and e.remarks then
@@ -441,9 +440,9 @@ function get_node_name(node_id)
 end
 
 function get_valid_nodes()
-	local show_node_info = uci_get_type("global_other", "show_node_info") or "0"
+	local show_node_info = uci_get_type("@global_other[0]", "show_node_info", "0")
 	local nodes = {}
-	uci:foreach(appname, "nodes", function(e)
+	libuci:foreach(appname, "nodes", function(e)
 		e.id = e[".name"]
 		if e.type and e.remarks then
 			if e.protocol and (e.protocol == "_balancing" or e.protocol == "_shunt" or e.protocol == "_iface") then
@@ -540,15 +539,7 @@ function gen_short_uuid()
 end
 
 function uci_get_type(type, config, default)
-	local value = uci:get_first(appname, type, config, default) or sys.exec("echo -n $(uci -q get " .. appname .. ".@" .. type .."[0]." .. config .. ")")
-	if (value == nil or value == "") and (default and default ~= "") then
-		value = default
-	end
-	return value
-end
-
-function uci_get_type_id(id, config, default)
-	local value = uci:get(appname, id, config, default) or sys.exec("echo -n $(uci -q get " .. appname .. "." .. id .. "." .. config .. ")")
+	local value = libuci:get(appname, type, config) or default
 	if (value == nil or value == "") and (default and default ~= "") then
 		value = default
 	end
@@ -564,7 +555,7 @@ local function chmod_755(file)
 end
 
 function get_customed_path(e)
-	return uci_get_type("global_app", e .. "_file")
+	return uci_get_type("@global_app[0]", e .. "_file")
 end
 
 function finded_com(e)
@@ -623,7 +614,7 @@ end
 function get_app_path(app_name)
 	if com[app_name] then
 		local def_path = com[app_name].default_path
-		local path = uci_get_type("global_app", app_name:gsub("%-","_") .. "_file")
+		local path = uci_get_type("@global_app[0]", app_name:gsub("%-","_") .. "_file")
 		path = path and (#path>0 and path or def_path) or def_path
 		return path
 	end

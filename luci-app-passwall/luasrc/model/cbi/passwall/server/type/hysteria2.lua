@@ -6,6 +6,8 @@ if not api.finded_com("hysteria") then
 	return
 end
 
+local fs = api.fs
+
 local type_name = "Hysteria2"
 
 local option_prefix = "hysteria2_"
@@ -46,7 +48,7 @@ o = s:option(FileUpload, _n("tls_certificateFile"), translate("Public key absolu
 o.default = m:get(s.section, "tls_certificateFile") or "/etc/config/ssl/" .. arg[1] .. ".pem"
 o.validate = function(self, value, t)
 	if value and value ~= "" then
-		if not nixio.fs.access(value) then
+		if not fs.access(value) then
 			return nil, translate("Can't find this file!")
 		else
 			return value
@@ -59,7 +61,7 @@ o = s:option(FileUpload, _n("tls_keyFile"), translate("Private key absolute path
 o.default = m:get(s.section, "tls_keyFile") or "/etc/config/ssl/" .. arg[1] .. ".key"
 o.validate = function(self, value, t)
 	if value and value ~= "" then
-		if not nixio.fs.access(value) then
+		if not fs.access(value) then
 			return nil, translate("Can't find this file!")
 		else
 			return value
