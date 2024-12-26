@@ -809,7 +809,7 @@ add_firewall_rule() {
 	}
 
 	#屏蔽列表
-	[ "$USE_PROXY_LIST_ALL" = "1" ] && {
+	[ "$USE_BLOCK_LIST_ALL" = "1" ] && {
 		cat $RULES_PATH/block_ip | tr -s "\r\n" "\n" | grep -v "^#" | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e "s/^/add $IPSET_BLOCK &/g" -e "s/$/ timeout 0/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
 		cat $RULES_PATH/block_ip | tr -s "\r\n" "\n" | grep -v "^#" | sed -e "/^$/d" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "s/^/add $IPSET_BLOCK6 &/g" -e "s/$/ timeout 0/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
 		[ "$USE_GEOVIEW" = "1" ] && {

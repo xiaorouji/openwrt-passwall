@@ -886,7 +886,7 @@ add_firewall_rule() {
 	}
 
 	#屏蔽列表
-	[ "$USE_PROXY_LIST_ALL" = "1" ] && {
+	[ "$USE_BLOCK_LIST_ALL" = "1" ] && {
 		insert_nftset $NFTSET_BLOCK "0" $(cat $RULES_PATH/block_ip | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -v "^#" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
 		insert_nftset $NFTSET_BLOCK6 "0" $(cat $RULES_PATH/block_ip | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -v "^#" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
 		[ "$USE_GEOVIEW" = "1" ] && {
