@@ -1,15 +1,12 @@
 local api = require "luci.passwall.api"
 local appname = "passwall"
-local uci = api.libuci
-local fs = api.fs
-local types_dir = "/usr/lib/lua/luci/model/cbi/passwall/client/type/"
-
-if not arg[1] or not uci:get(appname, arg[1]) then
-	luci.http.redirect(api.url("node_list"))
-end
 
 m = Map(appname, translate("Node Config"))
 m.redirect = api.url()
+
+if not arg[1] or not m.uci:get(appname, arg[1]) then
+	luci.http.redirect(api.url("node_list"))
+end
 
 s = m:section(NamedSection, arg[1], "nodes", "")
 s.addremove = false
@@ -67,6 +64,9 @@ if api.is_finded("ipt2socks") then
 		m:set(section, "password", value)
 	end
 end
+
+local fs = api.fs
+local types_dir = "/usr/lib/lua/luci/model/cbi/passwall/client/type/"
 
 local type_table = {}
 for filename in fs.dir(types_dir) do
