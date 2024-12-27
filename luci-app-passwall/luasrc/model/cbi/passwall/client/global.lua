@@ -347,6 +347,7 @@ o:value("180.184.1.1")
 o:value("180.184.2.2")
 o:value("114.114.114.114")
 o:value("114.114.115.115")
+o:value("119.28.28.28")
 o:depends("direct_dns_mode", "tcp")
 
 o = s:taboption("DNS", Value, "direct_dns_dot", translate("Direct DNS DoT"))
@@ -388,7 +389,7 @@ end
 ---- SmartDNS Forward Mode
 if api.is_finded("smartdns") then
 	o = s:taboption("DNS", ListValue, "smartdns_dns_mode", translate("Filter Mode"))
-	o:value("socks", "SOCKS")
+	o:value("socks", "Socks")
 	if has_singbox then
 		o:value("sing-box", "Sing-Box")
 	end

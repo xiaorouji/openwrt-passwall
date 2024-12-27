@@ -9,7 +9,7 @@ local total_lines_text = translate("Total Lines")
 		fetch('<%= api.url("read_rulelist") %>?type=gfw')
 			.then(response => response.text())
 			.then(data => {
-				var total_lines = data.split("\n").length;
+				var total_lines = data.split("\n").filter(line => line.trim() !== "").length;
 				var textarea = document.getElementById('gfw_textarea');
 				textarea.innerHTML = data;
 				//textarea.scrollTop = textarea.scrollHeight;
@@ -22,7 +22,7 @@ local total_lines_text = translate("Total Lines")
 		fetch('<%= api.url("read_rulelist") %>?type=chn')
 			.then(response => response.text())
 			.then(data => {
-				var total_lines = data.split("\n").length;
+				var total_lines = data.split("\n").filter(line => line.trim() !== "").length;
 				var textarea = document.getElementById('chn_textarea');
 				textarea.innerHTML = data;
 				//textarea.scrollTop = textarea.scrollHeight;
@@ -35,7 +35,7 @@ local total_lines_text = translate("Total Lines")
 		fetch('<%= api.url("read_rulelist") %>?type=chnroute')
 			.then(response => response.text())
 			.then(data => {
-				var total_lines = data.split("\n").length;
+				var total_lines = data.split("\n").filter(line => line.trim() !== "").length;
 				var textarea = document.getElementById('chnroute_textarea');
 				textarea.innerHTML = data;
 				//textarea.scrollTop = textarea.scrollHeight;
