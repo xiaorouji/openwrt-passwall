@@ -130,10 +130,8 @@ destroy_nftset() {
 }
 
 gen_nft_tables() {
-	if [ -z "$(nft list tables | grep 'inet passwall')" ]; then
-		local nft_table_file="$TMP_PATH/PSW_TABLE.nft"
-		# Set the correct priority to fit fw4
-		cat > "$nft_table_file" <<-EOF
+	if ! nft list tables | grep -q "^table inet passwall$"; then
+		nft -f - <<-EOF
 		table $NFTABLE_NAME {
 			chain dstnat {
 				type nat hook prerouting priority dstnat - 1; policy accept;
@@ -149,33 +147,23 @@ gen_nft_tables() {
 			}
 		}
 		EOF
-
-		nft -f "$nft_table_file"
-		rm -rf "$nft_table_file"
 	fi
 }
 
 insert_nftset() {
 	local nftset_name="${1}"; shift
 	local timeout_argument="${1}"; shift
-	local defalut_timeout_argument="3650d"
-	local nftset_elements
-
+	local default_timeout_argument="3650d"
 	[ -n "${1}" ] && {
-		if [ "$timeout_argument" == "-1" ]; then
-			nftset_elements=$(echo -e $@ | sed 's/\s/, /g')
-		elif [ "$timeout_argument" == "0" ]; then
-			nftset_elements=$(echo -e $@ | sed "s/\s/ timeout $defalut_timeout_argument, /g" | sed "s/$/ timeout $defalut_timeout_argument/")
-		else
-			nftset_elements=$(echo -e $@ | sed "s/\s/ timeout $timeout_argument, /g" | sed "s/$/ timeout $timeout_argument/")
-		fi
-		mkdir -p $TMP_PATH2/nftset
-		cat > "$TMP_PATH2/nftset/$nftset_name" <<-EOF
-			define $nftset_name = {$nftset_elements}	
-			add element $NFTABLE_NAME $nftset_name \$$nftset_name
+		local nftset_elements
+		case "$timeout_argument" in
+			"-1") nftset_elements=$(echo -e $@ | sed 's/\s/, /g') ;;
+			 "0") nftset_elements=$(echo -e $@ | sed "s/\s/ timeout $default_timeout_argument, /g" | sed "s/$/ timeout $default_timeout_argument/") ;;
+			   *) nftset_elements=$(echo -e $@ | sed "s/\s/ timeout $timeout_argument, /g" | sed "s/$/ timeout $timeout_argument/") ;;
+		esac
+		nft -f - <<-EOF
+			add element $NFTABLE_NAME $nftset_name {$nftset_elements}
 		EOF
-		nft -f "$TMP_PATH2/nftset/$nftset_name"
-		rm -rf "$TMP_PATH2/nftset"
 	}
 }
 
