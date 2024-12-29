@@ -3,11 +3,11 @@
 local api = require "luci.passwall.api"
 local appname = 'passwall'
 local uci = api.libuci
-local ss_type = uci:get(appname, "@global_subscribe[0]", "ss_type") or "shadowsocks-libev"
-local trojan_type = uci:get(appname, "@global_subscribe[0]", "trojan_type") or "trojan-plus"
+local ss_type = uci:get(appname, "@global_subscribe[0]", "ss_type") or "xray"
+local trojan_type = uci:get(appname, "@global_subscribe[0]", "trojan_type") or "xray"
 local vmess_type = uci:get(appname, "@global_subscribe[0]", "vmess_type") or "xray"
 local vless_type = uci:get(appname, "@global_subscribe[0]", "vless_type") or "xray"
-local hysteria2_type = uci:get(appname, "@global_subscribe[0]", "hysteria2_type") or "hysteria2"
+local hysteria2_type = uci:get(appname, "@global_subscribe[0]", "hysteria2_type") or "sing-box"
 -%>
 <script src="<%=resource%>/qrcode.min.js"></script>
 <script type="text/javascript">//<![CDATA[
@@ -795,25 +795,28 @@ local hysteria2_type = uci:get(appname, "@global_subscribe[0]", "hysteria2_type"
 					if (queryParam.security) {
 						if (queryParam.security == "tls") {
 							opt.set(dom_prefix + 'tls', true);
-							opt.set(dom_prefix + 'reality', false)
+							opt.set(dom_prefix + 'reality', false);
 							opt.set(dom_prefix + 'flow', queryParam.flow || '');
-							opt.set(dom_prefix + 'alpn', queryParam.alpn || '');
+							opt.set(dom_prefix + 'alpn', queryParam.alpn || 'default');
 							opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
 							opt.set(dom_prefix + 'tls_allowInsecure', true);
 							if (queryParam.allowinsecure === '0') {
 								opt.set(dom_prefix + 'tls_allowInsecure', false);
 							}
 							if (queryParam.fp && queryParam.fp.trim() != "") {
+								opt.set(dom_prefix + 'utls', true);
 								opt.set(dom_prefix + 'fingerprint', queryParam.fp);
 							}
 						}
 
 						if (queryParam.security == "reality") {
 							opt.set(dom_prefix + 'tls', true);
-							opt.set(dom_prefix + 'reality', true)
+							opt.set(dom_prefix + 'reality', true);
 							opt.set(dom_prefix + 'flow', queryParam.flow || '');
+							opt.set(dom_prefix + 'alpn', queryParam.alpn || 'default');
 							opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
 							if (queryParam.fp && queryParam.fp.trim() != "") {
+								opt.set(dom_prefix + 'utls', true);
 								opt.set(dom_prefix + 'fingerprint', queryParam.fp);
 							}
 							opt.set(dom_prefix + 'reality_publicKey', queryParam.pbk || '');
@@ -1156,25 +1159,28 @@ local hysteria2_type = uci:get(appname, "@global_subscribe[0]", "hysteria2_type"
 			if (queryParam.security) {
 				if (queryParam.security == "tls") {
 					opt.set(dom_prefix + 'tls', true);
-					opt.set(dom_prefix + 'reality', false)
+					opt.set(dom_prefix + 'reality', false);
 					opt.set(dom_prefix + 'flow', queryParam.flow || '');
-					opt.set(dom_prefix + 'alpn', queryParam.alpn || '');
+					opt.set(dom_prefix + 'alpn', queryParam.alpn || 'default');
 					opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
 					opt.set(dom_prefix + 'tls_allowInsecure', true);
 					if (queryParam.allowinsecure === '0') {
 						opt.set(dom_prefix + 'tls_allowInsecure', false);
 					}
 					if (queryParam.fp && queryParam.fp.trim() != "") {
+						opt.set(dom_prefix + 'utls', true);
 						opt.set(dom_prefix + 'fingerprint', queryParam.fp);
 					}
 				}
 
 				if (queryParam.security == "reality") {
 					opt.set(dom_prefix + 'tls', true);
-					opt.set(dom_prefix + 'reality', true)
+					opt.set(dom_prefix + 'reality', true);
 					opt.set(dom_prefix + 'flow', queryParam.flow || '');
+					opt.set(dom_prefix + 'alpn', queryParam.alpn || 'default');
 					opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
 					if (queryParam.fp && queryParam.fp.trim() != "") {
+						opt.set(dom_prefix + 'utls', true);
 						opt.set(dom_prefix + 'fingerprint', queryParam.fp);
 					}
 					opt.set(dom_prefix + 'reality_publicKey', queryParam.pbk || '');
