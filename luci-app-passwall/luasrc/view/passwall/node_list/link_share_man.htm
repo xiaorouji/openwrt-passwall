@@ -936,7 +936,7 @@ local api = require "luci.passwall.api"
 			opt.set(dom_prefix + 'port', m.port || "443");
 			opt.set(dom_prefix + 'password', decodeURIComponent(password));
 
-			queryParam.type = queryParam.type.toLowerCase();
+			queryParam.type = queryParam.type ? queryParam.type.toLowerCase() : "tcp";
 			if (queryParam.type === "kcp" || queryParam.type === "mkcp") {
 				queryParam.type = "mkcp";
 			}
@@ -1000,12 +1000,14 @@ local api = require "luci.passwall.api"
 				opt.set(dom_prefix + 'grpc_mode', queryParam.mode || "gun");
 			}
 
+			queryParam.security = queryParam.security || "tls";
 			opt.set(dom_prefix + 'tls', queryParam.security === "tls");
 			if (queryParam.security === "tls") {
 				var tls_serverName = queryParam.peer;
 				if (queryParam.sni) {
 					tls_serverName = queryParam.sni
 				}
+				tls_serverName = tls_serverName || "";
 				opt.set(dom_prefix + 'tls_serverName', tls_serverName);
 			}
 			if (queryParam.allowinsecure === '1') {
