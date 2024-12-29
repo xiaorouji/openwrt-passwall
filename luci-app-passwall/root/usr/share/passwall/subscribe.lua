@@ -593,7 +593,7 @@ local function processData(szType, content, add_mode, add_from)
 			info = info:sub(1, find_index - 1)
 		end
 
-		local hostInfo = split(base64Decode(info), "@")
+		local hostInfo = split(base64Decode(UrlDecode(info)), "@")
 		if hostInfo and #hostInfo > 0 then
 			local host_port = hostInfo[#hostInfo]
 			-- [2001:4860:4860::8888]:443
