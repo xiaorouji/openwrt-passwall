@@ -333,8 +333,11 @@ o:depends({ [_n("protocol")] = "shadowsocks" })
 o = s:option(Flag, _n("reality"), translate("REALITY"), translate("Only recommend to use with VLESS-TCP-XTLS-Vision."))
 o.default = 0
 o:depends({ [_n("tls")] = true, [_n("transport")] = "raw" })
+o:depends({ [_n("tls")] = true, [_n("transport")] = "ws" })
 o:depends({ [_n("tls")] = true, [_n("transport")] = "h2" })
+o:depends({ [_n("tls")] = true, [_n("transport")] = "quic" })
 o:depends({ [_n("tls")] = true, [_n("transport")] = "grpc" })
+o:depends({ [_n("tls")] = true, [_n("transport")] = "httpupgrade" })
 o:depends({ [_n("tls")] = true, [_n("transport")] = "xhttp" })
 
 o = s:option(ListValue, _n("alpn"), translate("alpn"))
