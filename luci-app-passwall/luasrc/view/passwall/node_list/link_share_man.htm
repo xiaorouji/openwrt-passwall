@@ -766,16 +766,18 @@ local hysteria2_type = uci:get(appname, "@global_subscribe[0]", "hysteria2_type"
 					dom_prefix = "xray_"
 					opt.set('type', "Xray");
 					opt.set(dom_prefix + 'protocol', "shadowsocks");
-					method = method.toLowerCase() === "chacha20-ietf-poly1305" ? "chacha20-poly1305" : method;
 				} else {
 					if (["2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305"].includes(method)) {
 						dom_prefix = "ssrust_"
 						opt.set('type', "SS-Rust");
-						method = method.toLowerCase() === "chacha20-poly1305" ? "chacha20-ietf-poly1305" : method;
 					} else {
 						dom_prefix = "ss_"
 						opt.set('type', "SS");
 					}
+				}
+				if (ss_type !== "xray") {
+					method = method.toLowerCase() === "chacha20-poly1305" ? "chacha20-ietf-poly1305" : method;
+					method = method.toLowerCase() === "xchacha20-poly1305" ? "xchacha20-ietf-poly1305" : method;
 				}
 				opt.set(dom_prefix + 'address', server);
 				opt.set(dom_prefix + 'port', port);
@@ -902,6 +904,10 @@ local hysteria2_type = uci:get(appname, "@global_subscribe[0]", "hysteria2_type"
 				} else {
 					dom_prefix = "ss_"
 					opt.set('type', "SS");
+				}
+				if (ss_type !== "xray") {
+					method = method.toLowerCase() === "chacha20-poly1305" ? "chacha20-ietf-poly1305" : method;
+					method = method.toLowerCase() === "xchacha20-poly1305" ? "xchacha20-ietf-poly1305" : method;
 				}
 				var sstr = b64decsafe(url0);
 				var team = sstr.split('@');

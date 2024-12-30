@@ -246,7 +246,9 @@ function gen_outbound(flag, node, tag, proxy_table)
 					{
 						address = node.address,
 						port = tonumber(node.port),
-						method = node.method or nil,
+						method = (node.method == "chacha20-ietf-poly1305" and "chacha20-poly1305") or
+							(node.method == "xchacha20-ietf-poly1305" and "xchacha20-poly1305") or
+							(node.method ~= "" and node.method) or nil,
 						ivCheck = (node.protocol == "shadowsocks") and node.iv_check == "1" or nil,
 						uot = (node.protocol == "shadowsocks") and node.uot == "1" or nil,
 						password = node.password or "",
