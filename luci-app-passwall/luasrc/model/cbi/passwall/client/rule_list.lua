@@ -271,7 +271,7 @@ o.remove = function(self, section, value)
 	fs.writefile(hosts, "")
 end
 
-if api.fs.access(gfwlist_path) then
+if fs.access(gfwlist_path) then
 	s:tab("gfw_list", translate("GFW List"))
 	o = s:taboption("gfw_list", DummyValue, "_gfw_fieldset")
 	o.rawhtml = true
@@ -284,7 +284,7 @@ if api.fs.access(gfwlist_path) then
 	]], translate("Read List"))
 end
 
-if api.fs.access(chnlist_path) then
+if fs.access(chnlist_path) then
 	s:tab("chn_list", translate("China List") .. "(" .. translate("Domain") .. ")")
 	o = s:taboption("chn_list", DummyValue, "_chn_fieldset")
 	o.rawhtml = true
@@ -297,7 +297,7 @@ if api.fs.access(chnlist_path) then
 	]], translate("Read List"))
 end
 
-if api.fs.access(chnroute_path) then
+if fs.access(chnroute_path) then
 	s:tab("chnroute_list", translate("China List") .. "(IP)")
 	o = s:taboption("chnroute_list", DummyValue, "_chnroute_fieldset")
 	o.rawhtml = true

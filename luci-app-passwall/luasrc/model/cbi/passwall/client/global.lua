@@ -1,12 +1,12 @@
 local api = require "luci.passwall.api"
 local appname = "passwall"
-local uci = api.libuci
 local datatypes = api.datatypes
+local fs = api.fs
 local has_singbox = api.finded_com("singbox")
 local has_xray = api.finded_com("xray")
-local has_gfwlist = api.fs.access("/usr/share/passwall/rules/gfwlist")
-local has_chnlist = api.fs.access("/usr/share/passwall/rules/chnlist")
-local has_chnroute = api.fs.access("/usr/share/passwall/rules/chnroute")
+local has_gfwlist = fs.access("/usr/share/passwall/rules/gfwlist")
+local has_chnlist = fs.access("/usr/share/passwall/rules/chnlist")
+local has_chnroute = fs.access("/usr/share/passwall/rules/chnroute")
 local chinadns_tls = os.execute("chinadns-ng -V | grep -i wolfssl >/dev/null")
 
 m = Map(appname)
@@ -37,13 +37,13 @@ end
 
 local socks_list = {}
 
-local tcp_socks_server = "127.0.0.1" .. ":" .. (uci:get(appname, "@global[0]", "tcp_node_socks_port") or "1070")
+local tcp_socks_server = "127.0.0.1" .. ":" .. (m.uci:get(appname, "@global[0]", "tcp_node_socks_port") or "1070")
 local socks_table = {}
 socks_table[#socks_table + 1] = {
 	id = tcp_socks_server,
 	remark = tcp_socks_server .. " - " .. translate("TCP Node")
 }
-uci:foreach(appname, "socks", function(s)
+m.uci:foreach(appname, "socks", function(s)
 	if s.enabled == "1" and s.node then
 		local id, remark
 		for k, n in pairs(nodes_table) do
@@ -199,7 +199,7 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 				type:depends("tcp_node", "__hide") --不存在的依赖，即始终隐藏
 			end
 
-			uci:foreach(appname, "shunt_rules", function(e)
+			m.uci:foreach(appname, "shunt_rules", function(e)
 				local id = e[".name"]
 				local node_option = vid .. "-" .. id .. "_node"
 				if id and e.remarks then
@@ -594,7 +594,7 @@ o = s:taboption("DNS", Flag, "dns_redirect", translate("DNS Redirect"), translat
 o.default = "1"
 o.rmempty = false
 
-if (uci:get(appname, "@global_forwarding[0]", "use_nft") or "0") == "1" then
+if (m.uci:get(appname, "@global_forwarding[0]", "use_nft") or "0") == "1" then
 	o = s:taboption("DNS", Button, "clear_ipset", translate("Clear NFTSET"), translate("Try this feature if the rule modification does not take effect."))
 else
 	o = s:taboption("DNS", Button, "clear_ipset", translate("Clear IPSET"), translate("Try this feature if the rule modification does not take effect."))
@@ -729,7 +729,7 @@ o.rmempty = false
 o = s2:option(ListValue, "node", translate("Socks Node"))
 
 local n = 1
-uci:foreach(appname, "socks", function(s)
+m.uci:foreach(appname, "socks", function(s)
 	if s[".name"] == section then
 		return false
 	end

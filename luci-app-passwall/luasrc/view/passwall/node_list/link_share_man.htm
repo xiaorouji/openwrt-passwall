@@ -2,7 +2,7 @@
 <%
 local api = require "luci.passwall.api"
 local appname = 'passwall'
-local uci = api.libuci
+local uci = self.map.uci
 local ss_type = uci:get(appname, "@global_subscribe[0]", "ss_type") or "xray"
 local trojan_type = uci:get(appname, "@global_subscribe[0]", "trojan_type") or "xray"
 local vmess_type = uci:get(appname, "@global_subscribe[0]", "vmess_type") or "xray"

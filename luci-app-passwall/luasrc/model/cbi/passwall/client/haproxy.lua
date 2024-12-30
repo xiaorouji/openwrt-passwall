@@ -1,8 +1,7 @@
 local api = require "luci.passwall.api"
 local appname = "passwall"
-local sys = api.sys
-local net = require "luci.model.network".init()
 local datatypes = api.datatypes
+local net = require "luci.model.network".init()
 
 local nodes_table = {}
 for k, e in ipairs(api.get_valid_nodes()) do

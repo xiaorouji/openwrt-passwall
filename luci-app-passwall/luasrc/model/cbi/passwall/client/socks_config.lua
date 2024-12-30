@@ -1,6 +1,5 @@
 local api = require "luci.passwall.api"
 local appname = "passwall"
-local uci = api.libuci
 local has_singbox = api.finded_com("singbox")
 local has_xray = api.finded_com("xray")
 
@@ -23,7 +22,7 @@ o.rmempty = false
 local auto_switch_tip
 local current_node = api.get_cache_var("socks_" .. arg[1])
 if current_node then
-	local n = uci:get_all(appname, current_node)
+	local n = m.uci:get_all(appname, current_node)
 	if n then
 		if tonumber(m:get(arg[1], "enable_autoswitch") or 0) == 1 then
 			if n then
@@ -44,7 +43,7 @@ o = s:option(Flag, "bind_local", translate("Bind Local"), translate("When select
 o.default = "0"
 
 local n = 1
-uci:foreach(appname, "socks", function(s)
+m.uci:foreach(appname, "socks", function(s)
 	if s[".name"] == section then
 		return false
 	end
