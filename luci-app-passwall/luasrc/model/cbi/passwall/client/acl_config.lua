@@ -418,4 +418,6 @@ o:value("direct", translate("Direct DNS"))
 o.description = desc .. "</ul>"
 o:depends({dns_shunt = "dnsmasq", tcp_proxy_mode = "proxy", chn_list = "direct"})
 
+m:append(Template(appname .. "/acl/footer"))
+
 return m
