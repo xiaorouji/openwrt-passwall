@@ -655,10 +655,20 @@ function gen_config(var)
 				}
 			}
 			if inbound.sniffing.enabled == true then
-				inbound.sniffing.destOverride = {"http", "tls", "quic", (remote_dns_fake) and "fakedns"}
+				inbound.sniffing.destOverride = {"http", "tls", "quic"}
 				inbound.sniffing.metadataOnly = false
 				inbound.sniffing.routeOnly = xray_settings.sniffing_override_dest ~= "1" or nil
 				inbound.sniffing.domainsExcluded = xray_settings.sniffing_override_dest == "1" and get_domain_excluded() or nil
+			end
+			if remote_dns_fake then
+				inbound.sniffing.enabled = true
+				if not inbound.sniffing.destOverride then
+					inbound.sniffing.destOverride = {"fakedns"}
+					inbound.sniffing.metadataOnly = true
+				else
+					table.insert(inbound.sniffing.destOverride, "fakedns")
+					inbound.sniffing.metadataOnly = false
+				end
 			end
 
 			if tcp_redir_port then
