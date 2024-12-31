@@ -4,7 +4,7 @@ local appname = "passwall"
 m = Map(appname, translate("Node Config"))
 m.redirect = api.url()
 
-if not arg[1] or not m.uci:get(appname, arg[1]) then
+if not arg[1] or not m:get(arg[1]) then
 	luci.http.redirect(api.url("node_list"))
 end
 
