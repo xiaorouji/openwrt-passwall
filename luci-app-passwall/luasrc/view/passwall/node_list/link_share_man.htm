@@ -893,6 +893,11 @@ local hysteria2_type = uci:get(appname, "@global_subscribe[0]", "hysteria2_type"
 					}
 				}
 			} else {
+				var sstr = b64decsafe(decodeURIComponent(url0));
+				var team = sstr.split('@');
+				var part1 = team[0].split(':');
+				var part2 = team[1].split(':');
+				var method = part1[0];
 				if (ss_type == "sing-box" && has_singbox) {
 					dom_prefix = "singbox_"
 					opt.set('type', "sing-box");
@@ -909,15 +914,11 @@ local hysteria2_type = uci:get(appname, "@global_subscribe[0]", "hysteria2_type"
 					method = method.toLowerCase() === "chacha20-poly1305" ? "chacha20-ietf-poly1305" : method;
 					method = method.toLowerCase() === "xchacha20-poly1305" ? "xchacha20-ietf-poly1305" : method;
 				}
-				var sstr = b64decsafe(url0);
-				var team = sstr.split('@');
-				var part1 = team[0].split(':');
-				var part2 = team[1].split(':');
 				opt.set(dom_prefix + 'address', part2[0]);
 				opt.set(dom_prefix + 'port', part2[1]);
 				opt.set(dom_prefix + 'password', part1[1]);
-				opt.set(dom_prefix + 'method', part1[0]);
-				opt.set(dom_prefix + 'ss_method', part1[0]);
+				opt.set(dom_prefix + 'method', method);
+				opt.set(dom_prefix + 'ss_method', method);
 				opt.set(dom_prefix + 'plugin', "none");
 				//opt.set(dom_prefix + 'plugin_opts', "");
 				if (param !== undefined) {
