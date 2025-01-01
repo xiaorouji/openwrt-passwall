@@ -296,7 +296,10 @@ ln_run() {
 	fi
 	#echo "${file_func} $*" >&2
 	[ -n "${file_func}" ] || echolog "  - 找不到 ${ln_name}，无法启动..."
-	[ "${output}" != "/dev/null" ] && local persist_log_path=$(config_t_get global persist_log_path) && local sys_log=$(config_t_get global sys_log "0")
+	[ "${output}" != "/dev/null" ] && [ "${ln_name}" != "chinadns-ng" ] && {
+		local persist_log_path=$(config_t_get global persist_log_path)
+		local sys_log=$(config_t_get global sys_log "0")
+	}
 	if [ -z "$persist_log_path" ] && [ "$sys_log" != "1" ]; then
 		${file_func:-echolog " - ${ln_name}"} "$@" >${output} 2>&1 &
 	else
@@ -570,13 +573,14 @@ run_chinadns_ng() {
 	eval_set_val $@
 
 	local _CONF_FILE=$TMP_ACL_PATH/$_flag/chinadns_ng.conf
-	local _LOG_FILE=$TMP_ACL_PATH/$_flag/chinadns_ng.log
-	_LOG_FILE="/dev/null"
+	local _LOG_FILE="/dev/null"
+	[ "$(config_t_get global log_chinadns_ng "0")" == "1" ] &&  _LOG_FILE=$TMP_ACL_PATH/$_flag/chinadns_ng.log
 
 	_extra_param="-FLAG ${_flag} -TCP_NODE ${_tcp_node} -LISTEN_PORT ${_listen_port} -DNS_LOCAL ${_dns_local} -DNS_TRUST ${_dns_trust}"
 	_extra_param="${_extra_param} -USE_DIRECT_LIST ${_use_direct_list} -USE_PROXY_LIST ${_use_proxy_list} -USE_BLOCK_LIST ${_use_block_list}"
 	_extra_param="${_extra_param} -GFWLIST ${_gfwlist} -CHNLIST ${_chnlist} -NO_IPV6_TRUST ${_no_ipv6_trust} -DEFAULT_MODE ${_default_mode}"
 	_extra_param="${_extra_param} -DEFAULT_TAG ${_default_tag} -NFTFLAG ${nftflag} -NO_LOGIC_LOG ${_no_logic_log} -REMOTE_FAKEDNS ${_remote_fakedns}"
+	_extra_param="${_extra_param} -LOG_FILE ${_LOG_FILE}"
 
 	lua $APP_PATH/helper_chinadns_add.lua ${_extra_param} > ${_CONF_FILE}
 	ln_run "$(first_type chinadns-ng)" chinadns-ng "${_LOG_FILE}" -C ${_CONF_FILE}

@@ -148,5 +148,33 @@ local api = require "luci.passwall.api"
 	}
 	setTimeout("go()", 1000);
 
+	document.addEventListener("DOMContentLoaded", function () {
+		setTimeout(function () {
+			var selects = document.querySelectorAll("select[id*='dns_shunt']");
+			selects.forEach(function (select, index) {
+				if (select.value === "chinadns-ng") {
+					addLogLink(select);
+				}
+				select.addEventListener("change", function () {
+					var existingLogLink = select.parentElement.querySelector("a.log-link");
+					if (existingLogLink) {
+						existingLogLink.remove();
+					}
+					if (select.value === "chinadns-ng") {
+						addLogLink(select);
+					}
+				});
+			});
+			function addLogLink(select) {
+				var logLink = document.createElement("a");
+				logLink.innerHTML = "<%:Log%>";
+				logLink.href = "#";
+				logLink.className = "log-link";
+				logLink.style.marginLeft = "10px";
+				logLink.setAttribute("onclick", "window.open('" + '<%=api.url("get_chinadns_log")%>' + "?flag=default', '_blank')");
+				select.insertAdjacentElement("afterend", logLink);
+			}
+		}, 1000);
+	});
 	//]]>
 </script>

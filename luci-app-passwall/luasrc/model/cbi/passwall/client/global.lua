@@ -660,11 +660,11 @@ end
 
 s:tab("log", translate("Log"))
 o = s:taboption("log", Flag, "log_tcp", translate("Enable") .. " " .. translatef("%s Node Log", "TCP"))
-o.default = "1"
+o.default = "0"
 o.rmempty = false
 
 o = s:taboption("log", Flag, "log_udp", translate("Enable") .. " " .. translatef("%s Node Log", "UDP"))
-o.default = "1"
+o.default = "0"
 o.rmempty = false
 
 o = s:taboption("log", ListValue, "loglevel", "Sing-Box/Xray " .. translate("Log Level"))
@@ -694,8 +694,17 @@ o:depends("advanced_log_feature", "1")
 o = s:taboption("log", Value, "log_event_cmd", translate("Shell Command"), translate("Shell command to execute, replace log content with %s."))
 o:depends("advanced_log_feature", "1")
 
-s:tab("faq", "FAQ")
+o = s:taboption("log", Flag, "log_chinadns_ng", translate("Enable") .. " ChinaDNS-NG " .. translate("Log"))
+o.default = "0"
+o.rmempty = false
 
+o = s:taboption("log", DummyValue, "_log_tips", " ")
+o.rawhtml = true
+o.cfgvalue = function(t, n)
+	return string.format('<font color="red">%s</font>', translate("It is recommended to disable logging during regular use to reduce system overhead."))
+end
+
+s:tab("faq", "FAQ")
 o = s:taboption("faq", DummyValue, "")
 o.template = appname .. "/global/faq"
 

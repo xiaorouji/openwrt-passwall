@@ -21,10 +21,11 @@ config global
 	option localhost_proxy '1'
 	option client_proxy '1'
 	option acl_enable '0'
-	option log_tcp '1'
-	option log_udp '1'
+	option log_tcp '0'
+	option log_udp '0'
 	option loglevel 'error'
 	option trojan_loglevel '4'
+	option log_chinadns_ng '0'
 
 config global_haproxy
 	option balancing_enable '0'
