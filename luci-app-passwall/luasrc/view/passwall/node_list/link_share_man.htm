@@ -829,10 +829,10 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 					}
 
 					queryParam.type = queryParam.type.toLowerCase();
-					if (queryParam.type === "kcp" || queryParam.type === "mkcp") {
+					if (queryParam.type === "kcp") {
 						queryParam.type = "mkcp";
 					}
-					if (queryParam.type === "h2" || queryParam.type === "http") {
+					if (queryParam.type === "h2") {
 						queryParam.type = "http";
 					}
 					if (dom_prefix == "singbox_" && queryParam.type === "raw") {
@@ -872,7 +872,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 								opt.set(dom_prefix + 'ws_earlyDataHeaderName', 'Sec-WebSocket-Protocol');
 							}
 						}
-					} else if (queryParam.type === "h2" || queryParam.type === "http") {
+					} else if (queryParam.type === "http") {
 						if (dom_prefix == "xray_") {
 							opt.set(dom_prefix + 'xhttp_mode', "stream-one");
 							opt.set(dom_prefix + 'xhttp_host', queryParam.host || "");
@@ -885,7 +885,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 						opt.set(dom_prefix + 'quic_guise', queryParam.headerType || "none");
 						opt.set(dom_prefix + 'quic_security', queryParam.quicSecurity);
 						opt.set(dom_prefix + 'quic_key', queryParam.key);
-					} else if (queryParam.type === "kcp" || queryParam.type === "mkcp") {
+					} else if (queryParam.type === "mkcp") {
 						opt.set(dom_prefix + 'mkcp_guise', queryParam.headerType || "none");
 					} else if (queryParam.type === "grpc") {
 						opt.set(dom_prefix + 'grpc_serviceName', (queryParam.serviceName || queryParam.path) || "");
@@ -961,10 +961,10 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 			opt.set(dom_prefix + 'password', decodeURIComponent(password));
 
 			queryParam.type = queryParam.type ? queryParam.type.toLowerCase() : "tcp";
-			if (queryParam.type === "kcp" || queryParam.type === "mkcp") {
+			if (queryParam.type === "kcp") {
 				queryParam.type = "mkcp";
 			}
-			if (queryParam.type === "h2" || queryParam.type === "http") {
+			if (queryParam.type === "h2") {
 				queryParam.type = "http";
 			}
 			if (dom_prefix == "singbox_" && queryParam.type === "raw") {
@@ -1004,7 +1004,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 						opt.set(dom_prefix + 'ws_earlyDataHeaderName', 'Sec-WebSocket-Protocol');
 					}
 				}
-			} else if (queryParam.type === "h2" || queryParam.type === "http") {
+			} else if (queryParam.type === "http") {
 				if (dom_prefix == "xray_") {
 					opt.set(dom_prefix + 'xhttp_mode', "stream-one");
 					opt.set(dom_prefix + 'xhttp_host', queryParam.host || "");
@@ -1017,7 +1017,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 				opt.set(dom_prefix + 'quic_guise', queryParam.headerType || "none");
 				opt.set(dom_prefix + 'quic_security', queryParam.quicSecurity);
 				opt.set(dom_prefix + 'quic_key', queryParam.key);
-			} else if (queryParam.type === "kcp" || queryParam.type === "mkcp") {
+			} else if (queryParam.type === "mkcp") {
 				opt.set(dom_prefix + 'mkcp_guise', queryParam.headerType || "none");
 			} else if (queryParam.type === "grpc") {
 				opt.set(dom_prefix + 'grpc_serviceName', (queryParam.serviceName || queryParam.path) || "");
@@ -1198,11 +1198,14 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 			}
 
 			queryParam.type = queryParam.type.toLowerCase();
-			if (queryParam.type === "kcp" || queryParam.type === "mkcp") {
+			if (queryParam.type === "kcp") {
 				queryParam.type = "mkcp";
 			}
-			if (queryParam.type === "h2" || queryParam.type === "http") {
+			if (queryParam.type === "h2") {
 				queryParam.type = "http";
+			}
+			if (queryParam.type === "splithttp") {
+				queryParam.type = "xhttp";
 			}
 			if (dom_prefix == "singbox_" && queryParam.type === "raw") {
 				queryParam.type = "tcp";
@@ -1259,7 +1262,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 			} else if (queryParam.type === "grpc") {
 				opt.set(dom_prefix + 'grpc_serviceName', (queryParam.serviceName || queryParam.path) || "");
 				opt.set(dom_prefix + 'grpc_mode', queryParam.mode || "gun");
-			} else if (queryParam.type === "xhttp" || queryParam.type === "splithttp") {
+			} else if (queryParam.type === "xhttp") {
 				opt.set(dom_prefix + 'xhttp_host', queryParam.host || "");
 				opt.set(dom_prefix + 'xhttp_path', queryParam.path || "");
 				opt.set(dom_prefix + 'xhttp_mode', queryParam.mode || "auto");

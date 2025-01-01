@@ -465,6 +465,7 @@ local function processData(szType, content, add_mode, add_from)
 		elseif result.type == "Xray" and info.net == "tcp" then
 			info.net = "raw"
 		end
+		if info.net == "splithttp" then info.net = "xhttp" end
 		if info.net == 'h2' or info.net == 'http' then
 			info.net = "http"
 			result.transport = (result.type == "Xray") and "xhttp" or "http"
@@ -527,7 +528,7 @@ local function processData(szType, content, add_mode, add_from)
 		if info.net == 'grpc' then
 			result.grpc_serviceName = info.path
 		end
-		if info.net == 'xhttp' or info.net == 'splithttp' then
+		if info.net == 'xhttp' then
 			result.xhttp_host = info.host
 			result.xhttp_path = info.path
 		end
@@ -974,6 +975,7 @@ local function processData(szType, content, add_mode, add_from)
 			elseif result.type == "Xray" and params.type == "tcp" then
 				params.type = "raw"
 			end
+			if params.type == "splithttp" then params.type = "xhttp" end
 			if params.type == "h2" or params.type == "http" then
 				params.type = "http"
 				result.transport = (result.type == "Xray") and "xhttp" or "http"
@@ -1037,7 +1039,7 @@ local function processData(szType, content, add_mode, add_from)
 				if params.serviceName then result.grpc_serviceName = params.serviceName end
 				result.grpc_mode = params.mode or "gun"
 			end
-			if params.type == 'xhttp' or params.type == 'splithttp' then
+			if params.type == 'xhttp' then
 				result.xhttp_host = params.host
 				result.xhttp_path = params.path
 				result.xhttp_mode = params.mode or "auto"
