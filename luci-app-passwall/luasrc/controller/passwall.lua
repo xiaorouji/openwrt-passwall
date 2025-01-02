@@ -289,6 +289,12 @@ function connect_status()
 	local gfw_list = uci:get(appname, "@global[0]", "use_gfw_list") or "1"
 	local proxy_mode = uci:get(appname, "@global[0]", "tcp_proxy_mode") or "proxy"
 	local socks_server = api.get_cache_var("GLOBAL_TCP_SOCKS_server")
+
+	-- 兼容 curl 8.6 time_starttransfer 错误
+	local curl_ver = luci.sys.exec("curl -V 2>/dev/null | head -n 1 | awk '{print $2}' | cut -d. -f1,2") or "0"
+	url = (curl_ver == "8.6") and "-w %{http_code}:%{time_appconnect} https://" .. url
+		or "-w %{http_code}:%{time_starttransfer} http://" .. url
+
 	if socks_server and socks_server ~= "" then
 		if (chn_list == "proxy" and gfw_list == "0" and proxy_mode ~= "proxy" and baidu ~= nil) or (chn_list == "0" and gfw_list == "0" and proxy_mode == "proxy") then
 		-- 中国列表+百度 or 全局
@@ -298,7 +304,7 @@ function connect_status()
 			url = "-x socks5h://" .. socks_server .. " " .. url
 		end
 	end
-	local result = luci.sys.exec('curl --connect-timeout 3 -o /dev/null -I -sk -w "%{http_code}:%{time_appconnect}" ' .. url)
+	local result = luci.sys.exec('curl --connect-timeout 3 -o /dev/null -I -sk ' .. url)
 	local code = tonumber(luci.sys.exec("echo -n '" .. result .. "' | awk -F ':' '{print $1}'") or "0")
 	if code ~= 0 then
 		local use_time = luci.sys.exec("echo -n '" .. result .. "' | awk -F ':' '{print $2}'")
