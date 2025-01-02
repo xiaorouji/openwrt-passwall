@@ -1,6 +1,6 @@
 module("luci.passwall.util_tuic", package.seeall)
 local api = require "luci.passwall.api"
-local uci = api.libuci
+local uci = api.uci
 local json = api.jsonc
 
 function gen_config(var)

@@ -4,7 +4,7 @@ local api = require ("luci.passwall.api")
 local appname = "passwall"
 local fs = api.fs
 local jsonc = api.jsonc
-local uci = api.libuci
+local uci = api.uci
 local sys = api.sys
 
 local log = function(...)

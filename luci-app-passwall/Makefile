@@ -1,5 +1,5 @@
 # Copyright (C) 2018-2020 L-WRT Team
-# Copyright (C) 2021-2023 xiaorouji
+# Copyright (C) 2021-2025 xiaorouji
 #
 # This is free software, licensed under the GNU General Public License v3.
 

@@ -1,6 +1,6 @@
 module("luci.passwall.util_xray", package.seeall)
 local api = require "luci.passwall.api"
-local uci = api.libuci
+local uci = api.uci
 local sys = api.sys
 local jsonc = api.jsonc
 local appname = "passwall"

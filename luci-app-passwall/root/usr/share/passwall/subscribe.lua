@@ -1312,7 +1312,7 @@ local function truncate_nodes(add_from)
 			end
 		end
 	end)
-	uci:commit(appname)
+	api.uci_save(uci, appname, true)
 end
 
 local function select_node(nodes, config)
@@ -1464,7 +1464,7 @@ local function update_node(manual)
 			end
 		end
 	end
-	uci:commit(appname)
+	api.uci_save(uci, appname, true)
 
 	if next(CONFIG) then
 		local nodes = {}
@@ -1499,7 +1499,7 @@ local function update_node(manual)
 		end
 		]]--
 
-		uci:commit(appname)
+		api.uci_save(uci, appname, true)
 	end
 
 	if arg[3] == "cron" then

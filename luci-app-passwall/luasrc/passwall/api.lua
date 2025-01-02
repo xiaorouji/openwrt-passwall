@@ -3,6 +3,7 @@ local com = require "luci.passwall.com"
 bin = require "nixio".bin
 fs = require "nixio.fs"
 sys = require "luci.sys"
+uci = require "luci.model.uci".cursor()
 libuci = require "uci".cursor()
 util = require "luci.util"
 datatypes = require "luci.cbi.datatypes"
@@ -30,6 +31,10 @@ function log(...)
 	end
 end
 
+function is_js_luci()
+	return sys.call('[ -f "/www/luci-static/resources/uci.js" ]') == 0
+end
+
 function uci_set_list(cursor, config, section, option, value)
 	if config and section and option then
 		if not value or #value == 0 then
@@ -55,24 +60,48 @@ function uci_section(cursor, config, type, name, values)
 	return stat and name
 end
 
+function uci_save(cursor, config, commit, apply)
+	if is_js_luci() then
+		commit = true
+		if commit then
+			if apply then
+				cursor:commit(config)
+			else
+				sh_uci_commit(config)
+			end
+		end
+	else
+		cursor:save(config)
+		if commit then
+			cursor:commit(config)
+			if apply then
+				sys.call("/etc/init.d/" .. config .. " reload > /dev/null 2>&1 &")
+			end
+		end
+	end
+end
+
 function sh_uci_get(config, section, option)
 	exec_call(string.format("uci -q get %s.%s.%s", config, section, option))
-	exec_call(string.format("uci -q commit %s", config))
 end
 
-function sh_uci_set(config, section, option, val)
+function sh_uci_set(config, section, option, val, commit)
 	exec_call(string.format("uci -q set %s.%s.%s=\"%s\"", config, section, option, val))
-	exec_call(string.format("uci -q commit %s", config))
+	if commit then sh_uci_commit(config) end
 end
 
-function sh_uci_del(config, section, option)
+function sh_uci_del(config, section, option, commit)
 	exec_call(string.format("uci -q delete %s.%s.%s", config, section, option))
-	exec_call(string.format("uci -q commit %s", config))
+	if commit then sh_uci_commit(config) end
 end
 
-function sh_uci_add_list(config, section, option, val)
+function sh_uci_add_list(config, section, option, val, commit)
 	exec_call(string.format("uci -q del_list %s.%s.%s=\"%s\"", config, section, option, val))
 	exec_call(string.format("uci -q add_list %s.%s.%s=\"%s\"", config, section, option, val))
+	if commit then sh_uci_commit(config) end
+end
+
+function sh_uci_commit(config)
 	exec_call(string.format("uci -q commit %s", config))
 end
 
@@ -175,7 +204,7 @@ end
 
 function curl_direct(url, file, args)
 	--直连访问
-	local chn_list = libuci:get(appname, "@global[0]", "chn_list") or "direct"
+	local chn_list = uci:get(appname, "@global[0]", "chn_list") or "direct"
 	local Dns = (chn_list == "proxy") and "1.1.1.1" or "223.5.5.5"
 	if not args then args = {} end
 	local tmp_args = clone(args)
@@ -419,30 +448,10 @@ function get_domain_from_url(url)
 	return url
 end
 
-function get_node_name(node_id)
-	local e
-	if type(node_id) == "table" then
-		e = node_id
-	else
-		e = libuci:get_all(appname, node_id)
-	end
-	if e then
-		if e.type and e.remarks then
-			if e.protocol and (e.protocol == "_balancing" or e.protocol == "_shunt" or e.protocol == "_iface") then
-				local type = e.type
-				if type == "sing-box" then type = "Sing-Box" end
-				local remark = "%s：[%s] " % {type .. " " .. i18n.translatef(e.protocol), e.remarks}
-				return remark
-			end
-		end
-	end
-	return ""
-end
-
 function get_valid_nodes()
 	local show_node_info = uci_get_type("@global_other[0]", "show_node_info", "0")
 	local nodes = {}
-	libuci:foreach(appname, "nodes", function(e)
+	uci:foreach(appname, "nodes", function(e)
 		e.id = e[".name"]
 		if e.type and e.remarks then
 			if e.protocol and (e.protocol == "_balancing" or e.protocol == "_shunt" or e.protocol == "_iface") then
@@ -539,7 +548,7 @@ function gen_short_uuid()
 end
 
 function uci_get_type(type, config, default)
-	local value = libuci:get(appname, type, config) or default
+	local value = uci:get(appname, type, config) or default
 	if (value == nil or value == "") and (default and default ~= "") then
 		value = default
 	end

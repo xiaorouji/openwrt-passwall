@@ -2,7 +2,7 @@
 
 local api = require ("luci.passwall.api")
 local name = api.appname
-local uci = api.libuci
+local uci = api.uci
 local sys = api.sys
 local jsonc = api.jsonc
 local fs = api.fs
@@ -469,7 +469,7 @@ uci:set(name, "@global_rules[0]", "chnroute6_update", chnroute6_update)
 uci:set(name, "@global_rules[0]", "chnlist_update", chnlist_update)
 uci:set(name, "@global_rules[0]", "geoip_update", geoip_update)
 uci:set(name, "@global_rules[0]", "geosite_update", geosite_update)
-uci:commit(name)
+api.uci_save(uci, name, true)
 
 if reboot == 1 then
 	if arg3 == "cron" then

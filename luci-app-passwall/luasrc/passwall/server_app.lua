@@ -3,7 +3,7 @@
 local action = arg[1]
 local api = require "luci.passwall.api"
 local sys = api.sys
-local uci = api.libuci
+local uci = api.uci
 local jsonc = api.jsonc
 
 local CONFIG = "passwall_server"

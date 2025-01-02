@@ -21,7 +21,7 @@ local NFTFLAG = var["-NFTFLAG"]
 local REMOTE_FAKEDNS = var["-REMOTE_FAKEDNS"]
 local LOG_FILE = var["-LOG_FILE"]
 
-local uci = api.libuci
+local uci = api.uci
 local sys = api.sys
 local fs = api.fs
 local datatypes = api.datatypes
