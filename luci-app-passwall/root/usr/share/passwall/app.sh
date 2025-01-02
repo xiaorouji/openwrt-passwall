@@ -417,8 +417,8 @@ run_ipt2socks() {
 }
 
 run_singbox() {
-	local flag type node tcp_redir_port udp_redir_port socks_address socks_port socks_username socks_password http_address http_port http_username http_password
-	local dns_listen_port direct_dns_port direct_dns_udp_server direct_dns_tcp_server direct_dns_dot_server remote_dns_protocol remote_dns_udp_server remote_dns_tcp_server remote_dns_doh remote_dns_client_ip remote_fakedns remote_dns_query_strategy dns_cache dns_socks_address dns_socks_port
+	local flag type node tcp_redir_port tcp_proxy_way udp_redir_port socks_address socks_port socks_username socks_password http_address http_port http_username http_password
+	local dns_listen_port direct_dns_query_strategy direct_dns_port direct_dns_udp_server direct_dns_tcp_server direct_dns_dot_server remote_dns_protocol remote_dns_udp_server remote_dns_tcp_server remote_dns_doh remote_dns_client_ip remote_fakedns remote_dns_query_strategy dns_cache dns_socks_address dns_socks_port
 	local loglevel log_file config_file server_host server_port
 	local _extra_param=""
 	eval_set_val $@
@@ -448,6 +448,7 @@ run_singbox() {
 	[ -n "$server_host" ] && _extra_param="${_extra_param} -server_host $server_host"
 	[ -n "$server_port" ] && _extra_param="${_extra_param} -server_port $server_port"
 	[ -n "$tcp_redir_port" ] && _extra_param="${_extra_param} -tcp_redir_port $tcp_redir_port"
+	[ -n "$tcp_proxy_way" ] && _extra_param="${_extra_param} -tcp_proxy_way $tcp_proxy_way"
 	[ -n "$udp_redir_port" ] && _extra_param="${_extra_param} -udp_redir_port $udp_redir_port"
 	[ -n "$socks_address" ] && _extra_param="${_extra_param} -local_socks_address $socks_address"
 	[ -n "$socks_port" ] && _extra_param="${_extra_param} -local_socks_port $socks_port"
@@ -474,7 +475,8 @@ run_singbox() {
 		direct_dns_port=$(echo ${local_dns} | awk -F '#' '{print $2}')
 	fi
 	_extra_param="${_extra_param} -direct_dns_port ${direct_dns_port:-53}"
-	_extra_param="${_extra_param} -direct_dns_query_strategy ${DIRECT_DNS_QUERY_STRATEGY}"
+	direct_dns_query_strategy=${direct_dns_query_strategy:-UseIP}
+	_extra_param="${_extra_param} -direct_dns_query_strategy ${direct_dns_query_strategy}"
 
 	[ -n "$remote_dns_query_strategy" ] && _extra_param="${_extra_param} -remote_dns_query_strategy ${remote_dns_query_strategy}"
 	case "$remote_dns_protocol" in
@@ -493,14 +495,13 @@ run_singbox() {
 	esac
 	[ -n "$remote_dns_client_ip" ] && _extra_param="${_extra_param} -remote_dns_client_ip ${remote_dns_client_ip}"
 	[ "$remote_fakedns" = "1" ] && _extra_param="${_extra_param} -remote_dns_fake 1"
-	_extra_param="${_extra_param} -tcp_proxy_way ${TCP_PROXY_WAY}"
 	lua $UTIL_SINGBOX gen_config ${_extra_param} > $config_file
 	ln_run "$(first_type $(config_t_get global_app singbox_file) sing-box)" "sing-box" $log_file run -c "$config_file"
 }
 
 run_xray() {
-	local flag type node tcp_redir_port udp_redir_port socks_address socks_port socks_username socks_password http_address http_port http_username http_password
-	local dns_listen_port remote_dns_udp_server remote_dns_tcp_server remote_dns_doh remote_dns_client_ip remote_fakedns remote_dns_query_strategy dns_cache dns_socks_address dns_socks_port
+	local flag type node tcp_redir_port tcp_proxy_way udp_redir_port socks_address socks_port socks_username socks_password http_address http_port http_username http_password
+	local dns_listen_port direct_dns_query_strategy remote_dns_udp_server remote_dns_tcp_server remote_dns_doh remote_dns_client_ip remote_fakedns remote_dns_query_strategy dns_cache dns_socks_address dns_socks_port
 	local loglevel log_file config_file server_host server_port
 	local _extra_param=""
 	eval_set_val $@
@@ -519,6 +520,7 @@ run_xray() {
 	[ -n "$server_host" ] && _extra_param="${_extra_param} -server_host $server_host"
 	[ -n "$server_port" ] && _extra_param="${_extra_param} -server_port $server_port"
 	[ -n "$tcp_redir_port" ] && _extra_param="${_extra_param} -tcp_redir_port $tcp_redir_port"
+	[ -n "$tcp_proxy_way" ] && _extra_param="${_extra_param} -tcp_proxy_way $tcp_proxy_way"
 	[ -n "$udp_redir_port" ] && _extra_param="${_extra_param} -udp_redir_port $udp_redir_port"
 	[ -n "$socks_address" ] && _extra_param="${_extra_param} -local_socks_address $socks_address"
 	[ -n "$socks_port" ] && _extra_param="${_extra_param} -local_socks_port $socks_port"
@@ -528,7 +530,8 @@ run_xray() {
 	[ -n "$http_username" ] && [ -n "$http_password" ] && _extra_param="${_extra_param} -local_http_username $http_username -local_http_password $http_password"
 	[ -n "$dns_socks_address" ] && [ -n "$dns_socks_port" ] && _extra_param="${_extra_param} -dns_socks_address ${dns_socks_address} -dns_socks_port ${dns_socks_port}"
 	[ -n "$dns_listen_port" ] && _extra_param="${_extra_param} -dns_listen_port ${dns_listen_port}"
-	_extra_param="${_extra_param} -direct_dns_query_strategy ${DIRECT_DNS_QUERY_STRATEGY}"
+	direct_dns_query_strategy=${direct_dns_query_strategy:-UseIP}
+	_extra_param="${_extra_param} -direct_dns_query_strategy ${direct_dns_query_strategy}"
 	[ -n "$remote_dns_query_strategy" ] && _extra_param="${_extra_param} -remote_dns_query_strategy ${remote_dns_query_strategy}"
 	[ -n "$remote_dns_client_ip" ] && _extra_param="${_extra_param} -remote_dns_client_ip ${remote_dns_client_ip}"
 	[ "$remote_fakedns" = "1" ] && _extra_param="${_extra_param} -remote_dns_fake 1"
@@ -545,7 +548,6 @@ run_xray() {
 		[ -n "$_doh_bootstrap" ] && _extra_param="${_extra_param} -remote_dns_doh_ip ${_doh_bootstrap}"
 		_extra_param="${_extra_param} -remote_dns_doh_port ${_doh_port} -remote_dns_doh_url ${_doh_url} -remote_dns_doh_host ${_doh_host}"
 	}
-	_extra_param="${_extra_param} -tcp_proxy_way ${TCP_PROXY_WAY}"
 	_extra_param="${_extra_param} -loglevel $loglevel"
 	lua $UTIL_XRAY gen_config ${_extra_param} > $config_file
 	ln_run "$(first_type $(config_t_get global_app ${type}_file) ${type})" ${type} $log_file run -c "$config_file"
@@ -924,7 +926,7 @@ run_redir() {
 				}
 				NEXT_DNS_LISTEN_PORT=$(expr $NEXT_DNS_LISTEN_PORT + 1)
 			}
-			run_singbox flag=$_flag node=$node tcp_redir_port=$local_port config_file=$config_file log_file=$log_file ${_args}
+			run_singbox flag=$_flag node=$node tcp_redir_port=$local_port tcp_proxy_way=$TCP_PROXY_WAY config_file=$config_file log_file=$log_file ${_args}
 		;;
 		xray)
 			local _flag="TCP"
@@ -982,7 +984,7 @@ run_redir() {
 				}
 				NEXT_DNS_LISTEN_PORT=$(expr $NEXT_DNS_LISTEN_PORT + 1)
 			}
-			run_xray flag=$_flag node=$node tcp_redir_port=$local_port config_file=$config_file log_file=$log_file ${_args}
+			run_xray flag=$_flag node=$node tcp_redir_port=$local_port tcp_proxy_way=$TCP_PROXY_WAY config_file=$config_file log_file=$log_file ${_args}
 		;;
 		trojan*)
 			[ "${TCP_PROXY_WAY}" = "tproxy" ] && lua_tproxy_arg="-use_tproxy true"
@@ -1424,6 +1426,7 @@ start_dns() {
 			local log_file=/dev/null
 			local _args="type=$DNS_MODE config_file=$config_file log_file=$log_file"
 			[ "${DNS_CACHE}" == "0" ] && _args="${_args} dns_cache=0"
+			_args="${_args} direct_dns_query_strategy=${DIRECT_DNS_QUERY_STRATEGY}"
 			_args="${_args} remote_dns_query_strategy=${REMOTE_DNS_QUERY_STRATEGY}"
 			DNSMASQ_FILTER_PROXY_IPV6=0
 			local _remote_dns_client_ip=$(config_t_get global remote_dns_client_ip)
@@ -1459,6 +1462,7 @@ start_dns() {
 			local log_file=/dev/null
 			local _args="type=$DNS_MODE config_file=$config_file log_file=$log_file"
 			[ "${DNS_CACHE}" == "0" ] && _args="${_args} dns_cache=0"
+			_args="${_args} direct_dns_query_strategy=${DIRECT_DNS_QUERY_STRATEGY}"
 			_args="${_args} remote_dns_query_strategy=${REMOTE_DNS_QUERY_STRATEGY}"
 			DNSMASQ_FILTER_PROXY_IPV6=0
 			local _remote_dns_client_ip=$(config_t_get global remote_dns_client_ip)
