@@ -4,7 +4,6 @@ bin = require "nixio".bin
 fs = require "nixio.fs"
 sys = require "luci.sys"
 uci = require "luci.model.uci".cursor()
-libuci = require "uci".cursor()
 util = require "luci.util"
 datatypes = require "luci.cbi.datatypes"
 jsonc = require "luci.jsonc"
@@ -35,47 +34,26 @@ function is_js_luci()
 	return sys.call('[ -f "/www/luci-static/resources/uci.js" ]') == 0
 end
 
-function uci_set_list(cursor, config, section, option, value)
-	if config and section and option then
-		if not value or #value == 0 then
-			return cursor:delete(config, section, option)
-		end
-		return cursor:set(
-			config, section, option,
-			( type(value) == "table" and value or { value } )
-		)
-	end
-	return false
-end
-
-function uci_section(cursor, config, type, name, values)
-	local stat = true
-	if name then
-		stat = cursor:set(config, name, type)
-	else
-		name = cursor:add(config, type)
-		stat = name and true
-	end
-
-	return stat and name
+function is_old_uci()
+	return sys.call("grep 'require \"uci\"' /usr/lib/lua/luci/model/uci.lua >/dev/null 2>&1") == 0
 end
 
 function uci_save(cursor, config, commit, apply)
-	if is_js_luci() then
+	if is_old_uci() then
+		cursor:save(config)
+		if commit then
+			cursor:commit(config)
+			if apply then
+				sys.call("/etc/init.d/" .. config .. " reload > /dev/null 2>&1 &")
+			end
+		end
+	else
 		commit = true
 		if commit then
 			if apply then
 				cursor:commit(config)
 			else
 				sh_uci_commit(config)
-			end
-		end
-	else
-		cursor:save(config)
-		if commit then
-			cursor:commit(config)
-			if apply then
-				sys.call("/etc/init.d/" .. config .. " reload > /dev/null 2>&1 &")
 			end
 		end
 	end
