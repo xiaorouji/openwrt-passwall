@@ -72,7 +72,7 @@ url_test_node() {
 			/usr/share/${CONFIG}/app.sh run_socks flag="url_test_${node_id}" node=${node_id} bind=127.0.0.1 socks_port=${_tmp_port} config_file=url_test_${node_id}.json
 			local curlx="socks5h://127.0.0.1:${_tmp_port}"
 		fi
-		# sleep 1s
+		sleep 1s
 		# 兼容 curl 8.6 time_starttransfer 错误
 		local curl_ver=$(curl -V 2>/dev/null | head -n 1 | awk '{print $2}' | cut -d. -f1,2)
 		local curl_arg="-w %{http_code}:%{time_starttransfer} http://"
