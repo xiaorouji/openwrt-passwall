@@ -5,12 +5,6 @@ local api = require "luci.passwall.api"
 	//<![CDATA[
 	document.addEventListener("DOMContentLoaded", function () {
 		setTimeout(function () {
-			var url = window.location.href;
-			var sid_match = url.match(/\/acl_config\/(cfg[0-9a-f]+)/);
-			var sid = sid_match ? sid_match[1] : null;
-			if (!sid) {
-				return;
-			}
 			var selects = document.querySelectorAll("select[id*='dns_shunt']");
 			selects.forEach(function (select) {
 				if (select.value === "chinadns-ng") {
@@ -32,7 +26,7 @@ local api = require "luci.passwall.api"
 				logLink.href = "#";
 				logLink.className = "log-link";
 				logLink.style.marginLeft = "10px";
-				logLink.setAttribute("onclick", "window.open('" + '<%=api.url("get_chinadns_log")%>' + "?flag=" + sid + "', '_blank')");
+				logLink.setAttribute("onclick", "window.open('" + '<%=api.url("get_chinadns_log") .. "?flag=" .. section%>' + "', '_blank')");
 				select.insertAdjacentElement("afterend", logLink);
 			}
 		}, 1000);
