@@ -6,21 +6,21 @@ local api = require "luci.passwall.api"
 <div class="cbi-value" id="_backup_div">
     <label class="cbi-value-title"><%:Create Backup File%></label>
     <div class="cbi-value-field">
-        <input type="button" class="btn cbi-button cbi-input-apply" onclick="dl_backup()" value="<%:DL Backup%>" />
+        <input class="btn cbi-button cbi-button-save" type="button" onclick="dl_backup()" value="<%:DL Backup%>" />
     </div>
 </div>
 
 <div class="cbi-value" id="_upload_div">
 	<label class="cbi-value-title"><%:Restore Backup File%></label>
 	<div class="cbi-value-field">
-		<input type="button" class="btn cbi-button cbi-input-apply" id="upload-btn" value="<%:RST Backup%>" />
+		<input class="btn cbi-button cbi-button-apply" type="button" id="upload-btn" value="<%:RST Backup%>" />
 	</div>
 </div>
 
 <div class="cbi-value" id="_reset_div">
     <label class="cbi-value-title"><%:Restore to default configuration%></label>
     <div class="cbi-value-field">
-        <input type="button" class="btn cbi-button cbi-button-remove" onclick="do_reset()" value="<%:Do Reset%>" />
+        <input class="btn cbi-button cbi-button-reset" type="button" onclick="do_reset()" value="<%:Do Reset%>" />
     </div>
 </div>
 
@@ -32,8 +32,8 @@ local api = require "luci.passwall.api"
 				<input class="cbi-input-file" type="file" id="ulfile" name="ulfile" accept=".tar.gz" required />
 				<br />
 				<div class="up-button-container">
-					<input type="submit" class="btn cbi-button cbi-input-apply" value="<%:UL Restore%>" />
-					<button class="btn cbi-button cbi-button-remove" id="upload-close"><%:CLOSE WIN%></button>
+					<input class="btn cbi-button cbi-button-apply" type="submit" value="<%:UL Restore%>" />
+					<input class="btn cbi-button cbi-button-remove" type="button" id="upload-close" value="<%:CLOSE WIN%>" />
 				</div>
 			</div>
 		</div>
