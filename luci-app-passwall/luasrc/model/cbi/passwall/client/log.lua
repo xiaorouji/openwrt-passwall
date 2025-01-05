@@ -16,9 +16,9 @@ s = fb:section(SimpleSection, translate("Backup and Restore"), translate("Backup
 							"<br><font color='red'>" ..
 							translate("Note: Restoring configurations across different versions may cause compatibility issues.") ..
 							"</font>")
-o = s:option(DummyValue, '', nil)
-o.template =  appname .. "/log/backup_restore"
 
+s.anonymous = true
+s:append(Template(appname .. "/log/backup_restore"))
 
 local backup_files = {
     "/etc/config/passwall",
