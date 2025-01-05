@@ -74,7 +74,7 @@ url_test_node() {
 		fi
 		sleep 1s
 		# 兼容 curl 8.6 time_starttransfer 错误
-		local curl_ver=$(curl -V 2>/dev/null | head -n 1 | awk '{print $2}' | cut -d. -f1,2)
+		local curl_ver=$(curl -V 2>/dev/null | head -n 1 | awk '{print $2}' | cut -d. -f1,2 | tr -d ' \n')
 		local curl_arg="-w %{http_code}:%{time_starttransfer} http://"
 		[ "${curl_ver}" = "8.6" ] && curl_arg="-w %{http_code}:%{time_appconnect} https://"
 

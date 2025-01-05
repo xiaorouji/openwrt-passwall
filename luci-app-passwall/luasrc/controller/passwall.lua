@@ -291,7 +291,7 @@ function connect_status()
 	local socks_server = api.get_cache_var("GLOBAL_TCP_SOCKS_server")
 
 	-- 兼容 curl 8.6 time_starttransfer 错误
-	local curl_ver = luci.sys.exec("curl -V 2>/dev/null | head -n 1 | awk '{print $2}' | cut -d. -f1,2") or "0"
+	local curl_ver = luci.sys.exec("curl -V 2>/dev/null | head -n 1 | awk '{print $2}' | cut -d. -f1,2 | tr -d ' \n'") or "0"
 	url = (curl_ver == "8.6") and "-w %{http_code}:%{time_appconnect} https://" .. url
 		or "-w %{http_code}:%{time_starttransfer} http://" .. url
 
