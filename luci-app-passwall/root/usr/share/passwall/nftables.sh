@@ -1300,6 +1300,15 @@ add_firewall_rule() {
 }
 
 del_firewall_rule() {
+	# 10秒内禁止重复运行
+	local time_file="/tmp/etc/passwall_tmp/del_fw_rule_time"
+	local current_time=$(date +%s)
+	if [ -f "$time_file" ]; then
+		local last_time=$(head -n 1 "$time_file" 2>/dev/null | tr -d ' \t' | grep -E '^[0-9]+$' || echo 0)
+		[ $((current_time - last_time)) -le 10 ] && return 0
+	fi
+	echo "$current_time" > "$time_file"
+
 	for nft in "dstnat" "srcnat" "nat_output" "mangle_prerouting" "mangle_output"; do
         local handles=$(nft -a list chain $NFTABLE_NAME ${nft} 2>/dev/null | grep -E "PSW_" | awk -F '# handle ' '{print$2}')
 		for handle in $handles; do

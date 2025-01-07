@@ -1254,6 +1254,15 @@ add_firewall_rule() {
 }
 
 del_firewall_rule() {
+	# 10秒内禁止重复运行
+	local time_file="/tmp/etc/passwall_tmp/del_fw_rule_time"
+	local current_time=$(date +%s)
+	if [ -f "$time_file" ]; then
+		local last_time=$(head -n 1 "$time_file" 2>/dev/null | tr -d ' \t' | grep -E '^[0-9]+$' || echo 0)
+		[ $((current_time - last_time)) -le 10 ] && return 0
+	fi
+	echo "$current_time" > "$time_file"
+
 	for ipt in "$ipt_n" "$ipt_m" "$ip6t_n" "$ip6t_m"; do
 		for chain in "PREROUTING" "OUTPUT"; do
 			for i in $(seq 1 $($ipt -nL $chain | grep -c PSW)); do
