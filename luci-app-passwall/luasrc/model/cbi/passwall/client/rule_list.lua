@@ -312,15 +312,18 @@ end
 
 m:append(Template(appname .. "/rule_list/js"))
 
-if sys.call('[ -f "/www/luci-static/resources/uci.js" ]') == 0 then
+function m.on_before_save(self)
+	m:set("@global[0]", "flush_set", "1")
+end
+
+if api.is_js_luci() then
+	function m.on_before_save(self)
+		api.sh_uci_set(appname, "@global[0]", "flush_set", "1", true)
+	end
 	m.apply_on_parse = true
 	function m.on_apply(self)
 		luci.sys.call("/etc/init.d/passwall reload > /dev/null 2>&1 &")
 	end
-end
-
-function m.on_commit(self)
-	luci.sys.call('[ -n "$(nft list sets 2>/dev/null | grep \"passwall_\")" ] && sh /usr/share/passwall/nftables.sh flush_nftset || sh /usr/share/passwall/iptables.sh flush_ipset > /dev/null 2>&1 &')
 end
 
 return m

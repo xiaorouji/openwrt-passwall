@@ -1300,15 +1300,6 @@ add_firewall_rule() {
 }
 
 del_firewall_rule() {
-	# 10秒内禁止重复运行
-	local time_file="/tmp/etc/passwall_tmp/del_fw_rule_time"
-	local current_time=$(date +%s)
-	if [ -f "$time_file" ]; then
-		local last_time=$(head -n 1 "$time_file" 2>/dev/null | tr -d ' \t' | grep -E '^[0-9]+$' || echo 0)
-		[ $((current_time - last_time)) -le 10 ] && return 0
-	fi
-	echo "$current_time" > "$time_file"
-
 	for nft in "dstnat" "srcnat" "nat_output" "mangle_prerouting" "mangle_output"; do
         local handles=$(nft -a list chain $NFTABLE_NAME ${nft} 2>/dev/null | grep -E "PSW_" | awk -F '# handle ' '{print$2}')
 		for handle in $handles; do
@@ -1349,11 +1340,11 @@ del_firewall_rule() {
 	destroy_nftset $NFTSET_BLOCK6
 	destroy_nftset $NFTSET_WHITE6
 
-	$DIR/app.sh echolog "删除nftables防火墙规则完成。"
+	$DIR/app.sh echolog "删除 nftables 规则完成。"
 }
 
 flush_nftset() {
-	$DIR/app.sh echolog "清空 NFTSET。"
+	$DIR/app.sh echolog "清空 NFTSet。"
 	for _name in $(nft -a list sets | grep -E "passwall" | awk -F 'set ' '{print $2}' | awk '{print $1}'); do
 		destroy_nftset ${_name}
 	done
@@ -1362,15 +1353,6 @@ flush_nftset() {
 flush_table() {
 	nft flush table $NFTABLE_NAME
 	nft delete table $NFTABLE_NAME
-}
-
-flush_nftset_reload() {
-	del_firewall_rule
-	flush_table
-	rm -rf /tmp/etc/passwall_tmp/singbox*
-	rm -rf /tmp/etc/passwall_tmp/smartdns*
-	rm -rf /tmp/etc/passwall_tmp/dnsmasq*
-	/etc/init.d/passwall reload
 }
 
 flush_include() {
@@ -1424,6 +1406,15 @@ start() {
 
 stop() {
 	del_firewall_rule
+	[ $(config_t_get global flush_set "0") = "1" ] && {
+		uci -q delete ${CONFIG}.@global[0].flush_set
+		uci -q commit ${CONFIG}
+		#flush_table
+		flush_nftset
+		rm -rf /tmp/etc/passwall_tmp/singbox*
+		rm -rf /tmp/etc/passwall_tmp/smartdns*
+		rm -rf /tmp/etc/passwall_tmp/dnsmasq*
+	}
 	flush_include
 }
 
@@ -1438,12 +1429,6 @@ insert_rule_before)
 	;;
 insert_rule_after)
 	insert_rule_after "$@"
-	;;
-flush_nftset)
-	flush_nftset
-	;;
-flush_nftset_reload)
-	flush_nftset_reload
 	;;
 get_wan_ip)
 	get_wan_ip
