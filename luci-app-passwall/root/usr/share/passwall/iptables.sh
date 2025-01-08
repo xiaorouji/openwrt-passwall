@@ -1408,7 +1408,6 @@ stop() {
 		uci -q commit ${CONFIG}
 		flush_ipset
 		rm -rf /tmp/etc/passwall_tmp/singbox*
-		rm -rf /tmp/etc/passwall_tmp/smartdns*
 		rm -rf /tmp/etc/passwall_tmp/dnsmasq*
 	}
 	flush_include

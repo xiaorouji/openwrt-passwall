@@ -1561,7 +1561,6 @@ start_dns() {
 			echolog "  * 未安装SmartDNS，默认使用Dnsmasq进行域名解析！"
 		fi
 	}
-	rm -rf $TMP_PATH2/smartdns_default*
 
 	[ "$DNS_SHUNT" = "chinadns-ng" ] && [ -n "$(first_type chinadns-ng)" ] && {
 		chinadns_ng_min=2024.04.13
