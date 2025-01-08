@@ -580,7 +580,7 @@ function clone(org)
 	return res
 end
 
-local function get_bin_version_cache(file, cmd)
+function get_bin_version_cache(file, cmd)
 	sys.call("mkdir -p /tmp/etc/passwall_tmp")
 	if fs.access(file) then
 		chmod_755(file)
