@@ -23,10 +23,6 @@ local DEFAULT_PROXY_MODE = var["-DEFAULT_PROXY_MODE"]
 local NO_PROXY_IPV6 = var["-NO_PROXY_IPV6"]
 local NO_LOGIC_LOG = var["-NO_LOGIC_LOG"]
 local NFTFLAG = var["-NFTFLAG"]
-local CACHE_PATH = api.CACHE_PATH
-local CACHE_FLAG = "smartdns_" .. FLAG
-local CACHE_DNS_PATH = CACHE_PATH .. "/" .. CACHE_FLAG
-local CACHE_DNS_FILE = CACHE_DNS_PATH .. ".conf"
 
 local uci = api.uci
 local sys = api.sys
@@ -37,6 +33,7 @@ local TMP_PATH = "/tmp/etc/" .. appname
 local TMP_ACL_PATH = TMP_PATH .. "/acl"
 local RULES_PATH = "/usr/share/" .. appname .. "/rules"
 local FLAG_PATH = TMP_ACL_PATH .. "/" .. FLAG
+local TMP_CONF_FILE = FLAG_PATH .. "/smartdns.conf"
 local config_lines = {}
 local tmp_lines = {}
 local USE_GEOVIEW = uci:get(appname, "@global_rules[0]", "enable_geoview")
@@ -105,10 +102,6 @@ end
 
 if not fs.access(FLAG_PATH) then
 	fs.mkdir(FLAG_PATH)
-end
-
-if not fs.access(CACHE_PATH) then
-	fs.mkdir(CACHE_PATH)
 end
 
 local LOCAL_EXTEND_ARG = ""
@@ -603,7 +596,7 @@ if uci:get(appname, TCP_NODE, "protocol") == "_shunt" then
 end
 
 if #config_lines > 0 then
-	local f_out = io.open(CACHE_DNS_FILE, "w")
+	local f_out = io.open(TMP_CONF_FILE, "w")
 	for i = 1, #config_lines do
 		line = config_lines[i]
 		if line ~= "" and not line:find("^#--") then
@@ -617,6 +610,6 @@ if DEFAULT_DNS_GROUP then
 	log(string.format("  - 默认 DNS 分组：%s", DEFAULT_DNS_GROUP))
 end
 
-fs.symlink(CACHE_DNS_FILE, SMARTDNS_CONF)
+fs.symlink(TMP_CONF_FILE, SMARTDNS_CONF)
 sys.call(string.format('echo "conf-file %s" >> /etc/smartdns/custom.conf', string.gsub(SMARTDNS_CONF, appname, appname .. "*")))
 log("  - 请让SmartDNS作为Dnsmasq的上游或重定向！")
