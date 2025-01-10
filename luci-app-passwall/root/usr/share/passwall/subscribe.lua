@@ -1433,7 +1433,7 @@ end
 
 local function update_node(manual)
 	if next(nodeResult) == nil then
-		log("更新失败，没有可用的节点信息")
+		log("没有可用的节点信息更新。")
 		return
 	end
 
@@ -1670,8 +1670,15 @@ local execute = function()
 				local stdout = f:read("*all")
 				f:close()
 				raw = trim(stdout)
-				os.remove("/tmp/" .. cfgid)
-				parse_link(raw, "2", remark)
+				local old_md5 = value.md5 or ""
+				local new_md5 = luci.sys.exec(string.format("echo -n $(echo '%s' | md5sum | awk '{print $1}')", raw))
+				if old_md5 == new_md5 then
+					log('订阅:【' .. remark .. '】没有变化，无需更新。')
+				else
+					os.remove("/tmp/" .. cfgid)
+					parse_link(raw, "2", remark)
+					uci:set(appname, cfgid, "md5", new_md5)
+				end
 			else
 				fail_list[#fail_list + 1] = value
 			end
