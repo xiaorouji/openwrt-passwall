@@ -96,6 +96,13 @@ local log = function(...)
 	end
 end
 
+local nodes_table = {}
+for k, e in ipairs(api.get_valid_nodes()) do
+	if e.node_type == "normal" then
+		nodes_table[#nodes_table + 1] = e
+	end
+end
+
 -- 获取各项动态配置的当前服务器，可以用 get 和 set， get必须要获取到节点表
 local CONFIG = {}
 do
@@ -123,20 +130,56 @@ do
 		local option = "node"
 		uci:foreach(appname, "socks", function(t)
 			i = i + 1
+			local id = t[".name"]
 			local node_id = t[option]
 			CONFIG[#CONFIG + 1] = {
 				log = true,
-				id = t[".name"],
+				id = id,
 				remarks = "Socks节点列表[" .. i .. "]",
 				currentNode = node_id and uci:get_all(appname, node_id) or nil,
 				set = function(o, server)
+					if not server or server == "" then
+						if #nodes_table > 0 then
+							server = nodes_table[1][".name"]
+						end
+					end
 					uci:set(appname, t[".name"], option, server)
 					o.newNodeId = server
-				end,
-				delete = function(o)
-					uci:delete(appname, t[".name"])
 				end
 			}
+			if t.autoswitch_backup_node and #t.autoswitch_backup_node > 0 then
+				local flag = "Socks节点列表[" .. i .. "]备用节点的列表"
+				local currentNodes = {}
+				local newNodes = {}
+				for k, node_id in ipairs(t.autoswitch_backup_node) do
+					if node_id then
+						local currentNode = uci:get_all(appname, node_id) or nil
+						if currentNode then
+							currentNodes[#currentNodes + 1] = {
+								log = true,
+								remarks = flag .. "[" .. k .. "]",
+								currentNode = currentNode,
+								set = function(o, server)
+									if server and server ~= "nil" then
+										table.insert(o.newNodes, server)
+									end
+								end
+							}
+						end
+					end
+				end
+				CONFIG[#CONFIG + 1] = {
+					remarks = flag,
+					currentNodes = currentNodes,
+					newNodes = newNodes,
+					set = function(o, newNodes)
+						if o then
+							if not newNodes then newNodes = o.newNodes end
+							uci:set_list(appname, id, "autoswitch_backup_node", newNodes or {})
+						end
+					end
+				}
+			end
 		end)
 	end
 
@@ -193,49 +236,6 @@ do
 		end)
 	end
 
-	uci:foreach(appname, "socks", function(o)
-		local id = o[".name"]
-		local node_table = uci:get(appname, id, "autoswitch_backup_node")
-		if node_table then
-			local nodes = {}
-			local new_nodes = {}
-			for k,node_id in ipairs(node_table) do
-				if node_id then
-					local currentNode = uci:get_all(appname, node_id) or nil
-					if currentNode then
-						if currentNode.protocol and (currentNode.protocol == "_balancing" or currentNode.protocol == "_shunt") then
-							currentNode = nil
-						end
-						nodes[#nodes + 1] = {
-							log = true,
-							remarks = "Socks[" .. id .. "]备用节点的列表[" .. k .. "]",
-							currentNode = currentNode,
-							set = function(o, server)
-								for kk, vv in pairs(CONFIG) do
-									if (vv.remarks == id .. "备用节点的列表") then
-										table.insert(vv.new_nodes, server)
-									end
-								end
-							end
-						}
-					end
-				end
-			end
-			CONFIG[#CONFIG + 1] = {
-				remarks = id .. "备用节点的列表",
-				nodes = nodes,
-				new_nodes = new_nodes,
-				set = function(o)
-					for kk, vv in pairs(CONFIG) do
-						if (vv.remarks == id .. "备用节点的列表") then
-							uci:set_list(appname, id, "autoswitch_backup_node", vv.new_nodes)
-						end
-					end
-				end
-			}
-		end
-	end)
-
 	uci:foreach(appname, "nodes", function(node)
 		local node_id = node[".name"]
 		if node.protocol and node.protocol == '_shunt' then
@@ -271,39 +271,32 @@ do
 				end
 			end
 		elseif node.protocol and node.protocol == '_balancing' then
-			local nodes = {}
-			local new_nodes = {}
+			local flag = "Xray负载均衡节点[" .. node_id .. "]列表"
+			local currentNodes = {}
+			local newNodes = {}
 			if node.balancing_node then
 				for k, node in pairs(node.balancing_node) do
-					nodes[#nodes + 1] = {
+					currentNodes[#currentNodes + 1] = {
 						log = false,
 						node = node,
 						currentNode = node and uci:get_all(appname, node) or nil,
 						remarks = node,
 						set = function(o, server)
-							for kk, vv in pairs(CONFIG) do
-								if (vv.remarks == "Xray负载均衡节点[" .. node_id .. "]列表") then
-									table.insert(vv.new_nodes, server)
-								end
+							if o and server and server ~= "nil" then
+								table.insert(o.newNodes, server)
 							end
 						end
 					}
 				end
 			end
 			CONFIG[#CONFIG + 1] = {
-				remarks = "Xray负载均衡节点[" .. node_id .. "]列表",
-				nodes = nodes,
-				new_nodes = new_nodes,
-				set = function(o)
-					for kk, vv in pairs(CONFIG) do
-						if (vv.remarks == "Xray负载均衡节点[" .. node_id .. "]列表") then
-							uci:foreach(appname, "nodes", function(node2)
-								if node2[".name"] == node[".name"] then
-									local section = uci:section(appname, "nodes", node_id)
-									uci:set_list(appname, section, "balancing_node", vv.new_nodes)
-								end
-							end)
-						end
+				remarks = flag,
+				currentNodes = currentNodes,
+				newNodes = newNodes,
+				set = function(o, newNodes)
+					if o then
+						if not newNodes then newNodes = o.newNodes end
+						uci:set_list(appname, node_id, "balancing_node", newNodes or {})
 					end
 				end
 			}
@@ -364,10 +357,10 @@ do
 	end)
 
 	for k, v in pairs(CONFIG) do
-		if v.nodes and type(v.nodes) == "table" then
-			for kk, vv in pairs(v.nodes) do
+		if v.currentNodes and type(v.currentNodes) == "table" then
+			for kk, vv in pairs(v.currentNodes) do
 				if vv.currentNode == nil then
-					CONFIG[k].nodes[kk] = nil
+					CONFIG[k].currentNodes[kk] = nil
 				end
 			end
 		else
@@ -1278,44 +1271,54 @@ end
 
 local function truncate_nodes(add_from)
 	for _, config in pairs(CONFIG) do
-		if config.nodes and type(config.nodes) == "table" then
-			for kk, vv in pairs(config.nodes) do
-				if vv.currentNode.add_mode == "2" then
-				else
-					vv.set(vv, vv.currentNode[".name"])
+		if config.currentNodes and #config.currentNodes > 0 then
+			local newNodes = {}
+			local removeNodesSet = {}
+			for k, v in pairs(config.currentNodes) do
+				if v.currentNode and v.currentNode.add_mode == "2" then
+					if (not add_from) or (add_from and add_from == v.currentNode.add_from) then
+						removeNodesSet[v.currentNode[".name"]] = true
+					end
 				end
 			end
-			config.set(config)
+			for _, value in ipairs(config.currentNodes) do
+				if not removeNodesSet[value.currentNode[".name"]] then
+					newNodes[#newNodes + 1] = value.currentNode[".name"]
+				end
+			end
+			if config.set then
+				config.set(config, newNodes)
+			end
 		else
 			if config.currentNode and config.currentNode.add_mode == "2" then
-				if add_from then
-					if config.currentNode.add_from and config.currentNode.add_from == add_from then
+				if (not add_from) or (add_from and add_from == config.currentNode.add_from) then
+					if config.delete then
+						config.delete(config)
+					elseif config.set then
 						config.set(config, "")
 					end
-				else
-					config.set(config, "")
-				end
-				if config.id then
-					uci:delete(appname, config.id)
 				end
 			end
 		end
 	end
 	uci:foreach(appname, "nodes", function(node)
 		if node.add_mode == "2" then
-			if add_from then
-				if node.add_from and node.add_from == add_from then
-					uci:delete(appname, node['.name'])
-				end
-			else
+			if (not add_from) or (add_from and add_from == node.add_from) then
 				uci:delete(appname, node['.name'])
 			end
 		end
 	end)
+	if add_from then
+		uci:foreach(appname, "subscribe_list", function(o)
+			if o.remark == add_from then
+				uci:delete(appname, o['.name'], "md5")
+			end
+		end)
+	end
 	api.uci_save(uci, appname, true)
 end
 
-local function select_node(nodes, config)
+local function select_node(nodes, config, parentConfig)
 	if config.currentNode then
 		local server
 		-- 特别优先级 cfgid
@@ -1408,26 +1411,28 @@ local function select_node(nodes, config)
 				end
 			end
 		end
-		-- 还不行 随便找一个
-		if not server then
-			local nodes_table = {}
-			for k, e in ipairs(api.get_valid_nodes()) do
-				if e.node_type == "normal" then
-					nodes_table[#nodes_table + 1] = e
+		if not parentConfig then
+			-- 还不行 随便找一个
+			if not server then
+				if #nodes_table > 0 then
+					if config.log == nil or config.log == true then
+						log('【' .. config.remarks .. '】' .. '无法找到最匹配的节点，当前已更换为：' .. nodes_table[1].remarks)
+					end
+					server = nodes_table[1][".name"]
 				end
-			end
-			if #nodes_table > 0 then
-				if config.log == nil or config.log == true then
-					log('【' .. config.remarks .. '】' .. '无法找到最匹配的节点，当前已更换为：' .. nodes_table[1].remarks)
-				end
-				server = nodes_table[1][".name"]
 			end
 		end
 		if server then
-			config.set(config, server)
+			if parentConfig then
+				config.set(parentConfig, server)
+			else
+				config.set(config, server)
+			end
 		end
 	else
-		config.set(config, "")
+		if not parentConfig then
+			config.set(config, "")
+		end
 	end
 end
 
@@ -1473,31 +1478,15 @@ local function update_node(manual)
 		end)
 
 		for _, config in pairs(CONFIG) do
-			if config.nodes and type(config.nodes) == "table" then
-				for kk, vv in pairs(config.nodes) do
-					select_node(nodes, vv)
+			if config.currentNodes and #config.currentNodes > 0 then
+				for kk, vv in pairs(config.currentNodes) do
+					select_node(nodes, vv, config)
 				end
 				config.set(config)
 			else
 				select_node(nodes, config)
 			end
 		end
-
-		--[[
-		for k, v in pairs(CONFIG) do
-			if type(v.new_nodes) == "table" and #v.new_nodes > 0 then
-				local new_node_list = ""
-				for kk, vv in pairs(v.new_nodes) do
-					new_node_list = new_node_list .. vv .. " "
-				end
-				if new_node_list ~= "" then
-					print(v.remarks, new_node_list)
-				end
-			else
-				print(v.remarks, v.newNodeId)
-			end
-		end
-		]]--
 
 		api.uci_save(uci, appname, true)
 	end
