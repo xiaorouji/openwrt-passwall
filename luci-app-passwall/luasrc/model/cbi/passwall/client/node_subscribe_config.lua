@@ -50,6 +50,10 @@ s = m:section(NamedSection, arg[1])
 s.addremove = false
 s.dynamic = false
 
+function m.commit_handler(self)
+	self:del(arg[1], "md5")
+end
+
 o = s:option(Value, "remark", translate("Subscribe Remark"))
 o.rmempty = false
 

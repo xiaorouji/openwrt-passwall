@@ -49,6 +49,12 @@ m = Map(appname)
 s = m:section(TypedSection, "global_subscribe", "")
 s.anonymous = true
 
+function m.commit_handler(self)
+	self.uci:foreach(appname, "subscribe_list", function(e)
+		self:del(e[".name"], "md5")
+	end)
+end
+
 o = s:option(ListValue, "filter_keyword_mode", translate("Filter keyword Mode"))
 o:value("0", translate("Close"))
 o:value("1", translate("Discard List"))
