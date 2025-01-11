@@ -50,6 +50,9 @@ s = m:section(TypedSection, "global_subscribe", "")
 s.anonymous = true
 
 function m.commit_handler(self)
+	if self.no_commit then
+		return
+	end
 	self.uci:foreach(appname, "subscribe_list", function(e)
 		self:del(e[".name"], "md5")
 	end)
@@ -122,13 +125,15 @@ o:value("ipv6_only", translate("IPv6 Only"))
 o = s:option(Button, "_stop", translate("Delete All Subscribe Node"))
 o.inputstyle = "remove"
 function o.write(e, e)
-	luci.sys.call("lua /usr/share/" .. appname .. "/subscribe.lua truncate > /dev/null 2>&1")
+	luci.sys.call("lua /usr/share/" .. appname .. "/subscribe.lua truncate all-node > /dev/null 2>&1")
+	m.no_commit = true
 end
 
 o = s:option(Button, "_update", translate("Manual subscription All"))
 o.inputstyle = "apply"
 function o.write(t, n)
 	luci.sys.call("lua /usr/share/" .. appname .. "/subscribe.lua start > /dev/null 2>&1 &")
+	m.no_commit = true
 	luci.http.redirect(api.url("log"))
 end
 
@@ -161,17 +166,23 @@ o.validate = function(self, value, t)
 	end
 end
 
-o = s:option(DummyValue, "_node_count")
+o = s:option(DummyValue, "_node_count", translate("Subscribe Info"))
 o.rawhtml = true
 o.cfgvalue = function(t, n)
 	local remark = m:get(n, "remark") or ""
+	local str = m:get(n, "rem_traffic") or ""
+	local expired_date = m:get(n, "expired_date") or ""
+	if expired_date ~= "" then
+		str = str .. (str ~= "" and "/" or "") .. expired_date
+	end
+	str = str ~= "" and "<br>" .. str or ""
 	local num = 0
 	m.uci:foreach(appname, "nodes", function(s)
 		if s["add_from"] ~= "" and s["add_from"] == remark then
 			num = num + 1
 		end
 	end)
-	return string.format("<span title='%s' style='color:red'>%s</span>", remark .. " " .. translate("Node num") .. ": " .. num, num)
+	return string.format("%s%s", translate("Node num") .. ": " .. num, str)
 end
 
 o = s:option(Value, "url", translate("Subscribe URL"))
@@ -183,12 +194,14 @@ o.inputstyle = "remove"
 function o.write(t, n)
 	local remark = m:get(n, "remark") or ""
 	luci.sys.call("lua /usr/share/" .. appname .. "/subscribe.lua truncate " .. remark .. " > /dev/null 2>&1")
+	m.no_commit = true
 end
 
 o = s:option(Button, "_update", translate("Manual subscription"))
 o.inputstyle = "apply"
 function o.write(t, n)
 	luci.sys.call("lua /usr/share/" .. appname .. "/subscribe.lua start " .. n .. " > /dev/null 2>&1 &")
+	m.no_commit = true
 	luci.http.redirect(api.url("log"))
 end
 

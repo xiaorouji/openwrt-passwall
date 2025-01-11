@@ -1021,6 +1021,9 @@ msgstr "节点订阅"
 msgid "Subscribe Remark"
 msgstr "订阅备注（机场）"
 
+msgid "Subscribe Info"
+msgstr "订阅信息"
+
 msgid "Subscribe URL"
 msgstr "订阅网址"
 

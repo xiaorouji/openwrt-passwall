@@ -85,6 +85,8 @@ config global_app
 
 config global_subscribe
 	option filter_keyword_mode '1'
+	list filter_discard_list '距离下次重置剩余'
+	list filter_discard_list '套餐到期'
 	list filter_discard_list '过期时间'
 	list filter_discard_list '剩余流量'
 	list filter_discard_list 'QQ群'
