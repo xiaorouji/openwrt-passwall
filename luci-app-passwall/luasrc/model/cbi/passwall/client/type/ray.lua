@@ -566,8 +566,12 @@ o = s:option(Value, _n("xhttp_path"), translate("XHTTP Path"))
 o.placeholder = "/"
 o:depends({ [_n("transport")] = "xhttp" })
 
-o = s:option(TextValue, _n("xhttp_extra"), translate("XHTTP Extra"), translate("An XHttpObject in JSON format, used for sharing."))
+o = s:option(Flag, _n("use_xhttp_extra"), translate("XHTTP Extra"))
+o.default = "0"
 o:depends({ [_n("transport")] = "xhttp" })
+
+o = s:option(TextValue, _n("xhttp_extra"), " ", translate("An XHttpObject in JSON format, used for sharing."))
+o:depends({ [_n("use_xhttp_extra")] = true })
 o.rows = 15
 o.wrap = "off"
 o.custom_write = function(self, section, value)

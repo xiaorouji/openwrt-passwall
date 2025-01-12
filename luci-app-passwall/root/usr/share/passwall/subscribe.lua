@@ -1054,7 +1054,8 @@ local function processData(szType, content, add_mode, add_from)
 				result.xhttp_host = params.host
 				result.xhttp_path = params.path
 				result.xhttp_mode = params.mode or "auto"
-				result.xhttp_extra = params.extra
+				result.use_xhttp_extra = (params.extra and params.extra ~= "") and "1" or nil
+				result.xhttp_extra = (params.extra and params.extra ~= "") and params.extra or nil
 				local success, Data = pcall(jsonParse, params.extra)
 				if success and Data then
 					local address = (Data.extra and Data.extra.downloadSettings and Data.extra.downloadSettings.address)

@@ -383,7 +383,9 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 				params += opt.query("host", dom_prefix + "xhttp_host");
 				params += opt.query("path", dom_prefix + "xhttp_path");
 				params += opt.query("mode", dom_prefix + "xhttp_mode");
-				params += opt.query("extra", dom_prefix + "xhttp_extra");
+				if (opt.get(dom_prefix + "use_xhttp_extra").checked) {
+					params += opt.query("extra", dom_prefix + "xhttp_extra");
+				}
 			} else if (v_transport === "httpupgrade") {
 				v_transport = "httpupgrade";
 				params += opt.query("host", dom_prefix + "httpupgrade_host");
@@ -1266,6 +1268,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 				opt.set(dom_prefix + 'xhttp_host', queryParam.host || "");
 				opt.set(dom_prefix + 'xhttp_path', queryParam.path || "");
 				opt.set(dom_prefix + 'xhttp_mode', queryParam.mode || "auto");
+				opt.set(dom_prefix + 'use_xhttp_extra', !!queryParam.extra);
 				opt.set(dom_prefix + 'xhttp_extra', queryParam.extra || "");
 			} else if (queryParam.type === "httpupgrade") {
 				opt.set(dom_prefix + 'httpupgrade_host', queryParam.host || "");
