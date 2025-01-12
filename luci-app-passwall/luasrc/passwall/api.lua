@@ -1178,11 +1178,16 @@ function luci_types(id, m, s, type_name, option_prefix)
 				end
 				s.fields[key].remove = function(self, section)
 					if s.fields["type"]:formvalue(id) == type_name then
-						if self.rewrite_option and rewrite_option_table[self.rewrite_option] == 1 then
-							m:del(section, self.rewrite_option)
+						-- 添加自定义 custom_remove 属性，如果有自定义的 custom_remove 函数，则使用自定义的 remove 逻辑
+						if self.custom_remove then
+							self:custom_remove(section)
 						else
-							if self.option:find(option_prefix) == 1 then
-								m:del(section, self.option:sub(1 + #option_prefix))
+							if self.rewrite_option and rewrite_option_table[self.rewrite_option] == 1 then
+								m:del(section, self.rewrite_option)
+							else
+								if self.option:find(option_prefix) == 1 then
+									m:del(section, self.option:sub(1 + #option_prefix))
+								end
 							end
 						end
 					end

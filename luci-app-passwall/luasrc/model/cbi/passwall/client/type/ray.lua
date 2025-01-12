@@ -566,14 +566,12 @@ o = s:option(Value, _n("xhttp_path"), translate("XHTTP Path"))
 o.placeholder = "/"
 o:depends({ [_n("transport")] = "xhttp" })
 
-o = s:option(TextValue, _n("xhttp_extra"), translate("XHTTP Extra"), translate("An <a target='_blank' href='https://xtls.github.io/config/transports/splithttp.html#extra'>XHTTP extra object</a> in raw json"))
+o = s:option(TextValue, _n("xhttp_extra"), translate("XHTTP Extra"), translate("An XHttpObject in JSON format, used for sharing."))
 o:depends({ [_n("transport")] = "xhttp" })
 o.rows = 15
 o.wrap = "off"
 o.custom_write = function(self, section, value)
-
 	m:set(section, self.option:sub(1 + #option_prefix), value)
-
 	local success, data = pcall(jsonc.parse, value)
 	if success and data then
 		local address = (data.extra and data.extra.downloadSettings and data.extra.downloadSettings.address)
@@ -593,6 +591,10 @@ o.validate = function(self, value)
 		value = value:sub(1, -2)
 	end
 	return value
+end
+o.custom_remove = function(self, section, value)
+	m:del(section, self.option:sub(1 + #option_prefix))
+	m:del(section, "download_address")
 end
 
 -- [[ Mux.Cool ]]--
