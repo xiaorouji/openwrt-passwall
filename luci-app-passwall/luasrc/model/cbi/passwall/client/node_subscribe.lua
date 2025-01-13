@@ -144,6 +144,7 @@ s.sortable = true
 s.template = "cbi/tblsection"
 s.extedit = api.url("node_subscribe_config", "%s")
 function s.create(e, t)
+	m.no_commit = true
 	local id = TypedSection.create(e, t)
 	luci.http.redirect(e.extedit:format(id))
 end

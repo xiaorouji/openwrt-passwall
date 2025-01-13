@@ -2,10 +2,11 @@ local api = require "luci.passwall.api"
 local appname = "passwall"
 
 m = Map(appname, translate("Node Config"))
-m.redirect = api.url()
+m.redirect = api.url("node_list")
+api.set_apply_on_parse(m)
 
 if not arg[1] or not m:get(arg[1]) then
-	luci.http.redirect(api.url("node_list"))
+	luci.http.redirect(m.redirect)
 end
 
 s = m:section(NamedSection, arg[1], "nodes", "")

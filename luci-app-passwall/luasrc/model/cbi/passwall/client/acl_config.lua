@@ -2,9 +2,11 @@ local api = require "luci.passwall.api"
 local appname = "passwall"
 
 m = Map(appname)
+m.redirect = api.url("acl")
+api.set_apply_on_parse(m)
 
 if not arg[1] or not m:get(arg[1]) then
-	luci.http.redirect(api.url("acl"))
+	luci.http.redirect(m.redirect)
 end
 
 local fs = api.fs
