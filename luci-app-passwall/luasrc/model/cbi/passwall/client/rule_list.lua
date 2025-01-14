@@ -9,6 +9,7 @@ local chnlist_path = "/usr/share/passwall/rules/chnlist"
 local chnroute_path = "/usr/share/passwall/rules/chnroute"
 
 m = Map(appname)
+api.set_apply_on_parse(m)
 
 -- [[ Rule List Settings ]]--
 s = m:section(TypedSection, "global_rules")

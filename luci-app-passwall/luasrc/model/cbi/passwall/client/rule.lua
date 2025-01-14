@@ -4,6 +4,8 @@ local has_xray = api.finded_com("xray")
 local has_singbox = api.finded_com("singbox")
 
 m = Map(appname)
+api.set_apply_on_parse(m)
+
 -- [[ Rule Settings ]]--
 s = m:section(TypedSection, "global_rules", translate("Rule status"))
 s.anonymous = true
