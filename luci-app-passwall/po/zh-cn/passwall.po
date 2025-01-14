@@ -1800,3 +1800,6 @@ msgstr "是否要恢复客户端默认配置？"
 
 msgid "Are you sure you want to restore the client to default settings?"
 msgstr "是否真的要恢复客户端默认配置？"
+
+msgid "Settings have been successfully saved and applied!"
+msgstr "设置已成功保存并应用!"

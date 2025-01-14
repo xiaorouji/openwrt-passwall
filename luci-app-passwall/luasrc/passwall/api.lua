@@ -45,17 +45,42 @@ function set_apply_on_parse(map)
 	if is_js_luci() then
 		map.apply_on_parse = false
 		map.on_after_apply = function(self)
-			if self.redirect then
-				luci.http.write([[
-					<script type="text/javascript">
-						setTimeout(function() {
-							window.location.href = ']] .. self.redirect .. [[';
-						}, 1000);
-					</script>
-				]])
-			end
+			showMsg_Redirect(self.redirect, 3000)
 		end
 	end
+end
+
+function showMsg_Redirect(redirectUrl, delay)
+	local message = "PassWall " .. i18n.translate("Settings have been successfully saved and applied!")
+	luci.http.write([[
+		<script type="text/javascript">
+			document.addEventListener('DOMContentLoaded', function() {
+				var messageDiv = document.createElement('div');
+				messageDiv.style.position = 'fixed';
+				messageDiv.style.top = '0';
+				messageDiv.style.left = '0';
+				messageDiv.style.width = '100%';
+				messageDiv.style.background = '#4caf50';
+				messageDiv.style.color = '#fff';
+				messageDiv.style.textAlign = 'center';
+				messageDiv.style.padding = '10px';
+				messageDiv.style.zIndex = '10000';
+				messageDiv.textContent = ']] .. message .. [[';
+				document.body.appendChild(messageDiv);
+				var redirectUrl = ']] .. (redirectUrl or "") .. [[';
+				var delay = ]] .. (delay or 3000) .. [[;
+				setTimeout(function() {
+					if (redirectUrl) {
+						window.location.href = redirectUrl;
+					} else {
+						if (messageDiv && messageDiv.parentNode) {
+							messageDiv.parentNode.removeChild(messageDiv);
+						}
+					}
+				}, delay);
+			});
+		</script>
+	]])
 end
 
 function uci_save(cursor, config, commit, apply)
