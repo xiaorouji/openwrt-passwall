@@ -1,4 +1,5 @@
 local api = require "luci.passwall.api"
+local uci = require "luci.model.uci".cursor()
 local appname = "passwall"
 local has_ss = api.is_finded("ss-redir")
 local has_ss_rust = api.is_finded("sslocal")
@@ -45,10 +46,6 @@ end
 
 m = Map(appname)
 
--- [[ Subscribe Settings ]]--
-s = m:section(TypedSection, "global_subscribe", "")
-s.anonymous = true
-
 function m.commit_handler(self)
 	if self.no_commit then
 		return
@@ -57,6 +54,21 @@ function m.commit_handler(self)
 		self:del(e[".name"], "md5")
 	end)
 end
+
+if api.is_js_luci() then
+	m.apply_on_parse = false
+	m.on_after_apply = function(self)
+		uci:foreach(appname, "subscribe_list", function(e)
+			uci:delete(appname, e[".name"], "md5")
+		end)
+		uci:commit(appname)
+		api.showMsg_Redirect()
+	end
+end
+
+-- [[ Subscribe Settings ]]--
+s = m:section(TypedSection, "global_subscribe", "")
+s.anonymous = true
 
 o = s:option(ListValue, "filter_keyword_mode", translate("Filter keyword Mode"))
 o:value("0", translate("Close"))
