@@ -543,7 +543,7 @@ function create_backup()
 		"/usr/share/passwall/rules/proxy_host",
 		"/usr/share/passwall/rules/proxy_ip"
 	}
-	local date = os.date("%Y%m%d")
+	local date = os.date("%y%m%d%H%M")
 	local tar_file = "/tmp/passwall-" .. date .. "-backup.tar.gz"
 	fs.remove(tar_file)
 	local cmd = "tar -czf " .. tar_file .. " " .. table.concat(backup_files, " ")
