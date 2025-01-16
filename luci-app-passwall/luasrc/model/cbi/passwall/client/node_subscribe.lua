@@ -1,5 +1,5 @@
 local api = require "luci.passwall.api"
-local uci = require "luci.model.uci".cursor()
+local uci = api.uci
 local appname = "passwall"
 local has_ss = api.is_finded("ss-redir")
 local has_ss_rust = api.is_finded("sslocal")
