@@ -55,6 +55,16 @@ function showMsg_Redirect(redirectUrl, delay)
 	luci.http.write([[
 		<script type="text/javascript">
 			document.addEventListener('DOMContentLoaded', function() {
+				// 创建遮罩层
+				var overlay = document.createElement('div');
+				overlay.style.position = 'fixed';
+				overlay.style.top = '0';
+				overlay.style.left = '0';
+				overlay.style.width = '100%';
+				overlay.style.height = '100%';
+				overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+				overlay.style.zIndex = '9999';
+				// 创建提示条
 				var messageDiv = document.createElement('div');
 				messageDiv.style.position = 'fixed';
 				messageDiv.style.top = '0';
@@ -66,7 +76,10 @@ function showMsg_Redirect(redirectUrl, delay)
 				messageDiv.style.padding = '10px';
 				messageDiv.style.zIndex = '10000';
 				messageDiv.textContent = ']] .. message .. [[';
+				// 将遮罩层和提示条添加到页面
+				document.body.appendChild(overlay);
 				document.body.appendChild(messageDiv);
+				// 重定向或隐藏提示条和遮罩层
 				var redirectUrl = ']] .. (redirectUrl or "") .. [[';
 				var delay = ]] .. (delay or 3000) .. [[;
 				setTimeout(function() {
@@ -75,6 +88,9 @@ function showMsg_Redirect(redirectUrl, delay)
 					} else {
 						if (messageDiv && messageDiv.parentNode) {
 							messageDiv.parentNode.removeChild(messageDiv);
+						}
+						if (overlay && overlay.parentNode) {
+							overlay.parentNode.removeChild(overlay);
 						}
 					}
 				}, delay);
