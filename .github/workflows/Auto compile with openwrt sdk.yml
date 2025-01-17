@@ -141,7 +141,7 @@ jobs:
           echo "CONFIG_PACKAGE_luci-app-passwall=m" >> .config
           make defconfig
           echo "make package/luci-app-passwall/{clean,compile} -j$(nproc)"
-          make package/luci-app-passwall/{clean,compile} -j$(nproc)
+          make package/luci-app-passwall/{clean,compile} -j$(nproc) V=s
           mv bin/packages/x86_64/passwall/ ../
           make clean
           rm .config .config.old
@@ -305,7 +305,7 @@ jobs:
           cd sdk
           for package in $(ls feeds/passwall_packages); do
               if [ -d "feeds/passwall_packages/$package" ]; then
-                  make package/feeds/passwall_packages/$package/compile -j$(nproc) 2>/dev/null
+                  make package/feeds/passwall_packages/$package/compile -j$(nproc) V=s 2>/dev/null
               fi
           done
 
