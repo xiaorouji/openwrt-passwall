@@ -536,9 +536,7 @@ function gen_config_server(node)
 			config.inbounds[1].streamSettings.realitySettings = {
 				show = false,
 				dest = node.reality_dest,
-				serverNames = {
-					node.reality_serverNames
-				},
+				serverNames = node.reality_serverNames or {},
 				privateKey = node.reality_private_key,
 				shortIds = node.reality_shortId or ""
 			} or nil
