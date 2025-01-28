@@ -1394,6 +1394,8 @@ gen_include() {
 
 	cat <<-EOF >> $FWI
 	${__nft}
+
+	return 0
 	EOF
 	return 0
 }
