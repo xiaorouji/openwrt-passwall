@@ -482,7 +482,7 @@ table.insert(config_lines, "default-tag " .. DEFAULT_TAG)
 table.insert(config_lines, "cache 4096")
 table.insert(config_lines, "cache-stale 3600")
 
-if DEFAULT_TAG == "none" then
+if DEFAULT_TAG == "none" or DEFAULT_TAG == "none_noip" then
 	table.insert(config_lines, "verdict-cache 5000")
 end
 
