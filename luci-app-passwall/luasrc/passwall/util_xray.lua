@@ -718,7 +718,7 @@ function gen_config(var)
 				local blc_node_tag = "blc-" .. blc_node_id
 				local is_new_blc_node = true
 				for _, outbound in ipairs(outbounds) do
-					if outbound.tag:find("^" .. blc_node_tag) == 1 then
+					if string.sub(outbound.tag, 1, #blc_node_tag) == blc_node_tag then
 						is_new_blc_node = false
 						valid_nodes[#valid_nodes + 1] = outbound.tag
 						break
@@ -743,7 +743,7 @@ function gen_config(var)
 			if fallback_node_id then
 				local is_new_node = true
 				for _, outbound in ipairs(outbounds) do
-					if outbound.tag:find("^" .. fallback_node_id) == 1 then
+					if string.sub(outbound.tag, 1, #fallback_node_id) == fallback_node_id then
 						is_new_node = false
 						fallback_node_tag = outbound.tag
 						break
