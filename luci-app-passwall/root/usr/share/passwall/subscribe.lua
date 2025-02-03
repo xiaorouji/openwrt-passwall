@@ -85,10 +85,10 @@ local function is_filter_keyword(value)
 end
 
 local nodeResult = {} -- update result
-local debug = false
+local isDebug = false
 
 local log = function(...)
-	if debug == true then
+	if isDebug == true then
 		local result = os.date("%Y-%m-%d %H:%M:%S: ") .. table.concat({...}, " ")
 		print(result)
 	else
@@ -1728,7 +1728,9 @@ if arg[1] then
 		log('开始订阅...')
 		xpcall(execute, function(e)
 			log(e)
-			log(debug.traceback())
+			if type(debug) == "table" and type(debug.traceback) == "function" then
+				log(debug.traceback())
+			end
 			log('发生错误, 正在恢复服务')
 		end)
 		log('订阅完毕...')
