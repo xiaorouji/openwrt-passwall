@@ -7,6 +7,9 @@ local appname = "passwall"
 local fs = api.fs
 local split = api.split
 
+local local_version = api.get_app_version("singbox")
+local version_ge_1_11_0 = api.compare_versions(local_version:match("[^v]+"), ">=", "1.11.0")
+
 local new_port
 
 local function get_new_port()
@@ -725,6 +728,26 @@ function gen_config_server(node)
 		for k, v in pairs(config.outbounds[index]) do
 			if k:find("_") == 1 then
 				config.outbounds[index][k] = nil
+			end
+		end
+	end
+
+	if version_ge_1_11_0 then
+		-- Migrate logics
+		-- https://sing-box.sagernet.org/migration/
+		for i = #config.outbounds, 1, -1 do
+			local value = config.outbounds[i]
+			if value.type == "block" then
+				-- https://sing-box.sagernet.org/migration/#migrate-legacy-special-outbounds-to-rule-actions
+				table.remove(config.outbounds, i)
+			end
+		end
+		-- https://sing-box.sagernet.org/migration/#migrate-legacy-special-outbounds-to-rule-actions
+		for i = #config.route.rules, 1, -1 do
+			local value = config.route.rules[i]
+			if value.outbound == "block" then
+				value.action = "reject"
+				value.outbound = nil
 			end
 		end
 	end
@@ -1484,6 +1507,90 @@ function gen_config(var)
 				if k:find("_") == 1 then
 					config.outbounds[index][k] = nil
 				end
+			end
+		end
+		if version_ge_1_11_0 then
+			-- Migrate logics
+			-- https://sing-box.sagernet.org/migration/
+			local endpoints = {}
+			for i = #config.outbounds, 1, -1 do
+				local value = config.outbounds[i]
+				if value.type == "wireguard" then
+					-- https://sing-box.sagernet.org/migration/#migrate-wireguard-outbound-to-endpoint
+					local endpoint = {
+						type = "wireguard",
+						tag = value.tag,
+						system = value.system_interface,
+						name = value.interface_name,
+						mtu = value.mtu,
+						address = value.local_address,
+						private_key = value.private_key,
+						peers = {
+							{
+								address = value.server,
+								port = value.server_port,
+								public_key = value.peer_public_key,
+								pre_shared_key = value.pre_shared_key,
+								allowed_ips = {"0.0.0.0/0"},
+								reserved = value.reserved
+							}
+						},
+						domain_strategy = value.domain_strategy,
+						detour = value.detour
+					}
+					endpoints[#endpoints + 1] = endpoint
+					table.remove(config.outbounds, i)
+				end
+				if value.type == "block" or value.type == "dns" then
+					-- https://sing-box.sagernet.org/migration/#migrate-legacy-special-outbounds-to-rule-actions
+					table.remove(config.outbounds, i)
+				end
+			end
+			if #endpoints > 0 then
+				config.endpoints = endpoints
+			end
+
+			-- https://sing-box.sagernet.org/migration/#migrate-legacy-special-outbounds-to-rule-actions
+			for i = #config.route.rules, 1, -1 do
+				local value = config.route.rules[i]
+				if value.outbound == "block" then
+					value.action = "reject"
+					value.outbound = nil
+				elseif value.outbound == "dns-out" then
+					value.action = "hijack-dns"
+					value.outbound = nil
+				else
+					value.action = "route"
+				end
+			end
+
+			-- https://sing-box.sagernet.org/migration/#migrate-legacy-inbound-fields-to-rule-actions
+			for i = #config.inbounds, 1, -1 do
+				local value = config.inbounds[i]
+				if value.sniff == true then
+					table.insert(config.route.rules, 1, {
+						inbound = value.tag,
+						action = "sniff"
+					})
+					value.sniff = nil
+					value.sniff_override_destination = nil
+				end
+				if value.domain_strategy then
+					table.insert(config.route.rules, 1, {
+						inbound = value.tag,
+						action = "resolve",
+						strategy = value.domain_strategy,
+						--server = ""
+					})
+					value.domain_strategy = nil
+				end
+			end
+
+			if config.route.final == "block" then
+				config.route.final = nil
+				table.insert(config.route.rules, {
+					action = "reject"
+				})
 			end
 		end
 		return jsonc.stringify(config, 1)
