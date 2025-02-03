@@ -2026,6 +2026,8 @@ start() {
 	get_config
 	export V2RAY_LOCATION_ASSET=$(config_t_get global_rules v2ray_location_asset "/usr/share/v2ray/")
 	export XRAY_LOCATION_ASSET=$V2RAY_LOCATION_ASSET
+	export ENABLE_DEPRECATED_GEOSITE=true
+	export ENABLE_DEPRECATED_GEOIP=true
 	ulimit -n 65535
 	start_haproxy
 	start_socks

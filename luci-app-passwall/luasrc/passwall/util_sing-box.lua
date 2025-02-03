@@ -1098,7 +1098,6 @@ function gen_config(var)
 					local rule = {
 						inbound = inboundTag,
 						outbound = outboundTag,
-						invert = false, --匹配反选
 						protocol = protocols
 					}
 
