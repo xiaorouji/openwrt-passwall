@@ -216,7 +216,7 @@ if DEFAULT_DNS_GROUP then
 	local domain_rules_str = "domain-rules /./ -nameserver " .. DEFAULT_DNS_GROUP
 	if DEFAULT_DNS_GROUP == REMOTE_GROUP then
 		domain_rules_str = domain_rules_str .. " -speed-check-mode none -d no -no-serve-expired"
-		if NO_PROXY_IPV6 == "1" and only_global == 1 and uci:get(appname, TCP_NODE, "protocol") ~= "_shunt" then
+		if NO_PROXY_IPV6 == "1" then
 			domain_rules_str = domain_rules_str .. " -address #6"
 		end
 	elseif DEFAULT_DNS_GROUP == LOCAL_GROUP then
