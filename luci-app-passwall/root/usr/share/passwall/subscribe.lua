@@ -1685,18 +1685,19 @@ local execute = function()
 			local access_mode = value.access_mode
 			local result = (not access_mode) and "自动" or (access_mode == "direct" and "直连访问" or (access_mode == "proxy" and "通过代理" or "自动"))
 			log('正在订阅:【' .. remark .. '】' .. url .. ' [' .. result .. ']')
-			local raw = curl(url, "/tmp/" .. cfgid, ua, access_mode)
+			local tmp_file = "/tmp/" .. cfgid
+			local raw = curl(url, tmp_file, ua, access_mode)
 			if raw == 0 then
-				local f = io.open("/tmp/" .. cfgid, "r")
+				local f = io.open(tmp_file, "r")
 				local stdout = f:read("*all")
 				f:close()
 				raw = trim(stdout)
 				local old_md5 = value.md5 or ""
-				local new_md5 = luci.sys.exec(string.format("echo -n $(echo '%s' | md5sum | awk '{print $1}')", raw))
+				local new_md5 = luci.sys.exec("[ -f " .. tmp_file .. " ] && md5sum " .. tmp_file .. " | awk '{print $1}' || echo 0")
+				os.remove(tmp_file)
 				if old_md5 == new_md5 then
 					log('订阅:【' .. remark .. '】没有变化，无需更新。')
 				else
-					os.remove("/tmp/" .. cfgid)
 					parse_link(raw, "2", remark, cfgid)
 					uci:set(appname, cfgid, "md5", new_md5)
 				end
