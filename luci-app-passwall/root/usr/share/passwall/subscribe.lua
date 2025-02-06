@@ -1327,13 +1327,11 @@ local function truncate_nodes(add_from)
 			end
 		end
 	end)
-	if add_from then
-		uci:foreach(appname, "subscribe_list", function(o)
-			if add_from == "all-node" or add_from == o.remark then
-				uci:delete(appname, o['.name'], "md5")
-			end
-		end)
-	end
+	uci:foreach(appname, "subscribe_list", function(o)
+		if (not add_from) or add_from == o.remark then
+			uci:delete(appname, o['.name'], "md5")
+		end
+	end)
 	api.uci_save(uci, appname, true)
 end
 

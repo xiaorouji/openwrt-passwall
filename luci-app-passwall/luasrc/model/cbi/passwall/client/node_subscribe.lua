@@ -137,7 +137,7 @@ o:value("ipv6_only", translate("IPv6 Only"))
 o = s:option(Button, "_stop", translate("Delete All Subscribe Node"))
 o.inputstyle = "remove"
 function o.write(e, e)
-	luci.sys.call("lua /usr/share/" .. appname .. "/subscribe.lua truncate all-node > /dev/null 2>&1")
+	luci.sys.call("lua /usr/share/" .. appname .. "/subscribe.lua truncate > /dev/null 2>&1")
 	m.no_commit = true
 end
 
