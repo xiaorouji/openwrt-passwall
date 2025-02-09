@@ -35,7 +35,7 @@ function is_js_luci()
 end
 
 function is_old_uci()
-	return sys.call("grep 'require \"uci\"' /usr/lib/lua/luci/model/uci.lua >/dev/null 2>&1") == 0
+	return sys.call("grep -E 'require[ \t]*\"uci\"' /usr/lib/lua/luci/model/uci.lua >/dev/null 2>&1") == 0
 end
 
 function set_apply_on_parse(map)
