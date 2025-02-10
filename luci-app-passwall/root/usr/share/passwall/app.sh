@@ -352,15 +352,17 @@ get_geoip() {
 	local geoip_type_flag=""
 	local geoip_path="$(config_t_get global_rules v2ray_location_asset)"
 	geoip_path="${geoip_path%*/}/geoip.dat"
-	[ -s "$geoip_path" ] || { echo ""; return; }
+	[ -s "$geoip_path" ] || { echo ""; return 1; }
 	case "$2" in
 		"ipv4") geoip_type_flag="-ipv6=false" ;;
 		"ipv6") geoip_type_flag="-ipv4=false" ;;
 	esac
 	if type geoview &> /dev/null; then
 		geoview -input "$geoip_path" -list "$geoip_code" $geoip_type_flag -lowmem=true
+		return 0
 	else
 		echo ""
+		return 1
 	fi
 }
 

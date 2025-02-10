@@ -90,10 +90,12 @@ end
 local function get_geosite(list_arg, out_path)
 	local geosite_path = uci:get(appname, "@global_rules[0]", "v2ray_location_asset")
 	geosite_path = geosite_path:match("^(.*)/") .. "/geosite.dat"
-	if not is_file_nonzero(geosite_path) then return end
+	if not is_file_nonzero(geosite_path) then return 1 end
 	if api.is_finded("geoview") and list_arg and out_path then
 		sys.exec("geoview -type geosite -append=true -input " .. geosite_path .. " -list '" .. list_arg .. "' -output " .. out_path)
+		return 0
 	end
+	return 1
 end
 
 if not fs.access(FLAG_PATH) then
@@ -142,8 +144,11 @@ if USE_BLOCK_LIST == "1" and not fs.access(file_block_host) then
 		f_out:close()
 	end
 	if USE_GEOVIEW == "1" and geosite_arg ~= "" and api.is_finded("geoview") then
-		get_geosite(geosite_arg, file_block_host)
-		log("  * 解析[屏蔽列表] Geosite 到屏蔽域名表(blocklist)完成")
+		if get_geosite(geosite_arg, file_block_host) == 0 then
+			log("  * 解析[屏蔽列表] Geosite 到屏蔽域名表(blocklist)完成")
+		else
+			log("  * 解析[屏蔽列表] Geosite 到屏蔽域名表(blocklist)失败！")
+		end
 	end
 end
 if USE_BLOCK_LIST == "1" and is_file_nonzero(file_block_host) then
@@ -211,8 +216,11 @@ if USE_DIRECT_LIST == "1" and not fs.access(file_direct_host) then
 		f_out:close()
 	end
 	if USE_GEOVIEW == "1" and geosite_arg ~= "" and api.is_finded("geoview") then
-		get_geosite(geosite_arg, file_direct_host)
-		log("  * 解析[直连列表] Geosite 到域名白名单(whitelist)完成")
+		if get_geosite(geosite_arg, file_direct_host) == 0 then
+			log("  * 解析[直连列表] Geosite 到域名白名单(whitelist)完成")
+		else
+			log("  * 解析[直连列表] Geosite 到域名白名单(whitelist)失败！")
+		end
 	end
 end
 if USE_DIRECT_LIST == "1" and is_file_nonzero(file_direct_host) then
@@ -254,8 +262,11 @@ if USE_PROXY_LIST == "1" and not fs.access(file_proxy_host) then
 		f_out:close()
 	end
 	if USE_GEOVIEW == "1" and geosite_arg ~= "" and api.is_finded("geoview") then
-		get_geosite(geosite_arg, file_proxy_host)
-		log("  * 解析[代理列表] Geosite 到代理域名表(blacklist)完成")
+		if get_geosite(geosite_arg, file_proxy_host) == 0 then
+			log("  * 解析[代理列表] Geosite 到代理域名表(blacklist)完成")
+		else
+			log("  * 解析[代理列表] Geosite 到代理域名表(blacklist)失败！")
+		end
 	end
 end
 if USE_PROXY_LIST == "1" and is_file_nonzero(file_proxy_host) then
@@ -404,13 +415,18 @@ if uci:get(appname, TCP_NODE, "protocol") == "_shunt" then
 	end
 
 	if GFWLIST == "1" and CHNLIST == "0" and USE_GEOVIEW == "1" and api.is_finded("geoview") then  --仅GFW模式解析geosite
+		local return_white, return_shunt
 		if geosite_white_arg ~= "" then
-			get_geosite(geosite_white_arg, file_white_host)
+			return_white = get_geosite(geosite_white_arg, file_white_host)
 		end
 		if geosite_shunt_arg ~= "" then
-			get_geosite(geosite_shunt_arg, file_shunt_host)
+			return_shunt = get_geosite(geosite_shunt_arg, file_shunt_host)
 		end
-		log("  * 解析[分流节点] Geosite 完成")
+		if (return_white == nil or return_white == 0) and (return_shunt == nil or return_shunt == 0) then
+			log("  * 解析[分流节点] Geosite 完成")
+		else
+			log("  * 解析[分流节点] Geosite 失败！")
+		end
 	end
 
 	local sets = {
