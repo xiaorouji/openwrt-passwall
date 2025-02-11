@@ -1049,7 +1049,7 @@ function gen_config(var)
 						balancerTag = balancer_tag,
 						network = e["network"] or "tcp,udp",
 						source = source,
-						sourcePort = nil,
+						sourcePort = e["sourcePort"] ~= "" and e["sourcePort"] or nil,
 						port = e["port"] ~= "" and e["port"] or nil,
 						protocol = protocols
 					}
