@@ -93,7 +93,7 @@ url_test_node() {
 		local chn_list=$(config_n_get @global[0] chn_list direct)
 		local probeUrl="www.google.com/generate_204"
 		[ "${chn_list}" = "proxy" ] && probeUrl="www.baidu.com"
-		result=$(${_curl} --connect-timeout 3 -o /dev/null -I -skL -x ${curlx} ${curl_arg}${probeUrl})
+		result=$(${_curl} --max-time 5 -o /dev/null -I -skL -x ${curlx} ${curl_arg}${probeUrl})
 		pgrep -af "url_test_${node_id}" | awk '! /test\.sh/{print $1}' | xargs kill -9 >/dev/null 2>&1
 		rm -rf "/tmp/etc/${CONFIG}/url_test_${node_id}.json"
 	}
