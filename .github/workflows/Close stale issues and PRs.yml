@@ -22,10 +22,10 @@ jobs:
           days-before-pr-close: -1
           operations-per-run: 500
 
-      - name: Delete workflow runs
-        uses: Mattraks/delete-workflow-runs@main
-        with:
-          token: ${{ github.token }}
-          repository: ${{ github.repository }}
-          retain_days: 1
-          keep_minimum_runs: 0
+      # - name: Delete workflow runs
+      #   uses: Mattraks/delete-workflow-runs@main
+      #   with:
+      #     token: ${{ github.token }}
+      #     repository: ${{ github.repository }}
+      #     retain_days: 1
+      #     keep_minimum_runs: 0
