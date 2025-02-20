@@ -306,13 +306,16 @@ function connect_status()
 	local result = luci.sys.exec('/usr/bin/curl --max-time 5 -o /dev/null -I -sk ' .. url)
 	local code = tonumber(luci.sys.exec("echo -n '" .. result .. "' | awk -F ':' '{print $1}'") or "0")
 	if code ~= 0 then
-		local use_time = luci.sys.exec("echo -n '" .. result .. "' | awk -F ':' '{print $2}'")
-		if use_time:find("%.") then
-			e.use_time = string.format("%.2f", use_time * 1000)
-		else
-			e.use_time = string.format("%.2f", use_time / 1000)
+		local use_time_str = luci.sys.exec("echo -n '" .. result .. "' | awk -F ':' '{print $2}'")
+		local use_time = tonumber(use_time_str)
+		if use_time then
+			if use_time_str:find("%.") then
+				e.use_time = string.format("%.2f", use_time * 1000)
+			else
+				e.use_time = string.format("%.2f", use_time / 1000)
+			end
+			e.ping_type = "curl"
 		end
-		e.ping_type = "curl"
 	end
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
@@ -345,11 +348,14 @@ function urltest_node()
 	local result = luci.sys.exec(string.format("/usr/share/passwall/test.sh url_test_node %s %s", id, "urltest_node"))
 	local code = tonumber(luci.sys.exec("echo -n '" .. result .. "' | awk -F ':' '{print $1}'") or "0")
 	if code ~= 0 then
-		local use_time = luci.sys.exec("echo -n '" .. result .. "' | awk -F ':' '{print $2}'")
-		if use_time:find("%.") then
-			e.use_time = string.format("%.2f", use_time * 1000)
-		else
-			e.use_time = string.format("%.2f", use_time / 1000)
+		local use_time_str = luci.sys.exec("echo -n '" .. result .. "' | awk -F ':' '{print $2}'")
+		local use_time = tonumber(use_time_str)
+		if use_time then
+			if use_time_str:find("%.") then
+				e.use_time = string.format("%.2f", use_time * 1000)
+			else
+				e.use_time = string.format("%.2f", use_time / 1000)
+			end
 		end
 	end
 	luci.http.prepare_content("application/json")
