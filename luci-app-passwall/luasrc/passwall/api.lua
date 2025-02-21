@@ -92,6 +92,7 @@ function showMsg_Redirect(redirectUrl, delay)
 						if (overlay && overlay.parentNode) {
 							overlay.parentNode.removeChild(overlay);
 						}
+						window.location.href = window.location.href;
 					}
 				}, delay);
 			});
