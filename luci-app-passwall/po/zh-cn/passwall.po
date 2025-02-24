@@ -1579,9 +1579,6 @@ msgstr "最大并发连接数"
 msgid "XUDP Mux concurrency"
 msgstr "XUDP 最大并发连接数"
 
-msgid "Mux idle timeout"
-msgstr "最大闲置时间"
-
 msgid "Padding"
 msgstr "填充"
 
@@ -1599,9 +1596,6 @@ msgstr "推荐值：Sec-WebSocket-Protocol"
 
 msgid "Health check"
 msgstr "健康检查"
-
-msgid "Idle timeout"
-msgstr "闲置时间"
 
 msgid "Health check timeout"
 msgstr "检查超时时间"
