@@ -56,6 +56,7 @@ end
 if singbox_tags:find("with_quic") then
 	o:value("hysteria2", "Hysteria2")
 end
+o:value("_urltest", translate("URLTest"))
 o:value("_shunt", translate("Shunt"))
 o:value("_iface", translate("Custom Interface"))
 
@@ -65,6 +66,7 @@ o:depends({ [_n("protocol")] = "_iface" })
 
 local nodes_table = {}
 local iface_table = {}
+local urltest_table = {}
 for k, e in ipairs(api.get_valid_nodes()) do
 	if e.node_type == "normal" then
 		nodes_table[#nodes_table + 1] = {
@@ -75,6 +77,12 @@ for k, e in ipairs(api.get_valid_nodes()) do
 	end
 	if e.protocol == "_iface" then
 		iface_table[#iface_table + 1] = {
+			id = e[".name"],
+			remark = e["remark"]
+		}
+	end
+	if e.protocol == "_urltest" then
+		urltest_table[#urltest_table + 1] = {
 			id = e[".name"],
 			remark = e["remark"]
 		}
@@ -91,6 +99,44 @@ m.uci:foreach(appname, "socks", function(s)
 	end
 end)
 
+--[[ URLTest ]]
+o = s:option(DynamicList, _n("urltest_node"), translate("URLTest node list"), translate("List of nodes to test, <a target='_blank' href='https://sing-box.sagernet.org/configuration/outbound/urltest'>document</a>"))
+o:depends({ [_n("protocol")] = "_urltest" })
+for k, v in pairs(nodes_table) do o:value(v.id, v.remark) end
+
+o = s:option(Value, _n("urltest_url"), translate("Probe URL"))
+o:depends({ [_n("protocol")] = "_urltest" })
+o:value("https://cp.cloudflare.com/", "Cloudflare")
+o:value("https://www.gstatic.com/generate_204", "Gstatic")
+o:value("https://www.google.com/generate_204", "Google")
+o:value("https://www.youtube.com/generate_204", "YouTube")
+o:value("https://connect.rom.miui.com/generate_204", "MIUI (CN)")
+o:value("https://connectivitycheck.platform.hicloud.com/generate_204", "HiCloud (CN)")
+o.default = "https://www.gstatic.com/generate_204"
+o.description = translate("The URL used to detect the connection status.")
+
+o = s:option(Value, _n("urltest_interval"), translate("Test interval"))
+o:depends({ [_n("protocol")] = "_urltest" })
+o.datatype = "uinteger"
+o.default = "180"
+o.description = translate("The test interval in seconds.") .. "<br />" ..
+		translate("Test interval must be less or equal than idle timeout.")
+
+o = s:option(Value, _n("urltest_tolerance"), translate("Test tolerance"), translate("The test tolerance in milliseconds."))
+o:depends({ [_n("protocol")] = "_urltest" })
+o.datatype = "uinteger"
+o.default = "50"
+
+o = s:option(Value, _n("urltest_idle_timeout"), translate("Idle timeout"), translate("The idle timeout in seconds."))
+o:depends({ [_n("protocol")] = "_urltest" })
+o.datatype = "uinteger"
+o.default = "1800"
+
+o = s:option(Flag, _n("urltest_interrupt_exist_connections"), translate("Interrupt existing connections"))
+o:depends({ [_n("protocol")] = "_urltest" })
+o.default = "0"
+o.description = translate("Interrupt existing connections when the selected outbound has changed.") 
+
 -- [[ 分流模块 ]]
 if #nodes_table > 0 then
 	o = s:option(Flag, _n("preproxy_enabled"), translate("Preproxy"))
@@ -99,6 +145,9 @@ if #nodes_table > 0 then
 	o = s:option(ListValue, _n("main_node"), string.format('<a style="color:red">%s</a>', translate("Preproxy Node")), translate("Set the node to be used as a pre-proxy. Each rule (including <code>Default</code>) has a separate switch that controls whether this rule uses the pre-proxy or not."))
 	o:depends({ [_n("protocol")] = "_shunt", [_n("preproxy_enabled")] = true })
 	for k, v in pairs(socks_list) do
+		o:value(v.id, v.remark)
+	end
+	for k, v in pairs(urltest_table) do
 		o:value(v.id, v.remark)
 	end
 	for k, v in pairs(iface_table) do
@@ -119,6 +168,9 @@ m.uci:foreach(appname, "shunt_rules", function(e)
 
 		if #nodes_table > 0 then
 			for k, v in pairs(socks_list) do
+				o:value(v.id, v.remark)
+			end
+			for k, v in pairs(urltest_table) do
 				o:value(v.id, v.remark)
 			end
 			for k, v in pairs(iface_table) do
@@ -150,6 +202,9 @@ o:value("_blackhole", translate("Blackhole"))
 
 if #nodes_table > 0 then
 	for k, v in pairs(socks_list) do
+		o:value(v.id, v.remark)
+	end
+	for k, v in pairs(urltest_table) do
 		o:value(v.id, v.remark)
 	end
 	for k, v in pairs(iface_table) do

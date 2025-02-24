@@ -103,6 +103,8 @@ o.cfgvalue = function(t, n)
 		local protocol = m:get(n, "protocol")
 		if protocol == "_balancing" then
 			protocol = translate("Balancing")
+		elseif protocol == "_urltest" then
+			protocol = "URLTest"
 		elseif protocol == "_shunt" then
 			protocol = translate("Shunt")
 		elseif protocol == "vmess" then
