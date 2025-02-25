@@ -95,7 +95,7 @@ url_test_node() {
 		[ "${chn_list}" = "proxy" ] && probeUrl="www.baidu.com"
 		result=$(${_curl} --max-time 5 -o /dev/null -I -skL -x ${curlx} ${curl_arg}${probeUrl})
 		pgrep -af "url_test_${node_id}" | awk '! /test\.sh/{print $1}' | xargs kill -9 >/dev/null 2>&1
-		rm -rf "/tmp/etc/${CONFIG}/url_test_${node_id}.json"
+		rm -rf "/tmp/etc/${CONFIG}/url_test_${node_id}"*.json
 	}
 	echo $result
 }
