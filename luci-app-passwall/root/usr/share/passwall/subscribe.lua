@@ -1721,7 +1721,7 @@ local execute = function()
 				f:close()
 				raw = trim(stdout)
 				local old_md5 = value.md5 or ""
-				local new_md5 = luci.sys.exec("[ -f " .. tmp_file .. " ] && md5sum " .. tmp_file .. " | awk '{print $1}' || echo 0")
+				local new_md5 = luci.sys.exec("[ -f " .. tmp_file .. " ] && md5sum " .. tmp_file .. " | awk '{print $1}' || echo 0"):gsub("\n", "")
 				os.remove(tmp_file)
 				if old_md5 == new_md5 then
 					log('订阅:【' .. remark .. '】没有变化，无需更新。')

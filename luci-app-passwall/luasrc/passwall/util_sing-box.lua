@@ -1103,6 +1103,8 @@ function gen_config(var)
 								end
 							end
 						end
+					elseif _node.protocol == "_urltest" then
+						rule_outboundTag = gen_urltest(_node)
 					elseif _node.protocol == "_iface" then
 						if _node.iface then
 							local _outbound = {
