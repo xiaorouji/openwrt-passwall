@@ -901,6 +901,54 @@ function gen_config(var)
 			table.insert(inbounds, inbound)
 		end
 
+		local function gen_urltest(_node)
+			local urltest_id = _node[".name"]
+			local urltest_tag = "urltest-" .. urltest_id
+			-- existing urltest
+			for _, v in ipairs(outbounds) do
+				if v.tag == urltest_tag then
+					return urltest_tag
+				end
+			end
+			-- new urltest
+			local ut_nodes = _node.urltest_node
+			local valid_nodes = {}
+			for i = 1, #ut_nodes do
+				local ut_node_id = ut_nodes[i]
+				local ut_node_tag = "ut-" .. ut_node_id
+				local is_new_ut_node = true
+				for _, outbound in ipairs(outbounds) do
+					if string.sub(outbound.tag, 1, #ut_node_tag) == ut_node_tag then
+						is_new_ut_node = false
+						valid_nodes[#valid_nodes + 1] = outbound.tag
+						break
+					end
+				end
+				if is_new_ut_node then
+					local ut_node = uci:get_all(appname, ut_node_id)
+					local outbound = gen_outbound(flag, ut_node, ut_node_tag)
+					if outbound then
+						outbound.tag = outbound.tag .. ":" .. ut_node.remarks
+						table.insert(outbounds, outbound)
+						valid_nodes[#valid_nodes + 1] = outbound.tag
+					end
+				end
+			end
+			if #valid_nodes == 0 then return nil end
+			local outbound = {
+				type = "urltest",
+				tag = urltest_tag,
+				outbounds = valid_nodes,
+				url = _node.urltest_url or "https://www.gstatic.com/generate_204",
+				interval = _node.urltest_interval and tonumber(_node.urltest_interval) and string.format("%dm", tonumber(_node.urltest_interval) / 60) or "3m",
+				tolerance = _node.urltest_tolerance and tonumber(_node.urltest_tolerance) and tonumber(_node.urltest_tolerance) or 50,
+				idle_timeout = _node.urltest_idle_timeout and tonumber(_node.urltest_idle_timeout) and string.format("%dm", tonumber(_node.urltest_idle_timeout) / 60) or "30m",
+				interrupt_exist_connections = (_node.urltest_interrupt_exist_connections == "true" or _node.urltest_interrupt_exist_connections == "1") and true or false
+			}
+			table.insert(outbounds, outbound)
+			return urltest_tag
+		end
+
 		local function set_outbound_detour(node, outbound, outbounds_table, shunt_rule_name)
 			if not node or not outbound or not outbounds_table then return nil end
 			local default_outTag = outbound.tag
@@ -1055,6 +1103,8 @@ function gen_config(var)
 								end
 							end
 						end
+					elseif _node.protocol == "_urltest" then
+						rule_outboundTag = gen_urltest(_node)
 					elseif _node.protocol == "_iface" then
 						if _node.iface then
 							local _outbound = {
@@ -1230,6 +1280,10 @@ function gen_config(var)
 
 			for index, value in ipairs(rules) do
 				table.insert(route.rules, rules[index])
+			end
+		elseif node.protocol == "_urltest" then
+			if node.urltest_node then
+				COMMON.default_outbound_tag = gen_urltest(node)
 			end
 		elseif node.protocol == "_iface" then
 			if node.iface then

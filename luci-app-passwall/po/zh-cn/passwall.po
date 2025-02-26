@@ -1579,9 +1579,6 @@ msgstr "最大并发连接数"
 msgid "XUDP Mux concurrency"
 msgstr "XUDP 最大并发连接数"
 
-msgid "Mux idle timeout"
-msgstr "最大闲置时间"
-
 msgid "Padding"
 msgstr "填充"
 
@@ -1599,9 +1596,6 @@ msgstr "推荐值：Sec-WebSocket-Protocol"
 
 msgid "Health check"
 msgstr "健康检查"
-
-msgid "Idle timeout"
-msgstr "闲置时间"
 
 msgid "Health check timeout"
 msgstr "检查超时时间"
@@ -1803,3 +1797,39 @@ msgstr "是否真的要恢复客户端默认配置？"
 
 msgid "Settings have been successfully saved and applied!"
 msgstr "设置已成功保存并应用!"
+
+msgid "_urltest"
+msgstr "URLTest"
+
+msgid "URLTest node list"
+msgstr "URLTest 节点列表"
+
+msgid "List of nodes to test, <a target='_blank' href='https://sing-box.sagernet.org/configuration/outbound/urltest'>document</a>"
+msgstr "要测试的节点列表，<a target='_blank' href='https://sing-box.sagernet.org/zh/configuration/outbound/urltest'>文档原理</a>"
+
+msgid "Test interval"
+msgstr "测试间隔"
+
+msgid "The test interval in seconds."
+msgstr "测试间隔时间（单位：秒）。"
+
+msgid "Test interval must be less or equal than idle timeout."
+msgstr "测试间隔时间必须小于或等于空闲超时时间。"
+
+msgid "Test tolerance"
+msgstr "测试容差"
+
+msgid "The test tolerance in milliseconds."
+msgstr "测试容差时间（单位：毫秒）。"
+
+msgid "Idle timeout"
+msgstr "空闲超时"
+
+msgid "The idle timeout in seconds."
+msgstr "空闲超时时间（单位：秒）。"
+
+msgid "Interrupt existing connections"
+msgstr "中断现有连接"
+
+msgid "Interrupt existing connections when the selected outbound has changed."
+msgstr "当选择的出站发生变化时中断现有连接。"

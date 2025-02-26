@@ -318,6 +318,36 @@ do
 					end
 				}
 			end
+		elseif node.protocol and node.protocol == '_urltest' then
+			local flag = "Sing-Box URLTest节点[" .. node_id .. "]列表"
+			local currentNodes = {}
+			local newNodes = {}
+			if node.urltest_node then
+				for k, node in pairs(node.urltest_node) do
+					currentNodes[#currentNodes + 1] = {
+						log = false,
+						node = node,
+						currentNode = node and uci:get_all(appname, node) or nil,
+						remarks = node,
+						set = function(o, server)
+							if o and server and server ~= "nil" then
+								table.insert(o.newNodes, server)
+							end
+						end
+					}
+				end
+			end
+			CONFIG[#CONFIG + 1] = {
+				remarks = flag,
+				currentNodes = currentNodes,
+				newNodes = newNodes,
+				set = function(o, newNodes)
+					if o then
+						if not newNodes then newNodes = o.newNodes end
+						uci:set_list(appname, node_id, "urltest_node", newNodes or {})
+					end
+				end
+			}
 		else
 			--前置代理节点
 			local currentNode = uci:get_all(appname, node_id) or nil
@@ -1691,7 +1721,7 @@ local execute = function()
 				f:close()
 				raw = trim(stdout)
 				local old_md5 = value.md5 or ""
-				local new_md5 = luci.sys.exec("[ -f " .. tmp_file .. " ] && md5sum " .. tmp_file .. " | awk '{print $1}' || echo 0")
+				local new_md5 = luci.sys.exec("[ -f " .. tmp_file .. " ] && md5sum " .. tmp_file .. " | awk '{print $1}' || echo 0"):gsub("\n", "")
 				os.remove(tmp_file)
 				if old_md5 == new_md5 then
 					log('订阅:【' .. remark .. '】没有变化，无需更新。')
