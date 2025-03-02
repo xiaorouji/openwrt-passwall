@@ -115,6 +115,10 @@ jobs:
           echo "src-git routing https://git.openwrt.org/feed/routing.git;openwrt-${{ matrix.sdk_ver }}"  >> feeds.conf
           echo "src-git passwall_packages https://github.com/${{ env.packages }}.git;main" >> feeds.conf
           echo "src-git passwall https://github.com/${{ env.passwall }}.git;${{ github.ref_name }}" >> feeds.conf
+
+          rm -rf feeds/packages/lang/golang
+          git clone https://github.com/sbwml/packages_lang_golang -b 24.x feeds/packages/lang/golang
+          
           ./scripts/feeds update -a
           echo "CONFIG_PACKAGE_luci-app-passwall=m" > .config
           ./scripts/feeds install -d n luci-app-passwall
