@@ -78,12 +78,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - sdk_ver: 21.02
-            luci_ver: 19.07
+          - sdk_ver: "21.02"
+            luci_ver: "19.07"
             sdk_url: https://downloads.openwrt.org/releases/21.02.7/targets/x86/64/openwrt-sdk-21.02.7-x86-64_gcc-8.4.0_musl.Linux-x86_64.tar.xz
 
-          - sdk_ver: 24.10
-            luci_ver: 24.10
+          - sdk_ver: "24.10"
+            luci_ver: "24.10"
             sdk_url: https://downloads.openwrt.org/releases/24.10.0/targets/x86/64/openwrt-sdk-24.10.0-x86-64_gcc-13.3.0_musl.Linux-x86_64.tar.zst
     steps:
       - name: Install packages
