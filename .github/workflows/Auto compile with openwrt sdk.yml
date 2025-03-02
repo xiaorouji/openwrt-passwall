@@ -260,8 +260,8 @@ jobs:
           ./scripts/feeds install -a -f -p passwall_packages
           ./scripts/feeds install luci-app-passwall
 
-          # rm -rf feeds/packages/lang/golang
-          # git clone https://github.com/sbwml/packages_lang_golang -b 23.x feeds/packages/lang/golang
+          rm -rf feeds/packages/lang/golang
+          git clone https://github.com/sbwml/packages_lang_golang -b 24.x feeds/packages/lang/golang
 
           echo "CONFIG_ALL_NONSHARED=n" > .config
           echo "CONFIG_ALL_KMODS=n" >> .config
@@ -306,7 +306,7 @@ jobs:
           for package in $(ls feeds/passwall_packages); do
               if [ -d "feeds/passwall_packages/$package" ]; then
                   echo "-----------begin compile $package ---------------"
-                  sleep 1s
+                  sleep 10s
                   make package/feeds/passwall_packages/$package/compile -j$(nproc) V=s
                   echo "-----------compiled $package ---------------"
                   echo ""
