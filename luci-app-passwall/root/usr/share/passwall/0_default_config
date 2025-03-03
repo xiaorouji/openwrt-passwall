@@ -51,10 +51,6 @@ config global_xray
 
 config global_singbox
 	option sniff_override_destination '0'
-	option geoip_path '/usr/share/singbox/geoip.db'
-	option geoip_url 'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.db'
-	option geosite_path '/usr/share/singbox/geosite.db'
-	option geosite_url 'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.db'
 
 config global_other
 	option auto_detection_time 'tcping'

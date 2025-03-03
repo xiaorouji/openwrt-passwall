@@ -1633,24 +1633,6 @@ msgstr "端口跳跃额外端口"
 msgid "HeartbeatPeriod(second)"
 msgstr "心跳周期（单位：秒）"
 
-msgid "Custom geoip Path"
-msgstr "自定义 geoip 文件路径"
-
-msgid "Custom geoip URL"
-msgstr "自定义 geoip 文件更新链接"
-
-msgid "Custom geosite Path"
-msgstr "自定义 geosite 文件路径"
-
-msgid "Custom geosite URL"
-msgstr "自定义 geosite 文件更新链接"
-
-msgid "Remove resource files"
-msgstr "删除资源文件"
-
-msgid "Sing-Box will automatically download resource files when starting, you can use this feature achieve upgrade resource files."
-msgstr "Sing-Box 会在启动时自动下载资源文件，您可以使用此功能实现升级资源文件。"
-
 msgid "Override the connection destination address"
 msgstr "覆盖连接目标地址"
 
