@@ -10,6 +10,41 @@ local split = api.split
 local local_version = api.get_app_version("singbox")
 local version_ge_1_11_0 = api.compare_versions(local_version:match("[^v]+"), ">=", "1.11.0")
 
+local geosite_all_tag = {}
+local geoip_all_tag = {}
+local srss_path = "/tmp/etc/" .. appname .."/srss/"
+
+local function convert_geofile()
+	local geo_path = uci:get(appname, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"
+	local geosite_path = geo_path:match("^(.*)/") .. "/geosite.dat"
+	local geoip_path = geo_path:match("^(.*)/") .. "/geoip.dat"
+	if not api.is_finded("geoview") then
+		api.log("* 注意：缺少 geoview 组件，Sing-Box 分流将无法启用！")
+		return
+	end
+	if not fs.access(srss_path) then
+		fs.mkdir(srss_path)
+	end
+	if next(geosite_all_tag) and fs.access(geosite_path) then
+		for k,v in pairs(geosite_all_tag) do
+			local srs_file = srss_path .. "geosite-" .. k ..".srs"
+			if not fs.access(srs_file) then
+				sys.exec("geoview -type geosite -action convert -input " .. geosite_path .. " -list '" .. k .. "' -output " .. srs_file .. " -lowmem=true")
+				--api.log("* 转换geosite:" .. k .. " 到 Sing-Box 规则集二进制文件")
+			end
+		end
+	end
+	if next(geoip_all_tag) and fs.access(geoip_path) then
+		for k,v in pairs(geoip_all_tag) do
+			local srs_file = srss_path .. "geoip-" .. k ..".srs"
+			if not fs.access(srs_file) then
+				sys.exec("geoview -type geoip -action convert -input " .. geoip_path .. " -list '" .. k .. "' -output " .. srs_file .. " -lowmem=true")
+				--api.log("* 转换geoip:" .. k .. " 到 Sing-Box 规则集二进制文件")
+			end
+		end
+	end
+end
+
 local new_port
 
 local function get_new_port()
@@ -802,17 +837,7 @@ function gen_config(var)
 	local singbox_settings = uci:get_all(appname, "@global_singbox[0]") or {}
 
 	local route = {
-		rules = {},
-		geoip = {
-			path = singbox_settings.geoip_path or "/usr/share/singbox/geoip.db",
-			download_url = singbox_settings.geoip_url or nil,
-			download_detour = nil,
-		},
-		geosite = {
-			path = singbox_settings.geosite_path or "/usr/share/singbox/geosite.db",
-			download_url = singbox_settings.geosite_url or nil,
-			download_detour = nil,
-		},
+		rules = {}
 	}
 
 	local experimental = nil
@@ -1183,17 +1208,21 @@ function gen_config(var)
 					end
 
 					if e.source then
-						local source_geoip = {}
 						local source_ip_cidr = {}
+						local is_private = false
 						string.gsub(e.source, '[^' .. " " .. ']+', function(w)
 							if w:find("geoip") == 1 then
-								table.insert(source_geoip, w)
+								local _geoip = w:sub(1 + #"geoip:")     --适配srs
+								if _geoip == "private" then
+									is_private = true
+								end
 							else
 								table.insert(source_ip_cidr, w)
 							end
 						end)
-						rule.source_geoip = #source_geoip > 0 and source_geoip or nil
+						rule.source_ip_is_private = is_private and true or nil
 						rule.source_ip_cidr = #source_ip_cidr > 0 and source_ip_cidr or nil
+						if is_private or #source_ip_cidr > 0 then rule.rule_set_ip_cidr_match_source = true end
 					end
 
 					if e.sourcePort then
@@ -1224,6 +1253,8 @@ function gen_config(var)
 						rule.port_range = #port_range > 0 and port_range or nil
 					end
 
+					local rule_set_tag = {}
+
 					if e.domain_list then
 						local domain_table = {
 							outboundTag = outboundTag,
@@ -1231,12 +1262,15 @@ function gen_config(var)
 							domain_suffix = {},
 							domain_keyword = {},
 							domain_regex = {},
-							geosite = {},
+							rule_set = {},
 						}
 						string.gsub(e.domain_list, '[^' .. "\r\n" .. ']+', function(w)
 							if w:find("#") == 1 then return end
 							if w:find("geosite:") == 1 then
-								table.insert(domain_table.geosite, w:sub(1 + #"geosite:"))
+								local _geosite = w:sub(1 + #"geosite:")  --适配srs
+								geosite_all_tag[_geosite] = true
+								table.insert(rule_set_tag, "geosite-" .. _geosite)
+								table.insert(domain_table.rule_set, "geosite-" .. _geosite)
 							elseif w:find("regexp:") == 1 then
 								table.insert(domain_table.domain_regex, w:sub(1 + #"regexp:"))
 							elseif w:find("full:") == 1 then
@@ -1251,7 +1285,6 @@ function gen_config(var)
 						rule.domain_suffix = #domain_table.domain_suffix > 0 and domain_table.domain_suffix or nil
 						rule.domain_keyword = #domain_table.domain_keyword > 0 and domain_table.domain_keyword or nil
 						rule.domain_regex = #domain_table.domain_regex > 0 and domain_table.domain_regex or nil
-						rule.geosite = #domain_table.geosite > 0 and domain_table.geosite or nil
 
 						if outboundTag then
 							table.insert(dns_domain_rules, api.clone(domain_table))
@@ -1260,19 +1293,27 @@ function gen_config(var)
 
 					if e.ip_list then
 						local ip_cidr = {}
-						local geoip = {}
+						local is_private = false
 						string.gsub(e.ip_list, '[^' .. "\r\n" .. ']+', function(w)
 							if w:find("#") == 1 then return end
 							if w:find("geoip:") == 1 then
-								table.insert(geoip, w:sub(1 + #"geoip:"))
+								local _geoip = w:sub(1 + #"geoip:")     --适配srs
+								if _geoip == "private" then
+									is_private = true
+								else
+									geoip_all_tag[_geoip] = true
+									table.insert(rule_set_tag, "geoip-" .. _geoip)
+								end
 							else
 								table.insert(ip_cidr, w)
 							end
 						end)
 
+						rule.ip_is_private = is_private and true or nil
 						rule.ip_cidr = #ip_cidr > 0 and ip_cidr or nil
-						rule.geoip = #geoip > 0 and geoip or nil
 					end
+
+					rule.rule_set = #rule_set_tag > 0 and rule_set_tag or nil --适配srs
 
 					table.insert(rules, rule)
 				end
@@ -1281,6 +1322,34 @@ function gen_config(var)
 			for index, value in ipairs(rules) do
 				table.insert(route.rules, rules[index])
 			end
+
+			local rule_set = {}    --适配srs
+			if next(geosite_all_tag) then
+				for k,v in pairs(geosite_all_tag) do
+					local srs_file = srss_path .. "geosite-" .. k ..".srs"
+					local _rule_set = {
+						tag = "geosite-" .. k,
+						type = "local",
+						format = "binary",
+						path = srs_file
+					}
+					table.insert(rule_set, _rule_set)
+				end
+			end
+			if next(geoip_all_tag) then
+				for k,v in pairs(geoip_all_tag) do
+					local srs_file = srss_path .. "geoip-" .. k ..".srs"
+					local _rule_set = {
+						tag = "geoip-" .. k,
+						type = "local",
+						format = "binary",
+						path = srs_file
+					}
+					table.insert(rule_set, _rule_set)
+				end
+			end
+			route.rule_set = #rule_set >0 and rule_set or nil
+
 		elseif node.protocol == "_urltest" then
 			if node.urltest_node then
 				COMMON.default_outbound_tag = gen_urltest(node)
@@ -1470,14 +1539,14 @@ function gen_config(var)
 		--按分流顺序DNS
 		if dns_domain_rules and #dns_domain_rules > 0 then
 			for index, value in ipairs(dns_domain_rules) do
-				if value.outboundTag and (value.domain or value.domain_suffix or value.domain_keyword or value.domain_regex or value.geosite) then
+				if value.outboundTag and (value.domain or value.domain_suffix or value.domain_keyword or value.domain_regex or value.rule_set) then
 					local dns_rule = {
 						server = value.outboundTag,
 						domain = (value.domain and #value.domain > 0) and value.domain or nil,
 						domain_suffix = (value.domain_suffix and #value.domain_suffix > 0) and value.domain_suffix or nil,
 						domain_keyword = (value.domain_keyword and #value.domain_keyword > 0) and value.domain_keyword or nil,
 						domain_regex = (value.domain_regex and #value.domain_regex > 0) and value.domain_regex or nil,
-						geosite = (value.geosite and #value.geosite > 0) and value.geosite or nil,
+						rule_set = (value.rule_set and #value.rule_set > 0) and value.rule_set or nil,                      --适配srs
 						disable_cache = false,
 					}
 					if value.outboundTag ~= "block" and value.outboundTag ~= "direct" then
@@ -1737,5 +1806,8 @@ if arg[1] then
 	local func =_G[arg[1]]
 	if func then
 		print(func(api.get_function_args(arg)))
+		if next(geosite_all_tag) or next(geoip_all_tag) then
+			convert_geofile()
+		end
 	end
 end

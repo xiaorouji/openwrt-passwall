@@ -777,8 +777,9 @@ run_redir() {
 		sing-box)
 			local protocol=$(config_n_get $node protocol)
 			[ "$protocol" = "_shunt" ] && {
-				local geoip_path="$(config_t_get global_singbox geoip_path)"
-				local geosite_path="$(config_t_get global_singbox geosite_path)"
+				local geo_path="$(config_t_get global_rules v2ray_location_asset)"
+				local geoip_path="${geo_path%*/}/geoip.dat"
+				local geosite_path="${geo_path%*/}/geosite.dat"
 				if [ ! -s "$geoip_path" ] || [ ! -s "$geosite_path" ]; then
 					echolog "* 缺少Geo规则文件，UDP Sing-Box分流节点无法正常使用！"
 				fi
@@ -895,8 +896,9 @@ run_redir() {
 			}
 
 			[ "$protocol" = "_shunt" ] && {
-				local geoip_path="$(config_t_get global_singbox geoip_path)"
-				local geosite_path="$(config_t_get global_singbox geosite_path)"
+				local geo_path="$(config_t_get global_rules v2ray_location_asset)"
+				local geoip_path="${geo_path%*/}/geoip.dat"
+				local geosite_path="${geo_path%*/}/geosite.dat"
 				if [ ! -s "$geoip_path" ] || [ ! -s "$geosite_path" ]; then
 					echolog "* 缺少Geo规则文件，TCP Sing-Box分流节点无法正常使用！"
 				fi
