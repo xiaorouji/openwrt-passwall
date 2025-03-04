@@ -350,8 +350,7 @@ parse_doh() {
 get_geoip() {
 	local geoip_code="$1"
 	local geoip_type_flag=""
-	local geoip_path="$(config_t_get global_rules v2ray_location_asset)"
-	geoip_path="${geoip_path%*/}/geoip.dat"
+	local geoip_path="${V2RAY_LOCATION_ASSET%*/}/geoip.dat"
 	[ -s "$geoip_path" ] || { echo ""; return 1; }
 	case "$2" in
 		"ipv4") geoip_type_flag="-ipv6=false" ;;
@@ -777,9 +776,8 @@ run_redir() {
 		sing-box)
 			local protocol=$(config_n_get $node protocol)
 			[ "$protocol" = "_shunt" ] && {
-				local geo_path="$(config_t_get global_rules v2ray_location_asset)"
-				local geoip_path="${geo_path%*/}/geoip.dat"
-				local geosite_path="${geo_path%*/}/geosite.dat"
+				local geoip_path="${V2RAY_LOCATION_ASSET%*/}/geoip.dat"
+				local geosite_path="${V2RAY_LOCATION_ASSET%*/}/geosite.dat"
 				if [ ! -s "$geoip_path" ] || [ ! -s "$geosite_path" ]; then
 					echolog "* 缺少Geo规则文件，UDP Sing-Box分流节点无法正常使用！"
 				fi
@@ -789,9 +787,8 @@ run_redir() {
 		xray)
 			local protocol=$(config_n_get $node protocol)
 			[ "$protocol" = "_shunt" ] && {
-				local geo_path="$(config_t_get global_rules v2ray_location_asset)"
-				local geoip_path="${geo_path%*/}/geoip.dat"
-				local geosite_path="${geo_path%*/}/geosite.dat"
+				local geoip_path="${V2RAY_LOCATION_ASSET%*/}/geoip.dat"
+				local geosite_path="${V2RAY_LOCATION_ASSET%*/}/geosite.dat"
 				if [ ! -s "$geoip_path" ] || [ ! -s "$geosite_path" ]; then
 					echolog "* 缺少Geo规则文件，UDP Xray分流节点无法正常使用！"
 				fi
@@ -896,9 +893,8 @@ run_redir() {
 			}
 
 			[ "$protocol" = "_shunt" ] && {
-				local geo_path="$(config_t_get global_rules v2ray_location_asset)"
-				local geoip_path="${geo_path%*/}/geoip.dat"
-				local geosite_path="${geo_path%*/}/geosite.dat"
+				local geoip_path="${V2RAY_LOCATION_ASSET%*/}/geoip.dat"
+				local geosite_path="${V2RAY_LOCATION_ASSET%*/}/geosite.dat"
 				if [ ! -s "$geoip_path" ] || [ ! -s "$geosite_path" ]; then
 					echolog "* 缺少Geo规则文件，TCP Sing-Box分流节点无法正常使用！"
 				fi
@@ -983,9 +979,8 @@ run_redir() {
 			}
 
 			[ "$protocol" = "_shunt" ] && {
-				local geo_path="$(config_t_get global_rules v2ray_location_asset)"
-				local geoip_path="${geo_path%*/}/geoip.dat"
-				local geosite_path="${geo_path%*/}/geosite.dat"
+				local geoip_path="${V2RAY_LOCATION_ASSET%*/}/geoip.dat"
+				local geosite_path="${V2RAY_LOCATION_ASSET%*/}/geosite.dat"
 				if [ ! -s "$geoip_path" ] || [ ! -s "$geosite_path" ]; then
 					echolog "* 缺少Geo规则文件，TCP Xray分流节点无法正常使用！"
 				fi
