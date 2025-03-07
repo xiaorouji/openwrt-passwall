@@ -783,7 +783,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 				}
 				opt.set(dom_prefix + 'address', server);
 				opt.set(dom_prefix + 'port', port);
-				opt.set(dom_prefix + 'password', password || "");
+				opt.set(dom_prefix + 'password', decodeURIComponent(password) || "");
 				opt.set(dom_prefix + 'method', method || "");
 				opt.set(dom_prefix + 'ss_method', method || "");
 				opt.set(dom_prefix + 'plugin', plugin || "none");
@@ -918,7 +918,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 				}
 				opt.set(dom_prefix + 'address', part2[0]);
 				opt.set(dom_prefix + 'port', part2[1]);
-				opt.set(dom_prefix + 'password', part1[1]);
+				opt.set(dom_prefix + 'password', decodeURIComponent(part1[1]));
 				opt.set(dom_prefix + 'method', method);
 				opt.set(dom_prefix + 'ss_method', method);
 				opt.set(dom_prefix + 'plugin', "none");
