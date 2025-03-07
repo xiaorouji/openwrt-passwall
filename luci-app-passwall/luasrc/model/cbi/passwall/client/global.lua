@@ -4,6 +4,7 @@ local datatypes = api.datatypes
 local fs = api.fs
 local has_singbox = api.finded_com("singbox")
 local has_xray = api.finded_com("xray")
+local has_geoview = api.is_finded("geoview")
 local has_gfwlist = fs.access("/usr/share/passwall/rules/gfwlist")
 local has_chnlist = fs.access("/usr/share/passwall/rules/chnlist")
 local has_chnroute = fs.access("/usr/share/passwall/rules/chnroute")
@@ -14,7 +15,9 @@ api.set_apply_on_parse(m)
 
 local nodes_table = {}
 for k, e in ipairs(api.get_valid_nodes()) do
-	nodes_table[#nodes_table + 1] = e
+	if not(e.type == "sing-box" and e.protocol == "_shunt" and not has_geoview) then  --Sing-Box分流节点缺少geoview组件时不允许使用
+		nodes_table[#nodes_table + 1] = e
+	end
 end
 
 local normal_list = {}
@@ -165,7 +168,7 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 			local vid = v.id
 			-- shunt node type, Sing-Box or Xray
 			local type = s:taboption("Main", ListValue, vid .. "-type", translate("Type"))
-			if has_singbox then
+			if has_singbox and has_geoview then
 				type:value("sing-box", "Sing-Box")
 			end
 			if has_xray then

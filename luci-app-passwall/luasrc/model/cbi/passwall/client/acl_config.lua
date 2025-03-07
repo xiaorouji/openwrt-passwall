@@ -13,6 +13,7 @@ local fs = api.fs
 local sys = api.sys
 local has_singbox = api.finded_com("singbox")
 local has_xray = api.finded_com("xray")
+local has_geoview = api.is_finded("geoview")
 local has_gfwlist = fs.access("/usr/share/passwall/rules/gfwlist")
 local has_chnlist = fs.access("/usr/share/passwall/rules/chnlist")
 local has_chnroute = fs.access("/usr/share/passwall/rules/chnroute")
@@ -23,7 +24,9 @@ end
 
 local nodes_table = {}
 for k, e in ipairs(api.get_valid_nodes()) do
-	nodes_table[#nodes_table + 1] = e
+	if not(e.type == "sing-box" and e.protocol == "_shunt" and not has_geoview) then  --Sing-Box分流节点缺少geoview组件时不允许使用
+		nodes_table[#nodes_table + 1] = e
+	end
 end
 
 local dynamicList_write = function(self, section, value)
