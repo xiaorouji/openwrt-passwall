@@ -601,7 +601,6 @@ local function processData(szType, content, add_mode, add_from)
 		--ss://2022-blake3-aes-256-gcm:YctPZ6U7xPPcU%2Bgp3u%2B0tx%2FtRizJN9K8y%2BuKlW2qjlI%3D@192.168.100.1:8888/?plugin=v2ray-plugin%3Bserver#Example3
 		--ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTp0ZXN0@xxxxxx.com:443?type=ws&path=%2Ftestpath&host=xxxxxx.com&security=tls&fp=&alpn=h3%2Ch2%2Chttp%2F1.1&sni=xxxxxx.com#test-1%40ss
 		--ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTp4eHh4eHhAeHh4eC54eHh4eC5jb206NTYwMDE#Hong%20Kong-01
-		--ss://MjAyMi1ibGFrZTMtYWVzLTEyOC1nY206WEdXbmhjUFAxb0Z4SXdxRXpRYXBnUSUzRCUzRCUzQTRuWHRlc0w2QnFOZlEyTVh2dnBqdGclM0QlM0Q@test.com:10333/?group=test#grose7ym
 
 		local idx_sp = 0
 		local alias = ""
@@ -667,7 +666,7 @@ local function processData(szType, content, add_mode, add_from)
 			local method = userinfo:sub(1, userinfo:find(":") - 1)
 			local password = userinfo:sub(userinfo:find(":") + 1, #userinfo)
 			result.method = method
-			result.password = UrlDecode(password)
+			result.password = password
 
 			if ss_type_default == "shadowsocks-rust" and has_ss_rust then
 				result.type = 'SS-Rust'
