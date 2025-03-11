@@ -495,8 +495,6 @@ if DEFAULT_TAG == "none_noip" then table.insert(config_lines, "noip-as-chnip") e
 if DEFAULT_TAG == nil or DEFAULT_TAG == "smart" or DEFAULT_TAG == "none_noip" then DEFAULT_TAG = "none" end
 
 table.insert(config_lines, "default-tag " .. DEFAULT_TAG)
-table.insert(config_lines, "cache 4096")
-table.insert(config_lines, "cache-stale 3600")
 
 if DEFAULT_TAG == "none" then
 	table.insert(config_lines, "verdict-cache 5000")
