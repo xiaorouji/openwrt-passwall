@@ -1639,7 +1639,7 @@ local function parse_link(raw, add_mode, add_from, cfgid)
 		log('成功解析【' .. add_from .. '】节点数量: ' .. #node_list)
 	else
 		if add_mode == "2" then
-			log('获取到的【' .. add_from .. '】订阅内容为空，可能是订阅地址失效，或是网络问题，请请检测。')
+			log('获取到的【' .. add_from .. '】订阅内容为空，可能是订阅地址无效，或是网络问题，请诊断！')
 		end
 	end
 end
@@ -1715,22 +1715,37 @@ local execute = function()
 			log('正在订阅:【' .. remark .. '】' .. url .. ' [' .. result .. ']')
 			local tmp_file = "/tmp/" .. cfgid
 			local raw = curl(url, tmp_file, ua, access_mode)
-			if raw == 0 then
-				local f = io.open(tmp_file, "r")
-				local stdout = f:read("*all")
-				f:close()
-				raw = trim(stdout)
-				local old_md5 = value.md5 or ""
-				local new_md5 = luci.sys.exec("[ -f " .. tmp_file .. " ] && md5sum " .. tmp_file .. " | awk '{print $1}' || echo 0"):gsub("\n", "")
-				os.remove(tmp_file)
-				if old_md5 == new_md5 then
-					log('订阅:【' .. remark .. '】没有变化，无需更新。')
-				else
-					parse_link(raw, "2", remark, cfgid)
-					uci:set(appname, cfgid, "md5", new_md5)
-				end
-			else
+			if raw ~= 0 then
 				fail_list[#fail_list + 1] = value
+			else
+				if luci.sys.call("[ -f " .. tmp_file .. " ] && sed -i -e '/^[ \t]*$/d' -e '/^[ \t]*\r$/d' " .. tmp_file) == 0 then
+					local f = io.open(tmp_file, "r")
+					local count = 0
+					for _ in f:lines() do
+						count = count + 1
+					end
+					if count == 1 then
+						f:seek("set")
+						local stdout = f:read("*all")
+						f:close()
+						local raw_data = trim(stdout)
+						local old_md5 = value.md5 or ""
+						local new_md5 = luci.sys.exec("md5sum " .. tmp_file .. " 2>/dev/null | awk '{print $1}'"):gsub("\n", "")
+						os.remove(tmp_file)
+						if old_md5 == new_md5 then
+							log('订阅:【' .. remark .. '】没有变化，无需更新。')
+						else
+							parse_link(raw_data, "2", remark, cfgid)
+							uci:set(appname, cfgid, "md5", new_md5)
+						end
+					else
+						f:close()
+						os.remove(tmp_file)
+						fail_list[#fail_list + 1] = value
+					end
+				else
+					fail_list[#fail_list + 1] = value
+				end
 			end
 			allowInsecure_default = nil
 			filter_keyword_mode_default = uci:get(appname, "@global_subscribe[0]", "filter_keyword_mode") or "0"
@@ -1745,7 +1760,7 @@ local execute = function()
 
 		if #fail_list > 0 then
 			for index, value in ipairs(fail_list) do
-				log(string.format('【%s】订阅失败，可能是订阅地址失效，或是网络问题，请诊断！', value.remark))
+				log(string.format('【%s】订阅失败，可能是订阅地址无效，或是网络问题，请诊断！', value.remark))
 			end
 		end
 		update_node(0)
