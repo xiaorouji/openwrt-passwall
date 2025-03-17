@@ -401,6 +401,10 @@ if singbox_tags:find("with_quic") then
 end
 
 if singbox_tags:find("with_quic") then
+	o = s:option(Value, _n("hysteria2_ports"), translate("Port hopping range"))
+	o.description = translate("Format as 1000:2000 Multiple groups are separated by commas (,).")
+	o:depends({ [_n("protocol")] = "hysteria2" })
+
 	o = s:option(Value, _n("hysteria2_up_mbps"), translate("Max upload Mbps"))
 	o:depends({ [_n("protocol")] = "hysteria2" })
 

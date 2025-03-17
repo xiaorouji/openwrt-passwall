@@ -1821,3 +1821,9 @@ msgstr "中断现有连接"
 
 msgid "Interrupt existing connections when the selected outbound has changed."
 msgstr "当选择的出站发生变化时中断现有连接。"
+
+msgid "Port hopping range"
+msgstr "端口跳跃范围"
+
+msgid "Format as 1000:2000 Multiple groups are separated by commas (,)."
+msgstr "格式为：1000:2000 多组时用逗号(,)隔开。"
