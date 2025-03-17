@@ -192,7 +192,7 @@ function get_redir_log()
 		proto = "TCP"
 	end
 	if fs.access(path .. "/" .. proto .. ".log") then
-		local content = luci.sys.exec("cat ".. path .. "/" .. proto .. ".log")
+		local content = luci.sys.exec("tail -n 19999 ".. path .. "/" .. proto .. ".log")
 		content = content:gsub("\n", "<br />")
 		luci.http.write(content)
 	else
@@ -216,7 +216,7 @@ function get_chinadns_log()
 	local flag = luci.http.formvalue("flag")
 	local path = "/tmp/etc/passwall/acl/" .. flag .. "/chinadns_ng.log"
 	if fs.access(path) then
-		local content = luci.sys.exec("cat ".. path)
+		local content = luci.sys.exec("tail -n 5000 ".. path)
 		content = content:gsub("\n", "<br />")
 		luci.http.write(content)
 	else
