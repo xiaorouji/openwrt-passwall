@@ -15,9 +15,9 @@ local geoip_all_tag = {}
 local srss_path = "/tmp/etc/" .. appname .."/srss/"
 
 local function convert_geofile()
-	local geo_path = uci:get(appname, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"
-	local geosite_path = geo_path:match("^(.*)/") .. "/geosite.dat"
-	local geoip_path = geo_path:match("^(.*)/") .. "/geoip.dat"
+	local geo_dir = (uci:get(appname, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"):match("^(.*)/")
+	local geosite_path = geo_dir .. "/geosite.dat"
+	local geoip_path = geo_dir .. "/geoip.dat"
 	if not api.is_finded("geoview") then
 		api.log("* 注意：缺少 geoview 组件，Sing-Box 分流将无法启用！")
 		return
@@ -25,24 +25,23 @@ local function convert_geofile()
 	if not fs.access(srss_path) then
 		fs.mkdir(srss_path)
 	end
-	if next(geosite_all_tag) and fs.access(geosite_path) then
-		for k,v in pairs(geosite_all_tag) do
-			local srs_file = srss_path .. "geosite-" .. k ..".srs"
-			if not fs.access(srs_file) then
-				sys.exec("geoview -type geosite -action convert -input " .. geosite_path .. " -list '" .. k .. "' -output " .. srs_file .. " -lowmem=true")
-				--api.log("* 转换geosite:" .. k .. " 到 Sing-Box 规则集二进制文件")
+	local function convert(file_path, prefix, tags)
+		if next(tags) and fs.access(file_path) then
+			for k in pairs(tags) do
+				local srs_file = srss_path .. prefix .. "-" .. k .. ".srs"
+				if not fs.access(srs_file) then
+					local cmd = string.format("geoview -type %s -action convert -input %s -list '%s' -output %s -lowmem=true",
+						prefix, file_path, k, srs_file)
+					sys.exec(cmd)
+					local status = fs.access(srs_file) and "成功。" or "失败！"
+					api.log(string.format("  - 转换 %s:%s ... %s", prefix, k, status))
+				end
 			end
 		end
 	end
-	if next(geoip_all_tag) and fs.access(geoip_path) then
-		for k,v in pairs(geoip_all_tag) do
-			local srs_file = srss_path .. "geoip-" .. k ..".srs"
-			if not fs.access(srs_file) then
-				sys.exec("geoview -type geoip -action convert -input " .. geoip_path .. " -list '" .. k .. "' -output " .. srs_file .. " -lowmem=true")
-				--api.log("* 转换geoip:" .. k .. " 到 Sing-Box 规则集二进制文件")
-			end
-		end
-	end
+	api.log("Sing-Box 规则集转换：")
+	convert(geosite_path, "geosite", geosite_all_tag)
+	convert(geoip_path, "geoip", geoip_all_tag)
 end
 
 local new_port
