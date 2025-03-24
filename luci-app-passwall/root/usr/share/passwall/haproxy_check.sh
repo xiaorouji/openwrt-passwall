@@ -8,7 +8,7 @@ server_port=$4
 probe_file="/tmp/etc/passwall/haproxy/Probe_URL"
 probeUrl="https://www.google.com/generate_204"
 if [ -f "$probe_file" ]; then
-	firstLine=$(head -n 1 "$probe_file" | tr -d ' \t')
+	firstLine=$(head -n 1 "$probe_file" | tr -d ' \t\n')
 	[ -n "$firstLine" ] && probeUrl="$firstLine"
 fi
 
