@@ -12,14 +12,14 @@ local version_ge_1_11_0 = api.compare_versions(local_version:match("[^v]+"), ">=
 
 local geosite_all_tag = {}
 local geoip_all_tag = {}
-local srss_path = "/tmp/etc/" .. appname .."/srss/"
+local srss_path = "/tmp/etc/" .. appname .."_tmp/srss/"
 
 local function convert_geofile()
 	local geo_dir = (uci:get(appname, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"):match("^(.*)/")
 	local geosite_path = geo_dir .. "/geosite.dat"
 	local geoip_path = geo_dir .. "/geoip.dat"
 	if not api.is_finded("geoview") then
-		api.log("* 注意：缺少 geoview 组件，Sing-Box 分流将无法启用！")
+		api.log("* 注意：缺少 geoview 组件，Sing-Box 分流无法启用！")
 		return
 	end
 	if not fs.access(srss_path) then
@@ -27,19 +27,26 @@ local function convert_geofile()
 	end
 	local function convert(file_path, prefix, tags)
 		if next(tags) and fs.access(file_path) then
+			local md5_file = srss_path .. prefix .. ".dat.md5"
+			local new_md5 = sys.exec("md5sum " .. file_path .. " 2>/dev/null | awk '{print $1}'"):gsub("\n", "")
+			local old_md5 = sys.exec("[ -f " .. md5_file .. " ] && head -n 1 " .. md5_file .. " | tr -d ' \t\n' || echo ''")
+			if new_md5 ~= "" and new_md5 ~= old_md5 then
+				sys.call("printf '%s' " .. new_md5 .. " > " .. md5_file)
+				sys.call("rm -rf " .. srss_path .. prefix .. "-*.srs" )
+			end
 			for k in pairs(tags) do
 				local srs_file = srss_path .. prefix .. "-" .. k .. ".srs"
 				if not fs.access(srs_file) then
-					local cmd = string.format("geoview -type %s -action convert -input %s -list '%s' -output %s -lowmem=true",
+					local cmd = string.format("geoview -type %s -action convert -input '%s' -list '%s' -output '%s' -lowmem=true",
 						prefix, file_path, k, srs_file)
 					sys.exec(cmd)
-					local status = fs.access(srs_file) and "成功。" or "失败！"
-					api.log(string.format("  - 转换 %s:%s ... %s", prefix, k, status))
+					--local status = fs.access(srs_file) and "成功。" or "失败！"
+					--api.log(string.format("  - 转换 %s:%s ... %s", prefix, k, status))
 				end
 			end
 		end
 	end
-	api.log("Sing-Box 规则集转换：")
+	--api.log("Sing-Box 规则集转换：")
 	convert(geosite_path, "geosite", geosite_all_tag)
 	convert(geoip_path, "geoip", geoip_all_tag)
 end
