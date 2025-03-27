@@ -7,7 +7,7 @@ local appname = "passwall"
 local fs = api.fs
 local split = api.split
 
-local local_version = api.get_app_version("singbox")
+local local_version = api.get_app_version("sing-box")
 local version_ge_1_11_0 = api.compare_versions(local_version:match("[^v]+"), ">=", "1.11.0")
 
 local geosite_all_tag = {}

@@ -24,7 +24,7 @@ _M.hysteria = {
 	}
 }
 
-_M.singbox = {
+_M["sing-box"] = {
 	name = "Sing-Box",
 	repo = "SagerNet/sing-box",
 	get_url = gh_release_url,

@@ -2,7 +2,7 @@ local m, s = ...
 
 local api = require "luci.passwall.api"
 
-local singbox_bin = api.finded_com("singbox")
+local singbox_bin = api.finded_com("sing-box")
 local geoview_bin = api.is_finded("geoview")
 
 if not singbox_bin then
