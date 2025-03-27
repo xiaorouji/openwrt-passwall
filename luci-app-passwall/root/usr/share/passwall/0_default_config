@@ -201,7 +201,7 @@ geosite:category-games'
 
 config shunt_rules 'AIGC'
 	option remarks 'AIGC'
-	option domain_list 'geosite:category-ai-chat-!cn
+	option domain_list 'geosite:category-ai-!cn
 domain:apple-relay.apple.com'
 
 config shunt_rules 'Streaming'
