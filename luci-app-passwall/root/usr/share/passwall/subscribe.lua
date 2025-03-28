@@ -187,7 +187,9 @@ do
 		local i = 0
 		local option = "lbss"
 		local function is_ip_port(str)
-			return str:match("^%d+%.%d+%.%d+%.%d+:%d+$") ~= nil
+			if type(str) ~= "string" then return false end
+			local ip, port = str:match("^([%d%.]+):(%d+)$")
+			return ip and datatypes.ipaddr(ip) and tonumber(port) and tonumber(port) <= 65535
 		end
 		uci:foreach(appname, "haproxy_config", function(t)
 			i = i + 1
