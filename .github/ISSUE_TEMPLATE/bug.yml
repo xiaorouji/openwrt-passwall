@@ -58,9 +58,13 @@ body:
     id: environment
     attributes:
       label: 系统相关信息
-      description: 填写相关信息以便更好的确定问题
+      description: |
+        系统相关信息必须提供，否则您的反馈会被我们忽略，以下是获取这些信息的路径：
+        - Passwall 及组件版本信息：OpenWrt 管理后台 - Passwall - 组件更新，选中所有组件的版本信息复制，或上传截图。
+        - OpenWrt 架构/固件版本/内核版本信息：OpenWrt 管理后台首页，选中相关信息复制，或上传截图。
       placeholder: |
-        - Passwall版本：
+        - Passwall 及组件版本信息：
+        - OpenWrt 架构/固件版本/内核版本信息：
         - 浏览器版本（如Chrome 96.0.4664.45 64位 正式版）：
         - 其他：
     validations:
