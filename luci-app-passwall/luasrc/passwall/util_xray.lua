@@ -781,7 +781,7 @@ function gen_config(var)
 				fallbackTag = fallback_node_tag,
 				strategy = strategy
 			})
-			if _node.balancingStrategy == "leastLoad" or fallback_node_tag then
+			if _node.balancingStrategy == "leastPing" or _node.balancingStrategy == "leastLoad" or fallback_node_tag then
 				if not burstObservatory then
 					burstObservatory = {
 						subjectSelector = { "blc-" },
