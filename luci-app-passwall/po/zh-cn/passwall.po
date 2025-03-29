@@ -445,8 +445,14 @@ msgstr "用于检测连接状态的网址。"
 msgid "Probe Interval"
 msgstr "探测间隔"
 
-msgid "The interval between initiating probes. Every time this time elapses, a server status check is performed on a server. The time format is numbers + units, such as '10s', '2h45m', and the supported time units are <code>ns</code>, <code>us</code>, <code>ms</code>, <code>s</code>, <code>m</code>, <code>h</code>, which correspond to nanoseconds, microseconds, milliseconds, seconds, minutes, and hours, respectively."
-msgstr "发起探测的间隔。每经过这个时间，就会对一个服务器进行服务器状态检测。时间格式为数字+单位，比如<code>&quot;10s&quot;</code>, <code>&quot;2h45m&quot;</code>，支持的时间单位有 <code>ns</code>，<code>us</code>，<code>ms</code>，<code>s</code>，<code>m</code>，<code>h</code>，分别对应纳秒、微秒、毫秒、秒、分、时。"
+msgid "The interval between initiating probes. The time format is numbers + units, such as '10s', '2h45m', and the supported time units are <code>ns</code>, <code>us</code>, <code>ms</code>, <code>s</code>, <code>m</code>, <code>h</code>, which correspond to nanoseconds, microseconds, milliseconds, seconds, minutes, and hours, respectively."
+msgstr "发起探测的间隔。时间格式为数字+单位，比如<code>&quot;10s&quot;</code>, <code>&quot;2h45m&quot;</code>，支持的时间单位有 <code>ns</code>，<code>us</code>，<code>ms</code>，<code>s</code>，<code>m</code>，<code>h</code>，分别对应纳秒、微秒、毫秒、秒、分、时。"
+
+msgid "Preferred Node Count"
+msgstr "优选节点数量"
+
+msgid "The load balancer selects the optimal number of nodes, and traffic is randomly distributed among them."
+msgstr "负载均衡器选出最优节点的个数，流量将在这几个节点中随机分配。"
 
 msgid "Shunt"
 msgstr "分流"
@@ -508,8 +514,8 @@ msgstr "仅 IPv6"
 msgid "Load balancing node list"
 msgstr "负载均衡节点列表"
 
-msgid "Load balancing node list, <a target='_blank' href='https://toutyrater.github.io/routing/balance2.html'>document</a>"
-msgstr "负载均衡节点列表，<a target='_blank' href='https://toutyrater.github.io/routing/balance2.html'>文档原理</a>"
+msgid "Load balancing node list, <a target='_blank' href='https://xtls.github.io/config/routing.html#balancerobject'>document</a>"
+msgstr "负载均衡节点列表，<a target='_blank' href='https://xtls.github.io/config/routing.html#balancerobject'>文档原理</a>"
 
 msgid "From Share URL"
 msgstr "导入分享URL"

@@ -95,7 +95,7 @@ m.uci:foreach(appname, "socks", function(s)
 end)
 
 -- 负载均衡列表
-local o = s:option(DynamicList, _n("balancing_node"), translate("Load balancing node list"), translate("Load balancing node list, <a target='_blank' href='https://toutyrater.github.io/routing/balance2.html'>document</a>"))
+local o = s:option(DynamicList, _n("balancing_node"), translate("Load balancing node list"), translate("Load balancing node list, <a target='_blank' href='https://xtls.github.io/config/routing.html#balancerobject'>document</a>"))
 o:depends({ [_n("protocol")] = "_balancing" })
 for k, v in pairs(nodes_table) do o:value(v.id, v.remark) end
 
@@ -104,7 +104,8 @@ o:depends({ [_n("protocol")] = "_balancing" })
 o:value("random")
 o:value("roundRobin")
 o:value("leastPing")
-o.default = "leastPing"
+o:value("leastLoad")
+o.default = "leastLoad"
 
 -- Fallback Node
 if api.compare_versions(xray_version, ">=", "1.8.10") then
@@ -133,6 +134,7 @@ end
 -- 探测地址
 local ucpu = s:option(Flag, _n("useCustomProbeUrl"), translate("Use Custome Probe URL"), translate("By default the built-in probe URL will be used, enable this option to use a custom probe URL."))
 ucpu:depends({ [_n("balancingStrategy")] = "leastPing" })
+ucpu:depends({ [_n("balancingStrategy")] = "leastLoad" })
 
 local pu = s:option(Value, _n("probeUrl"), translate("Probe URL"))
 pu:depends({ [_n("useCustomProbeUrl")] = true })
@@ -148,8 +150,9 @@ pu.description = translate("The URL used to detect the connection status.")
 -- 探测间隔
 local pi = s:option(Value, _n("probeInterval"), translate("Probe Interval"))
 pi:depends({ [_n("balancingStrategy")] = "leastPing" })
+pi:depends({ [_n("balancingStrategy")] = "leastLoad" })
 pi.default = "1m"
-pi.description = translate("The interval between initiating probes. Every time this time elapses, a server status check is performed on a server. The time format is numbers + units, such as '10s', '2h45m', and the supported time units are <code>ns</code>, <code>us</code>, <code>ms</code>, <code>s</code>, <code>m</code>, <code>h</code>, which correspond to nanoseconds, microseconds, milliseconds, seconds, minutes, and hours, respectively.")
+pi.description = translate("The interval between initiating probes. The time format is numbers + units, such as '10s', '2h45m', and the supported time units are <code>ns</code>, <code>us</code>, <code>ms</code>, <code>s</code>, <code>m</code>, <code>h</code>, which correspond to nanoseconds, microseconds, milliseconds, seconds, minutes, and hours, respectively.")
 
 if api.compare_versions(xray_version, ">=", "1.8.12") then
 	ucpu:depends({ [_n("protocol")] = "_balancing" })
@@ -158,6 +161,12 @@ else
 	ucpu:depends({ [_n("balancingStrategy")] = "leastPing" })
 	pi:depends({ [_n("balancingStrategy")] = "leastPing" })
 end
+
+o = s:option(Value, _n("expected"), translate("Preferred Node Count"))
+o:depends({ [_n("balancingStrategy")] = "leastLoad" })
+o.datatype = "uinteger"
+o.default = "2"
+o.description = translate("The load balancer selects the optimal number of nodes, and traffic is randomly distributed among them.")
 
 
 -- [[ 分流模块 ]]
