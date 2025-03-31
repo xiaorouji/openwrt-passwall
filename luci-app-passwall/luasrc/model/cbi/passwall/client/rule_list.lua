@@ -2,6 +2,7 @@ local api = require "luci.passwall.api"
 local appname = "passwall"
 local fs = api.fs
 local sys = api.sys
+local uci = api.uci
 local datatypes = api.datatypes
 local path = string.format("/usr/share/%s/rules/", appname)
 local gfwlist_path = "/usr/share/passwall/rules/gfwlist"
@@ -313,7 +314,10 @@ end
 
 m:append(Template(appname .. "/rule_list/js"))
 
-if api.is_finded("geoview") then
+local geo_dir = (uci:get(appname, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"):match("^(.*)/")
+local geosite_path = geo_dir .. "/geosite.dat"
+local geoip_path = geo_dir .. "/geoip.dat"
+if api.is_finded("geoview") and fs.access(geosite_path) and fs.access(geoip_path) then
 	s:tab("geoview", translate("Geo View"))
 	o = s:taboption("geoview", DummyValue, "_geoview_fieldset")
 	o.rawhtml = true
