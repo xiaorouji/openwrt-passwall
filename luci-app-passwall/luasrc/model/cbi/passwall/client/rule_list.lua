@@ -313,6 +313,13 @@ end
 
 m:append(Template(appname .. "/rule_list/js"))
 
+if api.is_finded("geoview") then
+	s:tab("geoview", translate("Geo View"))
+	o = s:taboption("geoview", DummyValue, "_geoview_fieldset")
+	o.rawhtml = true
+	o.template = appname .. "/rule_list/geoview"
+end
+
 function m.on_before_save(self)
 	m:set("@global[0]", "flush_set", "1")
 end

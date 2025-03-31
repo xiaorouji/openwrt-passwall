@@ -1833,3 +1833,42 @@ msgstr "端口跳跃范围"
 
 msgid "Format as 1000:2000 Multiple groups are separated by commas (,)."
 msgstr "格式为：1000:2000 多组时用逗号(,)隔开。"
+
+msgid "Geo View"
+msgstr "Geo 查询"
+
+msgid "Query"
+msgstr "查询"
+
+msgid "Querying"
+msgstr "查询中"
+
+msgid "Please enter query content!"
+msgstr "请输入查询内容！"
+
+msgid "No results were found!"
+msgstr "未找到任何结果！"
+
+msgid "Domain/IP Query"
+msgstr "域名/IP 查询"
+
+msgid "GeoIP/Geosite Query"
+msgstr "GeoIP/Geosite 查询"
+
+msgid "Enter a domain or IP to query the Geo rule list they belong to."
+msgstr "输入域名/IP，查询它们所在的 Geo 规则列表。"
+
+msgid "Enter a GeoIP or Geosite to extract the domains/IPs they contain. Format: geoip:cn or geosite:gfw"
+msgstr "输入 GeoIP/Geosite，提取它们所包含的域名/IP。格式：geoip:cn 或 geosite:gfw"
+
+msgid "Tips:"
+msgstr "小贴士："
+
+msgid "By entering a domain or IP, you can query the Geo rule list they belong to."
+msgstr "可以通过输入域名/IP，查询它们所在的 Geo 规则列表。"
+
+msgid "By entering a GeoIP or Geosite, you can extract the domains/IPs they contain."
+msgstr "可以通过输入 GeoIP/Geosite，提取它们所包含的域名/IP。"
+
+msgid "Use the GeoIP/Geosite query function to verify if the entered Geo rules are correct."
+msgstr "利用 GeoIP/Geosite 查询功能，可以验证输入的 Geo 规则是否正确。"
