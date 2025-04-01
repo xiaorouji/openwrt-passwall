@@ -371,19 +371,19 @@ function gen_config_server(node)
 			local fallbackStr = node.fallback_list[i]
 			if fallbackStr then
 				local tmp = {}
-				string.gsub(fallbackStr, '[^' .. "," .. ']+', function(w)
+				string.gsub(fallbackStr, '[^,]+', function(w)
 					table.insert(tmp, w)
 				end)
 				local dest = tmp[1] or ""
 				local path = tmp[2]
-				if dest:find("%.") then
-				else
+				local xver = tonumber(tmp[3])
+				if not dest:find("%.") then
 					dest = tonumber(dest)
 				end
 				fallbacks[i] = {
 					path = path,
 					dest = dest,
-					xver = 1
+					xver = xver
 				}
 			end
 		end

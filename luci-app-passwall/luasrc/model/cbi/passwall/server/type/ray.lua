@@ -362,7 +362,7 @@ o.default = 0
 o:depends({ [_n("fallback")] = true })
 ]]--
 
-o = s:option(DynamicList, _n("fallback_list"), "Fallback", translate("dest,path"))
+o = s:option(DynamicList, _n("fallback_list"), "Fallback", translate("format: dest,path,xver"))
 o:depends({ [_n("fallback")] = true })
 
 o = s:option(Flag, _n("bind_local"), translate("Bind Local"), translate("When selected, it can only be accessed localhost."))
