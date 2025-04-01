@@ -202,7 +202,7 @@ geosite:category-games'
 config shunt_rules 'AIGC'
 	option remarks 'AIGC'
 	option domain_list 'geosite:category-ai-!cn
-domain:apple-relay.apple.com'
+geosite:apple-intelligence'
 
 config shunt_rules 'Streaming'
 	option remarks 'Streaming'
