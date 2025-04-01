@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2022-2023 SMALLPROGRAM <https://github.com/smallprogram>
+# Copyright (c) 2022-2025 SMALLPROGRAM <https://github.com/smallprogram>
 # Description: Auto compile
 #
 name: "Auto compile with openwrt sdk"
@@ -15,6 +15,7 @@ env:
   TZ: Asia/Shanghai
   passwall: ${{ github.repository }}
   packages: xiaorouji/openwrt-passwall-packages
+  package_names: "chinadns-ng dns2socks geoview hysteria ipt2socks microsocks naiveproxy tcping trojan-plus tuic-client shadowsocks-rust shadowsocksr-libev simple-obfs sing-box v2ray-geodata v2ray-plugin xray-core xray-plugin"
 
 
 jobs:
@@ -325,7 +326,7 @@ jobs:
         id: compile
         run: |
           cd sdk
-          for package in $(ls feeds/passwall_packages); do
+          for package in ${{ env.package_names }}; do
               if [ -d "feeds/passwall_packages/$package" ]; then
                   echo "-----------begin compile $package ---------------"
                   sleep 10s
@@ -363,7 +364,7 @@ jobs:
           echo "**package name**|**package version**" >> release.txt
           echo "-|-" >> release.txt
 
-          pkgs=$(ls feeds/passwall_packages -I v2ray-geodata)
+          pkgs=$(ls feeds/passwall_packages -I v2ray-geodata | grep -E "$(echo "${{ env.package_names }}" | sed 's/ /|/g')")
           for pkg in $pkgs; do
             version=$(awk -F ':=' '/PKG_VERSION:=/{print $2}' feeds/passwall_packages/$pkg/Makefile | sed 's/\r//g')
             [ -z "${version}" ] && version=$(awk -F ':=' '/PKG_SOURCE_DATE:=/{print $2}' feeds/passwall_packages/$pkg/Makefile | sed 's/\r//g')
