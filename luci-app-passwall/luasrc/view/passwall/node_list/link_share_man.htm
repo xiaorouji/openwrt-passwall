@@ -11,7 +11,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 -%>
 <script src="<%=resource%>/qrcode.min.js"></script>
 <script type="text/javascript">//<![CDATA[
-	let has_singbox = "<%=api.finded_com("singbox")%>"
+	let has_singbox = "<%=api.finded_com("sing-box")%>"
 	let has_xray = "<%=api.finded_com("xray")%>"
 	let has_hysteria2 = "<%=api.finded_com("hysteria")%>"
 	let ss_type = "<%=ss_type%>"
@@ -511,6 +511,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 					params += "&obfs=" + "salamander";
 					params += opt.query("obfs-password", "hysteria2_obfs");
 				}
+				params += opt.query("mport", "hysteria2_hop");
 			} else {
 				v_password = opt.get(dom_prefix + "hysteria2_auth_password");
 				var dom_obfs_type = opt.get(dom_prefix + "hysteria2_obfs_type");
@@ -518,7 +519,9 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 					params += opt.query("obfs", dom_prefix + "hysteria2_obfs_type");
 					params += opt.query("obfs-password", dom_prefix + "hysteria2_obfs_password");
 				}
+				params += opt.query("mport", dom_prefix + "hysteria2_ports");
 			}
+			params = params.replace(/^&/, "");
 			url =
 				_address + ":" +
 				v_port.value + "?" +
@@ -1306,6 +1309,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 					opt.set(dom_prefix + 'hysteria2_obfs_type', "salamander");
 					opt.set(dom_prefix + 'hysteria2_obfs_password', queryParam["obfs-password"]);
 				}
+				opt.set(dom_prefix + 'hysteria2_ports', queryParam.mport || "");
 			} else if (has_hysteria2) {
 				opt.set('type', "Hysteria2");
 				dom_prefix = "hysteria2_"
@@ -1316,12 +1320,13 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 				if (queryParam.pinSHA256) {
 					opt.set(dom_prefix + 'tls_pinSHA256', queryParam.pinSHA256);
 				}
+				opt.set(dom_prefix + 'hop', queryParam.mport || "");
 			}
 			
 			opt.set(dom_prefix + 'address', m.hostname);
 			opt.set(dom_prefix + 'port', m.port || "443");
 			
-			opt.set(dom_prefix + 'tls_serverName', queryParam.sni);
+			opt.set(dom_prefix + 'tls_serverName', queryParam.sni || "");
 			if (queryParam.insecure && queryParam.insecure == "1") {
 				opt.set(dom_prefix + 'tls_allowInsecure', true);
 			}
