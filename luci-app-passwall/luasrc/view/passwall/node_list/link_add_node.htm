@@ -2,22 +2,6 @@
 local api = require "luci.passwall.api"
 -%>
 
-<style>
-#add_link_div{
-	display: none;
-	width: auto;
-	position: absolute;
-	left:50%;
-	top:50%;
-	transform: translate(-50%, -50%);
-	z-index: 99;
-	text-align: center;
-	background: white;
-	box-shadow: darkgrey 10px 10px 30px 5px;
-	padding: 30px 15px;
-}
-</style>
-
 <script type="text/javascript">
 	//<![CDATA[
 	function ajax_add_node(link) {
@@ -47,7 +31,8 @@ local api = require "luci.passwall.api"
 
 	function add_node() {
 		var nodes_link = document.getElementById("nodes_link").value;
-		if (nodes_link.trim() != "") {
+		nodes_link = nodes_link.replace(/\t/g, "").replace(/\r\n|\r/g, "\n").trim();
+		if (nodes_link != "") {
 			var s = nodes_link.split('://');
 			if (s.length > 1) {
 				ajax_add_node(nodes_link);
@@ -79,15 +64,13 @@ local api = require "luci.passwall.api"
 </script>
 
 <div id="add_link_div">
-	<div class="cbi-value">
-		<label class="cbi-value-title"><%:Share Link%></label>
-		<div class="cbi-value-field">
-			<p><textarea id="nodes_link" rows="5" cols="50"></textarea></p>
-			<font color="red"><%:Not a subscription link!!!%></font>
+	<div id="add_link_modal_container">
+		<h3><%:Add the node via the link%></h3>
+		<div class="cbi-value">
+			<textarea id="nodes_link" rows="10"></textarea>
+			<p id="nodes_link_text"><%:Enter share links, one per line. Subscription links are not supported!%></p>
 		</div>
-	</div>
-	<div class="cbi-value">
-		<div class="cbi-value-field" style="display: unset">
+		<div id="add_link_button_container">
 			<input class="btn cbi-button cbi-button-add" type="button" onclick="add_node()" value="<%:Add%>" />
 			<input class="btn cbi-button cbi-button-remove" type="button" onclick="close_add_link_div()" value="<%:Close%>" />
 		</div>
@@ -108,3 +91,55 @@ local api = require "luci.passwall.api"
 		<div id="div_node_count"></div>
 	</div>
 </div>
+
+<style>
+	#add_link_div {
+		display: none;
+		position: fixed;
+		left: 50%;
+		top: 50%;
+		transform: translate(-50%, -50%);
+		background: white;
+		padding: 20px;
+		border: 2px solid #ccc;
+		box-shadow: 0 0 10px rgba(0,0,0,0.5);
+		z-index: 1000;
+		width: 90%;
+		max-width: 500px;
+	}
+
+	#add_link_modal_container {
+		width: 100%;
+		text-align: center;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		padding-bottom: 20px;
+	}
+
+	#nodes_link {
+		width: 100%;
+		height: 180px;
+		resize: vertical;
+		font-family: monospace;
+		padding: 5px;
+		border: 1px solid #ccc;
+		border-radius: 5px;
+	}
+
+	#nodes_link_text {
+		color: red;
+		font-size: 14px;
+		margin-top: 5px;
+		text-align: center;
+		width: 100%;
+	}
+
+	#add_link_button_container {
+		display: flex;
+		justify-content: space-between;
+		width: 100%;
+		max-width: 300px;
+		margin-top: 10px;
+	}
+</style>

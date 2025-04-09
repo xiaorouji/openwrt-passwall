@@ -1593,7 +1593,7 @@ local function parse_link(raw, add_mode, add_from, cfgid)
 		end
 
 		for _, v in ipairs(nodes) do
-			if v then
+			if v and not string.match(v, "^%s*$") then
 				xpcall(function ()
 					local result
 					if szType == 'ssd' then
@@ -1773,12 +1773,9 @@ if arg[1] then
 		log('订阅完毕...')
 	elseif arg[1] == "add" then
 		local f = assert(io.open("/tmp/links.conf", 'r'))
-		local content = f:read('*all')
+		local raw = f:read('*all')
 		f:close()
-		local nodes = split(content:gsub(" ", "\n"), "\n")
-		for _, raw in ipairs(nodes) do
-			parse_link(raw, "1", "导入")
-		end
+		parse_link(raw, "1", "导入")
 		update_node(1)
 		luci.sys.call("rm -f /tmp/links.conf")
 	elseif arg[1] == "truncate" then
