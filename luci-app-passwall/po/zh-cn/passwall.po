@@ -1639,9 +1639,6 @@ msgstr "空闲超时 "
 msgid "Hop Interval"
 msgstr "端口跳跃时间 "
 
-msgid "Additional ports for hysteria hop"
-msgstr "端口跳跃额外端口"
-
 msgid "HeartbeatPeriod(second)"
 msgstr "心跳周期（单位：秒）"
 
@@ -1831,8 +1828,8 @@ msgstr "当选择的出站发生变化时中断现有连接。"
 msgid "Port hopping range"
 msgstr "端口跳跃范围"
 
-msgid "Format as 1000:2000 Multiple groups are separated by commas (,)."
-msgstr "格式为：1000:2000 多组时用逗号(,)隔开。"
+msgid "Format as 1000:2000 or 1000-2000 Multiple groups are separated by commas (,)."
+msgstr "格式为：1000:2000 或 1000-2000 多组时用逗号(,)隔开。"
 
 msgid "Geo View"
 msgstr "Geo 查询"

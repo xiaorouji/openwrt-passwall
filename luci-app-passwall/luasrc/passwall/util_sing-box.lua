@@ -390,8 +390,9 @@ function gen_outbound(flag, node, tag, proxy_table)
 
 		if node.protocol == "hysteria2" then
 			local server_ports = {}
-			if node.hysteria2_ports then
-				for range in node.hysteria2_ports:gmatch("([^,]+)") do
+			if node.hysteria2_hop then
+				node.hysteria2_hop = string.gsub(node.hysteria2_hop, "-", ":")
+				for range in node.hysteria2_hop:gmatch("([^,]+)") do
 					if range:match("^%d+:%d+$") then
 						table.insert(server_ports, range)
 					end

@@ -57,7 +57,7 @@ function gen_config(var)
 	local server = server_host .. ":" .. server_port
 
 	if (node.hysteria2_hop) then
-		server = server .. "," .. node.hysteria2_hop
+		server = server .. "," .. string.gsub(node.hysteria2_hop, ":", "-")
 	end
 
 	local config = {

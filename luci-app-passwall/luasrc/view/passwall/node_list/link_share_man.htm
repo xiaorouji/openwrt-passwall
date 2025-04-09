@@ -519,7 +519,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 					params += opt.query("obfs", dom_prefix + "hysteria2_obfs_type");
 					params += opt.query("obfs-password", dom_prefix + "hysteria2_obfs_password");
 				}
-				params += opt.query("mport", dom_prefix + "hysteria2_ports");
+				params += opt.query("mport", dom_prefix + "hysteria2_hop");
 			}
 			params = params.replace(/^&/, "");
 			url =
@@ -1309,7 +1309,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 					opt.set(dom_prefix + 'hysteria2_obfs_type', "salamander");
 					opt.set(dom_prefix + 'hysteria2_obfs_password', queryParam["obfs-password"]);
 				}
-				opt.set(dom_prefix + 'hysteria2_ports', queryParam.mport || "");
+				opt.set(dom_prefix + 'hysteria2_hop', queryParam.mport || "");
 			} else if (has_hysteria2) {
 				opt.set('type', "Hysteria2");
 				dom_prefix = "hysteria2_"

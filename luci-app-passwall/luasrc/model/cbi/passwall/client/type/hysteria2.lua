@@ -26,7 +26,8 @@ o = s:option(Value, _n("address"), translate("Address (Support Domain Name)"))
 o = s:option(Value, _n("port"), translate("Port"))
 o.datatype = "port"
 
-o = s:option(Value, _n("hop"), translate("Additional ports for hysteria hop"))
+o = s:option(Value, _n("hop"), translate("Port hopping range"))
+o.description = translate("Format as 1000:2000 or 1000-2000 Multiple groups are separated by commas (,).")
 o.rewrite_option = o.option
 
 o = s:option(Value, _n("obfs"), translate("Obfs Password"))
