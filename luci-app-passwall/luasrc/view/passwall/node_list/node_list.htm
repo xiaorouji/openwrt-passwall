@@ -46,8 +46,7 @@ table td, .table .td {
 
 <script type="text/javascript">
 	//<![CDATA[
-	let auto_detection_time = "<%=api.uci_get_type("@global_other[0]", "auto_detection_time", "0")%>"
-	
+
 	var node_list = {};
 	var node_count = 0;
 
@@ -314,7 +313,7 @@ table td, .table .td {
 
 	/* 自动Ping */
 	function pingAllNodes() {
-		if (auto_detection_time == "icmp" || auto_detection_time == "tcping") {
+		if (window.auto_detection_time == "icmp" || window.auto_detection_time == "tcping") {
 			var nodes = [];
 			const ping_value = document.getElementsByClassName(auto_detection_time == "tcping" ? 'tcping_value' : 'ping_value');
 			for (var i = 0; i < ping_value.length; i++) {
