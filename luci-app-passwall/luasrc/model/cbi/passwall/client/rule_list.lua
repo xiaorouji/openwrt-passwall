@@ -317,11 +317,13 @@ m:append(Template(appname .. "/rule_list/js"))
 local geo_dir = (uci:get(appname, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"):match("^(.*)/")
 local geosite_path = geo_dir .. "/geosite.dat"
 local geoip_path = geo_dir .. "/geoip.dat"
-if api.is_finded("geoview") and fs.access(geosite_path) and fs.access(geoip_path) then
-	s:tab("geoview", translate("Geo View"))
-	o = s:taboption("geoview", DummyValue, "_geoview_fieldset")
-	o.rawhtml = true
-	o.template = appname .. "/rule_list/geoview"
+if api.finded_com("geoview") and fs.access(geosite_path) and fs.access(geoip_path) then
+	if api.compare_versions(api.get_app_version("geoview"), ">=", "0.1.0") then
+		s:tab("geoview", translate("Geo View"))
+		o = s:taboption("geoview", DummyValue, "_geoview_fieldset")
+		o.rawhtml = true
+		o.template = appname .. "/rule_list/geoview"
+	end
 end
 
 function m.on_before_save(self)

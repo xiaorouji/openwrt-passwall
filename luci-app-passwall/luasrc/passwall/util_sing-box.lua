@@ -15,12 +15,21 @@ local geoip_all_tag = {}
 local srss_path = "/tmp/etc/" .. appname .."_tmp/srss/"
 
 local function convert_geofile()
+	if api.compare_versions(local_version:match("[^v]+"), "<", "1.8.0") then
+		api.log("！！！注意：Sing-Box 版本低，Sing-Box 分流无法启用！请在[组件更新]中更新。")
+		return
+	end
 	local geo_dir = (uci:get(appname, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"):match("^(.*)/")
 	local geosite_path = geo_dir .. "/geosite.dat"
 	local geoip_path = geo_dir .. "/geoip.dat"
-	if not api.is_finded("geoview") then
-		api.log("* 注意：缺少 geoview 组件，Sing-Box 分流无法启用！")
+	if not api.finded_com("geoview") then
+		api.log("！！！注意：缺少 Geoview 组件，Sing-Box 分流无法启用！请在[组件更新]中更新。")
 		return
+	else
+		if api.compare_versions(api.get_app_version("geoview"), "<", "0.1.6") then
+			api.log("！！！注意：Geoview 组件版本低，Sing-Box 分流无法启用！请在[组件更新]中更新。")
+			return
+		end
 	end
 	if not fs.access(srss_path) then
 		fs.mkdir(srss_path)
