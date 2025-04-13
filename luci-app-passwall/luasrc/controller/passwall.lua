@@ -88,7 +88,7 @@ function index()
 	entry({"admin", "services", appname, "check_passwall"}, call("app_check")).leaf = true
 	local coms = require "luci.passwall.com"
 	local com
-	for com, _ in pairs(coms) do
+	for _, com in ipairs(coms.order) do
 		entry({"admin", "services", appname, "check_" .. com}, call("com_check", com)).leaf = true
 		entry({"admin", "services", appname, "update_" .. com}, call("com_update", com)).leaf = true
 	end

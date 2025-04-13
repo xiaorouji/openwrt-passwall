@@ -189,7 +189,8 @@ local version = {}
 	</div>
 </div>
 
-<%for k, v in pairs(com) do
+<%for _, k in ipairs(com.order) do
+	local v = com[k]
 	version[k] = api.get_app_version(k)%>
 <div class="cbi-value">
 	<label class="cbi-value-title"><%=v.name%>

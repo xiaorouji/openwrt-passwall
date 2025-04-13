@@ -14,10 +14,13 @@ s:append(Template(appname .. "/app_update/app_version"))
 
 local k, v
 local com = require "luci.passwall.com"
-for k, v in pairs(com) do
-	o = s:option(Value, k:gsub("%-","_") .. "_file", translatef("%s App Path", v.name))
-	o.default = v.default_path or ("/usr/bin/" .. k)
-	o.rmempty = false
+for _, k in ipairs(com.order) do
+	v = com[k]
+	if k ~= "geoview" then
+		o = s:option(Value, k:gsub("%-","_") .. "_file", translatef("%s App Path", v.name))
+		o.default = v.default_path or ("/usr/bin/" .. k)
+		o.rmempty = false
+	end
 end
 
 o = s:option(DummyValue, "tips", " ")
