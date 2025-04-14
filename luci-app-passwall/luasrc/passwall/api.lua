@@ -897,7 +897,8 @@ local default_file_tree = {
 	armv5   = "arm.*5",
 	armv6   = "arm.*6[^4]*",
 	armv7   = "arm.*7",
-	armv8   = "arm64"
+	armv8   = "arm64",
+	riscv64 = "riscv64"
 }
 
 local function get_api_json(url)
