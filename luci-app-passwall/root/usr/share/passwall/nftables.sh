@@ -34,15 +34,19 @@ FWI=$(uci -q get firewall.passwall.path 2>/dev/null)
 FAKE_IP="198.18.0.0/15"
 
 factor() {
-	if [ -z "$1" ] || [ -z "$2" ]; then
-		echo ""
-	elif [ "$1" == "1:65535" ]; then
+	local ports="$1"
+	if [ -z "$1" ] || [ -z "$2" ] || [ "$ports" = "1:65535" ]; then
 		echo ""
 	# acl mac address
-	elif [ -n "$(echo $1 | grep -E '([A-Fa-f0-9]{2}:){5}[A-Fa-f0-9]{2}')" ]; then
+	elif echo "$1" | grep -qE '([A-Fa-f0-9]{2}:){5}[A-Fa-f0-9]{2}'; then
 		echo "$2 {$1}"
 	else
-		echo "$2 {$(echo $1 | sed 's/:/-/g')}"
+		ports=$(echo "$ports" | tr -d ' ' | sed 's/:/-/g')
+		if echo "$ports" | grep -qE '(^|,)1-65535($|,)'; then
+			echo ""
+			return
+		fi
+		echo "$2 {$ports}"
 	fi
 }
 
