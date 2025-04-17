@@ -78,5 +78,19 @@ local api = require "luci.passwall.api"
 				btn.value = QueryText;
 			})
 	}
+
+	document.getElementById("geoview.lookup").addEventListener("keydown", function(event) {
+		if (event.key === "Enter") {
+			event.preventDefault();
+			lookup_btn.click();
+		}
+	});
+
+	document.getElementById("geoview.extract").addEventListener("keydown", function(event) {
+		if (event.key === "Enter") {
+			event.preventDefault();
+			extract_btn.click();
+		}
+	});
 	//]]>
 </script>
