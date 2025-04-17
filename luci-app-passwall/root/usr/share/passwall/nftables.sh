@@ -41,12 +41,19 @@ factor() {
 	elif echo "$1" | grep -qE '([A-Fa-f0-9]{2}:){5}[A-Fa-f0-9]{2}'; then
 		echo "$2 {$1}"
 	else
-		ports=$(echo "$ports" | tr -d ' ' | sed 's/:/-/g')
-		if echo "$ports" | grep -qE '(^|,)1-65535($|,)'; then
+		ports=$(echo "$ports" | tr -d ' ' | sed 's/:/-/g' | tr ',' '\n' | awk '!a[$0]++' | grep -v '^$')
+		[ -z "$ports" ] && { echo ""; return; }
+		if echo "$ports" | grep -q '^1-65535$'; then
 			echo ""
 			return
 		fi
-		echo "$2 {$ports}"
+		local port
+		local port_list=""
+		for port in $ports; do
+			port_list="${port_list},$port"
+		done
+		port_list="${port_list#,}"
+		echo "$2 {$port_list}"
 	fi
 }
 

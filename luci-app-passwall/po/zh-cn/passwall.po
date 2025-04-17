@@ -709,6 +709,9 @@ msgstr "UDP 不转发端口"
 msgid "Fill in the ports you don't want to be forwarded by the agent, with the highest priority."
 msgstr "填写你不希望被代理转发的端口，优先级最高。"
 
+msgid "The port settings support single ports and ranges.<br>Separate multiple ports with commas (,).<br>Example: 21,80,443,1000:2000."
+msgstr "以上端口设置支持单端口和端口范围。<br>多个端口用英文逗号(,)隔开。<br>例：21,80,443,1000:2000。"
+
 msgid "TCP Proxy Drop Ports"
 msgstr "TCP 转发屏蔽端口"
 
