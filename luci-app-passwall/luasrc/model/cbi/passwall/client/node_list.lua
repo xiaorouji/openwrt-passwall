@@ -27,7 +27,7 @@ local show_node_info = m:get("@global_other[0]", "show_node_info") or "0"
 if auto_detection_time ~= "0" then
 	local node_count = 0
 	for k, e in ipairs(api.get_valid_nodes()) do
-		if e.protocol ~= "_shunt" and e.protocol ~= "_balancing" and e.protocol ~= "_urltest" and e.protocol ~= "_iface" then
+		if e.node_type == "normal" then
 			node_count = node_count + 1
 		end
 	end
@@ -168,8 +168,10 @@ o = s:option(DummyValue, "ping", "Ping")
 o.width = "8%"
 o.rawhtml = true
 o.cfgvalue = function(t, n)
-	local protocol = m:get(n, "protocol")
-	if protocol == "_shunt" or protocol == "_balancing" or protocol == "_urltest" or protocol == "_iface" then
+	local type = m:get(n, "type") or ""
+	local protocol = m:get(n, "protocol") or ""
+	if (type == "sing-box" or type == "Xray") and
+	   (protocol == "_shunt" or protocol == "_balancing" or protocol == "_urltest" or protocol == "_iface") then
 		return string.format('<span class="ping_value" cbiid="%s">---</span>', n)
 	end
 	if auto_detection_time ~= "icmp" then
@@ -184,8 +186,10 @@ o = s:option(DummyValue, "tcping", "TCPing")
 o.width = "8%"
 o.rawhtml = true
 o.cfgvalue = function(t, n)
-	local protocol = m:get(n, "protocol")
-	if protocol == "_shunt" or protocol == "_balancing" or protocol == "_urltest" or protocol == "_iface" then
+	local type = m:get(n, "type") or ""
+	local protocol = m:get(n, "protocol") or ""
+	if (type == "sing-box" or type == "Xray") and
+	   (protocol == "_shunt" or protocol == "_balancing" or protocol == "_urltest" or protocol == "_iface") then
 		return string.format('<span class="tcping_value" cbiid="%s">---</span>', n)
 	end
 	if auto_detection_time ~= "tcping" then
