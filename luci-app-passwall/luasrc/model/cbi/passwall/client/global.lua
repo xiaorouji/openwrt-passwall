@@ -606,8 +606,8 @@ end
 
 o = s:taboption("DNS", Flag, "chinadns_ng_cert_verify", translate("DoT Cert verify"), translate("Verify DoT SSL cert. (May fail on some platforms!)"))
 o.default = "0"
-o:depends({dns_shunt = "chinadns-ng", direct_dns_mode = "dot"})
-o:depends({dns_shunt = "chinadns-ng", dns_mode = "dot"})
+o:depends({direct_dns_mode = "dot"})
+o:depends({dns_mode = "dot"})
 
 o = s:taboption("DNS", Flag, "dns_redirect", translate("DNS Redirect"), translate("Force special DNS server to need proxy devices."))
 o.default = "1"
