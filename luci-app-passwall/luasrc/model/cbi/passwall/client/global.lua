@@ -365,15 +365,15 @@ o:value("119.28.28.28")
 o:depends("direct_dns_mode", "tcp")
 
 o = s:taboption("DNS", Value, "direct_dns_dot", translate("Direct DNS DoT"))
-o.default = "tls://1.12.12.12"
-o:value("tls://1.12.12.12")
-o:value("tls://120.53.53.53")
-o:value("tls://36.99.170.86")
-o:value("tls://101.198.191.4")
-o:value("tls://223.5.5.5")
-o:value("tls://223.6.6.6")
-o:value("tls://2400:3200::1")
-o:value("tls://2400:3200:baba::1")
+o.default = "tls://dot.pub@1.12.12.12"
+o:value("tls://dot.pub@1.12.12.12")
+o:value("tls://dot.pub@120.53.53.53")
+o:value("tls://dot.360.cn@36.99.170.86")
+o:value("tls://dot.360.cn@101.198.191.4")
+o:value("tls://dns.alidns.com@223.5.5.5")
+o:value("tls://dns.alidns.com@223.6.6.6")
+o:value("tls://dns.alidns.com@2400:3200::1")
+o:value("tls://dns.alidns.com@2400:3200:baba::1")
 o.validate = chinadns_dot_validate
 o:depends("direct_dns_mode", "dot")
 
@@ -515,17 +515,17 @@ o:depends({singbox_dns_mode = "tcp"})
 
 ---- DoT
 o = s:taboption("DNS", Value, "remote_dns_dot", translate("Remote DNS DoT"))
-o.default = "tls://1.1.1.1"
-o:value("tls://1.0.0.1", "1.0.0.1 (CloudFlare)")
-o:value("tls://1.1.1.1", "1.1.1.1 (CloudFlare)")
-o:value("tls://8.8.4.4", "8.8.4.4 (Google)")
-o:value("tls://8.8.8.8", "8.8.8.8 (Google)")
-o:value("tls://9.9.9.9", "9.9.9.9 (Quad9)")
-o:value("tls://149.112.112.112", "149.112.112.112 (Quad9)")
-o:value("tls://94.140.14.14", "94.140.14.14 (AdGuard)")
-o:value("tls://94.140.15.15", "94.140.15.15 (AdGuard)")
-o:value("tls://208.67.222.222", "208.67.222.222 (OpenDNS)")
-o:value("tls://208.67.220.220", "208.67.220.220 (OpenDNS)")
+o.default = "tls://dns.google@8.8.4.4"
+o:value("tls://1dot1dot1dot1.cloudflare-dns.com@1.0.0.1", "1.0.0.1 (CloudFlare)")
+o:value("tls://1dot1dot1dot1.cloudflare-dns.com@1.1.1.1", "1.1.1.1 (CloudFlare)")
+o:value("tls://dns.google@8.8.4.4", "8.8.4.4 (Google)")
+o:value("tls://dns.google@8.8.8.8", "8.8.8.8 (Google)")
+o:value("tls://dns.quad9.net@9.9.9.9", "9.9.9.9 (Quad9)")
+o:value("tls://dns.quad9.net@149.112.112.112", "149.112.112.112 (Quad9)")
+o:value("tls://dns.adguard.com@94.140.14.14", "94.140.14.14 (AdGuard)")
+o:value("tls://dns.adguard.com@94.140.15.15", "94.140.15.15 (AdGuard)")
+o:value("tls://dns.opendns.com@208.67.222.222", "208.67.222.222 (OpenDNS)")
+o:value("tls://dns.opendns.com@208.67.220.220", "208.67.220.220 (OpenDNS)")
 o.validate = chinadns_dot_validate
 o:depends("dns_mode", "dot")
 

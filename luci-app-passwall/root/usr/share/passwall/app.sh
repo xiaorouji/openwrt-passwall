@@ -933,7 +933,7 @@ run_redir() {
 						_args="${_args} direct_dns_tcp_server=$(config_t_get global direct_dns_tcp 223.5.5.5 | sed 's/:/#/g')"
 					;;
 					dot)
-						local tmp_dot_dns=$(config_t_get global direct_dns_dot "tls://1.12.12.12")
+						local tmp_dot_dns=$(config_t_get global direct_dns_dot "tls://dot.pub@1.12.12.12")
 						local tmp_dot_ip=$(echo "$tmp_dot_dns" | sed -n 's/.*:\/\/\([^@#]*@\)*\([^@#]*\).*/\2/p')
 						local tmp_dot_port=$(echo "$tmp_dot_dns" | sed -n 's/.*#\([0-9]\+\).*/\1/p')
 						_args="${_args} direct_dns_dot_server=$tmp_dot_ip#${tmp_dot_port:-853}"
@@ -1420,7 +1420,7 @@ start_dns() {
 		;;
 		dot)
 			if [ "$chinadns_tls" != "nil" ]; then
-				local DIRECT_DNS=$(config_t_get global direct_dns_dot "tls://1.12.12.12")
+				local DIRECT_DNS=$(config_t_get global direct_dns_dot "tls://dot.pub@1.12.12.12")
 				china_ng_local_dns=${DIRECT_DNS}
 
 				#当全局（包括访问控制节点）开启chinadns-ng时，不启动新进程。
@@ -1542,7 +1542,7 @@ start_dns() {
 		TCP_PROXY_DNS=1
 		if [ "$chinadns_tls" != "nil" ]; then
 			local china_ng_listen_port=${NEXT_DNS_LISTEN_PORT}
-			local china_ng_trust_dns=$(config_t_get global remote_dns_dot "tls://1.1.1.1")
+			local china_ng_trust_dns=$(config_t_get global remote_dns_dot "tls://dns.google@8.8.4.4")
 			local tmp_dot_ip=$(echo "$china_ng_trust_dns" | sed -n 's/.*:\/\/\([^@#]*@\)*\([^@#]*\).*/\2/p')
 			local tmp_dot_port=$(echo "$china_ng_trust_dns" | sed -n 's/.*#\([0-9]\+\).*/\1/p')
 			REMOTE_DNS="$tmp_dot_ip#${tmp_dot_port:-853}"
@@ -1887,7 +1887,7 @@ acl_app() {
 										;;
 										dot)
 											if [ "$(chinadns-ng -V | grep -i wolfssl)" != "nil" ]; then
-												_chinadns_local_dns=$(config_t_get global direct_dns_dot "tls://1.12.12.12")
+												_chinadns_local_dns=$(config_t_get global direct_dns_dot "tls://dot.pub@1.12.12.12")
 											fi
 										;;
 									esac
