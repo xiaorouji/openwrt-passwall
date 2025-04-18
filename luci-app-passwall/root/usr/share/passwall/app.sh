@@ -1542,7 +1542,7 @@ start_dns() {
 		TCP_PROXY_DNS=1
 		if [ "$chinadns_tls" != "nil" ]; then
 			local china_ng_listen_port=${NEXT_DNS_LISTEN_PORT}
-			local china_ng_trust_dns=$(config_t_get global remote_dns_dot "tls://dns.google@8.8.4.4")
+			local china_ng_trust_dns=$(config_t_get global remote_dns_dot "tls://one.one.one.one@1.1.1.1")
 			local tmp_dot_ip=$(echo "$china_ng_trust_dns" | sed -n 's/.*:\/\/\([^@#]*@\)*\([^@#]*\).*/\2/p')
 			local tmp_dot_port=$(echo "$china_ng_trust_dns" | sed -n 's/.*#\([0-9]\+\).*/\1/p')
 			REMOTE_DNS="$tmp_dot_ip#${tmp_dot_port:-853}"

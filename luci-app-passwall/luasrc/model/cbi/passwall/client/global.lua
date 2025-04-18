@@ -515,9 +515,9 @@ o:depends({singbox_dns_mode = "tcp"})
 
 ---- DoT
 o = s:taboption("DNS", Value, "remote_dns_dot", translate("Remote DNS DoT"))
-o.default = "tls://dns.google@8.8.4.4"
-o:value("tls://1dot1dot1dot1.cloudflare-dns.com@1.0.0.1", "1.0.0.1 (CloudFlare)")
-o:value("tls://1dot1dot1dot1.cloudflare-dns.com@1.1.1.1", "1.1.1.1 (CloudFlare)")
+o.default = "tls://one.one.one.one@1.1.1.1"
+o:value("tls://one.one.one.one@1.0.0.1", "1.0.0.1 (CloudFlare)")
+o:value("tls://one.one.one.one@1.1.1.1", "1.1.1.1 (CloudFlare)")
 o:value("tls://dns.google@8.8.4.4", "8.8.4.4 (Google)")
 o:value("tls://dns.google@8.8.8.8", "8.8.8.8 (Google)")
 o:value("tls://dns.quad9.net@9.9.9.9", "9.9.9.9 (Quad9)")
@@ -603,6 +603,11 @@ o:depends({dns_shunt = "dnsmasq", tcp_proxy_mode = "proxy", chn_list = "direct"}
 if api.is_finded("smartdns") then
 	o:depends({dns_shunt = "smartdns", tcp_proxy_mode = "proxy", chn_list = "direct"})
 end
+
+o = s:taboption("DNS", Flag, "chinadns_ng_cert_verify", translate("DoT Cert verify"), translate("Verify DoT SSL cert. (May fail on some platforms!)"))
+o.default = "0"
+o:depends({dns_shunt = "chinadns-ng", direct_dns_mode = "dot"})
+o:depends({dns_shunt = "chinadns-ng", dns_mode = "dot"})
 
 o = s:taboption("DNS", Flag, "dns_redirect", translate("DNS Redirect"), translate("Force special DNS server to need proxy devices."))
 o.default = "1"

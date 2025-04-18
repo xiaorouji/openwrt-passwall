@@ -502,6 +502,11 @@ end
 
 table.insert(config_lines, "hosts")
 
+local cert_verify = uci:get(appname, "@global[0]", "chinadns_ng_cert_verify") or 0
+if tonumber(cert_verify) == 1 then
+	table.insert(config_lines, "cert-verify")
+end
+
 if DEFAULT_TAG == "chn" then
 	log(string.format("  - 默认 DNS ：%s", DNS_LOCAL))
 elseif  DEFAULT_TAG == "gfw" then

@@ -232,6 +232,12 @@ msgstr "清空 IPSET"
 msgid "Clear NFTSET"
 msgstr "清空 NFTSET"
 
+msgid "DoT Cert verify"
+msgstr "DoT 证书验证"
+
+msgid "Verify DoT SSL cert. (May fail on some platforms!)"
+msgstr "验证 DoT SSL 证书。（在某些平台可能无法验证，谨慎开启！）"
+
 msgid "Try this feature if the rule modification does not take effect."
 msgstr "如果修改规则后没有生效，请尝试此功能。"
 
