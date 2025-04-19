@@ -24,8 +24,8 @@ local ssrust_encrypt_method_list = {
 
 s.fields["type"]:value(type_name, translate("Shadowsocks Rust"))
 
-o = s:option(ListValue, _n("ss_rust_protocol"))
-o:depends({ [_n("ss_rust_hide")] = "1" }) --不存在的依赖，始终隐藏，用于删除 protocol
+o = s:option(ListValue, _n("del_protocol")) --始终隐藏，用于删除 protocol
+o:depends({ [_n("__hide")] = "1" })
 o.rewrite_option = "protocol"
 
 o = s:option(Value, _n("address"), translate("Address (Support Domain Name)"))

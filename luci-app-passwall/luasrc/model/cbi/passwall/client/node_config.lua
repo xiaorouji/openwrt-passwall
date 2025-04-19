@@ -31,8 +31,8 @@ if api.is_finded("ipt2socks") then
 
 	s.fields["type"]:value("Socks", translate("Socks"))
 
-	o = s:option(ListValue, _n("socks_protocol"))
-	o:depends({ [_n("socks_hide")] = "1" }) --不存在的依赖，始终隐藏，用于删除 protocol
+	o = s:option(ListValue, _n("del_protocol")) --始终隐藏，用于删除 protocol
+	o:depends({ [_n("__hide")] = "1" })
 	o.rewrite_option = "protocol"
 
 	o = s:option(Value, _n("address"), translate("Address (Support Domain Name)"))

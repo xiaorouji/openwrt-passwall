@@ -18,8 +18,8 @@ end
 
 s.fields["type"]:value(type_name, "Trojan-Plus")
 
-o = s:option(ListValue, _n("trojan_protocol"))
-o:depends({ [_n("trojan_hide")] = "1" }) --不存在的依赖，始终隐藏，用于删除 protocol
+o = s:option(ListValue, _n("del_protocol")) --始终隐藏，用于删除 protocol
+o:depends({ [_n("__hide")] = "1" })
 o.rewrite_option = "protocol"
 
 o = s:option(Value, _n("address"), translate("Address (Support Domain Name)"))

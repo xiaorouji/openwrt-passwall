@@ -37,8 +37,8 @@ local ssr_obfs_list = {
 
 s.fields["type"]:value(type_name, translate("ShadowsocksR Libev"))
 
-o = s:option(ListValue, _n("ssr_protocol"))
-o:depends({ [_n("ssr_hide")] = "1" }) --不存在的依赖，始终隐藏，用于删除 protocol
+o = s:option(ListValue, _n("del_protocol")) --始终隐藏，用于删除 protocol
+o:depends({ [_n("__hide")] = "1" })
 o.rewrite_option = "protocol"
 
 o = s:option(Value, _n("address"), translate("Address (Support Domain Name)"))
