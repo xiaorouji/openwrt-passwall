@@ -634,9 +634,6 @@ msgstr "延迟"
 msgid "Automatic detection delay"
 msgstr "自动检测延迟"
 
-msgid "To optimize performance, auto-detection is disabled when there are more than 30 nodes."
-msgstr "为优化性能，超过 30 个节点不自动检测。"
-
 msgid "Show server address and port"
 msgstr "显示服务器地址和端口"
 
