@@ -441,6 +441,13 @@ function gen_outbound(flag, node, tag, proxy_table)
 			}
 		end
 
+		if node.protocol == "anytls" then
+			protocol_table = {
+				password = (node.password and node.password ~= "") and node.password or "",
+				tls = tls
+			}
+		end
+
 		if protocol_table then
 			for key, value in pairs(protocol_table) do
 				result[key] = value
@@ -727,6 +734,18 @@ function gen_config_server(node)
 			},
 			ignore_client_bandwidth = (node.hysteria2_ignore_client_bandwidth == "1") and true or false,
 			tls = tls
+		}
+	end
+
+	if node.protocol == "anytls" then
+		protocol_table = {
+			users = {
+				{
+					name = (node.username and node.username ~= "") and node.username or "sekai",
+					password = node.password
+				}
+			},
+			tls = tls,
 		}
 	end
 

@@ -551,6 +551,41 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 				params = params.substring(1);
 			}
 			url += params;
+		} else if (v_type === "sing-box" && opt.get(dom_prefix + "protocol").value === "anytls") {
+			protocol = "anytls";
+			var v_password = opt.get(dom_prefix + "password");
+			var v_port = opt.get(dom_prefix + "port");
+			url = encodeURIComponent(v_password.value) +
+				"@" + _address +
+				":" + v_port.value + "?";
+
+			var params = "";
+			if (opt.get(dom_prefix + "tls").checked) {
+				var v_security = "tls";
+				if (opt.get(dom_prefix + "fingerprint") && opt.get(dom_prefix + "fingerprint").value != "") {
+					let v_fp = opt.get(dom_prefix + "fingerprint").value;
+					params += "&fp=" + v_fp;
+				}
+				if (opt.get(dom_prefix + "reality") && opt.get(dom_prefix + "reality").checked) {
+					v_security = "reality";
+					if (opt.get(dom_prefix + "fingerprint") && opt.get(dom_prefix + "fingerprint").value != "") {
+						let v_fp = opt.get(dom_prefix + "fingerprint").value;
+						params += "&fp=" + v_fp;
+					}
+					params += opt.query("pbk", dom_prefix + "reality_publicKey");
+					params += opt.query("sid", dom_prefix + "reality_shortId");
+				}
+				params += "&security=" + v_security;
+				params += opt.query("alpn", dom_prefix + "alpn");
+				params += opt.query("sni", dom_prefix + "tls_serverName");
+				params += opt.query("allowinsecure", dom_prefix + "tls_allowInsecure");
+			}
+
+			params += "#" + encodeURI(v_alias.value);
+			if (params[0] == "&") {
+				params = params.substring(1);
+			}
+			url += params;
 		}
 		if (url) {
 			url = protocol.toLowerCase() + "://" + url;
@@ -1371,6 +1406,66 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 			}
 			if (hash) {
 				opt.set('remarks', decodeURIComponent(hash.substr(1)));
+			}
+		}
+		if (ssu[0] === "anytls") {
+			if (has_singbox) {
+				dom_prefix = "singbox_"
+				opt.set('type', "sing-box");
+			}
+			opt.set(dom_prefix + 'protocol', "anytls");
+			var m = parseNodeUrl(ssrurl);
+			var password = m.passwd;
+			if (password === "") {
+				s.innerHTML = "<font color='red'><%:Invalid Share URL Format%></font>";
+				return false;
+			}
+			opt.set(dom_prefix + 'password', password);
+			opt.set(dom_prefix + 'address', m.hostname);
+			opt.set(dom_prefix + 'port', m.port || "443");
+			var queryParam = {};
+			if (m.search.length > 1) {
+				var query = m.search.replace('/?', '?').split('?')
+				var queryParams = query[1];
+				var queryArray = queryParams.split('&');
+				var params;
+				for (i = 0; i < queryArray.length; i++) {
+					params = queryArray[i].split('=');
+					queryParam[decodeURIComponent(params[0])] = decodeURIComponent(params[1] || '');
+				}
+			}
+			if (queryParam.security) {
+				if (queryParam.security == "tls") {
+					opt.set(dom_prefix + 'tls', true);
+					opt.set(dom_prefix + 'reality', false);
+					opt.set(dom_prefix + 'flow', queryParam.flow || '');
+					opt.set(dom_prefix + 'alpn', queryParam.alpn || 'default');
+					opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
+					opt.set(dom_prefix + 'tls_allowInsecure', true);
+					if (queryParam.allowinsecure === '0' || queryParam.insecure === '0') {
+						opt.set(dom_prefix + 'tls_allowInsecure', false);
+					}
+					if (queryParam.fp && queryParam.fp.trim() != "") {
+						opt.set(dom_prefix + 'utls', true);
+						opt.set(dom_prefix + 'fingerprint', queryParam.fp);
+					}
+				}
+				if (queryParam.security == "reality") {
+					opt.set(dom_prefix + 'tls', true);
+					opt.set(dom_prefix + 'reality', true);
+					opt.set(dom_prefix + 'flow', queryParam.flow || '');
+					opt.set(dom_prefix + 'alpn', queryParam.alpn || 'default');
+					opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
+					if (queryParam.fp && queryParam.fp.trim() != "") {
+						opt.set(dom_prefix + 'utls', true);
+						opt.set(dom_prefix + 'fingerprint', queryParam.fp);
+					}
+					opt.set(dom_prefix + 'reality_publicKey', queryParam.pbk || '');
+					opt.set(dom_prefix + 'reality_shortId', queryParam.sid || '');
+				}
+			}
+			if (m.hash) {
+				opt.set('remarks', decodeURIComponent(m.hash.substr(1)));
 			}
 		}
 		if (dom_prefix && dom_prefix != null) {

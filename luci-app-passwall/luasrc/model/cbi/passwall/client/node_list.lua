@@ -121,6 +121,8 @@ o.cfgvalue = function(t, n)
 			protocol = "HY"
 		elseif protocol == "hysteria2" then
 			protocol = "HY2"
+		elseif protocol == "anytls" then
+			protocol = "AnyTLS"
 		else
 			protocol = protocol:gsub("^%l",string.upper)
 		end
