@@ -6,7 +6,7 @@ local api = require "luci.passwall.api"
 	//<![CDATA[
 	function ajax_add_node(link) {
 		if (link) {
-			XHR.get('<%=api.url("link_add_node")%>', {
+			XHR.post('<%=api.url("link_add_node")%>', {
 				'link': link
 			},
 			function(x, data) {
