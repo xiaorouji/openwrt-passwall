@@ -695,8 +695,27 @@ local function processData(szType, content, add_mode, add_from)
 
 			if result.plugin then
 				if result.type == 'Xray' then
-					--不支持插件
-					result.error_msg = "Xray不支持插件."
+					-- obfs-local插件转换成xray支持的格式
+					if result.plugin ~= "obfs-local" then
+						result.error_msg = "Xray不支持 " .. result.plugin .. " 插件."
+					else
+						local obfs = result.plugin_opts:match("obfs=([^;]+)") or ""
+						local obfs_host = result.plugin_opts:match("obfs%-host=([^;]+)") or ""
+						if obfs == "" or obfs_host == "" then
+							result.error_msg = "SS " .. result.plugin .. " 插件选项不完整."
+						end
+						if obfs == "http" then
+							result.transport = "raw"
+							result.tcp_guise = "http"
+							result.tcp_guise_http_host = obfs_host
+						elseif obfs == "tls" then
+							result.tls = "1"
+							result.tls_serverName = obfs_host
+							result.tls_allowInsecure = "1"
+						end
+						result.plugin = nil
+						result.plugin_opts = nil
+					end
 				end
 				if result.type == "sing-box" then
 					result.plugin_enabled = "1"

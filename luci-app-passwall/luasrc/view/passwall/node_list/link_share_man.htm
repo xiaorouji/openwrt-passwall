@@ -682,10 +682,28 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 					}
 					try {
 						obj.dispatchEvent(event);
-					} catch (err) {
-					}
+					} catch (err) {}
 				} else {
 					//alert('<%:Faltal on set option, please help in debug: %>' + opt + ' = ' + val);
+					// 处理 DynamicList
+					var fullName = this.base + '.' + opt;
+					var lists = document.querySelectorAll('.cbi-dynlist');
+					for (var i = 0; i < lists.length; i++) {
+						var parent = lists[i].closest('.cbi-value');
+						if (!parent) continue;
+						// 尝试从 label 的 for 属性中提取 fullName
+						var label = parent.querySelector('label.cbi-value-title');
+						var labelFor = label?.getAttribute('for');
+						if (labelFor === fullName) {
+							var input = lists[i].querySelector('input[type="text"]');
+							var addBtn = lists[i].querySelector('.cbi-button-add');
+							if (input && addBtn) {
+								input.value = val;
+								addBtn.click();
+							}
+							break;
+						}
+					}
 				}
 			},
 			setlist: function (opt, vlist) {
@@ -806,6 +824,9 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 					dom_prefix = "xray_"
 					opt.set('type', "Xray");
 					opt.set(dom_prefix + 'protocol', "shadowsocks");
+				} else if (ss_type == "shadowsocks-rust") {
+					dom_prefix = "ssrust_"
+					opt.set('type', "SS-Rust");
 				} else {
 					if (["2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305"].includes(method)) {
 						dom_prefix = "ssrust_"
@@ -824,10 +845,27 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 				opt.set(dom_prefix + 'password', password || "");
 				opt.set(dom_prefix + 'method', method || "");
 				opt.set(dom_prefix + 'ss_method', method || "");
-				opt.set(dom_prefix + 'plugin', plugin || "none");
 				if (plugin && plugin != "none") {
-					opt.set(dom_prefix + 'plugin_opts', pluginOpts || "");
+					plugin = (plugin === "simple-obfs") ? "obfs-local" : plugin;
 					opt.set(dom_prefix + 'plugin_enabled', true);
+					opt.set(dom_prefix + 'plugin', plugin || "none");
+					opt.set(dom_prefix + 'plugin_opts', pluginOpts || "");
+					//obfs-local插件转换成xray支持的格式
+					if (plugin == "obfs-local" && dom_prefix == "xray_") {
+						var obfs = pluginOpts.match(/obfs=([^;]+)/);
+						var obfs_host = pluginOpts.match(/obfs-host=([^;]+)/);
+						obfs = obfs ? obfs[1] : "";
+						obfs_host = obfs_host ? obfs_host[1] : "";
+						if (obfs === "http") {
+							opt.set(dom_prefix + 'transport', "raw");
+							opt.set(dom_prefix + 'tcp_guise', "http");
+							opt.set(dom_prefix + 'tcp_guise_http_host', obfs_host || '');
+						} else if (obfs === "tls") {
+							opt.set(dom_prefix + 'tls', true);
+							opt.set(dom_prefix + 'tls_serverName', obfs_host || '');
+							opt.set(dom_prefix + 'tls_allowInsecure', true);
+						}
+					}
 				}
 				if (param !== undefined) {
 					opt.set('remarks', decodeURIComponent(param));
