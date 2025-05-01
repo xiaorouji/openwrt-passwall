@@ -4,9 +4,20 @@ local api = require "luci.passwall.api"
 
 <script type="text/javascript">
 	//<![CDATA[
+	function getXHR() {
+		if (typeof XHR === 'object' && typeof XHR.create === 'function') {
+			return XHR.create();
+		} else if (typeof XHR === 'function') {
+			return new XHR();
+		} else {
+			throw new Error("XHR is not supported in this environment.");
+		}
+	}
+
 	function ajax_add_node(link) {
+		var xhr = getXHR();
 		if (link) {
-			XHR.post('<%=api.url("link_add_node")%>', {
+			xhr.post('<%=api.url("link_add_node")%>', {
 				'link': link
 			},
 			function(x, data) {
