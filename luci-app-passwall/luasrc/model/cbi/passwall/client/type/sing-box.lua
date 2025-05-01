@@ -448,6 +448,14 @@ o:value("h2,http/1.1")
 o:value("h3,h2,http/1.1")
 o:depends({ [_n("tls")] = true })
 
+o = s:option(Flag, _n("tls_disable_sni"), translate("Disable SNI"), translate("Do not send server name in ClientHello."))
+o.default = "0"
+o:depends({ [_n("tls")] = true })
+o:depends({ [_n("protocol")] = "hysteria"})
+o:depends({ [_n("protocol")] = "tuic" })
+o:depends({ [_n("protocol")] = "hysteria2" })
+o:depends({ [_n("protocol")] = "shadowsocks" })
+
 o = s:option(Value, _n("tls_serverName"), translate("Domain"))
 o:depends({ [_n("tls")] = true })
 o:depends({ [_n("protocol")] = "hysteria"})

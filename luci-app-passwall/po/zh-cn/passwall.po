@@ -1303,6 +1303,9 @@ msgstr "原版Trojan只支持'tls'，请选择'tls'。"
 msgid "Transfer mode"
 msgstr "传输模式"
 
+msgid "Do not send server name in ClientHello."
+msgstr "不要在 ClientHello 中发送服务器名称。"
+
 msgid "Domain"
 msgstr "域名"
 
