@@ -160,9 +160,10 @@ if not REMOTE_GROUP or REMOTE_GROUP == "nil" then
 	sys.call('sed -i "/passwall/d" /etc/smartdns/custom.conf >/dev/null 2>&1')
 end
 
+local force_https_soa = uci:get(appname, "@global[0]", "force_https_soa") or 1
 local proxy_server_name = "passwall-proxy-server"
 config_lines = {
-	"force-qtype-SOA 65",
+	tonumber(force_https_soa) == 1 and "force-qtype-SOA 65" or "force-qtype-SOA -65",
 	"server 114.114.114.114 -bootstrap-dns",
 	DNS_MODE == "socks" and string.format("proxy-server socks5://%s -name %s", REMOTE_PROXY_SERVER, proxy_server_name) or nil
 }

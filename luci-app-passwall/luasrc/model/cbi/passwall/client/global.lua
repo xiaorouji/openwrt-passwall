@@ -604,6 +604,14 @@ if api.is_finded("smartdns") then
 	o:depends({dns_shunt = "smartdns", tcp_proxy_mode = "proxy", chn_list = "direct"})
 end
 
+o = s:taboption("DNS", Flag, "force_https_soa", translate("Force HTTPS SOA"), translate("Force queries with qtype 65 to respond with an SOA record."))
+o.default = "1"
+o.rmempty = false
+o:depends({dns_shunt = "chinadns-ng"})
+if api.is_finded("smartdns") then
+	o:depends({dns_shunt = "smartdns"})
+end
+
 o = s:taboption("DNS", Flag, "chinadns_ng_cert_verify", translate("DoT Cert verify"), translate("Verify DoT SSL cert. (May fail on some platforms!)"))
 o.default = "0"
 o:depends({direct_dns_mode = "dot"})

@@ -106,13 +106,15 @@ local setflag = (NFTFLAG == "1") and "inet@passwall@" or ""
 
 local only_global = (DEFAULT_MODE == "proxy" and CHNLIST == "0" and GFWLIST == "0") and 1
 
+local force_https_soa = uci:get(appname, "@global[0]", "force_https_soa") or 1
+
 config_lines = {
 	LOG_FILE ~= "/dev/null" and "verbose" or "",
 	"bind-addr ::",
 	"bind-port " .. LISTEN_PORT,
 	"china-dns " .. DNS_LOCAL,
 	"trust-dns " .. DNS_TRUST,
-	"filter-qtype 65"
+	tonumber(force_https_soa) == 1 and "filter-qtype 65" or ""
 }
 
 for i = 1, 6 do

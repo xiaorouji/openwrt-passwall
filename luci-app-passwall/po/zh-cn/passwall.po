@@ -241,6 +241,12 @@ msgstr "验证 DoT SSL 证书。（在某些平台可能无法验证，谨慎开
 msgid "Try this feature if the rule modification does not take effect."
 msgstr "如果修改规则后没有生效，请尝试此功能。"
 
+msgid "Force HTTPS SOA"
+msgstr "停用 HTTPS 记录解析"
+
+msgid "Force queries with qtype 65 to respond with an SOA record."
+msgstr "强制使 qtype 65 查询返回 SOA。"
+
 msgid "Are you sure to hide?"
 msgstr "你确定要隐藏吗？"
 
