@@ -108,7 +108,7 @@ local only_global = (DEFAULT_MODE == "proxy" and CHNLIST == "0" and GFWLIST == "
 
 config_lines = {
 	LOG_FILE ~= "/dev/null" and "verbose" or "",
-	"bind-addr 127.0.0.1",
+	"bind-addr ::",
 	"bind-port " .. LISTEN_PORT,
 	"china-dns " .. DNS_LOCAL,
 	"trust-dns " .. DNS_TRUST,
