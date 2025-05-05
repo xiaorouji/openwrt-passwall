@@ -219,7 +219,7 @@ m.uci:foreach(appname, "shunt_rules", function(e)
 	end
 end)
 
-o = s:option(DummyValue, _n("shunt_tips"), " ")
+o = s:option(DummyValue, _n("shunt_tips"), "　")
 o.not_rewrite = true
 o.rawhtml = true
 o.cfgvalue = function(t, n)

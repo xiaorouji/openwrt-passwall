@@ -284,7 +284,7 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 			end
 		end
 	else
-		local tips = s:taboption("Main", DummyValue, "tips", " ")
+		local tips = s:taboption("Main", DummyValue, "tips", "　")
 		tips.rawhtml = true
 		tips.cfgvalue = function(t, n)
 			return string.format('<a style="color: red">%s</a>', translate("There are no available nodes, please add or subscribe nodes first."))
@@ -680,7 +680,7 @@ o = s:taboption("Proxy", Flag, "client_proxy", translate("Client Proxy"), transl
 o.default = "1"
 o.rmempty = false
 
-o = s:taboption("Proxy", DummyValue, "_proxy_tips", " ")
+o = s:taboption("Proxy", DummyValue, "_proxy_tips", "　")
 o.rawhtml = true
 o.cfgvalue = function(t, n)
 	return string.format('<a style="color: red" href="%s">%s</a>', api.url("acl"), translate("Want different devices to use different proxy modes/ports/nodes? Please use access control."))
@@ -726,7 +726,7 @@ o = s:taboption("log", Flag, "log_chinadns_ng", translate("Enable") .. " ChinaDN
 o.default = "0"
 o.rmempty = false
 
-o = s:taboption("log", DummyValue, "_log_tips", " ")
+o = s:taboption("log", DummyValue, "_log_tips", "　")
 o.rawhtml = true
 o.cfgvalue = function(t, n)
 	return string.format('<font color="red">%s</font>', translate("It is recommended to disable logging during regular use to reduce system overhead."))

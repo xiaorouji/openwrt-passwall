@@ -78,7 +78,7 @@ o = s:option(Value, "health_check_inter", translate("Health Check Inter"), trans
 o.default = "60"
 o:depends("balancing_enable", true)
 
-o = s:option(DummyValue, "health_check_tips", " ")
+o = s:option(DummyValue, "health_check_tips", "　")
 o.rawhtml = true
 o.cfgvalue = function(t, n)
 	return string.format('<span style="color: red">%s</span>', translate("When the URL test is used, the load balancing node will be converted into a Socks node. when node list set customizing, must be a Socks node, otherwise the health check will be invalid."))
