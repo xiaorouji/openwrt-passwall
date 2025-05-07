@@ -41,17 +41,42 @@ end
 e = t:option(DummyValue, "remarks", translate("Remarks"))
 e.width = "15%"
 
----- Type
 e = t:option(DummyValue, "type", translate("Type"))
+e.width = "20%"
+e.rawhtml = true
 e.cfgvalue = function(t, n)
-	local v = Value.cfgvalue(t, n)
-	if v then
-		if v == "sing-box" or v == "Xray" then
-			local protocol = m:get(n, "protocol")
-			return v .. " -> " .. protocol
+	local str = ""
+	local type = m:get(n, "type") or ""
+	if type == "sing-box" or type == "Xray" then
+		local protocol = m:get(n, "protocol") or ""
+		if protocol == "vmess" then
+			protocol = "VMess"
+		elseif protocol == "vless" then
+			protocol = "VLESS"
+		elseif protocol == "shadowsocks" then
+			protocol = "SS"
+		elseif protocol == "shadowsocksr" then
+			protocol = "SSR"
+		elseif protocol == "wireguard" then
+			protocol = "WG"
+		elseif protocol == "hysteria" then
+			protocol = "HY"
+		elseif protocol == "hysteria2" then
+			protocol = "HY2"
+		elseif protocol == "anytls" then
+			protocol = "AnyTLS"
+		else
+			protocol = protocol:gsub("^%l",string.upper)
+			local custom = m:get(n, "custom") or "0"
+			if custom == "1" then
+				protocol = translate("Custom Config")
+			end
 		end
-		return v
+		if type == "sing-box" then type = "Sing-Box" end
+		type = type .. " " .. protocol
 	end
+	str = str .. translate(type)
+	return str
 end
 
 e = t:option(DummyValue, "port", translate("Port"))

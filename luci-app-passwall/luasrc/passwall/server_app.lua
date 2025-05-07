@@ -32,11 +32,15 @@ local function cmd(cmd)
 end
 
 local function ipt(arg)
-	cmd(ipt_bin .. " -w " .. arg)
+	if ipt_bin and #ipt_bin > 0 then
+		cmd(ipt_bin .. " -w " .. arg)
+	end
 end
 
 local function ip6t(arg)
-	cmd(ip6t_bin .. " -w " .. arg)
+	if ip6t_bin and #ip6t_bin > 0 then
+		cmd(ip6t_bin .. " -w " .. arg)
+	end
 end
 
 local function ln_run(s, d, command, output)
@@ -116,20 +120,12 @@ local function start()
 			local config_file = CONFIG_PATH .. "/" .. id .. ".json"
 			local udp_forward = 1
 			local type = user.type or ""
-			if type == "Socks" then
-				local auth = ""
-				if user.auth and user.auth == "1" then
-					local username = user.username or ""
-					local password = user.password or ""
-					if username ~= "" and password ~= "" then
-						username = "-u " .. username
-						password = "-P " .. password
-						auth = username .. " " .. password
-					end
+			if type == "SS" or type == "SSR" then
+				if user.custom == "1" and user.config_str then
+					config = jsonc.parse(api.base64Decode(user.config_str))
+				else
+					config = require(require_dir .. "util_shadowsocks").gen_config_server(user)
 				end
-				bin = ln_run("/usr/bin/microsocks", "microsocks_" .. id, string.format("-i :: -p %s %s", port, auth), log_path)
-			elseif type == "SS" or type == "SSR" then
-				config = require(require_dir .. "util_shadowsocks").gen_config_server(user)
 				local udp_param = ""
 				udp_forward = tonumber(user.udp_forward) or 1
 				if udp_forward == 1 then
@@ -138,22 +134,47 @@ local function start()
 				type = type:lower()
 				bin = ln_run("/usr/bin/" .. type .. "-server", type .. "-server", "-c " .. config_file .. " " .. udp_param, log_path)
 			elseif type == "SS-Rust" then
-				config = require(require_dir .. "util_shadowsocks").gen_config_server(user)
+				if user.custom == "1" and user.config_str then
+					config = jsonc.parse(api.base64Decode(user.config_str))
+				else
+					config = require(require_dir .. "util_shadowsocks").gen_config_server(user)
+				end
 				bin = ln_run("/usr/bin/ssserver", "ssserver", "-c " .. config_file, log_path)
-			elseif type == "sing-box" then
-				config = require(require_dir .. "util_sing-box").gen_config_server(user)
-				bin = ln_run(api.get_app_path("sing-box"), "sing-box", "run -c " .. config_file, log_path)
 			elseif type == "Xray" then
-				config = require(require_dir .. "util_xray").gen_config_server(user)
+				if user.custom == "1" and user.config_str then
+					config = jsonc.parse(api.base64Decode(user.config_str))
+					if log_path then
+						if not config.log then
+							config.log = {}
+						end
+						config.log.loglevel = user.loglevel
+					end
+				else
+					config = require(require_dir .. "util_xray").gen_config_server(user)
+				end
 				bin = ln_run(api.get_app_path("xray"), "xray", "run -c " .. config_file, log_path)
-			elseif type == "Trojan" then
-				config = require(require_dir .. "util_trojan").gen_config_server(user)
-				bin = ln_run("/usr/sbin/trojan", "trojan", "-c " .. config_file, log_path)
-			elseif type == "Trojan-Plus" then
-				config = require(require_dir .. "util_trojan").gen_config_server(user)
-				bin = ln_run("/usr/sbin/trojan-plus", "trojan-plus", "-c " .. config_file, log_path)
+			elseif type == "sing-box" then
+				if user.custom == "1" and user.config_str then
+					config = jsonc.parse(api.base64Decode(user.config_str))
+					if log_path then
+						if not config.log then
+							config.log = {}
+						end
+						config.log.timestamp = true
+						config.log.disabled = false
+						config.log.level = user.loglevel
+						config.log.output = log_path
+					end
+				else
+					config = require(require_dir .. "util_sing-box").gen_config_server(user)
+				end
+				bin = ln_run(api.get_app_path("sing-box"), "sing-box", "run -c " .. config_file, log_path)
 			elseif type == "Hysteria2" then
-				config = require(require_dir .. "util_hysteria2").gen_config_server(user)
+				if user.custom == "1" and user.config_str then
+					config = jsonc.parse(api.base64Decode(user.config_str))
+				else
+					config = require(require_dir .. "util_hysteria2").gen_config_server(user)
+				end
 				bin = ln_run(api.get_app_path("hysteria"), "hysteria", "-c " .. config_file .. " server", log_path)
 			end
 
@@ -163,7 +184,7 @@ local function start()
 					f:write(jsonc.stringify(config, 1))
 					f:close()
 				end
-				log(string.format("%s %s 生成配置文件并运行 - %s", remarks, port, config_file))
+				log(string.format("%s 生成配置文件并运行 - %s", remarks, config_file))
 			end
 
 			if bin then
@@ -171,7 +192,7 @@ local function start()
 			end
 
 			local bind_local = user.bind_local or 0
-			if bind_local and tonumber(bind_local) ~= 1 then
+			if bind_local and tonumber(bind_local) ~= 1 and port then
 				if nft_flag == "0" then
 					ipt(string.format('-A PSW-SERVER -p tcp --dport %s -m comment --comment "%s" -j ACCEPT', port, remarks))
 					ip6t(string.format('-A PSW-SERVER -p tcp --dport %s -m comment --comment "%s" -j ACCEPT', port, remarks))
