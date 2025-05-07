@@ -120,7 +120,19 @@ local function start()
 			local config_file = CONFIG_PATH .. "/" .. id .. ".json"
 			local udp_forward = 1
 			local type = user.type or ""
-			if type == "SS" or type == "SSR" then
+			if type == "Socks" then
+				local auth = ""
+				if user.auth and user.auth == "1" then
+					local username = user.username or ""
+					local password = user.password or ""
+					if username ~= "" and password ~= "" then
+						username = "-u " .. username
+						password = "-P " .. password
+						auth = username .. " " .. password
+					end
+				end
+				bin = ln_run("/usr/bin/microsocks", "microsocks_" .. id, string.format("-i :: -p %s %s", port, auth), log_path)
+			elseif type == "SS" or type == "SSR" then
 				if user.custom == "1" and user.config_str then
 					config = jsonc.parse(api.base64Decode(user.config_str))
 				else
@@ -176,6 +188,12 @@ local function start()
 					config = require(require_dir .. "util_hysteria2").gen_config_server(user)
 				end
 				bin = ln_run(api.get_app_path("hysteria"), "hysteria", "-c " .. config_file .. " server", log_path)
+			elseif type == "Trojan" then
+				config = require(require_dir .. "util_trojan").gen_config_server(user)
+				bin = ln_run("/usr/sbin/trojan", "trojan", "-c " .. config_file, log_path)
+			elseif type == "Trojan-Plus" then
+				config = require(require_dir .. "util_trojan").gen_config_server(user)
+				bin = ln_run("/usr/sbin/trojan-plus", "trojan-plus", "-c " .. config_file, log_path)
 			end
 
 			if next(config) then
