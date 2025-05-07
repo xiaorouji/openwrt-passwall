@@ -1704,6 +1704,8 @@ start_dns() {
 		ln_run "$(first_type dnsmasq)" "dnsmasq_default" "/dev/null" -C ${GLOBAL_DNSMASQ_CONF} -x ${GLOBAL_ACL_PATH}/dnsmasq.pid
 		set_cache_var "ACL_default_dns_port" "${GLOBAL_DNSMASQ_PORT}"
 		DNS_REDIRECT_PORT=${GLOBAL_DNSMASQ_PORT}
+		#dhcp.leases to hosts
+		$APP_PATH/lease2hosts.sh > /dev/null 2>&1 &
 	fi
 }
 
@@ -1928,6 +1930,8 @@ acl_app() {
 								ln_run "$(first_type dnsmasq)" "dnsmasq_${sid}" "/dev/null" -C ${dnsmasq_conf} -x ${acl_path}/dnsmasq.pid
 								set_cache_var "ACL_${sid}_dns_port" "${dnsmasq_port}"
 								set_cache_var "node_${tcp_node}_$(echo -n "${tcp_proxy_mode}${remote_dns}" | md5sum | cut -d " " -f1)" "${dnsmasq_port}"
+								#dhcp.leases to hosts
+								$APP_PATH/lease2hosts.sh > /dev/null 2>&1 &
 							}
 							_redir_port=$(get_cache_var "node_${tcp_node}_redir_port")
 							_socks_port=$(get_cache_var "node_${tcp_node}_socks_port")
@@ -2155,6 +2159,7 @@ stop() {
 	}
 	rm -rf $TMP_PATH
 	rm -rf /tmp/lock/${CONFIG}_socks_auto_switch*
+	rm -rf /tmp/lock/${CONFIG}_lease2hosts*
 	echolog "清空并关闭相关程序和缓存完成。"
 	exit 0
 }
