@@ -46,6 +46,7 @@ o.rewrite_option = o.option
 
 o = s:option(FileUpload, _n("tls_certificateFile"), translate("Public key absolute path"), translate("as:") .. "/etc/ssl/fullchain.pem")
 o.default = m:get(s.section, "tls_certificateFile") or "/etc/config/ssl/" .. arg[1] .. ".pem"
+if o and o:formvalue(arg[1]) then o.default = o:formvalue(arg[1]) end
 o.validate = function(self, value, t)
 	if value and value ~= "" then
 		if not fs.access(value) then
@@ -59,6 +60,7 @@ end
 
 o = s:option(FileUpload, _n("tls_keyFile"), translate("Private key absolute path"), translate("as:") .. "/etc/ssl/private.key")
 o.default = m:get(s.section, "tls_keyFile") or "/etc/config/ssl/" .. arg[1] .. ".key"
+if o and o:formvalue(arg[1]) then o.default = o:formvalue(arg[1]) end
 o.validate = function(self, value, t)
 	if value and value ~= "" then
 		if not fs.access(value) then

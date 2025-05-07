@@ -260,6 +260,7 @@ end
 
 o = s:option(FileUpload, _n("tls_certificateFile"), translate("Public key absolute path"), translate("as:") .. "/etc/ssl/fullchain.pem")
 o.default = m:get(s.section, "tls_certificateFile") or "/etc/config/ssl/" .. arg[1] .. ".pem"
+if o and o:formvalue(arg[1]) then o.default = o:formvalue(arg[1]) end
 o:depends({ [_n("tls")] = true, [_n("reality")] = false })
 o:depends({ [_n("protocol")] = "naive" })
 o:depends({ [_n("protocol")] = "hysteria" })
@@ -278,6 +279,7 @@ end
 
 o = s:option(FileUpload, _n("tls_keyFile"), translate("Private key absolute path"), translate("as:") .. "/etc/ssl/private.key")
 o.default = m:get(s.section, "tls_keyFile") or "/etc/config/ssl/" .. arg[1] .. ".key"
+if o and o:formvalue(arg[1]) then o.default = o:formvalue(arg[1]) end
 o:depends({ [_n("tls")] = true, [_n("reality")] = false })
 o:depends({ [_n("protocol")] = "naive" })
 o:depends({ [_n("protocol")] = "hysteria" })
