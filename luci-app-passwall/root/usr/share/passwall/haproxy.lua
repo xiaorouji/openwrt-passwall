@@ -93,7 +93,7 @@ string.gsub(haproxy_dns, '[^' .. "," .. ']+', function(w)
 	if not s:find(":") then
 		s = s .. ":53"
 	end
-	mydns = mydns .. (index > 1 and "\n" or "") .. "    " .. string.format("nameserver dns%s %s", index, s)
+	mydns = mydns .. (index > 1 and "\n" or "") .. "	" .. string.format("nameserver dns%s %s", index, s)
 end)
 haproxy_config = haproxy_config:gsub("{{dns}}",  mydns)
 
@@ -180,22 +180,31 @@ listen %s
 ]], port, port))
 	end
 
+	local count_M, count_B = 1, 1
 	for i, o in ipairs(listens[port]) do
-		local remark = o.server_remark
+		local remark = o.server_remark or ""
+		-- 防止重名导致无法运行
+		if tostring(o.backup) ~= "1" then
+			remark = "M" .. count_M .. "-" .. remark
+			count_M = count_M + 1
+		else
+			remark = "B" .. count_B .. "-" .. remark
+			count_B = count_B + 1
+		end
 		local server = o.server_address .. ":" .. o.server_port
 		local server_conf = "server {{remark}} {{server}} weight {{weight}} {{resolvers}} check inter {{inter}} rise 1 fall 3 {{backup}}"
 		server_conf = server_conf:gsub("{{remark}}", remark)
 		server_conf = server_conf:gsub("{{server}}", server)
-		server_conf = server_conf:gsub("{{weight}}",  o.lbweight)
+		server_conf = server_conf:gsub("{{weight}}", o.lbweight)
 		local resolvers = "resolvers mydns"
 		if api.is_ip(o.server_address) then
 			resolvers = ""
 		end
-		server_conf = server_conf:gsub("{{resolvers}}",  resolvers)
-		server_conf = server_conf:gsub("{{inter}}",  tonumber(health_check_inter) .. "s")
-		server_conf = server_conf:gsub("{{backup}}",  o.backup == "1" and "backup" or "")
+		server_conf = server_conf:gsub("{{resolvers}}", resolvers)
+		server_conf = server_conf:gsub("{{inter}}", tonumber(health_check_inter) .. "s")
+		server_conf = server_conf:gsub("{{backup}}", tostring(o.backup) == "1" and "backup" or "")
 
-		f_out:write("    " .. server_conf .. "\n")
+		f_out:write("	" .. server_conf .. "\n")
 
 		if o.export ~= "0" then
 			sys.call(string.format("/usr/share/passwall/app.sh add_ip2route %s %s", o.origin_address, o.export))
