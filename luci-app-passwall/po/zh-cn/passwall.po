@@ -535,6 +535,9 @@ msgstr "导出分享URL"
 msgid "Generate QRCode"
 msgstr "生成二维码"
 
+msgid "Export Config File"
+msgstr "导出配置文件"
+
 msgid "Import Finished"
 msgstr "导入完成："
 

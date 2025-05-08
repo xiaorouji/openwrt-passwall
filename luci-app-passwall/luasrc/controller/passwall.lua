@@ -63,6 +63,7 @@ function index()
 	entry({"admin", "services", appname, "link_add_node"}, call("link_add_node")).leaf = true
 	entry({"admin", "services", appname, "socks_autoswitch_add_node"}, call("socks_autoswitch_add_node")).leaf = true
 	entry({"admin", "services", appname, "socks_autoswitch_remove_node"}, call("socks_autoswitch_remove_node")).leaf = true
+	entry({"admin", "services", appname, "gen_client_config"}, call("gen_client_config")).leaf = true
 	entry({"admin", "services", appname, "get_now_use_node"}, call("get_now_use_node")).leaf = true
 	entry({"admin", "services", appname, "get_redir_log"}, call("get_redir_log")).leaf = true
 	entry({"admin", "services", appname, "get_socks_log"}, call("get_socks_log")).leaf = true
@@ -169,6 +170,20 @@ function socks_autoswitch_remove_node()
 		api.uci_save(uci, appname)
 	end
 	luci.http.redirect(api.url("socks_config", id))
+end
+
+
+function gen_client_config()
+	local id = luci.http.formvalue("id")
+	local config_file = api.TMP_PATH .. "/config_" .. id
+	luci.sys.call(string.format("/usr/share/passwall/app.sh run_socks flag=config_%s node=%s bind=127.0.0.1 socks_port=1080 config_file=%s no_run=1", id, id, config_file))
+	if nixio.fs.access(config_file) then
+		luci.http.prepare_content("application/json")
+		luci.http.write(luci.sys.exec("cat " .. config_file))
+		luci.sys.call("rm -f " .. config_file)
+	else
+		luci.http.redirect(api.url("node_list"))
+	end
 end
 
 function get_now_use_node()

@@ -1520,10 +1520,15 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 		return false;
 	}
 
+	function exportConfigFile(btn, sid) {
+		window.open('<%=api.url("gen_client_config")%>?id=' + sid, "_blank")
+	}
+
 //]]></script>
 <input type="button" class="btn cbi-button cbi-button-apply" value='<%:From Share URL%>' onclick="return fromUrl(this, '<%=self.option%>', '<%=self.value%>')" />
 <input type="button" class="btn cbi-button cbi-button-apply" value='<%:Build Share URL%>' onclick="return exportUrl(this, '<%=self.option%>', '<%=self.value%>')" />
 <input type="button" class="btn cbi-button cbi-button-apply" value='<%:Generate QRCode%>' onclick="return genQrcode(this, '<%=self.option%>', '<%=self.value%>')" />
+<input type="button" class="btn cbi-button cbi-button-apply" value='<%:Export Config File%>' onclick="return exportConfigFile(this, '<%=self.value%>')" />
 <div id="qrcode_div" style="margin-top: 1rem;display:none">
 	<div id="qrcode"></div>
 </div>
