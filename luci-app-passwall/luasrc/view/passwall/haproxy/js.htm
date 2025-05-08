@@ -1,0 +1,46 @@
+
+<script type="text/javascript">
+	//<![CDATA[
+	document.addEventListener("DOMContentLoaded", function () {
+		let monitorStartTime = Date.now();
+
+		const monitorInterval = setInterval(function () {
+			if (Date.now() - monitorStartTime > 3000) {
+				clearInterval(monitorInterval);
+				return;
+			}
+
+			const rows = Array.from(document.querySelectorAll("tr.cbi-section-table-row"))
+				.filter(row => !row.classList.contains("placeholder")); // 排除无配置行
+
+			if (rows.length <= 1) return;
+
+			const lastRow = rows[rows.length - 1];
+			const secondLastRow = rows[rows.length - 2];
+
+			const lastInput = lastRow.querySelector("input[name$='.haproxy_port']");
+			const secondLastInput = secondLastRow.querySelector("input[name$='.haproxy_port']");
+
+			if (!lastInput || !secondLastInput) return;
+
+			// 如果还没绑定 change 事件，绑定一次
+			if (!lastInput.dataset.bindChange) {
+				lastInput.dataset.bindChange = "1";
+				lastInput.addEventListener("input", () => {
+					lastInput.dataset.userModified = "1";
+				});
+			}
+
+			// 如果用户手动修改过，就不再自动设置
+			if (lastInput.dataset.userModified === "1") return;
+
+			const lastVal = lastInput.value.trim();
+			const secondLastVal = secondLastInput.value.trim();
+
+			if (lastVal !== secondLastVal && secondLastVal !== "" && secondLastVal !== "0") {
+				lastInput.value = secondLastVal;
+			}
+		}, 300);
+	});
+	//]]>
+</script>
