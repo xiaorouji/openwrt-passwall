@@ -165,9 +165,9 @@ function gen_outbound(flag, node, tag, proxy_table)
 					spiderX = node.reality_spiderX or "/",
 					fingerprint = (node.type == "Xray" and node.fingerprint and node.fingerprint ~= "") and node.fingerprint or "chrome"
 				} or nil,
-				rawSettings = ((node.transport == "raw" or node.transport == "tcp") and node.protocol ~= "socks") and {
+				rawSettings = ((node.transport == "raw" or node.transport == "tcp") and node.protocol ~= "socks" and (node.tcp_guise and node.tcp_guise ~= "none")) and {
 					header = {
-						type = node.tcp_guise or "none",
+						type = node.tcp_guise,
 						request = (node.tcp_guise == "http") and {
 							path = node.tcp_guise_http_path or {"/"},
 							headers = {
