@@ -544,6 +544,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 			params += opt.query("sni", dom_prefix + "tls_serverName");
 			params += opt.query("alpn", dom_prefix + "tuic_alpn");
 			params += opt.query("congestion_control", dom_prefix + "tuic_congestion_control");
+			params += opt.query("udp_relay_mode", dom_prefix + "tuic_udp_relay_mode");
 			params += opt.query("allowinsecure", dom_prefix + "tls_allowInsecure");
 
 			params += "#" + encodeURI(v_alias.value);
@@ -1437,6 +1438,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 				}
 			}
 			opt.set(dom_prefix + 'tuic_congestion_control', queryParam.congestion_control || 'cubic');
+			opt.set(dom_prefix + 'tuic_udp_relay_mode', queryParam.udp_relay_mode || 'native');
 			opt.set(dom_prefix + 'tuic_alpn', queryParam.alpn || 'default');
 			opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
 			opt.set(dom_prefix + 'tls_allowInsecure', true);

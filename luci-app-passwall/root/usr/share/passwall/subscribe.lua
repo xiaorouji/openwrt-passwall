@@ -1323,6 +1323,7 @@ local function processData(szType, content, add_mode, add_from)
 		result.tls_serverName = params.sni
 		result.tuic_alpn = params.alpn or "default"
 		result.tuic_congestion_control = params.congestion_control or "cubic"
+		result.tuic_udp_relay_mode = params.udp_relay_mode or "native"
 		params.allowinsecure = params.allowinsecure or params.insecure
 		if params.allowinsecure then
 			if params.allowinsecure == "1" or params.allowinsecure == "0" then
