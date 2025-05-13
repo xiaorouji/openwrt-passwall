@@ -329,6 +329,10 @@ o:value("xtls-rprx-vision")
 o:depends({ [_n("protocol")] = "vless", [_n("tls")] = true })
 
 if singbox_tags:find("with_quic") then
+	o = s:option(Value, _n("hysteria_hop"), translate("Port hopping range"))
+	o.description = translate("Format as 1000:2000 or 1000-2000 Multiple groups are separated by commas (,).")
+	o:depends({ [_n("protocol")] = "hysteria" })
+
 	o = s:option(Value, _n("hysteria_obfs"), translate("Obfs Password"))
 	o:depends({ [_n("protocol")] = "hysteria" })
 
