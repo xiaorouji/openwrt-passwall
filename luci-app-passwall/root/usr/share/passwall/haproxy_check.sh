@@ -1,5 +1,7 @@
 #!/bin/sh
 
+export PATH=/usr/sbin:/usr/bin:/sbin:/bin:/root/bin
+
 listen_address=$1
 listen_port=$2
 server_address=$3
