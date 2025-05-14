@@ -84,6 +84,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 		local run_socks_instance = true
 		if proxy_table ~= nil and type(proxy_table) == "table" then
 			proxy_tag = proxy_table.tag or nil
+			run_socks_instance = proxy_table.run_socks_instance
 		end
 
 		if node.type ~= "sing-box" then
