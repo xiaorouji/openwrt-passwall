@@ -30,15 +30,21 @@ reload_dnsmasq_pids() {
 
 while true; do
 
-	if [ -s "$LEASE_FILE" ]; then
-		awk 'NF >= 4 {print $3" "$4}' "$LEASE_FILE" | sort > "$TMP_FILE"
-		if [ -f "$TMP_FILE" ]; then
-			if [ ! -f "$HOSTS_FILE" ] || [ "$(md5sum "$TMP_FILE" | awk '{print $1}')" != "$(md5sum "$HOSTS_FILE" | awk '{print $1}')" ]; then
+	if [ -f "$LEASE_FILE" ]; then
+		awk 'NF >= 4 && $4 != "*" {print $3" "$4}' "$LEASE_FILE" | sort > "$TMP_FILE"
+		if [ -s "$TMP_FILE" ]; then
+			if [ ! -f "$HOSTS_FILE" ] || ! cmp -s "$TMP_FILE" "$HOSTS_FILE"; then
 				mv "$TMP_FILE" "$HOSTS_FILE"
 				reload_dnsmasq_pids
 			else
-				rm -rf "$TMP_FILE"
+				rm -f "$TMP_FILE"
 			fi
+		else
+			if [ -s "$HOSTS_FILE" ]; then
+				: > "$HOSTS_FILE"
+				reload_dnsmasq_pids
+			fi
+			rm -f "$TMP_FILE"
 		fi
 	fi
 
