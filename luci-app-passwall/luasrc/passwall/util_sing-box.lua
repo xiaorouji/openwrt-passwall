@@ -459,6 +459,9 @@ function gen_outbound(flag, node, tag, proxy_table)
 		if node.protocol == "anytls" then
 			protocol_table = {
 				password = (node.password and node.password ~= "") and node.password or "",
+				idle_session_check_interval = "30s",
+				idle_session_timeout = "30s",
+				min_idle_session = 5,
 				tls = tls
 			}
 		end
