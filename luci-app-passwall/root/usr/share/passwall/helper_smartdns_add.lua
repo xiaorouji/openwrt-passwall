@@ -168,6 +168,23 @@ config_lines = {
 	DNS_MODE == "socks" and string.format("proxy-server socks5://%s -name %s", REMOTE_PROXY_SERVER, proxy_server_name) or nil
 }
 if DNS_MODE == "socks" then
+	local found_private = false
+	for dns in string.gmatch(REMOTE_DNS, "([^|]+)") do
+		-- 判断是否为私有地址
+		if dns:match("127%.0%.0%.") or
+		   dns:match("192%.168%.") or
+		   dns:match("10%.") or
+		   dns:match("172%.1[6-9]%.") or
+		   dns:match("172%.2[0-9]%.") or
+		   dns:match("172%.3[0-1]%.") then
+			found_private = true
+			break
+		end
+	end
+	if found_private then
+		REMOTE_DNS = "tcp://1.1.1.1"
+		log("  * 错误！SmartDNS 远程 DNS 不允许使用私有地址，将默认使用：tcp://1.1.1.1")
+	end
 	string.gsub(REMOTE_DNS, '[^' .. "|" .. ']+', function(w)
 		local server_dns = w
 		local server_param = string.format("server %s -group %s -proxy %s", "%s", REMOTE_GROUP, proxy_server_name)
