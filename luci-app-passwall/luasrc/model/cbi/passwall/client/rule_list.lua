@@ -12,6 +12,18 @@ local chnroute_path = "/usr/share/passwall/rules/chnroute"
 m = Map(appname)
 api.set_apply_on_parse(m)
 
+function clean_text(text)
+	local nbsp = string.char(0xC2, 0xA0) -- 不间断空格（U+00A0）
+	local fullwidth_space = string.char(0xE3, 0x80, 0x80) -- 全角空格（U+3000）
+	return text
+		:gsub(nbsp, " ")
+		:gsub(fullwidth_space, " ")
+		:gsub("^%s+", "")
+		:gsub("%s+$", "\n")
+		:gsub("\r\n", "\n")
+		:gsub("[ \t]*\n[ \t]*", "\n")
+end
+
 -- [[ Rule List Settings ]]--
 s = m:section(TypedSection, "global_rules")
 s.anonymous = true
@@ -40,7 +52,7 @@ o.remove = function(self, section, value)
 end
 o.validate = function(self, value)
 	local hosts= {}
-	value = value:gsub("^%s+", ""):gsub("%s+$","\n"):gsub("\r\n","\n"):gsub("[ \t]*\n[ \t]*", "\n")
+	value = clean_text(value)
 	string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(hosts, w) end)
 	for index, host in ipairs(hosts) do
 		if host:sub(1, 1) == "#" or host:sub(1, 8) == "geosite:" then
@@ -69,7 +81,7 @@ o.remove = function(self, section, value)
 end
 o.validate = function(self, value)
 	local ipmasks= {}
-	value = value:gsub("^%s+", ""):gsub("%s+$","\n"):gsub("\r\n","\n"):gsub("[ \t]*\n[ \t]*", "\n")
+	value = clean_text(value)
 	string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(ipmasks, w) end)
 	for index, ipmask in ipairs(ipmasks) do
 		if ipmask:sub(1, 1) == "#" or ipmask:sub(1, 6) == "geoip:" then
@@ -100,7 +112,7 @@ o.remove = function(self, section, value)
 end
 o.validate = function(self, value)
 	local hosts= {}
-	value = value:gsub("^%s+", ""):gsub("%s+$","\n"):gsub("\r\n","\n"):gsub("[ \t]*\n[ \t]*", "\n")
+	value = clean_text(value)
 	string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(hosts, w) end)
 	for index, host in ipairs(hosts) do
 		if host:sub(1, 1) == "#" or host:sub(1, 8) == "geosite:" then
@@ -129,7 +141,7 @@ o.remove = function(self, section, value)
 end
 o.validate = function(self, value)
 	local ipmasks= {}
-	value = value:gsub("^%s+", ""):gsub("%s+$","\n"):gsub("\r\n","\n"):gsub("[ \t]*\n[ \t]*", "\n")
+	value = clean_text(value)
 	string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(ipmasks, w) end)
 	for index, ipmask in ipairs(ipmasks) do
 		if ipmask:sub(1, 1) == "#" or ipmask:sub(1, 6) == "geoip:" then
@@ -158,7 +170,7 @@ o.remove = function(self, section, value)
 end
 o.validate = function(self, value)
 	local hosts= {}
-	value = value:gsub("^%s+", ""):gsub("%s+$","\n"):gsub("\r\n","\n"):gsub("[ \t]*\n[ \t]*", "\n")
+	value = clean_text(value)
 	string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(hosts, w) end)
 	for index, host in ipairs(hosts) do
 		if host:sub(1, 1) == "#" or host:sub(1, 8) == "geosite:" then
@@ -187,7 +199,7 @@ o.remove = function(self, section, value)
 end
 o.validate = function(self, value)
 	local ipmasks= {}
-	value = value:gsub("^%s+", ""):gsub("%s+$","\n"):gsub("\r\n","\n"):gsub("[ \t]*\n[ \t]*", "\n")
+	value = clean_text(value)
 	string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(ipmasks, w) end)
 	for index, ipmask in ipairs(ipmasks) do
 		if ipmask:sub(1, 1) == "#" or ipmask:sub(1, 6) == "geoip:" then
@@ -216,7 +228,7 @@ o.remove = function(self, section, value)
 end
 o.validate = function(self, value)
 	local ipmasks= {}
-	value = value:gsub("^%s+", ""):gsub("%s+$","\n"):gsub("\r\n","\n"):gsub("[ \t]*\n[ \t]*", "\n")
+	value = clean_text(value)
 	string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(ipmasks, w) end)
 	for index, ipmask in ipairs(ipmasks) do
 		if ipmask:sub(1, 1) == "#" then
@@ -245,7 +257,7 @@ o.remove = function(self, section, value)
 end
 o.validate = function(self, value)
 	local ipmasks= {}
-	value = value:gsub("^%s+", ""):gsub("%s+$","\n"):gsub("\r\n","\n"):gsub("[ \t]*\n[ \t]*", "\n")
+	value = clean_text(value)
 	string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(ipmasks, w) end)
 	for index, ipmask in ipairs(ipmasks) do
 		if ipmask:sub(1, 1) == "#" then
@@ -267,7 +279,7 @@ o.cfgvalue = function(self, section)
 	return fs.readfile(hosts) or ""
 end
 o.write = function(self, section, value)
-	fs.writefile(hosts, value:gsub("^%s+", ""):gsub("%s+$","\n"):gsub("\r\n","\n"):gsub("[ \t]*\n[ \t]*", "\n"))
+	fs.writefile(hosts, clean_text(value))
 end
 o.remove = function(self, section, value)
 	fs.writefile(hosts, "")

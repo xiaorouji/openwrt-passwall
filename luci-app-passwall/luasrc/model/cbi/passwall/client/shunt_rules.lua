@@ -6,6 +6,18 @@ m = Map(appname, "Sing-Box/Xray " .. translate("Shunt Rule"))
 m.redirect = api.url()
 api.set_apply_on_parse(m)
 
+function clean_text(text)
+	local nbsp = string.char(0xC2, 0xA0) -- 不间断空格（U+00A0）
+	local fullwidth_space = string.char(0xE3, 0x80, 0x80) -- 全角空格（U+3000）
+	return text
+		:gsub(nbsp, " ")
+		:gsub(fullwidth_space, " ")
+		:gsub("^%s+", "")
+		:gsub("%s+$", "\n")
+		:gsub("\r\n", "\n")
+		:gsub("[ \t]*\n[ \t]*", "\n")
+end
+
 s = m:section(NamedSection, arg[1], "shunt_rules", "")
 s.addremove = false
 s.dynamic = false
@@ -107,7 +119,7 @@ domain_list.rows = 10
 domain_list.wrap = "off"
 domain_list.validate = function(self, value)
 	local hosts= {}
-	value = value:gsub("^%s+", ""):gsub("%s+$","\n"):gsub("\r\n","\n"):gsub("[ \t]*\n[ \t]*", "\n")
+	value = clean_text(value)
 	string.gsub(value, "[^\r\n]+", function(w) table.insert(hosts, w) end)
 	for index, host in ipairs(hosts) do
 		local flag = 1
@@ -146,7 +158,7 @@ ip_list.rows = 10
 ip_list.wrap = "off"
 ip_list.validate = function(self, value)
 	local ipmasks= {}
-	value = value:gsub("^%s+", ""):gsub("%s+$","\n"):gsub("\r\n","\n"):gsub("[ \t]*\n[ \t]*", "\n")
+	value = clean_text(value)
 	string.gsub(value, "[^\r\n]+", function(w) table.insert(ipmasks, w) end)
 	for index, ipmask in ipairs(ipmasks) do
 		if ipmask:find("geoip:") and ipmask:find("geoip:") == 1 and not ipmask:find("%s") then
