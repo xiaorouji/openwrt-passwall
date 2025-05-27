@@ -346,7 +346,7 @@ o:depends({ [_n("protocol")] = "trojan" })
 
 -- [[ HTTP部分 ]]--
 
-o = s:option(Value, _n("http_host"), translate("HTTP Host"))
+o = s:option(DynamicList, _n("http_host"), translate("HTTP Host"))
 o:depends({ [_n("transport")] = "http" })
 
 o = s:option(Value, _n("http_path"), translate("HTTP Path"))

@@ -194,10 +194,21 @@ function gen_outbound(flag, node, tag, proxy_table)
 
 		local v2ray_transport = nil
 
+		if node.transport == "tcp" and node.tcp_guise == "http" and (node.tcp_guise_http_host or "") ~= "" then  --模拟xray raw(tcp)传输
+			v2ray_transport = {
+				type = "http",
+				host = node.tcp_guise_http_host,
+				path = (node.tcp_guise_http_path and node.tcp_guise_http_path[1]) or "/",
+				idle_timeout = (node.http_h2_health_check == "1") and node.http_h2_read_idle_timeout or nil,
+				ping_timeout = (node.http_h2_health_check == "1") and node.http_h2_health_check_timeout or nil,
+			}
+			--不强制执行 TLS。如果未配置 TLS，将使用纯 HTTP 1.1。
+		end
+
 		if node.transport == "http" then
 			v2ray_transport = {
 				type = "http",
-				host = { node.http_host },
+				host = node.http_host or {},
 				path = node.http_path or "/",
 				idle_timeout = (node.http_h2_health_check == "1") and node.http_h2_read_idle_timeout or nil,
 				ping_timeout = (node.http_h2_health_check == "1") and node.http_h2_health_check_timeout or nil,
@@ -530,7 +541,7 @@ function gen_config_server(node)
 	if node.transport == "http" then
 		v2ray_transport = {
 			type = "http",
-			host = node.http_host,
+			host = node.http_host or {},
 			path = node.http_path or "/",
 		}
 	end
