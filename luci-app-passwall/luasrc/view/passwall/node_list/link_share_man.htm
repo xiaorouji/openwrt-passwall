@@ -107,11 +107,24 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 			get: function (opt) {
 				var id = this.base + "." + opt;
 				var obj = document.getElementsByName(id)[0] || document.getElementsByClassName(id)[0] || document.getElementById(id)
-				if (obj) {
-					return obj;
-				} else {
-					return null;
+				// 如果找不到，返回一个模拟 DOM 的空对象，带常用方法和属性（防报错）
+				if (!obj) {
+					return {
+						value: "",
+						checked: false,
+						focus: function () {},
+						blur: function () {},
+						addEventListener: function () {},
+						removeEventListener: function () {},
+						classList: {
+							add: function () {},
+							remove: function () {},
+							toggle: function () {},
+							contains: function () { return false; }
+						}
+					};
 				}
+				return obj;
 			},
 			getlist: function (opt) {
 				var id = this.base + "." + opt;
@@ -1152,10 +1165,10 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 				opt.set(dom_prefix + 'transport', ssm.net);
 			}
 			if (ssm.net === "raw" || ssm.net === "tcp") {
-				opt.set(dom_prefix + 'tcp_guise', (ssm.host && ssm.path) ? "http" : "none");
-				if (ssm.host && ssm.path) {
+				opt.set(dom_prefix + 'tcp_guise', (ssm.host && ssm.host != "") ? "http" : "none");
+				if (ssm.host && ssm.host != "") {
 					opt.set(dom_prefix + 'tcp_guise_http_host', ssm.host);
-					opt.set(dom_prefix + 'tcp_guise_http_path', ssm.path);
+					opt.set(dom_prefix + 'tcp_guise_http_path', ssm.path || "");
 				}
 			} else if (ssm.net === "ws") {
 				opt.set(dom_prefix + 'ws_host', ssm.host);
