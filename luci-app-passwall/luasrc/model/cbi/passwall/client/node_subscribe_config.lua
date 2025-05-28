@@ -75,6 +75,12 @@ o.rmempty = false
 o = s:option(TextValue, "url", translate("Subscribe URL"))
 o.rows = 5
 o.rmempty = false
+o.validate = function(self, value)
+	if not value or value == "" then
+		return nil, translate("URL cannot be empty")
+	end
+	return value:gsub("%s+", ""):gsub("%z", "")
+end
 
 o = s:option(Flag, "allowInsecure", translate("allowInsecure"), translate("Whether unsafe connections are allowed. When checked, Certificate validation will be skipped."))
 o.default = "0"
