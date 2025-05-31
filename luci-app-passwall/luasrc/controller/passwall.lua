@@ -127,10 +127,28 @@ function hide_menu()
 end
 
 function link_add_node()
-	local lfile = "/tmp/links.conf"
-	local link = luci.http.formvalue("link")
-	luci.sys.call('echo \'' .. link .. '\' > ' .. lfile)
-	luci.sys.call("lua /usr/share/passwall/subscribe.lua add log")
+	-- 分片接收以突破uhttpd的限制
+	local tmp_file = "/tmp/links.conf"
+	local chunk = luci.http.formvalue("chunk")
+	local chunk_index = tonumber(luci.http.formvalue("chunk_index"))
+	local total_chunks = tonumber(luci.http.formvalue("total_chunks"))
+
+	if chunk and chunk_index ~= nil and total_chunks ~= nil then
+		-- 按顺序拼接到文件
+		local mode = "a"
+		if chunk_index == 0 then
+			mode = "w"
+		end
+		local f = io.open(tmp_file, mode)
+		if f then
+			f:write(chunk)
+			f:close()
+		end
+		-- 如果是最后一片，才执行
+		if chunk_index + 1 == total_chunks then
+			luci.sys.call("lua /usr/share/passwall/subscribe.lua add log")
+		end
+	end
 end
 
 function socks_autoswitch_add_node()
