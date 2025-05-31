@@ -85,7 +85,7 @@ jobs:
 
           - sdk_ver: "24.10"
             luci_ver: "24.10"
-            sdk_url: https://downloads.openwrt.org/releases/24.10.0/targets/x86/64/openwrt-sdk-24.10.0-x86-64_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+            sdk_url: https://downloads.openwrt.org/releases/24.10.1/targets/x86/64/openwrt-sdk-24.10.1-x86-64_gcc-13.3.0_musl.Linux-x86_64.tar.zst
     steps:
       - name: Install packages
         run: |
@@ -177,75 +177,79 @@ jobs:
       matrix:
         include:
           - platform: x86_64
-            url_sdk: https://downloads.openwrt.org/releases/24.10.0/targets/x86/64/openwrt-sdk-24.10.0-x86-64_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/x86/64/openwrt-sdk-24.10.1-x86-64_gcc-13.3.0_musl.Linux-x86_64.tar.zst
             sdk_ver: "24.10"
 
           - platform: aarch64_generic
-            url_sdk: https://downloads.openwrt.org/releases/24.10.0/targets/rockchip/armv8/openwrt-sdk-24.10.0-rockchip-armv8_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/rockchip/armv8/openwrt-sdk-24.10.1-rockchip-armv8_gcc-13.3.0_musl.Linux-x86_64.tar.zst
             sdk_ver: "24.10"
 
           - platform: aarch64_cortex-a53
-            url_sdk: https://downloads.openwrt.org/releases/24.10.0/targets/mvebu/cortexa53/openwrt-sdk-24.10.0-mvebu-cortexa53_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/mvebu/cortexa53/openwrt-sdk-24.10.1-mvebu-cortexa53_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+            sdk_ver: "24.10"
+
+          - platform: aarch64_cortex-a53_neon-vfpv4
+            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/ipq40xx/generic/openwrt-sdk-24.10.1-ipq40xx-generic_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
             sdk_ver: "24.10"
 
           - platform: aarch64_cortex-a72
-            url_sdk: https://downloads.openwrt.org/releases/24.10.0/targets/mvebu/cortexa72/openwrt-sdk-24.10.0-mvebu-cortexa72_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/mvebu/cortexa72/openwrt-sdk-24.10.1-mvebu-cortexa72_gcc-13.3.0_musl.Linux-x86_64.tar.zst
             sdk_ver: "24.10"
 
           - platform: arm_cortex-a5_vfpv4
-            url_sdk: https://downloads.openwrt.org/releases/24.10.0/targets/at91/sama5/openwrt-sdk-24.10.0-at91-sama5_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
+            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/at91/sama5/openwrt-sdk-24.10.1-at91-sama5_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
             sdk_ver: "24.10"
 
           - platform: arm_cortex-a7
-            url_sdk: https://downloads.openwrt.org/releases/24.10.0/targets/mediatek/mt7629/openwrt-sdk-24.10.0-mediatek-mt7629_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
+            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/mediatek/mt7629/openwrt-sdk-24.10.1-mediatek-mt7629_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
             sdk_ver: "24.10"
 
           - platform: arm_cortex-a7_neon-vfpv4
-            url_sdk: https://downloads.openwrt.org/releases/24.10.0/targets/sunxi/cortexa7/openwrt-sdk-24.10.0-sunxi-cortexa7_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
+            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/sunxi/cortexa7/openwrt-sdk-24.10.1-sunxi-cortexa7_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
             sdk_ver: "24.10"
 
           - platform: arm_cortex-a8_vfpv3
-            url_sdk: https://downloads.openwrt.org/releases/24.10.0/targets/sunxi/cortexa8/openwrt-sdk-24.10.0-sunxi-cortexa8_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
+            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/sunxi/cortexa8/openwrt-sdk-24.10.1-sunxi-cortexa8_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
             sdk_ver: "24.10"
 
           - platform: arm_cortex-a9
-            url_sdk: https://downloads.openwrt.org/releases/24.10.0/targets/bcm53xx/generic/openwrt-sdk-24.10.0-bcm53xx-generic_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
+            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/bcm53xx/generic/openwrt-sdk-24.10.1-bcm53xx-generic_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
             sdk_ver: "24.10"
 
           - platform: arm_cortex-a9_neon
-            url_sdk: https://downloads.openwrt.org/releases/24.10.0/targets/zynq/generic/openwrt-sdk-24.10.0-zynq-generic_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
+            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/zynq/generic/openwrt-sdk-24.10.1-zynq-generic_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
             sdk_ver: "24.10"
 
           - platform: arm_cortex-a9_vfpv3-d16
-            url_sdk: https://downloads.openwrt.org/releases/24.10.0/targets/mvebu/cortexa9/openwrt-sdk-24.10.0-mvebu-cortexa9_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
+            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/mvebu/cortexa9/openwrt-sdk-24.10.1-mvebu-cortexa9_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
             sdk_ver: "24.10"
 
           - platform: arm_cortex-a15_neon-vfpv4
-            url_sdk: https://downloads.openwrt.org/releases/24.10.0/targets/ipq806x/generic/openwrt-sdk-24.10.0-ipq806x-generic_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
+            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/ipq806x/generic/openwrt-sdk-24.10.1-ipq806x-generic_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
             sdk_ver: "24.10"
 
           - platform: mips_24kc
-            url_sdk: https://downloads.openwrt.org/releases/24.10.0/targets/ath79/generic/openwrt-sdk-24.10.0-ath79-generic_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/ath79/generic/openwrt-sdk-24.10.1-ath79-generic_gcc-13.3.0_musl.Linux-x86_64.tar.zst
             sdk_ver: "24.10"
 
           - platform: mips_4kec
-            url_sdk: https://downloads.openwrt.org/releases/24.10.0/targets/realtek/rtl838x/openwrt-sdk-24.10.0-realtek-rtl838x_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/realtek/rtl838x/openwrt-sdk-24.10.1-realtek-rtl838x_gcc-13.3.0_musl.Linux-x86_64.tar.zst
             sdk_ver: "24.10"
 
           - platform: mips_mips32
-            url_sdk: https://downloads.openwrt.org/releases/24.10.0/targets/bcm53xx/generic/openwrt-sdk-24.10.0-bcm53xx-generic_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
+            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/bcm53xx/generic/openwrt-sdk-24.10.1-bcm53xx-generic_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
             sdk_ver: "24.10"
 
           - platform: mipsel_24kc
-            url_sdk: https://downloads.openwrt.org/releases/24.10.0/targets/ramips/rt288x/openwrt-sdk-24.10.0-ramips-rt288x_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/ramips/rt288x/openwrt-sdk-24.10.1-ramips-rt288x_gcc-13.3.0_musl.Linux-x86_64.tar.zst
             sdk_ver: "24.10"
 
           - platform: mipsel_74kc
-            url_sdk: https://downloads.openwrt.org/releases/24.10.0/targets/ramips/rt3883/openwrt-sdk-24.10.0-ramips-rt3883_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/ramips/rt3883/openwrt-sdk-24.10.1-ramips-rt3883_gcc-13.3.0_musl.Linux-x86_64.tar.zst
             sdk_ver: "24.10"
 
           - platform: mipsel_mips32
-            url_sdk: https://downloads.openwrt.org/releases/24.10.0/targets/bcm47xx/generic/openwrt-sdk-24.10.0-bcm47xx-generic_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/bcm47xx/generic/openwrt-sdk-24.10.1-bcm47xx-generic_gcc-13.3.0_musl.Linux-x86_64.tar.zst
             sdk_ver: "24.10"
 
     steps:
