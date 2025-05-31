@@ -27,7 +27,7 @@ local function convert_geofile()
 		api.log("！！！注意：缺少 Geoview 组件，Sing-Box 分流无法启用！请在[组件更新]中更新。")
 		return
 	else
-		if api.compare_versions(api.get_app_version("geoview"), "<", "0.1.6") then
+		if api.compare_versions(api.get_app_version("geoview"), "<", "0.1.10") then
 			api.log("！！！注意：Geoview 组件版本低，Sing-Box 分流无法启用！请在[组件更新]中更新。")
 			return
 		end
