@@ -188,10 +188,6 @@ jobs:
             url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/mvebu/cortexa53/openwrt-sdk-24.10.1-mvebu-cortexa53_gcc-13.3.0_musl.Linux-x86_64.tar.zst
             sdk_ver: "24.10"
 
-          - platform: aarch64_cortex-a53_neon-vfpv4
-            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/ipq40xx/generic/openwrt-sdk-24.10.1-ipq40xx-generic_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
-            sdk_ver: "24.10"
-
           - platform: aarch64_cortex-a72
             url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/mvebu/cortexa72/openwrt-sdk-24.10.1-mvebu-cortexa72_gcc-13.3.0_musl.Linux-x86_64.tar.zst
             sdk_ver: "24.10"
