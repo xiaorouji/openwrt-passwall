@@ -1170,7 +1170,7 @@ start_redir() {
 		local log_file="${proto}.log"
 		eval current_port=\$${proto}_REDIR_PORT
 		local port=$(echo $(get_new_port $current_port $proto))
-		eval ${proto}_REDIR=$port
+		eval ${proto}_REDIR_PORT=$port
 		run_redir node=$node proto=${proto} bind=0.0.0.0 local_port=$port config_file=$config_file log_file=$log_file
 		set_cache_var "ACL_GLOBAL_${proto}_node" "${node}"
 		set_cache_var "ACL_GLOBAL_${proto}_redir_port" "${port}"
