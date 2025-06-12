@@ -1,0 +1,38 @@
+<%
+local api = require "luci.passwall.api"
+-%>
+<script type="text/javascript">
+	//<![CDATA[
+	function confirmDeleteNode(section, remark) {
+		if (!confirm("<%:Delete the subscribed node%>: " + remark + " ?"))
+			return false;
+
+		fetch('<%= api.url("subscribe_del_node") %>?section=' + encodeURIComponent(section), {
+			method: "GET"
+		}).then(res => {
+			if (res.ok) {
+				location.reload();
+			} else {
+				alert("<%:Failed to delete.%>");
+			}
+		});
+		return false;
+	}
+
+	function confirmDeleteAll() {
+		if (!confirm("<%:Are you sure you want to delete all subscribed nodes?%>"))
+			return false;
+
+		fetch('<%= api.url("subscribe_del_all") %>', {
+			method: "GET"
+		}).then(res => {
+			if (res.ok) {
+				location.reload();
+			} else {
+				alert("<%:Failed to delete.%>");
+			}
+		});
+		return false;
+	}
+	//]]>
+</script>

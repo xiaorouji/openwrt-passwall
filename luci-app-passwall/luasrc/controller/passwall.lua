@@ -81,6 +81,8 @@ function index()
 	entry({"admin", "services", appname, "clear_all_nodes"}, call("clear_all_nodes")).leaf = true
 	entry({"admin", "services", appname, "delete_select_nodes"}, call("delete_select_nodes")).leaf = true
 	entry({"admin", "services", appname, "update_rules"}, call("update_rules")).leaf = true
+	entry({"admin", "services", appname, "subscribe_del_node"}, call("subscribe_del_node")).leaf = true
+	entry({"admin", "services", appname, "subscribe_del_all"}, call("subscribe_del_all")).leaf = true
 
 	--[[rule_list]]
 	entry({"admin", "services", appname, "read_rulelist"}, call("read_rulelist")).leaf = true
@@ -646,4 +648,18 @@ function geo_view()
 	else
 		http.write(i18n.translate("No results were found!"))
 	end
+end
+
+function subscribe_del_node()
+	local section = luci.http.formvalue("section")
+	local remark = uci:get(appname, section, "remark") or ""
+	if remark and remark ~= "" then
+		luci.sys.call("lua /usr/share/" .. appname .. "/subscribe.lua truncate " .. luci.util.shellquote(remark) .. " > /dev/null 2>&1")
+	end
+	luci.http.status(200, "OK")
+end
+
+function subscribe_del_all()
+	luci.sys.call("lua /usr/share/" .. appname .. "/subscribe.lua truncate > /dev/null 2>&1")
+	luci.http.status(200, "OK")
 end

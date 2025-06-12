@@ -134,11 +134,12 @@ o:value("ipv4_only", translate("IPv4 Only"))
 o:value("ipv6_only", translate("IPv6 Only"))
 
 ---- Subscribe Delete All
-o = s:option(Button, "_stop", translate("Delete All Subscribe Node"))
-o.inputstyle = "remove"
-function o.write(e, e)
-	luci.sys.call("lua /usr/share/" .. appname .. "/subscribe.lua truncate > /dev/null 2>&1")
-	m.no_commit = true
+o = s:option(DummyValue, "_stop", translate("Delete All Subscribe Node"))
+o.rawhtml = true
+function o.cfgvalue(self, section)
+	return string.format(
+		[[<button type="button" class="cbi-button cbi-button-remove" onclick="return confirmDeleteAll()">%s</button>]],
+		translate("Delete All Subscribe Node"))
 end
 
 o = s:option(Button, "_update", translate("Manual subscription All"))
@@ -202,12 +203,13 @@ o = s:option(Value, "url", translate("Subscribe URL"))
 o.width = "auto"
 o.rmempty = false
 
-o = s:option(Button, "_remove", translate("Delete the subscribed node"))
-o.inputstyle = "remove"
-function o.write(t, n)
-	local remark = m:get(n, "remark") or ""
-	luci.sys.call("lua /usr/share/" .. appname .. "/subscribe.lua truncate " .. remark .. " > /dev/null 2>&1")
-	m.no_commit = true
+o = s:option(DummyValue, "_remove", translate("Delete the subscribed node"))
+o.rawhtml = true
+function o.cfgvalue(self, section)
+	local remark = m:get(section, "remark") or ""
+	return string.format(
+		[[<button type="button" class="cbi-button cbi-button-remove" onclick="return confirmDeleteNode('%s', '%s')">%s</button>]],
+		section, remark, translate("Delete the subscribed node"))
 end
 
 o = s:option(Button, "_update", translate("Manual subscription"))
@@ -217,5 +219,7 @@ function o.write(t, n)
 	m.no_commit = true
 	luci.http.redirect(api.url("log"))
 end
+
+s:append(Template(appname .. "/node_subscribe/js"))
 
 return m
