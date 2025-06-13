@@ -208,8 +208,8 @@ o.rawhtml = true
 function o.cfgvalue(self, section)
 	local remark = m:get(section, "remark") or ""
 	return string.format(
-		[[<button type="button" class="cbi-button cbi-button-remove" onclick="return confirmDeleteNode('%s', '%s')">%s</button>]],
-		section, remark, translate("Delete the subscribed node"))
+		[[<button type="button" class="cbi-button cbi-button-remove" onclick="return confirmDeleteNode('%s')">%s</button>]],
+		remark, translate("Delete the subscribed node"))
 end
 
 o = s:option(Button, "_update", translate("Manual subscription"))

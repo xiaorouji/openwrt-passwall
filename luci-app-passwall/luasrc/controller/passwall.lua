@@ -651,8 +651,7 @@ function geo_view()
 end
 
 function subscribe_del_node()
-	local section = luci.http.formvalue("section")
-	local remark = uci:get(appname, section, "remark") or ""
+	local remark = luci.http.formvalue("remark")
 	if remark and remark ~= "" then
 		luci.sys.call("lua /usr/share/" .. appname .. "/subscribe.lua truncate " .. luci.util.shellquote(remark) .. " > /dev/null 2>&1")
 	end

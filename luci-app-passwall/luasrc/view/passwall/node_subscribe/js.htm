@@ -3,11 +3,11 @@ local api = require "luci.passwall.api"
 -%>
 <script type="text/javascript">
 	//<![CDATA[
-	function confirmDeleteNode(section, remark) {
+	function confirmDeleteNode(remark) {
 		if (!confirm("<%:Delete the subscribed node%>: " + remark + " ?"))
 			return false;
 
-		fetch('<%= api.url("subscribe_del_node") %>?section=' + encodeURIComponent(section), {
+		fetch('<%= api.url("subscribe_del_node") %>?remark=' + encodeURIComponent(remark), {
 			method: "GET"
 		}).then(res => {
 			if (res.ok) {
