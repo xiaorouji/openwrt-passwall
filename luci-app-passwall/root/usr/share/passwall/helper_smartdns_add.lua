@@ -23,6 +23,7 @@ local DEFAULT_PROXY_MODE = var["-DEFAULT_PROXY_MODE"]
 local NO_PROXY_IPV6 = var["-NO_PROXY_IPV6"]
 local NO_LOGIC_LOG = var["-NO_LOGIC_LOG"]
 local NFTFLAG = var["-NFTFLAG"]
+local SUBNET = var["-SUBNET"]
 
 local uci = api.uci
 local sys = api.sys
@@ -225,6 +226,9 @@ if DNS_MODE == "socks" then
 		end
 
 		server_param = server_param .. " -group " .. REMOTE_GROUP .. " -exclude-default-group"
+		if SUBNET and SUBNET ~= "" and SUBNET ~= "0" then
+			server_param = server_param .. " -subnet " .. SUBNET
+		end
 		table.insert(config_lines, server_param)
 	end
 	REMOTE_FAKEDNS = 0
