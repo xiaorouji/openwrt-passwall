@@ -459,21 +459,6 @@ if api.is_finded("smartdns") then
 		end
 		return DynamicList.write(self, section, t)
 	end
-	function o.validate(self, value) --禁止私有IP
-		if type(value) == "table" then
-			for _, v in ipairs(value) do
-				if v:match("127%.0%.0%.") or
-				   v:match("192%.168%.") or
-				   v:match("10%.") or
-				   v:match("172%.1[6-9]%.") or
-				   v:match("172%.2[0-9]%.") or
-				   v:match("172%.3[0-1]%.") then
-					return nil, translatef("Private IPs are not allowed: %s", v)
-				end
-			end
-		end
-		return value
-	end
 end
 
 o = s:taboption("DNS", ListValue, "xray_dns_mode", translate("Request protocol"))
