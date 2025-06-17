@@ -168,39 +168,65 @@ config_lines = {
 	DNS_MODE == "socks" and string.format("proxy-server socks5://%s -name %s", REMOTE_PROXY_SERVER, proxy_server_name) or nil
 }
 if DNS_MODE == "socks" then
-	string.gsub(REMOTE_DNS, '[^' .. "|" .. ']+', function(w)
-		local server_dns = w
-		local server_param = string.format("server %s -group %s -proxy %s", "%s", REMOTE_GROUP, proxy_server_name)
-		server_param = server_param .. " -exclude-default-group"
+	for w in string.gmatch(REMOTE_DNS, '[^|]+') do
+		local server_dns = api.trim(w)
+		local server_param
 
-		local isHTTPS = w:find("https://")
-		if isHTTPS and isHTTPS == 1 then
-			local http_host = nil
-			local url = w
-			local port = 443
-			local s = api.split(w, ",")
-			if s and #s > 1 then
-				url = s[1]
-				local dns_ip = s[2]
-				local host_port = api.get_domain_from_url(s[1])
-				if host_port and #host_port > 0 then
-					http_host = host_port
-					local s2 = api.split(host_port, ":")
-					if s2 and #s2 > 1 then
-						http_host = s2[1]
-						port = s2[2]
-					end 
-					url = url:gsub(http_host, dns_ip)
+		local dnsType = string.match(server_dns, "^(.-)://")
+		dnsType = dnsType and string.lower(dnsType) or nil
+		local dnsServer = string.match(server_dns, "://(.+)") or server_dns
+
+		if dnsType and dnsType ~= "" and dnsType ~= "udp" then
+			if dnsType == "tcp" then
+				server_param = "server-tcp " .. dnsServer
+			elseif dnsType == "tls" then
+				server_param = "server-tls " .. dnsServer
+			elseif dnsType == "quic" then
+				server_param = "server-quic " .. dnsServer
+			elseif dnsType == "https" or dnsType == "h3" then
+				local http_host = nil
+				local url = w
+				local port = 443
+				local s = api.split(w, ",")
+				if s and #s > 1 then
+					url = s[1]
+					local dns_ip = s[2]
+					local host_port = api.get_domain_from_url(s[1])
+					if host_port and #host_port > 0 then
+						http_host = host_port
+						local s2 = api.split(host_port, ":")
+						if s2 and #s2 > 1 then
+							http_host = s2[1]
+							port = s2[2]
+						end 
+						url = url:gsub(http_host, dns_ip)
+					end
 				end
+				server_dns = url
+				if http_host then
+					server_dns = server_dns .. " -http-host " .. http_host
+				end
+				server_param = (dnsType == "https" and "server-https " or "server-h3 ") .. server_dns
 			end
-			server_dns = url
-			if http_host then
-				server_dns = server_dns .. " -http-host " .. http_host
-			end
+		else
+			server_param = "server " .. dnsServer
+
 		end
-		server_param = string.format(server_param, server_dns)
+
+		-- 判断是否为本地地址
+		local is_local = w:match("127%.0%.0%.")
+			or w:match("192%.168%.")
+			or w:match("10%.")
+			or w:match("172%.1[6-9]%.")
+			or w:match("172%.2[0-9]%.")
+			or w:match("172%.3[0-1]%.")
+		if not is_local then
+			server_param = server_param .. " -proxy " .. proxy_server_name
+		end
+
+		server_param = server_param .. " -group " .. REMOTE_GROUP .. " -exclude-default-group"
 		table.insert(config_lines, server_param)
-	end)
+	end
 	REMOTE_FAKEDNS = 0
 else
 	local server_param = string.format("server %s -group %s -exclude-default-group", TUN_DNS:gsub("#", ":"), REMOTE_GROUP)
