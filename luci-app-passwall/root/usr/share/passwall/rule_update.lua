@@ -203,7 +203,7 @@ local function fetch_rule(rule_name,rule_type,url,exclude_domain)
 			elseif rule_type == "ip4" then
 				local out = io.open(unsort_file_tmp, "a")
 				for line in io.lines(download_file_tmp..k) do
-					if not string.find(line, comment_pattern) and string.match(line, ip4_ipset_pattern) then
+					if string.match(line, ip4_ipset_pattern) and not string.match(line, "^0%.0%.0%.0(/%d+)?$") then
 						out:write(string.format("%s\n", line))
 					end
 				end
@@ -212,7 +212,7 @@ local function fetch_rule(rule_name,rule_type,url,exclude_domain)
 			elseif rule_type == "ip6" then
 				local out = io.open(unsort_file_tmp, "a")
 				for line in io.lines(download_file_tmp..k) do
-					if not string.find(line, comment_pattern) and string.match(line, ip6_ipset_pattern) then
+					if string.match(line, ip6_ipset_pattern) and not string.match(line, "^::(/%d+)?$") then
 						out:write(string.format("%s\n", line))
 					end
 				end
