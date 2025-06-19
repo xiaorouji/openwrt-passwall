@@ -44,17 +44,18 @@ o:value("https://fastly.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/google.ch
 o:value("https://fastly.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/china-list.txt", translate("Loyalsoldier/china-list"))
 o:value("https://fastly.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/apple-cn.txt", translate("Loyalsoldier/apple-cn"))
 o:value("https://fastly.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/google-cn.txt", translate("Loyalsoldier/google-cn"))
+o:value("https://fastly.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/ChinaMax/ChinaMax_Domain.txt", translate("ios_rule_script/ChinaMax_Domain"))
 
 if has_xray or has_singbox then
 	o = s:option(ListValue, "geoip_url", translate("GeoIP Update URL"))
-	o:value("https://api.github.com/repos/Loyalsoldier/v2ray-rules-dat/releases/latest", translate("Loyalsoldier/geoip"))
-	o:value("https://api.github.com/repos/MetaCubeX/meta-rules-dat/releases/latest", translate("MetaCubeX/geoip"))
-	o.default = "https://api.github.com/repos/Loyalsoldier/v2ray-rules-dat/releases/latest"
+	o:value("https://fastly.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geoip.dat", translate("Loyalsoldier/geoip"))
+	o:value("https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat", translate("MetaCubeX/geoip"))
+	o.default = "https://fastly.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geoip.dat"
 
 	o = s:option(ListValue, "geosite_url", translate("Geosite Update URL"))
-	o:value("https://api.github.com/repos/Loyalsoldier/v2ray-rules-dat/releases/latest", translate("Loyalsoldier/geosite"))
-	o:value("https://api.github.com/repos/MetaCubeX/meta-rules-dat/releases/latest", translate("MetaCubeX/geosite"))
-	o.default = "https://api.github.com/repos/Loyalsoldier/v2ray-rules-dat/releases/latest"
+	o:value("https://fastly.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat", translate("Loyalsoldier/geosite"))
+	o:value("https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat", translate("MetaCubeX/geosite"))
+	o.default = "https://fastly.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat"
 
 	o = s:option(Value, "v2ray_location_asset", translate("Location of Geo rule files"), translate("This variable specifies a directory where geoip.dat and geosite.dat files are."))
 	o.default = "/usr/share/v2ray/"
