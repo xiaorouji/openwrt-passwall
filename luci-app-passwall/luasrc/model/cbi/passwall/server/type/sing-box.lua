@@ -234,7 +234,8 @@ o:depends({ [_n("protocol")] = "vless" })
 o:depends({ [_n("protocol")] = "trojan" })
 o:depends({ [_n("protocol")] = "anytls" })
 
-if singbox_tags:find("with_reality_server") then
+-- https://github.com/SagerNet/sing-box/commit/d2a04c4e41e6cef0937331cb6d10211f431caaab
+if singbox_tags:find("with_utls") then
 	-- [[ REALITY部分 ]] --
 	o = s:option(Flag, _n("reality"), translate("REALITY"))
 	o.default = 0
@@ -300,37 +301,35 @@ o.validate = function(self, value, t)
 	return nil
 end
 
-if singbox_tags:find("with_ech") then
-	o = s:option(Flag, _n("ech"), translate("ECH"))
-	o.default = "0"
-	o:depends({ [_n("tls")] = true, [_n("flow")] = "", [_n("reality")] = false })
-	o:depends({ [_n("protocol")] = "naive" })
-	o:depends({ [_n("protocol")] = "hysteria" })
-	o:depends({ [_n("protocol")] = "tuic" })
-	o:depends({ [_n("protocol")] = "hysteria2" })
+o = s:option(Flag, _n("ech"), translate("ECH"))
+o.default = "0"
+o:depends({ [_n("tls")] = true, [_n("flow")] = "", [_n("reality")] = false })
+o:depends({ [_n("protocol")] = "naive" })
+o:depends({ [_n("protocol")] = "hysteria" })
+o:depends({ [_n("protocol")] = "tuic" })
+o:depends({ [_n("protocol")] = "hysteria2" })
 
-	o = s:option(TextValue, _n("ech_key"), translate("ECH Key"))
-	o.default = ""
-	o.rows = 5
-	o.wrap = "off"
-	o:depends({ [_n("ech")] = true })
-	o.validate = function(self, value)
-		value = value:gsub("^%s+", ""):gsub("%s+$","\n"):gsub("\r\n","\n"):gsub("[ \t]*\n[ \t]*", "\n")
-		value = value:gsub("^%s*\n", "")
-		if value:sub(-1) == "\n" then  
-			value = value:sub(1, -2)  
-		end
-		return value
+o = s:option(TextValue, _n("ech_key"), translate("ECH Key"))
+o.default = ""
+o.rows = 5
+o.wrap = "off"
+o:depends({ [_n("ech")] = true })
+o.validate = function(self, value)
+	value = value:gsub("^%s+", ""):gsub("%s+$","\n"):gsub("\r\n","\n"):gsub("[ \t]*\n[ \t]*", "\n")
+	value = value:gsub("^%s*\n", "")
+	if value:sub(-1) == "\n" then  
+		value = value:sub(1, -2)  
 	end
-
-	o = s:option(Flag, _n("pq_signature_schemes_enabled"), translate("PQ signature schemes"))
-	o.default = "0"
-	o:depends({ [_n("ech")] = true })
-
-	o = s:option(Flag, _n("dynamic_record_sizing_disabled"), translate("Disable adaptive sizing of TLS records"))
-	o.default = "0"
-	o:depends({ [_n("ech")] = true })
+	return value
 end
+
+o = s:option(Flag, _n("pq_signature_schemes_enabled"), translate("PQ signature schemes"))
+o.default = "0"
+o:depends({ [_n("ech")] = true })
+
+o = s:option(Flag, _n("dynamic_record_sizing_disabled"), translate("Disable adaptive sizing of TLS records"))
+o.default = "0"
+o:depends({ [_n("ech")] = true })
 
 o = s:option(ListValue, _n("transport"), translate("Transport"))
 o:value("tcp", "TCP")
