@@ -250,8 +250,10 @@ check_ver() {
 }
 
 first_type() {
-	local path_name=${1}
-	type -t -p "/bin/${path_name}" -p "${TMP_BIN_PATH}/${path_name}" -p "${path_name}" "$@" | head -n1
+	for p in "/bin/$1" "${TMP_BIN_PATH:-/tmp}/$1" "$1"; do
+		[ -x "$p" ] && echo "$p" && return
+	done
+	command -v "$1" 2>/dev/null || command -v "$2" 2>/dev/null
 }
 
 eval_set_val() {
@@ -421,7 +423,7 @@ run_singbox() {
 	[ -z "$type" ] && {
 		local type=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
 		if [ "$type" != "sing-box" ]; then
-			bin=$(first_type $(config_t_get global_app singbox_file) sing-box)
+			bin=$(first_type $(config_t_get global_app sing_box_file) sing-box)
 			[ -n "$bin" ] && type="sing-box"
 		fi
 	}
@@ -436,8 +438,6 @@ run_singbox() {
 	[ -z "$loglevel" ] && local loglevel=$(config_t_get global loglevel "warn")
 	[ "$loglevel" = "warning" ] && loglevel="warn"
 	_extra_param="${_extra_param} -loglevel $loglevel"
-
-	_extra_param="${_extra_param} -tags $($(first_type $(config_t_get global_app singbox_file) sing-box) version | grep 'Tags:' | awk '{print $2}')"
 
 	[ -n "$flag" ] && _extra_param="${_extra_param} -flag $flag"
 	[ -n "$node" ] && _extra_param="${_extra_param} -node $node"
@@ -493,7 +493,7 @@ run_singbox() {
 	[ "$remote_fakedns" = "1" ] && _extra_param="${_extra_param} -remote_dns_fake 1"
 	[ -n "$no_run" ] && _extra_param="${_extra_param} -no_run 1"
 	lua $UTIL_SINGBOX gen_config ${_extra_param} > $config_file
-	[ -n "$no_run" ] || ln_run "$(first_type $(config_t_get global_app singbox_file) sing-box)" "sing-box" $log_file run -c "$config_file"
+	[ -n "$no_run" ] || ln_run "$(first_type $(config_t_get global_app sing_box_file) sing-box)" "sing-box" $log_file run -c "$config_file"
 }
 
 run_xray() {
@@ -658,7 +658,7 @@ run_socks() {
 			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
 			local _extra_param="-local_http_address $bind -local_http_port $http_port"
 		}
-		local bin=$(first_type $(config_t_get global_app singbox_file) sing-box)
+		local bin=$(first_type $(config_t_get global_app sing_box_file) sing-box)
 		if [ -n "$bin" ]; then
 			type="sing-box"
 			lua $UTIL_SINGBOX gen_proto_config -local_socks_address $bind -local_socks_port $socks_port ${_extra_param} -server_proto socks -server_address ${_socks_address} -server_port ${_socks_port} -server_username ${_socks_username} -server_password ${_socks_password} > $config_file
@@ -736,7 +736,7 @@ run_socks() {
 
 	# http to socks
 	[ -z "$http_flag" ] && [ "$http_port" != "0" ] && [ -n "$http_config_file" ] && [ "$type" != "sing-box" ] && [ "$type" != "xray" ] && [ "$type" != "socks" ] && {
-		local bin=$(first_type $(config_t_get global_app singbox_file) sing-box)
+		local bin=$(first_type $(config_t_get global_app sing_box_file) sing-box)
 		if [ -n "$bin" ]; then
 			type="sing-box"
 			lua $UTIL_SINGBOX gen_proto_config -local_http_address $bind -local_http_port $http_port -server_proto socks -server_address "127.0.0.1" -server_port $socks_port -server_username $_username -server_password $_password > $http_config_file
@@ -1386,7 +1386,7 @@ stop_crontab() {
 start_dns() {
 	echolog "DNS域名解析："
 
-	local chinadns_tls=$(chinadns-ng -V | grep -i wolfssl)
+	local chinadns_tls=$($(first_type chinadns-ng) -V | grep -i wolfssl)
 	local china_ng_local_dns=$(IFS=','; set -- $LOCAL_DNS; [ "${1%%[#:]*}" = "127.0.0.1" ] && echo "$1" || ([ -n "$2" ] && echo "$1,$2" || echo "$1"))
 	local sing_box_local_dns=
 	local direct_dns_mode=$(config_t_get global direct_dns_mode "auto")
@@ -1628,7 +1628,7 @@ start_dns() {
 
 	[ "$DNS_SHUNT" = "chinadns-ng" ] && [ -n "$(first_type chinadns-ng)" ] && {
 		chinadns_ng_min=2024.04.13
-		chinadns_ng_now=$(chinadns-ng -V | grep -i "ChinaDNS-NG " | awk '{print $2}')
+		chinadns_ng_now=$($(first_type chinadns-ng) -V | grep -i "ChinaDNS-NG " | awk '{print $2}')
 		if [ $(check_ver "$chinadns_ng_now" "$chinadns_ng_min") = 1 ]; then
 			echolog "  * 注意：当前 ChinaDNS-NG 版本为[ $chinadns_ng_now ]，请更新到[ $chinadns_ng_min ]或以上版本，否则 DNS 有可能无法正常工作！"
 		fi
@@ -1878,7 +1878,7 @@ acl_app() {
 
 								[ "$dns_shunt" = "chinadns-ng" ] && [ -n "$(first_type chinadns-ng)" ] && {
 									chinadns_ng_min=2024.04.13
-									chinadns_ng_now=$(chinadns-ng -V | grep -i "ChinaDNS-NG " | awk '{print $2}')
+									chinadns_ng_now=$($(first_type chinadns-ng) -V | grep -i "ChinaDNS-NG " | awk '{print $2}')
 									if [ $(check_ver "$chinadns_ng_now" "$chinadns_ng_min") = 1 ]; then
 										echolog "  * 注意：当前 ChinaDNS-NG 版本为[ $chinadns_ng_now ]，请更新到[ $chinadns_ng_min ]或以上版本，否则 DNS 有可能无法正常工作！"
 									fi
@@ -1897,7 +1897,7 @@ acl_app() {
 											_chinadns_local_dns="tcp://$(config_t_get global direct_dns_tcp 223.5.5.5 | sed 's/:/#/g')"
 										;;
 										dot)
-											if [ "$(chinadns-ng -V | grep -i wolfssl)" != "nil" ]; then
+											if [ "$($(first_type chinadns-ng) -V | grep -i wolfssl)" != "nil" ]; then
 												_chinadns_local_dns=$(config_t_get global direct_dns_dot "tls://dot.pub@1.12.12.12")
 											fi
 										;;

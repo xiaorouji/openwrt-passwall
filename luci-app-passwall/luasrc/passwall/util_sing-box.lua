@@ -911,7 +911,6 @@ function gen_config(var)
 	local dns_cache = var["-dns_cache"]
 	local dns_socks_address = var["-dns_socks_address"]
 	local dns_socks_port = var["-dns_socks_port"]
-	local tags = var["-tags"]
 	local no_run = var["-no_run"]
 
 	local dns_domain_rules = {}
