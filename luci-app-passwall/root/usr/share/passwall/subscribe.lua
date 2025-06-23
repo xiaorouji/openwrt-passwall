@@ -609,10 +609,9 @@ local function processData(szType, content, add_mode, add_from)
 		--ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTp0ZXN0@xxxxxx.com:443?type=ws&path=%2Ftestpath&host=xxxxxx.com&security=tls&fp=&alpn=h3%2Ch2%2Chttp%2F1.1&sni=xxxxxx.com#test-1%40ss
 		--ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTp4eHh4eHhAeHh4eC54eHh4eC5jb206NTYwMDE#Hong%20Kong-01
 
-		local idx_sp = 0
+		local idx_sp = content:find("#") or 0
 		local alias = ""
-		if content:find("#") then
-			idx_sp = content:find("#")
+		if idx_sp > 0 then
 			alias = content:sub(idx_sp + 1, -1)
 		end
 		result.remarks = UrlDecode(alias)
@@ -623,7 +622,7 @@ local function processData(szType, content, add_mode, add_from)
 			local query = split(info, "%?")
 			for _, v in pairs(split(query[2], '&')) do
 				local t = split(v, '=')
-				params[t[1]] = UrlDecode(t[2])
+				if #t >= 2 then params[t[1]] = UrlDecode(t[2]) end
 			end
 			if params.plugin then
 				local plugin_info = params.plugin
@@ -831,6 +830,48 @@ local function processData(szType, content, add_mode, add_from)
 					end
 				else
 					result.error_msg = "请更换Xray或Sing-Box来支持SS更多的传输方式."
+				end
+			end
+
+			if params["shadow-tls"] then
+				if result.type ~= "sing-box" and result.type ~= "SS-Rust" then
+					result.error_msg =  ss_type_default .. " 不支持 shadow-tls 插件."
+				else
+					-- 解析SS Shadow-TLS 插件参数
+					local function parseShadowTLSParams(b64str, out)
+						local ok, data = pcall(jsonParse, base64Decode(b64str))
+						if not ok or type(data) ~= "table" then return "" end
+						if type(out) == "table" then
+							for k, v in pairs(data) do out[k] = v end
+						end
+						local t = {}
+						if data.version then t[#t+1] = "v" .. data.version .. "=1" end
+						if data.password then t[#t+1] = "passwd=" .. data.password end
+						for k, v in pairs(data) do
+							if k ~= "version" and k ~= "password" then
+								t[#t+1] = k .. "=" .. tostring(v)
+							end
+						end
+						return table.concat(t, ";")
+					end
+
+					if result.type == "SS-Rust" then
+						result.plugin = "shadow-tls"
+						result.plugin_opts = parseShadowTLSParams(params["shadow-tls"])
+					elseif result.type == "sing-box" then
+						local shadowtlsOpt = {}
+						parseShadowTLSParams(params["shadow-tls"], shadowtlsOpt)
+						if next(shadowtlsOpt) then
+							result.shadowtls = "1"
+							result.shadowtls_version = shadowtlsOpt.version or "1"
+							result.shadowtls_password = shadowtlsOpt.password
+							result.shadowtls_serverName = shadowtlsOpt.host
+							if shadowtlsOpt.fingerprint then
+								result.shadowtls_utls = "1"
+								result.shadowtls_fingerprint = shadowtlsOpt.fingerprint or "chrome"
+							end
+						end
+					end
 				end
 			end
 		end
@@ -1272,14 +1313,14 @@ local function processData(szType, content, add_mode, add_from)
 		if hysteria2_type_default == "sing-box" and has_singbox then
 			result.type = 'sing-box'
 			result.protocol = "hysteria2"
-			if params["obfs-password"] then
+			if params["obfs-password"] or params["obfs_password"] then
 				result.hysteria2_obfs_type = "salamander"
-				result.hysteria2_obfs_password = params["obfs-password"]
+				result.hysteria2_obfs_password = params["obfs-password"] or params["obfs_password"]
 			end
 		elseif has_hysteria2 then
 			result.type = "Hysteria2"
-			if params["obfs-password"] then
-				result.hysteria2_obfs = params["obfs-password"]
+			if params["obfs-password"] or params["obfs_password"] then
+				result.hysteria2_obfs = params["obfs-password"] or params["obfs_password"]
 			end
 		end
 	elseif szType == 'tuic' then
