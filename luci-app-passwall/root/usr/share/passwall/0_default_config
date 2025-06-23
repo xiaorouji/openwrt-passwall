@@ -79,7 +79,6 @@ config global_app
 	option sing_box_file '/usr/bin/sing-box'
 	option xray_file '/usr/bin/xray'
 	option hysteria_file '/usr/bin/hysteria'
-	option chinadns_ng_file '/usr/bin/chinadns-ng'
 
 config global_subscribe
 	option filter_keyword_mode '1'

@@ -599,7 +599,7 @@ run_chinadns_ng() {
 	_extra_param="${_extra_param} -LOG_FILE ${_LOG_FILE}"
 
 	lua $APP_PATH/helper_chinadns_add.lua ${_extra_param} > ${_CONF_FILE}
-	ln_run "$(first_type $(config_t_get global_app chinadns_ng_file) chinadns-ng)" chinadns-ng "${_LOG_FILE}" -C ${_CONF_FILE}
+	ln_run "$(first_type chinadns-ng)" chinadns-ng "${_LOG_FILE}" -C ${_CONF_FILE}
 }
 
 run_socks() {
@@ -1386,7 +1386,7 @@ stop_crontab() {
 start_dns() {
 	echolog "DNS域名解析："
 
-	local chinadns_tls=$(chinadns-ng -V | grep -i wolfssl)
+	local chinadns_tls=$($(first_type chinadns-ng) -V | grep -i wolfssl)
 	local china_ng_local_dns=$(IFS=','; set -- $LOCAL_DNS; [ "${1%%[#:]*}" = "127.0.0.1" ] && echo "$1" || ([ -n "$2" ] && echo "$1,$2" || echo "$1"))
 	local sing_box_local_dns=
 	local direct_dns_mode=$(config_t_get global direct_dns_mode "auto")
@@ -1416,7 +1416,7 @@ start_dns() {
 			[ "$DNS_SHUNT" != "chinadns-ng" ] || [ "$ACL_RULE_DNSMASQ" = "1" ] && {
 				LOCAL_DNS="127.0.0.1#${NEXT_DNS_LISTEN_PORT}"
 				local china_ng_c_dns="tcp://$(get_first_dns DIRECT_DNS 53 | sed 's/:/#/g')"
-				ln_run "$(first_type $(config_t_get global_app chinadns_ng_file) chinadns-ng)" chinadns-ng "/dev/null" -b :: -l ${NEXT_DNS_LISTEN_PORT} -c ${china_ng_c_dns} -d chn
+				ln_run "$(first_type chinadns-ng)" chinadns-ng "/dev/null" -b :: -l ${NEXT_DNS_LISTEN_PORT} -c ${china_ng_c_dns} -d chn
 				echolog "  - ChinaDNS-NG(${LOCAL_DNS}) -> ${china_ng_c_dns}"
 				echolog "  * 请确保上游直连 DNS 支持 TCP 查询。"
 				NEXT_DNS_LISTEN_PORT=$(expr $NEXT_DNS_LISTEN_PORT + 1)
@@ -1431,7 +1431,7 @@ start_dns() {
 				#当全局（包括访问控制节点）开启chinadns-ng时，不启动新进程。
 				[ "$DNS_SHUNT" != "chinadns-ng" ] || [ "$ACL_RULE_DNSMASQ" = "1" ] && {
 					LOCAL_DNS="127.0.0.1#${NEXT_DNS_LISTEN_PORT}"
-					ln_run "$(first_type $(config_t_get global_app chinadns_ng_file) chinadns-ng)" chinadns-ng "/dev/null" -b :: -l ${NEXT_DNS_LISTEN_PORT} -c ${DIRECT_DNS} -d chn ${cert_verify}
+					ln_run "$(first_type chinadns-ng)" chinadns-ng "/dev/null" -b :: -l ${NEXT_DNS_LISTEN_PORT} -c ${DIRECT_DNS} -d chn ${cert_verify}
 					echolog "  - ChinaDNS-NG(${LOCAL_DNS}) -> ${DIRECT_DNS}"
 					echolog "  * 请确保上游直连 DNS 支持 DoT 查询。"
 					NEXT_DNS_LISTEN_PORT=$(expr $NEXT_DNS_LISTEN_PORT + 1)
@@ -1554,7 +1554,7 @@ start_dns() {
 			REMOTE_DNS="$tmp_dot_ip#${tmp_dot_port:-853}"
 			[ "$DNS_SHUNT" != "chinadns-ng" ] && {
 				[ "$FILTER_PROXY_IPV6" = "1" ] && DNSMASQ_FILTER_PROXY_IPV6=0 && local no_ipv6_trust="-N"
-				ln_run "$(first_type $(config_t_get global_app chinadns_ng_file) chinadns-ng)" chinadns-ng "/dev/null" -b :: -l ${china_ng_listen_port} -t ${china_ng_trust_dns} -d gfw ${no_ipv6_trust} ${cert_verify}
+				ln_run "$(first_type chinadns-ng)" chinadns-ng "/dev/null" -b :: -l ${china_ng_listen_port} -t ${china_ng_trust_dns} -d gfw ${no_ipv6_trust} ${cert_verify}
 				echolog "  - ChinaDNS-NG(${TUN_DNS}) -> ${china_ng_trust_dns}"
 			}
 		else
@@ -1564,7 +1564,7 @@ start_dns() {
 			local china_ng_trust_dns="tcp://${REMOTE_DNS}"
 			[ "$DNS_SHUNT" != "chinadns-ng" ] && {
 				[ "$FILTER_PROXY_IPV6" = "1" ] && DNSMASQ_FILTER_PROXY_IPV6=0 && local no_ipv6_trust="-N"
-				ln_run "$(first_type $(config_t_get global_app chinadns_ng_file) chinadns-ng)" chinadns-ng "/dev/null" -b :: -l ${china_ng_listen_port} -t ${china_ng_trust_dns} -d gfw ${no_ipv6_trust}
+				ln_run "$(first_type chinadns-ng)" chinadns-ng "/dev/null" -b :: -l ${china_ng_listen_port} -t ${china_ng_trust_dns} -d gfw ${no_ipv6_trust}
 				echolog "  - ChinaDNS-NG(${TUN_DNS}) -> ${china_ng_trust_dns}"
 			}
 		fi
@@ -1576,7 +1576,7 @@ start_dns() {
 		if [ "$DNS_SHUNT" != "chinadns-ng" ] && [ "$FILTER_PROXY_IPV6" = "1" ]; then
 			DNSMASQ_FILTER_PROXY_IPV6=0
 			local no_ipv6_trust="-N"
-			ln_run "$(first_type $(config_t_get global_app chinadns_ng_file) chinadns-ng)" chinadns-ng "/dev/null" -b :: -l ${china_ng_listen_port} -t ${china_ng_trust_dns} -d gfw ${no_ipv6_trust}
+			ln_run "$(first_type chinadns-ng)" chinadns-ng "/dev/null" -b :: -l ${china_ng_listen_port} -t ${china_ng_trust_dns} -d gfw ${no_ipv6_trust}
 			echolog "  - ChinaDNS-NG(${TUN_DNS}) -> ${china_ng_trust_dns}"
 		else
 			TUN_DNS="$(echo ${REMOTE_DNS} | sed 's/#/:/g' | sed -E 's/\:([^:]+)$/#\1/g')"
@@ -1589,7 +1589,7 @@ start_dns() {
 		local china_ng_trust_dns="tcp://$(get_first_dns REMOTE_DNS 53 | sed 's/:/#/g')"
 		[ "$DNS_SHUNT" != "chinadns-ng" ] && {
 			[ "$FILTER_PROXY_IPV6" = "1" ] && DNSMASQ_FILTER_PROXY_IPV6=0 && local no_ipv6_trust="-N"
-			ln_run "$(first_type $(config_t_get global_app chinadns_ng_file) chinadns-ng)" chinadns-ng "/dev/null" -b :: -l ${china_ng_listen_port} -t ${china_ng_trust_dns} -d gfw ${no_ipv6_trust}
+			ln_run "$(first_type chinadns-ng)" chinadns-ng "/dev/null" -b :: -l ${china_ng_listen_port} -t ${china_ng_trust_dns} -d gfw ${no_ipv6_trust}
 			echolog "  - ChinaDNS-NG(${TUN_DNS}) -> ${china_ng_trust_dns}"
 		}
 	;;
@@ -1626,9 +1626,9 @@ start_dns() {
 		fi
 	}
 
-	[ "$DNS_SHUNT" = "chinadns-ng" ] && [ -n "$(first_type $(config_t_get global_app chinadns_ng_file) chinadns-ng)" ] && {
+	[ "$DNS_SHUNT" = "chinadns-ng" ] && [ -n "$(first_type chinadns-ng)" ] && {
 		chinadns_ng_min=2024.04.13
-		chinadns_ng_now=$($(first_type $(config_t_get global_app chinadns_ng_file) chinadns-ng) -V | grep -i "ChinaDNS-NG " | awk '{print $2}')
+		chinadns_ng_now=$($(first_type chinadns-ng) -V | grep -i "ChinaDNS-NG " | awk '{print $2}')
 		if [ $(check_ver "$chinadns_ng_now" "$chinadns_ng_min") = 1 ]; then
 			echolog "  * 注意：当前 ChinaDNS-NG 版本为[ $chinadns_ng_now ]，请更新到[ $chinadns_ng_min ]或以上版本，否则 DNS 有可能无法正常工作！"
 		fi
@@ -1876,9 +1876,9 @@ acl_app() {
 									set_cache_var "node_${tcp_node}_$(echo -n "${remote_dns}" | md5sum | cut -d " " -f1)" "${_dns_port}"
 								}
 
-								[ "$dns_shunt" = "chinadns-ng" ] && [ -n "$(first_type $(config_t_get global_app chinadns_ng_file) chinadns-ng)" ] && {
+								[ "$dns_shunt" = "chinadns-ng" ] && [ -n "$(first_type chinadns-ng)" ] && {
 									chinadns_ng_min=2024.04.13
-									chinadns_ng_now=$($(first_type $(config_t_get global_app chinadns_ng_file) chinadns-ng) -V | grep -i "ChinaDNS-NG " | awk '{print $2}')
+									chinadns_ng_now=$($(first_type chinadns-ng) -V | grep -i "ChinaDNS-NG " | awk '{print $2}')
 									if [ $(check_ver "$chinadns_ng_now" "$chinadns_ng_min") = 1 ]; then
 										echolog "  * 注意：当前 ChinaDNS-NG 版本为[ $chinadns_ng_now ]，请更新到[ $chinadns_ng_min ]或以上版本，否则 DNS 有可能无法正常工作！"
 									fi
@@ -1897,7 +1897,7 @@ acl_app() {
 											_chinadns_local_dns="tcp://$(config_t_get global direct_dns_tcp 223.5.5.5 | sed 's/:/#/g')"
 										;;
 										dot)
-											if [ "$(chinadns-ng -V | grep -i wolfssl)" != "nil" ]; then
+											if [ "$($(first_type chinadns-ng) -V | grep -i wolfssl)" != "nil" ]; then
 												_chinadns_local_dns=$(config_t_get global direct_dns_dot "tls://dot.pub@1.12.12.12")
 											fi
 										;;
