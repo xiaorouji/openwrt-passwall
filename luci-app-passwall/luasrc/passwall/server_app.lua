@@ -90,12 +90,14 @@ local function start()
 	end
 	cmd(string.format("mkdir -p %s %s", CONFIG_PATH, TMP_BIN_PATH))
 	cmd(string.format("touch %s", LOG_APP_FILE))
+	local nft_file
 	if nft_flag == "0" then
 		ipt("-N PSW-SERVER")
 		ipt("-I INPUT -j PSW-SERVER")
 		ip6t("-N PSW-SERVER")
 		ip6t("-I INPUT -j PSW-SERVER")
        else
+               local err
                nft_file, err = io.open(NFT_INCLUDE_FILE, "w")
                if nft_file then
                        nft_file:write('#!/usr/sbin/nft -f\n')
