@@ -194,16 +194,20 @@ end
 
 
 function gen_client_config()
-	local id = luci.http.formvalue("id")
-	local config_file = api.TMP_PATH .. "/config_" .. id
-	luci.sys.call(string.format("/usr/share/passwall/app.sh run_socks flag=config_%s node=%s bind=127.0.0.1 socks_port=1080 config_file=%s no_run=1", id, id, config_file))
-	if nixio.fs.access(config_file) then
-		luci.http.prepare_content("application/json")
-		luci.http.write(luci.sys.exec("cat " .. config_file))
-		luci.sys.call("rm -f " .. config_file)
-	else
-		luci.http.redirect(api.url("node_list"))
-	end
+       local id = luci.http.formvalue("id") or ""
+       local config_file = api.TMP_PATH .. "/config_" .. id
+       local cmd = string.format("/usr/share/passwall/app.sh run_socks %s %s bind=127.0.0.1 socks_port=1080 %s no_run=1",
+               luci.util.shellquote("flag=config_" .. id),
+               luci.util.shellquote("node=" .. id),
+               luci.util.shellquote("config_file=" .. config_file))
+       luci.sys.call(cmd)
+       if nixio.fs.access(config_file) then
+               luci.http.prepare_content("application/json")
+               luci.http.write(luci.sys.exec("cat " .. luci.util.shellquote(config_file)))
+               luci.sys.call("rm -f " .. luci.util.shellquote(config_file))
+       else
+               luci.http.redirect(api.url("node_list"))
+       end
 end
 
 function get_now_use_node()
@@ -509,21 +513,23 @@ function update_rules()
 end
 
 function server_user_status()
-	local e = {}
-	e.index = luci.http.formvalue("index")
-	e.status = luci.sys.call(string.format("/bin/busybox top -bn1 | grep -v 'grep' | grep '%s/bin/' | grep -i '%s' >/dev/null", appname .. "_server", luci.http.formvalue("id"))) == 0
-	http_write_json(e)
+       local e = {}
+       e.index = luci.http.formvalue("index")
+       local id = luci.http.formvalue("id") or ""
+       e.status = luci.sys.call(string.format("/bin/busybox top -bn1 | grep -v 'grep' | grep '%s/bin/' | grep -i %s >/dev/null", appname .. "_server", luci.util.shellquote(id))) == 0
+       http_write_json(e)
 end
 
 function server_user_log()
-	local id = luci.http.formvalue("id")
-	if fs.access("/tmp/etc/passwall_server/" .. id .. ".log") then
-		local content = luci.sys.exec("cat /tmp/etc/passwall_server/" .. id .. ".log")
-		content = content:gsub("\n", "<br />")
-		luci.http.write(content)
-	else
-		luci.http.write(string.format("<script>alert('%s');window.close();</script>", i18n.translate("Not enabled log")))
-	end
+       local id = luci.http.formvalue("id") or ""
+       local logfile = "/tmp/etc/passwall_server/" .. id .. ".log"
+       if fs.access(logfile) then
+               local content = luci.sys.exec("cat " .. luci.util.shellquote(logfile))
+               content = content:gsub("\n", "<br />")
+               luci.http.write(content)
+       else
+               luci.http.write(string.format("<script>alert('%s');window.close();</script>", i18n.translate("Not enabled log")))
+       end
 end
 
 function server_get_log()
