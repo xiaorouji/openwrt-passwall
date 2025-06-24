@@ -156,21 +156,9 @@ function get_cache_var(key)
 end
 
 function exec_call(cmd)
-	local process = io.popen(cmd .. '; echo -e "\n$?"')
-	local lines = {}
-	local result = ""
-	local return_code
-	for line in process:lines() do
-		lines[#lines + 1] = line
-	end
-	process:close()
-	if #lines > 0 then
-		return_code = lines[#lines]
-		for i = 1, #lines - 1 do
-			result = result .. lines[i] .. ((i == #lines - 1) and "" or "\n")
-		end
-	end
-	return tonumber(return_code), trim(result)
+        local output = util.exec(cmd .. '; echo -n "\n$?"')
+        local result, code = output:match("^(.*)\n(%d+)$")
+        return tonumber(code), trim(result or "")
 end
 
 function base64Decode(text)
