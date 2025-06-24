@@ -4,7 +4,7 @@
 module("luci.controller.passwall", package.seeall)
 local api = require "luci.passwall.api"
 local appname = "passwall"	-- not available
-local uci = api.uci			-- in funtion index()
+local uci = api.uci			-- in function index()
 local fs = api.fs
 local http = require "luci.http"
 local util = require "luci.util"
