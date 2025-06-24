@@ -14,6 +14,7 @@ o = s:option(ListValue, "auto_detection_time", translate("Automatic detection de
 o:value("0", translate("Close"))
 o:value("icmp", "Ping")
 o:value("tcping", "TCP Ping")
+o:value("urltest", translate("URL Test"))
 
 o = s:option(Flag, "show_node_info", translate("Show server address and port"))
 o.default = "0"
@@ -178,7 +179,11 @@ o = s:option(DummyValue, "_url_test", translate("URL Test"))
 o.width = "8%"
 o.rawhtml = true
 o.cfgvalue = function(t, n)
-	return string.format('<span class="ping"><a href="javascript:void(0)" onclick="javascript:urltest_node(\'%s\', this)">%s</a></span>', n, translate("Test"))
+       if auto_detection_time ~= "urltest" then
+               return string.format('<span class="ping"><a href="javascript:void(0)" onclick="javascript:urltest_node(\'%s\', this)">%s</a></span>', n, translate("Test"))
+       else
+               return string.format('<span class="urltest_value" cbiid="%s">---</span>', n)
+       end
 end
 
 m:append(Template(appname .. "/node_list/node_list"))

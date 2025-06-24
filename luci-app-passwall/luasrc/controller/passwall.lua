@@ -154,7 +154,7 @@ function link_add_node()
 end
 
 function socks_autoswitch_add_node()
-	local id = luci.http.formvalue("id")
+       local id = luci.http.formvalue("id") or ""
 	local key = luci.http.formvalue("key")
 	if id and id ~= "" and key and key ~= "" then
 		uci:set(appname, id, "enable_autoswitch", "1")
@@ -194,16 +194,20 @@ end
 
 
 function gen_client_config()
-	local id = luci.http.formvalue("id")
-	local config_file = api.TMP_PATH .. "/config_" .. id
-	luci.sys.call(string.format("/usr/share/passwall/app.sh run_socks flag=config_%s node=%s bind=127.0.0.1 socks_port=1080 config_file=%s no_run=1", id, id, config_file))
-	if nixio.fs.access(config_file) then
-		luci.http.prepare_content("application/json")
-		luci.http.write(luci.sys.exec("cat " .. config_file))
-		luci.sys.call("rm -f " .. config_file)
-	else
-		luci.http.redirect(api.url("node_list"))
-	end
+       local id = luci.http.formvalue("id") or ""
+       local config_file = api.TMP_PATH .. "/config_" .. id
+       local cmd = string.format("/usr/share/passwall/app.sh run_socks %s %s bind=127.0.0.1 socks_port=1080 %s no_run=1",
+               luci.util.shellquote("flag=config_" .. id),
+               luci.util.shellquote("node=" .. id),
+               luci.util.shellquote("config_file=" .. config_file))
+       luci.sys.call(cmd)
+       if nixio.fs.access(config_file) then
+               luci.http.prepare_content("application/json")
+               luci.http.write(luci.sys.exec("cat " .. luci.util.shellquote(config_file)))
+               luci.sys.call("rm -f " .. luci.util.shellquote(config_file))
+       else
+               luci.http.redirect(api.url("node_list"))
+       end
 end
 
 function get_now_use_node()
@@ -222,41 +226,42 @@ function get_now_use_node()
 end
 
 function get_redir_log()
-	local name = luci.http.formvalue("name")
-	local proto = luci.http.formvalue("proto")
-	local path = "/tmp/etc/passwall/acl/" .. name
+       local name = luci.http.formvalue("name") or ""
+       local proto = luci.http.formvalue("proto")
+       local path = "/tmp/etc/passwall/acl/" .. name
 	proto = proto:upper()
 	if proto == "UDP" and (uci:get(appname, "@global[0]", "udp_node") or "nil") == "tcp" and not fs.access(path .. "/" .. proto .. ".log") then
 		proto = "TCP"
 	end
-	if fs.access(path .. "/" .. proto .. ".log") then
-		local content = luci.sys.exec("tail -n 19999 ".. path .. "/" .. proto .. ".log")
-		content = content:gsub("\n", "<br />")
-		luci.http.write(content)
+       local logfile = path .. "/" .. proto .. ".log"
+       if fs.access(logfile) then
+               local content = luci.sys.exec(string.format("tail -n 19999 %s", luci.util.shellquote(logfile)))
+               content = content:gsub("\n", "<br />")
+               luci.http.write(content)
 	else
 		luci.http.write(string.format("<script>alert('%s');window.close();</script>", i18n.translate("Not enabled log")))
 	end
 end
 
 function get_socks_log()
-	local name = luci.http.formvalue("name")
-	local path = "/tmp/etc/passwall/SOCKS_" .. name .. ".log"
-	if fs.access(path) then
-		local content = luci.sys.exec("cat ".. path)
-		content = content:gsub("\n", "<br />")
-		luci.http.write(content)
+       local name = luci.http.formvalue("name") or ""
+       local path = "/tmp/etc/passwall/SOCKS_" .. name .. ".log"
+       if fs.access(path) then
+               local content = luci.sys.exec("cat " .. luci.util.shellquote(path))
+               content = content:gsub("\n", "<br />")
+               luci.http.write(content)
 	else
 		luci.http.write(string.format("<script>alert('%s');window.close();</script>", i18n.translate("Not enabled log")))
 	end
 end
 
 function get_chinadns_log()
-	local flag = luci.http.formvalue("flag")
-	local path = "/tmp/etc/passwall/acl/" .. flag .. "/chinadns_ng.log"
-	if fs.access(path) then
-		local content = luci.sys.exec("tail -n 5000 ".. path)
-		content = content:gsub("\n", "<br />")
-		luci.http.write(content)
+       local flag = luci.http.formvalue("flag") or ""
+       local path = "/tmp/etc/passwall/acl/" .. flag .. "/chinadns_ng.log"
+       if fs.access(path) then
+               local content = luci.sys.exec(string.format("tail -n 5000 %s", luci.util.shellquote(path)))
+               content = content:gsub("\n", "<br />")
+               luci.http.write(content)
 	else
 		luci.http.write(string.format("<script>alert('%s');window.close();</script>", i18n.translate("Not enabled log")))
 	end
@@ -317,10 +322,10 @@ function socks_status()
 end
 
 function connect_status()
-	local e = {}
-	e.use_time = ""
-	local url = luci.http.formvalue("url")
-	local baidu = string.find(url, "baidu")
+       local e = {}
+       e.use_time = ""
+       local url = luci.http.formvalue("url") or ""
+       local baidu = string.find(url, "baidu")
 	local chn_list = uci:get(appname, "@global[0]", "chn_list") or "direct"
 	local gfw_list = uci:get(appname, "@global[0]", "use_gfw_list") or "1"
 	local proxy_mode = uci:get(appname, "@global[0]", "tcp_proxy_mode") or "proxy"
@@ -329,19 +334,22 @@ function connect_status()
 
 	-- 兼容 curl 8.6 time_starttransfer 错误
 	local curl_ver = api.get_bin_version_cache("/usr/bin/curl", "-V 2>/dev/null | head -n 1 | awk '{print $2}' | cut -d. -f1,2 | tr -d ' \n'") or "0"
-	url = (curl_ver == "8.6") and "-w %{http_code}:%{time_appconnect} https://" .. url
-		or "-w %{http_code}:%{time_starttransfer} http://" .. url
+       local scheme = "http"
+       local curl_format = "%{http_code}:%{time_starttransfer}"
+       if curl_ver == "8.6" then
+               scheme = "https"
+               curl_format = "%{http_code}:%{time_appconnect}"
+       end
+       local curl_args = string.format("-w %s %s://%s", luci.util.shellquote(curl_format), scheme, luci.util.shellquote(url))
 
-	if socks_server and socks_server ~= "" then
-		if (chn_list == "proxy" and gfw_list == "0" and proxy_mode ~= "proxy" and baidu ~= nil) or (chn_list == "0" and gfw_list == "0" and proxy_mode == "proxy") then
-		-- 中国列表+百度 or 全局
-			url = "-x socks5h://" .. socks_server .. " " .. url
-		elseif baidu == nil then
-		-- 其他代理模式+百度以外网站
-			url = "-x socks5h://" .. socks_server .. " " .. url
-		end
-	end
-	local result = luci.sys.exec('/usr/bin/curl --max-time 5 -o /dev/null -I -sk ' .. url)
+       local curl_cmd = "/usr/bin/curl --max-time 5 -o /dev/null -I -sk"
+       if socks_server and socks_server ~= "" then
+               if (chn_list == "proxy" and gfw_list == "0" and proxy_mode ~= "proxy" and baidu ~= nil) or (chn_list == "0" and gfw_list == "0" and proxy_mode == "proxy") or baidu == nil then
+                       curl_cmd = curl_cmd .. " -x " .. luci.util.shellquote("socks5h://" .. socks_server)
+               end
+       end
+       curl_cmd = string.format("%s %s", curl_cmd, curl_args)
+       local result = luci.sys.exec(curl_cmd)
 	local code = tonumber(luci.sys.exec("echo -n '" .. result .. "' | awk -F ':' '{print $1}'") or "0")
 	if code ~= 0 then
 		local use_time_str = luci.sys.exec("echo -n '" .. result .. "' | awk -F ':' '{print $2}'")
@@ -361,8 +369,8 @@ end
 
 function ping_node()
 	local index = luci.http.formvalue("index")
-	local address = luci.http.formvalue("address")
-	local port = luci.http.formvalue("port")
+       local address = luci.http.formvalue("address")
+       local port = luci.http.formvalue("port")
 	local type = luci.http.formvalue("type") or "icmp"
 	local e = {}
 	e.index = index
@@ -370,7 +378,7 @@ function ping_node()
 		if api.is_ipv6(address) then
 			address = api.get_ipv6_only(address)
 		end
-		e.ping = luci.sys.exec(string.format("echo -n $(tcping -q -c 1 -i 1 -t 2 -p %s %s 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print $2}') 2>/dev/null", port, address))
+               e.ping = luci.sys.exec(string.format("echo -n $(tcping -q -c 1 -i 1 -t 2 -p %s %s 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print $2}') 2>/dev/null", luci.util.shellquote(port), luci.util.shellquote(address)))
 	else
 		e.ping = luci.sys.exec("echo -n $(ping -c 1 -W 1 %q 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print $2}') 2>/dev/null" % address)
 	end
@@ -383,7 +391,7 @@ function urltest_node()
 	local id = luci.http.formvalue("id")
 	local e = {}
 	e.index = index
-	local result = luci.sys.exec(string.format("/usr/share/passwall/test.sh url_test_node %s %s", id, "urltest_node"))
+       local result = luci.sys.exec(string.format("/usr/share/passwall/test.sh url_test_node %s %s", luci.util.shellquote(id), "urltest_node"))
 	local code = tonumber(luci.sys.exec("echo -n '" .. result .. "' | awk -F ':' '{print $1}'") or "0")
 	if code ~= 0 then
 		local use_time_str = luci.sys.exec("echo -n '" .. result .. "' | awk -F ':' '{print $2}'")
@@ -509,25 +517,27 @@ function update_rules()
 end
 
 function server_user_status()
-	local e = {}
-	e.index = luci.http.formvalue("index")
-	e.status = luci.sys.call(string.format("/bin/busybox top -bn1 | grep -v 'grep' | grep '%s/bin/' | grep -i '%s' >/dev/null", appname .. "_server", luci.http.formvalue("id"))) == 0
-	http_write_json(e)
+       local e = {}
+       e.index = luci.http.formvalue("index")
+       local id = luci.http.formvalue("id") or ""
+       e.status = luci.sys.call(string.format("/bin/busybox top -bn1 | grep -v 'grep' | grep '%s/bin/' | grep -i %s >/dev/null", appname .. "_server", luci.util.shellquote(id))) == 0
+       http_write_json(e)
 end
 
 function server_user_log()
-	local id = luci.http.formvalue("id")
-	if fs.access("/tmp/etc/passwall_server/" .. id .. ".log") then
-		local content = luci.sys.exec("cat /tmp/etc/passwall_server/" .. id .. ".log")
-		content = content:gsub("\n", "<br />")
-		luci.http.write(content)
-	else
-		luci.http.write(string.format("<script>alert('%s');window.close();</script>", i18n.translate("Not enabled log")))
-	end
+       local id = luci.http.formvalue("id") or ""
+       local logfile = "/tmp/etc/passwall_server/" .. id .. ".log"
+       if fs.access(logfile) then
+               local content = luci.sys.exec("cat " .. luci.util.shellquote(logfile))
+               content = content:gsub("\n", "<br />")
+               luci.http.write(content)
+       else
+               luci.http.write(string.format("<script>alert('%s');window.close();</script>", i18n.translate("Not enabled log")))
+       end
 end
 
 function server_get_log()
-	luci.http.write(luci.sys.exec("[ -f '/tmp/log/passwall_server.log' ] && cat /tmp/log/passwall_server.log"))
+       luci.http.write(luci.sys.exec("[ -f '/tmp/log/passwall_server.log' ] && cat /tmp/log/passwall_server.log"))
 end
 
 function server_clear_log()

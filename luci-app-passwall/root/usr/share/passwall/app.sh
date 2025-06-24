@@ -308,9 +308,9 @@ ln_run() {
 			${file_func:-echolog " - ${ln_name}"} "$@" 2>&1 | logger -t PASSWALL_${protocol}_${ln_name} &
 		fi
 	fi
-	process_count=$(ls $TMP_SCRIPT_FUNC_PATH | wc -l)
+       process_count=$(ls "$TMP_SCRIPT_FUNC_PATH" | wc -l)
 	process_count=$((process_count + 1))
-	echo "${file_func:-echolog "  - ${ln_name}"} $@ >${output}" > $TMP_SCRIPT_FUNC_PATH/$process_count
+       echo "${file_func:-echolog \"  - ${ln_name}\"} $@ >${output}" > "$TMP_SCRIPT_FUNC_PATH/$process_count"
 }
 
 lua_api() {
@@ -1223,10 +1223,11 @@ socks_node_switch() {
 		rm -rf $TMP_PATH/SOCKS_${flag}*
 		rm -rf $TMP_PATH/HTTP2SOCKS_${flag}*
 
-		for filename in $(ls ${TMP_SCRIPT_FUNC_PATH}); do
-			cmd=$(cat ${TMP_SCRIPT_FUNC_PATH}/${filename})
-			[ -n "$(echo $cmd | grep "${flag}")" ] && rm -f ${TMP_SCRIPT_FUNC_PATH}/${filename}
-		done
+               for filename in "${TMP_SCRIPT_FUNC_PATH}"/*; do
+                       [ -f "$filename" ] || continue
+                       cmd=$(cat "$filename")
+                       [ -n "$(echo $cmd | grep "${flag}")" ] && rm -f "$filename"
+               done
 		local bind_local=$(config_n_get $flag bind_local 0)
 		local bind="0.0.0.0"
 		[ "$bind_local" = "1" ] && bind="127.0.0.1"
