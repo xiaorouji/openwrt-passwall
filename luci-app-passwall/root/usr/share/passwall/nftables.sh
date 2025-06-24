@@ -186,9 +186,9 @@ insert_nftset() {
 gen_nftset() {
 	local nftset_name="${1}"; shift
 	local ip_type="${1}"; shift
-	#  0 - don't set defalut timeout
+	#  0 - don't set default timeout
 	local timeout_argument_set="${1}"; shift
-	#  0 - don't let element timeout(365 days) when set's timeout parameters be seted
+	#  0 - don't let element timeout(365 days) when set's timeout parameters be set
 	# -1 - follow the set's timeout parameters
 	local timeout_argument_element="${1}"; shift
 
