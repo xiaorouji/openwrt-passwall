@@ -187,7 +187,7 @@ msgstr "默认 DNS"
 msgid "When not matching any domain name list:"
 msgstr "当不匹配任何域名列表时："
 
-msgid "Remote DNS: Can avoid more DNS leaks, but some domestic domain names maybe to proxy!"
+msgid "Remote DNS: Can avoid more DNS leaks, but some domestic domain names may be proxied!"
 msgstr "远程 DNS：可以避免更多的 DNS 泄露，但会导致规则列表外的某些国内域名可能会走代理！"
 
 msgid "Direct DNS: Internet experience may be better, but DNS will be leaked!"
