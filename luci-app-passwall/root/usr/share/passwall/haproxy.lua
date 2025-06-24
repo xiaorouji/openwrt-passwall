@@ -3,7 +3,6 @@
 local api = require ("luci.passwall.api")
 local appname = "passwall"
 local fs = api.fs
-local jsonc = api.jsonc
 local uci = api.uci
 local sys = api.sys
 
@@ -11,10 +10,9 @@ local log = function(...)
 	api.log(...)
 end
 
-function get_ip_port_from(str)
-	local result_port = sys.exec("echo -n " .. str .. " | sed -n 's/^.*[:#]\\([0-9]*\\)$/\\1/p'")
-	local result_ip = sys.exec(string.format("__host=%s;__varport=%s;", str, result_port) .. "echo -n ${__host%%${__varport:+[:#]${__varport}*}}")
-	return result_ip, result_port
+local function get_ip_port_from(str)
+    local ip, port = str:match("^(.*)[:#](%d+)$")
+    return ip or str, port
 end
 
 local new_port
@@ -74,7 +72,6 @@ defaults
 	timeout http-keep-alive 10s
 	timeout check           10s
 	maxconn                 3000
-	
 resolvers mydns
 	resolve_retries       1
 	timeout resolve       5s
@@ -117,7 +114,6 @@ uci:foreach(appname, "haproxy_config", function(t)
 			t.origin_port = server_port
 			if health_check_type == "passwall_logic" then
 				if server_node.type ~= "Socks" then
-					local relay_port = server_node.port
 					new_port = get_new_port()
 					local config_file = string.format("haproxy_%s_%s.json", t[".name"], new_port)
 					sys.call(string.format('/usr/share/%s/app.sh run_socks "%s"> /dev/null',
@@ -163,7 +159,7 @@ for i in pairs(listens) do
 end
 table.sort(sortTable, function(a,b) return (a < b) end)
 
-for i, port in pairs(sortTable) do
+for _, port in ipairs(sortTable) do
     log(string.format("  +  入口 %s:%s", bind_address, port))
 
 	f_out:write("\n" .. string.format([[
@@ -181,7 +177,7 @@ listen %s
 	end
 
 	local count_M, count_B = 1, 1
-	for i, o in ipairs(listens[port]) do
+       for _, o in ipairs(listens[port]) do
 		local remark = o.server_remark or ""
 		-- 防止重名导致无法运行
 		if tostring(o.backup) ~= "1" then
