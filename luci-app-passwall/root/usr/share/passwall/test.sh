@@ -3,6 +3,10 @@
 CONFIG=passwall
 LOG_FILE=/tmp/log/$CONFIG.log
 
+# Default values if not provided
+retry_num=${retry_num:-3}
+connect_timeout=${connect_timeout:-2}
+
 echolog() {
 	local d="$(date "+%Y-%m-%d %H:%M:%S")"
 	#echo -e "$d: $1"

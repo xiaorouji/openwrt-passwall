@@ -95,13 +95,17 @@ local function start()
 		ipt("-I INPUT -j PSW-SERVER")
 		ip6t("-N PSW-SERVER")
 		ip6t("-I INPUT -j PSW-SERVER")
-	else
-		nft_file, err = io.open(NFT_INCLUDE_FILE, "w")
-		nft_file:write('#!/usr/sbin/nft -f\n')
-		nft_file:write('add chain inet fw4 PSW-SERVER\n')
-		nft_file:write('flush chain inet fw4 PSW-SERVER\n')
-		nft_file:write('insert rule inet fw4 input position 0 jump PSW-SERVER comment "PSW-SERVER"\n')
-	end
+       else
+               nft_file, err = io.open(NFT_INCLUDE_FILE, "w")
+               if nft_file then
+                       nft_file:write('#!/usr/sbin/nft -f\n')
+                       nft_file:write('add chain inet fw4 PSW-SERVER\n')
+                       nft_file:write('flush chain inet fw4 PSW-SERVER\n')
+                       nft_file:write('insert rule inet fw4 input position 0 jump PSW-SERVER comment "PSW-SERVER"\n')
+               else
+                       log('open ' .. NFT_INCLUDE_FILE .. ' failed: ' .. (err or 'unknown'))
+               end
+       end
 	uci:foreach(CONFIG, "user", function(user)
 		local id = user[".name"]
 		local enable = user.enable
@@ -227,11 +231,11 @@ local function start()
 			end
 		end
 	end)
-	if nft_flag == "1" then
-		nft_file:write("add rule inet fw4 PSW-SERVER return\n")
-		nft_file:close()
-		cmd("nft -f " .. NFT_INCLUDE_FILE)
-	end
+       if nft_flag == "1" and nft_file then
+               nft_file:write("add rule inet fw4 PSW-SERVER return\n")
+               nft_file:close()
+               cmd("nft -f " .. NFT_INCLUDE_FILE)
+       end
 	gen_include()
 end
 

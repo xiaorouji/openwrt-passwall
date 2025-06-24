@@ -147,12 +147,12 @@ domain_list.validate = function(self, value)
 	end
 	return value
 end
-domain_list.description = "<br /><ul><li>" .. translate("Plaintext: If this string matches any part of the targeting domain, this rule takes effet. Example: rule 'sina.com' matches targeting domain 'sina.com', 'sina.com.cn' and 'www.sina.com', but not 'sina.cn'.")
-.. "</li><li>" .. translate("Regular expression: Begining with 'regexp:', the rest is a regular expression. When the regexp matches targeting domain, this rule takes effect. Example: rule 'regexp:\\.goo.*\\.com$' matches 'www.google.com' and 'fonts.googleapis.com', but not 'google.com'.")
-.. "</li><li>" .. translate("Subdomain (recommended): Begining with 'domain:' and the rest is a domain. When the targeting domain is exactly the value, or is a subdomain of the value, this rule takes effect. Example: rule 'domain:v2ray.com' matches 'www.v2ray.com', 'v2ray.com', but not 'xv2ray.com'.")
-.. "</li><li>" .. translate("Full domain: Begining with 'full:' and the rest is a domain. When the targeting domain is exactly the value, the rule takes effect. Example: rule 'domain:v2ray.com' matches 'v2ray.com', but not 'www.v2ray.com'.")
-.. "</li><li>" .. translate("Pre-defined domain list: Begining with 'geosite:' and the rest is a name, such as geosite:google or geosite:cn.")
-.. "</li><li>" .. translate("Annotation: Begining with #")
+domain_list.description = "<br /><ul><li>" .. translate("Plaintext: If this string matches any part of the targeting domain, this rule takes effect. Example: rule 'sina.com' matches targeting domain 'sina.com', 'sina.com.cn' and 'www.sina.com', but not 'sina.cn'.")
+.. "</li><li>" .. translate("Regular expression: Beginning with 'regexp:', the rest is a regular expression. When the regexp matches targeting domain, this rule takes effect. Example: rule 'regexp:\\.goo.*\\.com$' matches 'www.google.com' and 'fonts.googleapis.com', but not 'google.com'.")
+.. "</li><li>" .. translate("Subdomain (recommended): Beginning with 'domain:' and the rest is a domain. When the targeting domain is exactly the value, or is a subdomain of the value, this rule takes effect. Example: rule 'domain:v2ray.com' matches 'www.v2ray.com', 'v2ray.com', but not 'xv2ray.com'.")
+.. "</li><li>" .. translate("Full domain: Beginning with 'full:' and the rest is a domain. When the targeting domain is exactly the value, the rule takes effect. Example: rule 'domain:v2ray.com' matches 'v2ray.com', but not 'www.v2ray.com'.")
+.. "</li><li>" .. translate("Pre-defined domain list: Beginning with 'geosite:' and the rest is a name, such as geosite:google or geosite:cn.")
+.. "</li><li>" .. translate("Annotation: Beginning with #")
 .. "</li></ul>"
 ip_list = s:option(TextValue, "ip_list", "IP")
 ip_list.rows = 10
@@ -176,7 +176,7 @@ end
 ip_list.description = "<br /><ul><li>" .. translate("IP: such as '127.0.0.1'.")
 .. "</li><li>" .. translate("CIDR: such as '127.0.0.0/8'.")
 .. "</li><li>" .. translate("GeoIP: such as 'geoip:cn'. It begins with geoip: (lower case) and followed by two letter of country code.")
-.. "</li><li>" .. translate("Annotation: Begining with #")
+.. "</li><li>" .. translate("Annotation: Beginning with #")
 .. "</li></ul>"
 
 return m
