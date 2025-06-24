@@ -33,15 +33,15 @@ local function restore_servers()
 	local dns_table = {}
 	local DNSMASQ_DNS = uci:get("dhcp", "@dnsmasq[0]", "server")
 	if DNSMASQ_DNS and #DNSMASQ_DNS > 0 then
-		for k, v in ipairs(DNSMASQ_DNS) do
-			tinsert(dns_table, v)
-		end
+               for _, v in ipairs(DNSMASQ_DNS) do
+                        tinsert(dns_table, v)
+                end
 	end
 	local OLD_SERVER = uci:get(appname, "@global[0]", "dnsmasq_servers")
 	if OLD_SERVER and #OLD_SERVER > 0 then
-		for k, v in ipairs(OLD_SERVER) do
-			tinsert(dns_table, v)
-		end
+               for _, v in ipairs(OLD_SERVER) do
+                        tinsert(dns_table, v)
+                end
 		uci:delete(appname, "@global[0]", "dnsmasq_servers")
 		api.uci_save(uci, appname, true)
 	end
@@ -51,12 +51,12 @@ local function restore_servers()
 	end
 end
 
-function stretch()
+local function stretch()
 	local dnsmasq_server = uci:get("dhcp", "@dnsmasq[0]", "server")
 	local dnsmasq_noresolv = uci:get("dhcp", "@dnsmasq[0]", "noresolv")
 	local _flag
 	if dnsmasq_server and #dnsmasq_server > 0 then
-		for k, v in ipairs(dnsmasq_server) do
+               for _, v in ipairs(dnsmasq_server) do
 			if not v:find("/") then
 				_flag = true
 			end
@@ -80,7 +80,7 @@ function stretch()
 	end
 end
 
-function restart(var)
+local function restart(var)
 	local LOG = var["-LOG"]
 	sys.call("/etc/init.d/dnsmasq restart >/dev/null 2>&1")
 	if LOG == "1" then
@@ -88,7 +88,7 @@ function restart(var)
 	end
 end
 
-function logic_restart(var)
+local function logic_restart(var)
 	local LOG = var["-LOG"]
 	local DEFAULT_DNS = api.get_cache_var("DEFAULT_DNS")
 	if DEFAULT_DNS then
@@ -97,11 +97,11 @@ function logic_restart(var)
 		local dns_table = {}
 		local dnsmasq_server = uci:get("dhcp", "@dnsmasq[0]", "server")
 		if dnsmasq_server and #dnsmasq_server > 0 then
-			for k, v in ipairs(dnsmasq_server) do
-				if v:find("/") then
-					tinsert(dns_table, v)
-				end
-			end
+                       for _, v in ipairs(dnsmasq_server) do
+                                if v:find("/") then
+                                        tinsert(dns_table, v)
+                                end
+                        end
 			uci:set_list("dhcp", "@dnsmasq[0]", "server", dns_table)
 			api.uci_save(uci, "dhcp", true)
 		end
@@ -115,7 +115,7 @@ function logic_restart(var)
 	end
 end
 
-function copy_instance(var)
+local function copy_instance(var)
 	local LISTEN_PORT = var["-LISTEN_PORT"]
 	local TMP_DNSMASQ_PATH = var["-TMP_DNSMASQ_PATH"]
 	local conf_lines = {}
@@ -155,7 +155,7 @@ function copy_instance(var)
 	end
 end
 
-function add_rule(var)
+local function add_rule(var)
 	local FLAG = var["-FLAG"]
 	local TMP_DNSMASQ_PATH = var["-TMP_DNSMASQ_PATH"]
 	local DNSMASQ_CONF_FILE = var["-DNSMASQ_CONF_FILE"]
@@ -200,7 +200,7 @@ function add_rule(var)
 		if not dns then
 			return
 		end
-		for k,v in ipairs(list1[domain].dns) do
+               for _, v in ipairs(list1[domain].dns) do
 			if dns == v then
 				return true
 			end
@@ -215,7 +215,7 @@ function add_rule(var)
 		if not ipset then
 			return
 		end
-		for k,v in ipairs(list1[domain].ipsets) do
+               for _, v in ipairs(list1[domain].ipsets) do
 			if ipset == v then
 				return true
 			end
@@ -286,17 +286,6 @@ function add_rule(var)
 		excluded_domain_str = excluded_domain_str .. "|" .. domain
 	end
 
-	local function check_excluded_domain(domain)
-		if domain == "" or domain:find("#") then
-			return false
-		end
-		for k,v in ipairs(excluded_domain) do
-			if domain:find(v) then
-				return true
-			end
-		end
-		return false
-	end
 
 	local cache_text = ""
 	local nodes_address_md5 = sys.exec("echo -n $(uci show passwall | grep '\\.address') | md5sum")
@@ -638,18 +627,18 @@ function add_rule(var)
 					end
 					address_out:write(string.format("address=/%s/%s", domain, value.address) .. "\n")
 				end
-				if value.dns and #value.dns > 0 then
-					for i, dns in ipairs(value.dns) do
-						server_out:write(string.format("server=/.%s/%s", key, dns) .. "\n")
-					end
-				end
-				if value.ipsets and #value.ipsets > 0 then
-					local ipsets_str = ""
-					for i, ipset in ipairs(value.ipsets) do
-						ipsets_str = ipsets_str .. ipset .. ","
-					end
-					ipsets_str = ipsets_str:sub(1, #ipsets_str - 1)
-					ipset_out:write(string.format("%s=/.%s/%s", set_name, key, ipsets_str) .. "\n")
+                               if value.dns and #value.dns > 0 then
+                                        for _, dns in ipairs(value.dns) do
+                                                server_out:write(string.format("server=/.%s/%s", key, dns) .. "\n")
+                                        end
+                               end
+                               if value.ipsets and #value.ipsets > 0 then
+                                       local ipsets_str = ""
+                                        for _, ipset in ipairs(value.ipsets) do
+                                               ipsets_str = ipsets_str .. ipset .. ","
+                                       end
+                                       ipsets_str = ipsets_str:sub(1, #ipsets_str - 1)
+                                       ipset_out:write(string.format("%s=/.%s/%s", set_name, key, ipsets_str) .. "\n")
 				end
 			end
 			address_out:close()
