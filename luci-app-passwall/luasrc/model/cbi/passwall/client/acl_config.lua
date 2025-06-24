@@ -421,7 +421,7 @@ o:value("none", translate("Smart, Do not accept no-ip reply from Direct DNS"))
 o:value("none_noip", translate("Smart, Accept no-ip reply from Direct DNS"))
 local desc = "<ul>"
 		.. "<li>" .. translate("When not matching any domain name list:") .. "</li>"
-		.. "<li>" .. translate("Remote DNS: Can avoid more DNS leaks, but some domestic domain names maybe to proxy!") .. "</li>"
+                .. "<li>" .. translate("Remote DNS: Can avoid more DNS leaks, but some domestic domain names may be proxied!") .. "</li>"
 		.. "<li>" .. translate("Direct DNS: Internet experience may be better, but DNS will be leaked!") .. "</li>"
 o.description = desc
 		.. "<li>" .. translate("Smart: Forward to both direct and remote DNS, if the direct DNS resolution result is a mainland China IP, then use the direct result, otherwise use the remote result.") .. "</li>"
