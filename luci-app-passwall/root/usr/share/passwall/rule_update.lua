@@ -62,13 +62,16 @@ local log = function(...)
 end
 
 local function gen_nftset(set_name, ip_type, tmp_file, input_file)
-	f = io.open(input_file, "r")
-	local element = f:read("*all")
-	f:close()
-
-	nft_file, err = io.open(tmp_file, "w")
-	nft_file:write('#!/usr/sbin/nft -f\n')
-	nft_file:write(string.format('define %s = {%s}\n', set_name, string.gsub(element, "%s*%c+", " timeout 3650d, ")))
+       nft_file, err = io.open(tmp_file, "w")
+       nft_file:write('#!/usr/sbin/nft -f\n')
+       nft_file:write(string.format('define %s = {', set_name))
+       for line in io.lines(input_file) do
+               line = line:gsub("%s*$", "")
+               if line ~= "" then
+                       nft_file:write(line .. " timeout 3650d, ")
+               end
+       end
+       nft_file:write('}\n')
 	if sys.call(string.format('nft "list set %s %s" >/dev/null 2>&1', nftable_name, set_name)) ~= 0 then
 		nft_file:write(string.format('add set %s %s { type %s; flags interval, timeout; timeout 2d; gc-interval 2d; auto-merge; }\n', nftable_name, set_name, ip_type))
 	end
@@ -167,15 +170,17 @@ local function fetch_rule(rule_name,rule_type,url,exclude_domain)
 		end
 
 		if sret_tmp == 200 then
-			if rule_name == "gfwlist" then
-				local domains = {}
-				local gfwlist = io.open(download_file_tmp..k, "r")
-				local decode = api.base64Decode(gfwlist:read("*all"))
-				gfwlist:close()
-
-				gfwlist = io.open(download_file_tmp..k, "w")
-				gfwlist:write(decode)
-				gfwlist:close()
+                       if rule_name == "gfwlist" then
+                               local domains = {}
+                               local infile = io.open(download_file_tmp..k, "r")
+                               local outfile_path = download_file_tmp..k .. ".decoded"
+                               local outfile = io.open(outfile_path, "w")
+                               for line in infile:lines() do
+                                       outfile:write(api.base64Decode(line))
+                               end
+                               infile:close()
+                               outfile:close()
+                               os.rename(outfile_path, download_file_tmp..k)
 			end
 
 			if rule_type == "domain" and exclude_domain == true then

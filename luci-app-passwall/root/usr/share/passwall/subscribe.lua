@@ -1879,10 +1879,13 @@ local execute = function()
 				fail_list[#fail_list + 1] = value
 			else
 				if luci.sys.call("[ -f " .. tmp_file .. " ] && sed -i -e '/^[ \t]*$/d' -e '/^[ \t]*\r$/d' " .. tmp_file) == 0 then
-					local f = io.open(tmp_file, "r")
-					local stdout = f:read("*all")
-					f:close()
-					local raw_data = trim(stdout)
+                                       local f = io.open(tmp_file, "r")
+                                       local lines = {}
+                                       for line in f:lines() do
+                                               lines[#lines + 1] = line
+                                       end
+                                       f:close()
+                                       local raw_data = trim(table.concat(lines, "\n"))
 					local old_md5 = value.md5 or ""
 					local new_md5 = luci.sys.exec("md5sum " .. tmp_file .. " 2>/dev/null | awk '{print $1}'"):gsub("\n", "")
 					os.remove(tmp_file)
@@ -1928,10 +1931,14 @@ if arg[1] then
 		end)
 		log('订阅完毕...')
 	elseif arg[1] == "add" then
-		local f = assert(io.open("/tmp/links.conf", 'r'))
-		local raw = f:read('*all')
-		f:close()
-		parse_link(raw, "1", "导入")
+               local f = assert(io.open("/tmp/links.conf", 'r'))
+               local lines = {}
+               for line in f:lines() do
+                       lines[#lines + 1] = line
+               end
+               f:close()
+               local raw = table.concat(lines, "\n")
+               parse_link(raw, "1", "导入")
 		update_node(1)
 		luci.sys.call("rm -f /tmp/links.conf")
 	elseif arg[1] == "truncate" then
