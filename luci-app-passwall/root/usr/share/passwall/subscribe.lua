@@ -406,18 +406,16 @@ do
 	end
 end
 
--- urlencode
--- local function get_urlencode(c) return sformat("%%%02X", sbyte(c)) end
+local function UrlEncode(szText)
+	return szText:gsub("([^%w%-_%.%~])", function(c)
+		return string.format("%%%02X", string.byte(c))
+	end)
+end
 
--- local function urlEncode(szText)
--- 	local str = szText:gsub("([^0-9a-zA-Z ])", get_urlencode)
--- 	str = str:gsub(" ", "+")
--- 	return str
--- end
-
-local function get_urldecode(h) return schar(tonumber(h, 16)) end
 local function UrlDecode(szText)
-	return (szText and szText:gsub("+", " "):gsub("%%(%x%x)", get_urldecode)) or nil
+	return szText and szText:gsub("+", " "):gsub("%%(%x%x)", function(h)
+		return string.char(tonumber(h, 16))
+	end) or nil
 end
 
 -- trim
@@ -668,9 +666,22 @@ local function processData(szType, content, add_mode, add_from)
 			else
 				userinfo = base64Decode(hostInfo[1])
 			end
-
 			local method = userinfo:sub(1, userinfo:find(":") - 1)
 			local password = userinfo:sub(userinfo:find(":") + 1, #userinfo)
+
+			-- 判断密码是否经过url编码
+			local function isURLEncodedPassword(pwd)
+				if not pwd:find("%%[0-9A-Fa-f][0-9A-Fa-f]") then
+					return false
+				end
+				local ok, decoded = pcall(UrlDecode, pwd)
+				return ok and UrlEncode(decoded) == pwd
+			end
+
+			local decoded = UrlDecode(password)
+			if isURLEncodedPassword(password) and decoded then
+				password = decoded
+			end
 			result.method = method
 			result.password = password
 
