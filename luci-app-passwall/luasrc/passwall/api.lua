@@ -176,15 +176,26 @@ end
 function base64Decode(text)
 	local raw = text
 	if not text then return '' end
+
 	text = text:gsub("%z", "")
 	text = text:gsub("%c", "")
 	text = text:gsub("_", "/")
 	text = text:gsub("-", "+")
 	local mod4 = #text % 4
-	text = text .. string.sub('====', mod4 + 1)
+	if mod4 > 0 then
+		text = text .. string.sub("====", mod4 + 1)
+	end
+
 	local result = nixio.bin.b64decode(text)
-	if result then
-		return result:gsub("%z", "")
+	if result and type(result) == "string" then
+		result = result:gsub("%z", "")
+		if result:find("%%[0-9A-Fa-f][0-9A-Fa-f]") then
+			result = result:gsub("%%(%x%x)", function(h)
+				local n = tonumber(h, 16)
+				return n and string.char(n) or ""
+			end):gsub("%+", " ")
+		end
+		return result
 	else
 		return raw
 	end

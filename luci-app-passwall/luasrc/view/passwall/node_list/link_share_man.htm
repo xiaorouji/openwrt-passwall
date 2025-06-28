@@ -60,7 +60,11 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 			str = str.replace(/-/g, "+").replace(/_/g, "/");
 			const pad = (4 - str.length % 4) % 4;
 			if (pad) str += "=".repeat(pad);
-			return atob(str);
+			const decoded = atob(str);
+			// 判断密码是否经过 URL 编码，进行 URL 解码
+			return /%[0-9A-Fa-f]{2}/.test(decoded)
+					? decodeURIComponent(decoded.replace(/\+/g, '%20'))
+					: decoded;
 		} catch (e) {
 			return orig;
 		}
@@ -864,19 +868,6 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 					port = mNormal[4];
 				}
 			}
-
-			// 判断密码是否经过url编码
-			const isURLEncodedPassword = function(pwd) {
-				if (!/%[0-9A-Fa-f]{2}/.test(pwd)) return false;
-				try {
-					const decoded = decodeURIComponent(pwd.replace(/\+/g, "%20"));
-					const reencoded = encodeURIComponent(decoded);
-					return reencoded === pwd;
-				} catch (e) {
-					return false;
-				}
-			}
-			password = isURLEncodedPassword(password) ? decodeURIComponent(password) : password;
 
 			if (queryParam.plugin) {
 				var pluginParams = decodeURIComponent(queryParam.plugin).split(";");
