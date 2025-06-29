@@ -48,15 +48,18 @@ o = s:option(ListValue, _n("tcp_fast_open"), "TCP " .. translate("Fast Open"), t
 o:value("false")
 o:value("true")
 
-o = s:option(ListValue, _n("plugin"), translate("plugin"))
+o = s:option(Flag, _n("plugin_enabled"), translate("plugin"))
+o.default = 0
+
+o = s:option(ListValue, _n("plugin"), "SIP003 " .. translate("plugin"))
+o.default = "none"
 o:value("none", translate("none"))
 if api.is_finded("xray-plugin") then o:value("xray-plugin") end
 if api.is_finded("v2ray-plugin") then o:value("v2ray-plugin") end
 if api.is_finded("obfs-local") then o:value("obfs-local") end
+o:depends({ [_n("plugin_enabled")] = true })
 
 o = s:option(Value, _n("plugin_opts"), translate("opts"))
-o:depends({ [_n("plugin")] = "xray-plugin"})
-o:depends({ [_n("plugin")] = "v2ray-plugin"})
-o:depends({ [_n("plugin")] = "obfs-local"})
+o:depends({ [_n("plugin_enabled")] = true })
 
 api.luci_types(arg[1], m, s, type_name, option_prefix)

@@ -1255,6 +1255,9 @@ msgstr "需要节点支持"
 msgid "plugin"
 msgstr "插件"
 
+msgid "Supports custom SIP003 plugins, Make sure the plugin is installed."
+msgstr "支持自定义 SIP003 插件，请确保插件已安装。"
+
 msgid "opts"
 msgstr "插件选项"
 

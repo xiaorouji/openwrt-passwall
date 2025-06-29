@@ -1060,6 +1060,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 						}
 					}
 					if (dom_prefix === "ssrust_") {
+						opt.set(dom_prefix + 'plugin_enabled', true);
 						opt.set(dom_prefix + 'plugin', "shadow-tls");
 						let shadowtlsOpt = parseShadowTLSParams(queryParam["shadow-tls"]);
 						opt.set(dom_prefix + 'plugin_opts', shadowtlsOpt || "");

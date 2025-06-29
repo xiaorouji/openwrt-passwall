@@ -54,7 +54,6 @@ function gen_config(var)
 	local local_tcp_redir_address = var["-local_tcp_redir_address"] or "0.0.0.0"
 	local local_udp_redir_port = var["-local_udp_redir_port"]
 	local local_udp_redir_address = var["-local_udp_redir_address"] or "0.0.0.0"
-	plugin_sh = var["-plugin_sh"] or ""
 
 	if api.is_ipv6(server_host) then
 		server_host = api.get_ipv6_only(server_host)
@@ -62,7 +61,8 @@ function gen_config(var)
 	local server = server_host
 
 	local plugin_file
-	if node.plugin and node.plugin ~= "none" then
+	if node.plugin and node.plugin ~= "" and node.plugin ~= "none" then
+		plugin_sh = var["-plugin_sh"] or ""
 		plugin_file = (plugin_sh ~="") and plugin_sh or node.plugin
 		plugin_bin = node.plugin
 	end
@@ -81,10 +81,8 @@ function gen_config(var)
 	}
 
 	if node.type == "SS" then
-		if node.plugin and node.plugin ~= "none" then
-			config.plugin = plugin_file
-			config.plugin_opts = node.plugin_opts or nil
-		end
+		config.plugin = plugin_file or nil
+		config.plugin_opts = (plugin_file) and node.plugin_opts or nil
 		config.mode = mode
 	elseif node.type == "SSR" then
 		config.protocol = node.protocol
@@ -101,7 +99,7 @@ function gen_config(var)
 					password = node.password,
 					timeout = tonumber(node.timeout),
 					plugin = plugin_file or nil,
-					plugin_opts = (node.plugin and node.plugin ~= "none") and node.plugin_opts or nil
+					plugin_opts = (plugin_file) and node.plugin_opts or nil
 				}
 			},
 			locals = {},

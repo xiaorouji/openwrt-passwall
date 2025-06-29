@@ -47,17 +47,29 @@ o = s:option(ListValue, _n("tcp_fast_open"), "TCP " .. translate("Fast Open"), t
 o:value("false")
 o:value("true")
 
-o = s:option(ListValue, _n("plugin"), translate("plugin"))
+o = s:option(Flag, _n("plugin_enabled"), translate("plugin"))
+o.default = 0
+
+o = s:option(Value, _n("plugin"), "SIP003 " .. translate("plugin"), translate("Supports custom SIP003 plugins, Make sure the plugin is installed."))
+o.default = "none"
 o:value("none", translate("none"))
 if api.is_finded("xray-plugin") then o:value("xray-plugin") end
 if api.is_finded("v2ray-plugin") then o:value("v2ray-plugin") end
 if api.is_finded("obfs-local") then o:value("obfs-local") end
 if api.is_finded("shadow-tls") then o:value("shadow-tls") end
+o:depends({ [_n("plugin_enabled")] = true })
+o.validate = function(self, value, t)
+	if value and value ~= "" and value ~= "none" then
+		if not api.is_finded(value) then
+			return nil, value .. ": " .. translate("Can't find this file!")
+		else
+			return value
+		end
+	end
+	return nil
+end
 
 o = s:option(Value, _n("plugin_opts"), translate("opts"))
-o:depends({ [_n("plugin")] = "xray-plugin"})
-o:depends({ [_n("plugin")] = "v2ray-plugin"})
-o:depends({ [_n("plugin")] = "obfs-local"})
-o:depends({ [_n("plugin")] = "shadow-tls"})
+o:depends({ [_n("plugin_enabled")] = true })
 
 api.luci_types(arg[1], m, s, type_name, option_prefix)
