@@ -94,8 +94,11 @@ url_test_node() {
 		local probeUrl="www.google.com/generate_204"
 		[ "${chn_list}" = "proxy" ] && probeUrl="www.baidu.com"
 		result=$(${_curl} --max-time 5 -o /dev/null -I -skL -x ${curlx} ${curl_arg}${probeUrl})
+		# 结束 SS 插件进程
+		local pid_file="/tmp/etc/${CONFIG}/url_test_${node_id}_plugin.pid"
+		[ -s "$pid_file" ] && kill -9 "$(head -n 1 "$pid_file")" >/dev/null 2>&1
 		pgrep -af "url_test_${node_id}" | awk '! /test\.sh/{print $1}' | xargs kill -9 >/dev/null 2>&1
-		rm -rf /tmp/etc/${CONFIG}/*url_test_${node_id}*.json
+		rm -rf /tmp/etc/${CONFIG}/*url_test_${node_id}*.*
 	}
 	echo $result
 }
