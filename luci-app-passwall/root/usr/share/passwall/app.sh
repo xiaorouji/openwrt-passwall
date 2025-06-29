@@ -573,7 +573,7 @@ run_dns2socks() {
 	[ -n "$log_file" ] || log_file="/dev/null"
 	dns=$(get_first_dns dns 53 | sed 's/#/:/g')
 	[ -n "$socks" ] && {
-		socks=$(echo $socks | sed "s/#/:/g")
+		socks="${socks//#/:}"
 		socks_address=$(echo $socks | awk -F ':' '{print $1}')
 		socks_port=$(echo $socks | awk -F ':' '{print $2}')
 	}
@@ -655,7 +655,7 @@ run_socks() {
 		local _socks_password=$(config_n_get $node password)
 		[ "$http_port" != "0" ] && {
 			http_flag=1
-			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
+			config_file="${config_file//SOCKS/HTTP_SOCKS}"
 			local _extra_param="-local_http_address $bind -local_http_port $http_port"
 		}
 		local bin=$(first_type $(config_t_get global_app sing_box_file) sing-box)
@@ -675,7 +675,7 @@ run_socks() {
 	sing-box)
 		[ "$http_port" != "0" ] && {
 			http_flag=1
-			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
+			config_file="${config_file//SOCKS/HTTP_SOCKS}"
 			local _args="http_address=$bind http_port=$http_port"
 		}
 		[ -n "$relay_port" ] && _args="${_args} server_host=$server_host server_port=$server_port"
@@ -685,7 +685,7 @@ run_socks() {
 	xray)
 		[ "$http_port" != "0" ] && {
 			http_flag=1
-			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
+			config_file="${config_file//SOCKS/HTTP_SOCKS}"
 			local _args="http_address=$bind http_port=$http_port"
 		}
 		[ -n "$relay_port" ] && _args="${_args} server_host=$server_host server_port=$server_port"
@@ -716,7 +716,7 @@ run_socks() {
 		local _extra_param
 		[ "$http_port" != "0" ] && {
 			http_flag=1
-			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
+			config_file="${config_file//SOCKS/HTTP_SOCKS}"
 			_extra_param="-local_http_address $bind -local_http_port $http_port"
 		}
 		[ -n "$no_run" ] || {
@@ -729,7 +729,7 @@ run_socks() {
 	hysteria2)
 		[ "$http_port" != "0" ] && {
 			http_flag=1
-			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
+			config_file="${config_file//SOCKS/HTTP_SOCKS}"
 			local _extra_param="-local_http_address $bind -local_http_port $http_port"
 		}
 		lua $UTIL_HYSTERIA2 gen_config -node $node -local_socks_address $bind -local_socks_port $socks_port -server_host $server_host -server_port $server_port ${_extra_param} > $config_file
@@ -899,19 +899,19 @@ run_redir() {
 			[ "$tcp_node_socks" = "1" ] && {
 				tcp_node_socks_flag=1
 				_args="${_args} socks_address=${tcp_node_socks_bind} socks_port=${tcp_node_socks_port}"
-				config_file=$(echo $config_file | sed "s/TCP/TCP_SOCKS/g")
+				config_file="${config_file//TCP/TCP_SOCKS}"
 			}
 			[ "$tcp_node_http" = "1" ] && {
 				tcp_node_http_flag=1
 				_args="${_args} http_port=${tcp_node_http_port}"
-				config_file=$(echo $config_file | sed "s/TCP/TCP_HTTP/g")
+				config_file="${config_file//TCP/TCP_HTTP}"
 			}
 			[ "$TCP_UDP" = "1" ] && {
 				UDP_REDIR_PORT=$local_port
 				unset UDP_NODE
 				_flag="TCP_UDP"
 				_args="${_args} udp_redir_port=${UDP_REDIR_PORT}"
-				config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
+				config_file="${config_file//TCP/TCP_UDP}"
 			}
 
 			local protocol=$(config_n_get $node protocol)
@@ -933,7 +933,7 @@ run_redir() {
 
 			[ "${DNS_MODE}" = "sing-box" ] && {
 				NO_PLUGIN_DNS=1
-				config_file=$(echo $config_file | sed "s/.json/_DNS.json/g")
+				config_file="${config_file//.json/_DNS.json}"
 				_args="${_args} remote_dns_query_strategy=${REMOTE_DNS_QUERY_STRATEGY}"
 				DNSMASQ_FILTER_PROXY_IPV6=0
 				local _remote_dns_client_ip=$(config_t_get global remote_dns_client_ip)
@@ -985,19 +985,19 @@ run_redir() {
 			[ "$tcp_node_socks" = "1" ] && {
 				tcp_node_socks_flag=1
 				_args="${_args} socks_address=${tcp_node_socks_bind} socks_port=${tcp_node_socks_port}"
-				config_file=$(echo $config_file | sed "s/TCP/TCP_SOCKS/g")
+				config_file="${config_file//TCP/TCP_SOCKS}"
 			}
 			[ "$tcp_node_http" = "1" ] && {
 				tcp_node_http_flag=1
 				_args="${_args} http_port=${tcp_node_http_port}"
-				config_file=$(echo $config_file | sed "s/TCP/TCP_HTTP/g")
+				config_file="${config_file//TCP/TCP_HTTP}"
 			}
 			[ "$TCP_UDP" = "1" ] && {
 				UDP_REDIR_PORT=$local_port
 				unset UDP_NODE
 				_flag="TCP_UDP"
 				_args="${_args} udp_redir_port=${UDP_REDIR_PORT}"
-				config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
+				config_file="${config_file//TCP/TCP_UDP}"
 			}
 
 			local protocol=$(config_n_get $node protocol)
@@ -1019,7 +1019,7 @@ run_redir() {
 
 			[ "${DNS_MODE}" = "xray" ] && {
 				NO_PLUGIN_DNS=1
-				config_file=$(echo $config_file | sed "s/.json/_DNS.json/g")
+				config_file="${config_file//.json/_DNS.json}"
 				_args="${_args} remote_dns_query_strategy=${REMOTE_DNS_QUERY_STRATEGY}"
 				DNSMASQ_FILTER_PROXY_IPV6=0
 				local _remote_dns_client_ip=$(config_t_get global remote_dns_client_ip)
@@ -1058,7 +1058,7 @@ run_redir() {
 		trojan*)
 			[ "${TCP_PROXY_WAY}" = "tproxy" ] && lua_tproxy_arg="-use_tproxy true"
 			[ "$TCP_UDP" = "1" ] && {
-				config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
+				config_file="${config_file//TCP/TCP_UDP}"
 				UDP_REDIR_PORT=$TCP_REDIR_PORT
 				unset UDP_NODE
 			}
@@ -1073,7 +1073,7 @@ run_redir() {
 		ssr)
 			[ "${TCP_PROXY_WAY}" = "tproxy" ] && lua_tproxy_arg="-tcp_tproxy true"
 			[ "$TCP_UDP" = "1" ] && {
-				config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
+				config_file="${config_file//TCP/TCP_UDP}"
 				UDP_REDIR_PORT=$TCP_REDIR_PORT
 				unset UDP_NODE
 				_extra_param="-u"
@@ -1085,7 +1085,7 @@ run_redir() {
 			[ "${TCP_PROXY_WAY}" = "tproxy" ] && lua_tproxy_arg="-tcp_tproxy true"
 			local lua_mode_arg="-mode tcp_only"
 			[ "$TCP_UDP" = "1" ] && {
-				config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
+				config_file="${config_file//TCP/TCP_UDP}"
 				UDP_REDIR_PORT=$TCP_REDIR_PORT
 				unset UDP_NODE
 				lua_mode_arg="-mode tcp_and_udp"
@@ -1100,16 +1100,16 @@ run_redir() {
 			[ "${TCP_PROXY_WAY}" = "tproxy" ] && _extra_param="${_extra_param} -tcp_tproxy true"
 			[ "$tcp_node_socks" = "1" ] && {
 				tcp_node_socks_flag=1
-				config_file=$(echo $config_file | sed "s/TCP/TCP_SOCKS/g")
+				config_file="${config_file//TCP/TCP_SOCKS}"
 				_extra_param="${_extra_param} -local_socks_address ${tcp_node_socks_bind} -local_socks_port ${tcp_node_socks_port}"
 			}
 			[ "$tcp_node_http" = "1" ] && {
 				tcp_node_http_flag=1
-				config_file=$(echo $config_file | sed "s/TCP/TCP_HTTP/g")
+				config_file="${config_file//TCP/TCP_HTTP}"
 				_extra_param="${_extra_param} -local_http_port ${tcp_node_http_port}"
 			}
 			[ "$TCP_UDP" = "1" ] && {
-				config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
+				config_file="${config_file//TCP/TCP_UDP}"
 				UDP_REDIR_PORT=$TCP_REDIR_PORT
 				unset UDP_NODE
 				_extra_param="${_extra_param} -local_udp_redir_port $local_port"
@@ -1123,16 +1123,16 @@ run_redir() {
 			local _extra_param="-local_tcp_redir_port $local_port"
 			[ "$tcp_node_socks" = "1" ] && {
 				tcp_node_socks_flag=1
-				config_file=$(echo $config_file | sed "s/TCP/TCP_SOCKS/g")
+				config_file="${config_file//TCP/TCP_SOCKS}"
 				_extra_param="${_extra_param} -local_socks_address ${tcp_node_socks_bind} -local_socks_port ${tcp_node_socks_port}"
 			}
 			[ "$tcp_node_http" = "1" ] && {
 				tcp_node_http_flag=1
-				config_file=$(echo $config_file | sed "s/TCP/TCP_HTTP/g")
+				config_file="${config_file//TCP/TCP_HTTP}"
 				_extra_param="${_extra_param} -local_http_port ${tcp_node_http_port}"
 			}
 			[ "$TCP_UDP" = "1" ] && {
-				config_file=$(echo $config_file | sed "s/TCP/TCP_UDP/g")
+				config_file="${config_file//TCP/TCP_UDP}"
 				UDP_REDIR_PORT=$TCP_REDIR_PORT
 				unset UDP_NODE
 				_extra_param="${_extra_param} -local_udp_redir_port $local_port"
@@ -1982,7 +1982,7 @@ acl_app() {
 									if [ "$dns_mode" = "sing-box" ] || [ "$dns_mode" = "xray" ]; then
 										dns_port=$(get_new_port $(expr $dns_port + 1))
 										_dns_port=$dns_port
-										config_file=$(echo $config_file | sed "s/TCP_/DNS_${_dns_port}_TCP_/g")
+										config_file="${config_file//TCP_/DNS_${_dns_port}_TCP_}"
 										remote_dns_doh=${remote_dns}
 										dnsmasq_filter_proxy_ipv6=0
 										remote_dns_query_strategy="UseIP"
@@ -1991,7 +1991,7 @@ acl_app() {
 										_extra_param="dns_listen_port=${_dns_port} remote_dns_protocol=${v2ray_dns_mode} remote_dns_tcp_server=${remote_dns} remote_dns_doh=${remote_dns_doh} remote_dns_query_strategy=${remote_dns_query_strategy} remote_dns_client_ip=${remote_dns_client_ip}"
 									fi
 									[ -n "$udp_node" ] && ([ "$udp_node" = "tcp" ] || [ "$udp_node" = "$tcp_node" ]) && {
-										config_file=$(echo $config_file | sed "s/TCP_/TCP_UDP_/g")
+										config_file="${config_file//TCP_/TCP_UDP_}"
 										_extra_param="${_extra_param} udp_redir_port=$redir_port"
 									}
 									config_file="$TMP_PATH/$config_file"
