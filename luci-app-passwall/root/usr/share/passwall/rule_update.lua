@@ -33,17 +33,17 @@ local gfwlist_url = uci:get(name, "@global_rules[0]", "gfwlist_url") or {"https:
 local chnroute_url = uci:get(name, "@global_rules[0]", "chnroute_url") or {"https://ispip.clang.cn/all_cn.txt"}
 local chnroute6_url =  uci:get(name, "@global_rules[0]", "chnroute6_url") or {"https://ispip.clang.cn/all_cn_ipv6.txt"}
 local chnlist_url = uci:get(name, "@global_rules[0]", "chnlist_url") or {"https://fastly.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/accelerated-domains.china.conf","https://fastly.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/apple.china.conf","https://fastly.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/google.china.conf"}
-local geoip_url =  uci:get(name, "@global_rules[0]", "geoip_url") or "https://fastly.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geoip.dat"
-local geosite_url =  uci:get(name, "@global_rules[0]", "geosite_url") or "https://fastly.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat"
+local geoip_url =  uci:get(name, "@global_rules[0]", "geoip_url") or "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"
+local geosite_url =  uci:get(name, "@global_rules[0]", "geosite_url") or "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
 local asset_location = uci:get(name, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"
 local use_nft = uci:get(name, "@global_forwarding[0]", "use_nft") or "0"
 
 --兼容旧版本geo下载方式的配置，择机删除。
 if geoip_url:match(".*/([^/]+)$") == "latest" then
-	geoip_url = "https://fastly.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geoip.dat"
+	geoip_url = "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"
 end
 if geosite_url:match(".*/([^/]+)$") == "latest" then
-	geosite_url = "https://fastly.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat"
+	geosite_url = "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
 end
 
 if arg3 == "cron" then
@@ -315,7 +315,7 @@ local function fetch_geofile(geo_name, geo_type, url)
 				reboot = 1
 				log(geo_type .. " 更新成功。")
 			else
-				log(geo_type .. " 更新失败，请稍后再试。")
+				log(geo_type .. " 更新失败，请稍后重试或更换更新URL。")
 				return 1
 			end
 		else
@@ -328,7 +328,7 @@ local function fetch_geofile(geo_name, geo_type, url)
 			log(geo_type .. " 更新成功。")
 		end
 	else
-		log(geo_type .. " 更新失败，请稍后再试。")
+		log(geo_type .. " 更新失败，请稍后重试或更换更新URL。")
 		return 1
 	end
 	return 0
