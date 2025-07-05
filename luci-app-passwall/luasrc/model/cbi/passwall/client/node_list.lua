@@ -61,6 +61,16 @@ function s.remove(e, t)
 			m:set(s[".name"], "udp_node", "default")
 		end
 	end)
+	if (m:get(t, "add_mode") or "0") == "2" then
+		local add_from = m:get(t, "add_from") or ""
+		if add_from ~= "" then
+			m.uci:foreach(appname, "subscribe_list", function(s)
+				if s["remark"] == add_from then
+					m:del(s[".name"], "md5")
+				end
+			end)
+		end
+	end
 	TypedSection.remove(e, t)
 	local new_node = ""
 	local node0 = m:get("@nodes[0]") or nil
