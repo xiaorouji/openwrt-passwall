@@ -241,7 +241,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 						shadow_tls = 1;
 					}
 				}
-			} else {
+			} else if (v_type === "sing-box" || v_type === "Xray") {
 				var v_transport = opt.get(dom_prefix + "transport").value;
 				if (v_transport === "ws") {
 					params += opt.query("host", dom_prefix + "ws_host");
@@ -295,7 +295,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 					params += opt.query("sni", dom_prefix + "tls_serverName");
 				}
 
-				if (opt.get(dom_prefix + "shadowtls").checked) {
+				if (opt.get(dom_prefix + "shadowtls")?.checked) {
 					let st_plugin_str = "";
 					let st_version = opt.get(dom_prefix + "shadowtls_version")?.value;
 					if (st_version) st_plugin_str += "v" + st_version + "=1;";
@@ -373,9 +373,9 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 				v_transport = "kcp";
 				info.type = opt.get(dom_prefix + "mkcp_guise").value;
 			} else if (v_transport === "quic") {
-				info.type = opt.get(dom_prefix + "quic_guise").value;
-				info.key = opt.get(dom_prefix + "quic_key").value;
-				info.securty = opt.get(dom_prefix + "quic_security").value;
+				info.type = opt.get(dom_prefix + "quic_guise")?.value;
+				info.key = opt.get(dom_prefix + "quic_key")?.value;
+				info.securty = opt.get(dom_prefix + "quic_security")?.value;
 			} else if (v_transport === "grpc") {
 				info.path = opt.get(dom_prefix + "grpc_serviceName").value;
 			}
