@@ -431,6 +431,8 @@ end
 
 function clear_all_nodes()
 	uci:set(appname, '@global[0]', "enabled", "0")
+	uci:set(appname, '@global[0]', "socks_enabled", "0")
+	uci:set(appname, '@haproxy_config[0]', "balancing_enable", "0")
 	uci:delete(appname, '@global[0]', "tcp_node")
 	uci:delete(appname, '@global[0]', "udp_node")
 	uci:foreach(appname, "socks", function(t)
@@ -452,7 +454,6 @@ function clear_all_nodes()
 	end)
 
 	api.uci_save(uci, appname, true, true)
-	luci.sys.call("/etc/init.d/" .. appname .. " stop")
 end
 
 function delete_select_nodes()
@@ -512,7 +513,6 @@ function delete_select_nodes()
 		uci:delete(appname, w)
 	end)
 	api.uci_save(uci, appname, true, true)
-	luci.sys.call("/etc/init.d/" .. appname .. " restart > /dev/null 2>&1 &")
 end
 
 function update_rules()
