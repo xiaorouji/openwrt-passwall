@@ -1,0 +1,220 @@
+<%
+local api = require "luci.passwall.api"
+-%>
+
+<div class="cbi-section">
+	<h3><%:Backup and Restore%></h3>
+	<div class="cbi-section-descr">
+		<%:Backup or Restore Client and Server Configurations.%>
+		<br>
+		<font color="red"><%:Note: Restoring configurations across different versions may cause compatibility issues.%></font>
+	</div>
+</div>
+
+<div class="cbi-value" id="_backup_div">
+	<label class="cbi-value-title"><%:Create Backup File%></label>
+	<div class="cbi-value-field">
+		<input class="btn cbi-button cbi-button-save" type="button" onclick="dl_backup()" value="<%:DL Backup%>" />
+	</div>
+</div>
+
+<div class="cbi-value" id="_upload_div">
+	<label class="cbi-value-title"><%:Restore Backup File%></label>
+	<div class="cbi-value-field">
+		<input class="btn cbi-button cbi-button-apply" type="button" onclick="show_upload_win()" value="<%:RST Backup%>" />
+	</div>
+</div>
+
+<div class="cbi-value" id="_reset_div">
+	<label class="cbi-value-title"><%:Restore to default configuration%></label>
+	<div class="cbi-value-field">
+		<input class="btn cbi-button cbi-button-reset" type="button" onclick="do_reset()" value="<%:Do Reset%>" />
+	</div>
+</div>
+
+<div class="cbi-value"></div>
+
+<div id="upload-modal" class="up-modal" style="display:none;">
+	<div class="up-modal-content">
+		<h3><%:Restore Backup File%></h3>
+		<div class="cbi-value" id="_upload_div">
+			<div class="up-cbi-value-field">
+				<input class="cbi-input-file" type="file" id="ulfile" name="ulfile" accept=".tar.gz" required />
+				<br />
+				<div class="up-button-container">
+					<input class="btn cbi-button cbi-button-apply" type="button" id="upload-btn" onclick="do_upload()" value="<%:UL Restore%>" />
+					<input class="btn cbi-button cbi-button-remove" type="button" onclick="close_upload_win()" value="<%:CLOSE WIN%>" />
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<style>
+.up-modal {
+	position: fixed;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	background: white;
+	padding: 20px;
+	border: 2px solid #ccc;
+	box-shadow: 0 0 10px rgba(0,0,0,0.5);
+	z-index: 1000;
+}
+
+.up-modal-content {
+	width: 100%;
+	max-width: 400px;
+	text-align: center;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
+.up-button-container {
+	display: flex;
+	justify-content: space-between;
+	width: 100%;
+	max-width: 250px;
+}
+
+.up-cbi-value-field {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	width: 100%;
+}
+</style>
+
+<script>
+	function show_upload_win(btn) {
+		document.getElementById("upload-modal").style.display = "block";
+	}
+
+	function close_upload_win(btn) {
+		document.getElementById("upload-modal").style.display = "none";
+	}
+
+	function dl_backup(btn) {
+		fetch('<%= api.url("create_backup") %>', {
+			method: 'POST'
+		})
+		.then(response => {
+			if (!response.ok) {
+				throw new Error("备份失败！");
+			}
+			const filename = response.headers.get("X-Backup-Filename");
+			if (!filename) {
+				return;
+			}
+			return response.blob().then(blob => ({ blob, filename }));
+		})
+		.then(result => {
+			if (!result) return;
+			const { blob, filename } = result;
+			const url = window.URL.createObjectURL(blob);
+			const a = document.createElement("a");
+			a.href = url;
+			a.download = filename;
+			document.body.appendChild(a);
+			a.click();
+			a.remove();
+			window.URL.revokeObjectURL(url);
+		})
+		.catch(error => alert(error.message));
+	}
+
+	function do_reset(btn) {
+		if (confirm("<%: Do you want to restore the client to default settings?%>")) {
+			setTimeout(function () {
+				if (confirm("<%: Are you sure you want to restore the client to default settings?%>")) {
+					var xhr1 = new XMLHttpRequest();
+					xhr1.open("GET",'<%= api.url("clear_log") %>', true);
+					xhr1.send(); 
+					var xhr2 = new XMLHttpRequest();
+					xhr2.open("GET",'<%= api.url("reset_config") %>', true);
+					xhr2.send(); 
+					window.location.href = '<%= api.url("log") %>'
+				}
+			}, 1000);
+		}
+	}
+
+	function do_upload(btn) {
+		const fileInput = document.getElementById("ulfile");
+		const file = fileInput.files[0];
+		if (!file) {
+			alert("<%:Please select a file first.%>");
+			return;
+		}
+		if (!file.name.endsWith(".tar.gz")) {
+			alert("<%:Invalid file type. Please upload a .tar.gz file.%>");
+			return;
+		}
+		const maxSize = 10 * 1024 * 1024; // 10MB
+		if (file.size > maxSize) {
+			alert("<%:File size exceeds 10MB limit.%>");
+			return;
+		}
+
+		const reader = new FileReader();
+		reader.onload = function (e) {
+			const binaryString = e.target.result; // ArrayBuffer
+			const binary = new Uint8Array(binaryString);
+			let binaryText = "";
+			for (let i = 0; i < binary.length; i++) {
+				binaryText += String.fromCharCode(binary[i]);
+			}
+
+			const base64Data = btoa(binaryText);
+
+			const targetByteSize = 64 * 1024; // 分片大小 64KB
+			let chunkSize = Math.floor(targetByteSize * 4 / 3);
+			chunkSize = chunkSize + (4 - (chunkSize % 4)) % 4;
+			const totalChunks = Math.ceil(base64Data.length / chunkSize);
+			let currentChunk = 0;
+
+			function sendNextChunk() {
+				if (currentChunk < totalChunks) {
+					const chunk = base64Data.substring(currentChunk * chunkSize, (currentChunk + 1) * chunkSize);
+					const xhr = new XMLHttpRequest();
+					xhr.open("POST", '<%= api.url("restore_backup") %>', true);
+					xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+					xhr.onreadystatechange = function () {
+						if (xhr.readyState === 4) {
+							if (xhr.status === 200) {
+								const resp = JSON.parse(xhr.responseText);
+								if (resp.status === "success") {
+									currentChunk++;
+									document.getElementById("upload-btn").value = "Uploading... " + Math.floor((currentChunk / totalChunks) * 100) + "%";
+									sendNextChunk();
+								} else {
+									alert("Upload error: " + resp.message);
+									document.getElementById("upload-btn").value = "<%:UL Restore%>";
+								}
+							} else {
+								alert("Upload failed with status " + xhr.status);
+								document.getElementById("upload-btn").value = "<%:UL Restore%>";
+							}
+						}
+					};
+					xhr.send(
+						"filename=" + encodeURIComponent(file.name) +
+						"&chunk=" + encodeURIComponent(chunk) +
+						"&chunk_index=" + currentChunk +
+						"&total_chunks=" + totalChunks
+					);
+				} else {
+					//alert("Upload completed.");
+					document.getElementById("upload-btn").value = "<%:UL Restore%>";
+					window.location.href = '<%= api.url("log") %>'
+				}
+			}
+			sendNextChunk();
+		};
+		reader.readAsArrayBuffer(file);
+	}
+
+</script>

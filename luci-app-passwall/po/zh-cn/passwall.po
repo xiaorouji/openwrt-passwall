@@ -52,6 +52,9 @@ msgstr "规则列表"
 msgid "Access control"
 msgstr "访问控制"
 
+msgid "Watch Logs"
+msgstr "查看日志"
+
 msgid "Node Config"
 msgstr "节点配置"
 
@@ -1771,8 +1774,8 @@ msgstr "总行数："
 msgid "Read List"
 msgstr "读取列表"
 
-msgid "Log Maint"
-msgstr "日志维护"
+msgid "Maintain"
+msgstr "维护"
 
 msgid "Backup and Restore"
 msgstr "备份还原"
@@ -1806,6 +1809,15 @@ msgstr "恢复默认配置"
 
 msgid "Do Reset"
 msgstr "执行重置"
+
+msgid "Please select a file first."
+msgstr "请先选择一个文件。"
+
+msgid "Invalid file type. Please upload a .tar.gz file."
+msgstr "文件类型无效，请上传一个 .tar.gz 文件。"
+
+msgid "File size exceeds 10MB limit."
+msgstr "文件大小超过 10MB 限制。"
 
 msgid "Do you want to restore the client to default settings?"
 msgstr "是否要恢复客户端默认配置？"

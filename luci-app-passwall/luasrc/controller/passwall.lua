@@ -49,7 +49,7 @@ function index()
 	entry({"admin", "services", appname, "socks_config"}, cbi(appname .. "/client/socks_config")).leaf = true
 	entry({"admin", "services", appname, "acl"}, cbi(appname .. "/client/acl"), _("Access control"), 98).leaf = true
 	entry({"admin", "services", appname, "acl_config"}, cbi(appname .. "/client/acl_config")).leaf = true
-	entry({"admin", "services", appname, "log"}, form(appname .. "/client/log"), _("Log Maint"), 999).leaf = true
+	entry({"admin", "services", appname, "log"}, form(appname .. "/client/log"), _("Watch Logs"), 999).leaf = true
 
 	--[[ Server ]]
 	entry({"admin", "services", appname, "server"}, cbi(appname .. "/server/index"), _("Server-Side"), 99).leaf = true
@@ -97,7 +97,8 @@ function index()
 	end
 
 	--[[Backup]]
-	entry({"admin", "services", appname, "backup"}, call("create_backup")).leaf = true
+	entry({"admin", "services", appname, "create_backup"}, call("create_backup")).leaf = true
+	entry({"admin", "services", appname, "restore_backup"}, call("restore_backup")).leaf = true
 
 	--[[geoview]]
 	entry({"admin", "services", appname, "geo_view"}, call("geo_view")).leaf = true
@@ -590,17 +591,18 @@ function read_rulelist()
 	end
 end
 
+local backup_files = {
+    "/etc/config/passwall",
+    "/etc/config/passwall_server",
+    "/usr/share/passwall/rules/block_host",
+    "/usr/share/passwall/rules/block_ip",
+    "/usr/share/passwall/rules/direct_host",
+    "/usr/share/passwall/rules/direct_ip",
+    "/usr/share/passwall/rules/proxy_host",
+    "/usr/share/passwall/rules/proxy_ip"
+}
+
 function create_backup()
-	local backup_files = {
-		"/etc/config/passwall",
-		"/etc/config/passwall_server",
-		"/usr/share/passwall/rules/block_host",
-		"/usr/share/passwall/rules/block_ip",
-		"/usr/share/passwall/rules/direct_host",
-		"/usr/share/passwall/rules/direct_ip",
-		"/usr/share/passwall/rules/proxy_host",
-		"/usr/share/passwall/rules/proxy_ip"
-	}
 	local date = os.date("%y%m%d%H%M")
 	local tar_file = "/tmp/passwall-" .. date .. "-backup.tar.gz"
 	fs.remove(tar_file)
@@ -611,6 +613,57 @@ function create_backup()
 	http.prepare_content("application/octet-stream")
 	http.write(fs.readfile(tar_file))
 	fs.remove(tar_file)
+end
+
+function restore_backup()
+	http.prepare_content("application/json")
+	local ok, err = pcall(function()
+		local filename = http.formvalue("filename")
+		local chunk = http.formvalue("chunk")
+		local chunk_index = tonumber(http.formvalue("chunk_index") or "-1")
+		local total_chunks = tonumber(http.formvalue("total_chunks") or "-1")
+		if not filename or not chunk then
+			http.write_json({ status = "error", message = "Missing filename or chunk" })
+			return
+		end
+		local file_path = "/tmp/" .. filename
+		local decoded = nixio.bin.b64decode(chunk)
+		local fp = io.open(file_path, "a+")
+		if not fp then
+			http.write_json({ status = "error", message = "Failed to open file for writing: " .. file_path })
+			return
+		end
+		fp:write(decoded)
+		fp:close()
+		if chunk_index + 1 == total_chunks then
+			api.sys.call("echo '' > /tmp/log/passwall.log")
+			api.log(" * PassWall 配置文件上传成功…")
+			local temp_dir = '/tmp/passwall_bak'
+			api.sys.call("mkdir -p " .. temp_dir)
+			if api.sys.call("tar -xzf " .. file_path .. " -C " .. temp_dir) == 0 then
+				for _, backup_file in ipairs(backup_files) do
+					local temp_file = temp_dir .. backup_file
+					if fs.access(temp_file) then
+						api.sys.call("cp -f " .. temp_file .. " " .. backup_file)
+					end
+				end
+				api.log(" * PassWall 配置还原成功…")
+				api.log(" * 重启 PassWall 服务中…\n")
+				api.sys.call('/etc/init.d/passwall restart > /dev/null 2>&1 &')
+				api.sys.call('/etc/init.d/passwall_server restart > /dev/null 2>&1 &')
+			else
+				api.log(" * PassWall 配置文件解压失败，请重试！")
+			end
+			api.sys.call("rm -rf " .. temp_dir)
+			fs.remove(file_path)
+			http.write_json({ status = "success", message = "Upload completed", path = file_path })
+		else
+			http.write_json({ status = "success", message = "Chunk received" })
+		end
+	end)
+	if not ok then
+		http.write_json({ status = "error", message = tostring(err) })
+	end
 end
 
 function geo_view()
