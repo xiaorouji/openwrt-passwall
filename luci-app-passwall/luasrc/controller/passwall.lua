@@ -9,6 +9,7 @@ local fs = api.fs
 local http = require "luci.http"
 local util = require "luci.util"
 local i18n = require "luci.i18n"
+local jsonStringify = luci.jsonc.stringify
 
 function index()
 	if not nixio.fs.access("/etc/config/passwall") then
@@ -106,7 +107,7 @@ end
 
 local function http_write_json(content)
 	http.prepare_content("application/json")
-	http.write_json(content or {code = 1})
+	http.write(jsonStringify(content or {code = 1}))
 end
 
 function reset_config()
@@ -357,7 +358,7 @@ function connect_status()
 		end
 	end
 	luci.http.prepare_content("application/json")
-	luci.http.write_json(e)
+	http.write(jsonStringify(e))
 end
 
 function ping_node()
@@ -616,21 +617,20 @@ function create_backup()
 end
 
 function restore_backup()
-	http.prepare_content("application/json")
 	local ok, err = pcall(function()
 		local filename = http.formvalue("filename")
 		local chunk = http.formvalue("chunk")
 		local chunk_index = tonumber(http.formvalue("chunk_index") or "-1")
 		local total_chunks = tonumber(http.formvalue("total_chunks") or "-1")
 		if not filename or not chunk then
-			http.write_json({ status = "error", message = "Missing filename or chunk" })
+			http_write_json({ status = "error", message = "Missing filename or chunk" })
 			return
 		end
 		local file_path = "/tmp/" .. filename
 		local decoded = nixio.bin.b64decode(chunk)
 		local fp = io.open(file_path, "a+")
 		if not fp then
-			http.write_json({ status = "error", message = "Failed to open file for writing: " .. file_path })
+			http_write_json({ status = "error", message = "Failed to open file for writing: " .. file_path })
 			return
 		end
 		fp:write(decoded)
@@ -656,13 +656,13 @@ function restore_backup()
 			end
 			api.sys.call("rm -rf " .. temp_dir)
 			fs.remove(file_path)
-			http.write_json({ status = "success", message = "Upload completed", path = file_path })
+			http_write_json({ status = "success", message = "Upload completed", path = file_path })
 		else
-			http.write_json({ status = "success", message = "Chunk received" })
+			http_write_json({ status = "success", message = "Chunk received" })
 		end
 	end)
 	if not ok then
-		http.write_json({ status = "error", message = tostring(err) })
+		http_write_json({ status = "error", message = tostring(err) })
 	end
 end
 

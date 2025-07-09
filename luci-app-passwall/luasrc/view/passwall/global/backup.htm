@@ -39,7 +39,7 @@ local api = require "luci.passwall.api"
 		<h3><%:Restore Backup File%></h3>
 		<div class="cbi-value" id="_upload_div">
 			<div class="up-cbi-value-field">
-				<input class="cbi-input-file" type="file" id="ulfile" name="ulfile" accept=".tar.gz" required />
+				<input class="cbi-input-file" type="file" id="ulfile" accept=".tar.gz" />
 				<br />
 				<div class="up-button-container">
 					<input class="btn cbi-button cbi-button-apply" type="button" id="upload-btn" onclick="do_upload()" value="<%:UL Restore%>" />
@@ -94,6 +94,7 @@ local api = require "luci.passwall.api"
 	}
 
 	function close_upload_win(btn) {
+		document.getElementById("ulfile").value = "";
 		document.getElementById("upload-modal").style.display = "none";
 	}
 
@@ -151,11 +152,13 @@ local api = require "luci.passwall.api"
 		}
 		if (!file.name.endsWith(".tar.gz")) {
 			alert("<%:Invalid file type. Please upload a .tar.gz file.%>");
+			fileInput.value = "";
 			return;
 		}
 		const maxSize = 10 * 1024 * 1024; // 10MB
 		if (file.size > maxSize) {
 			alert("<%:File size exceeds 10MB limit.%>");
+			fileInput.value = "";
 			return;
 		}
 
