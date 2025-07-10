@@ -679,7 +679,7 @@ run_socks() {
 			local _args="http_address=$bind http_port=$http_port"
 		}
 		[ -n "$relay_port" ] && _args="${_args} server_host=$server_host server_port=$server_port"
-		[ -n "$no_run" ] && _args="${_args} -no_run 1"
+		[ -n "$no_run" ] && _args="${_args} no_run=1"
 		run_singbox flag=$flag node=$node socks_address=$bind socks_port=$socks_port config_file=$config_file log_file=$log_file ${_args}
 	;;
 	xray)
@@ -689,7 +689,7 @@ run_socks() {
 			local _args="http_address=$bind http_port=$http_port"
 		}
 		[ -n "$relay_port" ] && _args="${_args} server_host=$server_host server_port=$server_port"
-		[ -n "$no_run" ] && _args="${_args} -no_run 1"
+		[ -n "$no_run" ] && _args="${_args} no_run=1"
 		run_xray flag=$flag node=$node socks_address=$bind socks_port=$socks_port config_file=$config_file log_file=$log_file ${_args}
 	;;
 	trojan*)

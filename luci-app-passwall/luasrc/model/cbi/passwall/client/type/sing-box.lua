@@ -123,20 +123,26 @@ o.description = translate("The URL used to detect the connection status.")
 
 o = s:option(Value, _n("urltest_interval"), translate("Test interval"))
 o:depends({ [_n("protocol")] = "_urltest" })
-o.datatype = "uinteger"
-o.default = "180"
-o.description = translate("The test interval in seconds.") .. "<br />" ..
+o.default = "3m"
+o.placeholder = "3m"
+o.description = translate("The interval between initiating probes.") .. "<br>" ..
+		translate("The time format is numbers + units, such as '10s', '2h45m', and the supported time units are <code>s</code>, <code>m</code>, <code>h</code>, which correspond to seconds, minutes, and hours, respectively.") .. "<br>" ..
+		translate("When the unit is not filled in, it defaults to seconds.") .. "<br>" ..
 		translate("Test interval must be less or equal than idle timeout.")
 
 o = s:option(Value, _n("urltest_tolerance"), translate("Test tolerance"), translate("The test tolerance in milliseconds."))
 o:depends({ [_n("protocol")] = "_urltest" })
 o.datatype = "uinteger"
+o.placeholder = "50"
 o.default = "50"
 
-o = s:option(Value, _n("urltest_idle_timeout"), translate("Idle timeout"), translate("The idle timeout in seconds."))
+o = s:option(Value, _n("urltest_idle_timeout"), translate("Idle timeout"))
 o:depends({ [_n("protocol")] = "_urltest" })
-o.datatype = "uinteger"
-o.default = "1800"
+o.placeholder = "30m"
+o.default = "30m"
+o.description = translate("The idle timeout.") .. "<br>" ..
+		translate("The time format is numbers + units, such as '10s', '2h45m', and the supported time units are <code>s</code>, <code>m</code>, <code>h</code>, which correspond to seconds, minutes, and hours, respectively.") .. "<br>" ..
+		translate("When the unit is not filled in, it defaults to seconds.")
 
 o = s:option(Flag, _n("urltest_interrupt_exist_connections"), translate("Interrupt existing connections"))
 o:depends({ [_n("protocol")] = "_urltest" })

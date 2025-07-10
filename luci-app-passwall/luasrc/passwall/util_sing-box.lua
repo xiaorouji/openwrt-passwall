@@ -1051,9 +1051,9 @@ function gen_config(var)
 				tag = urltest_tag,
 				outbounds = valid_nodes,
 				url = _node.urltest_url or "https://www.gstatic.com/generate_204",
-				interval = _node.urltest_interval and tonumber(_node.urltest_interval) and string.format("%dm", tonumber(_node.urltest_interval) / 60) or "3m",
-				tolerance = _node.urltest_tolerance and tonumber(_node.urltest_tolerance) and tonumber(_node.urltest_tolerance) or 50,
-				idle_timeout = _node.urltest_idle_timeout and tonumber(_node.urltest_idle_timeout) and string.format("%dm", tonumber(_node.urltest_idle_timeout) / 60) or "30m",
+				interval = (api.format_go_time(_node.urltest_interval) ~= "0s") and api.format_go_time(_node.urltest_interval) or "3m",
+				tolerance = (_node.urltest_tolerance and tonumber(_node.urltest_tolerance) > 0) and tonumber(_node.urltest_tolerance) or 50,
+				idle_timeout = (api.format_go_time(_node.urltest_idle_timeout) ~= "0s") and api.format_go_time(_node.urltest_idle_timeout) or "30m",
 				interrupt_exist_connections = (_node.urltest_interrupt_exist_connections == "true" or _node.urltest_interrupt_exist_connections == "1") and true or false
 			}
 			table.insert(outbounds, outbound)

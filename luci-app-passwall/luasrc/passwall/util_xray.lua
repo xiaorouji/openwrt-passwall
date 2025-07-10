@@ -794,7 +794,7 @@ function gen_config(var)
 						subjectSelector = { "blc-" },
 						pingConfig = {
 							destination = _node.useCustomProbeUrl and _node.probeUrl or nil,
-							interval = _node.probeInterval or "1m",
+							interval = (api.format_go_time(_node.probeInterval) ~= "0s") and api.format_go_time(_node.probeInterval) or "1m",
 							sampling = 3,
 							timeout = "5s"
 						}
