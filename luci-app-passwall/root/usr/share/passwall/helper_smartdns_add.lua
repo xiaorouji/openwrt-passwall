@@ -128,7 +128,7 @@ else
 	local f_in = io.open(custom_conf_path, "r")
 	if f_in then
 		for line in f_in:lines() do
-			line = line:match("^%s*(.-)%s*$")
+			line = api.trim(line)
 			if line ~= "" and not line:match("^#") then
 				local param, value = line:match("^(%S+)%s+(%S+)$")
 				if param and value then custom_config[param] = value end
