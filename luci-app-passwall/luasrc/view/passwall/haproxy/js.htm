@@ -37,8 +37,11 @@
 			const lastVal = lastInput.value.trim();
 			const secondLastVal = secondLastInput.value.trim();
 
-			if (lastVal !== secondLastVal && secondLastVal !== "" && secondLastVal !== "0") {
-				lastInput.value = secondLastVal;
+			const lbssHiddenInput = lastRow.querySelector("div.cbi-dropdown > div > input[type='hidden'][name$='.lbss']");
+			if (!lbssHiddenInput) {
+				if (lastVal !== secondLastVal && secondLastVal !== "" && secondLastVal !== "0") {
+					lastInput.value = secondLastVal;
+				}
 			}
 		}, 300);
 	});
