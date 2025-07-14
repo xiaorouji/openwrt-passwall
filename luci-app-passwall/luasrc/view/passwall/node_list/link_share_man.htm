@@ -261,6 +261,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 				} else if (v_transport === "mkcp") {
 					v_transport = "kcp";
 					params += opt.query("headerType", dom_prefix + "mkcp_guise");
+					params += opt.query("seed", dom_prefix + "mkcp_seed");
 				} else if (v_transport === "quic") {
 					params += opt.query("headerType", dom_prefix + "quic_guise");
 					params += opt.query("key", dom_prefix + "quic_key");
@@ -372,6 +373,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 			} else if (v_transport === "mkcp") {
 				v_transport = "kcp";
 				info.type = opt.get(dom_prefix + "mkcp_guise").value;
+				info.seed = opt.get(dom_prefix + "mkcp_seed").value;
 			} else if (v_transport === "quic") {
 				info.type = opt.get(dom_prefix + "quic_guise")?.value;
 				info.key = opt.get(dom_prefix + "quic_key")?.value;
@@ -419,6 +421,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 			} else if (v_transport === "mkcp") {
 				v_transport = "kcp";
 				params += opt.query("headerType", dom_prefix + "mkcp_guise");
+				params += opt.query("seed", dom_prefix + "mkcp_seed");
 			} else if (v_transport === "quic") {
 				params += opt.query("headerType", dom_prefix + "quic_guise");
 				params += opt.query("key", dom_prefix + "quic_key");
@@ -496,6 +499,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 			} else if (v_transport === "mkcp") {
 				v_transport = "kcp";
 				params += opt.query("headerType", dom_prefix + "mkcp_guise");
+				params += opt.query("seed", dom_prefix + "mkcp_seed");
 			} else if (v_transport === "quic") {
 				params += opt.query("headerType", dom_prefix + "quic_guise");
 				params += opt.query("key", dom_prefix + "quic_key");
@@ -1035,6 +1039,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 					opt.set(dom_prefix + 'quic_key', queryParam.key);
 				} else if (queryParam.type === "mkcp") {
 					opt.set(dom_prefix + 'mkcp_guise', queryParam.headerType || "none");
+					opt.set(dom_prefix + 'mkcp_seed', queryParam.seed || "");
 				} else if (queryParam.type === "grpc") {
 					opt.set(dom_prefix + 'grpc_serviceName', (queryParam.serviceName || queryParam.path) || "");
 					opt.set(dom_prefix + 'grpc_mode', queryParam.mode || "gun");
@@ -1174,6 +1179,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 				opt.set(dom_prefix + 'quic_key', queryParam.key);
 			} else if (queryParam.type === "mkcp") {
 				opt.set(dom_prefix + 'mkcp_guise', queryParam.headerType || "none");
+				opt.set(dom_prefix + 'mkcp_seed', queryParam.seed || "");
 			} else if (queryParam.type === "grpc") {
 				opt.set(dom_prefix + 'grpc_serviceName', (queryParam.serviceName || queryParam.path) || "");
 				opt.set(dom_prefix + 'grpc_mode', queryParam.mode || "gun");
@@ -1283,7 +1289,8 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 				opt.set(dom_prefix + 'quic_security', ssm.securty);
 				opt.set(dom_prefix + 'quic_key', ssm.key);
 			} else if (ssm.net === "kcp" || ssm.net === "mkcp") {
-				opt.set(dom_prefix + 'mkcp_guise', ssm.type);
+				opt.set(dom_prefix + 'mkcp_guise', ssm.type || "none");
+				opt.set(dom_prefix + 'mkcp_seed', ssm.seed || "");
 			} else if (ssm.net === "grpc") {
 				opt.set(dom_prefix + 'grpc_serviceName', ssm.path);
 			}
@@ -1415,6 +1422,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 				opt.set(dom_prefix + 'quic_key', queryParam.key);
 			} else if (queryParam.type === "kcp" || queryParam.type === "mkcp") {
 				opt.set(dom_prefix + 'mkcp_guise', queryParam.headerType || "none");
+				opt.set(dom_prefix + 'mkcp_seed', queryParam.seed || "");
 			} else if (queryParam.type === "grpc") {
 				opt.set(dom_prefix + 'grpc_serviceName', (queryParam.serviceName || queryParam.path) || "");
 				opt.set(dom_prefix + 'grpc_mode', queryParam.mode || "gun");
