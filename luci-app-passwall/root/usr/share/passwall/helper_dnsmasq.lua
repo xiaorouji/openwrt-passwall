@@ -347,7 +347,7 @@ function add_rule(var)
 			if USE_BLOCK_LIST == "1" then
 				for line in io.lines("/usr/share/passwall/rules/block_host") do
 					line = api.get_std_domain(line)
-					if line ~= "" and not line:find("#") then
+					if line ~= "" and not line:find("#") and not line:find(":") then
 						set_domain_address(line, "")
 					end
 				end
@@ -397,7 +397,7 @@ function add_rule(var)
 					--始终用国内DNS解析直连（白名单）列表
 					for line in io.lines("/usr/share/passwall/rules/direct_host") do
 						line = api.get_std_domain(line)
-						if line ~= "" and not line:find("#") then
+						if line ~= "" and not line:find("#") and not line:find(":") then
 							add_excluded_domain(line)
 							set_domain_dns(line, fwd_dns)
 							set_domain_ipset(line, table.concat(sets, ","))
@@ -434,7 +434,7 @@ function add_rule(var)
 					--始终使用远程DNS解析代理（黑名单）列表
 					for line in io.lines("/usr/share/passwall/rules/proxy_host") do
 						line = api.get_std_domain(line)
-						if line ~= "" and not line:find("#") then
+						if line ~= "" and not line:find("#") and not line:find(":") then
 							add_excluded_domain(line)
 							if NO_PROXY_IPV6 == "1" then
 								set_domain_address(line, "::")
