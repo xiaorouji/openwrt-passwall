@@ -184,7 +184,6 @@ function add_rule(var)
 
 	local list1 = {}
 	local excluded_domain = {}
-	local excluded_domain_str = "!"
 
 	local function log(...)
 		if NO_LOGIC_LOG == "1" then
@@ -283,7 +282,6 @@ function add_rule(var)
 			return
 		end
 		table.insert(excluded_domain, domain)
-		excluded_domain_str = excluded_domain_str .. "|" .. domain
 	end
 
 	local function check_excluded_domain(domain)
@@ -291,7 +289,7 @@ function add_rule(var)
 			return false
 		end
 		for k,v in ipairs(excluded_domain) do
-			if domain:find(v) then
+			if domain == v or domain:sub(-#("."..v)) == "."..v then
 				return true
 			end
 		end
@@ -471,9 +469,8 @@ function add_rule(var)
 					if REMOTE_FAKEDNS == "1" then
 						sets = {}
 					end
-					local gfwlist_str = sys.exec('cat /usr/share/passwall/rules/gfwlist | grep -v -E "^#" | grep -v -E "' .. excluded_domain_str .. '"')
-					for line in string.gmatch(gfwlist_str, "[^\r\n]+") do
-						if line ~= "" then
+					for line in io.lines("/usr/share/passwall/rules/gfwlist") do
+						if line ~= "" and not line:find("#") and not check_excluded_domain(line) then
 							if NO_PROXY_IPV6 == "1" then
 								set_domain_address(line, "::")
 							end
@@ -518,9 +515,8 @@ function add_rule(var)
 							sets = {}
 						end
 					end
-					local chnlist_str = sys.exec('cat /usr/share/passwall/rules/chnlist | grep -v -E "^#" | grep -v -E "' .. excluded_domain_str .. '"')
-					for line in string.gmatch(chnlist_str, "[^\r\n]+") do
-						if line ~= "" then
+					for line in io.lines("/usr/share/passwall/rules/chnlist") do
+						if line ~= "" and not line:find("#") and not check_excluded_domain(line) then
 							if CHN_LIST == "proxy" and NO_PROXY_IPV6 == "1" then
 								set_domain_address(line, "::")
 							end
