@@ -1700,7 +1700,8 @@ function gen_config(var)
 			if remote_dns_fake then
 				table.insert(dns.rules, {
 					query_type = { "A", "AAAA" },
-					server = fakedns_tag
+					server = fakedns_tag,
+					disable_cache = true
 				})
 			end
 		end
