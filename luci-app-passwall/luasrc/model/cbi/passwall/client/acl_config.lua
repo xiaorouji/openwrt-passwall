@@ -300,9 +300,10 @@ o:depends({ _tcp_node_bool = "1" })
 
 ---- DNS
 o = s:option(ListValue, "dns_shunt", "DNS " .. translate("Shunt"))
-o:depends({ _tcp_node_bool = "1" })
+o.default = "chinadns-ng"
 o:value("dnsmasq", "Dnsmasq")
 o:value("chinadns-ng", translate("ChinaDNS-NG (recommended)"))
+o:depends({ _tcp_node_bool = "1" })
 
 o = s:option(DummyValue, "view_chinadns_log", " ")
 o.template = appname .. "/acl/view_chinadns_log"
