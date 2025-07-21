@@ -23,6 +23,7 @@ uci:revert(appname)
 
 local has_ss = api.is_finded("ss-redir")
 local has_ss_rust = api.is_finded("sslocal")
+local has_ssr = api.is_finded("ssr-local") and api.is_finded("ssr-redir")
 local has_trojan_plus = api.is_finded("trojan-plus")
 local has_singbox = api.finded_com("sing-box")
 local has_xray = api.finded_com("xray")
@@ -446,6 +447,10 @@ local function processData(szType, content, add_mode, add_from)
 	}
 	--ssr://base64(host:port:protocol:method:obfs:base64pass/?obfsparam=base64param&protoparam=base64param&remarks=base64remarks&group=base64group&udpport=0&uot=0)
 	if szType == 'ssr' then
+		if not has_ssr then
+			log("跳过 SSR 节点，因未安装 SSR 核心程序 shadowsocksr-libev。")
+			return nil
+		end
 		result.type = "SSR"
 
 		local dat = split(content, "/%?")
@@ -472,17 +477,13 @@ local function processData(szType, content, add_mode, add_from)
 		result.remarks = base64Decode(params.remarks)
 	elseif szType == 'vmess' then
 		local info = jsonParse(content)
-		if has_singbox then
-			result.type = 'sing-box'
-		end
-		if has_xray then
-			result.type = 'Xray'
-		end
 		if vmess_type_default == "sing-box" and has_singbox then
 			result.type = 'sing-box'
-		end
-		if vmess_type_default == "xray" and has_xray then
+		elseif vmess_type_default == "xray" and has_xray then
 			result.type = "Xray"
+		else
+			log("跳过 VMess 节点，因未适配到 VMess 核心程序，或未正确设置节点使用类型。")
+			return nil
 		end
 		result.alter_id = info.aid
 		result.address = info.add
@@ -590,7 +591,21 @@ local function processData(szType, content, add_mode, add_from)
 			return nil
 		end
 	elseif szType == "ss" then
-		result.type = "SS"
+		if ss_type_default == "shadowsocks-libev" and has_ss then
+			result.type = "SS"
+		elseif ss_type_default == "shadowsocks-rust" and has_ss_rust then
+			result.type = 'SS-Rust'
+		elseif ss_type_default == "xray" and has_xray then
+			result.type = 'Xray'
+			result.protocol = 'shadowsocks'
+			result.transport = 'raw'
+		elseif ss_type_default == "sing-box" and has_singbox then
+			result.type = 'sing-box'
+			result.protocol = 'shadowsocks'
+		else
+			log("跳过 SS 节点，因未适配到 SS 核心程序，或未正确设置节点使用类型。")
+			return nil
+		end
 
 		--SS-URI = "ss://" userinfo "@" hostname ":" port [ "/" ] [ "?" plugin ] [ "#" tag ]
 		--userinfo = websafe-base64-encode-utf8(method  ":" password)
@@ -677,19 +692,6 @@ local function processData(szType, content, add_mode, add_from)
 			end
 			result.method = method
 			result.password = password
-
-			if ss_type_default == "shadowsocks-rust" and has_ss_rust then
-				result.type = 'SS-Rust'
-			end
-			if ss_type_default == "xray" and has_xray then
-				result.type = 'Xray'
-				result.protocol = 'shadowsocks'
-				result.transport = 'raw'
-			end
-			if ss_type_default == "sing-box" and has_singbox then
-				result.type = 'sing-box'
-				result.protocol = 'shadowsocks'
-			end
 
 			if result.type ~= "Xray" then
 				result.method = (method:lower() == "chacha20-poly1305" and "chacha20-ietf-poly1305") or
@@ -884,10 +886,15 @@ local function processData(szType, content, add_mode, add_from)
 			result.type = "Trojan-Plus"
 		elseif trojan_type_default == "sing-box" and has_singbox then
 			result.type = 'sing-box'
+			result.protocol = 'trojan'
 		elseif trojan_type_default == "xray" and has_xray then
 			result.type = 'Xray'
+			result.protocol = 'trojan'
+		else
+			log("跳过 Trojan 节点，因未适配到 Trojan 核心程序，或未正确设置节点使用类型。")
+			return nil
 		end
-		result.protocol = 'trojan'
+		
 		local alias = ""
 		if content:find("#") then
 			local idx_sp = content:find("#")
@@ -1043,17 +1050,13 @@ local function processData(szType, content, add_mode, add_from)
 		result.group = content.airport
 		result.remarks = content.remarks
 	elseif szType == "vless" then
-		if has_singbox then
-			result.type = 'sing-box'
-		end
-		if has_xray then
-			result.type = 'Xray'
-		end
 		if vless_type_default == "sing-box" and has_singbox then
 			result.type = 'sing-box'
-		end
-		if vless_type_default == "xray" and has_xray then
+		elseif vless_type_default == "xray" and has_xray then
 			result.type = "Xray"
+		else
+			log("跳过 VLESS 节点，因未适配到 VLESS 核心程序，或未正确设置节点使用类型。")
+			return nil
 		end
 		result.protocol = "vless"
 		local alias = ""
@@ -1216,6 +1219,14 @@ local function processData(szType, content, add_mode, add_from)
 			end
 		end
 	elseif szType == 'hysteria' then
+		if has_singbox then
+			result.type = 'sing-box'
+			result.protocol = "hysteria"
+		else
+			log("跳过 Hysteria 节点，因未安装 Hysteria 核心程序 Sing-box。")
+			return nil
+		end
+
 		local alias = ""
 		if content:find("#") then
 			local idx_sp = content:find("#")
@@ -1263,10 +1274,6 @@ local function processData(szType, content, add_mode, add_from)
 		result.hysteria_down_mbps = params.downmbps
 		result.hysteria_hop = params.mport
 
-		if has_singbox then
-			result.type = 'sing-box'
-			result.protocol = "hysteria"
-		end
 	elseif szType == 'hysteria2' or szType == 'hy2' then
 		local alias = ""
 		if content:find("#") then
@@ -1326,8 +1333,19 @@ local function processData(szType, content, add_mode, add_from)
 			if params["obfs-password"] or params["obfs_password"] then
 				result.hysteria2_obfs = params["obfs-password"] or params["obfs_password"]
 			end
+		else
+			log("跳过 Hysteria2 节点，因未适配到 Hysteria2 核心程序，或未正确设置节点使用类型。")
+			return nil
 		end
 	elseif szType == 'tuic' then
+		if has_singbox then
+			result.type = 'sing-box'
+			result.protocol = "tuic"
+		else
+			log("跳过 Tuic 节点，因未安装 Tuic 核心程序 Sing-box。")
+			return nil
+		end
+
 		local alias = ""
 		if content:find("#") then
 			local idx_sp = content:find("#")
@@ -1380,11 +1398,15 @@ local function processData(szType, content, add_mode, add_from)
 		else
 			result.tls_allowInsecure = allowInsecure_default and "1" or "0"
 		end
-		result.type = 'sing-box'
-		result.protocol = "tuic"
 	elseif szType == "anytls" then
-		result.type = 'sing-box'
-		result.protocol = "anytls"
+		if has_singbox then
+			result.type = 'sing-box'
+			result.protocol = "anytls"
+		else
+			log("跳过 AnyTLS 节点，因未安装 AnyTLS 核心程序 Sing-box 1.12。")
+			return nil
+		end
+
 		local alias = ""
 		if content:find("#") then
 			local idx_sp = content:find("#")
