@@ -113,7 +113,7 @@ jobs:
           echo "src-git base https://github.com/openwrt/openwrt.git;openwrt-${{ matrix.sdk_ver }}" > feeds.conf
           echo "src-git packages https://github.com/openwrt/packages.git;openwrt-${{ matrix.sdk_ver }}" >> feeds.conf
           echo "src-git luci https://github.com/openwrt/luci.git;openwrt-${{ matrix.luci_ver }}" >> feeds.conf
-          echo "src-git routing https://git.openwrt.org/feed/routing.git;openwrt-${{ matrix.sdk_ver }}"  >> feeds.conf
+          echo "src-git routing https://github.com/openwrt/routing.git;openwrt-${{ matrix.sdk_ver }}" >> feeds.conf
           echo "src-git passwall_packages https://github.com/${{ env.packages }}.git;main" >> feeds.conf
           echo "src-git passwall https://github.com/${{ env.passwall }}.git;${{ github.ref_name }}" >> feeds.conf
 
@@ -275,7 +275,7 @@ jobs:
           echo "src-git base https://github.com/openwrt/openwrt.git;openwrt-${{ matrix.sdk_ver }}" > feeds.conf
           echo "src-git packages https://github.com/openwrt/packages.git;openwrt-${{ matrix.sdk_ver }}" >> feeds.conf
           echo "src-git luci https://github.com/openwrt/luci.git;openwrt-${{ matrix.sdk_ver }}" >> feeds.conf
-          echo "src-git routing https://git.openwrt.org/feed/routing.git;openwrt-${{ matrix.sdk_ver }}"  >> feeds.conf
+          echo "src-git routing https://github.com/openwrt/routing.git;openwrt-${{ matrix.sdk_ver }}" >> feeds.conf
           echo "src-git passwall_packages https://github.com/${{ env.packages }}.git;main" >> feeds.conf
           echo "src-git passwall https://github.com/${{ env.passwall }}.git;main" >> feeds.conf
 
