@@ -1812,7 +1812,7 @@ local execute = function()
 	do
 		local subscribe_list = {}
 		local fail_list = {}
-		if arg[2] then
+		if arg[2] ~= "all" then
 			string.gsub(arg[2], '[^' .. "," .. ']+', function(w)
 				subscribe_list[#subscribe_list + 1] = uci:get_all(appname, w) or {}
 			end)
@@ -1821,6 +1821,8 @@ local execute = function()
 				subscribe_list[#subscribe_list + 1] = o
 			end)
 		end
+
+		local manual_sub = arg[3] == "manual"
 
 		for index, value in ipairs(subscribe_list) do
 			local cfgid = value[".name"]
@@ -1890,7 +1892,7 @@ local execute = function()
 					local old_md5 = value.md5 or ""
 					local new_md5 = luci.sys.exec("md5sum " .. tmp_file .. " 2>/dev/null | awk '{print $1}'"):gsub("\n", "")
 					os.remove(tmp_file)
-					if old_md5 == new_md5 then
+					if not manual_sub and old_md5 == new_md5 then
 						log('订阅:【' .. remark .. '】没有变化，无需更新。')
 					else
 						parse_link(raw_data, "2", remark, cfgid)
