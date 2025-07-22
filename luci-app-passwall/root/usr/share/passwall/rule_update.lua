@@ -465,4 +465,4 @@ if reboot == 1 then
 	uci:set(name, "@global[0]", "flush_set", "1")
 	api.uci_save(uci, name, true, true)
 end
-log("规则更新完毕...")
+log("规则更新完毕...\n")

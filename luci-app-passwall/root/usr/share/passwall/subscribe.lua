@@ -1954,7 +1954,7 @@ if arg[1] then
 			end
 			log('发生错误, 正在恢复服务')
 		end)
-		log('订阅完毕...')
+		log('订阅完毕...\n')
 	elseif arg[1] == "add" then
 		local f = assert(io.open("/tmp/links.conf", 'r'))
 		local raw = f:read('*all')
