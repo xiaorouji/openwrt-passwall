@@ -84,6 +84,8 @@ function index()
 	entry({"admin", "services", appname, "update_rules"}, call("update_rules")).leaf = true
 	entry({"admin", "services", appname, "subscribe_del_node"}, call("subscribe_del_node")).leaf = true
 	entry({"admin", "services", appname, "subscribe_del_all"}, call("subscribe_del_all")).leaf = true
+	entry({"admin", "services", appname, "subscribe_manual"}, call("subscribe_manual")).leaf = true
+	entry({"admin", "services", appname, "subscribe_manual_all"}, call("subscribe_manual_all")).leaf = true
 
 	--[[rule_list]]
 	entry({"admin", "services", appname, "read_rulelist"}, call("read_rulelist")).leaf = true
@@ -720,4 +722,52 @@ end
 function subscribe_del_all()
 	luci.sys.call("lua /usr/share/" .. appname .. "/subscribe.lua truncate > /dev/null 2>&1")
 	http.status(200, "OK")
+end
+
+function subscribe_manual()
+	local section = http.formvalue("section") or ""
+	local current_url = http.formvalue("url") or ""
+	if section == "" or current_url == "" then
+		http_write_json({ success = false, msg = "Missing section or URL, skip." })
+		return
+	end
+	local uci_url = api.sh_uci_get(appname, section, "url")
+	if not uci_url or uci_url == "" then
+		http_write_json({ success = false, msg = i18n.translate("Please save and apply before manually subscribing.") })
+		return
+	end
+	if uci_url ~= current_url then
+		api.sh_uci_set(appname, section, "url", current_url, true)
+	end
+	luci.sys.call("lua /usr/share/" .. appname .. "/subscribe.lua start " .. section .. " manual >/dev/null 2>&1 &")
+	http_write_json({ success = true, msg = "Subscribe triggered." })
+end
+
+function subscribe_manual_all()
+	local sections = http.formvalue("sections") or ""
+	local urls = http.formvalue("urls") or ""
+	if sections == "" or urls == "" then
+		http_write_json({ success = false, msg = "Missing section or URL, skip." })
+		return
+	end
+	local section_list = util.split(sections, ",")
+	local url_list = util.split(urls, ",")
+	-- 检查是否存在未保存配置
+	for i, section in ipairs(section_list) do
+		local uci_url = api.sh_uci_get(appname, section, "url")
+		if not uci_url or uci_url == "" then
+			http_write_json({ success = false, msg = i18n.translate("Please save and apply before manually subscribing.") })
+			return
+		end
+	end
+	-- 保存有变动的url
+	for i, section in ipairs(section_list) do
+		local current_url = url_list[i] or ""
+		local uci_url = api.sh_uci_get(appname, section, "url")
+		if current_url ~= "" and uci_url ~= current_url then
+			api.sh_uci_set(appname, section, "url", current_url, true)
+		end
+	end
+	luci.sys.call("lua /usr/share/" .. appname .. "/subscribe.lua start all manual >/dev/null 2>&1 &")
+	http_write_json({ success = true, msg = "Subscribe triggered." })
 end

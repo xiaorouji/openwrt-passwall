@@ -1072,8 +1072,14 @@ msgstr "订阅网址"
 msgid "Subscribe URL Access Method"
 msgstr "订阅网址访问方式"
 
-msgid "Please input the subscription url first, save and submit before manual subscription."
-msgstr "请输入订阅网址保存应用后再手动订阅。"
+msgid "When adding a new subscription, please save and apply before manually subscribing. If you only change the subscription URL, you can subscribe manually, and the system will save it automatically."
+msgstr "新增订阅请先保存并应用后再手动订阅；如仅修改订阅地址，可直接手动订阅，系统将自动保存。"
+
+msgid "Please save and apply before manually subscribing."
+msgstr "请先保存并应用后再手动订阅。"
+
+msgid "Subscribe URL cannot be empty."
+msgstr "订阅网址不能为空。"
 
 msgid "Subscribe via proxy"
 msgstr "通过代理订阅"
