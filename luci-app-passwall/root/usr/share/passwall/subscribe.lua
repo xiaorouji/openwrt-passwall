@@ -1913,7 +1913,6 @@ local execute = function()
 					local raw_data = api.trim(stdout)
 					local old_md5 = value.md5 or ""
 					local new_md5 = luci.sys.exec("md5sum " .. tmp_file .. " 2>/dev/null | awk '{print $1}'"):gsub("\n", "")
-					os.remove(tmp_file)
 					if not manual_sub and old_md5 == new_md5 then
 						log('订阅:【' .. remark .. '】没有变化，无需更新。')
 					else
@@ -1924,6 +1923,7 @@ local execute = function()
 					fail_list[#fail_list + 1] = value
 				end
 			end
+			luci.sys.call("rm -f " .. tmp_file)
 			allowInsecure_default = nil
 			filter_keyword_mode_default = uci:get(appname, "@global_subscribe[0]", "filter_keyword_mode") or "0"
 			filter_keyword_discard_list_default = uci:get(appname, "@global_subscribe[0]", "filter_discard_list") or {}
