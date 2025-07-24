@@ -3,6 +3,8 @@ local api = require "luci.passwall.api"
 -%>
 <script type="text/javascript">
 	//<![CDATA[
+	var appname = "<%= api.appname %>"
+
 	function confirmDeleteNode(remark) {
 		if (!confirm("<%:Delete the subscribed node%>: " + remark + " ?"))
 			return false;
@@ -36,7 +38,7 @@ local api = require "luci.passwall.api"
 	}
 
 	function ManualSubscribe(sectionId) {
-		var urlInput = document.querySelector("#cbid\\.<%= api.appname %>\\." + sectionId + "\\.url input");
+		var urlInput = document.querySelector("input[name='cbid." + appname + "." + sectionId + ".url']");
 		var currentUrl = urlInput ? urlInput.value.trim() : "";
 		if (!currentUrl) {
 			alert("<%:Subscribe URL cannot be empty.%>");
@@ -61,7 +63,7 @@ local api = require "luci.passwall.api"
 		var sectionIds = [];
 		var urls = [];
 
-		var table = document.getElementById("cbi-<%= api.appname %>-subscribe_list");
+		var table = document.getElementById("cbi-" + appname + "-subscribe_list");
 		var editBtns = table ? table.getElementsByClassName("cbi-button cbi-button-edit") : [];
 
 		for (var i = 0; i < editBtns.length; i++) {
@@ -72,7 +74,7 @@ local api = require "luci.passwall.api"
 			var id = onclickStr.substring(onclickStr.lastIndexOf('/') + 1, onclickStr.length - 1);
 			if (!id) continue;
 
-			var urlInput = document.querySelector("#cbid\\.<%= api.appname %>\\." + id + "\\.url input");
+			var urlInput = document.querySelector("input[name='cbid." + appname + "." + id + ".url']");
 			var currentUrl = urlInput ? urlInput.value.trim() : "";
 			if (!currentUrl) {
 				alert("<%:Subscribe URL cannot be empty.%>");
