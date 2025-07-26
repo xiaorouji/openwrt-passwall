@@ -132,7 +132,7 @@ if api.compare_versions(xray_version, ">=", "1.8.10") then
 end
 
 -- 探测地址
-local ucpu = s:option(Flag, _n("useCustomProbeUrl"), translate("Use Custome Probe URL"), translate("By default the built-in probe URL will be used, enable this option to use a custom probe URL."))
+local ucpu = s:option(Flag, _n("useCustomProbeUrl"), translate("Use Custom Probe URL"), translate("By default the built-in probe URL will be used, enable this option to use a custom probe URL."))
 ucpu:depends({ [_n("balancingStrategy")] = "leastPing" })
 ucpu:depends({ [_n("balancingStrategy")] = "leastLoad" })
 

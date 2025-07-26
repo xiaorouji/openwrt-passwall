@@ -445,7 +445,7 @@ msgstr "负载均衡策略"
 msgid "Fallback Node"
 msgstr "后备节点"
 
-msgid "Use Custome Probe URL"
+msgid "Use Custom Probe URL"
 msgstr "使用自定义探测网址"
 
 msgid "By default the built-in probe URL will be used, enable this option to use a custom probe URL."
