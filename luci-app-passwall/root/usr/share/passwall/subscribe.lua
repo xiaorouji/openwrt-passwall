@@ -825,6 +825,7 @@ local function processData(szType, content, add_mode, add_from)
 							result.reality_publicKey = params.pbk or nil
 							result.reality_shortId = params.sid or nil
 							result.reality_spiderX = params.spx or nil
+							result.reality_mldsa65Verify = params.pqv or nil
 						end
 					end
 					params.allowinsecure = params.allowinsecure or params.insecure
@@ -1201,6 +1202,7 @@ local function processData(szType, content, add_mode, add_from)
 					result.reality_publicKey = params.pbk or nil
 					result.reality_shortId = params.sid or nil
 					result.reality_spiderX = params.spx or nil
+					result.reality_mldsa65Verify = params.pqv or nil
 				end
 			end
 

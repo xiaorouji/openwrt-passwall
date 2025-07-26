@@ -286,6 +286,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 						params += opt.query("pbk", dom_prefix + "reality_publicKey");
 						params += opt.query("sid", dom_prefix + "reality_shortId");
 						params += opt.query("spx", dom_prefix + "reality_spiderX");
+						params += opt.query("pqv", dom_prefix + "reality_mldsa65Verify");
 					}
 					if (opt.get(dom_prefix + "flow") && opt.get(dom_prefix + "flow").value) {
 						let v_flow = opt.get(dom_prefix + "flow").value;
@@ -461,6 +462,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 					params += opt.query("pbk", dom_prefix + "reality_publicKey");
 					params += opt.query("sid", dom_prefix + "reality_shortId");
 					params += opt.query("spx", dom_prefix + "reality_spiderX");
+					params += opt.query("pqv", dom_prefix + "reality_mldsa65Verify");
 				}
 				if (opt.get(dom_prefix + "flow") && opt.get(dom_prefix + "flow").value) {
 					let v_flow = opt.get(dom_prefix + "flow").value;
@@ -529,6 +531,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 					params += opt.query("pbk", dom_prefix + "reality_publicKey");
 					params += opt.query("sid", dom_prefix + "reality_shortId");
 					params += opt.query("spx", dom_prefix + "reality_spiderX");
+					params += opt.query("pqv", dom_prefix + "reality_mldsa65Verify");
 				}
 				if (opt.get(dom_prefix + "flow") && opt.get(dom_prefix + "flow").value) {
 					let v_flow = opt.get(dom_prefix + "flow").value;
@@ -983,6 +986,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 						opt.set(dom_prefix + 'reality_publicKey', queryParam.pbk || '');
 						opt.set(dom_prefix + 'reality_shortId', queryParam.sid || '');
 						opt.set(dom_prefix + 'reality_spiderX', queryParam.spx || '');
+						opt.set(dom_prefix + 'reality_mldsa65Verify', queryParam.pqv || '');
 					}
 				}
 
@@ -1362,6 +1366,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 					opt.set(dom_prefix + 'reality_publicKey', queryParam.pbk || '');
 					opt.set(dom_prefix + 'reality_shortId', queryParam.sid || '');
 					opt.set(dom_prefix + 'reality_spiderX', queryParam.spx || '');
+					opt.set(dom_prefix + 'reality_mldsa65Verify', queryParam.pqv || '');
 				}
 
 			}

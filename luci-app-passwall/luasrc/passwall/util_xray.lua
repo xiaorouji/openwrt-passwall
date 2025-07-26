@@ -164,7 +164,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 					publicKey = node.reality_publicKey,
 					shortId = node.reality_shortId or "",
 					spiderX = node.reality_spiderX or "/",
-					fingerprint = (node.type == "Xray" and node.fingerprint and node.fingerprint ~= "") and node.fingerprint or "chrome"
+					fingerprint = (node.type == "Xray" and node.fingerprint and node.fingerprint ~= "") and node.fingerprint or "chrome",
+					mldsa65Verify = (node.reality_mldsa65Verify and node.reality_mldsa65Verify ~= "") and node.reality_mldsa65Verify or nil
 				} or nil,
 				rawSettings = ((node.transport == "raw" or node.transport == "tcp") and node.protocol ~= "socks" and (node.tcp_guise and node.tcp_guise ~= "none")) and {
 					header = {
@@ -548,7 +549,8 @@ function gen_config_server(node)
 				dest = node.reality_dest,
 				serverNames = node.reality_serverNames or {},
 				privateKey = node.reality_private_key,
-				shortIds = node.reality_shortId or ""
+				shortIds = node.reality_shortId or "",
+				mldsa65Seed = (node.reality_mldsa65Seed and node.reality_mldsa65Seed ~= "") and node.reality_mldsa65Seed or nil
 			} or nil
 		end
 	end

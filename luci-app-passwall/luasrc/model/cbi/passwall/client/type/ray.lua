@@ -403,6 +403,9 @@ o.default = "chrome"
 o:depends({ [_n("tls")] = true, [_n("utls")] = true })
 o:depends({ [_n("tls")] = true, [_n("reality")] = true })
 
+o = s:option(Value, _n("reality_mldsa65Verify"), "ML-DSA-65 " .. translate("Public key"))
+o:depends({ [_n("tls")] = true, [_n("reality")] = true })
+
 o = s:option(ListValue, _n("transport"), translate("Transport"))
 o:value("raw", "RAW (TCP)")
 o:value("mkcp", "mKCP")
