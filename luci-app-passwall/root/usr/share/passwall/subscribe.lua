@@ -820,6 +820,10 @@ local function processData(szType, content, add_mode, add_from)
 							result.utls = "1"
 							result.fingerprint = params.fp
 						end
+						if params.ech and params.ech ~= "" then
+							result.ech = "1"
+							result.ech_config = params.ech
+						end
 						if params.security == "reality" then
 							result.reality = "1"
 							result.reality_publicKey = params.pbk or nil
@@ -1197,6 +1201,10 @@ local function processData(szType, content, add_mode, add_from)
 				if params.fp and params.fp ~= "" then
 					result.utls = "1"
 					result.fingerprint = params.fp
+				end
+				if params.ech and params.ech ~= "" then
+					result.ech = "1"
+					result.ech_config = params.ech
 				end
 				if params.security == "reality" then
 					result.reality = "1"

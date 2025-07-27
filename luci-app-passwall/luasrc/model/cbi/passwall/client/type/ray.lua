@@ -373,6 +373,19 @@ o = s:option(Flag, _n("tls_allowInsecure"), translate("allowInsecure"), translat
 o.default = "0"
 o:depends({ [_n("tls")] = true, [_n("reality")] = false })
 
+o = s:option(Flag, _n("ech"), translate("ECH"))
+o.default = "0"
+o:depends({ [_n("tls")] = true, [_n("flow")] = "", [_n("reality")] = false })
+
+o = s:option(TextValue, _n("ech_config"), translate("ECH Config"))
+o.default = ""
+o.rows = 5
+o.wrap = "soft"
+o:depends({ [_n("ech")] = true })
+o.validate = function(self, value)
+	return api.trim(value:gsub("[\r\n]", ""))
+end
+
 -- [[ REALITY部分 ]] --
 o = s:option(Value, _n("reality_publicKey"), translate("Public Key"))
 o:depends({ [_n("tls")] = true, [_n("reality")] = true })

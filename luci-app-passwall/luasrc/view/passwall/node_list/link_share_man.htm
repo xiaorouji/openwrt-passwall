@@ -295,6 +295,8 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 					params += "&security=" + v_security;
 					params += opt.query("alpn", dom_prefix + "alpn");
 					params += opt.query("sni", dom_prefix + "tls_serverName");
+					params += opt.query("allowinsecure", dom_prefix + "tls_allowInsecure");
+					params += opt.query("ech", dom_prefix + "ech_config");
 				}
 
 				if (opt.get(dom_prefix + "shadowtls")?.checked) {
@@ -472,6 +474,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 				params += opt.query("alpn", dom_prefix + "alpn");
 				params += opt.query("sni", dom_prefix + "tls_serverName");
 				params += opt.query("allowinsecure", dom_prefix + "tls_allowInsecure");
+				params += opt.query("ech", dom_prefix + "ech_config");
 			}
 
 			params += "#" + encodeURI(v_alias.value);
@@ -541,6 +544,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 				params += opt.query("alpn", dom_prefix + "alpn");
 				params += opt.query("sni", dom_prefix + "tls_serverName");
 				params += opt.query("allowinsecure", dom_prefix + "tls_allowInsecure");
+				params += opt.query("ech", dom_prefix + "ech_config");
 			}
 			params += "#" + encodeURI(v_alias.value);
 			if (params[0] == "&") {
@@ -971,6 +975,8 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 							opt.set(dom_prefix + 'utls', true);
 							opt.set(dom_prefix + 'fingerprint', queryParam.fp);
 						}
+						opt.set(dom_prefix + 'ech', !!queryParam.ech);
+						opt.set(dom_prefix + 'ech_config', queryParam.ech || '');
 					}
 
 					if (queryParam.security == "reality") {
@@ -1352,6 +1358,8 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 						opt.set(dom_prefix + 'utls', true);
 						opt.set(dom_prefix + 'fingerprint', queryParam.fp);
 					}
+					opt.set(dom_prefix + 'ech', !!queryParam.ech);
+					opt.set(dom_prefix + 'ech_config', queryParam.ech || '');
 				}
 
 				if (queryParam.security == "reality") {

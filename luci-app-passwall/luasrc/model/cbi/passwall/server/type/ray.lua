@@ -236,6 +236,19 @@ o.validate = function(self, value, t)
 	return nil
 end
 
+o = s:option(Flag, _n("ech"), translate("ECH"))
+o.default = "0"
+o:depends({ [_n("tls")] = true, [_n("flow")] = "", [_n("reality")] = false })
+
+o = s:option(TextValue, _n("ech_key"), translate("ECH Key"))
+o.default = ""
+o.rows = 5
+o.wrap = "soft"
+o:depends({ [_n("ech")] = true })
+o.validate = function(self, value)
+	return api.trim(value:gsub("[\r\n]", ""))
+end
+
 o = s:option(ListValue, _n("transport"), translate("Transport"))
 o:value("raw", "RAW")
 o:value("mkcp", "mKCP")
