@@ -1717,12 +1717,6 @@ msgstr "ECH 配置"
 msgid "ECH Key"
 msgstr "ECH 密钥"
 
-msgid "PQ signature schemes"
-msgstr "后量子对等证书签名方案"
-
-msgid "Disable adaptive sizing of TLS records"
-msgstr "禁用 TLS 记录的自适应大小调整"
-
 msgid "Enable Multipath TCP, need to be enabled in both server and client configuration."
 msgstr "启用 Multipath TCP，需在服务端和客户端配置中同时启用。"
 

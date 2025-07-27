@@ -323,14 +323,6 @@ o.validate = function(self, value)
 	return value
 end
 
-o = s:option(Flag, _n("pq_signature_schemes_enabled"), translate("PQ signature schemes"))
-o.default = "0"
-o:depends({ [_n("ech")] = true })
-
-o = s:option(Flag, _n("dynamic_record_sizing_disabled"), translate("Disable adaptive sizing of TLS records"))
-o.default = "0"
-o:depends({ [_n("ech")] = true })
-
 o = s:option(ListValue, _n("transport"), translate("Transport"))
 o:value("tcp", "TCP")
 o:value("http", "HTTP")

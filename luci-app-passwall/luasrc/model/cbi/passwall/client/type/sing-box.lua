@@ -465,14 +465,6 @@ o.validate = function(self, value)
 	return value
 end
 
-o = s:option(Flag, _n("pq_signature_schemes_enabled"), translate("PQ signature schemes"))
-o.default = "0"
-o:depends({ [_n("ech")] = true })
-
-o = s:option(Flag, _n("dynamic_record_sizing_disabled"), translate("Disable adaptive sizing of TLS records"))
-o.default = "0"
-o:depends({ [_n("ech")] = true })
-
 if singbox_tags:find("with_utls") then
 	o = s:option(Flag, _n("utls"), translate("uTLS"))
 	o.default = "0"
