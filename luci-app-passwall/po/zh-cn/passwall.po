@@ -1712,10 +1712,10 @@ msgid "Protocol parameter. Enable length block encryption."
 msgstr "协议参数。启用长度块加密。"
 
 msgid "ECH Config"
-msgstr "ECH 密钥"
+msgstr "ECH 配置"
 
 msgid "ECH Key"
-msgstr "ECH 配置"
+msgstr "ECH 密钥"
 
 msgid "PQ signature schemes"
 msgstr "后量子对等证书签名方案"
