@@ -986,6 +986,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 						opt.set(dom_prefix + 'reality_publicKey', queryParam.pbk || '');
 						opt.set(dom_prefix + 'reality_shortId', queryParam.sid || '');
 						opt.set(dom_prefix + 'reality_spiderX', queryParam.spx || '');
+						opt.set(dom_prefix + 'use_mldsa65Verify', !!queryParam.pqv);
 						opt.set(dom_prefix + 'reality_mldsa65Verify', queryParam.pqv || '');
 					}
 				}
@@ -1366,6 +1367,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 					opt.set(dom_prefix + 'reality_publicKey', queryParam.pbk || '');
 					opt.set(dom_prefix + 'reality_shortId', queryParam.sid || '');
 					opt.set(dom_prefix + 'reality_spiderX', queryParam.spx || '');
+					opt.set(dom_prefix + 'use_mldsa65Verify', !!queryParam.pqv);
 					opt.set(dom_prefix + 'reality_mldsa65Verify', queryParam.pqv || '');
 				}
 

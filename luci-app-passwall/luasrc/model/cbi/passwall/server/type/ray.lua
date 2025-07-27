@@ -186,8 +186,18 @@ o:value("h2,http/1.1")
 o:value("h3,h2,http/1.1")
 o:depends({ [_n("tls")] = true })
 
-o = s:option(Value, _n("reality_mldsa65Seed"), "ML-DSA-65 " .. translate("Private Key"))
+o = s:option(Flag, _n("use_mldsa65Seed"), translate("ML-DSA-65"))
+o.default = "0"
 o:depends({ [_n("reality")] = true })
+
+o = s:option(TextValue, _n("reality_mldsa65Seed"), "ML-DSA-65 " .. translate("Private Key"))
+o.default = ""
+o.rows = 5
+o.wrap = "soft"
+o:depends({ [_n("use_mldsa65Seed")] = true })
+o.validate = function(self, value)
+	return api.trim(value:gsub("[\r\n]", ""))
+end
 
 -- o = s:option(Value, _n("minversion"), translate("minversion"))
 -- o.default = "1.3"
