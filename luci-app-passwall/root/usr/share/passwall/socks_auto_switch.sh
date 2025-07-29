@@ -177,6 +177,11 @@ start() {
 			sleep 6s
 			continue
 		}
+		pgrep -af "${CONFIG}/" | awk '/app\.sh.*(start|stop)/ || /nftables\.sh/ || /iptables\.sh/ { found = 1 } END { exit !found }' && {
+			# 特定任务执行中不检测
+			sleep 6s
+			continue
+		}
 		touch $LOCK_FILE
 		backup_node=$(echo $backup_node | tr -s ' ' '\n' | uniq | tr -s '\n' ' ')
 		test_auto_switch "$backup_node"
