@@ -33,14 +33,14 @@ local gfwlist_url = uci:get(name, "@global_rules[0]", "gfwlist_url") or {"https:
 local chnroute_url = uci:get(name, "@global_rules[0]", "chnroute_url") or {"https://ispip.clang.cn/all_cn.txt"}
 local chnroute6_url =  uci:get(name, "@global_rules[0]", "chnroute6_url") or {"https://ispip.clang.cn/all_cn_ipv6.txt"}
 local chnlist_url = uci:get(name, "@global_rules[0]", "chnlist_url") or {"https://fastly.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/accelerated-domains.china.conf","https://fastly.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/apple.china.conf","https://fastly.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/google.china.conf"}
-local geoip_url =  uci:get(name, "@global_rules[0]", "geoip_url") or "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"
+local geoip_url =  uci:get(name, "@global_rules[0]", "geoip_url") or "https://github.com/Loyalsoldier/geoip/releases/latest/download/geoip.dat"
 local geosite_url =  uci:get(name, "@global_rules[0]", "geosite_url") or "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
 local asset_location = uci:get(name, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"
 local use_nft = uci:get(name, "@global_forwarding[0]", "use_nft") or "0"
 
 --兼容旧版本geo下载方式的配置，择机删除。
 if geoip_url:match(".*/([^/]+)$") == "latest" then
-	geoip_url = "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"
+	geoip_url = "https://github.com/Loyalsoldier/geoip/releases/latest/download/geoip.dat"
 end
 if geosite_url:match(".*/([^/]+)$") == "latest" then
 	geosite_url = "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
@@ -203,7 +203,7 @@ local function fetch_rule(rule_name,rule_type,url,exclude_domain)
 			elseif rule_type == "ip4" then
 				local out = io.open(unsort_file_tmp, "a")
 				for line in io.lines(download_file_tmp..k) do
-					if string.match(line, ip4_ipset_pattern) and not string.match(line, "^0%.0%.0%.0(/%d+)?$") then
+					if string.match(line, ip4_ipset_pattern) and not string.match(line, "^0%..*") then
 						out:write(string.format("%s\n", line))
 					end
 				end
@@ -235,7 +235,7 @@ local function fetch_rule(rule_name,rule_type,url,exclude_domain)
 			end
 			out:close()
 		end
-		sys.call("cat " ..unsort_file_tmp.. " | sort -u > "..file_tmp)
+		sys.call("LC_ALL=C sort -u " .. unsort_file_tmp .. " > " .. file_tmp)
 		os.remove(unsort_file_tmp)
 
 		local old_md5 = sys.exec("echo -n $(md5sum " .. rule_path .. "/" ..rule_name.. " | awk '{print $1}')"):gsub("\n", "")
