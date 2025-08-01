@@ -21,7 +21,7 @@ env:
 jobs:
   job_check:
     name: Check Version
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     outputs:
       passwall_version: ${{ steps.check_version.outputs.latest_version }}
       has_update: ${{ steps.check_version.outputs.has_update }}
@@ -74,7 +74,7 @@ jobs:
     name: Build passwall [Luci ${{ matrix.luci_ver }}]
     needs: job_check
     if: needs.job_check.outputs.has_update == 'true'
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -89,50 +89,58 @@ jobs:
     steps:
       - name: Install packages
         run: |
-          sudo -E rm -rf /usr/share/dotnet /etc/mysql /etc/php /etc/apt/sources.list.d /usr/local/lib/android
+          sudo -E rm -rf /usr/share/dotnet /etc/mysql /etc/php /usr/local/lib/android
           echo "Install packages"
           sudo -E apt-get -qq update
-          sudo -E apt-get -qq install build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git libncurses-dev libssl-dev python3-distutils python3-setuptools rsync swig unzip zlib1g-dev file wget
+          sudo -E apt-get -qq install ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
+            bzip2 ccache clang cmake cpio curl device-tree-compiler ecj fastjar flex gawk gettext gcc-multilib \
+            g++-multilib git gnutls-dev gperf haveged help2man intltool lib32gcc-s1 libc6-dev-i386 libelf-dev \
+            libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses-dev libpython3-dev \
+            libreadline-dev libssl-dev libtool libyaml-dev libz-dev lld llvm lrzsz mkisofs msmtp nano \
+            ninja-build p7zip p7zip-full patch pkgconf python3 python3-pip python3-ply python3-docutils \
+            python3-pyelftools qemu-utils re2c rsync scons squashfs-tools subversion swig texinfo uglifyjs \
+            upx-ucl unzip vim wget xmlto xxd zlib1g-dev zstd
           sudo -E apt-get -qq autoremove --purge
           sudo -E apt-get -qq clean
-
-      - name: Cache openwrt SDK
-        id: cache-sdk
-        uses: actions/cache@v4
-        with:
-          path: sdk
-          key: openwrt-luci-${{ matrix.luci_ver }}-x86_64
 
       - name: Initialization environment
         if: steps.cache-sdk.outputs.cache-hit != 'true'
         run: |
           wget ${{ matrix.sdk_url }}
           file_name=$(echo ${{ matrix.sdk_url }} | awk -F/ '{print $NF}')
-          mkdir sdk && tar --zstd -x -f $file_name -C ./sdk --strip-components=1
+          mkdir sdk
+          if [[ $file_name == *.tar.xz ]]; then
+            tar -xJf $file_name -C ./sdk --strip-components=1
+          elif [[ $file_name == *.tar.zst ]]; then
+            tar --zstd -x -f $file_name -C ./sdk --strip-components=1
+          else
+            echo "Unsupported file format: $file_name"
+            exit 1
+          fi
           cd sdk
-          echo "src-git base https://github.com/openwrt/openwrt.git;openwrt-${{ matrix.sdk_ver }}" > feeds.conf
-          echo "src-git packages https://github.com/openwrt/packages.git;openwrt-${{ matrix.sdk_ver }}" >> feeds.conf
-          echo "src-git luci https://github.com/openwrt/luci.git;openwrt-${{ matrix.luci_ver }}" >> feeds.conf
-          echo "src-git routing https://github.com/openwrt/routing.git;openwrt-${{ matrix.sdk_ver }}" >> feeds.conf
-          echo "src-git passwall_packages https://github.com/${{ env.packages }}.git;main" >> feeds.conf
-          echo "src-git passwall https://github.com/${{ env.passwall }}.git;${{ github.ref_name }}" >> feeds.conf
 
+          cat > feeds.conf.default << EOF
+          src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git;main
+          src-git passwall https://github.com/${{ env.passwall }}.git;${{ github.ref_name }}
+          src-git base https://github.com/openwrt/openwrt.git;openwrt-${{ matrix.sdk_ver }}
+          src-git packages https://github.com/openwrt/packages.git;openwrt-${{ matrix.sdk_ver }}
+          src-git luci https://github.com/openwrt/luci.git;openwrt-${{ matrix.luci_ver }}
+          src-git routing https://github.com/openwrt/routing.git;openwrt-${{ matrix.sdk_ver }}
+          src-git telephony https://github.com/openwrt/telephony.git;openwrt-${{ matrix.sdk_ver }}
+          EOF
+
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+          #--------------------------------------begin_patches------------------------------------------
+          echo "Start applying the patch"
+
+          echo "update golang version"
           rm -rf feeds/packages/lang/golang
           git clone https://github.com/sbwml/packages_lang_golang -b 24.x feeds/packages/lang/golang
-          
-          ./scripts/feeds update -a
-          echo "CONFIG_PACKAGE_luci-app-passwall=m" > .config
-          ./scripts/feeds install -d n luci-app-passwall
-          make package/luci-app-passwall/download -j8
 
-      - name: Update passwall feeds
-        if: steps.cache-sdk.outputs.cache-hit == 'true'
-        run: |
-          cd sdk
-          sed -i '6s/main/${{ github.ref_name }}/' feeds.conf
-          ./scripts/feeds update passwall_packages
-          ./scripts/feeds update passwall
-          ./scripts/feeds install luci-app-passwall
+          echo "Patch application completed"
+          #--------------------------------------end_patches--------------------------------------------
 
       - name: Compile passwall
         id: compile
@@ -170,7 +178,7 @@ jobs:
   job_auto_compile:
     if: ${{ needs.job_check.outputs.has_update == 'true' && needs.job_check.outputs.prerelease == 'false' }}
     needs: job_check
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     name: build (${{ matrix.platform }})
     strategy:
       fail-fast: false
@@ -251,10 +259,17 @@ jobs:
     steps:
       - name: Initialization ${{ matrix.platform }} compile environment
         run: |
-          sudo -E rm -rf /usr/share/dotnet /etc/mysql /etc/php /etc/apt/sources.list.d /usr/local/lib/android
-          echo "install packages!!!!!!"
+          sudo -E rm -rf /usr/share/dotnet /etc/mysql /etc/php /usr/local/lib/android
+          echo "Install packages"
           sudo -E apt-get -qq update
-          sudo -E apt-get -qq install build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git libncurses-dev libssl-dev python3-distutils python3-setuptools rsync swig unzip zlib1g-dev file wget
+          sudo -E apt-get -qq install ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
+            bzip2 ccache clang cmake cpio curl device-tree-compiler ecj fastjar flex gawk gettext gcc-multilib \
+            g++-multilib git gnutls-dev gperf haveged help2man intltool lib32gcc-s1 libc6-dev-i386 libelf-dev \
+            libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses-dev libpython3-dev \
+            libreadline-dev libssl-dev libtool libyaml-dev libz-dev lld llvm lrzsz mkisofs msmtp nano \
+            ninja-build p7zip p7zip-full patch pkgconf python3 python3-pip python3-ply python3-docutils \
+            python3-pyelftools qemu-utils re2c rsync scons squashfs-tools subversion swig texinfo uglifyjs \
+            upx-ucl unzip vim wget xmlto xxd zlib1g-dev zstd
           sudo -E apt-get -qq autoremove --purge
           sudo -E apt-get -qq clean
 
@@ -262,7 +277,15 @@ jobs:
         run: |
           wget ${{ matrix.url_sdk }}
           file_name=$(echo ${{matrix.url_sdk}} | awk -F/ '{print $NF}')
-          mkdir sdk && tar --zstd -x -f $file_name -C ./sdk --strip-components=1
+          mkdir sdk
+          if [[ $file_name == *.tar.xz ]]; then
+            tar -xJf $file_name -C ./sdk --strip-components=1
+          elif [[ $file_name == *.tar.zst ]]; then
+            tar --zstd -x -f $file_name -C ./sdk --strip-components=1
+          else
+            echo "Unsupported file format: $file_name"
+            exit 1
+          fi
           cd sdk
 
       - name: SSH connection to Actions
@@ -272,19 +295,35 @@ jobs:
       - name: ${{ matrix.platform }} feeds configuration packages
         run: |
           cd sdk
-          echo "src-git base https://github.com/openwrt/openwrt.git;openwrt-${{ matrix.sdk_ver }}" > feeds.conf
-          echo "src-git packages https://github.com/openwrt/packages.git;openwrt-${{ matrix.sdk_ver }}" >> feeds.conf
-          echo "src-git luci https://github.com/openwrt/luci.git;openwrt-${{ matrix.sdk_ver }}" >> feeds.conf
-          echo "src-git routing https://github.com/openwrt/routing.git;openwrt-${{ matrix.sdk_ver }}" >> feeds.conf
-          echo "src-git passwall_packages https://github.com/${{ env.packages }}.git;main" >> feeds.conf
-          echo "src-git passwall https://github.com/${{ env.passwall }}.git;main" >> feeds.conf
+          cat > feeds.conf.default << EOF
+          src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git;main
+          src-git passwall https://github.com/${{ env.passwall }}.git;${{ github.ref_name }}
+          src-git base https://github.com/openwrt/openwrt.git;openwrt-${{ matrix.sdk_ver }}
+          src-git packages https://github.com/openwrt/packages.git;openwrt-${{ matrix.sdk_ver }}
+          src-git luci https://github.com/openwrt/luci.git;openwrt-${{ matrix.sdk_ver }}
+          src-git routing https://github.com/openwrt/routing.git;openwrt-${{ matrix.sdk_ver }}
+          src-git telephony https://github.com/openwrt/telephony.git;openwrt-${{ matrix.sdk_ver }}
+          EOF
+
 
           ./scripts/feeds update -a
-          ./scripts/feeds install -a -f -p passwall_packages
-          ./scripts/feeds install luci-app-passwall
+          ./scripts/feeds install -a
 
+          #--------------------------------------begin_patches------------------------------------------
+          echo "Start applying the patch"
+
+
+          echo "update golang version"
           rm -rf feeds/packages/lang/golang
-          git clone https://github.com/sbwml/packages_lang_golang -b 25.x feeds/packages/lang/golang
+          git clone https://github.com/sbwml/packages_lang_golang -b 24.x feeds/packages/lang/golang
+
+          echo "fixed rust host build error"
+          sed -i 's/--set=llvm\.download-ci-llvm=false/--set=llvm.download-ci-llvm=true/' feeds/packages/lang/rust/Makefile
+          grep -q -- '--ci false \\' feeds/packages/lang/rust/Makefile || sed -i '/x\.py \\/a \        --ci false \\' feeds/packages/lang/rust/Makefile
+
+
+          echo "Patch application completed"
+          #--------------------------------------end_patches--------------------------------------------
 
           echo "CONFIG_ALL_NONSHARED=n" > .config
           echo "CONFIG_ALL_KMODS=n" >> .config
