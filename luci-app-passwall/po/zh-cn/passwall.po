@@ -982,6 +982,12 @@ msgstr "Geo 规则文件目录"
 msgid "This variable specifies a directory where geoip.dat and geosite.dat files are."
 msgstr "此变量指定 geoip.dat 和 geosite.dat 文件所在的目录。"
 
+msgid "Generate Rule List from Geo"
+msgstr "从 Geo 文件生成规则"
+
+msgid "Generate rule lists such as GFW, China domains, and China IP ranges based on Geo files."
+msgstr "根据 Geo 文件生成规则列表，包括 GFW、中国域名和中国 IP 段等。"
+
 msgid "Enable Geo Data Parsing"
 msgstr "开启 Geo 数据解析"
 

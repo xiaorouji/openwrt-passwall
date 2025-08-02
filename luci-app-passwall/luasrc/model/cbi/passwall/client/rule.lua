@@ -17,6 +17,7 @@ o.rmempty = false
 
 ---- gfwlist URL
 o = s:option(DynamicList, "gfwlist_url", translate("GFW domains(gfwlist) Update URL"))
+o:depends("geo2rule", false)
 o:value("https://fastly.jsdelivr.net/gh/YW5vbnltb3Vz/domain-list-community@release/gfwlist.txt", translate("v2fly/domain-list-community"))
 o:value("https://fastly.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/gfw.txt", translate("Loyalsoldier/v2ray-rules-dat"))
 o:value("https://fastly.jsdelivr.net/gh/Loukky/gfwlist-by-loukky/gfwlist.txt", translate("Loukky/gfwlist-by-loukky"))
@@ -25,6 +26,7 @@ o.default = "https://fastly.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release
 
 ----chnroute  URL
 o = s:option(DynamicList, "chnroute_url", translate("China IPs(chnroute) Update URL"))
+o:depends("geo2rule", false)
 o:value("https://fastly.jsdelivr.net/gh/gaoyifan/china-operator-ip@ip-lists/china.txt", translate("gaoyifan/china-operator-ip/china"))
 o:value("https://ispip.clang.cn/all_cn.txt", translate("Clang.CN"))
 o:value("https://ispip.clang.cn/all_cn_cidr.txt", translate("Clang.CN.CIDR"))
@@ -34,12 +36,14 @@ o:value("https://fastly.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule
 
 ----chnroute6 URL
 o = s:option(DynamicList, "chnroute6_url", translate("China IPv6s(chnroute6) Update URL"))
+o:depends("geo2rule", false)
 o:value("https://fastly.jsdelivr.net/gh/gaoyifan/china-operator-ip@ip-lists/china6.txt", translate("gaoyifan/china-operator-ip/china6"))
 o:value("https://ispip.clang.cn/all_cn_ipv6.txt", translate("Clang.CN.IPv6"))
 o:value("https://fastly.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/ChinaMax/ChinaMax_IP.txt", translate("ios_rule_script/ChinaMax_IP"))
 
 ----chnlist URL
 o = s:option(DynamicList, "chnlist_url", translate("China List(Chnlist) Update URL"))
+o:depends("geo2rule", false)
 o:value("https://fastly.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/accelerated-domains.china.conf", translate("felixonmars/domains.china"))
 o:value("https://fastly.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/apple.china.conf", translate("felixonmars/apple.china"))
 o:value("https://fastly.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/google.china.conf", translate("felixonmars/google.china"))
@@ -69,6 +73,10 @@ if has_xray or has_singbox then
 	o.rmempty = false
 
 	if api.is_finded("geoview") then
+		o = s:option(Flag, "geo2rule", translate("Generate Rule List from Geo"), translate("Generate rule lists such as GFW, China domains, and China IP ranges based on Geo files."))
+		o.default = 0
+		o.rmempty = false
+
 		o = s:option(Flag, "enable_geoview", translate("Enable Geo Data Parsing"))
 		o.default = 0
 		o.rmempty = false
