@@ -7,16 +7,16 @@ local appname = "passwall"
 local fs = api.fs
 local split = api.split
 
-local local_version = api.get_app_version("sing-box")
-local version_ge_1_11_0 = api.compare_versions(local_version:match("[^v]+"), ">=", "1.11.0")
-local version_ge_1_12_0 = api.compare_versions(local_version:match("[^v]+"), ">=", "1.12.0")
+local local_version = api.get_app_version("sing-box"):match("[^v]+")
+local version_ge_1_11_0 = api.compare_versions(local_version, ">=", "1.11.0")
+local version_ge_1_12_0 = api.compare_versions(local_version, ">=", "1.12.0")
 
 local geosite_all_tag = {}
 local geoip_all_tag = {}
 local srss_path = "/tmp/etc/" .. appname .."_tmp/srss/"
 
 local function convert_geofile()
-	if api.compare_versions(local_version:match("[^v]+"), "<", "1.8.0") then
+	if api.compare_versions(local_version, "<", "1.8.0") then
 		api.log("！！！注意：Sing-Box 版本低，Sing-Box 分流无法启用！请在[组件更新]中更新。")
 		return
 	end
@@ -81,9 +81,13 @@ function gen_outbound(flag, node, tag, proxy_table)
 		end
 
 		local proxy_tag = nil
+		local fragment = nil
+		local record_fragment = nil
 		local run_socks_instance = true
 		if proxy_table ~= nil and type(proxy_table) == "table" then
 			proxy_tag = proxy_table.tag or nil
+			fragment = proxy_table.fragment or nil
+			record_fragment = proxy_table.record_fragment or nil
 			run_socks_instance = proxy_table.run_socks_instance
 		end
 
@@ -157,6 +161,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 				alpn = alpn, --支持的应用层协议协商列表，按优先顺序排列。如果两个对等点都支持 ALPN，则选择的协议将是此列表中的一个，如果没有相互支持的协议则连接将失败。
 				--min_version = "1.2",
 				--max_version = "1.3",
+				fragment = fragment,
+				record_fragment = record_fragment,
 				ech = {
 					enabled = (node.ech == "1") and true or false,
 					config = node.ech_config and split(node.ech_config:gsub("\\n", "\n"), "\n") or {}
@@ -373,6 +379,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 					enabled = true,
 					server_name = node.tls_serverName,
 					insecure = (node.tls_allowInsecure == "1") and true or false,
+					fragment = fragment,
+					record_fragment = record_fragment,
 					alpn = (node.hysteria_alpn and node.hysteria_alpn ~= "") and {
 						node.hysteria_alpn
 					} or nil,
@@ -405,6 +413,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 					enabled = true,
 					server_name = node.tls_serverName,
 					insecure = (node.tls_allowInsecure == "1") and true or false,
+					fragment = fragment,
+					record_fragment = record_fragment,
 					alpn = (node.tuic_alpn and node.tuic_alpn ~= "") and {
 						node.tuic_alpn
 					} or nil,
@@ -440,6 +450,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 					enabled = true,
 					server_name = node.tls_serverName,
 					insecure = (node.tls_allowInsecure == "1") and true or false,
+					fragment = fragment,
+					record_fragment = record_fragment,
 					ech = {
 						enabled = (node.ech == "1") and true or false,
 						config = node.ech_config and split(node.ech_config:gsub("\\n", "\n"), "\n") or {}
@@ -1016,7 +1028,7 @@ function gen_config(var)
 				end
 				if is_new_ut_node then
 					local ut_node = uci:get_all(appname, ut_node_id)
-					local outbound = gen_outbound(flag, ut_node, ut_node_tag, { run_socks_instance = not no_run })
+					local outbound = gen_outbound(flag, ut_node, ut_node_tag, { fragment = singbox_settings.fragment == "1" or nil, record_fragment = singbox_settings.record_fragment == "1" or nil, run_socks_instance = not no_run })
 					if outbound then
 						outbound.tag = outbound.tag .. ":" .. ut_node.remarks
 						table.insert(outbounds, outbound)
@@ -1182,8 +1194,19 @@ function gen_config(var)
 									})
 								end
 							end
-							
-							local _outbound = gen_outbound(flag, _node, rule_name, { tag = use_proxy and preproxy_tag or nil, run_socks_instance = not no_run })
+							local proxy_table = {
+								tag = use_proxy and preproxy_tag or nil,
+								run_socks_instance = not no_run
+							}
+							if not proxy_table.tag then
+								if singbox_settings.fragment == "1" then
+									proxy_table.fragment = true
+								end
+								if singbox_settings.record_fragment == "1" then
+									proxy_table.record_fragment = true
+								end
+							end
+							local _outbound = gen_outbound(flag, _node, rule_name, proxy_table)
 							if _outbound then
 								_outbound.tag = _outbound.tag .. ":" .. _node.remarks
 								rule_outboundTag, last_insert_outbound = set_outbound_detour(_node, _outbound, outbounds, rule_name)
@@ -1432,7 +1455,7 @@ function gen_config(var)
 				sys.call(string.format("mkdir -p %s && touch %s/%s", api.TMP_IFACE_PATH, api.TMP_IFACE_PATH, node.iface))
 			end
 		else
-			local outbound = gen_outbound(flag, node, nil, { run_socks_instance = not no_run })
+			local outbound = gen_outbound(flag, node, nil, { fragment = singbox_settings.fragment == "1" or nil, record_fragment = singbox_settings.record_fragment == "1" or nil, run_socks_instance = not no_run })
 			if outbound then
 				outbound.tag = outbound.tag .. ":" .. node.remarks
 				COMMON.default_outbound_tag, last_insert_outbound = set_outbound_detour(node, outbound, outbounds)

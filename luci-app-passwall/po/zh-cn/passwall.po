@@ -1750,6 +1750,12 @@ msgstr "分片间隔"
 msgid "Fragmentation interval (ms)"
 msgstr "分片间隔（ms）"
 
+msgid "Split handshake data into multiple TLS records for better censorship evasion. Low overhead. Recommended to enable first."
+msgstr 将握手数据拆分为多个 TLS 记录，提升抗封锁能力，几乎不增加延迟，建议优先启用。"
+
+msgid "Split handshake into multiple TCP segments. Enhances obfuscation. May increase delay. Use only if needed."
+msgstr "将 TLS 握手数据分为多个 TCP 包发送，提高伪装性，可能增加延迟，仅在封锁严重时使用。"
+
 msgid "Noise"
 msgstr "噪声"
 
