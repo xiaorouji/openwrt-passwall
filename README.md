@@ -3,6 +3,17 @@
 
 ## 📌如何能编译到最新代码？
 
+### 方法1：
+
+执行 `./scripts/feeds update -a` 操作前，在 `feeds.conf.default` **顶部**插入如下代码：
+
+```
+src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git;main
+src-git passwall_luci https://github.com/xiaorouji/openwrt-passwall.git;main
+```
+
+### 方法2：
+
 在 `./scripts/feeds install -a` 操作完成后，执行以下命令：
 
 ```shell
@@ -13,8 +24,4 @@ git clone https://github.com/xiaorouji/openwrt-passwall-packages package/passwal
 # 移除 openwrt feeds 过时的luci版本
 rm -rf feeds/luci/applications/luci-app-passwall
 git clone https://github.com/xiaorouji/openwrt-passwall package/passwall-luci
-
-# 更新 golang 1.25 版本
-rm -rf feeds/packages/lang/golang
-git clone https://github.com/sbwml/packages_lang_golang -b 25.x feeds/packages/lang/golang
 ```
