@@ -61,6 +61,37 @@ function s.remove(e, t)
 			m:set(s[".name"], "udp_node", "default")
 		end
 	end)
+	m.uci:foreach(appname, "nodes", function(s)
+		if s["preproxy_node"] == t then
+			m:del(s[".name"], "preproxy_node")
+			m:del(s[".name"], "chain_proxy")
+		end
+		if s["to_node"] == t then
+			m:del(s[".name"], "to_node")
+			m:del(s[".name"], "chain_proxy")
+		end
+		local list_name = s["urltest_node"] and "urltest_node" or (s["balancing_node"] and "balancing_node")
+		if list_name then
+			local nodes = m.uci:get_list(appname, s[".name"], list_name)
+			if nodes then
+				local changed = false
+				local new_nodes = {}
+				for _, node in ipairs(nodes) do
+					if node ~= t then
+						table.insert(new_nodes, node)
+					else
+						changed = true
+					end
+				end
+				if changed then
+					m.uci:set_list(appname, s[".name"], list_name, new_nodes)
+				end
+			end
+		end
+		if s["fallback_node"] == t then
+			m:del(s[".name"], "fallback_node")
+		end
+	end)
 	if (m:get(t, "add_mode") or "0") == "2" then
 		local add_from = m:get(t, "add_from") or ""
 		if add_from ~= "" then
