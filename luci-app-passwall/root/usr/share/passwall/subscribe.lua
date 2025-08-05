@@ -280,7 +280,7 @@ do
 			if node.balancing_node then
 				for k, node in pairs(node.balancing_node) do
 					currentNodes[#currentNodes + 1] = {
-						log = false,
+						log = true,
 						node = node,
 						currentNode = node and uci:get_all(appname, node) or nil,
 						remarks = node,
@@ -328,7 +328,7 @@ do
 			if node.urltest_node then
 				for k, node in pairs(node.urltest_node) do
 					currentNodes[#currentNodes + 1] = {
-						log = false,
+						log = true,
 						node = node,
 						currentNode = node and uci:get_all(appname, node) or nil,
 						remarks = node,
@@ -1566,7 +1566,9 @@ local function select_node(nodes, config, parentConfig)
 		if config.currentNode[".name"] then
 			for index, node in pairs(nodes) do
 				if node[".name"] == config.currentNode[".name"] then
-					log('更新【' .. config.remarks .. '】匹配节点：' .. node.remarks)
+					if config.log == nil or config.log == true then
+						log('更新【' .. config.remarks .. '】匹配节点：' .. node.remarks)
+					end
 					server = node[".name"]
 					break
 				end
@@ -1734,6 +1736,9 @@ local function update_node(manual)
 
 		for _, config in pairs(CONFIG) do
 			if config.currentNodes and #config.currentNodes > 0 then
+				if config.remarks and config.currentNodes[1].log ~= false then
+					log('----【' .. config.remarks .. '】----')
+				end
 				for kk, vv in pairs(config.currentNodes) do
 					select_node(nodes, vv, config)
 				end
