@@ -1580,6 +1580,9 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 					queryParam[decodeURIComponent(params[0])] = decodeURIComponent(params[1] || '');
 				}
 			}
+			if ((!queryParam.security || queryParam.security == "") && queryParam.sni && queryParam.sni != "") {
+				queryParam.security = "tls";
+			}
 			if (queryParam.security) {
 				if (queryParam.security == "tls") {
 					opt.set(dom_prefix + 'tls', true);

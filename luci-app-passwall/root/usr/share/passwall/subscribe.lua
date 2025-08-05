@@ -1452,9 +1452,12 @@ local function processData(szType, content, add_mode, add_from)
 				result.address = host_port
 			end
 			result.tls = "0"
+			if (not params.security or params.security == "") and params.sni and params.sni ~= "" then
+				params.security = "tls"
+			end
 			if params.security == "tls" or params.security == "reality" then
 				result.tls = "1"
-				result.tls_serverName = (params.sni and params.sni ~= "") and params.sni or params.host
+				result.tls_serverName = params.sni
 				result.alpn = params.alpn
 				if params.fp and params.fp ~= "" then
 					result.utls = "1"
