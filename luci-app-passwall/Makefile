@@ -129,6 +129,7 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_Shadow_TLS
 config PACKAGE_$(PKG_NAME)_INCLUDE_Simple_Obfs
 	bool "Include Simple-Obfs (Shadowsocks Plugin)"
 	select PACKAGE_simple-obfs
+	select PACKAGE_simple-obfs-client
 	default y
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_SingBox
