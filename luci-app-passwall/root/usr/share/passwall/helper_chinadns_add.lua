@@ -517,6 +517,14 @@ else
 	log(string.format("  - 默认 DNS ：%s", "智能匹配"))
 end
 
+--追加自定义配置
+local file_custom_config = RULES_PATH .. "/chinadns_custom_config"
+if fs.access(file_custom_config) then
+	for line in io.lines(file_custom_config) do
+		table.insert(config_lines, line)
+	end
+end
+
 --输出配置文件
 if #config_lines > 0 then
 	for i = 1, #config_lines do
