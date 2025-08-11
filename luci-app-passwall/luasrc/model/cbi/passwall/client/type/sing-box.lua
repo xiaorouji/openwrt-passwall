@@ -475,30 +475,30 @@ if singbox_tags:find("with_utls") then
 	o:value("firefox")
 	o:value("edge")
 	o:value("safari")
-	-- o:value("360")
+	o:value("360")
 	o:value("qq")
 	o:value("ios")
-	-- o:value("android")
+	o:value("android")
 	o:value("random")
-	-- o:value("randomized")
+	o:value("randomized")
 	o.default = "chrome"
-	o:depends({ [_n("tls")] = true, [_n("utls")] = true })
+	o:depends({ [_n("utls")] = true })
 
 	-- [[ REALITY部分 ]] --
 	o = s:option(Flag, _n("reality"), translate("REALITY"))
 	o.default = 0
-	o:depends({ [_n("protocol")] = "vless", [_n("utls")] = true })
-	o:depends({ [_n("protocol")] = "vmess", [_n("utls")] = true })
-	o:depends({ [_n("protocol")] = "shadowsocks", [_n("utls")] = true })
-	o:depends({ [_n("protocol")] = "socks", [_n("utls")] = true })
-	o:depends({ [_n("protocol")] = "trojan", [_n("utls")] = true })
-	o:depends({ [_n("protocol")] = "anytls", [_n("utls")] = true })
+	o:depends({ [_n("protocol")] = "vless", [_n("tls")] = true })
+	o:depends({ [_n("protocol")] = "vmess", [_n("tls")] = true })
+	o:depends({ [_n("protocol")] = "shadowsocks", [_n("tls")] = true })
+	o:depends({ [_n("protocol")] = "socks", [_n("tls")] = true })
+	o:depends({ [_n("protocol")] = "trojan", [_n("tls")] = true })
+	o:depends({ [_n("protocol")] = "anytls", [_n("tls")] = true })
 	
 	o = s:option(Value, _n("reality_publicKey"), translate("Public Key"))
-	o:depends({ [_n("utls")] = true, [_n("reality")] = true })
+	o:depends({ [_n("reality")] = true })
 	
 	o = s:option(Value, _n("reality_shortId"), translate("Short Id"))
-	o:depends({ [_n("utls")] = true, [_n("reality")] = true })
+	o:depends({ [_n("reality")] = true })
 end
 
 o = s:option(ListValue, _n("transport"), translate("Transport"))
