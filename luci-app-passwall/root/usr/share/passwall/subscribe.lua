@@ -1269,7 +1269,6 @@ local function processData(szType, content, add_mode, add_from)
 		else
 			result.address = host_port
 		end
-		result.protocol = params.protocol
 		result.hysteria_obfs = params.obfsParam
 		result.hysteria_auth_type = "string"
 		result.hysteria_auth_password = params.auth
