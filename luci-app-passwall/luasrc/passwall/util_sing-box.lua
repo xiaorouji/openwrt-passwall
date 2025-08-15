@@ -366,7 +366,11 @@ function gen_outbound(flag, node, tag, proxy_table)
 			end
 			protocol_table = {
 				server_ports = next(server_ports) and server_ports or nil,
-				hop_interval = next(server_ports) and "30s" or nil,
+				hop_interval = (function()
+							if not next(server_ports) then return nil end
+							local v = tonumber((node.hysteria_hop_interval or "30s"):match("^%d+"))
+							return (v and v >= 5) and (v .. "s") or "30s"
+						end)(),
 				up_mbps = tonumber(node.hysteria_up_mbps),
 				down_mbps = tonumber(node.hysteria_down_mbps),
 				obfs = node.hysteria_obfs,
@@ -438,7 +442,11 @@ function gen_outbound(flag, node, tag, proxy_table)
 			end
 			protocol_table = {
 				server_ports = next(server_ports) and server_ports or nil,
-				hop_interval = next(server_ports) and "30s" or nil,
+				hop_interval = (function()
+							if not next(server_ports) then return nil end
+							local v = tonumber((node.hysteria2_hop_interval or "30s"):match("^%d+"))
+							return (v and v >= 5) and (v .. "s") or "30s"
+						end)(),
 				up_mbps = (node.hysteria2_up_mbps and tonumber(node.hysteria2_up_mbps)) and tonumber(node.hysteria2_up_mbps) or nil,
 				down_mbps = (node.hysteria2_down_mbps and tonumber(node.hysteria2_down_mbps)) and tonumber(node.hysteria2_down_mbps) or nil,
 				obfs = {
