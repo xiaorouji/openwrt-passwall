@@ -1798,10 +1798,9 @@ acl_app() {
 		dnsmasq_port=${GLOBAL_DNSMASQ_PORT:-11400}
 		chinadns_port=11500
 		for item in $items; do
-			sid=$(uci -q show "${CONFIG}.${item}" | grep "=acl_rule" | awk -F '=' '{print $1}' | awk -F '.' '{print $2}')
+			local sid=$(uci -q show "${CONFIG}.${item}" | grep "=acl_rule" | awk -F '=' '{print $1}' | awk -F '.' '{print $2}')
+			[ "$(config_n_get $sid enabled)" = "1" ] || continue
 			eval $(uci -q show "${CONFIG}.${item}" | cut -d'.' -sf 3-)
-
-			[ "$enabled" = "1" ] || continue
 
 			if [ -n "${sources}" ]; then
 				for s in $sources; do
@@ -2015,7 +2014,7 @@ acl_app() {
 								run_dns ${_dns_port}
 							fi
 							set_cache_var "ACL_${sid}_tcp_node" "${tcp_node}"
-							set_cache_var "ACL_${sid}_tcp_redir_port" "${redir_port}"
+							set_cache_var "ACL_${sid}_tcp_redir_port" "${tcp_port}"
 						fi
 					}
 				fi
@@ -2033,7 +2032,7 @@ acl_app() {
 					fi
 				elif [ "$udp_node" = "tcp" ]; then
 					udp_node=$(get_cache_var "ACL_${sid}_tcp_node")
-					udp_port=$(get_cache_var "ACL_${sid}_tcp_port")
+					udp_port=$(get_cache_var "ACL_${sid}_tcp_redir_port")
 					set_cache_var "ACL_${sid}_udp_node" "${udp_node}"
 					set_cache_var "ACL_${sid}_udp_redir_port" "${udp_port}"
 				else
@@ -2070,7 +2069,7 @@ acl_app() {
 								fi
 							fi
 							set_cache_var "ACL_${sid}_udp_node" "${udp_node}"
-							set_cache_var "ACL_${sid}_udp_redir_port" "${redir_port}"
+							set_cache_var "ACL_${sid}_udp_redir_port" "${udp_port}"
 						fi
 					}
 				fi
