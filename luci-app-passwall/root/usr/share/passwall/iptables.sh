@@ -341,7 +341,7 @@ load_acl() {
 				[ -n "${is_tproxy}" ] && ipt_tmp=$ipt_m
 
 				[ "$tcp_no_redir_ports" != "disable" ] && {
-					if [ "$tcp_no_redir_ports" != "1:65535" ]; then
+					if ! has_1_65535 "$tcp_no_redir_ports"; then
 						[ "$_ipv4" != "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "$remarks") ${_ipt_source} -p tcp" $tcp_no_redir_ports "-j RETURN" 2>/dev/null
 						add_port_rules "$ipt_tmp -A PSW $(comment "$remarks") ${_ipt_source} -p tcp" $tcp_no_redir_ports "-j RETURN"
 						echolog "     - ${msg}不代理 TCP 端口[${tcp_no_redir_ports}]"
@@ -353,7 +353,7 @@ load_acl() {
 				}
 				
 				[ "$udp_no_redir_ports" != "disable" ] && {
-					if [ "$udp_no_redir_ports" != "1:65535" ]; then
+					if ! has_1_65535 "$udp_no_redir_ports"; then
 						[ "$_ipv4" != "1" ] && add_port_rules "$ip6t_m -A PSW $(comment "$remarks") ${_ipt_source} -p udp" $udp_no_redir_ports "-j RETURN" 2>/dev/null
 						add_port_rules "$ipt_m -A PSW $(comment "$remarks") ${_ipt_source} -p udp" $udp_no_redir_ports "-j RETURN"
 						echolog "     - ${msg}不代理 UDP 端口[${udp_no_redir_ports}]"
@@ -552,7 +552,7 @@ load_acl() {
 		[ "$TCP_NO_REDIR_PORTS" != "disable" ] && {
 			add_port_rules "$ip6t_m -A PSW $(comment "默认") -p tcp" $TCP_NO_REDIR_PORTS "-j RETURN"
 			add_port_rules "$ipt_tmp -A PSW $(comment "默认") -p tcp" $TCP_NO_REDIR_PORTS "-j RETURN"
-			if [ "$TCP_NO_REDIR_PORTS" != "1:65535" ]; then
+			if ! has_1_65535 "$TCP_NO_REDIR_PORTS"; then
 				echolog "     - ${msg}不代理 TCP 端口[${TCP_NO_REDIR_PORTS}]"
 			else
 				unset TCP_PROXY_MODE
@@ -563,7 +563,7 @@ load_acl() {
 		[ "$UDP_NO_REDIR_PORTS" != "disable" ] && {
 			add_port_rules "$ip6t_m -A PSW $(comment "默认") -p udp" $UDP_NO_REDIR_PORTS "-j RETURN"
 			add_port_rules "$ipt_m -A PSW $(comment "默认") -p udp" $UDP_NO_REDIR_PORTS "-j RETURN"
-			if [ "$UDP_NO_REDIR_PORTS" != "1:65535" ]; then
+			if ! has_1_65535 "$UDP_NO_REDIR_PORTS"; then
 				echolog "     - ${msg}不代理 UDP 端口[${UDP_NO_REDIR_PORTS}]"
 			else
 				unset UDP_PROXY_MODE
@@ -1100,7 +1100,7 @@ add_firewall_rule() {
 		[ "$TCP_NO_REDIR_PORTS" != "disable" ] && {
 			add_port_rules "$ipt_tmp -A PSW_OUTPUT -p tcp" $TCP_NO_REDIR_PORTS "-j RETURN"
 			add_port_rules "$ip6t_m -A PSW_OUTPUT -p tcp" $TCP_NO_REDIR_PORTS "-j RETURN"
-			if [ "$TCP_NO_REDIR_PORTS" != "1:65535" ]; then
+			if ! has_1_65535 "$TCP_NO_REDIR_PORTS"; then
 				echolog "  - ${msg}不代理 TCP 端口[${TCP_NO_REDIR_PORTS}]"
 			else
 				unset LOCALHOST_TCP_PROXY_MODE
@@ -1111,7 +1111,7 @@ add_firewall_rule() {
 		[ "$UDP_NO_REDIR_PORTS" != "disable" ] && {
 			add_port_rules "$ipt_m -A PSW_OUTPUT -p udp" $UDP_NO_REDIR_PORTS "-j RETURN"
 			add_port_rules "$ip6t_m -A PSW_OUTPUT -p udp" $UDP_NO_REDIR_PORTS "-j RETURN"
-			if [ "$UDP_NO_REDIR_PORTS" != "1:65535" ]; then
+			if ! has_1_65535 "$UDP_NO_REDIR_PORTS"; then
 				echolog "  - ${msg}不代理 UDP 端口[${UDP_NO_REDIR_PORTS}]"
 			else
 				unset LOCALHOST_UDP_PROXY_MODE

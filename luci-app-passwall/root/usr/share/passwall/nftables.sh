@@ -356,7 +356,7 @@ load_acl() {
 				msg="【$remarks】，${msg}"
 				
 				[ "$tcp_no_redir_ports" != "disable" ] && {
-					if [ "$tcp_no_redir_ports" != "1:65535" ]; then
+					if ! has_1_65535 "$tcp_no_redir_ports"; then
 						nft "add rule $NFTABLE_NAME $nft_prerouting_chain ${_ipt_source} ip protocol tcp $(factor $tcp_no_redir_ports "tcp dport") counter return comment \"$remarks\""
 						[ "$_ipv4" != "1" ] && nft "add rule $NFTABLE_NAME PSW_MANGLE_V6 ${_ipt_source} meta l4proto tcp $(factor $tcp_no_redir_ports "tcp dport") counter return comment \"$remarks\""
 						echolog "     - ${msg}不代理 TCP 端口[${tcp_no_redir_ports}]"
@@ -368,7 +368,7 @@ load_acl() {
 				}
 				
 				[ "$udp_no_redir_ports" != "disable" ] && {
-					if [ "$udp_no_redir_ports" != "1:65535" ]; then
+					if ! has_1_65535 "$udp_no_redir_ports"; then
 						nft "add rule $NFTABLE_NAME PSW_MANGLE ip protocol udp ${_ipt_source} $(factor $udp_no_redir_ports "udp dport") counter return comment \"$remarks\""
 						[ "$_ipv4" != "1" ] && nft "add rule $NFTABLE_NAME PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} $(factor $udp_no_redir_ports "udp dport") counter return comment \"$remarks\"" 2>/dev/null
 						echolog "     - ${msg}不代理 UDP 端口[${udp_no_redir_ports}]"
@@ -571,7 +571,7 @@ load_acl() {
 		[ "$TCP_NO_REDIR_PORTS" != "disable" ] && {
 			nft "add rule $NFTABLE_NAME $nft_prerouting_chain ip protocol tcp $(factor $TCP_NO_REDIR_PORTS "tcp dport") counter return comment \"默认\""
 			nft "add rule $NFTABLE_NAME PSW_MANGLE_V6 meta l4proto tcp $(factor $TCP_NO_REDIR_PORTS "tcp dport") counter return comment \"默认\""
-			if [ "$TCP_NO_REDIR_PORTS" != "1:65535" ]; then
+			if ! has_1_65535 "$TCP_NO_REDIR_PORTS"; then
 				echolog "     - ${msg}不代理 TCP 端口[${TCP_NO_REDIR_PORTS}]"
 			else
 				unset TCP_PROXY_MODE
@@ -582,7 +582,7 @@ load_acl() {
 		[ "$UDP_NO_REDIR_PORTS" != "disable" ] && {
 			nft "add $NFTABLE_NAME PSW_MANGLE ip protocol udp $(factor $UDP_NO_REDIR_PORTS "udp dport") counter return comment \"默认\""
 			nft "add $NFTABLE_NAME PSW_MANGLE_V6 counter meta l4proto udp $(factor $UDP_NO_REDIR_PORTS "udp dport") counter return comment \"默认\""
-			if [ "$UDP_NO_REDIR_PORTS" != "1:65535" ]; then
+			if ! has_1_65535 "$UDP_NO_REDIR_PORTS"; then
 				echolog "     - ${msg}不代理 UDP 端口[${UDP_NO_REDIR_PORTS}]"
 			else
 				unset UDP_PROXY_MODE
@@ -1125,7 +1125,7 @@ add_firewall_rule() {
 		[ "$TCP_NO_REDIR_PORTS" != "disable" ] && {
 			nft "add rule $NFTABLE_NAME $nft_output_chain ip protocol tcp $(factor $TCP_NO_REDIR_PORTS "tcp dport") counter return"
 			nft "add rule $NFTABLE_NAME PSW_OUTPUT_MANGLE_V6 meta l4proto tcp $(factor $TCP_NO_REDIR_PORTS "tcp dport") counter return"
-			if [ "$TCP_NO_REDIR_PORTS" != "1:65535" ]; then
+			if ! has_1_65535 "$TCP_NO_REDIR_PORTS"; then
 				echolog "  - ${msg}不代理 TCP 端口[${TCP_NO_REDIR_PORTS}]"
 			else
 				unset LOCALHOST_TCP_PROXY_MODE
@@ -1136,7 +1136,7 @@ add_firewall_rule() {
 		[ "$UDP_NO_REDIR_PORTS" != "disable" ] && {
 			nft "add rule $NFTABLE_NAME PSW_OUTPUT_MANGLE ip protocol udp $(factor $UDP_NO_REDIR_PORTS "udp dport") counter return"
 			nft "add rule $NFTABLE_NAME PSW_OUTPUT_MANGLE_V6 meta l4proto udp $(factor $UDP_NO_REDIR_PORTS "udp dport") counter return"
-			if [ "$UDP_NO_REDIR_PORTS" != "1:65535" ]; then
+			if ! has_1_65535 "$UDP_NO_REDIR_PORTS"; then
 				echolog "  - ${msg}不代理 UDP 端口[${UDP_NO_REDIR_PORTS}]"
 			else
 				unset LOCALHOST_UDP_PROXY_MODE

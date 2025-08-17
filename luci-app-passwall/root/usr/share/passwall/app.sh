@@ -389,6 +389,15 @@ eval_cache_var() {
 	[ -s "$TMP_PATH/var" ] && eval $(cat "$TMP_PATH/var")
 }
 
+has_1_65535() {
+	local val="$1"
+	val=${val//:/-}
+	case ",$val," in
+		*,1-65535,*) return 0 ;;
+		*) return 1 ;;
+	esac
+}
+
 run_ipt2socks() {
 	local flag proto tcp_tproxy local_port socks_address socks_port socks_username socks_password log_file
 	local _extra_param=""
@@ -1836,7 +1845,7 @@ acl_app() {
 			}
 			tcp_no_redir_ports=${tcp_no_redir_ports:-${TCP_NO_REDIR_PORTS}}
 			udp_no_redir_ports=${udp_no_redir_ports:-${UDP_NO_REDIR_PORTS}}
-			if [ "$tcp_no_redir_ports" == "1:65535" ] && [ "$udp_no_redir_ports" == "1:65535" ]; then
+			if has_1_65535 "$tcp_no_redir_ports" && has_1_65535 "$udp_no_redir_ports"; then
 				unset use_global_config
 				unset tcp_node
 				unset udp_node
@@ -2030,7 +2039,7 @@ acl_app() {
 					else
 						echolog "  - 全局节点未启用，跳过【${remarks}】"
 					fi
-				elif [ "$udp_node" = "tcp" ]; then
+				elif [ "$udp_node" = "tcp" ] || [ "$udp_node" = "$tcp_node" ]; then
 					udp_node=$(get_cache_var "ACL_${sid}_tcp_node")
 					udp_port=$(get_cache_var "ACL_${sid}_tcp_redir_port")
 					set_cache_var "ACL_${sid}_udp_node" "${udp_node}"
