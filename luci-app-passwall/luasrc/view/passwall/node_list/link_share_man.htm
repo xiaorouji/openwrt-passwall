@@ -963,7 +963,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 						opt.set(dom_prefix + 'alpn', queryParam.alpn || 'default');
 						opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
 						opt.set(dom_prefix + 'tls_allowInsecure', true);
-						if (queryParam.allowinsecure === '0' || queryParam.insecure === '0') {
+						if ((queryParam.allowinsecure ?? '0') === '0' && (queryParam.insecure ?? '0') === '0') {
 							opt.set(dom_prefix + 'tls_allowInsecure', false);
 						}
 						if (queryParam.fp && queryParam.fp.trim() != "") {
@@ -1206,9 +1206,10 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 				tls_serverName = tls_serverName || "";
 				opt.set(dom_prefix + 'tls_serverName', tls_serverName);
 				opt.set(dom_prefix + 'flow', (queryParam.flow || '').replace('-udp443', ''));
+				opt.set(dom_prefix + 'alpn', queryParam.alpn || 'default');
 			}
 			opt.set(dom_prefix + 'tls_allowInsecure', true);
-			if (queryParam.allowinsecure === '0' || queryParam.insecure === '0') {
+			if ((queryParam.allowinsecure ?? '0') === '0' && (queryParam.insecure ?? '0') === '0') {
 				opt.set(dom_prefix + 'tls_allowInsecure', false);
 			}
 
@@ -1346,7 +1347,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 					opt.set(dom_prefix + 'alpn', queryParam.alpn || 'default');
 					opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
 					opt.set(dom_prefix + 'tls_allowInsecure', true);
-					if (queryParam.allowinsecure === '0' || queryParam.insecure === '0') {
+					if ((queryParam.allowinsecure ?? '0') === '0' && (queryParam.insecure ?? '0') === '0') {
 						opt.set(dom_prefix + 'tls_allowInsecure', false);
 					}
 					if (queryParam.fp && queryParam.fp.trim() != "") {
@@ -1542,7 +1543,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 			opt.set(dom_prefix + 'tuic_alpn', queryParam.alpn || 'default');
 			opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
 			opt.set(dom_prefix + 'tls_allowInsecure', true);
-			if (queryParam.allowinsecure === '0' || queryParam.insecure === '0') {
+			if ((queryParam.allowinsecure ?? '0') === '0' && (queryParam.insecure ?? '0') === '0') {
 				opt.set(dom_prefix + 'tls_allowInsecure', false);
 			}
 			if (hash) {
@@ -1585,7 +1586,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 					opt.set(dom_prefix + 'alpn', queryParam.alpn || 'default');
 					opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
 					opt.set(dom_prefix + 'tls_allowInsecure', true);
-					if (queryParam.allowinsecure === '0' || queryParam.insecure === '0') {
+					if ((queryParam.allowinsecure ?? '0') === '0' && (queryParam.insecure ?? '0') === '0') {
 						opt.set(dom_prefix + 'tls_allowInsecure', false);
 					}
 					if (queryParam.fp && queryParam.fp.trim() != "") {
