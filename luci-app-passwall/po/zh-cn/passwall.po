@@ -1795,6 +1795,15 @@ msgstr "落地节点"
 msgid "Only support a layer of proxy."
 msgstr "仅支持一层代理。"
 
+msgid ""
+"Chained proxy works only with Xray or Sing-box nodes.<br>"
+"The chained node must be the same type as your subscription node (Xray with Xray, Sing-box with Sing-box).<br>"
+"You can only use manual or imported nodes as chained nodes."
+msgstr ""
+"链式代理仅支持 Xray 与 Sing-box 节点。<br>"
+"链式节点需与订阅节点类型一致（Xray 对应 Xray，Sing-box 对应 Sing-box）。<br>"
+"仅支持手动添加或导入的节点用作链式节点。"
+
 msgid "Only work with using the %s node."
 msgstr "与使用 %s 节点时生效。"
 

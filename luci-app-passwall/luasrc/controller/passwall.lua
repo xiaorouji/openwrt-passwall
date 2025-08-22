@@ -448,6 +448,9 @@ function clear_all_nodes()
 	end)
 	uci:foreach(appname, "subscribe_list", function(t)
 		uci:delete(appname, t[".name"], "md5")
+		uci:delete(appname, t[".name"], "chain_proxy")
+		uci:delete(appname, t[".name"], "preproxy_node")
+		uci:delete(appname, t[".name"], "to_node")
 	end)
 
 	api.uci_save(uci, appname, true, true)
@@ -516,6 +519,16 @@ function delete_select_nodes()
 			end
 			if t["fallback_node"] == w then
 				uci:delete(appname, t[".name"], "fallback_node")
+			end
+		end)
+		uci:foreach(appname, "subscribe_list", function(t)
+			if t["preproxy_node"] == w then
+				uci:delete(appname, t[".name"], "preproxy_node")
+				uci:delete(appname, t[".name"], "chain_proxy")
+			end
+			if t["to_node"] == w then
+				uci:delete(appname, t[".name"], "to_node")
+				uci:delete(appname, t[".name"], "chain_proxy")
 			end
 		end)
 		if (uci:get(appname, w, "add_mode") or "0") == "2" then

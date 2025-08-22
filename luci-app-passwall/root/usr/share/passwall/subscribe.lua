@@ -36,6 +36,7 @@ local vless_type_default = uci:get(appname, "@global_subscribe[0]", "vless_type"
 local hysteria2_type_default = uci:get(appname, "@global_subscribe[0]", "hysteria2_type") or "hysteria2"
 local domain_strategy_default = uci:get(appname, "@global_subscribe[0]", "domain_strategy") or ""
 local domain_strategy_node = ""
+local preproxy_node_group, to_node_group, chain_node_type = "", "", ""
 -- 判断是否过滤节点关键字
 local filter_keyword_mode_default = uci:get(appname, "@global_subscribe[0]", "filter_keyword_mode") or "0"
 local filter_keyword_discard_list_default = uci:get(appname, "@global_subscribe[0]", "filter_discard_list") or {}
@@ -1714,6 +1715,16 @@ local function update_node(manual)
 					if kkk == "type" and vvv == "sing-box" then
 						uci:set(appname, cfgid, "domain_strategy", domain_strategy_node)
 					end
+					-- 订阅组链式代理
+					if chain_node_type ~= "" and kkk == "type" and vvv == chain_node_type then
+						if preproxy_node_group ~="" then
+							uci:set(appname, cfgid, "chain_proxy", "1")
+							uci:set(appname, cfgid, "preproxy_node", preproxy_node_group)
+						elseif to_node_group ~= "" then
+							uci:set(appname, cfgid, "chain_proxy", "2")
+							uci:set(appname, cfgid, "to_node", to_node_group)
+						end
+					end		
 				end
 			end
 		end
@@ -1916,6 +1927,22 @@ local execute = function()
 			else
 				domain_strategy_node = domain_strategy_default
 			end
+
+			-- 订阅组链式代理
+			local function valid_chain_node(node)
+				if not node then return "" end
+				local cp = uci:get(appname, node, "chain_proxy") or ""
+				local am = uci:get(appname, node, "add_mode") or "0"
+				chain_node_type = (cp == "" and am ~= "2") and (uci:get(appname, node, "type") or "") or ""
+				if chain_node_type ~= "Xray" and chain_node_type ~= "sing-box" then
+					chain_node_type = ""
+					return ""
+				end
+				return node
+			end
+			preproxy_node_group = (value.chain_proxy == "1") and valid_chain_node(value.preproxy_node) or ""
+			to_node_group = (value.chain_proxy == "2") and valid_chain_node(value.to_node) or ""
+
 			local ua = value.user_agent
 			local access_mode = value.access_mode
 			local result = (not access_mode) and "自动" or (access_mode == "direct" and "直连访问" or (access_mode == "proxy" and "通过代理" or "自动"))
