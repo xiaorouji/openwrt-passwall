@@ -184,7 +184,6 @@ local api = require "luci.passwall.api"
 					const chunk = base64Data.substring(currentChunk * chunkSize, (currentChunk + 1) * chunkSize);
 					const xhr = new XMLHttpRequest();
 					xhr.open("POST", '<%= api.url("restore_backup") %>', true);
-					xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 					xhr.onreadystatechange = function () {
 						if (xhr.readyState === 4) {
 							if (xhr.status === 200) {
@@ -203,12 +202,12 @@ local api = require "luci.passwall.api"
 							}
 						}
 					};
-					xhr.send(
-						"filename=" + encodeURIComponent(file.name) +
-						"&chunk=" + encodeURIComponent(chunk) +
-						"&chunk_index=" + currentChunk +
-						"&total_chunks=" + totalChunks
-					);
+					const formData = new FormData();
+					formData.append("filename", file.name);
+					formData.append("chunk", chunk);
+					formData.append("chunk_index", currentChunk);
+					formData.append("total_chunks", totalChunks);
+					xhr.send(formData);
 				} else {
 					//alert("Upload completed.");
 					document.getElementById("upload-btn").value = "<%:UL Restore%>";
