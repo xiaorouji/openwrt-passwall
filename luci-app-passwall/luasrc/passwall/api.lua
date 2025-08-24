@@ -540,6 +540,8 @@ function get_valid_nodes()
 							protocol = "HY2"
 						elseif protocol == "anytls" then
 							protocol = "AnyTLS"
+						elseif protocol == "ssh" then
+							protocol = "SSH"
 						else
 							protocol = protocol:gsub("^%l",string.upper)
 						end
@@ -586,6 +588,8 @@ function get_node_remarks(n)
 					protocol = "HY2"
 				elseif protocol == "anytls" then
 					protocol = "AnyTLS"
+				elseif protocol == "ssh" then
+					protocol = "SSH"
 				else
 					protocol = protocol:gsub("^%l",string.upper)
 				end

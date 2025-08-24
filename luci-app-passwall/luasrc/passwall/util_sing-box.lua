@@ -478,6 +478,18 @@ function gen_outbound(flag, node, tag, proxy_table)
 			}
 		end
 
+		if node.protocol == "ssh" then
+			protocol_table = {
+				user = (node.username and node.username ~= "") and node.username or "root",
+				password = (node.password and node.password ~= "") and node.password or "",
+				private_key = node.ssh_priv_key,
+				private_key_passphrase = node.ssh_priv_key_pp,
+				host_key = node.ssh_host_key,
+				host_key_algorithms = node.ssh_host_key_algo,
+				client_version = node.ssh_client_version
+			}
+		end
+
 		if protocol_table then
 			for key, value in pairs(protocol_table) do
 				result[key] = value

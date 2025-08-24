@@ -1956,3 +1956,21 @@ msgstr "可以通过输入 GeoIP/Geosite，提取它们所包含的域名/IP。"
 
 msgid "Use the GeoIP/Geosite query function to verify if the entered Geo rules are correct."
 msgstr "利用 GeoIP/Geosite 查询功能，可以验证输入的 Geo 规则是否正确。"
+
+msgid "Private Key Passphrase"
+msgstr "私钥指纹"
+
+msgid "Host Key"
+msgstr "主机密钥"
+
+msgid "Accept any if empty."
+msgstr "留空则不校验。"
+
+msgid "Host Key Algorithms"
+msgstr "主机密钥算法"
+
+msgid "Client Version"
+msgstr "客户端版本"
+
+msgid "Random version will be used if empty."
+msgstr "如留空，则使用随机版本。"
