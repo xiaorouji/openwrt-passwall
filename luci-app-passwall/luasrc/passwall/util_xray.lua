@@ -779,6 +779,10 @@ function gen_config(var)
 							table.insert(outbounds, outbound)
 							fallback_node_tag = outbound.tag
 						end
+					else
+						if gen_balancer(fallback_node) then
+							fallback_node_tag = fallback_node_id
+						end
 					end
 				end
 			end
