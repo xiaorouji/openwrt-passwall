@@ -135,9 +135,15 @@ jobs:
           #--------------------------------------begin_patches------------------------------------------
           echo "Start applying the patch"
 
+          rm -rf temp_resp
+          git clone -b master --single-branch https://github.com/openwrt/packages.git temp_resp
           echo "update golang version"
           rm -rf feeds/packages/lang/golang
-          git clone https://github.com/sbwml/packages_lang_golang -b 24.x feeds/packages/lang/golang
+          cp -r temp_resp/lang/golang feeds/packages/lang
+          echo "update rust version"
+          rm -rf feeds/packages/lang/rust
+          cp -r temp_resp/lang/rust feeds/packages/lang
+          rm -rf temp_resp
 
           echo "Patch application completed"
           #--------------------------------------end_patches--------------------------------------------
@@ -313,9 +319,15 @@ jobs:
           echo "Start applying the patch"
 
 
+          rm -rf temp_resp
+          git clone -b master --single-branch https://github.com/openwrt/packages.git temp_resp
           echo "update golang version"
           rm -rf feeds/packages/lang/golang
-          git clone https://github.com/sbwml/packages_lang_golang -b 24.x feeds/packages/lang/golang
+          cp -r temp_resp/lang/golang feeds/packages/lang
+          echo "update rust version"
+          rm -rf feeds/packages/lang/rust
+          cp -r temp_resp/lang/rust feeds/packages/lang
+          rm -rf temp_resp
 
           echo "fixed rust host build error"
           sed -i 's/--set=llvm\.download-ci-llvm=false/--set=llvm.download-ci-llvm=true/' feeds/packages/lang/rust/Makefile
