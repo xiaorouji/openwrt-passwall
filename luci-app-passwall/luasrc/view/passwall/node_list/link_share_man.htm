@@ -3,17 +3,35 @@
 local api = require "luci.passwall.api"
 local appname = 'passwall'
 local map = self.map
-local ss_type = map:get("@global_subscribe[0]", "ss_type") or "xray"
-local trojan_type = map:get("@global_subscribe[0]", "trojan_type") or "xray"
-local vmess_type = map:get("@global_subscribe[0]", "vmess_type") or "xray"
-local vless_type = map:get("@global_subscribe[0]", "vless_type") or "xray"
-local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sing-box"
+
+local has_ss = api.is_finded("ss-redir")
+local has_ss_rust = api.is_finded("sslocal")
+local has_trojan_plus = api.is_finded("trojan-plus")
+local has_singbox = api.finded_com("sing-box")
+local has_xray = api.finded_com("xray")
+local has_hysteria2 = api.finded_com("hysteria")
+
+local function get_core(field, candidates)
+	local v = map:get(appname, "@global_subscribe[0]", field)
+	if not v or v == "" then
+		for _, c in ipairs(candidates) do
+			if c[1] then return c[2] end
+		end
+	end
+	return v
+end
+
+local ss_type = get_core("ss_type", {{has_ss,"shadowsocks-libev"},{has_ss_rust,"shadowsocks-rust"},{has_singbox,"sing-box"},{has_xray,"xray"}})
+local trojan_type = get_core("trojan_type", {{has_trojan_plus,"trojan-plus"},{has_singbox,"sing-box"},{has_xray,"xray"}})
+local vmess_type = get_core("vmess_type", {{has_xray,"xray"},{has_singbox,"sing-box"}})
+local vless_type = get_core("vless_type", {{has_xray,"xray"},{has_singbox,"sing-box"}})
+local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{has_singbox,"sing-box"}})
 -%>
 <script src="<%=resource%>/qrcode.min.js"></script>
 <script type="text/javascript">//<![CDATA[
-	let has_singbox = "<%=api.finded_com("sing-box")%>"
-	let has_xray = "<%=api.finded_com("xray")%>"
-	let has_hysteria2 = "<%=api.finded_com("hysteria")%>"
+	let has_singbox = "<%=has_singbox%>"
+	let has_xray = "<%=has_xray%>"
+	let has_hysteria2 = "<%=has_hysteria2%>"
 	let ss_type = "<%=ss_type%>"
 	let trojan_type = "<%=trojan_type%>"
 	let vmess_type = "<%=vmess_type%>"
