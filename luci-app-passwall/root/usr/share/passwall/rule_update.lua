@@ -95,7 +95,7 @@ end
 -- curl
 local function curl(url, file, valifile)
 	local args = {
-		"-skL", "-w %{http_code}", "--retry 3", "--connect-timeout 3"
+		"-skL", "-w %{http_code}", "--retry 3", "--connect-timeout 3", "--max-time 300", "--speed-limit 51200 --speed-time 15"
 	}
 	if file then
 		args[#args + 1] = "-o " .. file
@@ -126,7 +126,8 @@ end
 
 local function non_file_check(file_path, vali_file)
 	if fs.readfile(file_path, 10) then
-		local remote_file_size = tonumber(sys.exec("cat " .. vali_file .. " | grep -i 'Content-Length' | awk '{print $2}'"))
+		local size_str = sys.exec("grep -i 'Content-Length' " .. vali_file .. " | tail -n1 | sed 's/[^0-9]//g'")
+		local remote_file_size = tonumber(size_str ~= "" and size_str or nil)
 		local local_file_size = tonumber(fs.stat(file_path, "size"))
 		if remote_file_size and local_file_size then
 			if remote_file_size == local_file_size then
@@ -317,6 +318,7 @@ local function fetch_geofile(geo_name, geo_type, url)
 	local down_filename = url:match("^.*/([^/?#]+)")
 	local sha_url = url:gsub(down_filename, down_filename .. ".sha256sum")
 	local sha_path = tmp_path .. ".sha256sum"
+	local vali_file = tmp_path .. ".vali"
 
 	local function verify_sha256(sha_file)
 		return sys.call("sha256sum -c " .. sha_file .. " > /dev/null 2>&1") == 0
@@ -346,7 +348,18 @@ local function fetch_geofile(geo_name, geo_type, url)
 		end
 	end
 
-	if curl(url, tmp_path) == 200 then
+	local sret_tmp = curl(url, tmp_path, vali_file)
+	if sret_tmp == 200 and non_file_check(tmp_path, vali_file) then
+		log(geo_type .. " 下载文件过程出错，尝试重新下载。")
+		os.remove(tmp_path)
+		os.remove(vali_file)
+		sret_tmp = curl(url, tmp_path, vali_file)
+		if sret_tmp == 200 and non_file_check(tmp_path, vali_file) then
+			sret_tmp = 0
+			log(geo_type .. " 下载文件过程出错，请检查网络或下载链接后重试！")
+		end
+	end
+	if sret_tmp == 200 then
 		if sha_verify then
 			if verify_sha256(sha_path) then
 				sys.call(string.format("mkdir -p %s && cp -f %s %s", asset_location, tmp_path, asset_path))
@@ -451,6 +464,7 @@ end
 local function remove_tmp_geofile(name)
 	os.remove("/tmp/" .. name .. ".dat")
 	os.remove("/tmp/" .. name .. ".dat.sha256sum")
+	os.remove("/tmp/" .. name .. ".dat.vali")
 end
 
 if geo2rule == "1" then
