@@ -12,7 +12,7 @@ local has_xray = api.finded_com("xray")
 local has_hysteria2 = api.finded_com("hysteria")
 
 local function get_core(field, candidates)
-	local v = map:get(appname, "@global_subscribe[0]", field)
+	local v = map:get("@global_subscribe[0]", field)
 	if not v or v == "" then
 		for _, c in ipairs(candidates) do
 			if c[1] then return c[2] end
