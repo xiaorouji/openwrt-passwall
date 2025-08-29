@@ -518,7 +518,8 @@ function get_valid_nodes()
 				e["node_type"] = "special"
 				nodes[#nodes + 1] = e
 			end
-			if e.port and e.address then
+			local port = e.port or e.hysteria_hop or e.hysteria2_hop
+			if port and e.address then
 				local address = e.address
 				if is_ip(address) or datatypes.hostname(address) then
 					local type = e.type
@@ -551,7 +552,8 @@ function get_valid_nodes()
 					if is_ipv6(address) then address = get_ipv6_full(address) end
 					e["remark"] = "%s：[%s]" % {type, e.remarks}
 					if show_node_info == "1" then
-						e["remark"] = "%s：[%s] %s:%s" % {type, e.remarks, address, e.port}
+						port = port:gsub(":", "-")
+						e["remark"] = "%s：[%s] %s:%s" % {type, e.remarks, address, port}
 					end
 					e.node_type = "normal"
 					nodes[#nodes + 1] = e
@@ -605,8 +607,10 @@ end
 function get_full_node_remarks(n)
 	local remarks = get_node_remarks(n)
 	if #remarks > 0 then
-		if n.address and n.port then
-			remarks = remarks .. " " .. n.address .. ":" .. n.port
+		local port = n.port or n.hysteria_hop or n.hysteria2_hop
+		if n.address and port then
+			port = port:gsub(":", "-")
+			remarks = remarks .. " " .. n.address .. ":" .. port
 		end
 	end
 	return remarks

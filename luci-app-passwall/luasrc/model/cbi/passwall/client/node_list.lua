@@ -183,9 +183,10 @@ o.cfgvalue = function(t, n)
 		type = type .. " " .. protocol
 	end
 	local address = m:get(n, "address") or ""
-	local port = m:get(n, "port") or ""
+	local port = m:get(n, "port") or m:get(n, "hysteria_hop") or m:get(n, "hysteria2_hop") or ""
 	str = str .. translate(type) .. "：" .. remarks
 	if address ~= "" and port ~= "" then
+		port = port:gsub(":", "-")
 		if show_node_info == "1" then
 			if datatypes.ip6addr(address) then
 				str = str .. string.format("（[%s]:%s）", address, port)
