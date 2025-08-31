@@ -429,6 +429,18 @@ function is_ipv6(val)
 	return false
 end
 
+function is_local_ip(ip)
+	ip = tostring(ip or ""):lower()
+	ip = ip:gsub("^[%w%d]+://", "")   -- 去掉协议头
+		:gsub("/.*$", "")          -- 去掉路径
+		:gsub("^%[", ""):gsub("%]$", "") -- 去掉IPv6方括号
+		:gsub(":%d+$", "")         -- 去掉端口
+	return ip:match("^127%.") or ip:match("^10%.") or
+		ip:match("^172%.1[6-9]%.") or ip:match("^172%.2[0-9]%.") or
+		ip:match("^172%.3[0-1]%.") or ip:match("^192%.168%.") or
+		ip == "::1" or ip:match("^f[cd]") or ip:match("^fe[89ab]")
+end
+
 function is_ipv6addrport(val)
 	if is_ipv6(val) then
 		local address, port = val:match('%[(.*)%]:([^:]+)$')

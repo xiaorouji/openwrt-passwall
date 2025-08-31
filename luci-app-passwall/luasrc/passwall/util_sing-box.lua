@@ -1555,6 +1555,9 @@ function gen_config(var)
 			end
 
 			if remote_server.address then
+				if api.is_local_ip(remote_server.address) then  --dns为本地ip，不走代理
+					remote_server.detour = "direct"
+				end
 				table.insert(dns.servers, remote_server)
 			end
 
@@ -1610,6 +1613,9 @@ function gen_config(var)
 			end
 
 			if remote_server.server then
+				if api.is_local_ip(remote_server.server) then  --dns为本地ip，不走代理
+					remote_server.detour = "direct"
+				end
 				table.insert(dns.servers, remote_server)
 			end
 
@@ -1759,7 +1765,9 @@ function gen_config(var)
 						if value.outboundTag ~= COMMON.default_outbound_tag and (remote_server.address or remote_server.server) then
 							local remote_shunt_server = api.clone(remote_server)
 							remote_shunt_server.tag = value.outboundTag
-							remote_shunt_server.detour = value.outboundTag
+							local is_local = (remote_server.address and api.is_local_ip(remote_server.address)) or
+									 (remote_server.server and api.is_local_ip(remote_server.server))  --dns为本地ip，不走代理
+							remote_shunt_server.detour = is_local and "direct" or value.outboundTag
 							table.insert(dns.servers, remote_shunt_server)
 							dns_rule.server = remote_shunt_server.tag
 						end

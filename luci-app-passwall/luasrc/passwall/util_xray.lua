@@ -1370,25 +1370,37 @@ function gen_config(var)
 					end
 
 					if dns_server then
+						local outboundTag, balancerTag
+						if not api.is_local_ip(dns_server.address) or value.outboundTag == "blackhole" then --dns为本地ip，不走代理
+							outboundTag = value.outboundTag
+							balancerTag  = value.balancerTag
+						else
+							outboundTag = "direct"
+							balancerTag  = nil
+						end
 						table.insert(dns.servers, dns_server)
 						table.insert(routing.rules, {
-							inboundTag = {
-								dns_server.tag
-							},
-							outboundTag = value.outboundTag or nil,
-							balancerTag = value.balancerTag or nil
+							inboundTag = { dns_server.tag },
+							outboundTag = outboundTag,
+							balancerTag = balancerTag
 						})
 					end
 				end
 			end
 		end
 
+		local _outboundTag, _balancerTag
+		if not api.is_local_ip(_remote_dns.address) or dns_outbound_tag == "blackhole" then --dns为本地ip，不走代理
+			_outboundTag = dns_outbound_tag
+			_balancerTag  = COMMON.default_balancer_tag
+		else
+			_outboundTag = "direct"
+			_balancerTag  = nil
+		end
 		table.insert(routing.rules, {
-			inboundTag = {
-				"dns-global"
-			},
-			balancerTag = COMMON.default_balancer_tag,
-			outboundTag = dns_outbound_tag
+			inboundTag = { "dns-global" },
+			balancerTag = _balancerTag,
+			outboundTag = _outboundTag
 		})
 
 		local default_rule_index = nil
