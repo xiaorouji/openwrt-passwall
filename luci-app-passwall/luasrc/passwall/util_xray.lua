@@ -23,7 +23,8 @@ local function get_noise_packets()
 		local noise = (n.enabled == "1") and {
 			type = n.type,
 			packet = n.packet,
-			delay = string.find(n.delay, "-") and n.delay or tonumber(n.delay)
+			delay = string.find(n.delay, "-") and n.delay or tonumber(n.delay),
+			applyTo = n.applyTo
 		} or nil
 		table.insert(noises, noise)
 	end)
@@ -1472,7 +1473,8 @@ function gen_config(var)
 					fragment = (xray_settings.fragment == "1") and {
 						packets = (xray_settings.fragment_packets and xray_settings.fragment_packets ~= "") and xray_settings.fragment_packets,
 						length = (xray_settings.fragment_length and xray_settings.fragment_length ~= "") and xray_settings.fragment_length,
-						interval = (xray_settings.fragment_interval and xray_settings.fragment_interval ~= "") and xray_settings.fragment_interval
+						interval = (xray_settings.fragment_interval and xray_settings.fragment_interval ~= "") and xray_settings.fragment_interval,
+						maxSplit = (xray_settings.fragment_maxSplit and xray_settings.fragment_maxSplit ~= "") and xray_settings.fragment_maxSplit
 					} or nil,
 					noises = (xray_settings.noise == "1") and get_noise_packets() or nil
 				},
