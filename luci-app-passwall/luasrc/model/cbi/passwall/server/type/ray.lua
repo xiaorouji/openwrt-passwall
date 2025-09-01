@@ -79,8 +79,9 @@ o = s:option(Value, _n("d_port"), translate("Destination port"))
 o.datatype = "port"
 o:depends({ [_n("protocol")] = "dokodemo-door" })
 
-o = s:option(Value, _n("decryption"), translate("Encrypt Method"))
+o = s:option(Value, _n("decryption"), translate("Encrypt Method") .. " (decryption)")
 o.default = "none"
+o.placeholder = "none"
 o:depends({ [_n("protocol")] = "vless" })
 
 o = s:option(ListValue, _n("x_ss_method"), translate("Encrypt Method"))
@@ -363,7 +364,7 @@ o:value("aes-128-gcm")
 o:value("chacha20-poly1305")
 o:depends({ [_n("transport")] = "quic" })
 
-o = s:option(Value, _n("quic_key"), translate("Encrypt Method") .. translate("Key"))
+o = s:option(Value, _n("quic_key"), translate("Encrypt Key"))
 o:depends({ [_n("transport")] = "quic" })
 
 o = s:option(ListValue, _n("quic_guise"), translate("Camouflage Type"))

@@ -650,7 +650,10 @@ msgid "Lazy Start"
 msgstr "延迟启动"
 
 msgid "Encrypt Method"
-msgstr "加密"
+msgstr "加密方式"
+
+msgid "Encrypt Key"
+msgstr "加密密钥"
 
 msgid "Latency"
 msgstr "延迟"

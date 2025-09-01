@@ -303,7 +303,7 @@ o = s:option(ListValue, _n("security"), translate("Encrypt Method"))
 for a, t in ipairs(security_list) do o:value(t) end
 o:depends({ [_n("protocol")] = "vmess" })
 
-o = s:option(Value, _n("encryption"), translate("Encrypt Method"))
+o = s:option(Value, _n("encryption"), translate("Encrypt Method") .. " (encryption)")
 o.default = "none"
 o:value("none")
 o:depends({ [_n("protocol")] = "vless" })
