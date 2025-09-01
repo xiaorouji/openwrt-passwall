@@ -247,7 +247,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 								level = 0,
 								security = (node.protocol == "vmess") and node.security or nil,
 								encryption = node.encryption or "none",
-								flow = (node.protocol == "vless" and node.tls == "1" and (node.transport == "raw" or node.transport == "tcp") and node.flow and node.flow ~= "") and node.flow or nil
+								flow = (node.protocol == "vless" and node.tls == "1" and (node.transport == "raw" or node.transport == "tcp" or node.transport == "xhttp") and node.flow and node.flow ~= "") and node.flow or nil
 
 							}
 						}
