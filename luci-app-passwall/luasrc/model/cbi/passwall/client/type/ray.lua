@@ -332,6 +332,7 @@ o.default = ""
 o:value("", translate("Disable"))
 o:value("xtls-rprx-vision")
 o:depends({ [_n("protocol")] = "vless", [_n("tls")] = true, [_n("transport")] = "raw" })
+o:depends({ [_n("protocol")] = "vless", [_n("tls")] = true, [_n("transport")] = "xhttp" })
 o:depends({ [_n("protocol")] = "trojan", [_n("tls")] = true, [_n("transport")] = "raw" })
 
 o = s:option(Flag, _n("tls"), translate("TLS"))
@@ -712,3 +713,4 @@ for i, v in ipairs(s.fields[_n("protocol")].keylist) do
 end
 
 api.luci_types(arg[1], m, s, type_name, option_prefix)
+
