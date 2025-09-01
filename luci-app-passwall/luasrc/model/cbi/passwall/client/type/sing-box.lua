@@ -300,7 +300,6 @@ o.default = ""
 o:value("", translate("Disable"))
 o:value("xtls-rprx-vision")
 o:depends({ [_n("protocol")] = "vless", [_n("tls")] = true })
-o:depends({ [_n("protocol")] = "trojan", [_n("tls")] = true })
 
 if singbox_tags:find("with_quic") then
 	o = s:option(Value, _n("hysteria_hop"), translate("Port hopping range"))
