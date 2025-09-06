@@ -98,14 +98,11 @@ function gen_outbound(flag, node, tag, proxy_table)
 			end
 			node.stream_security = "none"
 		else
-			if node.flow == "xtls-rprx-vision" then
-			else
-				if proxy_tag then
-					node.proxySettings = {
-						tag = proxy_tag,
-						transportLayer = true
-					}
-				end
+			if proxy_tag then
+				node.proxySettings = {
+					tag = proxy_tag,
+					transportLayer = true
+				}
 			end
 		end
 
@@ -931,7 +928,7 @@ function gen_config(var)
 						return copied_outbound.tag, nil
 					end
 					--new outbound
-					if use_proxy and (_node.type ~= "Xray" or _node.flow == "xtls-rprx-vision") then
+					if use_proxy and _node.type ~= "Xray" then
 						new_port = get_new_port()
 						table.insert(inbounds, {
 							tag = "proxy_" .. rule_name,
