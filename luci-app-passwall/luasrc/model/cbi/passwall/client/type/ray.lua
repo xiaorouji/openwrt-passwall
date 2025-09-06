@@ -305,7 +305,7 @@ o:depends({ [_n("protocol")] = "vmess" })
 
 o = s:option(Value, _n("encryption"), translate("Encrypt Method") .. " (encryption)")
 o.default = "none"
-o:value("none")
+o.placeholder = "none"
 o:depends({ [_n("protocol")] = "vless" })
 
 o = s:option(ListValue, _n("ss_method"), translate("Encrypt Method"))

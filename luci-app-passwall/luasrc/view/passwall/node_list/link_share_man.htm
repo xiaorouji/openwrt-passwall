@@ -291,8 +291,6 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 				}
 				params += "&type=" + v_transport;
 
-				params += opt.query("encryption", dom_prefix + "encryption");
-
 				if (opt.get(dom_prefix + "tls").checked) {
 					var v_security = "tls";
 					if (opt.get(dom_prefix + "fingerprint") && opt.get(dom_prefix + "fingerprint").value != "") {
@@ -535,8 +533,6 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 			}
 			params += "&type=" + v_transport;
 
-			params += opt.query("encryption", dom_prefix + "encryption");
-
 			if (opt.get(dom_prefix + "tls").checked) {
 				var v_security = "tls";
 				if (opt.get(dom_prefix + "fingerprint") && opt.get(dom_prefix + "fingerprint").value != "") {
@@ -549,10 +545,6 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 					params += opt.query("sid", dom_prefix + "reality_shortId");
 					params += opt.query("spx", dom_prefix + "reality_spiderX");
 					params += opt.query("pqv", dom_prefix + "reality_mldsa65Verify");
-				}
-				if (opt.get(dom_prefix + "flow") && opt.get(dom_prefix + "flow").value) {
-					let v_flow = opt.get(dom_prefix + "flow").value;
-					params += "&flow=" + v_flow;
 				}
 				params += "&security=" + v_security;
 				params += opt.query("alpn", dom_prefix + "alpn");
@@ -973,7 +965,6 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 			}
 
 			if (Object.keys(queryParam).length > 0 && !queryParam.plugin) {
-				opt.set(dom_prefix + 'encryption', queryParam.encryption);
 				if (queryParam.security) {
 					if (queryParam.security == "tls") {
 						opt.set(dom_prefix + 'tls', true);
@@ -1223,7 +1214,6 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 				}
 				tls_serverName = tls_serverName || "";
 				opt.set(dom_prefix + 'tls_serverName', tls_serverName);
-				opt.set(dom_prefix + 'flow', (queryParam.flow || '').replace('-udp443', ''));
 				opt.set(dom_prefix + 'alpn', queryParam.alpn || 'default');
 			}
 			opt.set(dom_prefix + 'tls_allowInsecure', true);

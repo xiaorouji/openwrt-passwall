@@ -1047,8 +1047,6 @@ local function processData(szType, content, add_mode, add_from)
 				result.httpupgrade_path = params.path
 			end
 
-			result.encryption = params.encryption or "none"
-			result.flow = params.flow and params.flow:gsub("-udp443", "") or nil
 			result.alpn = params.alpn
 
 			if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "xhttp" or result.transport == "splithttp") then
