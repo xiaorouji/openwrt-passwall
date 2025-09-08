@@ -677,9 +677,6 @@ o:depends({ [_n("xmux")] = true })
 o = s:option(Flag, _n("tcpMptcp"), "tcpMptcp", translate("Enable Multipath TCP, need to be enabled in both server and client configuration."))
 o.default = 0
 
-o = s:option(Flag, _n("tcpNoDelay"), "tcpNoDelay")
-o.default = 0
-
 o = s:option(ListValue, _n("chain_proxy"), translate("Chain Proxy"))
 o:value("", translate("Close(Not use)"))
 o:value("1", translate("Preproxy Node"))
@@ -706,7 +703,6 @@ end
 for i, v in ipairs(s.fields[_n("protocol")].keylist) do
 	if not v:find("_") then
 		s.fields[_n("tcpMptcp")]:depends({ [_n("protocol")] = v })
-		s.fields[_n("tcpNoDelay")]:depends({ [_n("protocol")] = v })
 		s.fields[_n("chain_proxy")]:depends({ [_n("protocol")] = v })
 	end
 end

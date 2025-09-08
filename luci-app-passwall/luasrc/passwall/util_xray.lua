@@ -147,7 +147,6 @@ function gen_outbound(flag, node, tag, proxy_table)
 				sockopt = {
 					mark = 255,
 					tcpMptcp = (node.tcpMptcp == "1") and true or nil,
-					tcpNoDelay = (node.tcpNoDelay == "1") and true or nil,
 					dialerProxy = (fragment or noise) and "dialerproxy" or nil
 				},
 				network = node.transport,
@@ -1477,8 +1476,7 @@ function gen_config(var)
 				},
 				streamSettings = {
 					sockopt = {
-						mark = 255,
-						tcpNoDelay = true
+						mark = 255
 					}
 				}
 			})
