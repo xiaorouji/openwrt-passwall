@@ -107,7 +107,27 @@ end)
 --[[ URLTest ]]
 o = s:option(DynamicList, _n("urltest_node"), translate("URLTest node list"), translate("List of nodes to test, <a target='_blank' href='https://sing-box.sagernet.org/configuration/outbound/urltest'>document</a>"))
 o:depends({ [_n("protocol")] = "_urltest" })
-for k, v in pairs(nodes_table) do o:value(v.id, v.remark) end
+local valid_ids = {}
+for k, v in pairs(nodes_table) do
+	o:value(v.id, v.remark)
+	valid_ids[v.id] = true
+end
+-- 去重并禁止自定义非法输入
+function o.custom_write(self, section, value)
+	local result = {}
+	if type(value) == "table" then
+		local seen = {}
+		for _, v in ipairs(value) do
+			if v and not seen[v] and valid_ids[v] then
+				table.insert(result, v)
+				seen[v] = true
+			end
+		end
+	else
+		result = { value }
+	end
+	api.uci:set_list(appname, section, "urltest_node", result)
+end
 
 o = s:option(Value, _n("urltest_url"), translate("Probe URL"))
 o:depends({ [_n("protocol")] = "_urltest" })

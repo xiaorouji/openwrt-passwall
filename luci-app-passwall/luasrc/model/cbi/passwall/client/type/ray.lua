@@ -98,7 +98,27 @@ end)
 -- 负载均衡列表
 local o = s:option(DynamicList, _n("balancing_node"), translate("Load balancing node list"), translate("Load balancing node list, <a target='_blank' href='https://xtls.github.io/config/routing.html#balancerobject'>document</a>"))
 o:depends({ [_n("protocol")] = "_balancing" })
-for k, v in pairs(nodes_table) do o:value(v.id, v.remark) end
+local valid_ids = {}
+for k, v in pairs(nodes_table) do
+	o:value(v.id, v.remark)
+	valid_ids[v.id] = true
+end
+-- 去重并禁止自定义非法输入
+function o.custom_write(self, section, value)
+	local result = {}
+	if type(value) == "table" then
+		local seen = {}
+		for _, v in ipairs(value) do
+			if v and not seen[v] and valid_ids[v] then
+				table.insert(result, v)
+				seen[v] = true
+			end
+		end
+	else
+		result = { value }
+	end
+	api.uci:set_list(appname, section, "balancing_node", result)
+end
 
 local o = s:option(ListValue, _n("balancingStrategy"), translate("Balancing Strategy"))
 o:depends({ [_n("protocol")] = "_balancing" })
