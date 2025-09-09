@@ -184,7 +184,6 @@ define Package/$(PKG_NAME)/conffiles
 /usr/share/passwall/rules/lanlist_ipv4
 /usr/share/passwall/rules/lanlist_ipv6
 /usr/share/passwall/rules/domains_excluded
-/www/luci-static/resources/qrcode.min.js
 endef
 
 define Package/$(PKG_NAME)/postrm
