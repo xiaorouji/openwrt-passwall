@@ -40,7 +40,9 @@ o:value("socks", translate("Socks"))
 o:value("shadowsocks", translate("Shadowsocks"))
 o:value("trojan", translate("Trojan"))
 o:value("wireguard", translate("WireGuard"))
-o:value("_balancing", translate("Balancing"))
+if api.compare_versions(xray_version, ">=", "1.8.12") then
+	o:value("_balancing", translate("Balancing"))
+end
 o:value("_shunt", translate("Shunt"))
 o:value("_iface", translate("Custom Interface"))
 
@@ -96,7 +98,7 @@ m.uci:foreach(appname, "socks", function(s)
 end)
 
 -- 负载均衡列表
-local o = s:option(DynamicList, _n("balancing_node"), translate("Load balancing node list"), translate("Load balancing node list, <a target='_blank' href='https://xtls.github.io/config/routing.html#balancerobject'>document</a>"))
+o = s:option(DynamicList, _n("balancing_node"), translate("Load balancing node list"), translate("Load balancing node list, <a target='_blank' href='https://xtls.github.io/config/routing.html#balancerobject'>document</a>"))
 o:depends({ [_n("protocol")] = "_balancing" })
 local valid_ids = {}
 for k, v in pairs(nodes_table) do
@@ -120,76 +122,62 @@ function o.custom_write(self, section, value)
 	api.uci:set_list(appname, section, "balancing_node", result)
 end
 
-local o = s:option(ListValue, _n("balancingStrategy"), translate("Balancing Strategy"))
+o = s:option(ListValue, _n("balancingStrategy"), translate("Balancing Strategy"))
 o:depends({ [_n("protocol")] = "_balancing" })
 o:value("random")
 o:value("roundRobin")
 o:value("leastPing")
 o:value("leastLoad")
-o.default = "leastLoad"
+o.default = "random"
 
 -- Fallback Node
-if api.compare_versions(xray_version, ">=", "1.8.10") then
-	local o = s:option(ListValue, _n("fallback_node"), translate("Fallback Node"))
-	if api.compare_versions(xray_version, ">=", "1.8.12") then
-		o:depends({ [_n("protocol")] = "_balancing" })
-	else
-		o:depends({ [_n("balancingStrategy")] = "leastPing" })
-	end
-	local function check_fallback_chain(fb)
-		for k, v in pairs(fallback_table) do
-			if v.fallback == fb then
-				fallback_table[k] = nil
-				check_fallback_chain(v.id)
-			end
+o = s:option(ListValue, _n("fallback_node"), translate("Fallback Node"))
+o:value("", translate("Close(Not use)"))
+o:depends({ [_n("protocol")] = "_balancing" })
+local function check_fallback_chain(fb)
+	for k, v in pairs(fallback_table) do
+		if v.fallback == fb then
+			fallback_table[k] = nil
+			check_fallback_chain(v.id)
 		end
 	end
-	-- 检查fallback链，去掉会形成闭环的balancer节点
-	if is_balancer then
-		check_fallback_chain(arg[1])
-	end
-	for k, v in pairs(fallback_table) do o:value(v.id, v.remark) end
-	for k, v in pairs(nodes_table) do o:value(v.id, v.remark) end
 end
+-- 检查fallback链，去掉会形成闭环的balancer节点
+if is_balancer then
+	check_fallback_chain(arg[1])
+end
+for k, v in pairs(fallback_table) do o:value(v.id, v.remark) end
+for k, v in pairs(nodes_table) do o:value(v.id, v.remark) end
 
 -- 探测地址
-local ucpu = s:option(Flag, _n("useCustomProbeUrl"), translate("Use Custom Probe URL"), translate("By default the built-in probe URL will be used, enable this option to use a custom probe URL."))
-ucpu:depends({ [_n("balancingStrategy")] = "leastPing" })
-ucpu:depends({ [_n("balancingStrategy")] = "leastLoad" })
+o = s:option(Flag, _n("useCustomProbeUrl"), translate("Use Custom Probe URL"), translate("By default the built-in probe URL will be used, enable this option to use a custom probe URL."))
+o:depends({ [_n("protocol")] = "_balancing" })
 
-local pu = s:option(Value, _n("probeUrl"), translate("Probe URL"))
-pu:depends({ [_n("useCustomProbeUrl")] = true })
-pu:value("https://cp.cloudflare.com/", "Cloudflare")
-pu:value("https://www.gstatic.com/generate_204", "Gstatic")
-pu:value("https://www.google.com/generate_204", "Google")
-pu:value("https://www.youtube.com/generate_204", "YouTube")
-pu:value("https://connect.rom.miui.com/generate_204", "MIUI (CN)")
-pu:value("https://connectivitycheck.platform.hicloud.com/generate_204", "HiCloud (CN)")
-pu.default = "https://www.google.com/generate_204"
-pu.description = translate("The URL used to detect the connection status.")
+o = s:option(Value, _n("probeUrl"), translate("Probe URL"))
+o:depends({ [_n("useCustomProbeUrl")] = true })
+o:value("https://cp.cloudflare.com/", "Cloudflare")
+o:value("https://www.gstatic.com/generate_204", "Gstatic")
+o:value("https://www.google.com/generate_204", "Google")
+o:value("https://www.youtube.com/generate_204", "YouTube")
+o:value("https://connect.rom.miui.com/generate_204", "MIUI (CN)")
+o:value("https://connectivitycheck.platform.hicloud.com/generate_204", "HiCloud (CN)")
+o.default = "https://www.google.com/generate_204"
+o.description = translate("The URL used to detect the connection status.")
 
 -- 探测间隔
-local pi = s:option(Value, _n("probeInterval"), translate("Probe Interval"))
-pi:depends({ [_n("balancingStrategy")] = "leastPing" })
-pi:depends({ [_n("balancingStrategy")] = "leastLoad" })
-pi.default = "1m"
-pi.placeholder = "1m"
-pi.description = translate("The interval between initiating probes.") .. "<br>" ..
+o = s:option(Value, _n("probeInterval"), translate("Probe Interval"))
+o:depends({ [_n("protocol")] = "_balancing" })
+o.default = "1m"
+o.placeholder = "1m"
+o.description = translate("The interval between initiating probes.") .. "<br>" ..
 		translate("The time format is numbers + units, such as '10s', '2h45m', and the supported time units are <code>s</code>, <code>m</code>, <code>h</code>, which correspond to seconds, minutes, and hours, respectively.") .. "<br>" ..
 		translate("When the unit is not filled in, it defaults to seconds.")
-
-if api.compare_versions(xray_version, ">=", "1.8.12") then
-	ucpu:depends({ [_n("protocol")] = "_balancing" })
-	pi:depends({ [_n("protocol")] = "_balancing" })
-else
-	ucpu:depends({ [_n("balancingStrategy")] = "leastPing" })
-	pi:depends({ [_n("balancingStrategy")] = "leastPing" })
-end
 
 o = s:option(Value, _n("expected"), translate("Preferred Node Count"))
 o:depends({ [_n("balancingStrategy")] = "leastLoad" })
 o.datatype = "uinteger"
 o.default = "2"
+o.placeholder = "2"
 o.description = translate("The load balancer selects the optimal number of nodes, and traffic is randomly distributed among them.")
 
 
