@@ -1,16 +1,93 @@
 <%
 local api = require "luci.passwall.api"
-
-local gfwlist_update = api.uci_get_type("@global_rules[0]", "gfwlist_update", "1") == "1" and "checked='checked'" or ""
-local chnroute_update = api.uci_get_type("@global_rules[0]", "chnroute_update", "1") == "1" and "checked='checked'" or ""
-local chnroute6_update = api.uci_get_type("@global_rules[0]", "chnroute6_update", "1") == "1" and "checked='checked'" or ""
-local chnlist_update = api.uci_get_type("@global_rules[0]", "chnlist_update", "1") == "1" and "checked='checked'" or ""
-local geoip_update = api.uci_get_type("@global_rules[0]", "geoip_update", "1") == "1" and "checked='checked'" or ""
-local geosite_update = api.uci_get_type("@global_rules[0]", "geosite_update", "1") == "1" and "checked='checked'" or ""
 -%>
+
+<style>
+	div.cbi-value[id$="-gfwlist_update"],
+	div.cbi-value[id$="-chnroute_update"],
+	div.cbi-value[id$="-chnroute6_update"],
+	div.cbi-value[id$="-chnlist_update"],
+	div.cbi-value[id$="-geoip_update"],
+	div.cbi-value[id$="-geosite_update"] {
+		display: none !important;
+	}
+</style>
+
+<div class="cbi-value" id="_rule_div">
+	<label class="cbi-value-title">
+		<%:Update Options%>
+	</label>
+	<div class="cbi-value-field">
+		<div>
+			<label>
+				<input class="cbi-input-checkbox" type="checkbox" name="gfwlist" value="1" />
+				gfwlist
+			</label>
+			<label>
+				<input class="cbi-input-checkbox" type="checkbox" name="chnroute" value="1" />
+				chnroute
+			</label>
+			<label>
+				<input class="cbi-input-checkbox" type="checkbox" name="chnroute6" value="1" />
+				chnroute6
+			</label>
+			<label>
+				<input class="cbi-input-checkbox" type="checkbox" name="chnlist" value="1" />
+				chnlist
+			</label>
+			<label>
+				<input class="cbi-input-checkbox" type="checkbox" name="geoip" value="1" />
+				geoip
+			</label>
+			<label>
+				<input class="cbi-input-checkbox" type="checkbox" name="geosite" value="1" />
+				geosite
+			</label>
+			<br><br><input class="btn cbi-button cbi-button-apply" type="button" id="update_rules_btn" onclick="update_rules(this)" value="<%:Manually update%>" />
+		</div>
+	</div>
+</div>
 
 <script type="text/javascript">
 	//<![CDATA[
+	document.addEventListener('DOMContentLoaded', function () {
+		const flags = [
+			"gfwlist_update","chnroute_update","chnroute6_update",
+			"chnlist_update","geoip_update","geosite_update"
+		];
+		const targetNode = document.querySelector('form') || document.body;
+		const observer = new MutationObserver(() => {
+			flags.forEach(flag => {
+				const orig = Array.from(document.querySelectorAll(`input[name$=".${flag}"]`)).find(i => i.type === 'checkbox');
+				if (!orig) {
+					return;
+				}
+				// 隐藏最外层 div
+				const wrapper = orig.closest('.cbi-value');
+				if (wrapper && wrapper.style.display !== 'none') {
+					wrapper.style.display = 'none';
+				}
+				const custom = document.querySelector(`.cbi-input-checkbox[name="${flag.replace('_update','')}"]`);
+				if (!custom) {
+					return;
+				}
+				custom.checked = orig.checked;
+				// 自定义选择框与原生Flag双向绑定
+				if (!custom._binded) {
+					custom._binded = true;
+					orig.addEventListener('change', () => {
+						custom.checked = orig.checked;
+					});
+					custom.addEventListener('change', () => {
+						orig.checked = custom.checked;
+						orig.dispatchEvent(new Event('change', { bubbles: true }));
+					});
+				}
+			});
+		});
+		observer.observe(targetNode, { childList: true, subtree: true });
+	});
+
 	function update_rules(btn) {
 		btn.disabled = true;
 		btn.value = '<%:Updating...%>';
@@ -40,37 +117,3 @@ local geosite_update = api.uci_get_type("@global_rules[0]", "geosite_update", "1
 	}
 	//]]>
 </script>
-<div class="cbi-value" id="_rule_div">
-	<label class="cbi-value-title">
-		<%:Manually update%>
-	</label>
-	<div class="cbi-value-field">
-		<div>
-			<label>
-				<input class="cbi-input-checkbox" type="checkbox" name="gfwlist" value="1" <%=gfwlist_update%> />
-				gfwlist
-			</label>
-			<label>
-				<input class="cbi-input-checkbox" type="checkbox" name="chnroute" value="1" <%=chnroute_update%> />
-				chnroute
-			</label>
-			<label>
-				<input class="cbi-input-checkbox" type="checkbox" name="chnroute6" value="1" <%=chnroute6_update%> />
-				chnroute6
-			</label>
-			<label>
-				<input class="cbi-input-checkbox" type="checkbox" name="chnlist" value="1" <%=chnlist_update%> />
-				chnlist
-			</label>
-			<label>
-				<input class="cbi-input-checkbox" type="checkbox" name="geoip" value="1" <%=geoip_update%> />
-				geoip
-			</label>
-			<label>
-				<input class="cbi-input-checkbox" type="checkbox" name="geosite" value="1" <%=geosite_update%> />
-				geosite
-			</label>
-			<br><br><input class="btn cbi-button cbi-button-apply" type="button" id="update_rules_btn" onclick="update_rules(this)" value="<%:Manually update%>" />
-		</div>
-	</div>
-</div>

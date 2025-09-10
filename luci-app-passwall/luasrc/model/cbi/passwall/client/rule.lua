@@ -130,6 +130,16 @@ o.default = 2
 o:depends("week_update", "8")
 o.rmempty = true
 
+---- 更新选项，始终被js隐藏
+local flags = {
+	"gfwlist_update", "chnroute_update", "chnroute6_update",
+	"chnlist_update", "geoip_update", "geosite_update"
+}
+for _, f in ipairs(flags) do
+	o = s:option(Flag, f)
+	o.rmempty = false
+end
+
 s:append(Template(appname .. "/rule/rule_version"))
 
 if has_xray or has_singbox then

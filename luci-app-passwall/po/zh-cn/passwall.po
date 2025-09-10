@@ -910,6 +910,9 @@ msgstr "强制更新"
 msgid "Manually update"
 msgstr "手动更新"
 
+msgid "Update Options"
+msgstr "更新选项"
+
 msgid "The latest version: %s, currently does not support automatic update, if you need to update, please compile or download the ipk and then manually install."
 msgstr "最新版本：%s，目前暂不支持自动更新，如需更新，请自行编译或下载 ipk 然后手动安装。"
 
