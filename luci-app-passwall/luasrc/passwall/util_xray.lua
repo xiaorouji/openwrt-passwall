@@ -210,10 +210,10 @@ function gen_outbound(flag, node, tag, proxy_table)
 					path = node.httpupgrade_path or "/",
 					host = node.httpupgrade_host
 				} or nil,
-				xhttpSettings = (node.transport == "xhttp" or node.transport == "splithttp") and {
+				xhttpSettings = (node.transport == "xhttp") and {
 					mode = node.xhttp_mode or "auto",
-					path = node.xhttp_path or node.splithttp_path or "/",
-					host = node.xhttp_host or node.splithttp_host,
+					path = node.xhttp_path or "/",
+					host = node.xhttp_host,
 					-- 如果包含 "extra" 节，取 "extra" 内的内容，否则直接赋值给 extra
 					extra = node.xhttp_extra and (function()
 						local success, parsed = pcall(jsonc.parse, node.xhttp_extra)

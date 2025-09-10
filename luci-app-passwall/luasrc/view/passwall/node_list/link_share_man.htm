@@ -1392,9 +1392,6 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 			if (queryParam.type === "h2") {
 				queryParam.type = "http";
 			}
-			if (queryParam.type === "splithttp") {
-				queryParam.type = "xhttp";
-			}
 			if (dom_prefix == "singbox_" && queryParam.type === "raw") {
 				queryParam.type = "tcp";
 			} else if (dom_prefix == "xray_" && queryParam.type === "tcp") {

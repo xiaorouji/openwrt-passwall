@@ -280,7 +280,7 @@ o = s:option(Value, _n("httpupgrade_path"), translate("HttpUpgrade Path"))
 o.placeholder = "/"
 o:depends({ [_n("transport")] = "httpupgrade" })
 
--- [[ SplitHTTP部分 ]]--
+-- [[ XHTTP部分 ]]--
 o = s:option(Value, _n("xhttp_host"), translate("XHTTP Host"))
 o:depends({ [_n("transport")] = "xhttp" })
 
