@@ -198,13 +198,6 @@ function gen_outbound(flag, node, tag, proxy_table)
 					earlyDataHeaderName = (node.ws_earlyDataHeaderName) and node.ws_earlyDataHeaderName or nil,
 					heartbeatPeriod = tonumber(node.ws_heartbeatPeriod) or nil
 				} or nil,
-				dsSettings = (node.transport == "ds") and
-					{path = node.ds_path} or nil,
-				quicSettings = (node.transport == "quic") and {
-					security = node.quic_security,
-					key = node.quic_key,
-					header = {type = node.quic_guise}
-				} or nil,
 				grpcSettings = (node.transport == "grpc") and {
 					serviceName = node.grpc_serviceName,
 					multiMode = (node.grpc_mode == "multi") and true or nil,
@@ -494,14 +487,6 @@ function gen_config_server(node)
 					wsSettings = (node.transport == "ws") and {
 						host = node.ws_host or nil,
 						path = node.ws_path
-					} or nil,
-					dsSettings = (node.transport == "ds") and {
-						path = node.ds_path
-					} or nil,
-					quicSettings = (node.transport == "quic") and {
-						security = node.quic_security,
-						key = node.quic_key,
-						header = {type = node.quic_guise}
 					} or nil,
 					grpcSettings = (node.transport == "grpc") and {
 						serviceName = node.grpc_serviceName

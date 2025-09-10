@@ -255,8 +255,6 @@ o = s:option(ListValue, _n("transport"), translate("Transport"))
 o:value("raw", "RAW")
 o:value("mkcp", "mKCP")
 o:value("ws", "WebSocket")
-o:value("ds", "DomainSocket")
-o:value("quic", "QUIC")
 o:value("grpc", "gRPC")
 o:value("httpupgrade", "HttpUpgrade")
 o:value("xhttp", "XHTTP")
@@ -352,25 +350,6 @@ o:depends({ [_n("transport")] = "mkcp" })
 
 o = s:option(Value, _n("mkcp_seed"), translate("KCP Seed"))
 o:depends({ [_n("transport")] = "mkcp" })
-
--- [[ DomainSocket部分 ]]--
-
-o = s:option(Value, _n("ds_path"), "Path", translate("A legal file path. This file must not exist before running."))
-o:depends({ [_n("transport")] = "ds" })
-
--- [[ QUIC部分 ]]--
-o = s:option(ListValue, _n("quic_security"), translate("Encrypt Method"))
-o:value("none")
-o:value("aes-128-gcm")
-o:value("chacha20-poly1305")
-o:depends({ [_n("transport")] = "quic" })
-
-o = s:option(Value, _n("quic_key"), translate("Encrypt Key"))
-o:depends({ [_n("transport")] = "quic" })
-
-o = s:option(ListValue, _n("quic_guise"), translate("Camouflage Type"))
-for a, t in ipairs(header_type_list) do o:value(t) end
-o:depends({ [_n("transport")] = "quic" })
 
 -- [[ gRPC部分 ]]--
 o = s:option(Value, _n("grpc_serviceName"), "ServiceName")
