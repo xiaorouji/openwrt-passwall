@@ -802,7 +802,7 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 		if (ssu[0] === "ssr") {
 			dom_prefix = "ssr_"
 			//var b64c = ssu[1].match(/([A-Za-z0-9_-]+)/);
-			var sstr = b64decsafe(ssu[1]);
+			var sstr = b64decsafe((ssu[1] || "").replace(/#.*/, "").trim());
 			var ploc = sstr.indexOf("/?");
 			var url0 = "", param = "";
 			if (ploc > 0) {
@@ -1226,7 +1226,7 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 			}
 		}
 		if (ssu[0] === "vmess") {
-			var sstr = b64DecodeUnicode(ssu[1]);
+			var sstr = b64DecodeUnicode((ssu[1] || "").replace(/#.*/, "").trim());
 			var ploc = sstr.indexOf("/?");
 			if (vmess_type == "sing-box" && has_singbox) {
 				dom_prefix = "singbox_"

@@ -1821,10 +1821,11 @@ local function parse_link(raw, add_mode, add_from, cfgid)
 						local node = api.trim(v)
 						local dat = split(node, "://")
 						if dat and dat[1] and dat[2] then
-							if dat[1] == 'ss' or dat[1] == 'trojan' then
-								result = processData(dat[1], dat[2], add_mode, add_from)
+							if dat[1] == 'vmess' or dat[1] == 'ssr' then
+								local link = api.trim(dat[2]:gsub("#.*$", ""))
+								result = processData(dat[1], base64Decode(link), add_mode, add_from)
 							else
-								result = processData(dat[1], base64Decode(dat[2]), add_mode, add_from)
+								result = processData(dat[1], dat[2], add_mode, add_from)
 							end
 						end
 					else
