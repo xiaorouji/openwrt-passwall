@@ -641,7 +641,7 @@ end
 -- [[ Mux.Cool ]]--
 o = s:option(Flag, _n("mux"), "Mux", translate("Enable Mux.Cool"))
 o:depends({ [_n("protocol")] = "vmess" })
-o:depends({ [_n("protocol")] = "vless", [_n("flow")] = "", [_n("transport")] = "raw" })
+o:depends({ [_n("protocol")] = "vless", [_n("transport")] = "raw" })
 o:depends({ [_n("protocol")] = "vless", [_n("transport")] = "ws" })
 o:depends({ [_n("protocol")] = "vless", [_n("transport")] = "grpc" })
 o:depends({ [_n("protocol")] = "vless", [_n("transport")] = "httpupgrade" })
@@ -651,17 +651,12 @@ o:depends({ [_n("protocol")] = "shadowsocks" })
 o:depends({ [_n("protocol")] = "trojan" })
 
 o = s:option(Value, _n("mux_concurrency"), translate("Mux concurrency"))
-o.default = 8
+o.default = -1
 o:depends({ [_n("mux")] = true })
-
--- [[ XUDP Mux ]]--
-o = s:option(Flag, _n("xmux"), "XUDP Mux")
-o.default = 1
-o:depends({ [_n("protocol")] = "vless", [_n("flow")] = "xtls-rprx-vision" })
 
 o = s:option(Value, _n("xudp_concurrency"), translate("XUDP Mux concurrency"))
 o.default = 8
-o:depends({ [_n("xmux")] = true })
+o:depends({ [_n("mux")] = true })
 
 --[[tcpMptcp]]
 o = s:option(Flag, _n("tcpMptcp"), "tcpMptcp", translate("Enable Multipath TCP, need to be enabled in both server and client configuration."))
