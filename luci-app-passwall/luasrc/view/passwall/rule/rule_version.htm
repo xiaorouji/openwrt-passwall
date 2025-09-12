@@ -55,22 +55,18 @@ local api = require "luci.passwall.api"
 			"gfwlist_update","chnroute_update","chnroute6_update",
 			"chnlist_update","geoip_update","geosite_update"
 		];
-		const targetNode = document.querySelector('form') || document.body;
-		const observer = new MutationObserver(() => {
+		const bindFlags = () => {
+			let allBound = true;
 			flags.forEach(flag => {
 				const orig = Array.from(document.querySelectorAll(`input[name$=".${flag}"]`)).find(i => i.type === 'checkbox');
-				if (!orig) {
-					return;
-				}
+				if (!orig) { allBound = false; return; }
 				// 隐藏最外层 div
 				const wrapper = orig.closest('.cbi-value');
 				if (wrapper && wrapper.style.display !== 'none') {
 					wrapper.style.display = 'none';
 				}
 				const custom = document.querySelector(`.cbi-input-checkbox[name="${flag.replace('_update','')}"]`);
-				if (!custom) {
-					return;
-				}
+				if (!custom) { allBound = false; return; }
 				custom.checked = orig.checked;
 				// 自定义选择框与原生Flag双向绑定
 				if (!custom._binded) {
@@ -84,8 +80,13 @@ local api = require "luci.passwall.api"
 					});
 				}
 			});
-		});
-		observer.observe(targetNode, { childList: true, subtree: true });
+			return allBound;
+		};
+		const target = document.querySelector('form') || document.body;
+		const observer = new MutationObserver(() => bindFlags() ? observer.disconnect() : 0);
+		observer.observe(target, { childList: true, subtree: true });
+		const timer = setInterval(() => bindFlags() ? (clearInterval(timer), observer.disconnect()) : 0, 300);
+		setTimeout(() => { clearInterval(timer); observer.disconnect(); }, 5000);
 	});
 
 	function update_rules(btn) {
