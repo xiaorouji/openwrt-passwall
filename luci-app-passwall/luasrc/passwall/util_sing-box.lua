@@ -1855,7 +1855,8 @@ function gen_config(var)
 					servers = {
 						{
 							type = "local",
-							tag = "direct"
+							tag = "direct",
+							detour = "direct"
 						}
 					},
 				}
