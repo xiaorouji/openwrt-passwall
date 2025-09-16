@@ -37,55 +37,57 @@ local api = require "luci.passwall.api"
 <div id="upload-modal" class="up-modal" style="display:none;">
 	<div class="up-modal-content">
 		<h3><%:Restore Backup File%></h3>
-		<div class="cbi-value" id="_upload_div">
-			<div class="up-cbi-value-field">
-				<input class="cbi-input-file" type="file" id="ulfile" accept=".tar.gz" />
-				<br />
-				<div class="up-button-container">
-					<input class="btn cbi-button cbi-button-apply" type="button" id="upload-btn" onclick="do_upload()" value="<%:UL Restore%>" />
-					<input class="btn cbi-button cbi-button-remove" type="button" onclick="close_upload_win()" value="<%:CLOSE WIN%>" />
-				</div>
-			</div>
+		<div class="up-cbi-value-field">
+			<input class="cbi-input-file" type="file" id="ulfile" accept=".tar.gz" />
+		</div>
+		<div class="up-button-container">
+			<input class="btn cbi-button cbi-button-apply" type="button" id="upload-btn" onclick="do_upload()" value="<%:UL Restore%>" />
+			<input class="btn cbi-button cbi-button-remove" type="button" onclick="close_upload_win()" value="<%:CLOSE WIN%>" />
 		</div>
 	</div>
 </div>
 
 <style>
-.up-modal {
-	position: fixed;
-	left: 50%;
-	top: 50%;
-	transform: translate(-50%, -50%);
-	background: white;
-	padding: 20px;
-	border: 2px solid #ccc;
-	box-shadow: 0 0 10px rgba(0,0,0,0.5);
-	z-index: 1000;
-}
+	.up-modal {
+		position: fixed;
+		left: 50%;
+		top: 50%;
+		transform: translate(-50%, -50%);
+		background: white;
+		padding: 20px;
+		border: 2px solid #ccc;
+		border-radius: 5px;
+		box-shadow: 0 0 10px rgba(0,0,0,0.5);
+		z-index: 1000;
+		width: 90%;
+		max-width: 400px;
+	}
 
-.up-modal-content {
-	width: 100%;
-	max-width: 400px;
-	text-align: center;
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
-}
+	.up-modal-content {
+		width: 100%;
+		max-width: 400px;
+		text-align: center;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+	}
 
-.up-button-container {
-	display: flex;
-	justify-content: space-between;
-	width: 100%;
-	max-width: 250px;
-}
+	.up-button-container {
+		display: flex;
+		justify-content: space-between;
+		width: 100%;
+		max-width: 250px;
+	}
 
-.up-cbi-value-field {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	width: 100%;
-}
+	.up-cbi-value-field {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		width: 100%;
+		margin-top: 15px;
+		margin-bottom: 30px;
+	}
 </style>
 
 <script>
