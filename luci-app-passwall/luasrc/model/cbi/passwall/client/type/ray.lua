@@ -618,6 +618,7 @@ o.custom_write = function(self, section, value)
 		local address = (data.extra and data.extra.downloadSettings and data.extra.downloadSettings.address)
 			or (data.downloadSettings and data.downloadSettings.address)
 		if address and address ~= "" then
+			address = address:gsub("^%[", ""):gsub("%]$", "")
 			m:set(section, "download_address", address)
 		else
 			m:del(section, "download_address")

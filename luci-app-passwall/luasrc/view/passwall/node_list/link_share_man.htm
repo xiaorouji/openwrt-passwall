@@ -655,7 +655,7 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 		}
 		return false;
 	}
-	
+
 	function exportUrl(btn, urlname, sid) {
 		var url = buildUrl(btn, urlname, sid);
 		if (url) {
@@ -678,6 +678,11 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 				document.body.removeChild(textarea);
 			}
 		}
+	}
+
+	function unbracketIP(server) {
+		if (!server) return '';
+		return server.replace(/^\[/, '').replace(/\]$/, '');
 	}
 
 	function fromUrl(btn, urlname, sid) {
@@ -825,7 +830,7 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 				}
 			}
 			opt.set('type', "SSR");
-			opt.set(dom_prefix + 'address', ssm[1]);
+			opt.set(dom_prefix + 'address', unbracketIP(ssm[1]));
 			opt.set(dom_prefix + 'port', ssm[2]);
 			opt.set(dom_prefix + 'protocol', ssm[3]);
 			opt.set(dom_prefix + 'method', ssm[4]);
@@ -931,7 +936,7 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 				method = method.toLowerCase() === "chacha20-poly1305" ? "chacha20-ietf-poly1305" : method;
 				method = method.toLowerCase() === "xchacha20-poly1305" ? "xchacha20-ietf-poly1305" : method;
 			}
-			opt.set(dom_prefix + 'address', server);
+			opt.set(dom_prefix + 'address', unbracketIP(server));
 			opt.set(dom_prefix + 'port', port);
 			opt.set(dom_prefix + 'password', password || "");
 			opt.set(dom_prefix + 'method', method || "");
@@ -1136,7 +1141,7 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 					queryParam[decodeURIComponent(params[0]).toLowerCase()] = decodeURIComponent(params[1] || '');
 				}
 			}
-			opt.set(dom_prefix + 'address', m.hostname);
+			opt.set(dom_prefix + 'address', unbracketIP(m.hostname));
 			opt.set(dom_prefix + 'port', m.port || "443");
 			opt.set(dom_prefix + 'password', decodeURIComponent(password));
 
@@ -1243,7 +1248,7 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 			}
 			var ssm = JSON.parse(sstr);
 			opt.set('remarks', ssm.ps);
-			opt.set(dom_prefix + 'address', ssm.add);
+			opt.set(dom_prefix + 'address', unbracketIP(ssm.add));
 			opt.set(dom_prefix + 'port', ssm.port);
 			opt.set(dom_prefix + 'uuid', ssm.id);
 			opt.set(dom_prefix + 'tls', ssm.tls === "tls");
@@ -1332,7 +1337,7 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 				return false;
 			}
 			opt.set(dom_prefix + 'uuid', password);
-			opt.set(dom_prefix + 'address', m.hostname);
+			opt.set(dom_prefix + 'address', unbracketIP(m.hostname));
 			opt.set(dom_prefix + 'port', m.port || "443");
 			var queryParam = {};
 			if (m.search.length > 1) {
@@ -1504,7 +1509,7 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 				opt.set(dom_prefix + 'hop', queryParam.mport || "");
 			}
 			
-			opt.set(dom_prefix + 'address', m.hostname);
+			opt.set(dom_prefix + 'address', unbracketIP(m.hostname));
 			opt.set(dom_prefix + 'port', m.port || "443");
 			
 			opt.set(dom_prefix + 'tls_serverName', queryParam.sni || "");
@@ -1530,7 +1535,7 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 			var hash = _parsedUrl.hash;
 			opt.set(dom_prefix + 'uuid', decodeURIComponent(username));
 			opt.set(dom_prefix + 'password', decodeURIComponent(password));
-			opt.set(dom_prefix + 'address', hostname);
+			opt.set(dom_prefix + 'address', unbracketIP(hostname));
 			opt.set(dom_prefix + 'port', port || "443");
 			var queryParam = {};
 			if (search.length > 1) {
@@ -1568,7 +1573,7 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 				return false;
 			}
 			opt.set(dom_prefix + 'password', password);
-			opt.set(dom_prefix + 'address', m.hostname);
+			opt.set(dom_prefix + 'address', unbracketIP(m.hostname));
 			opt.set(dom_prefix + 'port', m.port || "443");
 			var queryParam = {};
 			if (m.search.length > 1) {

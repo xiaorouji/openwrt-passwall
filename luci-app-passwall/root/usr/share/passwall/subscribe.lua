@@ -1187,7 +1187,7 @@ local function processData(szType, content, add_mode, add_from)
 				if success and Data then
 					local address = (Data.extra and Data.extra.downloadSettings and Data.extra.downloadSettings.address)
 							or (Data.downloadSettings and Data.downloadSettings.address)
-					result.download_address = address and address ~= "" and address or nil
+					result.download_address = (address and address ~= "") and address:gsub("^%[", ""):gsub("%]$", "") or nil
 				else
 					result.download_address = nil
 				end
