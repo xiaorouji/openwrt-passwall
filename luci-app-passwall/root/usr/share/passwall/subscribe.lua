@@ -685,8 +685,13 @@ local function processData(szType, content, add_mode, add_from)
 			else
 				userinfo = base64Decode(hostInfo[1])
 			end
-			local method = userinfo:sub(1, userinfo:find(":") - 1)
-			local password = userinfo:sub(userinfo:find(":") + 1, #userinfo)
+			local method, password
+			if userinfo:find(":") then
+				method = userinfo:sub(1, userinfo:find(":") - 1)
+				password = userinfo:sub(userinfo:find(":") + 1, #userinfo)
+			else
+				password = hostInfo[1]  --一些链接用明文uuid做密码
+			end
 
 			-- 判断密码是否经过url编码
 			local function isURLEncodedPassword(pwd)
@@ -701,12 +706,20 @@ local function processData(szType, content, add_mode, add_from)
 			if isURLEncodedPassword(password) and decoded then
 				password = decoded
 			end
+
+			local _method = (method or "none"):lower()
+			method = (_method == "chacha20-poly1305" and "chacha20-ietf-poly1305") or
+				(_method == "xchacha20-poly1305" and "xchacha20-ietf-poly1305") or _method
+
 			result.method = method
 			result.password = password
 
-			if result.type ~= "Xray" then
-				result.method = (method:lower() == "chacha20-poly1305" and "chacha20-ietf-poly1305") or
-						(method:lower() == "xchacha20-poly1305" and "xchacha20-ietf-poly1305") or method
+			if has_xray and (result.type ~= 'Xray' and  result.type ~= 'sing-box' and params.type) then
+				result.type = 'Xray'
+				result.protocol = 'shadowsocks'
+			elseif has_singbox and (result.type ~= 'Xray' and  result.type ~= 'sing-box' and params.type) then
+				result.type = 'sing-box'
+				result.protocol = 'shadowsocks'
 			end
 
 			if result.plugin then
@@ -1805,9 +1818,9 @@ local function parse_link(raw, add_mode, add_from, cfgid)
 		else
 			-- ssd 外的格式
 			if add_mode == "1" then
-				nodes = split(raw:gsub(" ", "\n"), "\n")
+				nodes = split(raw, "\n")
 			else
-				nodes = split(base64Decode(raw):gsub(" ", "\n"), "\n")
+				nodes = split(base64Decode(raw):gsub("\r\n", "\n"), "\n")
 			end
 		end
 
@@ -1825,7 +1838,8 @@ local function parse_link(raw, add_mode, add_from, cfgid)
 								local link = api.trim(dat[2]:gsub("#.*$", ""))
 								result = processData(dat[1], base64Decode(link), add_mode, add_from)
 							else
-								result = processData(dat[1], dat[2], add_mode, add_from)
+								local link = dat[2]:gsub("&amp;", "&"):gsub("%s*#%s*", "#")  -- 一些奇葩的链接用"&amp;"当做"&"，"#"前后带空格
+								result = processData(dat[1], link, add_mode, add_from)
 							end
 						end
 					else

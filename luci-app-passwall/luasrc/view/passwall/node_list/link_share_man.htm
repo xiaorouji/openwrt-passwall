@@ -797,6 +797,7 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 		if (ssrurl === null || ssrurl === "") {
 			return false;
 		}
+		ssrurl = ssrurl.replace(/&amp;/gi, '&').replace(/\s*#\s*/, '#').trim();  //一些奇葩的链接用"&amp;"当做"&"，"#"前后带空格
 		s.innerHTML = "";
 		var ssu = ssrurl.split('://');
 		var event = document.createEvent("HTMLEvents");
@@ -874,6 +875,8 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 				if (userInfoSplitIndex !== -1) {
 					method = userInfo.substr(0, userInfoSplitIndex);
 					password = userInfo.substr(userInfoSplitIndex + 1);
+				} else {
+					password = url0.substr(0, sipIndex);  //一些链接用明文uuid做密码
 				}
 			} else {
 				// base64(method:pass@host:port)
@@ -912,13 +915,13 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 				pluginOpts = pluginParams.join(";");
 			}
 
-			if (ss_type == "sing-box" && has_singbox) {
-				dom_prefix = "singbox_"
-				opt.set('type', "sing-box");
-				opt.set(dom_prefix + 'protocol', "shadowsocks");
-			} else if (ss_type == "xray" && has_xray) {
+			if (has_xray && ((ss_type !== "xray" && ss_type !== "sing-box" && queryParam.type) || ss_type == "xray")) {
 				dom_prefix = "xray_"
 				opt.set('type', "Xray");
+				opt.set(dom_prefix + 'protocol', "shadowsocks");
+			} else if (has_singbox && ((ss_type !== "xray" && ss_type !== "sing-box" && queryParam.type) || ss_type == "sing-box")) {
+				dom_prefix = "singbox_"
+				opt.set('type', "sing-box");
 				opt.set(dom_prefix + 'protocol', "shadowsocks");
 			} else if (ss_type == "shadowsocks-rust") {
 				dom_prefix = "ssrust_"
@@ -932,10 +935,14 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 					opt.set('type', "SS");
 				}
 			}
-			if (ss_type !== "xray") {
-				method = method.toLowerCase() === "chacha20-poly1305" ? "chacha20-ietf-poly1305" : method;
-				method = method.toLowerCase() === "xchacha20-poly1305" ? "xchacha20-ietf-poly1305" : method;
-			}
+
+			const _method = (method || "none").toLowerCase();
+			const mapping = {
+				"chacha20-poly1305": "chacha20-ietf-poly1305",
+				"xchacha20-poly1305": "xchacha20-ietf-poly1305",
+			};
+			method = mapping[_method] || _method;
+
 			opt.set(dom_prefix + 'address', unbracketIP(server));
 			opt.set(dom_prefix + 'port', port);
 			opt.set(dom_prefix + 'password', password || "");
