@@ -126,7 +126,7 @@ function o.custom_write(self, section, value)
 	else
 		result = { value }
 	end
-	api.uci:set_list(appname, section, "urltest_node", result)
+	m.uci:set_list(appname, section, "urltest_node", result)
 end
 
 o = s:option(Value, _n("urltest_url"), translate("Probe URL"))

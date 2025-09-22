@@ -119,7 +119,7 @@ function o.custom_write(self, section, value)
 	else
 		result = { value }
 	end
-	api.uci:set_list(appname, section, "balancing_node", result)
+	m.uci:set_list(appname, section, "balancing_node", result)
 end
 
 o = s:option(ListValue, _n("balancingStrategy"), translate("Balancing Strategy"))
