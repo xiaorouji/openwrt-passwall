@@ -1986,3 +1986,6 @@ msgstr "客户端版本"
 
 msgid "Random version will be used if empty."
 msgstr "如留空，则使用随机版本。"
+
+msgid "The configured type also applies to the core specified when manually importing nodes."
+msgstr "配置的类型同样适用于手动导入节点时所指定的核心程序。"

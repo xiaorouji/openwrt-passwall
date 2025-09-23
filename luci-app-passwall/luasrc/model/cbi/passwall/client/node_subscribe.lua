@@ -130,6 +130,11 @@ if #hysteria2_type > 0 then
 	end
 end
 
+if #ss_type > 0 or #trojan_type > 0 or #vmess_type > 0 or #vless_type > 0 or #hysteria2_type > 0 then
+	o.description = string.format("<font color='red'>%s</font>",
+			translate("The configured type also applies to the core specified when manually importing nodes."))
+end
+
 o = s:option(ListValue, "domain_strategy", "Sing-box " .. translate("Domain Strategy"), translate("Set the default domain resolution strategy for the sing-box node."))
 o.default = ""
 o:value("", translate("Auto"))

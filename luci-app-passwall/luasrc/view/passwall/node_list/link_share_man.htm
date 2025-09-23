@@ -1336,16 +1336,13 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 				dom_prefix = "xray_"
 				opt.set('type', "Xray");
 			}
-			opt.set(dom_prefix + 'protocol', "vless");
+			
 			var m = parseNodeUrl(ssrurl);
 			var password = m.passwd;
 			if (password === "") {
 				s.innerHTML = "<font color='red'><%:Invalid Share URL Format%></font>";
 				return false;
 			}
-			opt.set(dom_prefix + 'uuid', password);
-			opt.set(dom_prefix + 'address', unbracketIP(m.hostname));
-			opt.set(dom_prefix + 'port', m.port || "443");
 			var queryParam = {};
 			if (m.search.length > 1) {
 				var query = m.search.replace('/?', '?').split('?')
@@ -1357,6 +1354,16 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 					queryParam[decodeURIComponent(params[0])] = decodeURIComponent(params[1] || '');
 				}
 			}
+
+			queryParam.type = queryParam.type.toLowerCase();
+			if (["xhttp", "kcp", "mkcp"].includes(queryParam.type) && vless_type !== "xray" && has_xray) {
+				dom_prefix = "xray_"
+				opt.set('type', "Xray");
+			}
+			opt.set(dom_prefix + 'protocol', "vless");
+			opt.set(dom_prefix + 'uuid', password);
+			opt.set(dom_prefix + 'address', unbracketIP(m.hostname));
+			opt.set(dom_prefix + 'port', m.port || "443");
 
 			opt.set(dom_prefix + 'encryption', queryParam.encryption || "none");
 			if (queryParam.security) {
@@ -1397,7 +1404,6 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 
 			}
 
-			queryParam.type = queryParam.type.toLowerCase();
 			if (queryParam.type === "kcp") {
 				queryParam.type = "mkcp";
 			}

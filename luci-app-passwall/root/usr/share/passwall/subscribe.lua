@@ -1122,6 +1122,9 @@ local function processData(szType, content, add_mode, add_from)
 
 			if not params.type then params.type = "tcp" end
 			params.type = string.lower(params.type)
+			if ({ xhttp=true, kcp=true, mkcp=true })[params.type] and result.type ~= "Xray" and has_xray then
+				result.type = "Xray"
+			end
 			if result.type == "sing-box" and params.type == "raw" then 
 				params.type = "tcp"
 			elseif result.type == "Xray" and params.type == "tcp" then
