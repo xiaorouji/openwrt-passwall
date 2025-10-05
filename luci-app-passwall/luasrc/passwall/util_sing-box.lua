@@ -909,7 +909,6 @@ function gen_config(var)
 	local direct_dns_port = var["-direct_dns_port"]
 	local direct_dns_udp_server = var["-direct_dns_udp_server"]
 	local direct_dns_tcp_server = var["-direct_dns_tcp_server"]
-	local direct_dns_dot_server = var["-direct_dns_dot_server"]
 	local direct_dns_query_strategy = var["-direct_dns_query_strategy"]
 	local remote_dns_server = var["-remote_dns_server"]
 	local remote_dns_port = var["-remote_dns_port"]
@@ -1639,7 +1638,7 @@ function gen_config(var)
 		end
 
 		local direct_strategy = "prefer_ipv6"
-		if direct_dns_udp_server or direct_dns_tcp_server or direct_dns_dot_server then
+		if direct_dns_udp_server or direct_dns_tcp_server then
 			if direct_dns_query_strategy == "UseIPv4" then
 				direct_strategy = "ipv4_only"
 			elseif direct_dns_query_strategy == "UseIPv6" then
@@ -1667,13 +1666,6 @@ function gen_config(var)
 				elseif direct_dns_tcp_server then
 					port = tonumber(direct_dns_port) or 53
 					direct_dns_server = "tcp://" .. direct_dns_tcp_server .. ":" .. port
-				elseif direct_dns_dot_server then
-					port = tonumber(direct_dns_port) or 853
-					if direct_dns_dot_server:find(":") == nil then
-						direct_dns_server = "tls://" .. direct_dns_dot_server .. ":" .. port
-					else
-						direct_dns_server = "tls://[" .. direct_dns_dot_server .. "]:" .. port
-					end
 				end
 		
 				table.insert(dns.servers, {
@@ -1693,10 +1685,6 @@ function gen_config(var)
 					port = tonumber(direct_dns_port) or 53
 					direct_dns_server = direct_dns_tcp_server
 					type = "tcp"
-				elseif direct_dns_dot_server then
-					port = tonumber(direct_dns_port) or 853
-					direct_dns_server = direct_dns_dot_server
-					type = "tls"
 				end
 		
 				table.insert(dns.servers, {
