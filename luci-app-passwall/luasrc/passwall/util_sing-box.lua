@@ -202,7 +202,10 @@ function gen_outbound(flag, node, tag, proxy_table)
 			v2ray_transport = {
 				type = "http",
 				host = node.tcp_guise_http_host,
-				path = (node.tcp_guise_http_path and node.tcp_guise_http_path[1]) or "/",
+				path = node.tcp_guise_http_path and (function()
+						local first = node.tcp_guise_http_path[1]
+						return (first == "" or not first) and "/" or first
+					end)() or "/",
 				idle_timeout = (node.http_h2_health_check == "1") and node.http_h2_read_idle_timeout or nil,
 				ping_timeout = (node.http_h2_health_check == "1") and node.http_h2_health_check_timeout or nil,
 			}

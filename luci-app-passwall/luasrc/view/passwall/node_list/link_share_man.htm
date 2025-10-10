@@ -963,6 +963,7 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 						opt.set(dom_prefix + 'transport', "raw");
 						opt.set(dom_prefix + 'tcp_guise', "http");
 						opt.set(dom_prefix + 'tcp_guise_http_host', obfs_host || '');
+						opt.set(dom_prefix + 'tcp_guise_http_path', '/');
 					} else if (obfs === "tls") {
 						opt.set(dom_prefix + 'tls', true);
 						opt.set(dom_prefix + 'tls_serverName', obfs_host || '');

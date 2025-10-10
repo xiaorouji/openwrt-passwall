@@ -737,6 +737,7 @@ local function processData(szType, content, add_mode, add_from)
 							result.transport = "raw"
 							result.tcp_guise = "http"
 							result.tcp_guise_http_host = (obfs_host and obfs_host ~= "") and { obfs_host } or nil
+							result.tcp_guise_http_path = { "/" }
 						elseif obfs == "tls" then
 							result.tls = "1"
 							result.tls_serverName = obfs_host
