@@ -954,10 +954,10 @@ run_redir() {
 
 				case "$(config_t_get global direct_dns_mode "auto")" in
 					udp)
-						_args="${_args} direct_dns_udp_server=$(config_t_get global direct_dns_udp 223.5.5.5 | sed -E 's/^\[([^]]+)\]:(.*)$/\1#\2/; t; s/^([^:]+):([0-9]+)$/\1#\2/')"
+						_args="${_args} direct_dns_udp_server=$(config_t_get global direct_dns 223.5.5.5 | sed -E 's/^\[([^]]+)\]:(.*)$/\1#\2/; t; s/^([^:]+):([0-9]+)$/\1#\2/')"
 					;;
 					tcp)
-						_args="${_args} direct_dns_tcp_server=$(config_t_get global direct_dns_tcp 223.5.5.5 | sed -E 's/^\[([^]]+)\]:(.*)$/\1#\2/; t; s/^([^:]+):([0-9]+)$/\1#\2/')"
+						_args="${_args} direct_dns_tcp_server=$(config_t_get global direct_dns 223.5.5.5 | sed -E 's/^\[([^]]+)\]:(.*)$/\1#\2/; t; s/^([^:]+):([0-9]+)$/\1#\2/')"
 					;;
 				esac
 
@@ -1034,10 +1034,10 @@ run_redir() {
 
 				case "$(config_t_get global direct_dns_mode "auto")" in
 					udp)
-						_args="${_args} direct_dns_udp_server=$(config_t_get global direct_dns_udp 223.5.5.5 | sed -E 's/^\[([^]]+)\]:(.*)$/\1#\2/; t; s/^([^:]+):([0-9]+)$/\1#\2/')"
+						_args="${_args} direct_dns_udp_server=$(config_t_get global direct_dns 223.5.5.5 | sed -E 's/^\[([^]]+)\]:(.*)$/\1#\2/; t; s/^([^:]+):([0-9]+)$/\1#\2/')"
 					;;
 					tcp)
-						_args="${_args} direct_dns_tcp_server=$(config_t_get global direct_dns_tcp 223.5.5.5 | sed -E 's/^\[([^]]+)\]:(.*)$/\1#\2/; t; s/^([^:]+):([0-9]+)$/\1#\2/')"
+						_args="${_args} direct_dns_tcp_server=$(config_t_get global direct_dns 223.5.5.5 | sed -E 's/^\[([^]]+)\]:(.*)$/\1#\2/; t; s/^([^:]+):([0-9]+)$/\1#\2/')"
 					;;
 				esac
 
@@ -1431,12 +1431,12 @@ start_dns() {
 
 	case "$direct_dns_mode" in
 		udp)
-			LOCAL_DNS=$(config_t_get global direct_dns_udp 223.5.5.5 | sed -E 's/^\[([^]]+)\]:(.*)$/\1#\2/; t; s/^([^:]+):([0-9]+)$/\1#\2/')
+			LOCAL_DNS=$(config_t_get global direct_dns 223.5.5.5 | sed -E 's/^\[([^]]+)\]:(.*)$/\1#\2/; t; s/^([^:]+):([0-9]+)$/\1#\2/')
 			china_ng_local_dns=${LOCAL_DNS}
 			sing_box_local_dns="direct_dns_udp_server=${LOCAL_DNS}"
 		;;
 		tcp)	
-			local DIRECT_DNS=$(config_t_get global direct_dns_tcp 223.5.5.5 | sed -E 's/^\[([^]]+)\]:(.*)$/\1#\2/; t; s/^([^:]+):([0-9]+)$/\1#\2/')
+			local DIRECT_DNS=$(config_t_get global direct_dns 223.5.5.5 | sed -E 's/^\[([^]]+)\]:(.*)$/\1#\2/; t; s/^([^:]+):([0-9]+)$/\1#\2/')
 			china_ng_local_dns="tcp://${DIRECT_DNS}"
 			sing_box_local_dns="direct_dns_tcp_server=${DIRECT_DNS}"
 
@@ -1869,10 +1869,10 @@ acl_app() {
 									_direct_dns_mode=$(config_t_get global direct_dns_mode "auto")
 									case "${_direct_dns_mode}" in
 										udp)
-											_chinadns_local_dns=$(config_t_get global direct_dns_udp 223.5.5.5 | sed -E 's/^\[([^]]+)\]:(.*)$/\1#\2/; t; s/^([^:]+):([0-9]+)$/\1#\2/')
+											_chinadns_local_dns=$(config_t_get global direct_dns 223.5.5.5 | sed -E 's/^\[([^]]+)\]:(.*)$/\1#\2/; t; s/^([^:]+):([0-9]+)$/\1#\2/')
 										;;
 										tcp)
-											_chinadns_local_dns="tcp://$(config_t_get global direct_dns_tcp 223.5.5.5 | sed -E 's/^\[([^]]+)\]:(.*)$/\1#\2/; t; s/^([^:]+):([0-9]+)$/\1#\2/')"
+											_chinadns_local_dns="tcp://$(config_t_get global direct_dns 223.5.5.5 | sed -E 's/^\[([^]]+)\]:(.*)$/\1#\2/; t; s/^([^:]+):([0-9]+)$/\1#\2/')"
 										;;
 									esac
 

@@ -306,20 +306,7 @@ o:value("tcp", translatef("Requery DNS By %s", "TCP"))
 o:depends({dns_shunt = "dnsmasq"})
 o:depends({dns_shunt = "chinadns-ng"})
 
-o = s:taboption("DNS", Value, "direct_dns_udp", translate("Direct DNS"))
-o.datatype = "or(ipaddr,ipaddrport)"
-o.default = "223.5.5.5"
-o:value("223.5.5.5")
-o:value("223.6.6.6")
-o:value("119.29.29.29")
-o:value("180.76.76.76")
-o:value("180.184.1.1")
-o:value("180.184.2.2")
-o:value("114.114.114.114")
-o:value("114.114.115.115")
-o:depends("direct_dns_mode", "udp")
-
-o = s:taboption("DNS", Value, "direct_dns_tcp", translate("Direct DNS"))
+o = s:taboption("DNS", Value, "direct_dns", translate("Direct DNS"))
 o.datatype = "or(ipaddr,ipaddrport)"
 o.default = "223.5.5.5"
 o:value("223.5.5.5")
@@ -329,6 +316,7 @@ o:value("180.184.2.2")
 o:value("114.114.114.114")
 o:value("114.114.115.115")
 o:value("119.28.28.28")
+o:depends("direct_dns_mode", "udp")
 o:depends("direct_dns_mode", "tcp")
 
 o = s:taboption("DNS", Flag, "filter_proxy_ipv6", translate("Filter Proxy Host IPv6"), translate("Experimental feature."))
