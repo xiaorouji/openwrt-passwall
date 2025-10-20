@@ -1589,15 +1589,17 @@ function gen_config(var)
 			remote_server = {
 				tag = "remote",
 				domain_strategy = remote_strategy,
-				domain_resolver = "direct",
 				detour = default_outTag,
 			}
+
+			local tmp_address
 
 			if remote_dns_udp_server then
 				local server_port = tonumber(remote_dns_port) or 53
 				remote_server.type = "udp"
 				remote_server.server = remote_dns_udp_server
 				remote_server.server_port = server_port
+				tmp_address = remote_dns_udp_server
 			end
 
 			if remote_dns_tcp_server then
@@ -1605,6 +1607,7 @@ function gen_config(var)
 				remote_server.type = "tcp"
 				remote_server.server = remote_dns_server
 				remote_server.server_port = server_port
+				tmp_address = remote_dns_server
 			end
 
 			if remote_dns_doh_url and remote_dns_doh_host then
@@ -1612,6 +1615,11 @@ function gen_config(var)
 				remote_server.type = "https"
 				remote_server.server = remote_dns_doh_host
 				remote_server.server_port = server_port
+				tmp_address = remote_dns_doh_host
+			end
+
+			if tmp_address and not tmp_address:match("^%d+%.%d+%.%d+%.%d+$") and not tmp_address:match("^[%[%]%x:]+$") then  --dns为域名时
+				remote_server.domain_resolver = "direct"
 			end
 
 			if remote_server.server then
