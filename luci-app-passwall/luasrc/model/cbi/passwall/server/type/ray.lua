@@ -83,6 +83,10 @@ o = s:option(Value, _n("decryption"), translate("Encrypt Method") .. " (decrypti
 o.default = "none"
 o.placeholder = "none"
 o:depends({ [_n("protocol")] = "vless" })
+o.validate = function(self, value)
+	value = api.trim(value)
+	return (value == "" and "none" or value)
+end
 
 o = s:option(ListValue, _n("x_ss_method"), translate("Encrypt Method"))
 o.rewrite_option = "method"
