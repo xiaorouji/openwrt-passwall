@@ -199,18 +199,12 @@ table td, .table .td {
 	}
 
 	function get_address_full(id) {
-		try {
-			var address = document.getElementById("cbid.passwall." + id + ".address").value;
-			var port = document.getElementById("cbid.passwall." + id + ".port").value;
-		}
-		catch(err){}
+		var address = (document.getElementById("cbid.passwall." + id + ".address") || {}).value || "";
+		var port = (document.getElementById("cbid.passwall." + id + ".port") || {}).value || "";
 		//判断是否含有汉字
-		var reg = new RegExp("[\\u4E00-\\u9FFF]+","g");
-		if ((address != null && address != "") && (port != null && port != "") && reg.test(address) == false) {
-			return { address: address, port: port };
-		} else {
-			return null;
-		}
+		var reg = /[\u4E00-\u9FFF]+/;
+		address = !reg.test(address) ? address : "";
+		return { address: address, port: port };
 	}
 
 	//获取当前使用的节点
@@ -285,7 +279,7 @@ table td, .table .td {
 	
 	function ping_node(cbi_id, dom, type) {
 		var full = get_address_full(cbi_id);
-		if (full != null) {
+		if ((type == "icmp" && full.address != "" ) || (type == "tcping" && full.address != "" && full.port != "")) {
 			dom.onclick = null
 			dom.innerText = "<%:Check...%>";
 			XHR.get('<%=api.url("ping_node")%>', {
@@ -320,7 +314,7 @@ table td, .table .td {
 			for (var i = 0; i < ping_value.length; i++) {
 				var cbi_id = ping_value[i].getAttribute("cbiid");
 				var full = get_address_full(cbi_id);
-				if (full != null) {
+				if ((auto_detection_time == "icmp" && full.address != "" ) || (auto_detection_time == "tcping" && full.address != "" && full.port != "")) {
 					var flag = false;
 					//当有多个相同地址和端口时合在一起
 					for (var j = 0; j < nodes.length; j++) {

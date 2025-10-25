@@ -183,20 +183,21 @@ o.cfgvalue = function(t, n)
 		type = type .. " " .. protocol
 	end
 	local address = m:get(n, "address") or ""
-	local port = m:get(n, "port") or m:get(n, "hysteria_hop") or m:get(n, "hysteria2_hop") or ""
+	local port = m:get(n, "port") or ""
+	local port_s = (port ~= "") and port or m:get(n, "hysteria_hop") or m:get(n, "hysteria2_hop") or ""
 	str = str .. translate(type) .. "：" .. remarks
-	if address ~= "" and port ~= "" then
-		port = port:gsub(":", "-")
+	if address ~= "" and port_s ~= "" then
+		port_s = port_s:gsub(":", "-")
 		if show_node_info == "1" then
 			if datatypes.ip6addr(address) then
-				str = str .. string.format("（[%s]:%s）", address, port)
+				str = str .. string.format("（[%s]:%s）", address, port_s)
 			else
-				str = str .. string.format("（%s:%s）", address, port)
+				str = str .. string.format("（%s:%s）", address, port_s)
 			end
 		end
-		str = str .. string.format("<input type='hidden' id='cbid.%s.%s.address' value='%s'/>", appname, n, address)
-		str = str .. string.format("<input type='hidden' id='cbid.%s.%s.port' value='%s'/>", appname, n, port)
 	end
+	str = str .. string.format("<input type='hidden' id='cbid.%s.%s.address' value='%s'/>", appname, n, address)
+	str = str .. string.format("<input type='hidden' id='cbid.%s.%s.port' value='%s'/>", appname, n, port)
 	return str
 end
 
