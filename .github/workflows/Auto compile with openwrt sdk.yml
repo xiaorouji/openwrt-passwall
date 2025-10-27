@@ -137,15 +137,17 @@ jobs:
 
           rm -rf temp_resp
           git clone -b master --single-branch https://github.com/openwrt/packages.git temp_resp
-          cd temp_resp
-          git checkout 2b99cd7d7637da0f152da378994f699aaf0dd44d
-          cd ..
           echo "update golang version"
           rm -rf feeds/packages/lang/golang
           cp -r temp_resp/lang/golang feeds/packages/lang
           echo "update rust version"
           rm -rf feeds/packages/lang/rust
           cp -r temp_resp/lang/rust feeds/packages/lang
+          rm -rf temp_resp
+          
+          echo "update patch-kernel.sh"
+          git clone -b main --single-branch https://github.com/openwrt/openwrt.git temp_resp
+          cp -f temp_resp/scripts/patch-kernel.sh scripts/
           rm -rf temp_resp
 
           echo "Patch application completed"
@@ -324,15 +326,16 @@ jobs:
 
           rm -rf temp_resp
           git clone -b master --single-branch https://github.com/openwrt/packages.git temp_resp
-          cd temp_resp
-          git checkout 2b99cd7d7637da0f152da378994f699aaf0dd44d
-          cd ..
           echo "update golang version"
           rm -rf feeds/packages/lang/golang
           cp -r temp_resp/lang/golang feeds/packages/lang
           echo "update rust version"
           rm -rf feeds/packages/lang/rust
           cp -r temp_resp/lang/rust feeds/packages/lang
+          rm -rf temp_resp
+
+          git clone -b main --single-branch https://github.com/openwrt/openwrt.git temp_resp
+          cp -f temp_resp/scripts/patch-kernel.sh scripts/
           rm -rf temp_resp
 
           echo "fixed rust host build error"
