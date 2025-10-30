@@ -10,6 +10,21 @@ if not arg[1] or not m:get(arg[1]) then
 	luci.http.redirect(m.redirect)
 end
 
+-- Add inline CSS to map description
+m.description = (m.description or "") .. "\n" .. [[
+	<style>
+		div[id^="cbid.passwall."] .cbi-value-field {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 1em;
+		}
+		div[id^="cbid.passwall."] .cbi-checkbox {
+			display: inline-flex;
+			align-items: center;
+		}
+	</style>
+]]
+
 function clean_text(text)
 	local nbsp = string.char(0xC2, 0xA0) -- 不间断空格（U+00A0）
 	local fullwidth_space = string.char(0xE3, 0x80, 0x80) -- 全角空格（U+3000）
@@ -35,10 +50,14 @@ protocol = s:option(MultiValue, "protocol", translate("Protocol"))
 protocol:value("http")
 protocol:value("tls")
 protocol:value("bittorrent")
+protocol.widget = "checkbox"
+protocol.default = nil
 
 o = s:option(MultiValue, "inbound", translate("Inbound Tag"))
 o:value("tproxy", translate("Transparent proxy"))
 o:value("socks", "Socks")
+o.widget = "checkbox"
+o.default = nil
 
 network = s:option(ListValue, "network", translate("Network"))
 network:value("tcp,udp", "TCP UDP")
