@@ -54,6 +54,8 @@ local api = require "luci.passwall.api"
     flex: none; 
     margin-right: 15px;
     width: 55%; 
+    min-height: 60px;
+    justify-content: center; 
 }
 
 .card-title {
@@ -69,6 +71,17 @@ local api = require "luci.passwall.api"
 
 .card-delay {
     text-align: left;
+
+}
+
+.status-card:first-child .card-delay {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 0px;
+}
+
+.delay-text:nth-child(4) {
+    margin-left: -0.8em;
 }
 
 .delay-text {
@@ -154,15 +167,27 @@ local api = require "luci.passwall.api"
     .delay-text {
         font-size: 12px;
     }
+
+    .status-card:first-child .card-delay span:nth-child(2),
+    .status-card:first-child .card-delay span:nth-child(4) {
+        display: none;
+    }
+
+    .status-card:first-child .card-delay {
+        grid-template-columns: 1fr;
+    }
 }
 </style>
 
 <div class="status-cards" id="passwall_status_fieldset">
     <div class="status-card">
         <div class="card-right">
-            <div class="card-title">TCP</div>
+            <div class="card-title"></div>
             <div class="card-delay" id="status_tcp_node">
-                <span class="delay-text"><%:Running Status%></span>
+                <span class="delay-text">TCP: <%:Running Status%></span>
+                <span class="delay-text">DNS: <%:Running Status%></span>
+                <span class="delay-text">UDP: <%:Running Status%></span>
+                <span class="delay-text"><%:Load Balancing%>: <%:Running Status%></span>
             </div>
         </div>
         <div class="card-icon">
@@ -220,48 +245,18 @@ var autoCheckTimeout = null;
 
 XHR.poll(5, '<%=api.url("index_status")%>', null,
     function (x, data) {
-        var status_dns = document.getElementById('status_dns');
-        var status_haproxy = document.getElementById('status_haproxy');
-        if (data) {
-            if (true) {
-                var status_tcp_node = document.getElementById('status_tcp_node');
-                if (status_tcp_node) {
-                    var text = '';
-                    if (data["tcp_node_status"])
-                        text = '<span class="green"><%:RUNNING%></span>';
-                    else
-                        text = '<span class="red"><%:NOT RUNNING%></span>';
-                    status_tcp_node.innerHTML = text;
-                }
-            }
-
-            if (true) {
-                var status_udp_node = document.getElementById('status_udp_node');
-                if (status_udp_node) {
-                    var text = '';
-                    if (data["udp_node_status"])
-                        text = '<span class="green"><%:RUNNING%></span>';
-                    else
-                        text = '<span class="red"><%:NOT RUNNING%></span>';
-                    status_udp_node.innerHTML = text;
-                }
-            }
-
-            if (status_dns) {
-                if (data.dns_mode_status) {
-                    status_dns.innerHTML = '<span class="green"><%:RUNNING%></span>';
-                } else {
-                    status_dns.innerHTML = '<span class="red"><%:NOT RUNNING%></span>';
-                }
-            }
+        var status_tcp_node = document.getElementById('status_tcp_node');
+        if (data && status_tcp_node) {
+            var tcp_status = data["tcp_node_status"] ? '<span class="green"><%:RUNNING%></span>' : '<span class="red"><%:NOT RUNNING%></span>';
+            var udp_status = data["udp_node_status"] ? '<span class="green"><%:RUNNING%></span>' : '<span class="red"><%:NOT RUNNING%></span>';
+            var dns_status = data["dns_mode_status"] ? '<span class="green"><%:RUNNING%></span>' : '<span class="red"><%:NOT RUNNING%></span>';
+            var haproxy_status = data["haproxy_status"] ? '<span class="green"><%:RUNNING%></span>' : '<span class="red"><%:NOT RUNNING%></span>';
             
-            if (status_haproxy) {
-                if (data.haproxy_status) {
-                    status_haproxy.innerHTML = '<span class="green"><%:RUNNING%></span>'
-                } else {
-                    status_haproxy.innerHTML = '<span class="red"><%:NOT RUNNING%></span>'
-                }
-            }
+            status_tcp_node.innerHTML =  
+                '<span class="delay-text">TCP: ' + tcp_status + '</span>' +
+                '<span class="delay-text">DNS: ' + dns_status + '</span>' +
+                '<span class="delay-text">UDP: ' + udp_status + '</span>' +
+                '<span class="delay-text"><%:Load Balancing%>: ' + haproxy_status + '</span>';
         }
     });
 
