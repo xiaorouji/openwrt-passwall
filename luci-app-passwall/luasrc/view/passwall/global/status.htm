@@ -247,11 +247,14 @@ XHR.poll(5, '<%=api.url("index_status")%>', null,
                 }
             }
 
-            if (data.dns_mode_status) {
-                status_dns.innerHTML = '<span class="green"><%:RUNNING%></span>';
-            } else {
-                status_dns.innerHTML = '<span class="red"><%:NOT RUNNING%></span>';
+            if (status_dns) {
+                if (data.dns_mode_status) {
+                    status_dns.innerHTML = '<span class="green"><%:RUNNING%></span>';
+                } else {
+                    status_dns.innerHTML = '<span class="red"><%:NOT RUNNING%></span>';
+                }
             }
+            
             if (status_haproxy) {
                 if (data.haproxy_status) {
                     status_haproxy.innerHTML = '<span class="green"><%:RUNNING%></span>'
