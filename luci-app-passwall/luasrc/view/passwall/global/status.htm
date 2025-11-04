@@ -10,14 +10,7 @@ local api = require "luci.passwall.api"
     --card-hover-border: #adb5bd;
     --card-right-bg: #E6E6FA;
     --card-radius: 12px;
-    --card-right-radius: 8px;
-    
-    --delay-fast: #28a745;
-    --delay-medium: #ffc107;
-    --delay-slow: #dc3545;
-    --delay-checking: #007bff;
-    --status-running: #28a745;
-    --status-stopped: #dc3545;
+    --card-right-radius: 8px;   
 }
 
 .status-cards {
@@ -40,10 +33,6 @@ local api = require "luci.passwall.api"
     width: 100%;
     box-sizing: border-box;
     min-height: 80px;
-}
-
-[data-theme="dark"] .status-card {
-    background: var(--card-bg-color);
 }
 
 .status-card:hover {
@@ -181,11 +170,11 @@ local api = require "luci.passwall.api"
         </div>
     </div>
 
-    <div class="status-card" onclick="checkConnect('baidu', 'https://www.baidu.com')">
+    <div class="status-card" onclick="checkConnect('baidu', 'www.baidu.com')">
         <div class="card-right">
             <div class="card-title">Baidu</div>
             <div class="card-delay">
-                <span id="_baidu_status" class="delay-text"><%:Touch Check%></span>
+                <span id="status_baidu" class="delay-text"><%:Touch Check%></span>
             </div>
         </div>
         <div class="card-icon">
@@ -193,11 +182,11 @@ local api = require "luci.passwall.api"
         </div>
     </div>
 
-    <div class="status-card" onclick="checkConnect('google', 'https://www.google.com/generate_204')">
+    <div class="status-card" onclick="checkConnect('google', 'www.google.com/generate_204')">
         <div class="card-right">
             <div class="card-title">Google</div>
             <div class="card-delay">
-                <span id="_google_status" class="delay-text"><%:Touch Check%></span>
+                <span id="status_google" class="delay-text"><%:Touch Check%></span>
             </div>
         </div>
         <div class="card-icon">
@@ -205,11 +194,11 @@ local api = require "luci.passwall.api"
         </div>
     </div>
 
-    <div class="status-card" onclick="checkConnect('youtube', 'https://www.youtube.com')">
+    <div class="status-card" onclick="checkConnect('youtube', 'www.youtube.com')">
         <div class="card-right">
             <div class="card-title">YouTube</div>
             <div class="card-delay">
-                <span id="_youtube_status" class="delay-text"><%:Touch Check%></span>
+                <span id="status_youtube" class="delay-text"><%:Touch Check%></span>
             </div>
         </div>
         <div class="card-icon">
@@ -219,94 +208,176 @@ local api = require "luci.passwall.api"
 </div>
 
 <script>
+//<![CDATA[
+var imgs = document.getElementsByTagName('img');
+for (var i = 0 ; i < imgs.length; i++) {
+    document.getElementsByTagName('img')[i].setAttribute("oncontextmenu","return false;");
+    document.getElementsByTagName('img')[i].setAttribute("ondragstart","return false;");
+}
+
+var autoCheckInProgress = false;
+var autoCheckTimeout = null;
+
 XHR.poll(5, '<%=api.url("index_status")%>', null,
     function (x, data) {
+        var status_dns = document.getElementById('status_dns');
+        var status_haproxy = document.getElementById('status_haproxy');
         if (data) {
-            var status_tcp_node = document.getElementById('status_tcp_node');
-            if (status_tcp_node) {
-                var statusText = status_tcp_node.querySelector('.delay-text');
-                if (data["tcp_node_status"]) {
-                    statusText.textContent = '<%:RUNNING%>';
-                    statusText.className = 'delay-text running';
+            if (true) {
+                var status_tcp_node = document.getElementById('status_tcp_node');
+                if (status_tcp_node) {
+                    var text = '';
+                    if (data["tcp_node_status"])
+                        text = '<span class="green"><%:RUNNING%></span>';
+                    else
+                        text = '<span class="red"><%:NOT RUNNING%></span>';
+                    status_tcp_node.innerHTML = text;
+                }
+            }
+
+            if (true) {
+                var status_udp_node = document.getElementById('status_udp_node');
+                if (status_udp_node) {
+                    var text = '';
+                    if (data["udp_node_status"])
+                        text = '<span class="green"><%:RUNNING%></span>';
+                    else
+                        text = '<span class="red"><%:NOT RUNNING%></span>';
+                    status_udp_node.innerHTML = text;
+                }
+            }
+
+            if (data.dns_mode_status) {
+                status_dns.innerHTML = '<span class="green"><%:RUNNING%></span>';
+            } else {
+                status_dns.innerHTML = '<span class="red"><%:NOT RUNNING%></span>';
+            }
+            if (status_haproxy) {
+                if (data.haproxy_status) {
+                    status_haproxy.innerHTML = '<span class="green"><%:RUNNING%></span>'
                 } else {
-                    statusText.textContent = '<%:NOT RUNNING%>';
-                    statusText.className = 'delay-text stopped';
+                    status_haproxy.innerHTML = '<span class="red"><%:NOT RUNNING%></span>'
                 }
             }
         }
     });
 
-function checkConnect(type, url) {
-    var statusElement = document.getElementById('_' + type + '_status');
-    var iconElement = document.getElementById(type + '_icon');
-    if (!statusElement || !iconElement) return;
-    
-    var card = statusElement.closest('.status-card');
-    card.style.pointerEvents = 'none';
-    statusElement.textContent = '<%:Check...%>';
-    statusElement.className = 'delay-text checking';
-    
-    var startTime = Date.now();
-    var img = new Image();
-    
-    var testUrl = url;
-    if (type === 'google') {
-        testUrl = 'https://www.google.com/favicon.ico?t=' + Date.now();
-    } else if (type === 'baidu') {
-        testUrl = 'https://www.baidu.com/favicon.ico?t=' + Date.now();
-    } else if (type === 'youtube') {
-        testUrl = 'https://www.youtube.com/favicon.ico?t=' + Date.now();
+function getIconNumber(type) {
+    switch(type) {
+        case 'baidu': return '1';
+        case 'google': return '3';
+        case 'youtube': return '4';
+        default: return '1';
     }
-    
-    img.onload = function() {
-        handleSuccess(Date.now() - startTime, true);
-    };
-    
-    img.onerror = function() {
-        handleSuccess(Date.now() - startTime, false);
-    };
-    
-    function handleSuccess(use_time, isSuccess) {
-        card.style.pointerEvents = 'auto';
-        
-        if (isSuccess && use_time < 3000) {
-            statusElement.textContent = use_time + " ms";
-            statusElement.className = use_time < 500 ? 'delay-text fast' : 
-                                     use_time < 1500 ? 'delay-text medium' : 'delay-text slow';
-            iconElement.src = '/luci-static/passwall/img/site_icon_0' + getIconNumber(type) + '.png';
-        } else {
-            statusElement.textContent = "<%:Problem detected!%>";
-            statusElement.className = 'delay-text slow';
-            iconElement.src = '/luci-static/passwall/img/site_icon1_0' + getIconNumber(type) + '.png';
-        }
-    }
-    
-    function getIconNumber(type) {
-        switch(type) {
-            case 'baidu': return '1';
-            case 'google': return '3';
-            case 'youtube': return '4';
-            default: return '1';
-        }
-    }
-    
-    img.src = testUrl;
-    
-    setTimeout(function() {
-        if (card.style.pointerEvents === 'none') {
-            card.style.pointerEvents = 'auto';
-            statusElement.textContent = "<%:Problem detected!%>";
-            statusElement.className = 'delay-text slow';
-            iconElement.src = '/luci-static/passwall/img/site_icon1_0' + getIconNumber(type) + '.png';
-        }
-    }, 8000);
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(function() {
-        checkConnect('baidu', 'https://www.baidu.com');
-        checkConnect('google', 'https://www.google.com/generate_204');
-        checkConnect('youtube', 'https://www.youtube.com');
-    }, 1000);
+function checkConnect(type, url) {
+    var s = document.getElementById('status_' + type);
+    var iconElement = document.getElementById(type + '_icon');
+    var card = s.parentNode.parentNode.parentNode.parentNode;
+    
+    if (s) {
+        card.style.pointerEvents = 'none';
+        card.removeAttribute('onclick');
+        
+        s.innerHTML = '<%:Check...%>';
+        s.className = 'delay-text checking';
+        
+        iconElement.src = '/luci-static/passwall/img/site_icon1_0' + getIconNumber(type) + '.png';
+        
+        var sendDate = (new Date()).getTime();
+        XHR.get('<%=api.url("connect_status")%>', {
+                type: type,
+                url : url
+            },
+            function(x, rv) {
+                card.style.pointerEvents = 'auto';
+                card.setAttribute('onclick','checkConnect("' + type + '","' + url + '")');
+                
+                if (rv.ping_type && rv.ping_type == "curl") {
+                    var use_time = rv.use_time;
+                    if (use_time < 1000) {
+                        s.className = "delay-text fast";
+                    } else if (use_time < 2000) {
+                        s.className = "delay-text medium";
+                    } else {
+                        s.className = "delay-text slow";
+                    }
+                    s.innerHTML = use_time + " ms";
+                    iconElement.src = '/luci-static/passwall/img/site_icon_0' + getIconNumber(type) + '.png';
+                } else if (rv.status) {
+                    s.className = "delay-text medium";
+                    s.innerHTML = "<%:Working...%>";
+                    iconElement.src = '/luci-static/passwall/img/site_icon_0' + getIconNumber(type) + '.png';
+                }
+                else {
+                    s.className = "delay-text slow";
+                    s.innerHTML = '<%:Problem detected!%>';
+                    iconElement.src = '/luci-static/passwall/img/site_icon1_0' + getIconNumber(type) + '.png';
+                }
+            }
+        );
+        
+        setTimeout(function() {
+            if (card.style.pointerEvents === 'none') {
+                card.style.pointerEvents = 'auto';
+                card.setAttribute('onclick','checkConnect("' + type + '","' + url + '")');
+                s.className = "delay-text slow";
+                s.innerHTML = '<%:Problem detected!%>';
+                iconElement.src = '/luci-static/passwall/img/site_icon1_0' + getIconNumber(type) + '.png';
+            }
+        }, 8000);
+    }
+    return false;
+}
+
+function autoCheckAll() {
+    if (autoCheckInProgress) {
+        return;
+    }
+    
+    autoCheckInProgress = true;
+    
+    var sites = [
+        { type: 'baidu', url: 'www.baidu.com' },
+        { type: 'google', url: 'www.google.com/generate_204' },
+        { type: 'youtube', url: 'www.youtube.com' }
+    ];
+    
+    var currentIndex = 0;
+    
+    function checkNextSite() {
+        if (currentIndex >= sites.length) {
+            autoCheckInProgress = false;
+            return;
+        }
+        
+        var site = sites[currentIndex];
+        checkConnect(site.type, site.url);
+        
+        currentIndex++;
+        
+        if (currentIndex < sites.length) {
+            setTimeout(checkNextSite, 3000);
+        } else {
+            setTimeout(function() {
+                autoCheckInProgress = false;
+            }, 8000);
+        }
+    }
+    
+    checkNextSite();
+}
+
+window.addEventListener('load', function() {
+    setTimeout(autoCheckAll, 2000);
+    setInterval(autoCheckAll, 300000);
 });
+
+function startAutoCheck() {
+    if (!autoCheckInProgress) {
+        autoCheckAll();
+    }
+}
+//]]>
 </script>
