@@ -56,6 +56,7 @@ local api = require "luci.passwall.api"
     width: 55%; 
     min-height: 60px;
     justify-content: center; 
+    container-type: inline-size;
 }
 
 .card-title {
@@ -127,13 +128,7 @@ local api = require "luci.passwall.api"
 .delay-text.running { color: #28a745; }
 .delay-text.stopped { color: #dc3545; }
 
-@media (max-width: 768px) {
-    .status-cards {
-        grid-template-columns: 1fr 1fr;
-        gap: 15px;
-        margin-top: 15px;
-    }
-    
+@media (max-width: 768px) {  
     .status-card {
         padding: 12px;
         min-height: 70px;
@@ -143,6 +138,7 @@ local api = require "luci.passwall.api"
         padding: 6px 12px;
         gap: 3px;
         margin-left: 10px;
+        min-height: 50px;
     }
     
     .card-icon {
@@ -167,15 +163,6 @@ local api = require "luci.passwall.api"
     .delay-text {
         font-size: 12px;
     }
-
-    .status-card:first-child .card-delay span:nth-child(2),
-    .status-card:first-child .card-delay span:nth-child(4) {
-        display: none;
-    }
-
-    .status-card:first-child .card-delay {
-        grid-template-columns: 1fr;
-    }
 }
 
 @media (max-width: 1200px) {
@@ -183,6 +170,16 @@ local api = require "luci.passwall.api"
         grid-template-columns: 1fr 1fr;
         gap: 15px;
         margin-top: 15px;
+    }
+}
+
+@container (max-width: 200px) {
+    .status-card:first-child .card-delay span:nth-child(2),
+    .status-card:first-child .card-delay span:nth-child(4) {
+        display: none;
+    }
+    .status-card:first-child .card-delay {
+        grid-template-columns: 1fr;
     }
 }
 </style>
