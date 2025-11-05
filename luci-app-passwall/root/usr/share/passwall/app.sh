@@ -2114,7 +2114,7 @@ stop() {
 	# 结束 SS 插件进程
 	# kill_all xray-plugin v2ray-plugin obfs-local shadow-tls
 	local pid_file pid
-	find "$TMP_PATH" -type f -name '*_plugin.pid' | while read -r pid_file; do
+	find "$TMP_PATH" -type f -name '*_plugin.pid' 2>/dev/null | while read -r pid_file; do
 		read -r pid < "$pid_file"
 		if [ -n "$pid" ]; then
 			kill -9 "$pid" >/dev/null 2>&1
