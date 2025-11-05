@@ -35,13 +35,12 @@ EOF
 
 chmod +x /usr/share/passwall/*.sh
 
-## 4.77-5 below upgrade to 4.77-6 above
-[ -e "/etc/config/passwall_show" ] && rm -rf /etc/config/passwall_show
-
 [ "$(uci -q get passwall.@global_xray[0].sniffing)" == "1" ] && [ "$(uci -q get passwall.@global_xray[0].route_only)" != "1" ] && uci -q set passwall.@global_xray[0].sniffing_override_dest=1
 uci -q delete passwall.@global_xray[0].sniffing
 uci -q delete passwall.@global_xray[0].route_only
 uci -q commit passwall
+
+sed -i "s#add_from#group#g" /etc/config/passwall 2>/dev/null
 
 rm -f /tmp/luci-indexcache
 rm -rf /tmp/luci-modulecache/

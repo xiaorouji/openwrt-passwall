@@ -1977,3 +1977,9 @@ msgstr "如留空，则使用随机版本。"
 
 msgid "The configured type also applies to the core specified when manually importing nodes."
 msgstr "配置的类型同样适用于手动导入节点时所指定的核心程序。"
+
+msgid "Group Name"
+msgstr "分组名"
+
+msgid "Currently using %s node"
+msgstr "当前使用的 %s 节点"

@@ -79,6 +79,10 @@ local api = require "luci.passwall.api"
 		}
 	}
 
+	function add_new_node() {
+		window.location.href = '<%=api.url("add_node")%>?redirect=1';
+	}
+
 	//]]>
 </script>
 
@@ -99,7 +103,7 @@ local api = require "luci.passwall.api"
 <div class="cbi-value">
 	<label class="cbi-value-title"></label>
 	<div class="cbi-value-field">
-		<input class="btn cbi-button cbi-button-add" type="submit" name="cbi.cts.passwall.nodes." value="<%:Add%>" />
+		<input class="btn cbi-button cbi-button-add" type="button" onclick="add_new_node()" value="<%:Add%>" />
 		<input class="btn cbi-button cbi-button-add" type="button" onclick="open_add_link_div()" value="<%:Add the node via the link%>" />
 		<input class="btn cbi-button cbi-button-remove" type="button" onclick="clear_all_nodes()" value="<%:Clear all nodes%>" />
 		<input class="btn cbi-button cbi-button-remove" type="button" onclick="delete_select_nodes()" value="<%:Delete select nodes%>" />
@@ -107,7 +111,6 @@ local api = require "luci.passwall.api"
 		<input class="btn cbi-button cbi-button-apply" type="submit" name="cbi.apply" value="<%:Save & Apply%>" />
 		<input class="btn cbi-button cbi-button-save" type="submit" name="cbi.save" value="<%:Save%>" />
 		<input class="btn cbi-button cbi-button-reset" type="button" value="<%:Reset%>" onclick="location.href='<%=REQUEST_URI%>'" />
-		<div id="div_node_count"></div>
 	</div>
 </div>
 

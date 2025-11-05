@@ -202,7 +202,7 @@ o.cfgvalue = function(t, n)
 	str = str ~= "" and "<br>" .. str or ""
 	local num = 0
 	m.uci:foreach(appname, "nodes", function(s)
-		if s["add_from"] ~= "" and s["add_from"] == remark then
+		if s["group"] ~= "" and s["group"] == remark then
 			num = num + 1
 		end
 	end)
