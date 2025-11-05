@@ -219,42 +219,6 @@ local api = require "luci.passwall.api"
         </div>
     </div>
 
-    <div class="status-card" onclick="checkConnect('baidu', 'www.baidu.com')">
-        <div class="card-right">
-            <div class="card-title">Baidu</div>
-            <div class="card-delay">
-                <span id="status_baidu" class="delay-text"><%:Touch Check%></span>
-            </div>
-        </div>
-        <div class="card-icon">
-            <img src="/luci-static/passwall/img/site_icon1_01.png" alt="Baidu" id="baidu_icon">
-        </div>
-    </div>
-
-    <div class="status-card" onclick="checkConnect('google', 'www.google.com/generate_204')">
-        <div class="card-right">
-            <div class="card-title">Google</div>
-            <div class="card-delay">
-                <span id="status_google" class="delay-text"><%:Touch Check%></span>
-            </div>
-        </div>
-        <div class="card-icon">
-            <img src="/luci-static/passwall/img/site_icon1_03.png" alt="Google" id="google_icon">
-        </div>
-    </div>
-
-    <div class="status-card" onclick="checkConnect('youtube', 'www.youtube.com')">
-        <div class="card-right">
-            <div class="card-title">YouTube</div>
-            <div class="card-delay">
-                <span id="status_youtube" class="delay-text"><%:Touch Check%></span>
-            </div>
-        </div>
-        <div class="card-icon">
-            <img src="/luci-static/passwall/img/site_icon1_04.png" alt="YouTube" id="youtube_icon">
-        </div>
-    </div>
-
     <div class="status-card">
         <div class="card-right">
             <div class="card-title">UDP</div>
@@ -288,6 +252,42 @@ local api = require "luci.passwall.api"
         </div>
         <div class="card-icon">
             <img src="data:image/png;base64,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"class="core-icon" />
+        </div>
+    </div>
+
+    <div class="status-card" onclick="checkConnect('baidu', 'www.baidu.com')">
+        <div class="card-right">
+            <div class="card-title">Baidu</div>
+            <div class="card-delay">
+                <span id="status_baidu" class="delay-text"><%:Touch Check%></span>
+            </div>
+        </div>
+        <div class="card-icon">
+            <img src="/luci-static/passwall/img/site_icon1_01.png" alt="Baidu" id="baidu_icon">
+        </div>
+    </div>
+
+    <div class="status-card" onclick="checkConnect('google', 'www.google.com/generate_204')">
+        <div class="card-right">
+            <div class="card-title">Google</div>
+            <div class="card-delay">
+                <span id="status_google" class="delay-text"><%:Touch Check%></span>
+            </div>
+        </div>
+        <div class="card-icon">
+            <img src="/luci-static/passwall/img/site_icon1_03.png" alt="Google" id="google_icon">
+        </div>
+    </div>
+
+    <div class="status-card" onclick="checkConnect('youtube', 'www.youtube.com')">
+        <div class="card-right">
+            <div class="card-title">YouTube</div>
+            <div class="card-delay">
+                <span id="status_youtube" class="delay-text"><%:Touch Check%></span>
+            </div>
+        </div>
+        <div class="card-icon">
+            <img src="/luci-static/passwall/img/site_icon1_04.png" alt="YouTube" id="youtube_icon">
         </div>
     </div>
 
