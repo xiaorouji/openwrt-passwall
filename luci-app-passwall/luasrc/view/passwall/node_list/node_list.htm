@@ -568,7 +568,7 @@ table td, .table .td {
 			for (let i = 0; i < node_list.length; i++) {
 				let _node = node_list[i]
 				if (!_node.group || _node.group === "") {
-					_node.group = "<%:default%>"
+					_node.group = "default"
 				}
 				if (!group_nodes[_node.group]) {
 					group_nodes[_node.group] = []
@@ -630,10 +630,15 @@ table td, .table .td {
 					_html = _html.split("{{node-tr}}").join(node_tr_html);
 					table_html = _html;
 				}
+
+				var group_name = group
+				if (group === "default") {
+					group_name = "<%:default%>"
+				}
 				
 				tab_ul_li_html +=
 					'<li id="tab.passwall.nodes.' + group + '" class="cbi-tab">' +
-						'<a onclick="this.blur(); return cbi_t_switch(\'passwall.nodes\', \'' + group + '\')" href="<%=REQUEST_URI%>?tab.passwall.nodes=' + group + '">' + group + " | " + "<font style='color: red'>" + group_nodes[group].length + '</font></a>' +
+						'<a onclick="this.blur(); return cbi_t_switch(\'passwall.nodes\', \'' + group + '\')" href="<%=REQUEST_URI%>?tab.passwall.nodes=' + group + '">' + group_name + " | " + "<font style='color: red'>" + group_nodes[group].length + '</font></a>' +
 					'</li>'
 				tab_content_html +=
 					'<div class="cbi-tabcontainer" id="container.passwall.nodes.' + group + '" style="display: none;">' +

@@ -1734,7 +1734,9 @@ local function update_node(manual)
 				if type(vvv) == "table" and next(vvv) ~= nil then
 					uci:set_list(appname, cfgid, kkk, vvv)
 				else
-					uci:set(appname, cfgid, kkk, vvv)
+					if kkk ~= "group" or vvv ~= "default" then
+						uci:set(appname, cfgid, kkk, vvv)
+					end
 					-- sing-box 域名解析策略
 					if kkk == "type" and vvv == "sing-box" then
 						uci:set(appname, cfgid, "domain_strategy", domain_strategy_node)
@@ -2031,7 +2033,7 @@ if arg[1] then
 		local f = assert(io.open("/tmp/links.conf", 'r'))
 		local raw = f:read('*all')
 		f:close()
-		parse_link(raw, "1", "导入")
+		parse_link(raw, "1", arg[2])
 		update_node(1)
 		luci.sys.call("rm -f /tmp/links.conf")
 	elseif arg[1] == "truncate" then

@@ -4,7 +4,7 @@ local api = require "luci.passwall.api"
 
 <script type="text/javascript">
 	//<![CDATA[
-	function ajax_add_node(link) {
+	function ajax_add_node(link, group) {
 		const chunkSize = 1000;  // 分片发送以突破uhttpd的限制，每块1000字符
 		const totalChunks = Math.ceil(link.length / chunkSize);
 		let currentChunk = 0;
@@ -31,6 +31,7 @@ local api = require "luci.passwall.api"
 				formData.append("chunk", chunk);
 				formData.append("chunk_index", currentChunk);
 				formData.append("total_chunks", totalChunks);
+				formData.append("group", group);
 				xhr.send(formData);
 			} else {
 				window.location.href = '<%=api.url("node_list")%>';
@@ -50,11 +51,12 @@ local api = require "luci.passwall.api"
 
 	function add_node() {
 		var nodes_link = document.getElementById("nodes_link").value;
+		var group = (document.querySelector('#addlink_group_custom input[type="hidden"]')?.value || "default");
 		nodes_link = nodes_link.replace(/\t/g, "").replace(/\r\n|\r/g, "\n").trim();
 		if (nodes_link != "") {
 			var s = nodes_link.split('://');
 			if (s.length > 1) {
-				ajax_add_node(nodes_link);
+				ajax_add_node(nodes_link, group);
 			}
 			else {
 				alert("<%:Please enter the correct link.%>");
@@ -83,6 +85,84 @@ local api = require "luci.passwall.api"
 		window.location.href = '<%=api.url("add_node")%>?redirect=1';
 	}
 
+	//自定义分组下拉列表事件
+	document.addEventListener("DOMContentLoaded", function() {
+		var dropdown = document.getElementById("addlink_group_custom");
+		if (!dropdown) return;
+
+		var display = dropdown.querySelector(".selected-display");
+		var displayText = display.querySelector(".text");
+		var list = dropdown.querySelector(".dropdown-list");
+		var hidden = dropdown.querySelector('input[type="hidden"]');
+		var input = dropdown.querySelector(".create-item-input");
+
+		display.addEventListener("click", function() {
+			list.style.display = list.style.display === "none" ? "block" : "none";
+			input.value = "";
+			input.focus();
+		});
+
+		function selectItem(li) {
+			list.querySelectorAll(".dropdown-item").forEach(function(el){
+				el.classList.remove("selected");
+			});
+			li.classList.add("selected");
+			hidden.value = li.dataset.value;
+			displayText.textContent = li.dataset.value || "<%:default%>";
+			list.style.display = "none";
+		}
+
+		list.addEventListener("click", function(e){
+			var li = e.target.closest(".dropdown-item");
+			if (!li || li.classList.contains("custom-input")) return;
+			selectItem(li);
+		});
+
+		input.addEventListener("keydown", function(e){
+			if (e.keyCode !== 13) return;
+			e.stopPropagation();
+			e.preventDefault();
+
+			var val = input.value.trim();
+			if (!val) return;
+
+			var li = Array.from(list.querySelectorAll(".dropdown-item")).find(function(el){
+				return el.dataset.value === val;
+			});
+			if (!li) {
+				li = document.createElement("li");
+				li.className = "dropdown-item";
+				li.dataset.value = val;
+				li.textContent = val;
+				list.insertBefore(li, input.parentNode); 
+			}
+
+			input.value = "";
+			selectItem(li);
+		});
+		// 从tab中读取分组名称
+		var observer = new MutationObserver(function(mutations, obs){
+			var tabs = document.querySelectorAll(".cbi-tabmenu li");
+			if(!tabs.length) return;
+
+			tabs.forEach(function(li){
+				var group = li.id.split('.').pop();
+				if(group === "default") return;
+				if(Array.from(list.querySelectorAll(".dropdown-item")).some(el => el.dataset.value === group)) return;
+
+				var newLi = document.createElement("li");
+				newLi.className = "dropdown-item";
+				newLi.dataset.value = group;
+				newLi.textContent = group;
+
+				list.insertBefore(newLi, input.parentNode);
+			});
+
+			obs.disconnect();
+		});
+		observer.observe(document.body, {childList: true, subtree: true});
+	});
+
 	//]]>
 </script>
 
@@ -92,6 +172,24 @@ local api = require "luci.passwall.api"
 		<div class="cbi-value">
 			<textarea id="nodes_link" rows="10"></textarea>
 			<p id="nodes_link_text"><%:Enter share links, one per line. Subscription links are not supported!%></p>
+		</div>
+		<div class="cbi-value modal-center">
+			<label class="cbi-value-title"><%:Group Name%></label>
+			<div class="cbi-value-field">
+				<div id="addlink_group_custom" class="custom-dropdown">
+					<div class="selected-display">
+						<span class="text"><%:default%></span>
+						<span class="arrow">▾</span>
+					</div>
+					<ul class="dropdown-list" style="display:none;">
+						<li class="dropdown-item" data-value=""><%:default%></li>
+						<li class="dropdown-item custom-input">
+							<input type="text" placeholder="-- <%:custom%> --" class="create-item-input">
+						</li>
+					</ul>
+					<input type="hidden" name="addlink_group" value="">
+				</div>
+			</div>
 		</div>
 		<div id="add_link_button_container">
 			<input class="btn cbi-button cbi-button-add" type="button" onclick="add_node()" value="<%:Add%>" />
@@ -147,12 +245,13 @@ local api = require "luci.passwall.api"
 		padding: 5px;
 		border: 1px solid #ccc;
 		border-radius: 5px;
+		margin-bottom: -10px;
 	}
 
 	#nodes_link_text {
 		color: red;
 		font-size: 14px;
-		margin-top: 5px;
+		margin-top: 0;
 		text-align: center;
 		width: 100%;
 	}
@@ -163,5 +262,100 @@ local api = require "luci.passwall.api"
 		width: 100%;
 		max-width: 300px;
 		margin-top: 10px;
+	}
+
+	#add_link_modal_container .modal-center {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+		gap: 10px;
+		margin-bottom: 15px;
+		width: auto;
+	}
+
+	#add_link_modal_container .modal-center .cbi-value-title {
+		display: inline-block;
+		width: 80px;
+		text-align: right;
+		font-size: 13px;
+		line-height: 28px;
+		margin: 0;
+		white-space: nowrap;
+		flex-shrink: 0;
+	}
+
+	#add_link_modal_container .modal-center .cbi-value-field {
+		display: flex;
+		justify-content: flex-start;
+		width: 200px;
+	}
+
+	.custom-dropdown {
+		position: relative;
+		border: 1px solid #d9d9d9;
+		border-radius: 2px;
+		width: 200px;
+		font-size: 13px;
+		background: #fff;
+		cursor: pointer;
+		box-sizing: border-box;
+		height: 28px;
+	}
+
+	.selected-display {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 0 8px;
+		height: 100%;
+	}
+
+	.selected-display:hover {
+		background-color: #f7f7f7;
+	}
+
+	.selected-display .arrow {
+		font-size: 12px;
+		color: #666;
+	}
+
+	.dropdown-list {
+		position: absolute;
+		top: 100%;
+		left: 0;
+		width: 100%;
+		border: 1px solid #d9d9d9;
+		border-top: none;
+		box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+		background: #fff;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		max-height: 250px;
+		overflow-y: auto;
+		overflow-x: hidden;
+		z-index: 100;
+		box-sizing: border-box;
+	}
+
+	.dropdown-item {
+		padding: 4px 8px;
+		line-height: 20px;
+	}
+
+	.dropdown-item.selected {
+		background-color: #1e90ff;
+		color: #fff;
+	}
+
+	.dropdown-item.custom-input input {
+		width: 100%;
+		max-width: 200px;
+		box-sizing: border-box;
+		padding: 3px;
+		font-size: 13px;
+		line-height: 20px;
+		border: 1px solid #ccc;
 	}
 </style>
