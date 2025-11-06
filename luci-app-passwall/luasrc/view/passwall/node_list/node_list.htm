@@ -567,7 +567,7 @@ table td, .table .td {
 			var group_nodes = {}
 			for (let i = 0; i < node_list.length; i++) {
 				let _node = node_list[i]
-				if (!_node.group) {
+				if (!_node.group || _node.group === "") {
 					_node.group = "<%:default%>"
 				}
 				if (!group_nodes[_node.group]) {

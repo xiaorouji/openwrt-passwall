@@ -23,10 +23,12 @@ o.default = translate("Remarks")
 o.rmempty = false
 
 o = s:option(Value, "group", translate("Group Name"))
+o.default = ""
+o:value("", translate("default"))
 local groups = {}
 m.uci:foreach(appname, "nodes", function(s)
 	if s[".name"] ~= arg[1] then
-		if s.group then
+		if s.group and s.group ~= "" then
 			groups[s.group] = true
 		end
 	end
