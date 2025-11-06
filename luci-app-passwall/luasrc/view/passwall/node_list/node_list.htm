@@ -60,6 +60,12 @@ table td, .table .td {
 
 	function cbi_t_switch(section, tab) {
 		if( cbi_t[section] && cbi_t[section][tab] ) {
+			//在切换选项卡之前，先取消当前激活选项卡的全选状态
+			var btn = document.getElementById("select_all_btn");
+			if (btn) {
+				dechecked_all_node(btn);
+			}
+
 			var o = cbi_t[section][tab];
 			var h = document.getElementById('tab.' + section);
 			for( var tid in cbi_t[section] ) {
@@ -176,7 +182,9 @@ table td, .table .td {
 	}
 
 	function checked_all_node(btn) {
-		var doms = document.getElementById("cbi-passwall-nodes").getElementsByClassName("nodes_select");
+		var visibleContainer = document.querySelector('#cbi-passwall-nodes > .cbi-tabcontainer[style*="display:block"], #cbi-passwall-nodes > .cbi-tabcontainer[style*="display: block"]');
+		if (!visibleContainer) return;
+		var doms = visibleContainer.getElementsByClassName("nodes_select");
 		if (doms && doms.length > 0) {
 			for (var i = 0 ; i < doms.length; i++) {
 				doms[i].checked = true;
@@ -187,7 +195,9 @@ table td, .table .td {
 	}
 
 	function dechecked_all_node(btn) {
-		var doms = document.getElementById("cbi-passwall-nodes").getElementsByClassName("nodes_select");
+		var visibleContainer = document.querySelector('#cbi-passwall-nodes > .cbi-tabcontainer[style*="display:block"], #cbi-passwall-nodes > .cbi-tabcontainer[style*="display: block"]');
+		if (!visibleContainer) return;
+		var doms = visibleContainer.getElementsByClassName("nodes_select");
 		if (doms && doms.length > 0) {
 			for (var i = 0 ; i < doms.length; i++) {
 				doms[i].checked = false;
@@ -199,7 +209,9 @@ table td, .table .td {
 
 	function delete_select_nodes() {
 		var ids = [];
-		var doms = document.getElementById("cbi-passwall-nodes").getElementsByClassName("nodes_select");
+		var visibleContainer = document.querySelector('#cbi-passwall-nodes > .cbi-tabcontainer[style*="display:block"], #cbi-passwall-nodes > .cbi-tabcontainer[style*="display: block"]');
+		if (!visibleContainer) return;
+		var doms = visibleContainer.getElementsByClassName("nodes_select");
 		if (doms && doms.length > 0) {
 			for (var i = 0 ; i < doms.length; i++) {
 				if (doms[i].checked) {

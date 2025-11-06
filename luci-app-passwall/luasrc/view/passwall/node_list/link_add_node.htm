@@ -107,7 +107,7 @@ local api = require "luci.passwall.api"
 		<input class="btn cbi-button cbi-button-add" type="button" onclick="open_add_link_div()" value="<%:Add the node via the link%>" />
 		<input class="btn cbi-button cbi-button-remove" type="button" onclick="clear_all_nodes()" value="<%:Clear all nodes%>" />
 		<input class="btn cbi-button cbi-button-remove" type="button" onclick="delete_select_nodes()" value="<%:Delete select nodes%>" />
-		<input class="btn cbi-button" type="button" onclick="checked_all_node(this)" value="<%:Select all%>" />
+		<input class="btn cbi-button" type="button" id="select_all_btn" onclick="checked_all_node(this)" value="<%:Select all%>" />
 		<input class="btn cbi-button cbi-button-apply" type="submit" name="cbi.apply" value="<%:Save & Apply%>" />
 		<input class="btn cbi-button cbi-button-save" type="submit" name="cbi.save" value="<%:Save%>" />
 		<input class="btn cbi-button cbi-button-reset" type="button" value="<%:Reset%>" onclick="location.href='<%=REQUEST_URI%>'" />
