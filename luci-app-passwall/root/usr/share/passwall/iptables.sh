@@ -1067,7 +1067,6 @@ add_firewall_rule() {
 	unset WAN6_IP
 
 	insert_rule_before "$ip6t_m" "PREROUTING" "mwan3" "-j PSW"
-	insert_rule_before "$ip6t_m" "PREROUTING" "PSW" "-p tcp -m socket -j PSW_DIVERT"
 
 	$ip6t_m -N PSW_OUTPUT
 	$ip6t_m -A PSW_OUTPUT -m mark --mark 0xff -j RETURN
