@@ -2161,8 +2161,7 @@ stop() {
 				uci -q set ${CONFIG}.@global[0].dns_mode="$_new_dns_mode"
 				uci -q set ${CONFIG}.@global[0].v2ray_dns_mode="tcp"
 				uci -q commit ${CONFIG}
-				local _cap_type=$(echo "$_type" | sed 's/^\(.\)/\U\1/')
-				echolog "* 检测到 TCP 节点为 $_cap_type 分流，强制修改 DNS 过滤模式为 $_cap_type ！"
+				echolog "* 检测到 TCP 节点为 $_type 分流，强制修改 DNS 过滤模式为 $_type ！"
 			fi
 		fi
 	fi
