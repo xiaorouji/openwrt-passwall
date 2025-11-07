@@ -2147,6 +2147,25 @@ stop() {
 	rm -rf /tmp/lock/${CONFIG}_socks_auto_switch*
 	rm -rf /tmp/lock/${CONFIG}_lease2hosts*
 	echolog "清空并关闭相关程序和缓存完成。"
+	# 根据分流节点类型自动调整 DNS 过滤模式
+	local _tcp_node=$(config_t_get global tcp_node)
+	if [ -n "$_tcp_node" ]; then
+		local _protocol=$(config_n_get $_tcp_node protocol)
+		if [ "$_protocol" = "_shunt" ]; then
+			local _type=$(config_n_get $_tcp_node type)
+			local _dns_mode=$(config_t_get global dns_mode)
+			local _new_dns_mode
+			[ "$_type" = "Xray" ] && _new_dns_mode="xray"
+			[ "$_type" = "sing-box" ] && _new_dns_mode="sing-box"
+			if [ -n "$_new_dns_mode" ] && [ "$_dns_mode" != "$_new_dns_mode" ]; then
+				uci -q set ${CONFIG}.@global[0].dns_mode="$_new_dns_mode"
+				uci -q set ${CONFIG}.@global[0].v2ray_dns_mode="tcp"
+				uci -q commit ${CONFIG}
+				local _cap_type=$(echo "$_type" | sed 's/^\(.\)/\U\1/')
+				echolog "* 检测到 TCP 节点为 $_cap_type 分流，强制修改 DNS 过滤模式为 $_cap_type ！"
+			fi
+		fi
+	fi
 	exit 0
 }
 
