@@ -127,9 +127,6 @@ msgstr "您只需要在SmartDNS配置好国内DNS分组，并设置重定向或�
 msgid "Filter Mode"
 msgstr "过滤模式"
 
-msgid "If the node uses Xray/Sing-Box shunt, select the matching filter mode (Xray/Sing-Box)."
-msgstr "当节点使用 Xray/Sing-Box 分流时，过滤模式需对应选择 Xray/Sing-Box 。"
-
 msgid "A/AAAA type"
 msgstr "A/AAAA 类型"
 

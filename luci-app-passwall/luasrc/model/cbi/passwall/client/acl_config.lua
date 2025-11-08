@@ -22,6 +22,7 @@ local port_validate = function(self, value, t)
 end
 
 local nodes_table = {}
+local shunt_list = {}
 for k, e in ipairs(api.get_valid_nodes()) do
 	nodes_table[#nodes_table + 1] = e
 end
@@ -202,6 +203,9 @@ o:depends({ _tcp_node_bool = "1" })
 for k, v in pairs(nodes_table) do
 	s.fields["tcp_node"]:value(v.id, v["remark"])
 	s.fields["udp_node"]:value(v.id, v["remark"])
+	if v.protocol and v.protocol == "_shunt" then
+		shunt_list[#shunt_list + 1] = v
+	end
 end
 
 o = s:option(DummyValue, "_udp_node_bool", "")
@@ -313,11 +317,7 @@ o.default = "0"
 o:depends({ _tcp_node_bool = "1" })
 
 ---- DNS Forward Mode
-o = s:option(ListValue, "dns_mode", translate("Filter Mode"),
-			 "<font color='red'>" .. translate(
-				 "If the node uses Xray/Sing-Box shunt, select the matching filter mode (Xray/Sing-Box).") ..
-				 "</font>")
-o:depends({ _tcp_node_bool = "1" })
+o = s:option(ListValue, "dns_mode", translate("Filter Mode"))
 if api.is_finded("dns2socks") then
 	o:value("dns2socks", "dns2socks")
 end
@@ -326,6 +326,19 @@ if has_singbox then
 end
 if has_xray then
 	o:value("xray", "Xray")
+end
+o.remove = function(self, section)
+	local f = s.fields["tcp_node"]
+	local id_val = f and f:formvalue(section) or ""
+	if id_val == "" then
+		return m:del(section, self.option)
+	end
+	for k, v in pairs(shunt_list) do
+		if v.id == id_val then
+			local new_val = (v.type == "Xray") and "xray" or "sing-box"
+			return m:set(section, self.option, new_val)
+		end
+	end
 end
 
 o = s:option(ListValue, "xray_dns_mode", translate("Request protocol"))
@@ -438,5 +451,22 @@ o:value("remote", translate("Remote DNS"))
 o:value("direct", translate("Direct DNS"))
 o.description = desc .. "</ul>"
 o:depends({dns_shunt = "dnsmasq", tcp_proxy_mode = "proxy", chn_list = "direct"})
+
+for k, v in pairs(nodes_table) do
+	if v.protocol and v.protocol ~= "_shunt" then
+		s.fields["dns_mode"]:depends({ _tcp_node_bool = "1", tcp_node = v.id })
+	end
+end
+for k, v in pairs(shunt_list) do
+	if v.type == "Xray" and has_xray then
+		s.fields["xray_dns_mode"]:depends({ _tcp_node_bool = "1", tcp_node = v.id })
+	end
+	if v.type == "sing-box" and has_singbox then
+		s.fields["singbox_dns_mode"]:depends({ _tcp_node_bool = "1", tcp_node = v.id })
+	end
+	if has_xray or has_singbox then
+		s.fields["remote_dns_client_ip"]:depends({ tcp_node = v.id })
+	end
+end
 
 return m
