@@ -176,13 +176,13 @@ local api = require "luci.passwall.api"
 <div id="add_link_div">
 	<div id="add_link_modal_container">
 		<h3><%:Add the node via the link%></h3>
-		<div class="cbi-value">
+		<div class="value-custom">
 			<textarea id="nodes_link" rows="10"></textarea>
 			<p id="nodes_link_text"><%:Enter share links, one per line. Subscription links are not supported!%></p>
 		</div>
-		<div class="cbi-value modal-center">
-			<label class="cbi-value-title"><%:Group Name%></label>
-			<div class="cbi-value-field">
+		<div class="value-custom">
+			<div class="value-field-custom">
+				<label class="value-title-custom"><%:Group Name%></label>
 				<div id="addlink_group_custom" class="custom-dropdown">
 					<div class="selected-display">
 						<span class="text"><%:default%></span>
@@ -252,13 +252,12 @@ local api = require "luci.passwall.api"
 		padding: 5px;
 		border: 1px solid #ccc;
 		border-radius: 5px;
-		margin-bottom: -10px;
 	}
 
 	#nodes_link_text {
 		color: red;
 		font-size: 14px;
-		margin-top: 0;
+		margin-top: 5px;
 		text-align: center;
 		width: 100%;
 	}
@@ -271,43 +270,40 @@ local api = require "luci.passwall.api"
 		margin-top: 10px;
 	}
 
-	#add_link_modal_container .modal-center {
+	.value-custom {
 		display: flex;
-		flex-direction: row;
+		flex-direction: column;
 		align-items: center;
-		justify-content: center;
-		gap: 10px;
-		margin-bottom: 15px;
-		width: auto;
+		width: 100%;
+		margin: 10px 0;
+		padding: 0px 5px 0px 5px;
 	}
 
-	#add_link_modal_container .modal-center .cbi-value-title {
-		display: inline-block;
-		width: 80px;
-		text-align: right;
+	.value-field-custom {
+		display: inline-flex;
+		align-items: center;
+		gap: 10px;
+	}
+
+	.value-title-custom {
 		font-size: 13px;
 		line-height: 28px;
-		margin: 0;
 		white-space: nowrap;
-		flex-shrink: 0;
-	}
-
-	#add_link_modal_container .modal-center .cbi-value-field {
-		display: flex;
-		justify-content: flex-start;
-		width: 200px;
+		text-align: right;
 	}
 
 	.custom-dropdown {
 		position: relative;
 		border: 1px solid #d9d9d9;
 		border-radius: 2px;
-		width: 200px;
+		width: 180px;
+		height: 28px;
 		font-size: 13px;
 		background: #fff;
 		cursor: pointer;
 		box-sizing: border-box;
-		height: 28px;
+		display: flex;
+		align-items: center;
 	}
 
 	.selected-display {
@@ -315,7 +311,9 @@ local api = require "luci.passwall.api"
 		justify-content: space-between;
 		align-items: center;
 		padding: 0 8px;
+		width: 100%;
 		height: 100%;
+		box-sizing: border-box;
 	}
 
 	.selected-display:hover {
@@ -331,7 +329,7 @@ local api = require "luci.passwall.api"
 		position: absolute;
 		top: 100%;
 		left: 0;
-		width: 100%;
+		width: 180px;
 		border: 1px solid #d9d9d9;
 		border-top: none;
 		box-shadow: 0 1px 3px rgba(0,0,0,0.15);
@@ -339,7 +337,7 @@ local api = require "luci.passwall.api"
 		list-style: none;
 		margin: 0;
 		padding: 0;
-		max-height: 250px;
+		max-height: 200px;
 		overflow-y: auto;
 		overflow-x: hidden;
 		z-index: 100;
@@ -349,6 +347,7 @@ local api = require "luci.passwall.api"
 	.dropdown-item {
 		padding: 4px 8px;
 		line-height: 20px;
+		cursor: pointer;
 	}
 
 	.dropdown-item.selected {
@@ -356,13 +355,17 @@ local api = require "luci.passwall.api"
 		color: #fff;
 	}
 
+	.create-item-input::placeholder {
+		text-align: center;
+	}
+
 	.dropdown-item.custom-input input {
 		width: 100%;
-		max-width: 200px;
 		box-sizing: border-box;
 		padding: 3px;
 		font-size: 13px;
 		line-height: 20px;
 		border: 1px solid #ccc;
+		text-align: left;
 	}
 </style>
