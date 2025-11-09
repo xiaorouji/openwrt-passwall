@@ -1301,6 +1301,7 @@ function gen_config(var)
 			end
 		end
 
+		local dns_rule_position = 1
 		if dns_listen_port then
 			table.insert(inbounds, {
 				listen = "127.0.0.1",
@@ -1334,16 +1335,18 @@ function gen_config(var)
 				},
 				outboundTag = "dns-out"
 			})
+			dns_rule_position = dns_rule_position + 1
 		end
 
 		if COMMON.default_outbound_tag == "direct" then
 			if direct_dns_udp_server or direct_dns_tcp_server then
-				table.insert(routing.rules, {
+				table.insert(routing.rules, dns_rule_position, {
 					inboundTag = {
 						"dns-global-direct"
 					},
 					outboundTag = "direct"
 				})
+				dns_rule_position = dns_rule_position + 1
 			end
 		end
 
@@ -1376,11 +1379,12 @@ function gen_config(var)
 							balancerTag  = nil
 						end
 						table.insert(dns.servers, dns_server)
-						table.insert(routing.rules, {
+						table.insert(routing.rules, dns_rule_position, {
 							inboundTag = { dns_server.tag },
 							outboundTag = outboundTag,
 							balancerTag = balancerTag
 						})
+						dns_rule_position = dns_rule_position + 1
 					end
 				end
 			end
@@ -1394,11 +1398,12 @@ function gen_config(var)
 			_outboundTag = "direct"
 			_balancerTag  = nil
 		end
-		table.insert(routing.rules, {
+		table.insert(routing.rules, dns_rule_position, {
 			inboundTag = { "dns-global" },
 			balancerTag = _balancerTag,
 			outboundTag = _outboundTag
 		})
+		dns_rule_position = dns_rule_position + 1
 
 		local default_rule_index = nil
 		for index, value in ipairs(routing.rules) do
