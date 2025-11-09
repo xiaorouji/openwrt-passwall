@@ -980,17 +980,20 @@ add_firewall_rule() {
 		$ipt_n -I PREROUTING 1 -j PSW_DNS
 	fi
 
+	$ipt_m -N PSW_DIVERT
+	$ipt_m -A PSW_DIVERT -j MARK --set-mark 1
+	$ipt_m -A PSW_DIVERT -j ACCEPT
+
 	$ipt_m -N PSW_RULE
 	$ipt_m -A PSW_RULE -j CONNMARK --restore-mark
 	$ipt_m -A PSW_RULE -m mark --mark 1 -j RETURN
-	$ipt_m -A PSW_RULE -p tcp -m tcp --syn -j MARK --set-xmark 1
-	$ipt_m -A PSW_RULE -p udp -m conntrack --ctstate NEW,RELATED -j MARK --set-xmark 1
+	$ipt_m -A PSW_RULE -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j MARK --set-xmark 1
+	$ipt_m -A PSW_RULE -p udp -m conntrack --ctstate NEW -j MARK --set-xmark 1
 	$ipt_m -A PSW_RULE -j CONNMARK --save-mark
 
 	$ipt_m -N PSW
 	$ipt_m -A PSW $(dst $IPSET_LAN) -j RETURN
 	$ipt_m -A PSW $(dst $IPSET_VPS) -j RETURN
-	$ipt_m -A PSW -m conntrack --ctdir REPLY -j RETURN
 	
 	[ ! -z "${WAN_IP}" ] && {
 		$ipt_m -A PSW $(comment "WAN_IP_RETURN") -d "${WAN_IP}" -j RETURN
@@ -999,11 +1002,11 @@ add_firewall_rule() {
 	unset WAN_IP
 
 	insert_rule_before "$ipt_m" "PREROUTING" "mwan3" "-j PSW"
+	insert_rule_before "$ipt_m" "PREROUTING" "PSW" "-p tcp -m socket -j PSW_DIVERT"
 
 	$ipt_m -N PSW_OUTPUT
 	$ipt_m -A PSW_OUTPUT $(dst $IPSET_LAN) -j RETURN
 	$ipt_m -A PSW_OUTPUT $(dst $IPSET_VPS) -j RETURN
-	$ipt_m -A PSW_OUTPUT -m conntrack --ctdir REPLY -j RETURN
 
 	[ -n "$IPT_APPEND_DNS" ] && {
 		local local_dns dns_address dns_port
@@ -1050,29 +1053,32 @@ add_firewall_rule() {
 		$ip6t_n -I PREROUTING 1 -j PSW_DNS
 	fi
 
+	$ip6t_m -N PSW_DIVERT
+	$ip6t_m -A PSW_DIVERT -j MARK --set-mark 1
+	$ip6t_m -A PSW_DIVERT -j ACCEPT
+
 	$ip6t_m -N PSW_RULE
 	$ip6t_m -A PSW_RULE -j CONNMARK --restore-mark
 	$ip6t_m -A PSW_RULE -m mark --mark 1 -j RETURN
-	$ip6t_m -A PSW_RULE -p tcp -m tcp --syn -j MARK --set-xmark 1
-	$ip6t_m -A PSW_RULE -p udp -m conntrack --ctstate NEW,RELATED -j MARK --set-xmark 1
+	$ip6t_m -A PSW_RULE -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j MARK --set-xmark 1
+	$ip6t_m -A PSW_RULE -p udp -m conntrack --ctstate NEW -j MARK --set-xmark 1
 	$ip6t_m -A PSW_RULE -j CONNMARK --save-mark
 
 	$ip6t_m -N PSW
 	$ip6t_m -A PSW $(dst $IPSET_LAN6) -j RETURN
 	$ip6t_m -A PSW $(dst $IPSET_VPS6) -j RETURN
-	$ip6t_m -A PSW -m conntrack --ctdir REPLY -j RETURN
 	
 	WAN6_IP=$(get_wan6_ip)
 	[ ! -z "${WAN6_IP}" ] && $ip6t_m -A PSW $(comment "WAN6_IP_RETURN") -d ${WAN6_IP} -j RETURN
 	unset WAN6_IP
 
 	insert_rule_before "$ip6t_m" "PREROUTING" "mwan3" "-j PSW"
+	insert_rule_before "$ip6t_m" "PREROUTING" "PSW" "-p tcp -m socket -j PSW_DIVERT"
 
 	$ip6t_m -N PSW_OUTPUT
 	$ip6t_m -A PSW_OUTPUT -m mark --mark 0xff -j RETURN
 	$ip6t_m -A PSW_OUTPUT $(dst $IPSET_LAN6) -j RETURN
 	$ip6t_m -A PSW_OUTPUT $(dst $IPSET_VPS6) -j RETURN
-	$ip6t_m -A PSW_OUTPUT -m conntrack --ctdir REPLY -j RETURN
 	[ "${USE_BLOCK_LIST}" = "1" ] && $ip6t_m -A PSW_OUTPUT $(dst $IPSET_BLOCK6) -j DROP
 	[ "${USE_DIRECT_LIST}" = "1" ] && $ip6t_m -A PSW_OUTPUT $(dst $IPSET_WHITE6) -j RETURN
 
@@ -1309,7 +1315,7 @@ del_firewall_rule() {
 				$ipt -D $chain $index 2>/dev/null
 			done
 		done
-		for chain in "PSW" "PSW_OUTPUT" "PSW_DNS" "PSW_RULE"; do
+		for chain in "PSW" "PSW_OUTPUT" "PSW_DIVERT" "PSW_DNS" "PSW_RULE"; do
 			$ipt -F $chain 2>/dev/null
 			$ipt -X $chain 2>/dev/null
 		done
@@ -1363,7 +1369,7 @@ gen_include() {
 		[ -z "${_ipt}" ] && return
 
 		echo "*$2"
-		${_ipt}-save -t $2 | grep "PSW" | grep -v "\-j PSW$" | sed -e "s/^-A \(OUTPUT\|PREROUTING\)/-I \1 1/"
+		${_ipt}-save -t $2 | grep "PSW" | grep -v "\-j PSW$" | grep -v "mangle\-OUTPUT\-PSW" | grep -v "socket \-j PSW_DIVERT$" | sed -e "s/^-A \(OUTPUT\|PREROUTING\)/-I \1 1/"
 		echo 'COMMIT'
 	}
 	local __ipt=""
@@ -1384,6 +1390,7 @@ gen_include() {
 			[ -z "${is_tproxy}" ] && \$(${MY_PATH} insert_rule_after "$ipt_n" "PREROUTING" "prerouting_rule" "-p tcp -j PSW")
 
 			\$(${MY_PATH} insert_rule_before "$ipt_m" "PREROUTING" "mwan3" "-j PSW")
+			\$(${MY_PATH} insert_rule_before "$ipt_m" "PREROUTING" "PSW" "-p tcp -m socket -j PSW_DIVERT")
 
 			WAN_IP=\$(${MY_PATH} get_wan_ip)
 
@@ -1416,6 +1423,7 @@ gen_include() {
 			[ "$accept_icmpv6" = "1" ] && $ip6t_n -A PREROUTING -p ipv6-icmp -j PSW
 
 			\$(${MY_PATH} insert_rule_before "$ip6t_m" "PREROUTING" "mwan3" "-j PSW")
+			\$(${MY_PATH} insert_rule_before "$ip6t_m" "PREROUTING" "PSW" "-p tcp -m socket -j PSW_DIVERT")
 
 			PR_INDEX=\$(${MY_PATH} RULE_LAST_INDEX "$ip6t_m" PSW WAN6_IP_RETURN -1)
 			if [ \$PR_INDEX -ge 0 ]; then
