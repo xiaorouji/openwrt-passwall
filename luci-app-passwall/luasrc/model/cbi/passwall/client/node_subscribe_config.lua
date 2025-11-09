@@ -3,6 +3,7 @@ local uci = api.uci
 local appname = "passwall"
 
 m = Map(appname)
+api.set_apply_on_parse(m)
 m.redirect = api.url("node_subscribe")
 
 if not arg[1] or not m:get(arg[1]) then
@@ -11,20 +12,6 @@ end
 
 function m.commit_handler(self)
 	self:del(arg[1], "md5")
-end
-
-if api.is_js_luci() then
-	m.apply_on_parse = false
-	m.on_after_apply = function(self)
-		uci:delete(appname, arg[1], "md5")
-		uci:commit(appname)
-		api.showMsg_Redirect(self.redirect, 3000)
-	end
-end
-
-m.render = function(self, ...)
-	Map.render(self, ...)
-	api.optimize_cbi_ui()
 end
 
 local has_ss = api.is_finded("ss-redir")
