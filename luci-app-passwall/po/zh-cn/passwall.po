@@ -226,6 +226,15 @@ msgstr "DNS 重定向"
 msgid "Force special DNS server to need proxy devices."
 msgstr "强制需要代理的设备使用专用 DNS 服务器。"
 
+msgid "Clear IPSET on Reboot"
+msgstr "重启清空 IPSET"
+
+msgid "Clear NFTSET on Reboot"
+msgstr "重启清空 NFTSET"
+
+msgid "Clear IPSET/NFTSET on service reboot. This may increase reboot time."
+msgstr "重启服务时清空 IPSET/NFTSET，可能会延长重启时间。"
+
 msgid "Clear IPSET"
 msgstr "清空 IPSET"
 

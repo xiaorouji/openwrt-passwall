@@ -581,13 +581,18 @@ o.default = "1"
 o.rmempty = false
 
 local use_nft = m:get("@global_forwarding[0]", "use_nft") == "1"
-local ipset_str = api.i18n.translate(use_nft and "Clear NFTSET" or "Clear IPSET")
-o = s:taboption("DNS", DummyValue, "clear_ipset", ipset_str, translate("Try this feature if the rule modification does not take effect."))
+local set_title = api.i18n.translate(use_nft and "Clear NFTSET on Reboot" or "Clear IPSET on Reboot")
+o = s:taboption("DNS", Flag, "flush_set_on_reboot", set_title, translate("Clear IPSET/NFTSET on service reboot. This may increase reboot time."))
+o.default = "0"
+o.rmempty = false
+
+set_title = api.i18n.translate(use_nft and "Clear NFTSET" or "Clear IPSET")
+o = s:taboption("DNS", DummyValue, "clear_ipset", set_title, translate("Try this feature if the rule modification does not take effect."))
 o.rawhtml = true
 function o.cfgvalue(self, section)
 	return string.format(
 		[[<button type="button" class="cbi-button cbi-button-remove" onclick="location.href='%s'">%s</button>]],
-		api.url("flush_set") .. "?redirect=1&reload=1", ipset_str)
+		api.url("flush_set") .. "?redirect=1&reload=1", set_title)
 end
 
 s:tab("Proxy", translate("Mode"))

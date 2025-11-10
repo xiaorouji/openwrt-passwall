@@ -1354,20 +1354,20 @@ del_firewall_rule() {
 	destroy_nftset $NFTSET_LOCAL
 	destroy_nftset $NFTSET_LAN
 	destroy_nftset $NFTSET_VPS
-	destroy_nftset $NFTSET_SHUNT
+	#destroy_nftset $NFTSET_SHUNT
 	#destroy_nftset $NFTSET_GFW
 	#destroy_nftset $NFTSET_CHN
-	destroy_nftset $NFTSET_BLACK
+	#destroy_nftset $NFTSET_BLACK
 	destroy_nftset $NFTSET_BLOCK
 	destroy_nftset $NFTSET_WHITE
 
 	destroy_nftset $NFTSET_LOCAL6
 	destroy_nftset $NFTSET_LAN6
 	destroy_nftset $NFTSET_VPS6
-	destroy_nftset $NFTSET_SHUNT6
+	#destroy_nftset $NFTSET_SHUNT6
 	#destroy_nftset $NFTSET_GFW6
 	#destroy_nftset $NFTSET_CHN6
-	destroy_nftset $NFTSET_BLACK6
+	#destroy_nftset $NFTSET_BLACK6
 	destroy_nftset $NFTSET_BLOCK6
 	destroy_nftset $NFTSET_WHITE6
 
@@ -1439,7 +1439,7 @@ start() {
 
 stop() {
 	del_firewall_rule
-	[ $(config_t_get global flush_set "0") = "1" ] && {
+	[ $(config_t_get global flush_set_on_reboot "0") = "1" -o $(config_t_get global flush_set "0") = "1" ] && {
 		uci -q delete ${CONFIG}.@global[0].flush_set
 		uci -q commit ${CONFIG}
 		#flush_table

@@ -85,6 +85,13 @@ if has_xray or has_singbox then
 			.. "<li>" .. "2." .. translate("Once enabled, the rule list can support GeoIP/Geosite rules.") .. "</li>"
 			.. "<li>" .. translate("Note: Increases resource usage; Geosite analysis is only supported in ChinaDNS-NG and SmartDNS modes.") .. "</li>"
 			.. "</ul>"
+		function o.write(self, section, value)
+			local old = m:get(section, self.option) or "0"
+			if old ~= value then
+				m:set(section, "flush_set", "1")
+			end
+			return Flag.write(self, section, value)
+		end
 	end
 end
 

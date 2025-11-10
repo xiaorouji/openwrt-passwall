@@ -10,6 +10,10 @@ if not arg[1] or not m:get(arg[1]) then
 	luci.http.redirect(m.redirect)
 end
 
+function m.on_before_save(self)
+	m:set("@global[0]", "flush_set", "1")
+end
+
 -- Add inline CSS to map description
 m.description = (m.description or "") .. "\n" .. [[
 	<style>

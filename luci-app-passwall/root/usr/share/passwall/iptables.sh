@@ -1330,7 +1330,7 @@ del_firewall_rule() {
 	destroy_ipset $IPSET_LOCAL
 	destroy_ipset $IPSET_LAN
 	destroy_ipset $IPSET_VPS
-	destroy_ipset $IPSET_SHUNT
+	#destroy_ipset $IPSET_SHUNT
 	#destroy_ipset $IPSET_GFW
 	#destroy_ipset $IPSET_CHN
 	#destroy_ipset $IPSET_BLACK
@@ -1340,7 +1340,7 @@ del_firewall_rule() {
 	destroy_ipset $IPSET_LOCAL6
 	destroy_ipset $IPSET_LAN6
 	destroy_ipset $IPSET_VPS6
-	destroy_ipset $IPSET_SHUNT6
+	#destroy_ipset $IPSET_SHUNT6
 	#destroy_ipset $IPSET_GFW6
 	#destroy_ipset $IPSET_CHN6
 	#destroy_ipset $IPSET_BLACK6
@@ -1459,7 +1459,7 @@ start() {
 
 stop() {
 	del_firewall_rule
-	[ $(config_t_get global flush_set "0") = "1" ] && {
+	[ $(config_t_get global flush_set_on_reboot "0") = "1" -o $(config_t_get global flush_set "0") = "1" ] && {
 		uci -q delete ${CONFIG}.@global[0].flush_set
 		uci -q commit ${CONFIG}
 		flush_ipset
