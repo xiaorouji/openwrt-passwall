@@ -88,7 +88,7 @@ if has_xray or has_singbox then
 		function o.write(self, section, value)
 			local old = m:get(section, self.option) or "0"
 			if old ~= value then
-				m:set(section, "flush_set", "1")
+				m:set("@global[0]", "flush_set", "1")
 			end
 			return Flag.write(self, section, value)
 		end
