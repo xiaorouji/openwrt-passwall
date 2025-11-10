@@ -88,6 +88,7 @@ function index()
 	entry({"admin", "services", appname, "subscribe_del_all"}, call("subscribe_del_all")).leaf = true
 	entry({"admin", "services", appname, "subscribe_manual"}, call("subscribe_manual")).leaf = true
 	entry({"admin", "services", appname, "subscribe_manual_all"}, call("subscribe_manual_all")).leaf = true
+	entry({"admin", "services", appname, "flush_set"}, call("flush_set")).leaf = true
 
 	--[[rule_list]]
 	entry({"admin", "services", appname, "read_rulelist"}, call("read_rulelist")).leaf = true
@@ -867,4 +868,18 @@ function subscribe_manual_all()
 	end
 	luci.sys.call("lua /usr/share/" .. appname .. "/subscribe.lua start all manual >/dev/null 2>&1 &")
 	http_write_json({ success = true, msg = "Subscribe triggered." })
+end
+
+function flush_set()
+	local redirect = http.formvalue("redirect") or "0"
+	local reload = http.formvalue("reload") or "0"
+	if reload == "1" then
+		uci:set(appname, '@global[0]', "flush_set", "1")
+		api.uci_save(uci, appname, true, true)
+	else
+		api.sh_uci_set(appname, "@global[0]", "flush_set", "1", true)
+	end
+	if redirect == "1" then
+		http.redirect(api.url("log"))
+	end
 end
