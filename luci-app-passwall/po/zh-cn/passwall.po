@@ -1114,6 +1114,12 @@ msgstr "手动订阅全部"
 msgid "This remark already exists, please change a new remark."
 msgstr "此备注已存在，请改一个新的备注。"
 
+msgid "Remark cannot be empty."
+msgstr "备注不能为空。"
+
+msgid "URL cannot be empty."
+msgstr "网址不能为空。"
+
 msgid "Filter keyword Mode"
 msgstr "过滤关键字模式"
 

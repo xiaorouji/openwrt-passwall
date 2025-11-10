@@ -1546,7 +1546,7 @@ local function truncate_nodes(group)
 			local removeNodesSet = {}
 			for k, v in pairs(config.currentNodes) do
 				if v.currentNode and v.currentNode.add_mode == "2" then
-					if (not group) or (group and group == v.currentNode.group) then
+					if (not group) or (group:lower() == (v.currentNode.group or ""):lower()) then
 						removeNodesSet[v.currentNode[".name"]] = true
 					end
 				end
@@ -1561,7 +1561,7 @@ local function truncate_nodes(group)
 			end
 		else
 			if config.currentNode and config.currentNode.add_mode == "2" then
-				if (not group) or (group and group == config.currentNode.group) then
+				if (not group) or (group:lower() == (config.currentNode.group or ""):lower()) then
 					if config.delete then
 						config.delete(config)
 					elseif config.set then
@@ -1573,13 +1573,13 @@ local function truncate_nodes(group)
 	end
 	uci:foreach(appname, "nodes", function(node)
 		if node.add_mode == "2" then
-			if (not group) or (group and group == node.group) then
+			if (not group) or (group:lower() == (node.group or ""):lower()) then
 				uci:delete(appname, node['.name'])
 			end
 		end
 	end)
 	uci:foreach(appname, "subscribe_list", function(o)
-		if (not group) or group == o.remark then
+		if (not group) or (group:lower() == (o.remark or ""):lower()) then
 			uci:delete(appname, o['.name'], "md5")
 		end
 	end)
@@ -1714,13 +1714,13 @@ local function update_node(manual)
 
 	local group = {}
 	for _, v in ipairs(nodeResult) do
-		group[v["remark"]] = true
+		group[v["remark"]:lower()] = true
 	end
 
 	if manual == 0 and next(group) then
 		uci:foreach(appname, "nodes", function(node)
 			-- 如果未发现新节点或手动导入的节点就不要删除了...
-			if node.add_mode == "2" and (node.group and group[node.group] == true) then
+			if node.add_mode == "2" and (node.group and group[node.group:lower()] == true) then
 				uci:delete(appname, node['.name'])
 			end
 		end)

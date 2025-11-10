@@ -175,19 +175,33 @@ end
 o = s:option(Value, "remark", translate("Remarks"))
 o.width = "auto"
 o.rmempty = false
-o.validate = function(self, value, t)
-	if value then
-		local count = 0
-		m.uci:foreach(appname, "subscribe_list", function(e)
-			if e[".name"] ~= t and e["remark"] == value then
-				count = count + 1
+o.validate = function(self, value, section)
+	value = (value or ""):match("^%s*(.-)%s*$")
+	if value == "" then
+		return nil, translate("Remark cannot be empty.")
+	end
+	local duplicate = false
+	m.uci:foreach(appname, "subscribe_list", function(e)
+		if e[".name"] ~= section and e["remark"] and e["remark"]:lower() == value:lower() then
+			duplicate = true
+			return false
+		end
+	end)
+	if duplicate then
+		return nil, translate("This remark already exists, please change a new remark.")
+	end
+	return value
+end
+o.write = function(self, section, value)
+	local old = m:get(section, self.option) or ""
+	if old:lower() ~= value:lower() then
+		m.uci:foreach(appname, "nodes", function(e)
+			if e["group"] and e["group"]:lower() == old:lower() then
+				m.uci:set(appname, e[".name"], "group", value)
 			end
 		end)
-		if count > 0 then
-			return nil, translate("This remark already exists, please change a new remark.")
-		end
-		return value
 	end
+	return Value.write(self, section, value)
 end
 
 o = s:option(DummyValue, "_node_count", translate("Subscribe Info"))
