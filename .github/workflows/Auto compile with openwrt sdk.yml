@@ -204,7 +204,7 @@ jobs:
     if: ${{ needs.job_check.outputs.has_update == 'true' && needs.job_check.outputs.prerelease == 'false' }}
     needs: job_check
     runs-on: ubuntu-latest
-    name: build (${{ matrix.platform }})
+    name: build (${{ matrix.ver }}-${{ matrix.platform }})
     strategy:
       fail-fast: false
       matrix:
