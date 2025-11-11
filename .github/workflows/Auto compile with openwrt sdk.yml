@@ -174,19 +174,6 @@ jobs:
           mkdir upload
           mv bin/packages/*/passwall/luci-* upload/
           cd upload
-          # for file in luci-*; do
-          #   if [[ -f "$file" ]]; then
-          #       filename="${file%.*}"
-          #       extension="${file##*.}"
-          #       if [[ "${{ matrix.ver }}" == "apk" ]]; then
-          #           new_name="${filename}-${{ matrix.platform }}.${extension}"
-          #           mv "$file" "$new_name"
-          #           echo "Renamed: $file -> $new_name"
-          #       else
-          #           echo "Skipped renaming (ver != apk): $file"
-          #       fi
-          #   fi
-          # done
           echo "status=success" >> $GITHUB_OUTPUT
           echo "FIRMWARE=$PWD" >> $GITHUB_ENV
 
