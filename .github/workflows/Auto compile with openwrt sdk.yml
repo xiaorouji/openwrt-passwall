@@ -132,7 +132,7 @@ jobs:
 
           cat > feeds.tmp <<'EOF'
           src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git;main
-          src-git passwall2 https://github.com/${{ env.passwall }}.git;${{ github.ref_name }}
+          src-git passwall https://github.com/${{ env.passwall }}.git;${{ github.ref_name }}
           EOF
           cat feeds.conf.default >> feeds.tmp
           mv feeds.tmp feeds.conf.default
@@ -387,7 +387,7 @@ jobs:
           
           cat > feeds.tmp <<'EOF'
           src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git;main
-          src-git passwall2 https://github.com/${{ env.passwall }}.git;${{ github.ref_name }}
+          src-git passwall https://github.com/${{ env.passwall }}.git;${{ github.ref_name }}
           EOF
           cat feeds.conf.default >> feeds.tmp
           mv feeds.tmp feeds.conf.default
