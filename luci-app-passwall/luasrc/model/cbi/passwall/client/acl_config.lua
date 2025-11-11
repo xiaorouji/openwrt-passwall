@@ -453,7 +453,7 @@ o.description = desc .. "</ul>"
 o:depends({dns_shunt = "dnsmasq", tcp_proxy_mode = "proxy", chn_list = "direct"})
 
 for k, v in pairs(nodes_table) do
-	if v.protocol and v.protocol ~= "_shunt" then
+	if v.protocol ~= "_shunt" then
 		s.fields["dns_mode"]:depends({ _tcp_node_bool = "1", tcp_node = v.id })
 	end
 end

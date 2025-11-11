@@ -773,7 +773,7 @@ for k, v in pairs(nodes_table) do
 		s2.fields["node"]:value(v.id, v["remark"])
 	end
 
-	if v.protocol and v.protocol ~= "_shunt" then
+	if v.protocol ~= "_shunt" then
 		s.fields["dns_mode"]:depends({ dns_shunt = "chinadns-ng", tcp_node = v.id })
 		s.fields["dns_mode"]:depends({ dns_shunt = "dnsmasq", tcp_node = v.id })
 		if api.is_finded("smartdns") then
