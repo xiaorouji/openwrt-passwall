@@ -16,6 +16,7 @@ env:
   passwall: ${{ github.repository }}
   packages: xiaorouji/openwrt-passwall-packages
   package_names: "chinadns-ng dns2socks geoview hysteria ipt2socks microsocks naiveproxy tcping trojan-plus tuic-client shadowsocks-rust shadowsocksr-libev simple-obfs sing-box v2ray-geodata v2ray-plugin xray-core xray-plugin shadow-tls"
+  package_release: "chinadns-ng dns2socks geoview hysteria ipt2socks microsocks naiveproxy tcping trojan-plus tuic-client shadowsocks-rust shadowsocksr-libev simple-obfs sing-box v2ray-geoip v2ray-plugin v2ray-geosite xray-core xray-plugin shadow-tls"
 
 
 jobs:
@@ -447,12 +448,6 @@ jobs:
           make defconfig
 
 
-      - name: ${{ matrix.platform }} download
-        run: |
-          cd sdk
-          make download -j8
-          find dl -size -1024c -exec ls -l {} \;
-
       - name: ${{ matrix.platform }} compile
         id: compile
         run: |
@@ -461,7 +456,7 @@ jobs:
               if [ -d "feeds/passwall_packages/$package" ]; then
                   echo "-----------begin compile $package ---------------"
                   sleep 10s
-                  make package/feeds/passwall_packages/$package/compile -j$(nproc) V=s
+                  make package/$package/compile -j$(nproc) V=s
                   echo "-----------compiled $package ---------------"
                   echo ""
               fi
@@ -474,9 +469,27 @@ jobs:
         if: steps.compile.outputs.status == 'success'
         run: |
           cd sdk
-          mkdir upload
 
-          zip -jr upload/passwall_packages_${{ matrix.ver }}_${{ matrix.platform }}.zip bin/packages/*/passwall_packages/*
+          mkdir tmp_upload
+          shopt -s nullglob 
+          for src_dir in bin/packages/*/{packages,passwall_packages}; do
+              [[ -d "$src_dir" ]] || continue
+
+              echo "Scanning: $src_dir"
+
+              for prefix in ${{ env.package_release }}; do
+                  for file in "$src_dir"/"$prefix"*; do
+                      [[ -f "$file" ]] || continue
+
+                      filename=$(basename "$file")
+                      echo "  Found: $filename"
+                      cp -r "$file" "tmp_upload/"
+                  done
+              done
+          done
+
+          mkdir upload
+          zip -jr upload/passwall_packages_${{ matrix.ver }}_${{ matrix.platform }}.zip tmp_upload/*
 
           echo "FIRMWARE=$PWD" >> $GITHUB_ENV
           echo "status=success" >> $GITHUB_OUTPUT
