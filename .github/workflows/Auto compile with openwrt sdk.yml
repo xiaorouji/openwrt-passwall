@@ -36,18 +36,29 @@ jobs:
       - name: Check version
         id: check_version
         env:
-          url_tags: https://api.github.com/repos/${{ env.passwall }}/tags
+          url_tags: https://api.github.com/repos/${{ env.passwall }}/releases/latest
         run: |
           cd luci-app-passwall
           latest_version=$(awk -F ':=' '/^PKG_VERSION:=|^PKG_RELEASE:=/ {print $2}' Makefile | sed ':a;N;s/\$(PKG_VERSION)-//;s/\n$//;s/\n/-/;ba')
-          has_update=$([ -z "$(wget -qO- -t1 -T2 ${{env.url_tags}} | grep \"${latest_version}\")" ] && echo true || echo false)
-          prerelease=$([ "${{ github.ref_name }}" == "main" ] && echo false || echo true)
           echo "latest_version=${latest_version}" >> $GITHUB_OUTPUT
-          echo "has_update=${has_update}" >> $GITHUB_OUTPUT
+
+          prerelease=$([ "${{ github.ref_name }}" == "main" ] && echo false || echo true)
           echo "prerelease=${prerelease}" >> $GITHUB_OUTPUT
-          echo "latest_version: ${latest_version}"
-          echo "has_update: ${has_update}"
-          echo "prerelease: ${prerelease}"
+
+          remote_latest_version=$(wget -qO- -t1 -T2 ${{env.url_tags}} | jq -r '.tag_name')
+
+          if [ -z "$remote_latest_version" ] || [ "$remote_latest_version" = "null" ]; then
+            echo "Failed to fetch remote tags"
+            echo "has_update=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          echo "Remote latest: $remote_latest_version"
+
+          if [ "$latest_version" = "$remote_latest_version" ]; then
+            echo "has_update=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_update=true" >> $GITHUB_OUTPUT
+          fi
 
       - name: Prepare release
         if: steps.check_version.outputs.has_update == 'true'
@@ -71,7 +82,7 @@ jobs:
 
 
   job_build_passwall:
-    name: Build passwall [Luci ${{ matrix.luci_ver }}]
+    name: Build passwall [${{ matrix.ver }}]
     needs: job_check
     if: needs.job_check.outputs.has_update == 'true'
     runs-on: ubuntu-latest
@@ -79,13 +90,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - sdk_ver: "21.02"
-            luci_ver: "19.07"
-            sdk_url: https://downloads.openwrt.org/releases/21.02.7/targets/x86/64/openwrt-sdk-21.02.7-x86-64_gcc-8.4.0_musl.Linux-x86_64.tar.xz
+          - platform: x86_64
+            url_sdk: https://downloads.openwrt.org/releases/24.10.4/targets/x86/64/openwrt-sdk-24.10.4-x86-64_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+            ver: "ipk"
 
-          - sdk_ver: "24.10"
-            luci_ver: "24.10"
-            sdk_url: https://downloads.openwrt.org/releases/24.10.1/targets/x86/64/openwrt-sdk-24.10.1-x86-64_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+          - platform: x86_64
+            url_sdk: https://downloads.openwrt.org/snapshots/targets/x86/64/openwrt-sdk-x86-64_gcc-14.3.0_musl.Linux-x86_64.tar.zst
+            ver: "apk"
     steps:
       - name: Install packages
         run: |
@@ -104,10 +115,9 @@ jobs:
           sudo -E apt-get -qq clean
 
       - name: Initialization environment
-        if: steps.cache-sdk.outputs.cache-hit != 'true'
         run: |
-          wget ${{ matrix.sdk_url }}
-          file_name=$(echo ${{ matrix.sdk_url }} | awk -F/ '{print $NF}')
+          wget ${{ matrix.url_sdk }}
+          file_name=$(echo ${{ matrix.url_sdk }} | awk -F/ '{print $NF}')
           mkdir sdk
           if [[ $file_name == *.tar.xz ]]; then
             tar -xJf $file_name -C ./sdk --strip-components=1
@@ -119,14 +129,9 @@ jobs:
           fi
           cd sdk
 
-          cat > feeds.conf.default << EOF
+          cat << EOF >> feeds.conf.default
           src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git;main
           src-git passwall https://github.com/${{ env.passwall }}.git;${{ github.ref_name }}
-          src-git base https://github.com/openwrt/openwrt.git;openwrt-${{ matrix.sdk_ver }}
-          src-git packages https://github.com/openwrt/packages.git;openwrt-${{ matrix.sdk_ver }}
-          src-git luci https://github.com/openwrt/luci.git;openwrt-${{ matrix.luci_ver }}
-          src-git routing https://github.com/openwrt/routing.git;openwrt-${{ matrix.sdk_ver }}
-          src-git telephony https://github.com/openwrt/telephony.git;openwrt-${{ matrix.sdk_ver }}
           EOF
 
           ./scripts/feeds update -a
@@ -153,7 +158,7 @@ jobs:
           echo "Patch application completed"
           #--------------------------------------end_patches--------------------------------------------
 
-      - name: Compile passwall
+      - name: Compile
         id: compile
         run: |
           cd sdk
@@ -166,13 +171,22 @@ jobs:
           make defconfig
           echo "make package/luci-app-passwall/{clean,compile} -j$(nproc)"
           make package/luci-app-passwall/{clean,compile} -j$(nproc) V=s
-          mv bin/packages/x86_64/passwall/ ../
-          make clean
-          rm .config .config.old
-          rm -rf feeds/passwall feeds/passwall.*
-          cd ../passwall
-          for i in $(ls); do mv $i luci-${{ matrix.luci_ver }}_$i; done
-          cd ..
+          mkdir upload
+          mv bin/packages/*/passwall/luci-* upload/
+          cd upload
+          # for file in luci-*; do
+          #   if [[ -f "$file" ]]; then
+          #       filename="${file%.*}"
+          #       extension="${file##*.}"
+          #       if [[ "${{ matrix.ver }}" == "apk" ]]; then
+          #           new_name="${filename}-${{ matrix.platform }}.${extension}"
+          #           mv "$file" "$new_name"
+          #           echo "Renamed: $file -> $new_name"
+          #       else
+          #           echo "Skipped renaming (ver != apk): $file"
+          #       fi
+          #   fi
+          # done
           echo "status=success" >> $GITHUB_OUTPUT
           echo "FIRMWARE=$PWD" >> $GITHUB_ENV
 
@@ -183,7 +197,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{needs.job_check.outputs.passwall_version}}
-          files: ${{ env.FIRMWARE }}/passwall/*.ipk
+          files: ${{ env.FIRMWARE }}/*
 
 
   job_auto_compile:
@@ -196,76 +210,150 @@ jobs:
       matrix:
         include:
           - platform: x86_64
-            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/x86/64/openwrt-sdk-24.10.1-x86-64_gcc-13.3.0_musl.Linux-x86_64.tar.zst
-            sdk_ver: "24.10"
+            url_sdk: https://downloads.openwrt.org/releases/24.10.4/targets/x86/64/openwrt-sdk-24.10.4-x86-64_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+            ver: "ipk"
 
           - platform: aarch64_generic
-            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/rockchip/armv8/openwrt-sdk-24.10.1-rockchip-armv8_gcc-13.3.0_musl.Linux-x86_64.tar.zst
-            sdk_ver: "24.10"
+            url_sdk: https://downloads.openwrt.org/releases/24.10.4/targets/rockchip/armv8/openwrt-sdk-24.10.4-rockchip-armv8_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+            ver: "ipk"
 
           - platform: aarch64_cortex-a53
-            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/mvebu/cortexa53/openwrt-sdk-24.10.1-mvebu-cortexa53_gcc-13.3.0_musl.Linux-x86_64.tar.zst
-            sdk_ver: "24.10"
+            url_sdk: https://downloads.openwrt.org/releases/24.10.4/targets/mvebu/cortexa53/openwrt-sdk-24.10.4-mvebu-cortexa53_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+            ver: "ipk"
 
           - platform: aarch64_cortex-a72
-            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/mvebu/cortexa72/openwrt-sdk-24.10.1-mvebu-cortexa72_gcc-13.3.0_musl.Linux-x86_64.tar.zst
-            sdk_ver: "24.10"
+            url_sdk: https://downloads.openwrt.org/releases/24.10.4/targets/mvebu/cortexa72/openwrt-sdk-24.10.4-mvebu-cortexa72_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+            ver: "ipk"
 
           - platform: arm_cortex-a5_vfpv4
-            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/at91/sama5/openwrt-sdk-24.10.1-at91-sama5_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
-            sdk_ver: "24.10"
+            url_sdk: https://downloads.openwrt.org/releases/24.10.4/targets/at91/sama5/openwrt-sdk-24.10.4-at91-sama5_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
+            ver: "ipk"
 
           - platform: arm_cortex-a7
-            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/mediatek/mt7629/openwrt-sdk-24.10.1-mediatek-mt7629_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
-            sdk_ver: "24.10"
+            url_sdk: https://downloads.openwrt.org/releases/24.10.4/targets/mediatek/mt7629/openwrt-sdk-24.10.4-mediatek-mt7629_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
+            ver: "ipk"
 
           - platform: arm_cortex-a7_neon-vfpv4
-            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/sunxi/cortexa7/openwrt-sdk-24.10.1-sunxi-cortexa7_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
-            sdk_ver: "24.10"
+            url_sdk: https://downloads.openwrt.org/releases/24.10.4/targets/sunxi/cortexa7/openwrt-sdk-24.10.4-sunxi-cortexa7_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
+            ver: "ipk"
 
           - platform: arm_cortex-a8_vfpv3
-            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/sunxi/cortexa8/openwrt-sdk-24.10.1-sunxi-cortexa8_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
-            sdk_ver: "24.10"
+            url_sdk: https://downloads.openwrt.org/releases/24.10.4/targets/sunxi/cortexa8/openwrt-sdk-24.10.4-sunxi-cortexa8_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
+            ver: "ipk"
 
           - platform: arm_cortex-a9
-            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/bcm53xx/generic/openwrt-sdk-24.10.1-bcm53xx-generic_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
-            sdk_ver: "24.10"
+            url_sdk: https://downloads.openwrt.org/releases/24.10.4/targets/bcm53xx/generic/openwrt-sdk-24.10.4-bcm53xx-generic_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
+            ver: "ipk"
 
           - platform: arm_cortex-a9_neon
-            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/zynq/generic/openwrt-sdk-24.10.1-zynq-generic_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
-            sdk_ver: "24.10"
+            url_sdk: https://downloads.openwrt.org/releases/24.10.4/targets/zynq/generic/openwrt-sdk-24.10.4-zynq-generic_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
+            ver: "ipk"
 
           - platform: arm_cortex-a9_vfpv3-d16
-            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/mvebu/cortexa9/openwrt-sdk-24.10.1-mvebu-cortexa9_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
-            sdk_ver: "24.10"
+            url_sdk: https://downloads.openwrt.org/releases/24.10.4/targets/mvebu/cortexa9/openwrt-sdk-24.10.4-mvebu-cortexa9_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
+            ver: "ipk"
 
           - platform: arm_cortex-a15_neon-vfpv4
-            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/ipq806x/generic/openwrt-sdk-24.10.1-ipq806x-generic_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
-            sdk_ver: "24.10"
+            url_sdk: https://downloads.openwrt.org/releases/24.10.4/targets/ipq806x/generic/openwrt-sdk-24.10.4-ipq806x-generic_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
+            ver: "ipk"
 
           - platform: mips_24kc
-            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/ath79/generic/openwrt-sdk-24.10.1-ath79-generic_gcc-13.3.0_musl.Linux-x86_64.tar.zst
-            sdk_ver: "24.10"
+            url_sdk: https://downloads.openwrt.org/releases/24.10.4/targets/ath79/generic/openwrt-sdk-24.10.4-ath79-generic_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+            ver: "ipk"
 
           - platform: mips_4kec
-            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/realtek/rtl838x/openwrt-sdk-24.10.1-realtek-rtl838x_gcc-13.3.0_musl.Linux-x86_64.tar.zst
-            sdk_ver: "24.10"
+            url_sdk: https://downloads.openwrt.org/releases/24.10.4/targets/realtek/rtl838x/openwrt-sdk-24.10.4-realtek-rtl838x_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+            ver: "ipk"
 
           - platform: mips_mips32
-            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/bcm53xx/generic/openwrt-sdk-24.10.1-bcm53xx-generic_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
-            sdk_ver: "24.10"
+            url_sdk: https://downloads.openwrt.org/releases/24.10.4/targets/bcm53xx/generic/openwrt-sdk-24.10.4-bcm53xx-generic_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
+            ver: "ipk"
 
           - platform: mipsel_24kc
-            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/ramips/rt288x/openwrt-sdk-24.10.1-ramips-rt288x_gcc-13.3.0_musl.Linux-x86_64.tar.zst
-            sdk_ver: "24.10"
+            url_sdk: https://downloads.openwrt.org/releases/24.10.4/targets/ramips/rt288x/openwrt-sdk-24.10.4-ramips-rt288x_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+            ver: "ipk"
 
           - platform: mipsel_74kc
-            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/ramips/rt3883/openwrt-sdk-24.10.1-ramips-rt3883_gcc-13.3.0_musl.Linux-x86_64.tar.zst
-            sdk_ver: "24.10"
+            url_sdk: https://downloads.openwrt.org/releases/24.10.4/targets/ramips/rt3883/openwrt-sdk-24.10.4-ramips-rt3883_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+            ver: "ipk"
 
           - platform: mipsel_mips32
-            url_sdk: https://downloads.openwrt.org/releases/24.10.1/targets/bcm47xx/generic/openwrt-sdk-24.10.1-bcm47xx-generic_gcc-13.3.0_musl.Linux-x86_64.tar.zst
-            sdk_ver: "24.10"
+            url_sdk: https://downloads.openwrt.org/releases/24.10.4/targets/bcm47xx/generic/openwrt-sdk-24.10.4-bcm47xx-generic_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+            ver: "ipk"
+
+
+
+          - platform: x86_64
+            url_sdk: https://downloads.openwrt.org/snapshots/targets/x86/64/openwrt-sdk-x86-64_gcc-14.3.0_musl.Linux-x86_64.tar.zst
+            ver: "apk"
+
+          - platform: aarch64_generic
+            url_sdk: https://downloads.openwrt.org/snapshots/targets/rockchip/armv8/openwrt-sdk-rockchip-armv8_gcc-14.3.0_musl.Linux-x86_64.tar.zst
+            ver: "apk"
+
+          - platform: aarch64_cortex-a53
+            url_sdk: https://downloads.openwrt.org/snapshots/targets/mvebu/cortexa53/openwrt-sdk-mvebu-cortexa53_gcc-14.3.0_musl.Linux-x86_64.tar.zst
+            ver: "apk"
+
+          - platform: aarch64_cortex-a72
+            url_sdk: https://downloads.openwrt.org/snapshots/targets/mvebu/cortexa72/openwrt-sdk-mvebu-cortexa72_gcc-14.3.0_musl.Linux-x86_64.tar.zst
+            ver: "apk"
+
+          - platform: arm_cortex-a5_vfpv4
+            url_sdk: https://downloads.openwrt.org/snapshots/targets/at91/sama5/openwrt-sdk-at91-sama5_gcc-14.3.0_musl_eabi.Linux-x86_64.tar.zst
+            ver: "apk"
+
+          - platform: arm_cortex-a7
+            url_sdk: https://downloads.openwrt.org/snapshots/targets/mediatek/mt7629/openwrt-sdk-mediatek-mt7629_gcc-14.3.0_musl_eabi.Linux-x86_64.tar.zst
+            ver: "apk"
+
+          - platform: arm_cortex-a7_neon-vfpv4
+            url_sdk: https://downloads.openwrt.org/snapshots/targets/sunxi/cortexa7/openwrt-sdk-sunxi-cortexa7_gcc-14.3.0_musl_eabi.Linux-x86_64.tar.zst
+            ver: "apk"
+
+          - platform: arm_cortex-a8_vfpv3
+            url_sdk: https://downloads.openwrt.org/snapshots/targets/sunxi/cortexa8/openwrt-sdk-sunxi-cortexa8_gcc-14.3.0_musl_eabi.Linux-x86_64.tar.zst
+            ver: "apk"
+
+          - platform: arm_cortex-a9
+            url_sdk: https://downloads.openwrt.org/snapshots/targets/bcm53xx/generic/openwrt-sdk-bcm53xx-generic_gcc-14.3.0_musl_eabi.Linux-x86_64.tar.zst
+            ver: "apk"
+
+          - platform: arm_cortex-a9_neon
+            url_sdk: https://downloads.openwrt.org/snapshots/targets/zynq/generic/openwrt-sdk-zynq-generic_gcc-14.3.0_musl_eabi.Linux-x86_64.tar.zst
+            ver: "apk"
+
+          - platform: arm_cortex-a9_vfpv3-d16
+            url_sdk: https://downloads.openwrt.org/snapshots/targets/mvebu/cortexa9/openwrt-sdk-mvebu-cortexa9_gcc-14.3.0_musl_eabi.Linux-x86_64.tar.zst
+            ver: "apk"
+
+          - platform: arm_cortex-a15_neon-vfpv4
+            url_sdk: https://downloads.openwrt.org/snapshots/targets/ipq806x/generic/openwrt-sdk-ipq806x-generic_gcc-14.3.0_musl_eabi.Linux-x86_64.tar.zst
+            ver: "apk"
+
+          - platform: mips_24kc
+            url_sdk: https://downloads.openwrt.org/snapshots/targets/ath79/generic/openwrt-sdk-ath79-generic_gcc-14.3.0_musl.Linux-x86_64.tar.zst
+            ver: "apk"
+
+          - platform: mips_4kec
+            url_sdk: https://downloads.openwrt.org/snapshots/targets/realtek/rtl838x/openwrt-sdk-realtek-rtl838x_gcc-14.3.0_musl.Linux-x86_64.tar.zst
+            ver: "apk"
+
+          - platform: mips_mips32
+            url_sdk: https://downloads.openwrt.org/snapshots/targets/bcm53xx/generic/openwrt-sdk-bcm53xx-generic_gcc-14.3.0_musl_eabi.Linux-x86_64.tar.zst
+            ver: "apk"
+
+          - platform: mipsel_24kc
+            url_sdk: https://downloads.openwrt.org/snapshots/targets/ramips/rt288x/openwrt-sdk-ramips-rt288x_gcc-14.2.0_musl.Linux-x86_64.tar.zst
+            ver: "apk"
+
+          - platform: mipsel_74kc
+            url_sdk: https://downloads.openwrt.org/snapshots/targets/ramips/rt3883/openwrt-sdk-ramips-rt3883_gcc-14.3.0_musl.Linux-x86_64.tar.zst
+            ver: "apk"
+
+          - platform: mipsel_mips32
+            url_sdk: https://downloads.openwrt.org/snapshots/targets/bcm47xx/generic/openwrt-sdk-bcm47xx-generic_gcc-14.3.0_musl.Linux-x86_64.tar.zst
+            ver: "apk"
 
     steps:
       - name: Initialization ${{ matrix.platform }} compile environment
@@ -306,14 +394,9 @@ jobs:
       - name: ${{ matrix.platform }} feeds configuration packages
         run: |
           cd sdk
-          cat > feeds.conf.default << EOF
+          cat << EOF >> feeds.conf.default
           src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git;main
           src-git passwall https://github.com/${{ env.passwall }}.git;${{ github.ref_name }}
-          src-git base https://github.com/openwrt/openwrt.git;openwrt-${{ matrix.sdk_ver }}
-          src-git packages https://github.com/openwrt/packages.git;openwrt-${{ matrix.sdk_ver }}
-          src-git luci https://github.com/openwrt/luci.git;openwrt-${{ matrix.sdk_ver }}
-          src-git routing https://github.com/openwrt/routing.git;openwrt-${{ matrix.sdk_ver }}
-          src-git telephony https://github.com/openwrt/telephony.git;openwrt-${{ matrix.sdk_ver }}
           EOF
 
 
