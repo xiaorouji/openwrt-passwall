@@ -126,8 +126,16 @@ local api = require "luci.passwall.api"
 			var val = input.value.trim();
 			if (!val) return;
 
+			if (val.toLowerCase() === "default") {
+				var emptyLi = Array.from(list.querySelectorAll(".dropdown-item"))
+					.find(function(el){ return !el.dataset.value; });
+				if (emptyLi) selectItem(emptyLi);
+				input.value = "";
+				return;
+			}
+
 			var li = Array.from(list.querySelectorAll(".dropdown-item")).find(function(el){
-				return el.dataset.value === val;
+				return el.dataset.value.toLowerCase() === val.toLowerCase();
 			});
 			if (!li) {
 				li = document.createElement("li");
