@@ -659,6 +659,21 @@ table td, .table .td {
 			if (default_group) {
 				cbi_t_switch("passwall.nodes", default_group)
 			}
+
+			//clear expire data
+			if (localStorage && localStorage.length > 0) {
+				const now = Date.now();
+				for (let i = 0; i < localStorage.length; i++) {
+					let key = localStorage.key(i);
+					if (key && (key.startsWith("icmp") || key.startsWith("tcping"))) {
+						let value_str = localStorage.getItem(key);
+						const value = JSON.parse(value_str);
+						if (!(value && value.savetime && (now - value.timestamp) < value.savetime)) {
+							localStorage.removeItem(key);
+						}
+					}
+				}
+			}
 			
 			get_now_use_node();
 
