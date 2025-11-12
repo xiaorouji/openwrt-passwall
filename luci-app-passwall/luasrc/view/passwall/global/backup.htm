@@ -134,10 +134,10 @@ local api = require "luci.passwall.api"
 			setTimeout(function () {
 				if (confirm("<%: Are you sure you want to restore the client to default settings?%>")) {
 					var xhr1 = new XMLHttpRequest();
-					xhr1.open("GET",'<%= api.url("clear_log") %>', true);
+					xhr1.open("GET",'<%= api.url("clear_log") %>', false);
 					xhr1.send(); 
 					var xhr2 = new XMLHttpRequest();
-					xhr2.open("GET",'<%= api.url("reset_config") %>', true);
+					xhr2.open("GET",'<%= api.url("reset_config") %>', false);
 					xhr2.send(); 
 					window.location.href = '<%= api.url("log") %>'
 				}
