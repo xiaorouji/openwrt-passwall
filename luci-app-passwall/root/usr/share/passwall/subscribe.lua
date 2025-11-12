@@ -449,6 +449,26 @@ local function get_subscribe_info(cfgid, value)
 	end
 end
 
+-- 设置 ss 协议实现类型
+local function set_ss_implementation(result)
+	if ss_type_default == "shadowsocks-libev" and has_ss then
+		result.type = "SS"
+	elseif ss_type_default == "shadowsocks-rust" and has_ss_rust then
+		result.type = 'SS-Rust'
+	elseif ss_type_default == "xray" and has_xray then
+		result.type = 'Xray'
+		result.protocol = 'shadowsocks'
+		result.transport = 'raw'
+	elseif ss_type_default == "sing-box" and has_singbox then
+		result.type = 'sing-box'
+		result.protocol = 'shadowsocks'
+	else
+		log("跳过 SS 节点，因未适配到 SS 核心程序，或未正确设置节点使用类型。")
+		return nil
+	end
+	return result
+end
+
 -- 处理数据
 local function processData(szType, content, add_mode, group)
 	--log(content, add_mode, group)
@@ -602,21 +622,8 @@ local function processData(szType, content, add_mode, group)
 			return nil
 		end
 	elseif szType == "ss" then
-		if ss_type_default == "shadowsocks-libev" and has_ss then
-			result.type = "SS"
-		elseif ss_type_default == "shadowsocks-rust" and has_ss_rust then
-			result.type = 'SS-Rust'
-		elseif ss_type_default == "xray" and has_xray then
-			result.type = 'Xray'
-			result.protocol = 'shadowsocks'
-			result.transport = 'raw'
-		elseif ss_type_default == "sing-box" and has_singbox then
-			result.type = 'sing-box'
-			result.protocol = 'shadowsocks'
-		else
-			log("跳过 SS 节点，因未适配到 SS 核心程序，或未正确设置节点使用类型。")
-			return nil
-		end
+		result = set_ss_implementation(result)
+		if not result then return nil end
 
 		--SS-URI = "ss://" userinfo "@" hostname ":" port [ "/" ] [ "?" plugin ] [ "#" tag ]
 		--userinfo = websafe-base64-encode-utf8(method  ":" password)
@@ -1069,7 +1076,8 @@ local function processData(szType, content, add_mode, group)
 		end
 
 	elseif szType == "ssd" then
-		result.type = "SS"
+		result = set_ss_implementation(result)
+		if not result then return nil end
 		result.address = content.server
 		result.port = content.port
 		result.password = content.password
@@ -1831,7 +1839,7 @@ local function parse_link(raw, add_mode, group, cfgid)
 		end
 
 		for _, v in ipairs(nodes) do
-			if v and not string.match(v, "^%s*$") then
+			if v and (szType == 'ssd' or not string.match(v, "^%s*$")) then
 				xpcall(function ()
 					local result
 					if szType == 'ssd' then
