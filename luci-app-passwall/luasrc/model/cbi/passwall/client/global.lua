@@ -529,7 +529,10 @@ o:depends({dns_mode = "xray", dns_shunt = "chinadns-ng"})
 o:depends({smartdns_dns_mode = "xray", dns_shunt = "smartdns"})
 o.validate = function(self, value, t)
 	if value and value == "1" then
-		local _dns_mode = s.fields["dns_mode"]:formvalue(t) or s.fields["smartdns_dns_mode"]:formvalue(t)
+		local _dns_mode = s.fields["dns_mode"]:formvalue(t)
+		if not _dns_mode and s.fields["smartdns_dns_mode"] then
+			_dns_mode = s.fields["smartdns_dns_mode"]:formvalue(t)
+		end
 		local _tcp_node = s.fields["tcp_node"]:formvalue(t)
 		if _dns_mode and _tcp_node then
 			if m:get(_tcp_node, "type"):lower() ~= _dns_mode then
