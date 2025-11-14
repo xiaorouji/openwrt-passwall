@@ -130,6 +130,13 @@ jobs:
           fi
           cd sdk
 
+          # Update feeds to github source
+          sed -i \
+              -e 's|git\.openwrt\.org/feed|github.com/openwrt|g' \
+              -e 's|git\.openwrt\.org/project|github.com/openwrt|g' \
+              -e 's|git\.openwrt\.org/openwrt|github.com/openwrt|g' \
+              "feeds.conf.default"
+
           cat > feeds.tmp <<'EOF'
           src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git;main
           src-git passwall https://github.com/${{ env.passwall }}.git;${{ github.ref_name }}
@@ -385,6 +392,13 @@ jobs:
         run: |
           cd sdk
           
+          # Update feeds to github source
+          sed -i \
+              -e 's|git\.openwrt\.org/feed|github.com/openwrt|g' \
+              -e 's|git\.openwrt\.org/project|github.com/openwrt|g' \
+              -e 's|git\.openwrt\.org/openwrt|github.com/openwrt|g' \
+              "feeds.conf.default"
+
           cat > feeds.tmp <<'EOF'
           src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git;main
           src-git passwall https://github.com/${{ env.passwall }}.git;${{ github.ref_name }}
