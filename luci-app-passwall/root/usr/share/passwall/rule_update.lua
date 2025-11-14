@@ -109,9 +109,11 @@ end
 
 --check excluded domain
 local function check_excluded_domain(value)
-	for k,v in ipairs(excluded_domain) do
-		if value:find(v) then
-			return true
+	value = value and value:lower() or ""
+	for _, domain in ipairs(excluded_domain) do
+		local pattern = "^[a-z0-9-]+%.(" .. domain .. ")$"
+		if value:match(pattern) then
+		    return true
 		end
 	end
 end
