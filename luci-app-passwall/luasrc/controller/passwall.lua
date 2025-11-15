@@ -420,6 +420,20 @@ function set_node()
 	local protocol = http.formvalue("protocol")
 	local section = http.formvalue("section")
 	uci:set(appname, "@global[0]", protocol .. "_node", section)
+	if protocol == "tcp" then
+		local node_protocol = uci:get(appname, section, "protocol")
+		if node_protocol == "_shunt" then
+			local type = uci:get(appname, section, "type")
+			local dns_shunt = uci:get(appname, "@global[0]", "dns_shunt")
+			local dns_key = (dns_shunt == "smartdns") and "smartdns_dns_mode" or "dns_mode"
+			local dns_mode = uci:get(appname, "@global[0]", dns_key)
+			local new_dns_mode = (type == "Xray") and "xray" or "sing-box"
+			if dns_mode ~= new_dns_mode then
+				uci:set(appname, "@global[0]", dns_key, new_dns_mode)
+				uci:set(appname, "@global[0]", "v2ray_dns_mode", "tcp")
+			end
+		end
+	end
 	api.uci_save(uci, appname, true, true)
 	http.redirect(api.url("log"))
 end
