@@ -107,7 +107,7 @@ o.validate = function(self, value, section)
 end
 o.write = function(self, section, value)
 	local old = m:get(section, self.option) or ""
-	if old:lower() ~= value:lower() then
+	if old ~= value then
 		m.uci:foreach(appname, "nodes", function(e)
 			if e["group"] and e["group"]:lower() == old:lower() then
 				m.uci:set(appname, e[".name"], "group", value)
