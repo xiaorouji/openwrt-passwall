@@ -44,7 +44,6 @@ table td, .table .td {
 }
 </style>
 
-
 <% if api.is_js_luci() then -%>
 <script type="text/javascript">
 	var cbi_t = [];
@@ -83,6 +82,21 @@ table td, .table .td {
 		}
 		return false
 	}
+</script>
+<%- else %>
+<script type="text/javascript">
+	(function() {
+		if (typeof(cbi_t_switch) === "function") {
+			var old_switch = cbi_t_switch;
+			cbi_t_switch = function(section, tab) {
+				var btn = document.getElementById("select_all_btn");
+				if (btn) {
+					dechecked_all_node(btn);
+				}
+				return old_switch(section, tab);
+			};
+		}
+	})();
 </script>
 <%- end %>
 
