@@ -22,9 +22,15 @@ local port_validate = function(self, value, t)
 end
 
 local nodes_table = {}
-local shunt_list = {}
-for k, e in ipairs(api.get_valid_nodes()) do
+for _, e in ipairs(api.get_valid_nodes()) do
 	nodes_table[#nodes_table + 1] = e
+end
+
+local normal_list = {}
+for _, v in pairs(nodes_table) do
+	if v.node_type == "normal" then
+		normal_list[#normal_list + 1] = v
+	end
 end
 
 local dynamicList_write = function(self, section, value)
@@ -200,14 +206,6 @@ o:value("", translate("Close"))
 o:value("tcp", translate("Same as the tcp node"))
 o:depends({ _tcp_node_bool = "1" })
 
-for k, v in pairs(nodes_table) do
-	s.fields["tcp_node"]:value(v.id, v["remark"])
-	s.fields["udp_node"]:value(v.id, v["remark"])
-	if v.protocol and v.protocol == "_shunt" then
-		shunt_list[#shunt_list + 1] = v
-	end
-end
-
 o = s:option(DummyValue, "_udp_node_bool", "")
 o.template = "passwall/cbi/hidevalue"
 o.value = "1"
@@ -260,6 +258,8 @@ o.cfgvalue = function(t, n)
 	return string.format('<font color="red">%s</font>',
 	translate("The port settings support single ports and ranges.<br>Separate multiple ports with commas (,).<br>Example: 21,80,443,1000:2000."))
 end
+o:depends({ use_global_config = true })
+o:depends({ _tcp_node_bool = "1" })
 
 o = s:option(Flag, "use_direct_list", translatef("Use %s", translate("Direct List")))
 o.default = "1"
@@ -333,10 +333,18 @@ o.remove = function(self, section)
 	if id_val == "" then
 		return m:del(section, self.option)
 	end
-	for k, v in pairs(shunt_list) do
+	for _, v in pairs(nodes_table) do
 		if v.id == id_val then
 			local new_val = (v.type == "Xray") and "xray" or "sing-box"
-			return m:set(section, self.option, new_val)
+			m:set(section, self.option, new_val)
+
+			local dns_field = s.fields[new_val .. "_dns_mode"]
+			local v2ray_dns_mode = dns_field and dns_field:formvalue(section)
+			if v2ray_dns_mode then
+				m:set(section, "v2ray_dns_mode", v2ray_dns_mode)
+			end
+
+			break
 		end
 	end
 end
@@ -453,19 +461,28 @@ o.description = desc .. "</ul>"
 o:depends({dns_shunt = "dnsmasq", tcp_proxy_mode = "proxy", chn_list = "direct"})
 
 for k, v in pairs(nodes_table) do
-	if v.protocol ~= "_shunt" then
+	if #normal_list == 0 then
+		s.fields["dns_mode"]:depends({ _tcp_node_bool = "1" })
+		break
+	end
+	if v.protocol == "_shunt" then
+		if v.type == "Xray" and has_xray then
+			s.fields["tcp_node"]:value(v.id, v["remark"])
+			s.fields["udp_node"]:value(v.id, v["remark"])
+			s.fields["xray_dns_mode"]:depends({ _tcp_node_bool = "1", tcp_node = v.id })
+		end
+		if v.type == "sing-box" and has_singbox then
+			s.fields["tcp_node"]:value(v.id, v["remark"])
+			s.fields["udp_node"]:value(v.id, v["remark"])
+			s.fields["singbox_dns_mode"]:depends({ _tcp_node_bool = "1", tcp_node = v.id })
+		end
+		if has_xray or has_singbox then
+			s.fields["remote_dns_client_ip"]:depends({ tcp_node = v.id })
+		end
+	else
+		s.fields["tcp_node"]:value(v.id, v["remark"])
+		s.fields["udp_node"]:value(v.id, v["remark"])
 		s.fields["dns_mode"]:depends({ _tcp_node_bool = "1", tcp_node = v.id })
-	end
-end
-for k, v in pairs(shunt_list) do
-	if v.type == "Xray" and has_xray then
-		s.fields["xray_dns_mode"]:depends({ _tcp_node_bool = "1", tcp_node = v.id })
-	end
-	if v.type == "sing-box" and has_singbox then
-		s.fields["singbox_dns_mode"]:depends({ _tcp_node_bool = "1", tcp_node = v.id })
-	end
-	if has_xray or has_singbox then
-		s.fields["remote_dns_client_ip"]:depends({ tcp_node = v.id })
 	end
 end
 

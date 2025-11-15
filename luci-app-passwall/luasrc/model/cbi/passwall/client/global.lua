@@ -12,7 +12,7 @@ m = Map(appname)
 api.set_apply_on_parse(m)
 
 local nodes_table = {}
-for k, e in ipairs(api.get_valid_nodes()) do
+for _, e in ipairs(api.get_valid_nodes()) do
 	nodes_table[#nodes_table + 1] = e
 end
 
@@ -21,7 +21,7 @@ local balancing_list = {}
 local urltest_list = {}
 local shunt_list = {}
 local iface_list = {}
-for k, v in pairs(nodes_table) do
+for _, v in pairs(nodes_table) do
 	if v.node_type == "normal" then
 		normal_list[#normal_list + 1] = v
 	end
@@ -136,15 +136,16 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 		for k, v in pairs(shunt_list) do
 			local vid = v.id
 			-- shunt node type, Sing-Box or Xray
-			local type = s:taboption("Main", ListValue, vid .. "-type", translate("Type"))
-			if has_singbox then
-				type:value("sing-box", "Sing-Box")
-			end
+			o = s:taboption("Main", ListValue, vid .. "-type", translate("Type"))
 			if has_xray then
-				type:value("Xray", translate("Xray"))
+				o:value("Xray", translate("Xray"))
 			end
-			type.cfgvalue = get_cfgvalue(v.id, "type")
-			type.write = get_write(v.id, "type")
+			if has_singbox then
+				o:value("sing-box", "Sing-Box")
+			end
+			o:depends("tcp_node", v.id)
+			o.cfgvalue = get_cfgvalue(v.id, "type")
+			o.write = get_write(v.id, "type")
 
 			-- pre-proxy
 			o = s:taboption("Main", Flag, vid .. "-preproxy_enabled", translate("Preproxy"))
@@ -172,12 +173,6 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 			end
 			o.cfgvalue = get_cfgvalue(v.id, "main_node")
 			o.write = get_write(v.id, "main_node")
-
-			if (has_singbox and has_xray) or (v.type == "sing-box" and not has_singbox) or (v.type == "Xray" and not has_xray) then
-				type:depends("tcp_node", v.id)
-			else
-				type:depends("tcp_node", "__hide") --不存在的依赖，即始终隐藏
-			end
 
 			m.uci:foreach(appname, "shunt_rules", function(e)
 				local id = e[".name"]
@@ -587,7 +582,6 @@ local use_nft = m:get("@global_forwarding[0]", "use_nft") == "1"
 local set_title = api.i18n.translate(use_nft and "Clear NFTSET on Reboot" or "Clear IPSET on Reboot")
 o = s:taboption("DNS", Flag, "flush_set_on_reboot", set_title, translate("Clear IPSET/NFTSET on service reboot. This may increase reboot time."))
 o.default = "0"
-o.rmempty = false
 
 set_title = api.i18n.translate(use_nft and "Clear NFTSET" or "Clear IPSET")
 o = s:taboption("DNS", DummyValue, "clear_ipset", set_title, translate("Try this feature if the rule modification does not take effect."))
@@ -766,8 +760,29 @@ if has_singbox or has_xray then
 end
 
 for k, v in pairs(nodes_table) do
-	s.fields["tcp_node"]:value(v.id, v["remark"])
-	s.fields["udp_node"]:value(v.id, v["remark"])
+	if #normal_list == 0 then
+		break
+	end
+	if v.protocol == "_shunt" then
+		if has_singbox or has_xray then
+			s.fields["tcp_node"]:value(v.id, v["remark"])
+			s.fields["udp_node"]:value(v.id, v["remark"])
+
+			s.fields["xray_dns_mode"]:depends({ [v.id .. "-type"] = "Xray", tcp_node = v.id })
+			s.fields["singbox_dns_mode"]:depends({ [v.id .. "-type"] = "sing-box", tcp_node = v.id })
+			s.fields["remote_dns_client_ip"]:depends({ tcp_node = v.id })
+			s.fields["remote_fakedns"]:depends({ tcp_node = v.id })
+		end
+	else
+		s.fields["tcp_node"]:value(v.id, v["remark"])
+		s.fields["udp_node"]:value(v.id, v["remark"])
+
+		s.fields["dns_mode"]:depends({ dns_shunt = "chinadns-ng", tcp_node = v.id })
+		s.fields["dns_mode"]:depends({ dns_shunt = "dnsmasq", tcp_node = v.id })
+		if api.is_finded("smartdns") then
+			s.fields["smartdns_dns_mode"]:depends({ dns_shunt = "smartdns", tcp_node = v.id })
+		end
+	end
 	if v.type == "Socks" then
 		if has_singbox or has_xray then
 			s2.fields["node"]:value(v.id, v["remark"])
@@ -775,21 +790,6 @@ for k, v in pairs(nodes_table) do
 	else
 		s2.fields["node"]:value(v.id, v["remark"])
 	end
-
-	if v.protocol ~= "_shunt" then
-		s.fields["dns_mode"]:depends({ dns_shunt = "chinadns-ng", tcp_node = v.id })
-		s.fields["dns_mode"]:depends({ dns_shunt = "dnsmasq", tcp_node = v.id })
-		if api.is_finded("smartdns") then
-			s.fields["smartdns_dns_mode"]:depends({ dns_shunt = "smartdns", tcp_node = v.id })
-		end
-	end
-end
-
-for k, v in pairs(shunt_list) do
-	s.fields["xray_dns_mode"]:depends({ [v.id .. "-type"] = "Xray", tcp_node = v.id })
-	s.fields["singbox_dns_mode"]:depends({ [v.id .. "-type"] = "sing-box", tcp_node = v.id })
-	s.fields["remote_dns_client_ip"]:depends({ tcp_node = v.id })
-	s.fields["remote_fakedns"]:depends({ tcp_node = v.id })
 end
 
 m:append(Template(appname .. "/global/footer"))
