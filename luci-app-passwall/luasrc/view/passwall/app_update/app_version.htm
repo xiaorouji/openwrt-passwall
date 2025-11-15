@@ -111,7 +111,10 @@ local version = {}
 				} else {
 					btn.disabled = true;
 					btn.value = noUpdateText;
-					window['_' + app + '-force_btn'].style.display = "inline";
+					var forceBtn = document.getElementById('_' + app + '-force_btn');
+					if (forceBtn) {
+						forceBtn.style.display = "inline";
+					}
 				}
 			}
 		}, 300);

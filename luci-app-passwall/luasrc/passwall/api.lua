@@ -1205,7 +1205,7 @@ function get_version()
 	if not version or #version == 0 then
 		version = sys.exec("apk list luci-app-passwall 2>/dev/null | awk '/installed/ {print $1}' | cut -d'-' -f4-")
 	end
-	return version or ""
+	return (version or ""):gsub("\n", "")
 end
 
 function to_check_self()
