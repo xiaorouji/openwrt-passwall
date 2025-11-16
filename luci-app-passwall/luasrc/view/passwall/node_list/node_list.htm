@@ -183,6 +183,12 @@ table td, .table .td {
 		}
 	}
 
+	function to_add_node() {
+		const dom = document.getElementsByClassName("cbi-tab")[0];
+		const current_group = dom.getAttribute("group_name")
+		window.location.href='<%=api.url("add_node")%>?redirect=1&group=' + current_group;
+	}
+
 	function copy_node(cbi_id) {
 		window.location.href = '<%=api.url("copy_node")%>' + "?section=" + cbi_id;
 	}
@@ -515,7 +521,7 @@ table td, .table .td {
 			{{node-tr}}
 		</table>
 		<div class="cbi-section-create cbi-tblsection-create">
-			<input class="cbi-button cbi-button-add" type="button" value="<%:Add%>" onclick="location.href='<%=api.url("add_node")%>?redirect=1'">
+			<input class="cbi-button cbi-button-add" type="button" value="<%:Add%>" onclick="to_add_node()">
 		</div>
 	</fieldset>
 </script>
@@ -676,7 +682,7 @@ table td, .table .td {
 				}
 				
 				tab_ul_li_html +=
-					'<li id="tab.passwall.nodes.' + group + '" class="cbi-tab">' +
+					'<li group_name="' + group + '" id="tab.passwall.nodes.' + group + '" class="cbi-tab">' +
 						'<a onclick="this.blur(); return cbi_t_switch(\'passwall.nodes\', \'' + group + '\')" href="<%=REQUEST_URI%>?tab.passwall.nodes=' + group + '">' + group_name + " | " + "<font style='color: red'>" + group_nodes[group].length + '</font></a>' +
 					'</li>'
 				tab_content_html +=

@@ -407,6 +407,11 @@ function add_node()
 	local uuid = api.gen_short_uuid()
 	uci:section(appname, "nodes", uuid)
 
+	local group = http.formvalue("group")
+	if group and group ~= "default" then
+		uci:set(appname, uuid, "group", group)
+	end
+
 	if redirect == "1" then
 		api.uci_save(uci, appname)
 		http.redirect(api.url("node_config", uuid))
