@@ -42,6 +42,31 @@ table td, .table .td {
         background: #4a90e2 !important;
     }
 }
+
+.td.cbi-section-actions {
+	text-align: right !important;
+}
+
+.node-wrapper {
+	align-items: center;
+	display: inline-flex !important;
+	gap: 4px;
+}
+
+.node-wrapper .cbi-input-checkbox {
+	flex-grow: 0 !important;
+	flex-basis: auto;
+}
+
+.cbi-tabmenu > li {
+    margin-right: 2px !important;
+}
+
+.cbi-tabmenu > li:last-child {
+    margin-right: 0 !important;
+}
+
+
 </style>
 
 <% if api.is_js_luci() then -%>
@@ -505,7 +530,7 @@ table td, .table .td {
 		<td class="td cbi-value-field">{{tcping}}</td>
 		<td class="td cbi-value-field">{{url_test}}</td>
 		<td class="td cbi-section-table-cell nowrap cbi-section-actions">
-			<div>
+			<div class="node-wrapper">
 				<!--It has been damaged and awaits repair or other solutions.-->
 				<!--<input class="btn cbi-button" type="button" value="<%:To Top%>" onclick="_cbi_row_top('{{id}}')"/>-->
 				<input class="cbi-input-checkbox nodes_select" type="checkbox" cbid="{{id}}" />
