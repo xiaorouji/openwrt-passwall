@@ -338,7 +338,7 @@ o.remove = function(self, section)
 			local new_val = (v.type == "Xray") and "xray" or "sing-box"
 			m:set(section, self.option, new_val)
 
-			local dns_field = s.fields[new_val .. "_dns_mode"]
+			local dns_field = s.fields[v.type == "Xray" and "xray_dns_mode" or "singbox_dns_mode"]
 			local v2ray_dns_mode = dns_field and dns_field:formvalue(section)
 			if v2ray_dns_mode then
 				m:set(section, "v2ray_dns_mode", v2ray_dns_mode)
@@ -350,6 +350,8 @@ o.remove = function(self, section)
 end
 
 o = s:option(ListValue, "xray_dns_mode", translate("Request protocol"))
+o.default = "tcp"
+o:value("udp", "UDP")
 o:value("tcp", "TCP")
 o:value("tcp+doh", "TCP + DoH (" .. translate("A/AAAA type") .. ")")
 o:depends("dns_mode", "xray")
@@ -363,6 +365,8 @@ o.write = function(self, section, value)
 end
 
 o = s:option(ListValue, "singbox_dns_mode", translate("Request protocol"))
+o.default = "tcp"
+o:value("udp", "UDP")
 o:value("tcp", "TCP")
 o:value("doh", "DoH")
 o:depends("dns_mode", "sing-box")
@@ -387,53 +391,53 @@ o:value("149.112.112.112", "149.112.112.112 (Quad9-Recommended)")
 o:value("208.67.220.220", "208.67.220.220 (OpenDNS)")
 o:value("208.67.222.222", "208.67.222.222 (OpenDNS)")
 o:depends({dns_mode = "dns2socks"})
+o:depends({xray_dns_mode = "udp"})
 o:depends({xray_dns_mode = "tcp"})
 o:depends({xray_dns_mode = "tcp+doh"})
+o:depends({singbox_dns_mode = "udp"})
 o:depends({singbox_dns_mode = "tcp"})
 
-if has_singbox or has_xray then
-	o = s:option(Value, "remote_dns_doh", translate("Remote DNS DoH"))
-	o:value("https://1.1.1.1/dns-query", "CloudFlare")
-	o:value("https://1.1.1.2/dns-query", "CloudFlare-Security")
-	o:value("https://8.8.4.4/dns-query", "Google 8844")
-	o:value("https://8.8.8.8/dns-query", "Google 8888")
-	o:value("https://9.9.9.9/dns-query", "Quad9-Recommended 9.9.9.9")
-	o:value("https://149.112.112.112/dns-query", "Quad9-Recommended 149.112.112.112")
-	o:value("https://208.67.222.222/dns-query", "OpenDNS")
-	o:value("https://dns.adguard.com/dns-query,176.103.130.130", "AdGuard")
-	o:value("https://doh.libredns.gr/dns-query,116.202.176.26", "LibreDNS")
-	o:value("https://doh.libredns.gr/ads,116.202.176.26", "LibreDNS (No Ads)")
-	o.default = "https://1.1.1.1/dns-query"
-	o.validate = function(self, value, t)
-		if value ~= "" then
-			value = api.trim(value)
-			local flag = 0
-			local util = require "luci.util"
-			local val = util.split(value, ",")
-			local url = val[1]
-			val[1] = nil
-			for i = 1, #val do
-				local v = val[i]
-				if v then
-					if not api.datatypes.ipmask4(v) then
-						flag = 1
-					end
+o = s:option(Value, "remote_dns_doh", translate("Remote DNS DoH"))
+o:value("https://1.1.1.1/dns-query", "1.1.1.1 (CloudFlare)")
+o:value("https://1.1.1.2/dns-query", "1.1.1.2 (CloudFlare-Security)")
+o:value("https://8.8.4.4/dns-query", "8.8.4.4 (Google)")
+o:value("https://8.8.8.8/dns-query", "8.8.8.8 (Google)")
+o:value("https://9.9.9.9/dns-query", "9.9.9.9 (Quad9)")
+o:value("https://149.112.112.112/dns-query", "149.112.112.112 (Quad9)")
+o:value("https://208.67.222.222/dns-query", "208.67.222.222 (OpenDNS)")
+o:value("https://dns.adguard.com/dns-query,94.140.14.14", "94.140.14.14 (AdGuard)")
+o:value("https://doh.libredns.gr/dns-query,116.202.176.26", "116.202.176.26 (LibreDNS)")
+o:value("https://doh.libredns.gr/ads,116.202.176.26", "116.202.176.26 (LibreDNS-NoAds)")
+o.default = "https://1.1.1.1/dns-query"
+o.validate = function(self, value, t)
+	if value ~= "" then
+		value = api.trim(value)
+		local flag = 0
+		local util = require "luci.util"
+		local val = util.split(value, ",")
+		local url = val[1]
+		val[1] = nil
+		for i = 1, #val do
+			local v = val[i]
+			if v then
+				if not api.datatypes.ipmask4(v) then
+					flag = 1
 				end
 			end
-			if flag == 0 then
-				return value
-			end
 		end
-		return nil, translate("DoH request address") .. " " .. translate("Format must be:") .. " URL,IP"
+		if flag == 0 then
+			return value
+		end
 	end
-	o:depends({xray_dns_mode = "tcp+doh"})
-	o:depends({singbox_dns_mode = "doh"})
-
-	o = s:option(Value, "remote_dns_client_ip", translate("EDNS Client Subnet"))
-	o.datatype = "ipaddr"
-	o:depends({dns_mode = "sing-box"})
-	o:depends({dns_mode = "xray"})
+	return nil, translate("DoH request address") .. " " .. translate("Format must be:") .. " URL,IP"
 end
+o:depends({xray_dns_mode = "tcp+doh"})
+o:depends({singbox_dns_mode = "doh"})
+
+o = s:option(Value, "remote_dns_client_ip", translate("EDNS Client Subnet"))
+o.datatype = "ipaddr"
+o:depends({dns_mode = "sing-box"})
+o:depends({dns_mode = "xray"})
 
 o = s:option(ListValue, "chinadns_ng_default_tag", translate("Default DNS"))
 o.default = "none"

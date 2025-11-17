@@ -1544,8 +1544,7 @@ function gen_config(var)
 			}
 
 			if remote_dns_udp_server then
-				local server_port = tonumber(remote_dns_port) or 53
-				remote_server.address = "udp://" .. remote_dns_udp_server .. ":" .. server_port
+				remote_server.address = remote_dns_udp_server
 			end
 
 			if remote_dns_tcp_server then
@@ -1597,9 +1596,9 @@ function gen_config(var)
 			if remote_dns_udp_server then
 				local server_port = tonumber(remote_dns_port) or 53
 				remote_server.type = "udp"
-				remote_server.server = remote_dns_udp_server
+				remote_server.server = remote_dns_server
 				remote_server.server_port = server_port
-				tmp_address = remote_dns_udp_server
+				tmp_address = remote_dns_server
 			end
 
 			if remote_dns_tcp_server then

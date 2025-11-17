@@ -580,6 +580,8 @@ function gen_config(var)
 	local direct_dns_udp_server = var["-direct_dns_udp_server"]
 	local direct_dns_tcp_server = var["-direct_dns_tcp_server"]
 	local direct_dns_query_strategy = var["-direct_dns_query_strategy"]
+	local remote_dns_udp_server = var["-remote_dns_udp_server"]
+	local remote_dns_udp_port = var["-remote_dns_udp_port"]
 	local remote_dns_tcp_server = var["-remote_dns_tcp_server"]
 	local remote_dns_tcp_port = var["-remote_dns_tcp_port"]
 	local remote_dns_doh_url = var["-remote_dns_doh_url"]
@@ -1175,7 +1177,7 @@ function gen_config(var)
 		end
 	end
 
-	if remote_dns_tcp_server and remote_dns_tcp_port then
+	if (remote_dns_udp_server and remote_dns_udp_port) or (remote_dns_tcp_server and remote_dns_tcp_port) then
 		if not routing then
 			routing = {
 				domainStrategy = "IPOnDemand",
@@ -1230,8 +1232,13 @@ function gen_config(var)
 		local _remote_dns = {
 			--tag = "dns-global-remote",
 			queryStrategy = (remote_dns_query_strategy and remote_dns_query_strategy ~= "") and remote_dns_query_strategy or "UseIPv4",
-			address = "tcp://" .. remote_dns_tcp_server .. ":" .. tonumber(remote_dns_tcp_port) or 53
 		}
+		if remote_dns_udp_server then
+			_remote_dns.address = remote_dns_udp_server
+			_remote_dns.port = tonumber(remote_dns_udp_port) or 53
+		else
+			address = "tcp://" .. remote_dns_tcp_server .. ":" .. tonumber(remote_dns_tcp_port) or 53
+		end
 
 		local _remote_dns_host
 		if remote_dns_doh_url and remote_dns_doh_host then
@@ -1309,8 +1316,8 @@ function gen_config(var)
 				protocol = "dokodemo-door",
 				tag = "dns-in",
 				settings = {
-					address = remote_dns_tcp_server,
-					port = tonumber(remote_dns_tcp_port),
+					address = remote_dns_udp_server or remote_dns_tcp_server,
+					port = tonumber(remote_dns_udp_port) or tonumber(remote_dns_tcp_port),
 					network = "tcp,udp"
 				}
 			})
@@ -1322,9 +1329,9 @@ function gen_config(var)
 					tag = dns_outbound_tag
 				} or nil,
 				settings = {
-					address = remote_dns_tcp_server,
-					port = tonumber(remote_dns_tcp_port),
-					network = "tcp",
+					address = remote_dns_udp_server or remote_dns_tcp_server,
+					port = tonumber(remote_dns_udp_port) or tonumber(remote_dns_tcp_port),
+					network = remote_dns_udp_server and "udp" or "tcp",
 					nonIPQuery = "drop"
 				}
 			})
