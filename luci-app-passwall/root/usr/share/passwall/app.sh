@@ -1552,6 +1552,7 @@ start_dns() {
 			[ -n "${_remote_dns_client_ip}" ] && _args="${_args} remote_dns_client_ip=${_remote_dns_client_ip}"
 			TCP_PROXY_DNS=1
 			_args="${_args} dns_listen_port=${NEXT_DNS_LISTEN_PORT}"
+			_args="${_args} remote_dns_protocol=${v2ray_dns_mode}"
 			case "$v2ray_dns_mode" in
 				udp)
 					_args="${_args} remote_dns_udp_server=${REMOTE_DNS}"
