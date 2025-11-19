@@ -595,7 +595,7 @@ end
 function get_node()
 	local id = http.formvalue("id")
 	local result = {}
-	local show_node_info = api.uci_get_type("@global_other[0]", "show_node_info", "0")
+	local show_node_info = api.uci_get_type("global_other", "show_node_info", "0")
 
 	function add_is_ipv6_key(o)
 		if o and o.address and show_node_info == "1" then
