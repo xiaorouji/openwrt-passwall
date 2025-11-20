@@ -1723,6 +1723,12 @@ msgstr "协议参数。如果启用会随机浪费流量。"
 msgid "Protocol parameter. Enable length block encryption."
 msgstr "协议参数。启用长度块加密。"
 
+msgid "TLS Chain Fingerprint (SHA256)"
+msgstr "TLS 证书链指纹（SHA256）"
+
+msgid "Once set, connects only when the server’s chain fingerprint matches."
+msgstr "设置后，仅在服务器证书链指纹匹配时连接。"
+
 msgid "ECH Config"
 msgstr "ECH 配置"
 

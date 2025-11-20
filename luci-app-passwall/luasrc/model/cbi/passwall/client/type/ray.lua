@@ -386,6 +386,9 @@ o = s:option(Flag, _n("tls_allowInsecure"), translate("allowInsecure"), translat
 o.default = "0"
 o:depends({ [_n("tls")] = true, [_n("reality")] = false })
 
+o = s:option(Value, _n("tls_chain_fingerprint"), translate("TLS Chain Fingerprint (SHA256)"), translate("Once set, connects only when the server’s chain fingerprint matches."))
+o:depends({ [_n("tls")] = true, [_n("reality")] = false })
+
 o = s:option(Flag, _n("ech"), translate("ECH"))
 o.default = "0"
 o:depends({ [_n("tls")] = true, [_n("flow")] = "", [_n("reality")] = false })
