@@ -121,7 +121,8 @@ else
 		{key = "response_mode", config_key = "response-mode", prefix = "-r ", default = "first-ping"},
 		{key = "rr_ttl", config_key = "rr-ttl", prefix = "-rr-ttl "},
 		{key = "rr_ttl_min", config_key = "rr-ttl-min", prefix = "-rr-ttl-min "},
-		{key = "rr_ttl_max", config_key = "rr-ttl-max", prefix = "-rr-ttl-max "}
+		{key = "rr_ttl_max", config_key = "rr-ttl-max", prefix = "-rr-ttl-max "},
+		{key = "rr_ttl_reply_max", config_key = "rr-ttl-reply-max", prefix = "-rr-ttl-reply-max "}
 	}
 	-- 从 custom.conf 中读取值，以最后出现的值为准
 	local custom_config = {}
