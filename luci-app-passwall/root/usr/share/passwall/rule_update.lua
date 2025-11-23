@@ -154,35 +154,13 @@ local function is_comment_line(s)
 end
 
 -- IPv4 检测，替代 string.find "^%d+%.%d+%.%d+%.%d+"
-local function is_ipv4(s)
-	local dot = 0
-	local last = 1
-	local len = #s
-	for i = 1, len do
-		local b = s:byte(i)
-		if b == 46 then  -- "."
-			dot = dot + 1
-			if dot > 3 then return false end
-			if i == last then return false end
-			local seg = tonumber(s:sub(last, i - 1))
-			if not seg or seg > 255 then return false end
-			last = i + 1
-		elseif b < 48 or b > 57 then
-			return dot == 3 and i > last and tonumber(s:sub(last)) and tonumber(s:sub(last)) <= 255
-		end
-	end
-	if dot ~= 3 or last > len then return false end
-	local seg = tonumber(s:sub(last))
-	return seg and seg <= 255
-end
-
 -- IPv4 cidr检测，替代 string.find "^%d+%.%d+%.%d+%.%d+[%/][%d]+$"
-local function is_ipv4_cidr(s)
+local function is_ipv4(s, check_cidr)
 	local dot = 0
 	local seg_start = 1
 	local len = #s
-	local i = 1
 	local mask_start = nil
+	local i = 1
 	while i <= len do
 		local b = s:byte(i)
 		if b >= 48 and b <= 57 then
@@ -194,6 +172,7 @@ local function is_ipv4_cidr(s)
 			if not seg or seg > 255 then return false end
 			seg_start = i + 1
 		elseif b == 47 then  -- "/"
+			if not check_cidr then return false end
 			if dot ~= 3 or i == seg_start then return false end
 			local seg = tonumber(s:sub(seg_start, i - 1))
 			if not seg or seg > 255 then return false end
@@ -204,26 +183,45 @@ local function is_ipv4_cidr(s)
 		end
 		i = i + 1
 	end
-	if not mask_start or mask_start > len then return false end
-	-- 检查 CIDR 掩码
+	-- 如果没有 CIDR，则检查最后一段即可
+	if not check_cidr or not mask_start then
+		if dot ~= 3 or seg_start > len then return false end
+		local seg = tonumber(s:sub(seg_start))
+		return seg and seg <= 255 or false
+	end
+	-- CIDR 掩码检查
+	if mask_start > len then return false end
 	local mask = tonumber(s:sub(mask_start))
-	if not mask or mask < 0 or mask > 32 then return false end
-	return true
+	return mask and mask >= 0 and mask <= 32 or false
 end
 
--- IPv6 cidr检测，替代 string.find ":-[%x]+%:+[%x]-[%/][%d]+$"
-local function is_ipv6_cidr(s)
+local function is_ipv4_cidr(s)
+	return is_ipv4(s, true)
+end
+
+local function is_ipv6(s, check_cidr)
+	local first = s:byte(1)
+	local last = s:byte(#s)
+	if first == 91 and last == 93 then  -- "[" and "]"
+		s = s:sub(2, -2)
+	end
 	local len = #s
 	local i = 1
 	local seg_len = 0
 	local segs = 0
-	local saw_dc = false
+	local saw_dc = false  -- 是否出现 "::"
 	local b
 	while i <= len do
 		b = s:byte(i)
-		if b == 47 then
+		-- CIDR 部分
+		if b == 47 then  -- '/'
+			if not check_cidr then
+				return false
+			end
+			-- 处理 "/" 之前的段
 			if seg_len > 0 then segs = segs + 1 end
 			if (not saw_dc and segs ~= 8) or (saw_dc and segs > 8) then return false end
+			-- 解析掩码
 			i = i + 1
 			if i > len then return false end
 			local mask = 0
@@ -234,29 +232,46 @@ local function is_ipv6_cidr(s)
 				if mask > 128 then return false end
 				i = i + 1
 			end
+			-- CIDR 解析成功
 			return true
-		elseif b == 58 then
-			if i + 1 <= len and s:byte(i + 1) == 58 then
+		end
+		-- 冒号处理（: 或 ::）
+		if b == 58 then
+			local nextb = (i+1 <= len) and s:byte(i+1) or 0
+			-- "::"
+			if nextb == 58 then
 				if saw_dc then return false end
 				saw_dc = true
-				if seg_len > 0 then segs = segs + 1; seg_len = 0 end
+				if seg_len > 0 then segs = segs + 1 end
+				seg_len = 0
 				i = i + 2
 			else
+				-- 普通 ":"
 				if seg_len == 0 then return false end
 				segs = segs + 1
 				seg_len = 0
 				i = i + 1
 			end
 		else
-			if not ((b >= 48 and b <= 57) or (b >= 65 and b <= 70) or (b >= 97 and b <= 102)) then
-				return false
-			end
+			-- hex 数字
+			local is_hex =
+				(b >= 48 and b <= 57) or   -- 0-9
+				(b >= 65 and b <= 70) or   -- A-F
+				(b >= 97 and b <= 102)     -- a-f
+			if not is_hex then return false end
 			seg_len = seg_len + 1
 			if seg_len > 4 then return false end
 			i = i + 1
 		end
 	end
-	return false
+	if seg_len > 0 then segs = segs + 1 end
+	if not saw_dc then return segs == 8 end
+	return segs <= 8
+end
+
+-- IPv6 cidr检测，替代 string.find ":-[%x]+%:+[%x]-[%/][%d]+$"
+local function is_ipv6_cidr(s)
+	return is_ipv6(s, true)
 end
 
 -- 检测是否含有冒号，替代 string.find(line, ":")
