@@ -210,19 +210,28 @@ table td, .table .td {
 		document.getElementById("set_node_name").innerHTML = "";
 	}
 
-	function _cbi_row_top(id) {
-		//此函数已经损坏，等待修复或其他解决方案。
-		var dom = document.getElementById("cbi-passwall-" + id);
-		if (dom) {
-			var trs = document.getElementById("cbi-passwall-nodes").getElementsByClassName("cbi-section-table-row");
-			if (trs && trs.length > 0) {
-				for (var i = 0; i < trs.length; i++) {
-					var up = dom.getElementsByClassName("cbi-button-up");
-					if (up) {
-						cbi_row_swap(up[0], true, 'cbi.sts.passwall.nodes');
-					}
-				}
+	function row_swap(btn, up) {
+		const row = btn.closest("tr");
+		if (!row) return;
+		const parent = row.parentNode;
+		if (up) {
+			const prev = row.previousElementSibling;
+			if (prev && !prev.classList.contains("cbi-section-table-titles")) {
+				parent.insertBefore(row, prev);
 			}
+		} else {
+			const next = row.nextElementSibling;
+			if (next) parent.insertBefore(next, row);
+		}
+	}
+
+	function row_top(btn) {
+		const row = btn.closest("tr");
+		if (!row) return;
+		const parent = row.parentNode;
+		let firstDataRow = parent.querySelector("tr:not(.cbi-section-table-titles)");
+		if (firstDataRow && firstDataRow !== row) {
+			parent.insertBefore(row, firstDataRow);
 		}
 	}
 
@@ -303,6 +312,39 @@ table td, .table .td {
 		var reg = /[\u4E00-\u9FFF]+/;
 		address = !reg.test(address) ? address : "";
 		return { address: address, port: port };
+	}
+
+	function save_current_page_order(group) {
+		var table = document.getElementById("cbi-passwall-nodes-" + group + "-table");
+		if (!table) {
+			alert("<%:No table!%>");
+			return;
+		}
+		var rows = table.querySelectorAll("tr.cbi-section-table-row");
+		if (!rows || rows.length === 0) {
+			alert("<%:No nodes!%>");
+			return;
+		}
+		var btn = document.getElementById("save_order_btn_" + group);
+		if (btn) btn.disabled = true;
+		var ids = [];
+		rows.forEach(function(row) {
+			var id = row.id.replace("cbi-passwall-", "");
+			ids.push(id);
+		});
+		XHR.get('<%=api.url("save_node_order")%>', {
+				group: group,
+				ids: ids.join(",")
+			},
+			function(x, result) {
+				if (btn) btn.disabled = false;
+				if (x && x.status === 200) {
+					alert("<%:Saved current page order successfully.%>");
+				} else {
+					alert("<%:Save failed!%>");
+				}
+			}
+		);
 	}
 
 	//获取当前使用的节点
@@ -522,6 +564,7 @@ table td, .table .td {
 		</table>
 		<div class="cbi-section-create cbi-tblsection-create">
 			<input class="cbi-button cbi-button-add" type="button" value="<%:Add%>" onclick="to_add_node()">
+			<input class="cbi-button cbi-button-apply" type="button" id="save_order_btn_{{group}}" value="<%:Save Order%>" onclick="save_current_page_order('{{group}}')">
 		</div>
 	</fieldset>
 </script>
@@ -537,11 +580,12 @@ table td, .table .td {
 		<td class="td cbi-value-field">{{url_test}}</td>
 		<td class="td cbi-section-table-cell nowrap cbi-section-actions">
 			<div class="node-wrapper">
-				<!--It has been damaged and awaits repair or other solutions.-->
-				<!--<input class="btn cbi-button" type="button" value="<%:To Top%>" onclick="_cbi_row_top('{{id}}')"/>-->
 				<input class="cbi-input-checkbox nodes_select" type="checkbox" cbid="{{id}}" />
+				<input class="btn cbi-button cbi-button-edit" type="button" value="<%:To Top%>" onclick="row_top(this)" title="<%:To Top%>"/>
 				<input class="btn cbi-button cbi-button-apply" type="button" value="<%:Use%>" id="apply_{{id}}" onclick="open_set_node_div('{{id}}')"/>
 				<input class="btn cbi-button cbi-button-add" type="button" value="<%:Copy%>" onclick="copy_node('{{id}}')"/>
+				<input class="btn cbi-button cbi-button-up" type="button" value="<%:Move up%>" onclick="return row_swap(this, true)" title="<%:Move up%>">
+				<input class="btn cbi-button cbi-button-down" type="button" value="<%:Move down%>" onclick="return row_swap(this, false)" title="<%:Move down%>">
 				<input class="btn cbi-button cbi-button-edit" type="button" value="<%:Edit%>" onclick="location.href='<%=api.url("node_config")%>/{{id}}'" alt="<%:Edit%>" title="<%:Edit%>">
 				<input class="btn cbi-button cbi-button-remove" type="button" value="<%:Delete%>" onclick="del_node('{{id}}')" alt="<%:Delete%>" title="<%:Delete%>">
 			</div>

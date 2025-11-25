@@ -421,6 +421,12 @@ msgstr "节点备注"
 msgid "Add Mode"
 msgstr "添加方式"
 
+msgid "Save Order"
+msgstr "保存当前顺序"
+
+msgid "Saved current page order successfully."
+msgstr "保存当前页面顺序成功。"
+
 msgid "Type"
 msgstr "类型"
 
