@@ -1,6 +1,7 @@
 <%
 local api = require "luci.passwall.api"
 -%>
+<script src="<%=resource%>/view/<%=api.appname%>/Sortable.min.js"></script>
 
 <style>
 table th, .table .th {
@@ -66,7 +67,34 @@ table td, .table .td {
     margin-right: 0 !important;
 }
 
+.node-wrapper .drag-handle {
+    cursor: grab !important;
+	display: inline-flex;
+	align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    padding: 0 !important;
+    line-height: inherit;
+    user-select: none;
+	height: 32px !important;
+	width: 32px;
+	min-width: 32px;
+}
 
+.sortable-chosen {
+    background-color: rgba(220, 235, 245, 0.4) !important;
+    opacity: 0.7;
+}
+
+.sortable-ghost {
+	background: #cce5ff !important;
+	height: 3px !important;
+}
+
+.dragging-row {
+    background-color: rgba(131, 191, 255, 0.7) !important;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
 </style>
 
 <% if api.is_js_luci() then -%>
@@ -208,21 +236,6 @@ table td, .table .td {
 	function close_set_node_div() {
 		document.getElementById("set_node_div").style.display="none";
 		document.getElementById("set_node_name").innerHTML = "";
-	}
-
-	function row_swap(btn, up) {
-		const row = btn.closest("tr");
-		if (!row) return;
-		const parent = row.parentNode;
-		if (up) {
-			const prev = row.previousElementSibling;
-			if (prev && !prev.classList.contains("cbi-section-table-titles")) {
-				parent.insertBefore(row, prev);
-			}
-		} else {
-			const next = row.nextElementSibling;
-			if (next) parent.insertBefore(next, row);
-		}
 	}
 
 	function row_top(btn) {
@@ -548,6 +561,60 @@ table td, .table .td {
 			}
 		}
 	}
+
+	//列表拖动重排
+	function initSortableForTable(table) {
+		if (!table) return null;
+		var root = table.querySelector('tbody') || table;
+		if (root._sortable_initialized) return root._sortable_instance;
+		root._sortable_initialized = true;
+		var opts = {
+			handle: ".drag-handle",
+			draggable: "tr.cbi-section-table-row",
+			animation: 150,
+			ghostClass: "dragging-row",
+			fallbackOnBody: true,
+			forceFallback: false,
+			swapThreshold: 0.65,
+			onEnd: function (evt) {
+				//var group = evt.to.id.replace("cbi-passwall-nodes-", "").replace("-table", "");
+				//save_current_page_order(group); // 自动提交保存
+			}
+		};
+		try {
+			var instance = Sortable.create(root, opts);
+			root._sortable_instance = instance;
+			return instance;
+		} catch (err) {
+			root._sortable_initialized = false;
+			console.error("Sortable init failed:", err);
+			return null;
+		}
+	}
+
+	function initAllSortable(group_nodes) {
+		if (typeof Sortable === 'undefined') {
+			var retries = 0;
+			var maxRetries = 25;
+			var t = setInterval(function () {
+				retries++;
+				if (typeof Sortable !== 'undefined') {
+					clearInterval(t);
+					for (var group in group_nodes) {
+						var table = document.getElementById("cbi-passwall-nodes-" + group + "-table");
+						initSortableForTable(table);
+					}
+				} else if (retries >= maxRetries) {
+					clearInterval(t);
+				}
+			}, 200);
+		} else {
+			for (var group in group_nodes) {
+				var table = document.getElementById("cbi-passwall-nodes-" + group + "-table");
+				initSortableForTable(table);
+			}
+		}
+	}
 </script>
 
 <script type="text/template" id="nodes-table-template">
@@ -584,10 +651,9 @@ table td, .table .td {
 				<input class="btn cbi-button cbi-button-edit" type="button" value="<%:To Top%>" onclick="row_top(this)" title="<%:To Top%>"/>
 				<input class="btn cbi-button cbi-button-apply" type="button" value="<%:Use%>" id="apply_{{id}}" onclick="open_set_node_div('{{id}}')"/>
 				<input class="btn cbi-button cbi-button-add" type="button" value="<%:Copy%>" onclick="copy_node('{{id}}')"/>
-				<input class="btn cbi-button cbi-button-up" type="button" value="<%:Move up%>" onclick="return row_swap(this, true)" title="<%:Move up%>">
-				<input class="btn cbi-button cbi-button-down" type="button" value="<%:Move down%>" onclick="return row_swap(this, false)" title="<%:Move down%>">
 				<input class="btn cbi-button cbi-button-edit" type="button" value="<%:Edit%>" onclick="location.href='<%=api.url("node_config")%>/{{id}}'" alt="<%:Edit%>" title="<%:Edit%>">
 				<input class="btn cbi-button cbi-button-remove" type="button" value="<%:Delete%>" onclick="del_node('{{id}}')" alt="<%:Delete%>" title="<%:Delete%>">
+				<input class="cbi-button drag-handle center" type="button" value="☰" title="<%:Drag to reorder%>"/>
 			</div>
 		</td>
 	</tr>
@@ -748,6 +814,8 @@ table td, .table .td {
 			if (default_group) {
 				cbi_t_switch("passwall.nodes", default_group)
 			}
+
+			initAllSortable(group_nodes);
 
 			//clear expire data
 			if (localStorage && localStorage.length > 0) {
