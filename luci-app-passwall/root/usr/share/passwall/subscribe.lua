@@ -504,8 +504,8 @@ local function processData(szType, content, add_mode, group)
 		end
 		result.obfs_param = base64Decode(params.obfsparam)
 		result.protocol_param = base64Decode(params.protoparam)
-		local group = base64Decode(params.group)
-		if group then result.group = group end
+		-- local ssr_group = base64Decode(params.group)
+		-- if ssr_group then result.ssr_group = ssr_group end
 		result.remarks = base64Decode(params.remarks)
 	elseif szType == 'vmess' then
 		local info = jsonParse(content)
