@@ -223,7 +223,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 					host = node.xhttp_host,
 					-- 如果包含 "extra" 节，取 "extra" 内的内容，否则直接赋值给 extra
 					extra = node.xhttp_extra and (function()
-							local success, parsed = pcall(jsonc.parse, node.xhttp_extra)
+							local success, parsed = pcall(jsonc.parse, api.base64Decode(node.xhttp_extra))
 							if success then
 								return parsed.extra or parsed
 							else

@@ -618,8 +618,14 @@ o = s:option(TextValue, _n("xhttp_extra"), " ", translate("An XHttpObject in JSO
 o:depends({ [_n("use_xhttp_extra")] = true })
 o.rows = 15
 o.wrap = "off"
+o.custom_cfgvalue = function(self, section, value)
+	local raw = m:get(section, "xhttp_extra")
+	if raw then
+		return api.base64Decode(raw)
+	end
+end
 o.custom_write = function(self, section, value)
-	m:set(section, self.option:sub(1 + #option_prefix), value)
+	m:set(section, "xhttp_extra", api.base64Encode(value))
 	local success, data = pcall(jsonc.parse, value)
 	if success and data then
 		local address = (data.extra and data.extra.downloadSettings and data.extra.downloadSettings.address)
@@ -642,7 +648,7 @@ o.validate = function(self, value)
 	return value
 end
 o.custom_remove = function(self, section, value)
-	m:del(section, self.option:sub(1 + #option_prefix))
+	m:del(section, "xhttp_extra")
 	m:del(section, "download_address")
 end
 

@@ -179,19 +179,15 @@ function exec_call(cmd)
 end
 
 function base64Decode(text)
-	local raw = text
 	if not text then return '' end
-	text = text:gsub("%z", "")
-	text = text:gsub("%c", "")
-	text = text:gsub("_", "/")
-	text = text:gsub("-", "+")
-	local mod4 = #text % 4
-	text = text .. string.sub('====', mod4 + 1)
-	local result = nixio.bin.b64decode(text)
+	local encoded = text:gsub("%z", ""):gsub("%c", ""):gsub("_", "/"):gsub("-", "+")
+	local mod4 = #encoded % 4
+	encoded = encoded .. string.sub('====', mod4 + 1)
+	local result = nixio.bin.b64decode(encoded)
 	if result then
 		return result:gsub("%z", "")
 	else
-		return raw
+		return text
 	end
 end
 
