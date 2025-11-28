@@ -52,7 +52,7 @@ local api = require "luci.passwall.api"
 	function add_node() {
 		var nodes_link = document.getElementById("nodes_link").value;
 		var group = (document.querySelector('#addlink_group_custom input[type="hidden"]')?.value || "default");
-		nodes_link = nodes_link.replace(/\t/g, "").replace(/\r\n|\r/g, "\n").replace(/\s+/g, '').replace(/<[^>]*>/g, '').trim();
+		nodes_link = nodes_link.replace(/\t/g, "").replace(/\r\n|\r/g, "\n").replace(/<[^>]*>/g, '').trim();
 		if (nodes_link != "") {
 			var s = nodes_link.split('://');
 			if (s.length > 1) {

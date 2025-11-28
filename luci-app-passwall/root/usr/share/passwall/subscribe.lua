@@ -1804,7 +1804,9 @@ local function update_node(manual)
 		end
 	end
 
-	luci.sys.call("/etc/init.d/" .. appname .. " restart > /dev/null 2>&1 &")
+	if manual ~= 1 then
+		luci.sys.call("/etc/init.d/" .. appname .. " restart > /dev/null 2>&1 &")
+	end
 end
 
 local function parse_link(raw, add_mode, group, cfgid)
