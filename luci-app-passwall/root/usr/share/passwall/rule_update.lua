@@ -324,7 +324,8 @@ end
 local function non_file_check(file_path, vali_file)
 	if fs.readfile(file_path, 10) then
 		local size_str = sys.exec("grep -i 'Content-Length' " .. vali_file .. " | tail -n1 | sed 's/[^0-9]//g'")
-		local remote_file_size = tonumber(size_str ~= "" and size_str or nil)
+		local remote_file_size = tonumber(size_str)
+		remote_file_size = (remote_file_size and remote_file_size > 0) and remote_file_size or nil
 		local local_file_size = tonumber(fs.stat(file_path, "size"))
 		if remote_file_size and local_file_size then
 			if remote_file_size == local_file_size then
