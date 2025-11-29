@@ -3,13 +3,19 @@ local api = require "luci.passwall.api"
 -%>
 <script type="text/javascript">
 	//<![CDATA[
+	var log_textarea = null;
+	var first_load_done = false;
+
+	function scrollToBottom() {
+		log_textarea.scrollTop = log_textarea.scrollHeight;
+	}
+
 	function clear_log(btn) {
 		XHR.get('<%=api.url("server_clear_log")%>', null,
 			function(x, data) {
-				if(x && x.status == 200) {
-					var log_textarea = document.getElementById('log_textarea');
+				if(x && x.status == 200 && log_textarea) {
 					log_textarea.innerHTML = "";
-					log_textarea.scrollTop = log_textarea.scrollHeight;
+					scrollToBottom();
 				}
 			}
 		);
@@ -18,9 +24,16 @@ local api = require "luci.passwall.api"
 	XHR.poll(3, '<%=api.url("server_get_log")%>', null,
 		function(x, data) {
 			if(x && x.status == 200) {
-				var log_textarea = document.getElementById('log_textarea');
+				if (!log_textarea) log_textarea = document.getElementById('log_textarea');
+				var wasBottom = (log_textarea.scrollTop + log_textarea.clientHeight >= log_textarea.scrollHeight - 10);
 				log_textarea.innerHTML = x.responseText;
-				log_textarea.scrollTop = log_textarea.scrollHeight;
+				if (!first_load_done) {
+					scrollToBottom();
+					first_load_done = true;
+				}
+				else if (wasBottom) {
+					scrollToBottom();
+				}
 			}
 		}
 	);
