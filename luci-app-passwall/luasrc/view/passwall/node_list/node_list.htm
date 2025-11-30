@@ -1,7 +1,7 @@
 <%
 local api = require "luci.passwall.api"
 -%>
-<script src="<%=resource%>/view/<%=api.appname%>/Sortable.min.js"></script>
+<script src="<%=resource%>/view/<%=api.appname%>/Sortable.min.js?v=25.11.27"></script>
 
 <style>
 table th, .table .th {
@@ -54,12 +54,6 @@ table td, .table .td {
 	gap: 4px;
 }
 
-.node-wrapper .cbi-input-checkbox {
-	flex-grow: 0 !important;
-	flex-shrink: 0;
-	flex-basis: auto;
-}
-
 .cbi-tabmenu > li {
 	margin-right: 2px !important;
 }
@@ -80,6 +74,76 @@ table td, .table .td {
 	user-select: none;
 	color: #00000070;
 	align-self: stretch;
+}
+
+#cbi-passwall-nodes .pw-checkbox, #cbi-passwall-nodes th:nth-child(1) {
+	padding-right: 0px;
+}
+
+#select_all_btn {
+	display: none;
+}
+
+/* enable flex for small screens*/
+@media screen and (max-width: 1152px) {
+	.cbi-section-table-row {
+		display: flex;
+		flex-direction: row;
+		flex-wrap: wrap;
+		justify-content: space-between;
+	}
+
+	#cbi-passwall-nodes-default-fieldset {
+		margin: 0;
+	}
+
+	.cbi-section-table-titles {
+		display: none !important;
+	}
+
+	/* meticulously control how each component occupies the limited space we have */
+	#cbi-passwall-nodes .pw-checkbox, #cbi-passwall-nodes th:nth-child(1) {
+		flex: 0 0 40px;
+		min-width: 0;
+	}
+
+	#cbi-passwall-nodes .pw-remark {
+		flex: 1 1 30%;
+		min-width: 0;
+	}
+
+	#cbi-passwall-nodes .pw-ping, #cbi-passwall-nodes .pw-tcping, #cbi-passwall-nodes .pw-urltest {
+		flex: 0 0 50px;
+		white-space: nowrap;
+		min-width: 0;
+	}
+
+	.pw-actions {
+		padding-top: 0 !important;
+		border-top-width: 0 !important;
+		flex: 1 1 350px;
+	}
+
+	#select_all_btn {
+		display: inline-block !important;
+	}
+}
+
+/* shrink actionbar even further for mobile devices */
+@media screen and (max-width: 500px) {
+	.node-wrapper {
+		gap: 0;
+	}
+
+	.cbi-button {
+		margin-left: 0 !important;
+		margin-right: 1px !important;
+	}
+
+	.pw-actions {
+		padding-left: 5px!important;
+		padding-right: 5px !important;
+	}
 }
 
 .sortable-chosen {
@@ -114,11 +178,7 @@ table td, .table .td {
 	function cbi_t_switch(section, tab) {
 		if( cbi_t[section] && cbi_t[section][tab] ) {
 			//在切换选项卡之前，先取消当前激活选项卡的全选状态
-			var btn = document.getElementById("select_all_btn");
-			if (btn) {
-				dechecked_all_node(btn);
-			}
-
+			dechecked_all_node();
 			var o = cbi_t[section][tab];
 			var h = document.getElementById('tab.' + section);
 			for( var tid in cbi_t[section] ) {
@@ -143,10 +203,7 @@ table td, .table .td {
 		if (typeof(cbi_t_switch) === "function") {
 			var old_switch = cbi_t_switch;
 			cbi_t_switch = function(section, tab) {
-				var btn = document.getElementById("select_all_btn");
-				if (btn) {
-					dechecked_all_node(btn);
-				}
+				dechecked_all_node();
 				return old_switch(section, tab);
 			};
 		}
@@ -249,30 +306,59 @@ table td, .table .td {
 		}
 	}
 
-	function checked_all_node(btn) {
+	function set_select_all_state(sectionChecked) {
 		var visibleContainer = document.querySelector('#cbi-passwall-nodes > .cbi-tabcontainer[style*="display:block"], #cbi-passwall-nodes > .cbi-tabcontainer[style*="display: block"]');
 		if (!visibleContainer) return;
-		var doms = visibleContainer.getElementsByClassName("nodes_select");
-		if (doms && doms.length > 0) {
-			for (var i = 0 ; i < doms.length; i++) {
-				doms[i].checked = true;
-			}
-			btn.value = "<%:DeSelect all%>";
-			btn.setAttribute("onclick", "dechecked_all_node(this)");
+		var nodes = visibleContainer.getElementsByClassName("nodes_select");
+		var selectAllChk = visibleContainer.querySelector(".nodes_select_all");
+		var selectAllBtn = document.getElementById("select_all_btn");
+		for (var i = 0; i < nodes.length; i++) {
+			nodes[i].checked = sectionChecked;
+		}
+		if (selectAllChk) {
+			selectAllChk.checked = sectionChecked;
+			selectAllChk.title = sectionChecked ? "<%:DeSelect all%>" : "<%:Select all%>";
+			selectAllChk.setAttribute("onclick", sectionChecked ? "dechecked_all_node(this)" : "checked_all_node(this)");
+		}
+		if (selectAllBtn) {
+			selectAllBtn.value = sectionChecked ? "<%:DeSelect all%>" : "<%:Select all%>";
+			selectAllBtn.setAttribute("onclick", sectionChecked ? "dechecked_all_node(this)" : "checked_all_node(this)");
 		}
 	}
 
+	function checked_all_node(btn) {
+		set_select_all_state(true);
+	}
+
 	function dechecked_all_node(btn) {
+		set_select_all_state(false);
+	}
+
+	function update_select_state() {
 		var visibleContainer = document.querySelector('#cbi-passwall-nodes > .cbi-tabcontainer[style*="display:block"], #cbi-passwall-nodes > .cbi-tabcontainer[style*="display: block"]');
 		if (!visibleContainer) return;
-		var doms = visibleContainer.getElementsByClassName("nodes_select");
-		if (doms && doms.length > 0) {
-			for (var i = 0 ; i < doms.length; i++) {
-				doms[i].checked = false;
-			}
-			btn.value = "<%:Select all%>";
-			btn.setAttribute("onclick", "checked_all_node(this)");
+		var nodes = visibleContainer.getElementsByClassName("nodes_select");
+		if (!nodes.length) return;
+		var selectAllChk = visibleContainer.querySelector(".nodes_select_all");
+		var selectAllBtn = document.getElementById("select_all_btn");
+		var checkedCount = 0;
+		for (var i = 0; i < nodes.length; i++) {
+			if (nodes[i].checked) checkedCount++;
 		}
+		var allChecked = checkedCount === nodes.length;
+		var title = allChecked ? "<%:DeSelect all%>" : "<%:Select all%>";
+		var onclickFunc = allChecked ? "dechecked_all_node(this)" : "checked_all_node(this)";
+
+		function updateElement(el) {
+			if (!el) return;
+			if ("checked" in el) el.checked = allChecked;
+			if ("title" in el) el.title = title;
+			if ("value" in el) el.value = title;
+			el.setAttribute("onclick", onclickFunc);
+		}
+
+		updateElement(selectAllChk);
+		updateElement(selectAllBtn);
 	}
 
 	function delete_select_nodes() {
@@ -622,6 +708,9 @@ table td, .table .td {
 	<fieldset class="cbi-section cbi-tblsection" id="cbi-passwall-nodes-{{group}}-fieldset">
 		<table class="table cbi-section-table" id="cbi-passwall-nodes-{{group}}-table" style="">
 			<tr class="tr cbi-section-table-titles anonymous">
+				<th class="th cbi-section-table-cell" style="width:20px">
+					<input class="cbi-input-checkbox nodes_select_all" type="checkbox" onclick="checked_all_node(this)" title="<%:Select all%>"/>
+				</th>
 				<th class="th cbi-section-table-cell" style="width:40%"><%:Remarks%></th>
 				<th class="th cbi-section-table-cell" style="width:8%">Ping</th>
 				<th class="th cbi-section-table-cell" style="width:8%">TCPing</th>
@@ -642,13 +731,15 @@ table td, .table .td {
 		<input class="hidden" id="cbid.passwall.{{id}}.remarks" value="{{remarks_val}}"/>
 		<input class="hidden" id="cbid.passwall.{{id}}.address" value="{{address_val}}"/>
 		<input class="hidden" id="cbid.passwall.{{id}}.port" value="{{port_val}}"/>
-		<td class="td cbi-value-field">{{remarks}}</td>
-		<td class="td cbi-value-field">{{ping}}</td>
-		<td class="td cbi-value-field">{{tcping}}</td>
-		<td class="td cbi-value-field">{{url_test}}</td>
-		<td class="td cbi-section-table-cell nowrap cbi-section-actions">
+		<td class="td cbi-value-field pw-checkbox">
+			<input class="cbi-input-checkbox nodes_select" type="checkbox" cbid="{{id}}" onclick="update_select_state()"/>
+		</td>
+		<td class="td cbi-value-field pw-remark">{{remarks}}</td>
+		<td class="td cbi-value-field pw-ping">{{ping}}</td>
+		<td class="td cbi-value-field pw-tcping">{{tcping}}</td>
+		<td class="td cbi-value-field pw-urltest">{{url_test}}</td>
+		<td class="td cbi-section-table-cell nowrap cbi-section-actions pw-actions">
 			<div class="node-wrapper">
-				<input class="cbi-input-checkbox nodes_select" type="checkbox" cbid="{{id}}" />
 				<input class="btn cbi-button cbi-button-edit" type="button" value="<%:To Top%>" onclick="row_top(this)" title="<%:To Top%>"/>
 				<input class="btn cbi-button cbi-button-apply" type="button" value="<%:Use%>" id="apply_{{id}}" onclick="open_set_node_div('{{id}}')"/>
 				<input class="btn cbi-button cbi-button-add" type="button" value="<%:Copy%>" onclick="copy_node('{{id}}')"/>
