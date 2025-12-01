@@ -506,6 +506,8 @@ end
 function get_valid_nodes()
 	local show_node_info = uci_get_type("global_other", "show_node_info", "0")
 	local nodes = {}
+	local default_nodes = {}
+	local other_nodes = {}
 	uci:foreach(appname, "nodes", function(e)
 		e.id = e[".name"]
 		if e.type and e.remarks then
@@ -515,7 +517,11 @@ function get_valid_nodes()
 				if type == "sing-box" then type = "Sing-Box" end
 				e["remark"] = "%s：[%s] " % {type .. " " .. i18n.translatef(e.protocol), e.remarks}
 				e["node_type"] = "special"
-				nodes[#nodes + 1] = e
+				if not e.group or e.group == "" then
+					default_nodes[#default_nodes + 1] = e
+				else
+					other_nodes[#other_nodes + 1] = e
+				end
 			end
 			local port = e.port or e.hysteria_hop or e.hysteria2_hop
 			if port and e.address then
@@ -555,11 +561,17 @@ function get_valid_nodes()
 						e["remark"] = "%s：[%s] %s:%s" % {type, e.remarks, address, port}
 					end
 					e.node_type = "normal"
-					nodes[#nodes + 1] = e
+					if not e.group or e.group == "" then
+						default_nodes[#default_nodes + 1] = e
+					else
+						other_nodes[#other_nodes + 1] = e
+					end
 				end
 			end
 		end
 	end)
+	for i = 1, #default_nodes do nodes[#nodes + 1] = default_nodes[i] end
+	for i = 1, #other_nodes do nodes[#nodes + 1] = other_nodes[i] end
 	return nodes
 end
 
