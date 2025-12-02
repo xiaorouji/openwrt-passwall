@@ -414,6 +414,23 @@ table td, .table .td {
 		return { address: address, port: port };
 	}
 
+	function get_node_order(group) {
+		let table = document.getElementById("cbi-passwall-nodes-" + group + "-table");
+		if (!table) {
+			return;
+		}
+		let rows = table.querySelectorAll("tr.cbi-section-table-row");
+		if (!rows || rows.length === 0) {
+			return;
+		}
+		var ids = [];
+		rows.forEach(function(row) {
+			var id = row.id.replace("cbi-passwall-", "");
+			ids.push(id);
+		});
+		return ids;
+	}
+
 	function save_current_page_order(group) {
 		var table = document.getElementById("cbi-passwall-nodes-" + group + "-table");
 		if (!table) {
@@ -426,7 +443,10 @@ table td, .table .td {
 			return;
 		}
 		var btn = document.getElementById("save_order_btn_" + group);
-		if (btn) btn.disabled = true;
+		if (btn) {
+			btn.style.display = "none";
+			btn.disabled = true;
+		}
 		var ids = [];
 		rows.forEach(function(row) {
 			var id = row.id.replace("cbi-passwall-", "");
@@ -437,9 +457,16 @@ table td, .table .td {
 				ids: ids.join(",")
 			},
 			function(x, result) {
-				if (btn) btn.disabled = false;
+				if (btn) {
+					btn.style.display = null;
+					btn.disabled = false;
+				}
 				if (x && x.status === 200) {
+					origin_group_node_order[group] = get_node_order(group);
 					alert("<%:Saved current page order successfully.%>");
+					if (btn) {
+						btn.style.display = "none";
+					}
 				} else {
 					alert("<%:Save failed!%>");
 				}
@@ -649,9 +676,20 @@ table td, .table .td {
 		}
 	}
 
+	function arraysEqual(a, b) {
+		if (a === b) return true;
+		if (a == null || b == null) return false;
+		if (a.length !== b.length) return false;
+		for (let i = 0; i < a.length; i++) {
+			if (a[i] !== b[i]) return false;
+		}
+		return true;
+	}
+
 	//列表拖动重排
 	function initSortableForTable(table) {
 		if (!table) return null;
+		let group = table.id.replace("cbi-passwall-nodes-", "").replace("-table", "")
 		var root = table.querySelector('tbody') || table;
 		if (root._sortable_initialized) return root._sortable_instance;
 		root._sortable_initialized = true;
@@ -664,8 +702,16 @@ table td, .table .td {
 			forceFallback: false,
 			swapThreshold: 0.65,
 			onEnd: function (evt) {
-				//var group = evt.to.id.replace("cbi-passwall-nodes-", "").replace("-table", "");
 				//save_current_page_order(group); // 自动提交保存
+				let save_order_btn = document.getElementById("save_order_btn_" + group);
+				if (save_order_btn) {
+					const new_order = get_node_order(group);
+					if (!arraysEqual(new_order, origin_group_node_order[group])) {
+						save_order_btn.style.display = null;
+					} else {
+						save_order_btn.style.display = "none";
+					}
+				}
 			}
 		};
 		try {
@@ -721,7 +767,7 @@ table td, .table .td {
 		</table>
 		<div class="cbi-section-create cbi-tblsection-create">
 			<input class="cbi-button cbi-button-add" type="button" value="<%:Add%>" onclick="to_add_node()">
-			<input class="cbi-button cbi-button-apply" type="button" id="save_order_btn_{{group}}" value="<%:Save Order%>" onclick="save_current_page_order('{{group}}')">
+			<input class="cbi-button cbi-button-apply" style="display: none" type="button" id="save_order_btn_{{group}}" value="<%:Save Order%>" onclick="save_current_page_order('{{group}}')">
 		</div>
 	</fieldset>
 </script>
@@ -905,6 +951,11 @@ table td, .table .td {
 			
 			if (default_group) {
 				cbi_t_switch("passwall.nodes", default_group)
+			}
+
+			origin_group_node_order = {};
+			for (let group in group_nodes) {
+				origin_group_node_order[group] = get_node_order(group);
 			}
 
 			initAllSortable(group_nodes);
