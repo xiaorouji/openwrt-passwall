@@ -296,13 +296,22 @@ table td, .table .td {
 		document.getElementById("set_node_name").innerHTML = "";
 	}
 
-	function row_top(btn) {
+	function row_top(btn, group) {
 		const row = btn.closest("tr");
 		if (!row) return;
 		const parent = row.parentNode;
 		let firstDataRow = parent.querySelector("tr:not(.cbi-section-table-titles)");
 		if (firstDataRow && firstDataRow !== row) {
 			parent.insertBefore(row, firstDataRow);
+			let save_order_btn = document.getElementById("save_order_btn_" + group);
+			if (save_order_btn) {
+				const new_order = get_node_order(group);
+				if (!arraysEqual(new_order, origin_group_node_order[group])) {
+					save_order_btn.style.display = null;
+				} else {
+					save_order_btn.style.display = "none";
+				}
+			}
 		}
 	}
 
@@ -786,7 +795,7 @@ table td, .table .td {
 		<td class="td cbi-value-field pw-urltest">{{url_test}}</td>
 		<td class="td cbi-section-table-cell nowrap cbi-section-actions pw-actions">
 			<div class="node-wrapper">
-				<input class="btn cbi-button cbi-button-edit" type="button" value="<%:To Top%>" onclick="row_top(this)" title="<%:To Top%>"/>
+				<input class="btn cbi-button cbi-button-edit" type="button" value="<%:To Top%>" onclick="row_top(this, '{{group}}')" title="<%:To Top%>"/>
 				<input class="btn cbi-button cbi-button-apply" type="button" value="<%:Use%>" id="apply_{{id}}" onclick="open_set_node_div('{{id}}')"/>
 				<input class="btn cbi-button cbi-button-add" type="button" value="<%:Copy%>" onclick="copy_node('{{id}}')"/>
 				<input class="btn cbi-button cbi-button-edit" type="button" value="<%:Edit%>" onclick="location.href='<%=api.url("node_config")%>/{{id}}'" alt="<%:Edit%>" title="<%:Edit%>">
