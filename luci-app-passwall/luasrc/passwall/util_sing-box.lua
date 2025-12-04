@@ -213,33 +213,48 @@ function gen_outbound(flag, node, tag, proxy_table)
 		end
 
 		if node.transport == "http" then
-			v2ray_transport = {
-				type = "http",
-				host = node.http_host or {},
-				path = node.http_path or "/",
-				idle_timeout = (node.http_h2_health_check == "1") and node.http_h2_read_idle_timeout or nil,
-				ping_timeout = (node.http_h2_health_check == "1") and node.http_h2_health_check_timeout or nil,
-			}
-			--不强制执行 TLS。如果未配置 TLS，将使用纯 HTTP 1.1。
+		v2ray_transport = {
+			type = "http",
+			host = node.http_host or {},
+			path = node.http_path or "/",
+			idle_timeout = (node.http_h2_health_check == "1") and node.http_h2_read_idle_timeout or nil,
+			ping_timeout = (node.http_h2_health_check == "1") and node.http_h2_health_check_timeout or nil,
+			headers = {}
+		}
+		if node.user_agent and node.user_agent ~= "" then
+			v2ray_transport.headers["User-Agent"] = node.user_agent
 		end
+		--不强制执行 TLS。如果未配置 TLS，将使用纯 HTTP 1.1。
+	end
 
 		if node.transport == "ws" then
-			v2ray_transport = {
-				type = "ws",
-				path = node.ws_path or "/",
-				headers = (node.ws_host ~= nil) and { Host = node.ws_host } or nil,
-				max_early_data = tonumber(node.ws_maxEarlyData) or nil,
-				early_data_header_name = (node.ws_earlyDataHeaderName) and node.ws_earlyDataHeaderName or nil --要与 Xray-core 兼容，请将其设置为 Sec-WebSocket-Protocol。它需要与服务器保持一致。
-			}
+		local headers = {}
+		if node.ws_host then
+			headers["Host"] = node.ws_host
 		end
+		if node.user_agent and node.user_agent ~= "" then
+			headers["User-Agent"] = node.user_agent
+		end
+		v2ray_transport = {
+			type = "ws",
+			path = node.ws_path or "/",
+			headers = next(headers) and headers or nil,
+			max_early_data = tonumber(node.ws_maxEarlyData) or nil,
+			early_data_header_name = (node.ws_earlyDataHeaderName) and node.ws_earlyDataHeaderName or nil --要与 Xray-core 兼容，请将其设置为 Sec-WebSocket-Protocol。它需要与服务器保持一致。
+		}
+	end
 
 		if node.transport == "httpupgrade" then
-			v2ray_transport = {
-				type = "httpupgrade",
-				host = node.httpupgrade_host,
-				path = node.httpupgrade_path or "/",
-			}
+		v2ray_transport = {
+			type = "httpupgrade",
+			host = node.httpupgrade_host,
+			path = node.httpupgrade_path or "/",
+			headers = {}
+		}
+		if node.user_agent and node.user_agent ~= "" then
+			v2ray_transport.headers["User-Agent"] = node.user_agent
 		end
+	end
 
 		if node.transport == "quic" then
 			v2ray_transport = {
@@ -273,14 +288,17 @@ function gen_outbound(flag, node, tag, proxy_table)
 		end
 
 		if node.protocol == "http" then
-			protocol_table = {
-				username = (node.username and node.password) and node.username or nil,
-				password = (node.username and node.password) and node.password or nil,
-				path = nil,
-				headers = nil,
-				tls = tls
-			}
+		protocol_table = {
+			username = (node.username and node.password) and node.username or nil,
+			password = (node.username and node.password) and node.password or nil,
+			path = nil,
+			headers = {},
+			tls = tls
+		}
+		if node.user_agent and node.user_agent ~= "" then
+			protocol_table.headers["User-Agent"] = node.user_agent
 		end
+	end
 
 		if node.protocol == "shadowsocks" then
 			protocol_table = {
@@ -575,7 +593,11 @@ function gen_config_server(node)
 			type = "httpupgrade",
 			host = node.httpupgrade_host,
 			path = node.httpupgrade_path or "/",
+			headers = {}
 		}
+		if node.user_agent and node.user_agent ~= "" then
+			v2ray_transport.headers["User-Agent"] = node.user_agent
+		end
 	end
 
 	if node.transport == "quic" then
