@@ -481,6 +481,12 @@ o:depends({ [_n("protocol")] = "tuic" })
 o:depends({ [_n("protocol")] = "hysteria2" })
 o:depends({ [_n("protocol")] = "shadowsocks" })
 
+o = s:option(Value, _n("user_agent"), translate("User-Agent"), translate("Custom User-Agent for HTTP/HTTPS requests."))
+o:depends({ [_n("transport")] = "http" })
+o:depends({ [_n("transport")] = "ws" })
+o:depends({ [_n("transport")] = "httpupgrade" })
+o:depends({ [_n("protocol")] = "http" })
+
 o = s:option(Value, _n("tls_serverName"), translate("Domain"))
 o:depends({ [_n("tls")] = true })
 o:depends({ [_n("protocol")] = "hysteria"})
