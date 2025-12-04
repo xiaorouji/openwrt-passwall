@@ -41,12 +41,16 @@ local api = require "luci.passwall.api"
 	}
 
 	function open_add_link_div() {
+		document.getElementById('modal-mask').style.display = 'block';
 		document.getElementById("add_link_div").style.display = "block";
+		document.body.classList.add('modal-open');
 		document.getElementById("nodes_link").focus();
 	}
 
 	function close_add_link_div() {
+		document.getElementById('modal-mask').style.display = 'none';
 		document.getElementById("add_link_div").style.display = "none";
+		document.body.classList.remove('modal-open');
 	}
 
 	function add_node() {
@@ -81,13 +85,69 @@ local api = require "luci.passwall.api"
 		}
 	}
 
+	function open_reassign_group_div() {
+		var ids = [];
+		var visibleContainer = document.querySelector('#cbi-passwall-nodes > .cbi-tabcontainer[style*="display:block"], #cbi-passwall-nodes > .cbi-tabcontainer[style*="display: block"]');
+		if (!visibleContainer) return;
+		var doms = visibleContainer.getElementsByClassName("nodes_select");
+		if (doms && doms.length > 0) {
+			for (var i = 0 ; i < doms.length; i++) {
+				if (doms[i].checked) {
+					ids.push(doms[i].getAttribute("cbid"))
+				}
+			}
+			if (ids.length > 0) {
+				document.getElementById('modal-mask').style.display = 'block';
+				document.getElementById("reassign_group_div").style.display = "block";
+				document.body.classList.add('modal-open');
+			} else {
+				alert("<%:You no select nodes !%>");
+			}
+		}
+	}
+
+	function close_reassign_group_div() {
+		document.getElementById('modal-mask').style.display = 'none';
+		document.getElementById("reassign_group_div").style.display = "none";
+		document.body.classList.remove('modal-open');
+	}
+
+	function reassign_group() {
+		var ids = [];
+		var group = (document.querySelector('#reassign_group_custom input[type="hidden"]')?.value || "default");
+		var visibleContainer = document.querySelector('#cbi-passwall-nodes > .cbi-tabcontainer[style*="display:block"], #cbi-passwall-nodes > .cbi-tabcontainer[style*="display: block"]');
+		if (!visibleContainer) return;
+		var doms = visibleContainer.getElementsByClassName("nodes_select");
+		if (doms && doms.length > 0) {
+			for (var i = 0 ; i < doms.length; i++) {
+				if (doms[i].checked) {
+					ids.push(doms[i].getAttribute("cbid"))
+				}
+			}
+			if (ids.length > 0) {
+				XHR.get('<%=api.url("reassign_group")%>', {
+					group: group,
+					ids: ids.join(",")
+				},
+				function(x, data) {
+					if (x && x.status == 200) {
+						window.location.href = '<%=api.url("node_list")%>';
+					}
+					else {
+						alert("<%:Error%>");
+					}
+				});
+			}
+		}
+	}
+
 	function add_new_node() {
 		window.location.href = '<%=api.url("add_node")%>?redirect=1';
 	}
 
 	//自定义分组下拉列表事件
-	document.addEventListener("DOMContentLoaded", function() {
-		var dropdown = document.getElementById("addlink_group_custom");
+	function dropdown_list_fun(div_id) {
+		var dropdown = document.getElementById(div_id);
 		if (!dropdown) return;
 
 		var display = dropdown.querySelector(".selected-display");
@@ -99,7 +159,7 @@ local api = require "luci.passwall.api"
 		display.addEventListener("click", function() {
 			list.style.display = list.style.display === "none" ? "block" : "none";
 			input.value = "";
-			input.focus();
+			//input.focus();
 		});
 
 		function selectItem(li) {
@@ -119,7 +179,8 @@ local api = require "luci.passwall.api"
 		});
 
 		input.addEventListener("keydown", function(e){
-			if (e.keyCode !== 13) return;
+			var isEnter = e.key === "Enter" || e.keyCode === 13;
+			if (!isEnter) return;
 			e.stopPropagation();
 			e.preventDefault();
 
@@ -135,7 +196,7 @@ local api = require "luci.passwall.api"
 			}
 
 			var li = Array.from(list.querySelectorAll(".dropdown-item")).find(function(el){
-				return el.dataset.value.toLowerCase() === val.toLowerCase();
+				return el.dataset.value && el.dataset.value.toLowerCase() === val.toLowerCase();
 			});
 			if (!li) {
 				li = document.createElement("li");
@@ -176,10 +237,19 @@ local api = require "luci.passwall.api"
 				list.style.display = "none";
 			}
 		});
+	}
+
+	document.addEventListener("DOMContentLoaded", function() {
+		dropdown_list_fun("addlink_group_custom");
 	});
 
+	document.addEventListener("DOMContentLoaded", function() {
+		dropdown_list_fun("reassign_group_custom");
+	});
 	//]]>
 </script>
+
+<div id="modal-mask"></div>
 
 <div id="add_link_div">
 	<div id="add_link_modal_container">
@@ -199,7 +269,7 @@ local api = require "luci.passwall.api"
 					<ul class="dropdown-list" style="display:none;">
 						<li class="dropdown-item" data-value=""><%:default%></li>
 						<li class="dropdown-item custom-input">
-							<input type="text" placeholder="-- <%:custom%> --" class="create-item-input">
+							<input type="text" placeholder="-- <%:custom%> --" class="create-item-input" inputmode="text" enterkeyhint="done">
 						</li>
 					</ul>
 					<input type="hidden" name="addlink_group" value="">
@@ -213,6 +283,36 @@ local api = require "luci.passwall.api"
 	</div>
 </div>
 
+<div id="reassign_group_div">
+	<div id="reassign_group_modal_container">
+		<h3><%:Reassign Node Group%></h3>
+		<div class="value-custom">
+			<div class="value-field-custom">
+				<label class="value-title-custom" for="reassign_group_custom"><%:Group Name%></label>
+				<div id="reassign_group_custom" class="custom-dropdown">
+					<div class="selected-display">
+						<span class="text"><%:default%></span>
+						<span class="arrow">▾</span>
+					</div>
+					<ul class="dropdown-list" style="display:none;">
+						<li class="dropdown-item" data-value=""><%:default%></li>
+						<li class="dropdown-item custom-input">
+							<input type="text" placeholder="-- <%:custom%> --" class="create-item-input" inputmode="text" enterkeyhint="done">
+						</li>
+					</ul>
+					<input type="hidden" name="to_group" value="">
+				</div>
+			</div>
+		</div>
+		<div id="reassign_group_button_container">
+			<input class="btn cbi-button cbi-button-edit" type="button" onclick="reassign_group()" value="<%:Save%>" />
+			<input class="btn cbi-button cbi-button-remove" type="button" onclick="close_reassign_group_div()" value="<%:Close%>" />
+		</div>
+	</div>
+</div>
+
+
+
 <div class="pw-toolbar">
 	<div class="pw-toolbar-field">
 		<input class="btn cbi-button cbi-button-add" type="button" onclick="add_new_node()" value="<%:Add%>" />
@@ -220,9 +320,10 @@ local api = require "luci.passwall.api"
 		<input class="btn cbi-button cbi-button-remove" type="button" onclick="clear_all_nodes()" value="<%:Clear all nodes%>" />
 		<input class="btn cbi-button cbi-button-remove" type="button" onclick="delete_select_nodes()" value="<%:Delete select nodes%>" />
 		<input class="btn cbi-button cbi-button-edit" type="button" id="select_all_btn" onclick="checked_all_node(this)" value="<%:Select all%>" />
-		<input class="btn cbi-button cbi-button-apply" type="submit" name="cbi.apply" value="<%:Save & Apply%>" />
-		<input class="btn cbi-button cbi-button-save" type="submit" name="cbi.save" value="<%:Save%>" />
-		<input class="btn cbi-button cbi-button-reset" type="button" value="<%:Reset%>" onclick="location.href='<%=REQUEST_URI%>'" />
+		<input class="btn cbi-button cbi-button-edit" type="button" onclick="open_reassign_group_div()" value="<%:Reassign Group%>" />
+		<!--<input class="btn cbi-button cbi-button-apply" type="submit" name="cbi.apply" value="<%:Save & Apply%>" />-->
+		<!--<input class="btn cbi-button cbi-button-save" type="submit" name="cbi.save" value="<%:Save%>" />-->
+		<!--<input class="btn cbi-button cbi-button-reset" type="button" value="<%:Reset%>" onclick="location.href='<%=REQUEST_URI%>'" />-->
 	</div>
 </div>
 
@@ -239,7 +340,28 @@ local api = require "luci.passwall.api"
 		padding: 5px 0 5px;
 	}
 
-	#add_link_div {
+	#modal-mask {
+		display: none;
+		position: fixed;
+		left: 0;
+		top: 0;
+		width: 100vw;
+		height: 100vh;
+		background: rgba(0,0,0,0.4);
+		z-index: 999;
+	}
+
+	body.modal-open {
+		overflow: hidden;
+		pointer-events: none;
+	}
+
+	body.modal-open #add_link_div,
+	body.modal-open #reassign_group_div {
+		pointer-events: auto;
+	}
+
+	#add_link_div, #reassign_group_div {
 		display: none;
 		position: fixed;
 		left: 50%;
@@ -254,7 +376,7 @@ local api = require "luci.passwall.api"
 		max-width: 500px;
 	}
 
-	#add_link_modal_container {
+	#add_link_modal_container, #reassign_group_modal_container {
 		width: 100%;
 		text-align: center;
 		display: flex;
@@ -281,7 +403,7 @@ local api = require "luci.passwall.api"
 		width: 100%;
 	}
 
-	#add_link_button_container {
+	#add_link_button_container, #reassign_group_button_container {
 		display: flex;
 		justify-content: space-between;
 		width: 100%;

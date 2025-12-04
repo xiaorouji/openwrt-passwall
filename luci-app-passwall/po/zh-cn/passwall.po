@@ -2008,5 +2008,11 @@ msgstr "配置的类型同样适用于手动导入节点时所指定的核心程
 msgid "Group Name"
 msgstr "分组名"
 
+msgid "Reassign Group"
+msgstr "调整分组"
+
+msgid "Reassign Node Group"
+msgstr "调整节点分组"
+
 msgid "Currently using %s node"
 msgstr "当前使用的 %s 节点"
