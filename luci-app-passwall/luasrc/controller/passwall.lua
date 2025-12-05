@@ -85,6 +85,7 @@ function index()
 	entry({"admin", "services", appname, "reassign_group"}, call("reassign_group")).leaf = true
 	entry({"admin", "services", appname, "get_node"}, call("get_node")).leaf = true
 	entry({"admin", "services", appname, "save_node_order"}, call("save_node_order")).leaf = true
+	entry({"admin", "services", appname, "save_node_list_opt"}, call("save_node_list_opt")).leaf = true
 	entry({"admin", "services", appname, "update_rules"}, call("update_rules")).leaf = true
 	entry({"admin", "services", appname, "subscribe_del_node"}, call("subscribe_del_node")).leaf = true
 	entry({"admin", "services", appname, "subscribe_del_all"}, call("subscribe_del_all")).leaf = true
@@ -652,6 +653,15 @@ function reassign_group()
 		end
 	end
 	api.sh_uci_commit(appname)
+	http_write_json({ status = "ok" })
+end
+
+function save_node_list_opt()
+	local option = http.formvalue("option") or ""
+	local value = http.formvalue("value") or ""
+	if option ~= "" then
+		api.sh_uci_set(appname, "@global_other[0]", option, value, true)
+	end
 	http_write_json({ status = "ok" })
 end
 

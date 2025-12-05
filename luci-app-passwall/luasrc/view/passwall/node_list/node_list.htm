@@ -160,6 +160,11 @@ table td, .table .td {
 	background-color: rgba(131, 191, 255, 0.7) !important;
 	box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
+
+/* hide save button */
+.cbi-page-actions {
+	display: none !important;
+}
 </style>
 
 <% if api.is_js_luci() then -%>
@@ -215,7 +220,7 @@ table td, .table .td {
 	//<![CDATA[
 	let auto_detection_time = "<%=api.uci_get_type("global_other", "auto_detection_time", "0")%>"
 	let show_node_info = "<%=api.uci_get_type("global_other", "show_node_info", "0")%>"
-	
+
 	var node_list = [];
 
 	var ajax = {
@@ -552,7 +557,7 @@ table td, .table .td {
 			);
 		}
 	}
-	
+
 	function ping_node(cbi_id, dom, type) {
 		var full = get_address_full(cbi_id);
 		if ((type == "icmp" && full.address != "" ) || (type == "tcping" && full.address != "" && full.port != "")) {
@@ -862,10 +867,10 @@ table td, .table .td {
 		return str;
 	}
 
-	XHR.get('<%=api.url("get_node")%>', null,
-		function(x, result) {
+	function loadNodeList() {
+		XHR.get('<%=api.url("get_node")%>', null, function(x, result) {
 			var node_list = result
-			
+
 			var group_nodes = {}
 			for (let i = 0; i < node_list.length; i++) {
 				let _node = node_list[i]
@@ -877,7 +882,7 @@ table td, .table .td {
 				}
 				group_nodes[_node.group].push(_node)
 			}
-			
+
 			var tab_ul_html = '<ul class="cbi-tabmenu">'
 			var tab_ul_li_html = ''
 			var tab_content_html = '<fieldset class="cbi-section-node cbi-section-node-tabbed" id="cbi-passwall-nodes">'
@@ -926,7 +931,7 @@ table td, .table .td {
 						innerHTML = innerHTML.split("{{remarks_val}}").join(o["remarks"]);
 						innerHTML = innerHTML.split("{{address_val}}").join(o["address"] || "");
 						innerHTML = innerHTML.split("{{port_val}}").join(o["port"] || "");
-						
+
 						node_tr_html += innerHTML
 					}
 					_html = _html.split("{{node-tr}}").join(node_tr_html);
@@ -937,7 +942,7 @@ table td, .table .td {
 				if (group === "default") {
 					group_name = "<%:default%>"
 				}
-				
+
 				tab_ul_li_html +=
 					'<li group_name="' + group + '" id="tab.passwall.nodes.' + group + '" class="cbi-tab">' +
 						'<a onclick="this.blur(); return cbi_t_switch(\'passwall.nodes\', \'' + group + '\')" href="<%=REQUEST_URI%>?tab.passwall.nodes=' + group + '">' + group_name + " | " + "<font style='color: red'>" + group_nodes[group].length + '</font></a>' +
@@ -947,17 +952,17 @@ table td, .table .td {
 					'' + table_html +
 					'</div>'
 			}
-			
+
 			tab_ul_html += tab_ul_li_html + '</ul>'
 			tab_content_html += '</fieldset>'
 			var tab_html = tab_ul_html + tab_content_html
-			
+
 			document.getElementById("node_list").innerHTML = tab_html
-			
+
 			for (let group in group_nodes) {
 				cbi_t_add("passwall.nodes", group)
 			}
-			
+
 			if (default_group) {
 				cbi_t_switch("passwall.nodes", default_group)
 			}
@@ -983,12 +988,60 @@ table td, .table .td {
 					}
 				}
 			}
-			
+
 			get_now_use_node();
 
 			pingAllNodes();
+		});
+	}
+
+	loadNodeList();
+
+	//Node list option saving logic
+	document.addEventListener("DOMContentLoaded", function () {
+		function waitForElement(selector, callback) {
+			const el = document.querySelector(selector);
+			if (el) return callback(el);
+			const observer = new MutationObserver(() => {
+				const el = document.querySelector(selector);
+				if (el) {
+					observer.disconnect();
+					callback(el);
+				}
+			});
+			observer.observe(document.body, { childList: true, subtree: true });
 		}
-	);
+
+		function onChange(option, value) {
+			XHR.get('<%=api.url("save_node_list_opt")%>', {
+				option: option,
+				value: value
+			}, function(x) {
+				if (x && x.status == 200) {
+					document.getElementById("node_list").innerHTML = "";
+					loadNodeList();
+				} else {
+					alert("<%:Error%>");
+				}
+			});
+		}
+
+		waitForElement('input[type="checkbox"][name*="passwall"][name*="show_node_info"]', function(el) {
+			el.addEventListener("change", () => {
+				el.blur();
+				show_node_info = el.checked ? "1" : "0";
+				onChange("show_node_info", show_node_info);
+			});
+		});
+
+		waitForElement('select[name*="passwall"][name*="auto_detection_time"]', function(el) {
+			el.addEventListener("change", () => {
+				el.blur();
+				auto_detection_time = el.value;
+				onChange("auto_detection_time", auto_detection_time);
+			});
+		});
+	});
 	//]]>
 </script>
 
