@@ -64,11 +64,10 @@ if api.is_js_luci() then
 		uci:commit(appname)
 		api.showMsg_Redirect()
 	end
-end
-
-m.render = function(self, ...)
-	Map.render(self, ...)
-	api.optimize_cbi_ui()
+	m.render = function(self, ...)
+		Map.render(self, ...)
+		api.optimize_cbi_ui()
+	end
 end
 
 -- [[ Subscribe Settings ]]--

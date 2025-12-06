@@ -20,11 +20,10 @@ if api.is_js_luci() then
 		uci:commit(appname)
 		api.showMsg_Redirect(self.redirect, 3000)
 	end
-end
-
-m.render = function(self, ...)
-	Map.render(self, ...)
-	api.optimize_cbi_ui()
+	m.render = function(self, ...)
+		Map.render(self, ...)
+		api.optimize_cbi_ui()
+	end
 end
 
 local has_ss = api.is_finded("ss-redir")
