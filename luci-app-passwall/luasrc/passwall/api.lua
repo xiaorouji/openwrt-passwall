@@ -47,10 +47,10 @@ function set_apply_on_parse(map)
 		map.on_after_apply = function(self)
 			showMsg_Redirect(self.redirect, 3000)
 		end
-	end
-	map.render = function(self, ...)
-		getmetatable(self).__index.render(self, ...) -- 保持原渲染流程
-		optimize_cbi_ui()
+		map.render = function(self, ...)
+			getmetatable(self).__index.render(self, ...) -- 保持原渲染流程
+			optimize_cbi_ui()
+		end
 	end
 end
 
