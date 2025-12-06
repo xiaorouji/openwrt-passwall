@@ -91,25 +91,38 @@ o.datatype = "min(1)"
 o.default = 1
 o:depends("enable_autoswitch", true)
 	
-autoswitch_backup_node = s:option(DynamicList, "autoswitch_backup_node", translate("List of backup nodes"))
-autoswitch_backup_node:depends("enable_autoswitch", true)
-function o.write(self, section, value)
-	local t = {}
-	local t2 = {}
-	if type(value) == "table" then
-		local x
-		for _, x in ipairs(value) do
-			if x and #x > 0 then
-				if not t2[x] then
-					t2[x] = x
-					t[#t+1] = x
-				end
-			end
-		end
+o = s:option(MultiValue, "autoswitch_backup_node", translate("List of backup nodes"))
+o:depends("enable_autoswitch", true)
+o.widget = "checkbox"
+o.template = appname .. "/cbi/nodes_multiselect"
+local keylist = {}
+local vallist = {}
+local grouplist = {}
+for i, v in pairs(nodes_table) do
+	keylist[i] = v.id
+	vallist[i] = v.remark
+	grouplist[i] = v.group or ""
+	socks_node:value(v.id, v["remark"])
+end
+o.keylist = keylist
+o.vallist = vallist
+o.group = grouplist
+-- 读取旧 DynamicList
+function o.cfgvalue(self, section)
+	local val = m.uci:get_list(appname, section, "autoswitch_backup_node")
+	if val then
+		return val
 	else
-		t = { value }
+		return {}
 	end
-	return DynamicList.write(self, section, t)
+end
+-- 写入保持 DynamicList
+function o.write(self, section, value)
+	local result = {}
+	for v in value:gmatch("%S+") do
+		result[#result + 1] = v
+	end
+	m.uci:set_list(appname, section, "autoswitch_backup_node", result)
 end
 
 o = s:option(Flag, "autoswitch_restore_switch", translate("Restore Switch"), translate("When detects main node is available, switch back to the main node."))
@@ -125,12 +138,7 @@ o:value("https://connect.rom.miui.com/generate_204", "MIUI (CN)")
 o:value("https://connectivitycheck.platform.hicloud.com/generate_204", "HiCloud (CN)")
 o:depends("enable_autoswitch", true)
 
-for k, v in pairs(nodes_table) do
-	autoswitch_backup_node:value(v.id, v["remark"])
-	socks_node:value(v.id, v["remark"])
-end
-
-o = s:option(DummyValue, "btn", " ")
+o = s:option(DummyValue, "btn", "　")
 o.template = appname .. "/socks_auto_switch/btn"
 o:depends("enable_autoswitch", true)
 
