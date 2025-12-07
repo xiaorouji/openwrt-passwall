@@ -1,6 +1,5 @@
 <%+cbi/valueheader%>
 <%
-local api = require "luci.passwall.api"
 local cbid = "cbid." .. self.config .. "." .. section .. "." .. self.option
 
 -- 读取 MultiValue
@@ -32,7 +31,7 @@ local group_order = {}
 for _, item in ipairs(values) do
 	local g = item.group
 	if not g or g == "" then 
-		g = api.i18n.translate("default") 
+		g = translate("default") 
 	end
 	if not groups[g] then 
 		groups[g] = {}
@@ -41,6 +40,30 @@ for _, item in ipairs(values) do
 	table.insert(groups[g], item)
 end
 %>
+
+<style>
+/* 组标题的右箭头（折叠） */
+.lv-arrow-right {
+	width: 0;
+	height: 0;
+	border-top: 4px solid transparent;
+	border-bottom: 4px solid transparent;
+	border-left: 5px solid #555;
+	display: inline-block;
+	vertical-align: middle;
+}
+
+/* 组标题的下箭头（展开） */
+.lv-arrow-down-small {
+	width: 0;
+	height: 0;
+	border-left: 4px solid transparent;
+	border-right: 4px solid transparent;
+	border-top: 5px solid #555;
+	display: inline-block;
+	vertical-align: middle;
+}
+</style>
 
 <div id="<%=cbid%>" style="display: inline-block;">
 	<!-- 搜索 -->
@@ -60,8 +83,8 @@ end
 				<div class="group-title"
 					onclick="toggleGroup_<%=self.option%>('<%=gname%>')"
 					style="cursor:pointer;padding:6px;background:#f0f0f0;border-radius:4px;margin-bottom:4px;display:flex;align-items:center;white-space:nowrap;">
-					<span id="arrow-<%=self.option%>-<%=gname%>" style="width:16px;">▼</span>
-					<b><%=gname%></b>
+					<span id="arrow-<%=self.option%>-<%=gname%>" class="lv-arrow-down-small"></span>
+					<b style="margin-left:8px;"><%=gname%></b>
 					<span id="group-count-<%=self.option%>-<%=gname%>" style="margin-left:8px;color:blue;">
 						(0/<%=#items%>)
 					</span>
@@ -116,10 +139,10 @@ end
 		if (isSearching) {
 			if (ul.style.display === "none") {
 				ul.style.display = "";
-				if (arrow) arrow.textContent = "▼";
+				if (arrow) arrow.className = "lv-arrow-down-small";
 			} else {
 				ul.style.display = "none";
-				if (arrow) arrow.textContent = "►";
+				if (arrow) arrow.className = "lv-arrow-right";
 			}
 			return;
 		}
@@ -131,17 +154,17 @@ end
 			const garrow = document.getElementById("arrow-" + opt + "-" + gname);
 			if (gname !== g) {
 				if (gul) gul.style.display = "none";
-				if (garrow) garrow.textContent = "►";
+				if (garrow) arrow.className = "lv-arrow-right";
 			}
 		});
 		document.getElementById(listId).parentNode.scrollTop = 0;
 		// 切换当前组
 		if (ul.style.display === "none") {
 			ul.style.display = "";
-			if (arrow) arrow.textContent = "▼";
+			if (arrow) arrow.className = "lv-arrow-down-small";
 		} else {
 			ul.style.display = "none";
-			if (arrow) arrow.textContent = "►";
+			if (arrow) arrow.className = "lv-arrow-right";
 		}
 	};
 
@@ -175,7 +198,7 @@ end
 				group.style.display = "";
 				if (keyword) {
 					ul.style.display = "";
-					arrow.textContent = "▼";
+					arrow.className = "lv-arrow-down-small";
 				}
 			}
 		});
@@ -190,7 +213,7 @@ end
 				const ul = document.getElementById("group-" + opt + "-" + gname);
 				const arrow = document.getElementById("arrow-" + opt + "-" + gname);
 				if (ul) ul.style.display = "none";
-				if (arrow) arrow.textContent = "►";
+				if (arrow) arrow.className = "lv-arrow-right";
 			});
 		}
 	};
@@ -243,7 +266,7 @@ end
 			const ul = document.getElementById("group-" + opt + "-" + gname);
 			const arrow = document.getElementById("arrow-" + opt + "-" + gname);
 			if (ul) ul.style.display = "none";
-			if (arrow) arrow.textContent = "►";
+			if (arrow) arrow.className = "lv-arrow-right";
 		});
 
 		updateCount();
