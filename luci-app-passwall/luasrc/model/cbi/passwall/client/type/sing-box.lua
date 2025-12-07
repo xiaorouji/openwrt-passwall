@@ -110,17 +110,11 @@ o = s:option(MultiValue, _n("urltest_node"), translate("URLTest node list"), tra
 o:depends({ [_n("protocol")] = "_urltest" })
 o.widget = "checkbox"
 o.template = appname .. "/cbi/nodes_multiselect"
-local keylist = {}
-local vallist = {}
-local grouplist = {}
-for i, v in ipairs(nodes_table) do
-	keylist[i] = v.id
-	vallist[i] = v.remark
-	grouplist[i] = v.group or ""
+o.group = {}
+for i, v in pairs(nodes_table) do
+	o:value(v.id, v.remark)
+	o.group[#o.group+1] = v.group or ""
 end
-o.keylist = keylist
-o.vallist = vallist
-o.group = grouplist
 -- 读取旧 DynamicList
 function o.cfgvalue(self, section)
 	local val = m.uci:get_list(appname, section, "urltest_node")

@@ -103,17 +103,11 @@ o = s:option(MultiValue, _n("balancing_node"), translate("Load balancing node li
 o:depends({ [_n("protocol")] = "_balancing" })
 o.widget = "checkbox"
 o.template = appname .. "/cbi/nodes_multiselect"
-local keylist = {}
-local vallist = {}
-local grouplist = {}
-for i, v in ipairs(nodes_table) do
-	keylist[i] = v.id
-	vallist[i] = v.remark
-	grouplist[i] = v.group or ""
+o.group = {}
+for i, v in pairs(nodes_table) do
+	o:value(v.id, v.remark)
+	o.group[#o.group+1] = v.group or ""
 end
-o.keylist = keylist
-o.vallist = vallist
-o.group = grouplist
 -- 读取旧 DynamicList
 function o.cfgvalue(self, section)
 	local val = m.uci:get_list(appname, section, "balancing_node")

@@ -95,18 +95,12 @@ o = s:option(MultiValue, "autoswitch_backup_node", translate("List of backup nod
 o:depends("enable_autoswitch", true)
 o.widget = "checkbox"
 o.template = appname .. "/cbi/nodes_multiselect"
-local keylist = {}
-local vallist = {}
-local grouplist = {}
+o.group = {}
 for i, v in pairs(nodes_table) do
-	keylist[i] = v.id
-	vallist[i] = v.remark
-	grouplist[i] = v.group or ""
+	o:value(v.id, v.remark)
+	o.group[#o.group+1] = v.group or ""
 	socks_node:value(v.id, v["remark"])
 end
-o.keylist = keylist
-o.vallist = vallist
-o.group = grouplist
 -- 读取旧 DynamicList
 function o.cfgvalue(self, section)
 	local val = m.uci:get_list(appname, section, "autoswitch_backup_node")
