@@ -65,14 +65,14 @@ end
 }
 </style>
 
-<div id="<%=cbid%>" style="display: inline-block;">
+<div id="<%=cbid%>" class="cbi-input-select" style="display: inline-block;">
 	<!-- 搜索 -->
 	<input type="text"
 		id="<%=cbid%>.search"
 		class="node-search-input cbi-input-text"
 		placeholder="<%:Search nodes...%>"
 		oninput="filterGroups_<%=self.option%>(this.value)"
-		style="width:100%;padding:6px;margin-bottom:8px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box;" />
+		style="width:100%;padding:6px;margin-bottom:8px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box;max-height:36px;" />
 	<!-- 主容器 -->
 	<div style="max-height:300px; overflow:auto; margin-bottom:8px; white-space:nowrap;">
 		<ul class="cbi-multi" id="<%=cbid%>.node_list" style="padding:0 !important;margin:0 !important;width:100%;box-sizing:border-box;">
@@ -85,7 +85,7 @@ end
 					style="cursor:pointer;padding:6px;background:#f0f0f0;border-radius:4px;margin-bottom:4px;display:flex;align-items:center;white-space:nowrap;">
 					<span id="arrow-<%=self.option%>-<%=gname%>" class="lv-arrow-down-small"></span>
 					<b style="margin-left:8px;"><%=gname%></b>
-					<span id="group-count-<%=self.option%>-<%=gname%>" style="margin-left:8px;color:blue;">
+					<span id="group-count-<%=self.option%>-<%=gname%>" style="margin-left:8px;color:#007bff;">
 						(0/<%=#items%>)
 					</span>
 				</div>
@@ -93,7 +93,7 @@ end
 				<ul id="group-<%=self.option%>-<%=gname%>" style="margin:0 0 8px 16px; padding:0; list-style:none;">
 
 				<% for _, item in ipairs(items) do %>
-					<li data-node-name="<%=pcdata(item.label):lower()%>" style="list-style:none; padding:0; margin:0; white-space:nowrap;">
+					<li data-node-name="<%=pcdata(item.label):lower()%>" style="list-style:none;padding:0;margin:0;white-space:nowrap;" title="<%=pcdata(item.label)%>">
 						<input
 							type="checkbox"
 							class="cbi-input-checkbox"
