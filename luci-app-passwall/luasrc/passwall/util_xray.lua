@@ -179,7 +179,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 									return r
 								end)() or {"/"},
 							headers = {
-								Host = node.tcp_guise_http_host or {}
+								Host = node.tcp_guise_http_host or {},
+								["User-Agent"] = node.tcp_guise_http_user_agent and {node.tcp_guise_http_user_agent} or nil
 							}
 						} or nil
 					}
@@ -200,7 +201,10 @@ function gen_outbound(flag, node, tag, proxy_table)
 				} or nil,
 				wsSettings = (node.transport == "ws") and {
 					path = node.ws_path or "/",
-					host = node.ws_host or nil,
+					headers = {
+						Host = node.ws_host or nil,
+						["User-Agent"] = node.ws_user_agent or nil
+					},
 					maxEarlyData = tonumber(node.ws_maxEarlyData) or nil,
 					earlyDataHeaderName = (node.ws_earlyDataHeaderName) and node.ws_earlyDataHeaderName or nil,
 					heartbeatPeriod = tonumber(node.ws_heartbeatPeriod) or nil
@@ -215,7 +219,10 @@ function gen_outbound(flag, node, tag, proxy_table)
 				} or nil,
 				httpupgradeSettings = (node.transport == "httpupgrade") and {
 					path = node.httpupgrade_path or "/",
-					host = node.httpupgrade_host
+					host = node.httpupgrade_host,
+					headers = {
+						["User-Agent"] = node.httpupgrade_user_agent or nil
+					}
 				} or nil,
 				xhttpSettings = (node.transport == "xhttp") and {
 					mode = node.xhttp_mode or "auto",
