@@ -7,7 +7,7 @@ jobs:
   stale:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/stale@v7.0.0
+      - uses: actions/stale@v10
         with:
           stale-issue-message: "Stale Issue"
           stale-pr-message: "Stale PR"
