@@ -9,6 +9,8 @@ if not arg[1] or not m:get(arg[1]) then
 	luci.http.redirect(m.redirect)
 end
 
+m:append(Template(appname .. "/cbi/nodes_multivalue_com"))
+
 local has_singbox = api.finded_com("sing-box")
 local has_xray = api.finded_com("xray")
 
@@ -94,7 +96,7 @@ o:depends("enable_autoswitch", true)
 o = s:option(MultiValue, "autoswitch_backup_node", translate("List of backup nodes"))
 o:depends("enable_autoswitch", true)
 o.widget = "checkbox"
-o.template = appname .. "/cbi/nodes_multiselect"
+o.template = appname .. "/cbi/nodes_multivalue"
 o.group = {}
 for i, v in pairs(nodes_table) do
 	o:value(v.id, v.remark)

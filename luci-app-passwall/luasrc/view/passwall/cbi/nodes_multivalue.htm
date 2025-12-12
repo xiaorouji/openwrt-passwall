@@ -1,0 +1,122 @@
+<%+cbi/valueheader%>
+<%
+--	Template Developers:
+--		- lwb1978
+--	Copyright: copyright(c)2025–2027
+--	Description: Passwall(2) UI template
+local json = require "luci.jsonc"
+local cbid = "cbid." .. self.config .. "." .. section .. "." .. self.option
+
+-- 读取 MultiValue
+local values = {}
+for i, key in pairs(self.keylist) do
+	values[#values + 1] = {
+		key = key,
+		label = self.vallist[i] or key,
+		group = self.group and self.group[i] or nil
+	}
+end
+
+-- 获取选中值
+local selected = {}
+local cval = self:cfgvalue(section)
+if type(cval) == "table" then
+	for _, v in pairs(cval) do
+		selected[v] = true
+	end
+elseif type(cval) == "string" then
+	for v in cval:gmatch("%S+") do
+		selected[v] = true
+	end
+end
+
+-- 按原顺序分组
+local groups = {}
+local group_order = {}
+for _, item in ipairs(values) do
+	local g = item.group
+	if not g or g == "" then 
+		g = translate("default") 
+	end
+	if not groups[g] then 
+		groups[g] = {}
+		table.insert(group_order, g)
+	end
+	table.insert(groups[g], item)
+end
+
+local total_count = #values
+local selected_count = 0
+for _, item in ipairs(values) do
+	if selected[item.key] then
+		selected_count = selected_count + 1
+	end
+end
+%>
+
+<div id="<%=cbid%>" class="cbi-input-select" style="display:inline-block;">
+	<!-- 搜索框 -->
+	<input type="text" id="<%=cbid%>.search"
+		class="mv_search_input cbi-input-text"
+		placeholder="<%:Search nodes...%>" />
+	<!-- 主容器 -->
+	<div class="mv_list_container">
+		<ul class="cbi-multi mv_node_list" id="<%=cbid%>.node_list">
+			<% for _, gname in ipairs(group_order) do local items = groups[gname] %>
+			<li class="group-block" data-group="<%=gname%>">
+				<!-- 组标题 -->
+				<div class="group-title">
+					<span id="arrow-<%=self.option%>-<%=gname%>" class="mv-arrow-right"></span>
+					<b style="margin-left:8px;"><%=gname%></b>
+					<%
+						local g_selected = 0
+						for _, it in ipairs(items) do
+							if selected[it.key] then
+								g_selected = g_selected + 1
+							end
+						end
+					%>
+					<span id="group-count-<%=self.option%>-<%=gname%>" style="margin-left:8px;color:#007bff;">
+						(<%=g_selected%>/<%=#items%>)
+					</span>
+				</div>
+				<!-- 组内容 -->
+				<ul id="group-<%=self.option%>-<%=gname%>" class="group-items" style="display:none;"
+					data-items='<%=json.stringify(items)%>'
+					data-selected='<%=json.stringify(selected)%>'>
+				</ul>
+			</li>
+			<% end %>
+		</ul>
+	</div>
+	<!-- 底部控制栏 -->
+	<div class="mv-controls">
+		<input class="btn cbi-button cbi-button-edit" type="button" onclick="mv_selectAll('<%=cbid%>','<%=self.option%>',true)" value="<%:Select all%>">
+		<input class="btn cbi-button cbi-button-edit" type="button" onclick="mv_selectAll('<%=cbid%>','<%=self.option%>',false)" value="<%:DeSelect all%>">
+		<span id="count-<%=self.option%>" style="color:#666;"><%:Selected:%> <span style='color:red;'><%=selected_count%>/<%=total_count%></span></span>
+	</div>
+</div>
+<%+cbi/valuefooter%>
+
+<script type="text/javascript">
+//<![CDATA[
+(function(){
+	const cbid = "<%=cbid%>";
+	const opt = "<%=self.option%>";
+	const searchInput = document.getElementById(cbid + ".search");
+	const nodeList = document.getElementById(cbid + ".node_list");
+
+	nodeList.querySelectorAll(".group-title").forEach(title => {
+		title.addEventListener("click", function() {
+			mv_render_multivalue_list(cbid, opt, nodeList, searchInput);
+			const g = this.closest(".group-block")?.getAttribute("data-group");
+			if (g) mv_toggleGroup(opt, nodeList, searchInput, g);
+		});
+	});
+
+	searchInput.addEventListener("focus", function() {
+		mv_render_multivalue_list(cbid, opt, nodeList, searchInput);
+    });
+})();
+//]]>
+</script>

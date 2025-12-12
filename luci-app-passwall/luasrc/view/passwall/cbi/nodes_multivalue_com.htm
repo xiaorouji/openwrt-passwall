@@ -1,0 +1,283 @@
+<%
+--	Template Developers:
+--		- lwb1978
+--	Copyright: copyright(c)2025–2027
+--	Description: Passwall(2) UI template
+%>
+
+<style>
+/* 组标题的右箭头 */
+.mv-arrow-right {
+	width: 0;
+	height: 0;
+	border-top: 4px solid transparent;
+	border-bottom: 4px solid transparent;
+	border-left: 5px solid #555;
+	display: inline-block;
+	vertical-align: middle;
+}
+/* 组标题的下箭头 */
+.mv-arrow-down-small {
+	width: 0;
+	height: 0;
+	border-left: 4px solid transparent;
+	border-right: 4px solid transparent;
+	border-top: 5px solid #555;
+	display: inline-block;
+	vertical-align: middle;
+}
+.mv_search_input {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 6px;
+	margin-bottom: 8px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	max-height: 36px;
+}
+.mv_list_container {
+	max-height: 300px;
+	overflow: auto;
+	margin-bottom: 8px;
+	white-space: nowrap;
+}
+.mv_node_list {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 0 !important;
+	margin: 0 !important;
+}
+.mv_node_list li.group-block {
+	list-style: none;
+	padding: 0;
+	margin: 0 0 8px 0;
+}
+.mv_node_list .group-title {
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	padding: 6px;
+	margin-bottom: 4px;
+	background: #f0f0f0;
+	border-radius: 4px;
+	white-space: nowrap;
+}
+.mv_node_list ul.group-items {
+	margin: 0 0 8px 16px;
+	padding: 0;
+	list-style: none;
+}
+.mv_node_list ul.group-items li.node-item {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	white-space: nowrap;
+	text-align: left;
+}
+.mv-node-row {
+	display: inline-flex;
+	align-items: center;
+	vertical-align: middle;
+}
+.mv-node-checkbox {
+	margin: 0;
+	vertical-align: middle;
+	margin-right: 6px;
+}
+.mv-node-label {
+	margin: 0;
+	padding: 0;
+	vertical-align: middle;
+	cursor: pointer;
+}
+.mv-controls {
+	margin-top: 4px;
+	display: flex;
+	gap: 4px;
+	align-items: center;
+}
+</style>
+
+<script type="text/javascript">
+//<![CDATA[
+	// 折叠组
+	function mv_toggleGroup(opt, nodeList, searchInput, g) {
+		const ul = nodeList.querySelector("#group-" + opt + "-" + g);
+		const arrow = nodeList.querySelector("#arrow-" + opt + "-" + g);
+		if (!ul) return;
+		// 判断是否在搜索状态
+		const keyword = searchInput.value.trim().toLowerCase();
+		const isSearching = keyword.length > 0;
+		// 搜索状态下，仅切换当前组，不处理其他组
+		if (isSearching){
+			ul.style.display = ul.style.display === "none" ? "block" : "none";
+			if (arrow) arrow.className = ul.style.display === "none" ? "mv-arrow-right" : "mv-arrow-down-small";
+			return;
+		}
+		// 非搜索模式：先折叠其他组
+		nodeList.querySelectorAll(".group-block").forEach(group=>{
+			const gname = group.getAttribute("data-group");
+			const gul = document.getElementById("group-" + opt + "-" + gname);
+			const garrow = document.getElementById("arrow-" + opt + "-" + gname);
+			if (gname !== g) {
+				if (gul) gul.style.display = "none";
+				if (garrow) garrow.className = "mv-arrow-right";
+			}
+		});
+		nodeList.parentNode.scrollTop = 0;
+		// 切换当前组
+		ul.style.display = ul.style.display === "none" ? "block" : "none";
+		if (arrow) arrow.className = ul.style.display === "none" ? "mv-arrow-right" : "mv-arrow-down-small";
+	};
+
+	// 计数
+	function mv_updateCount(opt, nodeList, searchInput) {
+		const keyword = searchInput.value.trim().toLowerCase();
+		const isSearching = keyword.length > 0;
+		// 当前实例下的所有 checkbox
+		const cbs = isSearching 
+			? Array.from(nodeList.querySelectorAll("input[type=checkbox]")).filter(cb => cb.closest("li").style.display !== "none")
+			: nodeList.querySelectorAll("input[type=checkbox]");
+		let checked = 0;
+		cbs.forEach(cb => { if(cb.checked) checked++; });
+		// 更新总计
+		const totalSpan = document.getElementById("count-" + opt);
+		if (totalSpan) {
+			totalSpan.innerHTML = "<%:Selected:%> <span style='color:red;'>" + checked + " / " + cbs.length + "</span>";
+		}
+		// 更新每个组计数
+		nodeList.querySelectorAll(".group-block").forEach(group => {
+			const gname = group.getAttribute("data-group");
+			const groupCbs = group.querySelectorAll("li[data-node-name] input[type=checkbox]");
+			let groupChecked = 0;
+			let totalCount = 0;
+			groupCbs.forEach(cb => {
+				const li = cb.closest("li");
+				// 搜索时只统计可见节点
+				if (!isSearching || li.style.display !== "none") {
+					totalCount++;
+					if (cb.checked) groupChecked++;
+				}
+			});
+			const span = document.getElementById("group-count-" + opt + "-" + gname);
+			if(span) span.textContent = "(" + groupChecked + "/" + totalCount + ")";
+		});
+	}
+
+	// 搜索
+	function mv_filterGroups(searchInput, opt, nodeList) {
+		const keyword = searchInput.value.trim().toLowerCase();
+		nodeList.querySelectorAll(".group-block").forEach(group => {
+			const items = group.querySelectorAll("li[data-node-name]");
+			let matchCount = 0;
+			items.forEach(li => {
+				const name = li.getAttribute("data-node-name");
+				if (!keyword || name.indexOf(keyword) !== -1) {
+					li.style.display = "";
+					matchCount++;
+				} else {
+					li.style.display = "none";
+				}
+			});
+			// 搜索时自动展开组
+			const gname = group.getAttribute("data-group");
+			const ul = document.getElementById("group-" + opt + "-" + gname);
+			const arrow = document.getElementById("arrow-" + opt + "-" + gname);
+
+			if (matchCount === 0 && keyword !== "") {
+				group.style.display = "none";
+			} else {
+				group.style.display = "";
+				if (keyword && ul && arrow) {
+					ul.style.display = "";
+					arrow.className = "mv-arrow-down-small";
+				}
+			}
+		});
+		mv_updateCount(opt, nodeList, searchInput);
+		// 清空搜索后恢复全部折叠
+		if (!keyword) {
+			mv_collapseAllGroups(opt, nodeList);
+		}
+	}
+
+	// 折叠所有组
+	function mv_collapseAllGroups(opt, nodeList) {
+		nodeList.querySelectorAll(".group-block").forEach(group => {
+			const gname = group.getAttribute("data-group");
+			const ul = document.getElementById("group-" + opt + "-" + gname);
+			const arrow = document.getElementById("arrow-" + opt + "-" + gname);
+			if (ul) ul.style.display = "none";
+			if (arrow) arrow.className = "mv-arrow-right";
+		});
+	}
+
+	window.mv_nodeitem_rendered = {};
+	function mv_render_multivalue_list(cbid, opt, nodeList, searchInput) {
+		if (window.mv_nodeitem_rendered[cbid]) return;
+		const root = document.getElementById(cbid);
+		if (!root) return;
+		// 遍历所有组
+		root.querySelectorAll(".group-items").forEach(function(ul) {
+			// 组名
+			const gname = ul.id.replace("group-" + opt + "-", "");
+			// 解析 Lua 注入的数据
+			const items    = JSON.parse(ul.dataset.items || "[]");
+			const selected = JSON.parse(ul.dataset.selected || "{}");
+			// 清空
+			ul.innerHTML = "";
+			// 按你的原 HTML 完整渲染
+			items.forEach(function(item) {
+				// li
+				let li = document.createElement("li");
+				li.className = "node-item";
+				li.setAttribute("data-node-name", item.label.toLowerCase());
+				li.title = item.label;
+				// row div
+				let row = document.createElement("div");
+				row.className = "mv-node-row";
+				// checkbox
+				let checkboxId = cbid + "." + item.key;
+				let checkbox = document.createElement("input");
+				checkbox.type = "checkbox";
+				checkbox.className = "cbi-input-checkbox mv-node-checkbox";
+				checkbox.id = checkboxId;
+				checkbox.name = cbid;
+				checkbox.value = item.key;
+				if (selected[item.key]) checkbox.checked = true;
+				// label
+				let label = document.createElement("label");
+				label.className = "mv-node-label";
+				label.htmlFor = checkboxId;
+				label.textContent = item.label;
+				// 组装
+				row.appendChild(checkbox);
+				row.appendChild(label);
+				li.appendChild(row);
+				ul.appendChild(li);
+			});
+		});
+		window.mv_nodeitem_rendered[cbid] = true;
+		searchInput.addEventListener("input", function() {
+			mv_filterGroups(searchInput, opt, nodeList);
+		})
+		// checkbox 改变时更新计数
+		nodeList.addEventListener("change", () => {
+			mv_updateCount(opt, nodeList, searchInput);
+		});
+	}
+
+	// 全选 / 全不选
+	function mv_selectAll(cbid, opt, flag) {
+		if (!window.mv_nodeitem_rendered[cbid]) return;
+		const nodeList = document.getElementById(cbid + ".node_list");
+		const searchInput = document.getElementById(cbid + ".search");
+		const cbs = nodeList.querySelectorAll("input[type=checkbox]");
+		cbs.forEach(cb=>{
+			if (cb.offsetParent !== null) cb.checked = flag;
+		});
+		mv_updateCount(opt, nodeList, searchInput);
+	};
+
+//]]>
+</script>

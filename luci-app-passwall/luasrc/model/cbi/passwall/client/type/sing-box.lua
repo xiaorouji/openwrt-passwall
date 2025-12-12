@@ -109,7 +109,7 @@ end)
 o = s:option(MultiValue, _n("urltest_node"), translate("URLTest node list"), translate("List of nodes to test, <a target='_blank' href='https://sing-box.sagernet.org/configuration/outbound/urltest'>document</a>"))
 o:depends({ [_n("protocol")] = "_urltest" })
 o.widget = "checkbox"
-o.template = appname .. "/cbi/nodes_multiselect"
+o.template = appname .. "/cbi/nodes_multivalue"
 o.group = {}
 for i, v in pairs(nodes_table) do
 	o:value(v.id, v.remark)

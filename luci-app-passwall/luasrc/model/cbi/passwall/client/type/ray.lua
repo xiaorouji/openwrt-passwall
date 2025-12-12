@@ -102,7 +102,7 @@ end)
 o = s:option(MultiValue, _n("balancing_node"), translate("Load balancing node list"), translate("Load balancing node list, <a target='_blank' href='https://xtls.github.io/config/routing.html#balancerobject'>document</a>"))
 o:depends({ [_n("protocol")] = "_balancing" })
 o.widget = "checkbox"
-o.template = appname .. "/cbi/nodes_multiselect"
+o.template = appname .. "/cbi/nodes_multivalue"
 o.group = {}
 for i, v in pairs(nodes_table) do
 	o:value(v.id, v.remark)
