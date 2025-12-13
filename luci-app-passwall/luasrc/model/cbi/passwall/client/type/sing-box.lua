@@ -120,20 +120,27 @@ for i, v in pairs(nodes_table) do
 end
 -- 读取旧 DynamicList
 function o.cfgvalue(self, section)
-	local val = m.uci:get_list(appname, section, "urltest_node")
-	if val then
-		return val
-	else
-		return {}
-	end
+	return m.uci:get_list(appname, section, "urltest_node") or {}
 end
 -- 写入保持 DynamicList
 function o.custom_write(self, section, value)
-	local result = {}
+	local old = m.uci:get_list(appname, section, "urltest_node") or {}
+	local new, set = {}, {}
 	for v in value:gmatch("%S+") do
-		result[#result + 1] = v
+		new[#new + 1] = v
+		set[v] = 1
 	end
-	m.uci:set_list(appname, section, "urltest_node", result)
+	for _, v in ipairs(old) do
+		if not set[v] then
+			m.uci:set_list(appname, section, "urltest_node", new)
+			return
+		end
+		set[v] = nil
+	end
+	for _ in pairs(set) do
+		m.uci:set_list(appname, section, "urltest_node", new)
+		return
+	end
 end
 
 o = s:option(Value, _n("urltest_url"), translate("Probe URL"))
