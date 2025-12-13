@@ -34,6 +34,95 @@ local api = require "luci.passwall.api"
 			);
 		}
 
+		<% if api.is_js_luci() then %>
+
+		var global_id = null;
+		var global = document.getElementById("cbi-passwall-global");
+		if (global) {
+			var node = global.getElementsByClassName("cbi-section-node")[0];
+			var node_id = node.getAttribute("id");
+			global_id = node_id;
+			var reg1 = new RegExp("(?<=" + node_id + "-).*?(?=(_node))");
+			for (var i = 0; i < node.childNodes.length; i++) {
+				var row = node.childNodes[i];
+				if (!row || !row.childNodes) continue;
+
+				for (var k = 0; k < row.childNodes.length; k++) {
+					try {
+						var dom = row.childNodes[k];
+						if (!dom || !dom.id) continue;
+						var s = dom.id.match(reg1);
+						if (!s) continue;
+						var cbi_id = global_id + "-";
+						var dom_id = dom.id.split(cbi_id).join(cbi_id.split("-").join(".")).split("cbi.").join("cbid.");
+						if (!/_node$/.test(dom_id)) continue;
+
+						var node_select = document.getElementById(dom_id);
+						if (!node_select) continue;
+
+						var hidden_input = node_select.querySelector('input[type="hidden"][id$=".value"]');
+						var node_select_value = hidden_input ? hidden_input.value : "";
+						if (!node_select_value || node_select_value.indexOf("_default") === 0 || node_select_value.indexOf("_direct") === 0 || node_select_value.indexOf("_blackhole") === 0) {
+							continue;
+						}
+
+						var to_url = '<%=api.url("node_config")%>/' + node_select_value;
+						if (node_select_value.indexOf("Socks_") === 0) {
+							to_url = '<%=api.url("socks_config")%>/' +
+									 node_select_value.substring("Socks_".length);
+						}
+						var html = '<a href="#" onclick="location.href=\'' + to_url + '\'"><%:Edit%></a>';
+
+						if (s[0] === "tcp" || s[0] === "udp") {
+							html += '<a href="#" onclick="window.open(\'' + '<%=api.url("get_redir_log")%>?name=default&proto=' + s[0] + '\', \'_blank\')"><%:Log%></a>';
+						}
+
+						node_select.insertAdjacentHTML("beforeend",
+							'<div class="node-actions" style="display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap; margin-left:4px;">'  
+							+ html + '</div>'
+						);
+					} catch (e) {
+					}
+				}
+			}
+		}
+
+		var socks = document.getElementById("cbi-passwall-socks");
+		if (socks) {
+			var socks_enabled_dom = document.getElementById(global_id + "-socks_enabled");
+			socks_enabled_dom.parentNode.removeChild(socks_enabled_dom);
+			var descr = socks.getElementsByClassName("cbi-section-descr")[0];
+			descr.outerHTML = socks_enabled_dom.outerHTML;
+			rows = socks.getElementsByClassName("cbi-section-table-row");
+			for (var i = 0; i < rows.length; i++) {
+				try {
+					var row = rows[i];
+					var id = row.id;
+					if (!id) continue;
+					var dom_id = id + "-node";
+					dom_id = dom_id.replace("cbi-", "cbid-").replace(new RegExp("-", 'g'), ".");
+					var node_select = document.getElementById(dom_id);
+					if (!node_select) continue;
+
+					var hidden_input = node_select.querySelector('input[type="hidden"][id$=".value"]');
+					var node_select_value = hidden_input ? hidden_input.value : "";
+					if (node_select_value && node_select_value != "") {
+						var to_url = '<%=api.url("node_config")%>/' + node_select_value;
+						var html = '<a href="#" onclick="location.href=\'' + to_url + '\'"><%:Edit%></a>';
+						html += '<a href="#" onclick="window.open(\'' + '<%=api.url("get_socks_log")%>?name=' + id.replace("cbi-passwall-", "") + '\', \'_blank\')"><%:Log%></a>';
+
+						node_select.insertAdjacentHTML("afterend",
+							'<div class="node-actions" style="display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap; margin-left:4px;">'  
+							+ html + '</div>'
+						);
+					}
+				} catch(err) {
+				}
+			}
+		}
+
+		<% else %>
+
 		var global_id = null;
 		var global = document.getElementById("cbi-passwall-global");
 		if (global) {
@@ -145,36 +234,34 @@ local api = require "luci.passwall.api"
 				}
 			}
 		}
-	}
-	setTimeout("go()", 1000);
 
-	document.addEventListener("DOMContentLoaded", function () {
-		setTimeout(function () {
-			var selects = document.querySelectorAll("select[id*='dns_shunt']");
-			selects.forEach(function (select, index) {
+		<% end %>
+
+		var selects = document.querySelectorAll("select[id*='dns_shunt']");
+		selects.forEach(function (select, index) {
+			if (select.value === "chinadns-ng") {
+				addLogLink(select);
+			}
+			select.addEventListener("change", function () {
+				var existingLogLink = select.parentElement.querySelector("a.log-link");
+				if (existingLogLink) {
+					existingLogLink.remove();
+				}
 				if (select.value === "chinadns-ng") {
 					addLogLink(select);
 				}
-				select.addEventListener("change", function () {
-					var existingLogLink = select.parentElement.querySelector("a.log-link");
-					if (existingLogLink) {
-						existingLogLink.remove();
-					}
-					if (select.value === "chinadns-ng") {
-						addLogLink(select);
-					}
-				});
 			});
-			function addLogLink(select) {
-				var logLink = document.createElement("a");
-				logLink.innerHTML = "<%:Log%>";
-				logLink.href = "#";
-				logLink.className = "log-link";
-				logLink.style.marginLeft = "10px";
-				logLink.setAttribute("onclick", "window.open('" + '<%=api.url("get_chinadns_log")%>' + "?flag=default', '_blank')");
-				select.insertAdjacentElement("afterend", logLink);
-			}
-		}, 1000);
-	});
+		});
+		function addLogLink(select) {
+			var logLink = document.createElement("a");
+			logLink.innerHTML = "<%:Log%>";
+			logLink.href = "#";
+			logLink.className = "log-link";
+			logLink.style.marginLeft = "10px";
+			logLink.setAttribute("onclick", "window.open('" + '<%=api.url("get_chinadns_log")%>' + "?flag=default', '_blank')");
+			select.insertAdjacentElement("afterend", logLink);
+		}
+	}
+	setTimeout("go()", 1000);
 	//]]>
 </script>

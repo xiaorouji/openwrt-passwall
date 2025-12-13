@@ -14,6 +14,10 @@ function m.commit_handler(self)
 end
 
 if api.is_js_luci() then
+	m:append(Template(appname .. "/cbi/nodes_listvalue_com"))
+end
+
+if api.is_js_luci() then
 	m.apply_on_parse = false
 	m.on_after_apply = function(self)
 		uci:delete(appname, arg[1], "md5")
@@ -76,7 +80,8 @@ for k, e in ipairs(api.get_valid_nodes()) do
 			remark = e["remark"],
 			type = e["type"],
 			add_mode = e["add_mode"],
-			chain_proxy = e["chain_proxy"]
+			chain_proxy = e["chain_proxy"],
+			group = e["group"]
 		}
 	end
 end
@@ -268,18 +273,28 @@ descrStr = descrStr .. "The chained node must be the same type as your subscript
 descrStr = descrStr .. "You can only use manual or imported nodes as chained nodes."
 descrStr = translate(descrStr) .. "<br>" .. translate("Only support a layer of proxy.")
 
-o = s:option(ListValue, "preproxy_node", translate("Preproxy Node"))
-o:depends({ ["chain_proxy"] = "1" })
-o.description = descrStr
+o1 = s:option(ListValue, "preproxy_node", translate("Preproxy Node"))
+o1:depends({ ["chain_proxy"] = "1" })
+o1.description = descrStr
+if api.is_js_luci() then
+	o1.template = appname .. "/cbi/nodes_listvalue"
+end
+o1.group = {}
 
-o = s:option(ListValue, "to_node", translate("Landing Node"))
-o:depends({ ["chain_proxy"] = "2" })
-o.description = descrStr
+o2 = s:option(ListValue, "to_node", translate("Landing Node"))
+o2:depends({ ["chain_proxy"] = "2" })
+o2.description = descrStr
+if api.is_js_luci() then
+	o2.template = appname .. "/cbi/nodes_listvalue"
+end
+o2.group = {}
 
 for k, v in pairs(nodes_table) do
 	if (v.type == "Xray" or v.type == "sing-box") and (not v.chain_proxy or v.chain_proxy == "") and v.add_mode ~= "2" then
-		s.fields["preproxy_node"]:value(v.id, v.remark)
-		s.fields["to_node"]:value(v.id, v.remark)
+		o1:value(v.id, v.remark)
+		o1.group[#o1.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
+		o2:value(v.id, v.remark)
+		o2.group[#o2.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
 	end
 end
 

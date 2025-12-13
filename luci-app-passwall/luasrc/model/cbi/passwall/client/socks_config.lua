@@ -10,6 +10,9 @@ if not arg[1] or not m:get(arg[1]) then
 end
 
 m:append(Template(appname .. "/cbi/nodes_multivalue_com"))
+if api.is_js_luci() then
+	m:append(Template(appname .. "/cbi/nodes_listvalue_com"))
+end
 
 local has_singbox = api.finded_com("sing-box")
 local has_xray = api.finded_com("xray")
@@ -47,6 +50,10 @@ socks_node = s:option(ListValue, "node", translate("Node"))
 if auto_switch_tip then
 	socks_node.description = auto_switch_tip
 end
+if api.is_js_luci() then
+	socks_node.template = appname .. "/cbi/nodes_listvalue"
+end
+socks_node.group = {}
 
 o = s:option(Flag, "bind_local", translate("Bind Local"), translate("When selected, it can only be accessed localhost."))
 o.default = "0"
@@ -102,6 +109,7 @@ for i, v in pairs(nodes_table) do
 	o:value(v.id, v.remark)
 	o.group[#o.group+1] = v.group or ""
 	socks_node:value(v.id, v["remark"])
+	socks_node.group[#socks_node.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
 end
 -- 读取旧 DynamicList
 function o.cfgvalue(self, section)

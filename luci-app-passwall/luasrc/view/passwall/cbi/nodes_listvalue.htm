@@ -1,0 +1,147 @@
+<%+cbi/valueheader%>
+<%
+--	Template Developers:
+--		- lwb1978
+--		- snowie2000
+--	Copyright: copyright(c)2025–2027
+--	Description: Passwall(2) UI template
+
+local json = require "luci.jsonc"
+
+-- 读取值（keylist/vallist/group）
+local values = {}
+for i, key in pairs(self.keylist) do
+	values[#values + 1] = {
+		key = key,
+		label = self.vallist[i] or key,
+		group = self.group and self.group[i] or nil
+	}
+end
+
+-- 获取当前配置值（单值）
+local current_key = nil
+local cval = self:cfgvalue(section)
+if type(cval) == "table" then
+	-- 若意外为table，取第一个
+	for k,_ in pairs(cval) do
+		current_key = k
+		break
+	end
+elseif type(cval) == "string" then
+	current_key = (cval:match("%S+")) -- 取第一个 token
+end
+
+-- 分离无组节点（ungrouped）与有组节点（grouped），并保持原有顺序
+local ungrouped = {}
+local groups = {}
+local group_order = {}
+for _, item in ipairs(values) do
+	if not item.group or item.group == "" then
+		table.insert(ungrouped, item)
+	else
+		local g = item.group
+		if not groups[g] then
+			groups[g] = {}
+			table.insert(group_order, g)
+		end
+		table.insert(groups[g], item)
+	end
+end
+
+-- 如果没有配置值，默认取第一个（优先无组第一项，否则第一组第一项）
+if not current_key then
+	if #ungrouped > 0 then
+		current_key = ungrouped[1].key
+	else
+		-- 找到 group_order 第一个有节点的项
+		for _, g in ipairs(group_order) do
+			if groups[g] and #groups[g] > 0 then
+				current_key = groups[g][1].key
+				break
+			end
+		end
+	end
+end
+
+-- 获取当前 label（用于主控件显示）
+local function find_label_by_key(k)
+	if not k then return "" end
+	for _, v in ipairs(values) do
+		if v.key == k then return v.label end
+	end
+	return ""
+end
+local current_label = find_label_by_key(current_key) or ""
+
+-- 打包数据给 JS
+local dropdown_data = {
+	current_key = current_key,
+	current_label = current_label,
+	ungrouped = ungrouped,
+	groups = groups,
+	group_order = group_order,
+	cbid = cbid,
+}
+%>
+<script>
+window.lv_dropdown_data = window.lv_dropdown_data || {};
+window.lv_dropdown_data["<%=cbid%>"] = <%=json.stringify(dropdown_data)%>;
+</script>
+
+<div id="<%=cbid%>" class="lv-dropdown-container">
+	<select id="<%=cbid%>.ref" class="cbi-input-select" style="display: none !important">
+		<option value>placeholder</option>
+	</select>
+	<!-- 隐藏 input（保存实际配置值） -->
+ 	<input type="hidden" name="<%=cbid%>" id="<%=cbid%>.value" value="<%=current_key%>" class="cbi-input-dropdown" data-option="<%=self.option%>" data-update="cbi_d_update" onclick="cbi_d_update(this.name, this.value, this)" onchange="cbi_d_update(this.name, this.value, this)" />
+	<!-- 模拟的 ListValue 控件外观（与主题大小保持一致） -->
+	<div class="cbi-input-value cbi-input-select lv-dropdown-display" id="<%=cbid%>.display" tabindex="0">
+		<span id="<%=cbid%>.label" class="lv-dropdown-label" title="<%=pcdata(current_label)%>">
+			<%=pcdata(current_label ~= "" and current_label or ("("..translate("Not set")..")"))%>
+		</span>
+		<span class="lv-arrow-down"></span>
+	</div>
+	<!-- 下拉面板 -->
+	<div id="<%=cbid%>.panel" class="cbi-listvalue-panel lv-dropdown-panel">
+		<!-- 搜索框 -->
+		<div style="padding:8px;border-bottom:1px solid #f0f0f0;">
+			<input id="<%=cbid%>.search" class="cbi-input-text lv-dropdown-search" type="text" placeholder="<%:Search nodes...%>" />
+		</div>
+		<!-- 列表容器 -->
+		<div id="<%=cbid%>.list" style="padding:8px;">
+			<!-- 首次点击 display 时由 JS 填充 -->
+		</div>
+	</div>
+</div>
+
+<%+cbi/valuefooter%>
+
+<script type="text/javascript">
+//<![CDATA[
+(function(){
+	const cbid = "<%=cbid%>";
+	const panel = document.getElementById(cbid + ".panel");
+	const display = document.getElementById(cbid + ".display");
+	const labelSpan = document.getElementById(cbid + ".label");
+	const hiddenInput = document.getElementById(cbid + ".value");
+	const searchInput = document.getElementById(cbid + ".search");
+	const listContainer = document.getElementById(cbid + ".list");
+	// 点击 display
+	display.addEventListener("click", function(e){
+		e.stopPropagation();
+		lv_render_dropdown_list(cbid,panel,listContainer,hiddenInput,labelSpan,searchInput);
+		const panelStyle = window.getComputedStyle(panel);
+		const isPanelVisible = panelStyle.display !== "none";
+		document.querySelectorAll(".cbi-listvalue-panel").forEach(p=>{
+			if (p !== panel) p.style.display = "none";
+		});
+		if (isPanelVisible) {
+			lv_closePanel(cbid,panel,listContainer,hiddenInput,searchInput);
+		} else {
+			lv_openPanel(cbid,display,panel,listContainer,hiddenInput,searchInput);
+		}
+	});
+	lv_adaptiveStyle(cbid);	// copy select styles
+})();
+//]]>
+</script>

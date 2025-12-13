@@ -68,13 +68,15 @@ for k, e in ipairs(api.get_valid_nodes()) do
 	if e.protocol == "_balancing" then
 		balancers_table[#balancers_table + 1] = {
 			id = e[".name"],
-			remark = e["remark"]
+			remark = e["remark"],
+			group = e["group"]
 		}
 		if e[".name"] ~= arg[1] then
 			fallback_table[#fallback_table + 1] = {
 				id = e[".name"],
 				remark = e["remark"],
-				fallback = e["fallback_node"]
+				fallback = e["fallback_node"],
+				group = e["group"]
 			}
 		else
 			is_balancer = true
@@ -83,7 +85,8 @@ for k, e in ipairs(api.get_valid_nodes()) do
 	if e.protocol == "_iface" then
 		iface_table[#iface_table + 1] = {
 			id = e[".name"],
-			remark = e["remark"]
+			remark = e["remark"],
+			group = e["group"]
 		}
 	end
 end
@@ -93,7 +96,8 @@ m.uci:foreach(appname, "socks", function(s)
 	if s.enabled == "1" and s.node then
 		socks_list[#socks_list + 1] = {
 			id = "Socks_" .. s[".name"],
-			remark = translate("Socks Config") .. " " .. string.format("[%s %s]", s.port, translate("Port"))
+			remark = translate("Socks Config") .. " " .. string.format("[%s %s]", s.port, translate("Port")),
+			group = "Socks"
 		}
 	end
 end)
@@ -138,6 +142,10 @@ o.default = "random"
 o = s:option(ListValue, _n("fallback_node"), translate("Fallback Node"))
 o:value("", translate("Close(Not use)"))
 o:depends({ [_n("protocol")] = "_balancing" })
+if api.is_js_luci() then
+	o.template = appname .. "/cbi/nodes_listvalue"
+end
+o.group = {""}
 local function check_fallback_chain(fb)
 	for k, v in pairs(fallback_table) do
 		if v.fallback == fb then
@@ -150,8 +158,14 @@ end
 if is_balancer then
 	check_fallback_chain(arg[1])
 end
-for k, v in pairs(fallback_table) do o:value(v.id, v.remark) end
-for k, v in pairs(nodes_table) do o:value(v.id, v.remark) end
+for k, v in pairs(fallback_table) do
+	o:value(v.id, v.remark)
+	o.group[#o.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
+end
+for k, v in pairs(nodes_table) do
+	o:value(v.id, v.remark)
+	o.group[#o.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
+end
 
 -- 探测地址
 o = s:option(Flag, _n("useCustomProbeUrl"), translate("Use Custom Probe URL"), translate("By default the built-in probe URL will be used, enable this option to use a custom probe URL."))
@@ -192,17 +206,25 @@ if #nodes_table > 0 then
 
 	o = s:option(ListValue, _n("main_node"), string.format('<a style="color:red">%s</a>', translate("Preproxy Node")), translate("Set the node to be used as a pre-proxy. Each rule (including <code>Default</code>) has a separate switch that controls whether this rule uses the pre-proxy or not."))
 	o:depends({ [_n("protocol")] = "_shunt", [_n("preproxy_enabled")] = true })
+	if api.is_js_luci() then
+		o.template = appname .. "/cbi/nodes_listvalue"
+	end
+	o.group = {}
 	for k, v in pairs(socks_list) do
 		o:value(v.id, v.remark)
+		o.group[#o.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
 	end
 	for k, v in pairs(balancers_table) do
 		o:value(v.id, v.remark)
+		o.group[#o.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
 	end
 	for k, v in pairs(iface_table) do
 		o:value(v.id, v.remark)
+		o.group[#o.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
 	end
 	for k, v in pairs(nodes_table) do
 		o:value(v.id, v.remark)
+		o.group[#o.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
 	end
 end
 m.uci:foreach(appname, "shunt_rules", function(e)
@@ -213,22 +235,30 @@ m.uci:foreach(appname, "shunt_rules", function(e)
 		o:value("_direct", translate("Direct Connection"))
 		o:value("_blackhole", translate("Blackhole"))
 		o:depends({ [_n("protocol")] = "_shunt" })
+		if api.is_js_luci() then
+			o.template = appname .. "/cbi/nodes_listvalue"
+		end
+		o.group = {"","","",""}
 
 		if #nodes_table > 0 then
 			for k, v in pairs(socks_list) do
 				o:value(v.id, v.remark)
+				o.group[#o.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
 			end
 			for k, v in pairs(balancers_table) do
 				o:value(v.id, v.remark)
+				o.group[#o.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
 			end
 			for k, v in pairs(iface_table) do
 				o:value(v.id, v.remark)
+				o.group[#o.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
 			end
 			local pt = s:option(ListValue, _n(e[".name"] .. "_proxy_tag"), string.format('* <a style="color:red">%s</a>', e.remarks .. " " .. translate("Preproxy")))
 			pt:value("", translate("Close"))
 			pt:value("main", translate("Preproxy Node"))
 			for k, v in pairs(nodes_table) do
 				o:value(v.id, v.remark)
+				o.group[#o.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
 				pt:depends({ [_n("protocol")] = "_shunt", [_n("preproxy_enabled")] = true, [_n(e[".name"])] = v.id })
 			end
 		end
@@ -247,22 +277,30 @@ local o = s:option(ListValue, _n("default_node"), string.format('* <a style="col
 o:depends({ [_n("protocol")] = "_shunt" })
 o:value("_direct", translate("Direct Connection"))
 o:value("_blackhole", translate("Blackhole"))
+if api.is_js_luci() then
+	o.template = appname .. "/cbi/nodes_listvalue"
+end
+o.group = {"",""}
 
 if #nodes_table > 0 then
 	for k, v in pairs(socks_list) do
 		o:value(v.id, v.remark)
+		o.group[#o.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
 	end
 	for k, v in pairs(balancers_table) do
 		o:value(v.id, v.remark)
+		o.group[#o.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
 	end
 	for k, v in pairs(iface_table) do
 		o:value(v.id, v.remark)
+		o.group[#o.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
 	end
 	local dpt = s:option(ListValue, _n("default_proxy_tag"), string.format('* <a style="color:red">%s</a>', translate("Default Preproxy")), translate("When using, localhost will connect this node first and then use this node to connect the default node."))
 	dpt:value("", translate("Close"))
 	dpt:value("main", translate("Preproxy Node"))
 	for k, v in pairs(nodes_table) do
 		o:value(v.id, v.remark)
+		o.group[#o.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
 		dpt:depends({ [_n("protocol")] = "_shunt", [_n("preproxy_enabled")] = true, [_n("default_node")] = v.id })
 	end
 end
@@ -699,16 +737,26 @@ for i, v in ipairs(s.fields[_n("protocol")].keylist) do
 	end
 end
 
-o = s:option(ListValue, _n("preproxy_node"), translate("Preproxy Node"), translate("Only support a layer of proxy."))
-o:depends({ [_n("chain_proxy")] = "1" })
+o1 = s:option(ListValue, _n("preproxy_node"), translate("Preproxy Node"), translate("Only support a layer of proxy."))
+o1:depends({ [_n("chain_proxy")] = "1" })
+if api.is_js_luci() then
+	o1.template = appname .. "/cbi/nodes_listvalue"
+end
+o1.group = {}
 
-o = s:option(ListValue, _n("to_node"), translate("Landing Node"), translate("Only support a layer of proxy."))
-o:depends({ [_n("chain_proxy")] = "2" })
+o2 = s:option(ListValue, _n("to_node"), translate("Landing Node"), translate("Only support a layer of proxy."))
+o2:depends({ [_n("chain_proxy")] = "2" })
+if api.is_js_luci() then
+	o2.template = appname .. "/cbi/nodes_listvalue"
+end
+o2.group = {}
 
 for k, v in pairs(nodes_table) do
 	if v.type == "Xray" and v.id ~= arg[1] and (not v.chain_proxy or v.chain_proxy == "") then
-		s.fields[_n("preproxy_node")]:value(v.id, v.remark)
-		s.fields[_n("to_node")]:value(v.id, v.remark)
+		o1:value(v.id, v.remark)
+		o1.group[#o1.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
+		o2:value(v.id, v.remark)
+		o2.group[#o2.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
 	end
 end
 
