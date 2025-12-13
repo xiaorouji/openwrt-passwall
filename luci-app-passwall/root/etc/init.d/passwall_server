@@ -14,3 +14,9 @@ restart() {
 	stop
 	start
 }
+
+reload() {
+	echo "Warning: This service does not support configuration reloading"
+	echo "Performing full restart instead..."
+	restart
+}

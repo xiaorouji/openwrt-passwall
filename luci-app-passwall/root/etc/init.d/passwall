@@ -68,3 +68,9 @@ restart() {
 	$APP_FILE start
 	unset_lock
 }
+
+reload() {
+	echo "Warning: This service does not support configuration reloading"
+	echo "Performing full restart instead..."
+	restart
+}
