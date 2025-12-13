@@ -108,15 +108,12 @@ end
 
 	nodeList.querySelectorAll(".group-title").forEach(title => {
 		title.addEventListener("click", function() {
-			mv_render_multivalue_list(cbid, opt, nodeList, searchInput);
 			const g = this.closest(".group-block")?.getAttribute("data-group");
 			if (g) mv_toggleGroup(opt, nodeList, searchInput, g);
 		});
 	});
 
-	searchInput.addEventListener("focus", function() {
-		mv_render_multivalue_list(cbid, opt, nodeList, searchInput);
-    });
+	mv_multivalue_init(cbid, opt, nodeList, searchInput)
 })();
 //]]>
 </script>

@@ -279,5 +279,35 @@
 		mv_updateCount(opt, nodeList, searchInput);
 	};
 
+
+	function mv_onControlVisible(cbid, cb) {
+		var root = document.getElementById(cbid);
+		if (!root) return;
+		var container = root.closest(".cbi-value");
+		if (!container) return;
+		if (container.offsetParent !== null) {
+			cb();
+			return;
+		}
+		var observer = new MutationObserver(function () {
+			if (container.offsetParent !== null) {
+				observer.disconnect();
+				cb();
+			}
+		});
+		observer.observe(container, {
+			attributes: true,
+			attributeFilter: ["style", "class"]
+		});
+	}
+
+	function mv_multivalue_init(cbid, opt, nodeList, searchInput) {
+		mv_onControlVisible(cbid, function () {
+			var root = document.getElementById(cbid);
+			if (!root || root.dataset.rendered) return;
+			root.dataset.rendered = "1";
+			mv_render_multivalue_list(cbid, opt, nodeList, searchInput)
+		});
+	}
 //]]>
 </script>
