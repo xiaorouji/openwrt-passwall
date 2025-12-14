@@ -43,6 +43,7 @@ local api = require "luci.passwall.api"
 			var node_id = node.getAttribute("id");
 			global_id = node_id;
 			var reg1 = new RegExp("(?<=" + node_id + "-).*?(?=(_node))");
+
 			for (var i = 0; i < node.childNodes.length; i++) {
 				var row = node.childNodes[i];
 				if (!row || !row.childNodes) continue;
@@ -54,14 +55,15 @@ local api = require "luci.passwall.api"
 						var s = dom.id.match(reg1);
 						if (!s) continue;
 						var cbi_id = global_id + "-";
-						var dom_id = dom.id.split(cbi_id).join(cbi_id.split("-").join(".")).split("cbi.").join("cbid.");
-						if (!/_node$/.test(dom_id)) continue;
+						var cbid = dom.id.split(cbi_id).join(cbi_id.split("-").join(".")).split("cbi.").join("cbid.");
+						var dom_id = cbid + ".main";
+						if (!/_node\.main$/.test(dom_id)) continue;
 
 						var node_select = document.getElementById(dom_id);
 						if (!node_select) continue;
 
-						var hidden_input = node_select.querySelector('input[type="hidden"][id$=".value"]');
-						var node_select_value = hidden_input ? hidden_input.value : "";
+						var hidden_select = document.getElementById(cbid);
+						var node_select_value = hidden_select ? hidden_select.options[0].value : "";
 						if (!node_select_value || node_select_value.indexOf("_default") === 0 || node_select_value.indexOf("_direct") === 0 || node_select_value.indexOf("_blackhole") === 0) {
 							continue;
 						}
@@ -100,12 +102,13 @@ local api = require "luci.passwall.api"
 					var id = row.id;
 					if (!id) continue;
 					var dom_id = id + "-node";
-					dom_id = dom_id.replace("cbi-", "cbid-").replace(new RegExp("-", 'g'), ".");
+					var cbid = dom_id.replace("cbi-", "cbid-").replace(new RegExp("-", 'g'), ".");
+					dom_id = cbid + ".main";
 					var node_select = document.getElementById(dom_id);
 					if (!node_select) continue;
 
-					var hidden_input = node_select.querySelector('input[type="hidden"][id$=".value"]');
-					var node_select_value = hidden_input ? hidden_input.value : "";
+					var hidden_select = document.getElementById(cbid);;
+					var node_select_value = hidden_select ? hidden_select.options[0].value : "";
 					if (node_select_value && node_select_value != "") {
 						var to_url = '<%=api.url("node_config")%>/' + node_select_value;
 						var html = '<a href="#" onclick="location.href=\'' + to_url + '\'"><%:Edit%></a>';

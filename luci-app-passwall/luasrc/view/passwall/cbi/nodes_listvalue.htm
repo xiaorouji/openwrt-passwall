@@ -88,13 +88,12 @@ window.lv_dropdown_data = window.lv_dropdown_data || {};
 window.lv_dropdown_data["<%=cbid%>"] = <%=json.stringify(dropdown_data)%>;
 </script>
 
-<div id="<%=cbid%>" class="lv-dropdown-container">
-	<select id="<%=cbid%>.ref" class="cbi-input-select" style="display: none !important">
-		<option value>placeholder</option>
+<div id="<%=cbid%>.main" class="lv-dropdown-container">
+	<!-- 隐藏 select（保存实际配置值） -->
+	<select id="<%=cbid%>" name="<%=cbid%>" class="cbi-input-select" data-update="change" style="display:none !important;">
+		<option value="<%=current_key%>" selected="selected">placeholder</option>
 	</select>
-	<!-- 隐藏 input（保存实际配置值） -->
- 	<input type="hidden" name="<%=cbid%>" id="<%=cbid%>.value" value="<%=current_key%>" class="cbi-input-dropdown" data-option="<%=self.option%>" data-update="cbi_d_update" onclick="cbi_d_update(this.name, this.value, this)" onchange="cbi_d_update(this.name, this.value, this)" />
-	<!-- 模拟的 ListValue 控件外观（与主题大小保持一致） -->
+	<!-- 模拟 ListValue 控件外观 -->
 	<div class="cbi-input-value cbi-input-select lv-dropdown-display" id="<%=cbid%>.display" tabindex="0">
 		<span id="<%=cbid%>.label" class="lv-dropdown-label" title="<%=pcdata(current_label)%>">
 			<%=pcdata(current_label ~= "" and current_label or ("("..translate("Not set")..")"))%>
@@ -120,25 +119,26 @@ window.lv_dropdown_data["<%=cbid%>"] = <%=json.stringify(dropdown_data)%>;
 //<![CDATA[
 (function(){
 	const cbid = "<%=cbid%>";
+	const hiddenSelect = document.getElementById(cbid);
 	const panel = document.getElementById(cbid + ".panel");
 	const display = document.getElementById(cbid + ".display");
 	const labelSpan = document.getElementById(cbid + ".label");
-	const hiddenInput = document.getElementById(cbid + ".value");
 	const searchInput = document.getElementById(cbid + ".search");
 	const listContainer = document.getElementById(cbid + ".list");
+
 	// 点击 display
 	display.addEventListener("click", function(e){
 		e.stopPropagation();
-		lv_render_dropdown_list(cbid,panel,listContainer,hiddenInput,labelSpan,searchInput);
+		lv_render_dropdown_list(cbid,panel,listContainer,hiddenSelect,labelSpan,searchInput,display);
 		const panelStyle = window.getComputedStyle(panel);
 		const isPanelVisible = panelStyle.display !== "none";
 		document.querySelectorAll(".cbi-listvalue-panel").forEach(p=>{
 			if (p !== panel) p.style.display = "none";
 		});
 		if (isPanelVisible) {
-			lv_closePanel(cbid,panel,listContainer,hiddenInput,searchInput);
+			lv_closePanel(cbid,panel,listContainer,hiddenSelect,searchInput);
 		} else {
-			lv_openPanel(cbid,display,panel,listContainer,hiddenInput,searchInput);
+			lv_openPanel(cbid,display,panel,listContainer,hiddenSelect,searchInput);
 		}
 	});
 	lv_adaptiveStyle(cbid);	// copy select styles

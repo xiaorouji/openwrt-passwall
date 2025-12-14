@@ -87,17 +87,16 @@ local appname = api.appname
 	max-width: calc(100% - 18px);
 }
 .lv-dropdown-panel {
-	position: absolute;
-	top: 100%;
-	z-index: 9999;
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 2147483647;
 	display: none;
 	border: 1px solid #dcdcdc;
 	border-radius: 4px;
-	margin-top: 6px;
 	box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-	max-height: 60vh;
+	max-height: 50vh;
 	overflow: auto;
-	min-width: 100%;
 }
 .lv-dropdown-search {
 	width: 100%;
@@ -131,20 +130,10 @@ local appname = api.appname
 	text-overflow: ellipsis;
 	text-align: left !important;
 }
- #cbi-passwall-socks .td.cbi-value-field > div { 
+ #cbi-<%=appname%>-socks .td.cbi-value-field > div { 
 	white-space: nowrap;
 }
-/* 当下拉列表被遮挡时，给容器添加属性 */
-#cbi-<%=appname%>,
-#cbi-<%=appname%>-global,
-#cbi-<%=appname%>-socks,
-.cbi-section,
-.cbi-section-node {
-	overflow: visible !important;
-}
 </style>
-
-<script src="<%=resource%>/view/<%=appname%>/popper.min.js?v=25.12.11"></script>
 
 <script type="text/javascript">
 //<![CDATA[
@@ -258,10 +247,10 @@ local appname = api.appname
 
 	function lv_adaptiveStyle(cbid) {
 		const display = document.getElementById(cbid + ".display");
-		const hiddenRef = document.getElementById(cbid + ".ref");
-		if (hiddenRef && display) {
-			const elOption = hiddenRef.getElementsByTagName("option")[0]
-			const styleRef = window.getComputedStyle(hiddenRef)
+		const hiddenSelect = document.getElementById(cbid);
+		if (hiddenSelect && display) {
+			const elOption = hiddenSelect.getElementsByTagName("option")[0]
+			const styleSelect = window.getComputedStyle(hiddenSelect)
 			const styleOption = window.getComputedStyle(elOption)
 			const styleBody = window.getComputedStyle(document.body)
 
@@ -269,9 +258,9 @@ local appname = api.appname
 			const styleNames = ["width", "color", "height", "padding", "margin", "lineHeight", "border", "borderRadius"]
 			document.head.appendChild(styleNode)
 			// trace back from option -> select -> body for background color
-			const optionColor = !lv_isTransparent(styleOption.backgroundColor) ? styleOption.backgroundColor : !lv_isTransparent(styleRef.backgroundColor) ? styleRef.backgroundColor : styleBody.backgroundColor
+			const optionColor = !lv_isTransparent(styleOption.backgroundColor) ? styleOption.backgroundColor : !lv_isTransparent(styleSelect.backgroundColor) ? styleSelect.backgroundColor : styleBody.backgroundColor
 			const titleColor = lv_getColorSchema(optionColor) === "light" ? lv_darker(optionColor, 30) : lv_lighter(optionColor, 30)
-			const selectStyleCSS = [`#${CSS.escape(cbid + ".display")} {`, lv_style2Css(styleRef, styleNames), lv_style2Css(styleRef, ["backgroundColor"]), "}"]
+			const selectStyleCSS = [`#${CSS.escape(cbid + ".display")} {`, lv_style2Css(styleSelect, styleNames), lv_style2Css(styleSelect, ["backgroundColor"]), "}"]
 			const optionStyleCSS = [`#${CSS.escape(cbid + ".panel")}  {`, lv_style2Css(styleOption, styleNames), `background-color: ${optionColor};`, "}"]
 			const titleStyleCSS = [`#${CSS.escape(cbid + ".panel")} .lv-group-title  {`, `background-color: ${titleColor} !important;`, "}"]
 			styleNode.textContent = [].concat(selectStyleCSS, optionStyleCSS, titleStyleCSS).join("\n")
@@ -279,9 +268,9 @@ local appname = api.appname
 	}
 
 	// 高亮当前选中的项
-	function lv_highlightSelectedItem(listContainer, hiddenInput) {
+	function lv_highlightSelectedItem(listContainer, hiddenSelect) {
 		const allItems = listContainer.querySelectorAll("li[data-key]");
-		const currentKey = hiddenInput.value;
+		const currentKey = hiddenSelect.options[0].value;
 		allItems.forEach(item => {
 			item.classList.remove("is-selected");
 			if (item.getAttribute('data-key') === currentKey) {
@@ -291,9 +280,9 @@ local appname = api.appname
 	}
 
 	// 更新组内选中计数
-	function lv_updateGroupCounts(cbid, listContainer, hiddenInput, searchInput) {
+	function lv_updateGroupCounts(cbid, listContainer, hiddenSelect, searchInput) {
 		const groups = listContainer.querySelectorAll(".lv-group");
-		const currentKey = hiddenInput.value;
+		const currentKey = hiddenSelect.options[0].value;
 		const isSearching = searchInput.value.trim() !== "";
 		groups.forEach(group => {
 			const gname = group.getAttribute("data-group");
@@ -335,7 +324,7 @@ local appname = api.appname
 	}
 
 	//搜索过滤器：按 name 或 label 做模糊匹配，搜索时自动展开所有组并隐藏不匹配条目
-	function lv_filterList(keyword, cbid, listContainer, hiddenInput, searchInput) {
+	function lv_filterList(keyword, cbid, listContainer, hiddenSelect, searchInput) {
 		keyword = (keyword || "").toLowerCase().trim();
 		const topItems = listContainer.querySelectorAll("ul li[data-key]");
 		topItems.forEach(li=>{
@@ -371,8 +360,8 @@ local appname = api.appname
 				if (arrow) arrow.className = "lv-arrow-right";
 			}
 		});
-		lv_updateGroupCounts(cbid, listContainer, hiddenInput, searchInput);
-		lv_highlightSelectedItem(listContainer, hiddenInput);
+		lv_updateGroupCounts(cbid, listContainer, hiddenSelect, searchInput);
+		lv_highlightSelectedItem(listContainer, hiddenSelect);
 	}
 
 	// 切换单个组（点击组标题）
@@ -408,9 +397,9 @@ local appname = api.appname
 		}
 	}
 
-	// 展开包含当前 hiddenInput 值的组（初始化或打开面板时使用）
-	function lv_expandGroupOfCurrent(cbid, listContainer, hiddenInput) {
-		const key = hiddenInput.value;
+	// 展开包含当前 hiddenSelect 值的组（初始化或打开面板时使用）
+	function lv_expandGroupOfCurrent(cbid, listContainer, hiddenSelect) {
+		const key = hiddenSelect.options[0].value;
 		if (!key) return;
 		const targetLi = listContainer.querySelector("li[data-key='" + key.replace(/'/g,"\\'") + "']");
 		if (!targetLi) return;
@@ -446,70 +435,83 @@ local appname = api.appname
 		}
 	}
 
-	const lv_popperMap = {};
-	function lv_popperInit(cbid, display, panel) {	
-		if (!lv_popperMap[cbid]) {
-			lv_popperMap[cbid] = Popper.createPopper(display, panel, {
-				placement: 'bottom-start',
-				strategy: 'absolute',
-				modifiers: [
-					{
-						name: 'offset',
-						options: { offset: [0, 1] }
-					},
-					{
-						name: 'preventOverflow',
-						options: {
-							boundary: 'viewport',
-							padding: 8,
-							altAxis: true
-						}
-					},
-					{
-						name: 'flip',
-						options: {
-							fallbackPlacements: ['top-start', 'top', 'top-end'],
-							padding: 8,
-							boundary: 'viewport'
-						}
-					},
-					{
-						name: 'computeStyles',
-						options: { adaptive: true }
-					}
-				]
-			});
+	// 计算panel位置
+	function lv_repositionPanel(panel, display) {
+		if (!panel || panel.style.display === "none") return;
+		const rect = display.getBoundingClientRect();
+		const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+		panel.style.visibility = "hidden";
+		panel.style.display = "block";
+		panel.style.minHeight = "100px";
+		panel.style.maxHeight = Math.min(0.5*viewportHeight, 550) + "px";
+		const panelHeight = panel.offsetHeight;
+		const spaceBelow = viewportHeight - rect.bottom;
+		const spaceAbove = rect.top;
+		let top, isUp = false;
+		if (spaceBelow >= panelHeight) {
+			top = rect.bottom + 2;
+			isUp = false;
+		} else if (spaceAbove >= panelHeight) {
+			top = rect.top - panelHeight - 2;
+			isUp = true;
 		} else {
-			lv_popperMap[cbid].update();
+			if (spaceBelow >= spaceAbove) {
+				top = Math.max(rect.bottom - 2, viewportHeight - panelHeight - 2);
+				isUp = false;
+			} else {
+				top = Math.min(rect.top - panelHeight + 2, 2);
+				isUp = true;
+			}
 		}
-		return lv_popperMap[cbid];
+		panel.style.left = rect.left + "px";
+		panel.style.top = top + "px";
+		panel.style.minWidth = rect.width + "px";
+		panel.style.visibility = "";
 	}
 
 	// 打开/关闭面板
-	function lv_openPanel(cbid, display, panel, listContainer, hiddenInput, searchInput) {
+	function lv_openPanel(cbid, display, panel, listContainer, hiddenSelect, searchInput) {
+		if (!panel._moved) {
+			document.body.appendChild(panel);
+			panel._moved = true;
+		}
+		lv_expandGroupOfCurrent(cbid, listContainer, hiddenSelect);
+		lv_highlightSelectedItem(listContainer, hiddenSelect);
 		panel.style.display = "block";
-		lv_expandGroupOfCurrent(cbid, listContainer, hiddenInput);
-		lv_highlightSelectedItem(listContainer, hiddenInput);
-		lv_popperInit(cbid, display, panel);
+		lv_repositionPanel(panel, display);
 		// 失焦监听
 		const handler = function(e){
 			const target = e.target;
 			if (panel.style.display !== "none") {
 				if (!panel.contains(target) && !display.contains(target)) {
-					lv_closePanel(cbid, panel, listContainer, hiddenInput, searchInput, display);
+					lv_closePanel(cbid, panel, listContainer, hiddenSelect, searchInput, display);
 				}
 			}
 		}
 		panel._docClickHandler = handler;
 		document.addEventListener("click", handler);
+		// 滚动 / resize 自动 reposition
+		const repositionHandler = function() {
+			lv_repositionPanel(panel, display);
+		};
+		panel._repositionHandler = repositionHandler;
+		window.addEventListener("scroll", repositionHandler, true);
+		window.addEventListener("resize", repositionHandler);
 	}
-	function lv_closePanel(cbid, panel, listContainer, hiddenInput, searchInput) {
+	function lv_closePanel(cbid, panel, listContainer, hiddenSelect, searchInput) {
 		panel.style.display = "none";
 		searchInput.value = "";
-		lv_filterList("", cbid, listContainer, hiddenInput, searchInput);
+		lv_filterList("", cbid, listContainer, hiddenSelect, searchInput);
+		// document click
 		if (panel._docClickHandler) {
 			document.removeEventListener("click", panel._docClickHandler);
 			panel._docClickHandler = null;
+		}
+		// scroll / resize
+		if (panel._repositionHandler) {
+			window.removeEventListener("scroll", panel._repositionHandler, true);
+			window.removeEventListener("resize", panel._repositionHandler);
+			panel._repositionHandler = null;
 		}
 	}
 
@@ -522,7 +524,7 @@ local appname = api.appname
 	}
 
 	// 通用渲染函数
-	function lv_render_dropdown_list(cbid, panel, listContainer, hiddenInput, labelSpan, searchInput) {
+	function lv_render_dropdown_list(cbid, panel, listContainer, hiddenSelect, labelSpan, searchInput, display) {
 		if (window.lv_dropdown_rendered[cbid]) return;
 		const data = window.lv_dropdown_data[cbid];
 		if (!data) return;
@@ -585,7 +587,7 @@ local appname = api.appname
 		window.lv_dropdown_rendered[cbid] = true;
 
 		lv_adaptiveStyle(cbid);
-		lv_updateGroupCounts(cbid, listContainer, hiddenInput, searchInput);
+		lv_updateGroupCounts(cbid, listContainer, hiddenSelect, searchInput);
 
 		// 点击项（无组与组内项都使用 li[data-key]）
 		listContainer.addEventListener("click", function(e){
@@ -594,46 +596,57 @@ local appname = api.appname
 			if(!li || li === listContainer) return;
 			const key = li.getAttribute('data-key') || "";
 			const text = li.querySelector(".lv-item-label")?.textContent || li.textContent || key;
-			hiddenInput.value = key;
+			//动态改值
+			hiddenSelect.options[0].value =key;
+			hiddenSelect.value = key;
 			labelSpan.textContent = text;
 			labelSpan.title = text;
 			try {
 				var evt = new Event('change', { bubbles: true });
-				hiddenInput.dispatchEvent(evt);
+				hiddenSelect.dispatchEvent(evt);
 			} catch(e){}
-			lv_highlightSelectedItem(listContainer, hiddenInput);
-			lv_updateGroupCounts(cbid, listContainer, hiddenInput, searchInput);
-			lv_closePanel(cbid,panel,listContainer,hiddenInput,searchInput);
+			lv_highlightSelectedItem(listContainer, hiddenSelect);
+			lv_updateGroupCounts(cbid, listContainer, hiddenSelect, searchInput);
+			lv_closePanel(cbid,panel,listContainer,hiddenSelect,searchInput);
 		});
 
 		// 搜索功能
 		searchInput.addEventListener("input", function() {
-			lv_filterList(this.value, cbid, listContainer, hiddenInput, searchInput);
+			lv_filterList(this.value, cbid, listContainer, hiddenSelect, searchInput);
+			lv_repositionPanel(panel, display);
 		});
 
 		// 切换组
 		listContainer.querySelectorAll(".lv-group-title").forEach(title => {
 			title.addEventListener("click", function() {
 				const g = this.closest(".lv-group")?.getAttribute("data-group");
-				if (g) lv_toggleGroup(listContainer, cbid, g);
-			});
-		});
-
-		// 监听隐藏 input 的外部改变
-		hiddenInput.addEventListener("change", function(){
-			const val = this.value;
-			let targetLi = null;
-			const allLis = listContainer.querySelectorAll("li[data-key]");
-			allLis.forEach(li => {
-				if (li.getAttribute('data-key') === val) {
-					targetLi = li;
+				if (g) {
+					lv_toggleGroup(listContainer, cbid, g);
+					lv_repositionPanel(panel, display);
 				}
 			});
-			if (targetLi) {
-				labelSpan.textContent = targetLi.querySelector(".lv-item-label")?.textContent || targetLi.textContent;
-			}
-			lv_updateGroupCounts(cbid, listContainer, hiddenInput, searchInput);
 		});
+		
+		// 设置宽度
+		panel.style.maxWidth = lv_getPanelMaxWidth(display);
+		panel.style.minWidth = display.getBoundingClientRect().width + "px";
+		panel.style.width = "auto";
+	}
+
+	function lv_getPanelMaxWidth(display) {
+		if (!display) return 0;
+		const rectW = el => el && el.getBoundingClientRect().width;
+		const fallback = rectW(display) || 0;
+		const cbiValue = display.closest(".cbi-value");
+		if (cbiValue) {
+			const valueW = rectW(cbiValue);
+			const titleW = rectW(cbiValue.querySelector(".cbi-value-title"));
+			if (valueW) {
+				return Math.floor(titleW ? valueW - titleW : valueW);
+			}
+		}
+		const fieldW = rectW(display.closest(".cbi-value-field"));
+		return Math.floor(fieldW || fallback);
 	}
 //]]>
 </script>
