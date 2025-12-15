@@ -189,9 +189,7 @@ if #nodes_table > 0 then
 
 	o = s:option(ListValue, _n("main_node"), string.format('<a style="color:red">%s</a>', translate("Preproxy Node")), translate("Set the node to be used as a pre-proxy. Each rule (including <code>Default</code>) has a separate switch that controls whether this rule uses the pre-proxy or not."))
 	o:depends({ [_n("protocol")] = "_shunt", [_n("preproxy_enabled")] = true })
-	if api.is_js_luci() then
-		o.template = appname .. "/cbi/nodes_listvalue"
-	end
+	o.template = appname .. "/cbi/nodes_listvalue"
 	o.group = {}
 	for k, v in pairs(socks_list) do
 		o:value(v.id, v.remark)
@@ -218,9 +216,7 @@ m.uci:foreach(appname, "shunt_rules", function(e)
 		o:value("_direct", translate("Direct Connection"))
 		o:value("_blackhole", translate("Blackhole"))
 		o:depends({ [_n("protocol")] = "_shunt" })
-		if api.is_js_luci() then
-			o.template = appname .. "/cbi/nodes_listvalue"
-		end
+		o.template = appname .. "/cbi/nodes_listvalue"
 		o.group = {"","","",""}
 
 		if #nodes_table > 0 then
@@ -260,9 +256,7 @@ local o = s:option(ListValue, _n("default_node"), string.format('* <a style="col
 o:depends({ [_n("protocol")] = "_shunt" })
 o:value("_direct", translate("Direct Connection"))
 o:value("_blackhole", translate("Blackhole"))
-if api.is_js_luci() then
-	o.template = appname .. "/cbi/nodes_listvalue"
-end
+o.template = appname .. "/cbi/nodes_listvalue"
 o.group = {"",""}
 
 if #nodes_table > 0 then
@@ -839,16 +833,12 @@ end
 
 o1 = s:option(ListValue, _n("preproxy_node"), translate("Preproxy Node"), translate("Only support a layer of proxy."))
 o1:depends({ [_n("chain_proxy")] = "1" })
-if api.is_js_luci() then
-	o1.template = appname .. "/cbi/nodes_listvalue"
-end
+o1.template = appname .. "/cbi/nodes_listvalue"
 o1.group = {}
 
 o2 = s:option(ListValue, _n("to_node"), translate("Landing Node"), translate("Only support a layer of proxy."))
 o2:depends({ [_n("chain_proxy")] = "2" })
-if api.is_js_luci() then
-	o2.template = appname .. "/cbi/nodes_listvalue"
-end
+o2.template = appname .. "/cbi/nodes_listvalue"
 o2.group = {}
 
 for k, v in pairs(nodes_table) do

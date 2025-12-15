@@ -101,7 +101,7 @@ window.lv_dropdown_data["<%=cbid%>"] = <%=json.stringify(dropdown_data)%>;
 		<span class="lv-arrow-down"></span>
 	</div>
 	<!-- 下拉面板 -->
-	<div id="<%=cbid%>.panel" class="cbi-listvalue-panel lv-dropdown-panel">
+	<div id="<%=cbid%>.panel" class="cbi-listvalue-panel lv-dropdown-panel" style="display:none;">
 		<!-- 搜索框 -->
 		<div style="padding:8px;border-bottom:1px solid #f0f0f0;">
 			<input id="<%=cbid%>.search" class="cbi-input-text lv-dropdown-search" type="text" placeholder="<%:Search nodes...%>" />
@@ -130,12 +130,10 @@ window.lv_dropdown_data["<%=cbid%>"] = <%=json.stringify(dropdown_data)%>;
 	display.addEventListener("click", function(e){
 		e.stopPropagation();
 		lv_render_dropdown_list(cbid,panel,listContainer,hiddenSelect,labelSpan,searchInput,display);
-		const panelStyle = window.getComputedStyle(panel);
-		const isPanelVisible = panelStyle.display !== "none";
 		document.querySelectorAll(".cbi-listvalue-panel").forEach(p=>{
 			if (p !== panel) p.style.display = "none";
 		});
-		if (isPanelVisible) {
+		if (panel.style.display !== "none") {
 			lv_closePanel(cbid,panel,listContainer,hiddenSelect,searchInput);
 		} else {
 			lv_openPanel(cbid,display,panel,listContainer,hiddenSelect,searchInput);

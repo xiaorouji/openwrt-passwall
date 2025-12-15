@@ -9,9 +9,7 @@ if not arg[1] or not m:get(arg[1]) then
 	luci.http.redirect(m.redirect)
 end
 
-if api.is_js_luci() then
-	m:append(Template(appname .. "/cbi/nodes_listvalue_com"))
-end
+m:append(Template(appname .. "/cbi/nodes_listvalue_com"))
 
 local fs = api.fs
 local sys = api.sys
@@ -198,9 +196,7 @@ o:depends({ _hide_node_option = "1",  ['!reverse'] = true })
 o = s:option(ListValue, "tcp_node", "<a style='color: red'>" .. translate("TCP Node") .. "</a>")
 o.default = ""
 o:depends({ _hide_node_option = false, use_global_config = false })
-if api.is_js_luci() then
-	o.template = appname .. "/cbi/nodes_listvalue"
-end
+o.template = appname .. "/cbi/nodes_listvalue"
 o.group = {}
 
 o = s:option(DummyValue, "_tcp_node_bool", "")
@@ -213,9 +209,7 @@ o.default = ""
 o:value("", translate("Close"))
 o:value("tcp", translate("Same as the tcp node"))
 o:depends({ _tcp_node_bool = "1" })
-if api.is_js_luci() then
-	o.template = appname .. "/cbi/nodes_listvalue"
-end
+o.template = appname .. "/cbi/nodes_listvalue"
 o.group = {"",""}
 
 o = s:option(DummyValue, "_udp_node_bool", "")

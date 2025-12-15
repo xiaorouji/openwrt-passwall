@@ -91,7 +91,6 @@ local appname = api.appname
 	top: 0;
 	left: 0;
 	z-index: 2147483647;
-	display: none;
 	border: 1px solid #dcdcdc;
 	border-radius: 4px;
 	box-shadow: 0 6px 18px rgba(0,0,0,0.08);
@@ -255,7 +254,7 @@ local appname = api.appname
 			const styleBody = window.getComputedStyle(document.body)
 
 			const styleNode = document.createElement('style')
-			const styleNames = ["width", "color", "height", "padding", "margin", "lineHeight", "border", "borderRadius"]
+			const styleNames = ["width", "color", "height", "padding", "margin", "lineHeight", "border", "borderRadius", "minWidth", "minHeight"]
 			document.head.appendChild(styleNode)
 			// trace back from option -> select -> body for background color
 			const optionColor = !lv_isTransparent(styleOption.backgroundColor) ? styleOption.backgroundColor : !lv_isTransparent(styleSelect.backgroundColor) ? styleSelect.backgroundColor : styleBody.backgroundColor
@@ -431,7 +430,9 @@ local appname = api.appname
 			});
 		}
 		if (targetLi) {
-			targetLi.scrollIntoView({ block: "nearest" });
+			requestAnimationFrame(() => {
+				targetLi.scrollIntoView({ block: "nearest" });
+			});
 		}
 	}
 
@@ -491,8 +492,14 @@ local appname = api.appname
 		panel._docClickHandler = handler;
 		document.addEventListener("click", handler);
 		// 滚动 / resize 自动 reposition
-		const repositionHandler = function() {
-			lv_repositionPanel(panel, display);
+		let ticking = false;
+		const repositionHandler = function () {
+			if (ticking) return;
+			ticking = true;
+			requestAnimationFrame(function () {
+				ticking = false;
+				lv_repositionPanel(panel, display);
+			});
 		};
 		panel._repositionHandler = repositionHandler;
 		window.addEventListener("scroll", repositionHandler, true);
@@ -522,8 +529,6 @@ local appname = api.appname
 			"&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
 		}[c]));
 	}
-
-	// 通用渲染函数
 	function lv_render_dropdown_list(cbid, panel, listContainer, hiddenSelect, labelSpan, searchInput, display) {
 		if (window.lv_dropdown_rendered[cbid]) return;
 		const data = window.lv_dropdown_data[cbid];
@@ -596,17 +601,21 @@ local appname = api.appname
 			if(!li || li === listContainer) return;
 			const key = li.getAttribute('data-key') || "";
 			const text = li.querySelector(".lv-item-label")?.textContent || li.textContent || key;
-			//动态改值
-			hiddenSelect.options[0].value =key;
-			hiddenSelect.value = key;
-			labelSpan.textContent = text;
-			labelSpan.title = text;
-			try {
-				var evt = new Event('change', { bubbles: true });
-				hiddenSelect.dispatchEvent(evt);
-			} catch(e){}
-			lv_highlightSelectedItem(listContainer, hiddenSelect);
-			lv_updateGroupCounts(cbid, listContainer, hiddenSelect, searchInput);
+			if (key !== hiddenSelect.value) {
+				//动态改值
+				hiddenSelect.options[0].value = key;
+				hiddenSelect.value = key;
+				labelSpan.textContent = text;
+				labelSpan.title = text;
+				setTimeout(() => {
+					try {
+						const evt = new Event('change', { bubbles: true });
+						hiddenSelect.dispatchEvent(evt);
+					} catch(e){}
+				}, 0);
+				lv_highlightSelectedItem(listContainer, hiddenSelect);
+				lv_updateGroupCounts(cbid, listContainer, hiddenSelect, searchInput);
+			}
 			lv_closePanel(cbid,panel,listContainer,hiddenSelect,searchInput);
 		});
 

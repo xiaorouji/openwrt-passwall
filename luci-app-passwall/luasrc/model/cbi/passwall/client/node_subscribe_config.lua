@@ -13,9 +13,7 @@ function m.commit_handler(self)
 	self:del(arg[1], "md5")
 end
 
-if api.is_js_luci() then
-	m:append(Template(appname .. "/cbi/nodes_listvalue_com"))
-end
+m:append(Template(appname .. "/cbi/nodes_listvalue_com"))
 
 if api.is_js_luci() then
 	m.apply_on_parse = false
@@ -276,17 +274,13 @@ descrStr = translate(descrStr) .. "<br>" .. translate("Only support a layer of p
 o1 = s:option(ListValue, "preproxy_node", translate("Preproxy Node"))
 o1:depends({ ["chain_proxy"] = "1" })
 o1.description = descrStr
-if api.is_js_luci() then
-	o1.template = appname .. "/cbi/nodes_listvalue"
-end
+o1.template = appname .. "/cbi/nodes_listvalue"
 o1.group = {}
 
 o2 = s:option(ListValue, "to_node", translate("Landing Node"))
 o2:depends({ ["chain_proxy"] = "2" })
 o2.description = descrStr
-if api.is_js_luci() then
-	o2.template = appname .. "/cbi/nodes_listvalue"
-end
+o2.template = appname .. "/cbi/nodes_listvalue"
 o2.group = {}
 
 for k, v in pairs(nodes_table) do

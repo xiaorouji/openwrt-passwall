@@ -11,9 +11,7 @@ local has_chnroute = fs.access("/usr/share/passwall/rules/chnroute")
 m = Map(appname)
 api.set_apply_on_parse(m)
 
-if api.is_js_luci() then
-	m:append(Template(appname .. "/cbi/nodes_listvalue_com"))
-end
+m:append(Template(appname .. "/cbi/nodes_listvalue_com"))
 
 local nodes_table = {}
 for _, e in ipairs(api.get_valid_nodes()) do
@@ -109,17 +107,13 @@ o.rmempty = false
 
 ---- TCP Node
 o = s:taboption("Main", ListValue, "tcp_node", "<a style='color: red'>" .. translate("TCP Node") .. "</a>")
-if api.is_js_luci() then
-	o.template = appname .. "/cbi/nodes_listvalue"
-end
+o.template = appname .. "/cbi/nodes_listvalue"
 o:value("", translate("Close"))
 o.group = {""}
 
 ---- UDP Node
 o = s:taboption("Main", ListValue, "udp_node", "<a style='color: red'>" .. translate("UDP Node") .. "</a>")
-if api.is_js_luci() then
-	o.template = appname .. "/cbi/nodes_listvalue"
-end
+o.template = appname .. "/cbi/nodes_listvalue"
 o:value("", translate("Close"))
 o:value("tcp", translate("Same as the tcp node"))
 o.group = {"",""}
@@ -169,9 +163,7 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 
 			o = s:taboption("Main", ListValue, vid .. "-main_node", string.format('<a style="color:red">%s</a>', translate("Preproxy Node")), translate("Set the node to be used as a pre-proxy. Each rule (including <code>Default</code>) has a separate switch that controls whether this rule uses the pre-proxy or not."))
 			o:depends(vid .. "-preproxy_enabled", "1")
-			if api.is_js_luci() then
-				o.template = appname .. "/cbi/nodes_listvalue"
-			end
+			o.template = appname .. "/cbi/nodes_listvalue"
 			o.group = {}
 			for k1, v1 in pairs(socks_list) do
 				o:value(v1.id, v1.remark)
@@ -209,9 +201,7 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 					o:value("_default", translate("Default"))
 					o:value("_direct", translate("Direct Connection"))
 					o:value("_blackhole", translate("Blackhole"))
-					if api.is_js_luci() then
-						o.template = appname .. "/cbi/nodes_listvalue"
-					end
+					o.template = appname .. "/cbi/nodes_listvalue"
 					o.group = {"","","",""}
 
 					local pt = s:taboption("Main", ListValue, vid .. "-".. id .. "_proxy_tag", string.format('* <a style="color:red">%s</a>', e.remarks .. " " .. translate("Preproxy")))
@@ -252,9 +242,7 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 			o:depends("tcp_node", v.id)
 			o:value("_direct", translate("Direct Connection"))
 			o:value("_blackhole", translate("Blackhole"))
-			if api.is_js_luci() then
-				o.template = appname .. "/cbi/nodes_listvalue"
-			end
+			o.template = appname .. "/cbi/nodes_listvalue"
 			o.group = {"",""}
 			for k1, v1 in pairs(socks_list) do
 				o:value(v1.id, v1.remark)
@@ -388,6 +376,7 @@ end
 
 ---- DNS Forward Mode
 o = s:taboption("DNS", ListValue, "dns_mode", translate("Filter Mode"))
+o.default = "tcp"
 o:value("udp", translatef("Requery DNS By %s", "UDP"))
 o:value("tcp", translatef("Requery DNS By %s", "TCP"))
 if api.is_finded("dns2socks") then
@@ -773,9 +762,7 @@ o.default = 1
 o.rmempty = false
 
 o = s2:option(ListValue, "node", translate("Socks Node"))
-if api.is_js_luci() then
-	o.template = appname .. "/cbi/nodes_listvalue"
-end
+o.template = appname .. "/cbi/nodes_listvalue"
 o.group = {}
 
 o = s2:option(DummyValue, "now_node", translate("Current Node"))
