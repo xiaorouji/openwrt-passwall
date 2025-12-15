@@ -1,6 +1,7 @@
 local api = require "luci.passwall.api"
+local appname = api.appname
 local fs = api.fs
-local types_dir = "/usr/lib/lua/luci/model/cbi/passwall/server/type/"
+local types_dir = "/usr/lib/lua/luci/model/cbi/" .. appname .. "/server/type/"
 
 m = Map("passwall_server", translate("Server Config"))
 m.redirect = api.url("server")
@@ -9,6 +10,8 @@ api.set_apply_on_parse(m)
 if not arg[1] or not m:get(arg[1]) then
 	luci.http.redirect(m.redirect)
 end
+
+m:append(Template(appname .. "/cbi/nodes_listvalue_com"))
 
 s = m:section(NamedSection, arg[1], "user", "")
 s.addremove = false
