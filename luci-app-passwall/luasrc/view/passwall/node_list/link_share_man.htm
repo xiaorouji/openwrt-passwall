@@ -1657,7 +1657,9 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 <input type="button" class="btn cbi-button cbi-button-apply" value='<%:Generate QRCode%>' onclick="return genQrcode(this, '<%=self.option%>', '<%=self.value%>')" />
 <input type="button" class="btn cbi-button cbi-button-apply" value='<%:Export Config File%>' onclick="return exportConfigFile(this, '<%=self.value%>')" />
 <div id="qrcode_div" style="margin-top: 1rem;display:none">
-	<div id="qrcode"></div>
+	<div id="qrcode" style="display:flex;justify-content:center;"></div>
 </div>
-<span id="<%=self.option%>-status"></span>
+<div style="text-align:center;"> 
+	<span id="<%=self.option%>-status"></span>
+</div>
 <%+cbi/valuefooter%>
