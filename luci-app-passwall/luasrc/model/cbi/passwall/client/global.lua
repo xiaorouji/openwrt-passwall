@@ -309,6 +309,18 @@ o = s:taboption("Main", Flag, "tcp_node_socks_bind_local", translate("TCP Node")
 o.default = "1"
 o:depends({ tcp_node = "", ["!reverse"] = true })
 
+-- Node → DNS Depends Settings
+o = s:taboption("Main", DummyValue, "_node_sel_shunt", "")
+o.template = appname .. "/cbi/hidevalue"
+o.value = "1"
+o:depends({ tcp_node = "__always__" })
+
+o = s:taboption("Main", DummyValue, "_node_sel_other", "")
+o.template = appname .. "/cbi/hidevalue"
+o.value = "1"
+o:depends({ _node_sel_shunt = "1",  ['!reverse'] = true })
+
+-- [[ DNS Settings ]]--
 s:tab("DNS", translate("DNS"))
 
 o = s:taboption("DNS", ListValue, "dns_shunt", "DNS " .. translate("Shunt"))
@@ -388,8 +400,8 @@ end
 if has_xray then
 	o:value("xray", "Xray")
 end
-o:depends({ dns_shunt = "chinadns-ng", tcp_node = "" })
-o:depends({ dns_shunt = "dnsmasq", tcp_node = "" })
+o:depends({ dns_shunt = "chinadns-ng", _node_sel_other = "1" })
+o:depends({ dns_shunt = "dnsmasq", _node_sel_other = "1" })
 o.remove = function(self, section)
 	local f = s.fields["smartdns_dns_mode"]
 	if f and f:formvalue(section) then
@@ -408,7 +420,7 @@ if api.is_finded("smartdns") then
 	if has_xray then
 		o:value("xray", "Xray")
 	end
-	o:depends({ dns_shunt = "smartdns", tcp_node = "" })
+	o:depends({ dns_shunt = "smartdns", _node_sel_other = "1" })
 	o.remove = function(self, section)
 		local f = s.fields["dns_mode"]
 		if f and f:formvalue(section) then
@@ -468,7 +480,9 @@ o:value("tcp+doh", "TCP + DoH (" .. translate("A/AAAA type") .. ")")
 o:depends("dns_mode", "xray")
 o:depends("smartdns_dns_mode", "xray")
 o.cfgvalue = function(self, section)
-	return m:get(section, "v2ray_dns_mode")
+	local v = m:get(section, "v2ray_dns_mode")
+	local key = { udp = true, tcp = true, ["tcp+doh"] = true }
+	return (v and key[v]) and v or self.default
 end
 o.write = function(self, section, value)
 	if s.fields["dns_mode"]:formvalue(section) == "xray" or s.fields["smartdns_dns_mode"]:formvalue(section) == "xray" then
@@ -484,7 +498,9 @@ o:value("doh", "DoH")
 o:depends("dns_mode", "sing-box")
 o:depends("smartdns_dns_mode", "sing-box")
 o.cfgvalue = function(self, section)
-	return m:get(section, "v2ray_dns_mode")
+	local v = m:get(section, "v2ray_dns_mode")
+	local key = { udp = true, tcp = true, doh = true }
+	return (v and key[v]) and v or self.default
 end
 o.write = function(self, section, value)
 	if s.fields["dns_mode"]:formvalue(section) == "sing-box" or s.fields["smartdns_dns_mode"]:formvalue(section) == "sing-box" then
@@ -548,6 +564,7 @@ o.datatype = "ipaddr"
 o:depends({dns_mode = "sing-box"})
 o:depends({dns_mode = "xray"})
 o:depends("dns_shunt", "smartdns")
+o:depends("_node_sel_shunt", "1")
 
 o = s:taboption("DNS", Flag, "remote_fakedns", "FakeDNS", translate("Use FakeDNS work in the shunt domain that proxy."))
 o.default = "0"
@@ -557,6 +574,7 @@ o:depends({smartdns_dns_mode = "sing-box", dns_shunt = "smartdns"})
 o:depends({dns_mode = "xray", dns_shunt = "dnsmasq"})
 o:depends({dns_mode = "xray", dns_shunt = "chinadns-ng"})
 o:depends({smartdns_dns_mode = "xray", dns_shunt = "smartdns"})
+o:depends("_node_sel_shunt", "1")
 o.validate = function(self, value, t)
 	if value and value == "1" then
 		local _dns_mode = s.fields["dns_mode"]:formvalue(t)
@@ -810,22 +828,15 @@ for k, v in pairs(nodes_table) do
 			udp:value(v.id, v["remark"])
 			udp.group[#udp.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
 
-			s.fields["xray_dns_mode"]:depends({ [v.id .. "-type"] = "Xray", tcp_node = v.id })
-			s.fields["singbox_dns_mode"]:depends({ [v.id .. "-type"] = "sing-box", tcp_node = v.id })
-			s.fields["remote_dns_client_ip"]:depends({ tcp_node = v.id })
-			s.fields["remote_fakedns"]:depends({ tcp_node = v.id })
+			s.fields["_node_sel_shunt"]:depends({ tcp_node = v.id })
+			s.fields["xray_dns_mode"]:depends({ [v.id .. "-type"] = "Xray", _node_sel_shunt = "1" })
+			s.fields["singbox_dns_mode"]:depends({ [v.id .. "-type"] = "sing-box", _node_sel_shunt = "1" })
 		end
 	else
 		tcp:value(v.id, v["remark"])
 		tcp.group[#tcp.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
 		udp:value(v.id, v["remark"])
 		udp.group[#udp.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
-
-		s.fields["dns_mode"]:depends({ dns_shunt = "chinadns-ng", tcp_node = v.id })
-		s.fields["dns_mode"]:depends({ dns_shunt = "dnsmasq", tcp_node = v.id })
-		if api.is_finded("smartdns") then
-			s.fields["smartdns_dns_mode"]:depends({ dns_shunt = "smartdns", tcp_node = v.id })
-		end
 	end
 	if v.type == "Socks" then
 		if has_singbox or has_xray then
