@@ -244,9 +244,11 @@ local appname = api.appname
 		return lv_rgbToHex(r, g, b);
 	}
 
+	// copy select styles
 	function lv_adaptiveStyle(cbid) {
 		const display = document.getElementById(cbid + ".display");
 		const hiddenSelect = document.getElementById(cbid);
+		const panel = document.getElementById(cbid + ".panel");
 		if (hiddenSelect && display) {
 			const elOption = hiddenSelect.getElementsByTagName("option")[0]
 			const styleSelect = window.getComputedStyle(hiddenSelect)
@@ -466,7 +468,13 @@ local appname = api.appname
 		}
 		panel.style.left = rect.left + "px";
 		panel.style.top = top + "px";
-		panel.style.minWidth = rect.width + "px";
+		const panelRect = panel.getBoundingClientRect();
+		const displayWidth = rect.width;
+		const remainingWidth = window.innerWidth - panelRect.left - 12;
+		const maxWidth = Math.max(displayWidth, Math.floor(remainingWidth));
+		panel.style.maxWidth = maxWidth + "px";
+		panel.style.minWidth = displayWidth + "px";
+		panel.style.width = "auto";
 		panel.style.visibility = "";
 	}
 
@@ -601,22 +609,24 @@ local appname = api.appname
 			if(!li || li === listContainer) return;
 			const key = li.getAttribute('data-key') || "";
 			const text = li.querySelector(".lv-item-label")?.textContent || li.textContent || key;
-			if (key !== hiddenSelect.value) {
-				//动态改值
+
+			const changed = key !== hiddenSelect.value;
+			if (changed) {
+				//改值
 				hiddenSelect.options[0].value = key;
+				hiddenSelect.options[0].text = key;
 				hiddenSelect.value = key;
 				labelSpan.textContent = text;
 				labelSpan.title = text;
-				setTimeout(() => {
-					try {
-						const evt = new Event('change', { bubbles: true });
-						hiddenSelect.dispatchEvent(evt);
-					} catch(e){}
-				}, 0);
 				lv_highlightSelectedItem(listContainer, hiddenSelect);
 				lv_updateGroupCounts(cbid, listContainer, hiddenSelect, searchInput);
 			}
 			lv_closePanel(cbid,panel,listContainer,hiddenSelect,searchInput);
+			if (changed) {
+				setTimeout(() => {
+					hiddenSelect.dispatchEvent(new Event('change', { bubbles: true }));
+				}, 0);
+			}
 		});
 
 		// 搜索功能
@@ -635,27 +645,22 @@ local appname = api.appname
 				}
 			});
 		});
-		
-		// 设置宽度
-		panel.style.maxWidth = lv_getPanelMaxWidth(display);
-		panel.style.minWidth = display.getBoundingClientRect().width + "px";
-		panel.style.width = "auto";
 	}
 
-	function lv_getPanelMaxWidth(display) {
-		if (!display) return 0;
-		const rectW = el => el && el.getBoundingClientRect().width;
-		const fallback = rectW(display) || 0;
-		const cbiValue = display.closest(".cbi-value");
-		if (cbiValue) {
-			const valueW = rectW(cbiValue);
-			const titleW = rectW(cbiValue.querySelector(".cbi-value-title"));
-			if (valueW) {
-				return Math.floor(titleW ? valueW - titleW : valueW);
-			}
-		}
-		const fieldW = rectW(display.closest(".cbi-value-field"));
-		return Math.floor(fieldW || fallback);
+	const lv_adaptiveControls = new Set();
+	function lv_registerAdaptive(cbid) {
+		lv_adaptiveControls.add(cbid);
+		lv_adaptiveStyle(cbid);
 	}
+	let lv_adaptiveTicking = false;
+	window.addEventListener("resize", () => {
+		if (!lv_adaptiveTicking) {
+			lv_adaptiveTicking = true;
+			requestAnimationFrame(() => {
+				lv_adaptiveControls.forEach(cbid => lv_adaptiveStyle(cbid));
+				lv_adaptiveTicking = false;
+			});
+		}
+	});
 //]]>
 </script>
