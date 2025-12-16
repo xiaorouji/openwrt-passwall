@@ -201,8 +201,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 				} or nil,
 				wsSettings = (node.transport == "ws") and {
 					path = node.ws_path or "/",
-					headers = (node.ws_host or node.ws_user_agent) and {
-						Host = node.ws_host,
+					host = node.ws_host,
+					headers = node.ws_user_agent and {
 						["User-Agent"] = node.ws_user_agent
 					} or nil,
 					maxEarlyData = tonumber(node.ws_maxEarlyData) or nil,
