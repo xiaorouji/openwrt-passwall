@@ -41,9 +41,14 @@ local api = require "luci.passwall.api"
 	}
 
 	function open_add_link_div() {
-		document.getElementById('modal-mask').style.display = 'block';
-		document.getElementById("add_link_div").style.display = "block";
 		document.body.classList.add('modal-open');
+		document.getElementById('modal-mask').style.display = 'block';
+		const addLinkDiv = document.getElementById("add_link_div");
+		addLinkDiv.style.display = "block";
+		if (!addLinkDiv._dropdown_inited) {
+			addLinkDiv._dropdown_inited = true;
+			dropdown_list_fun("addlink_group_custom");
+		}
 		document.getElementById("nodes_link").focus();
 	}
 
@@ -54,11 +59,11 @@ local api = require "luci.passwall.api"
 	}
 
 	function add_node() {
-		var nodes_link = document.getElementById("nodes_link").value;
-		var group = (document.querySelector('#addlink_group_custom input[type="hidden"]')?.value || "default");
+		let nodes_link = document.getElementById("nodes_link").value;
+		const group = (document.querySelector('#addlink_group_custom input[type="hidden"]')?.value || "default");
 		nodes_link = nodes_link.replace(/\t/g, "").replace(/\r\n|\r/g, "\n").replace(/<[^>]*>/g, '').trim();
 		if (nodes_link != "") {
-			var s = nodes_link.split('://');
+			let s = nodes_link.split('://');
 			if (s.length > 1) {
 				ajax_add_node(nodes_link, group);
 			}
@@ -86,20 +91,25 @@ local api = require "luci.passwall.api"
 	}
 
 	function open_reassign_group_div() {
-		var ids = [];
-		var visibleContainer = document.querySelector('#cbi-passwall-nodes > .cbi-tabcontainer[style*="display:block"], #cbi-passwall-nodes > .cbi-tabcontainer[style*="display: block"]');
+		const ids = [];
+		const visibleContainer = document.querySelector('#cbi-passwall-nodes > .cbi-tabcontainer[style*="display:block"], #cbi-passwall-nodes > .cbi-tabcontainer[style*="display: block"]');
 		if (!visibleContainer) return;
-		var doms = visibleContainer.getElementsByClassName("nodes_select");
+		const doms = visibleContainer.getElementsByClassName("nodes_select");
 		if (doms && doms.length > 0) {
-			for (var i = 0 ; i < doms.length; i++) {
+			for (let i = 0 ; i < doms.length; i++) {
 				if (doms[i].checked) {
 					ids.push(doms[i].getAttribute("cbid"))
 				}
 			}
 			if (ids.length > 0) {
-				document.getElementById('modal-mask').style.display = 'block';
-				document.getElementById("reassign_group_div").style.display = "block";
 				document.body.classList.add('modal-open');
+				document.getElementById('modal-mask').style.display = 'block';
+				const reassignGroupDiv = document.getElementById("reassign_group_div");
+				reassignGroupDiv.style.display = "block";
+				if (!reassignGroupDiv._dropdown_inited) {
+					reassignGroupDiv._dropdown_inited = true;
+					dropdown_list_fun("reassign_group_custom");
+				}
 			} else {
 				alert("<%:You no select nodes !%>");
 			}
@@ -113,13 +123,13 @@ local api = require "luci.passwall.api"
 	}
 
 	function reassign_group() {
-		var ids = [];
-		var group = (document.querySelector('#reassign_group_custom input[type="hidden"]')?.value || "default");
-		var visibleContainer = document.querySelector('#cbi-passwall-nodes > .cbi-tabcontainer[style*="display:block"], #cbi-passwall-nodes > .cbi-tabcontainer[style*="display: block"]');
+		const ids = [];
+		const group = (document.querySelector('#reassign_group_custom input[type="hidden"]')?.value || "default");
+		const visibleContainer = document.querySelector('#cbi-passwall-nodes > .cbi-tabcontainer[style*="display:block"], #cbi-passwall-nodes > .cbi-tabcontainer[style*="display: block"]');
 		if (!visibleContainer) return;
-		var doms = visibleContainer.getElementsByClassName("nodes_select");
+		const doms = visibleContainer.getElementsByClassName("nodes_select");
 		if (doms && doms.length > 0) {
-			for (var i = 0 ; i < doms.length; i++) {
+			for (let i = 0 ; i < doms.length; i++) {
 				if (doms[i].checked) {
 					ids.push(doms[i].getAttribute("cbid"))
 				}
@@ -147,14 +157,14 @@ local api = require "luci.passwall.api"
 
 	//自定义分组下拉列表事件
 	function dropdown_list_fun(div_id) {
-		var dropdown = document.getElementById(div_id);
+		const dropdown = document.getElementById(div_id);
 		if (!dropdown) return;
 
-		var display = dropdown.querySelector(".selected-display");
-		var displayText = display.querySelector(".text");
-		var list = dropdown.querySelector(".dropdown-list");
-		var hidden = dropdown.querySelector('input[type="hidden"]');
-		var input = dropdown.querySelector(".create-item-input");
+		const display = dropdown.querySelector(".selected-display");
+		const displayText = display.querySelector(".text");
+		const list = dropdown.querySelector(".dropdown-list");
+		const hidden = dropdown.querySelector('input[type="hidden"]');
+		const input = dropdown.querySelector(".create-item-input");
 
 		display.addEventListener("click", function() {
 			list.style.display = list.style.display === "none" ? "block" : "none";
@@ -173,29 +183,29 @@ local api = require "luci.passwall.api"
 		}
 
 		list.addEventListener("click", function(e){
-			var li = e.target.closest(".dropdown-item");
+			const li = e.target.closest(".dropdown-item");
 			if (!li || li.classList.contains("custom-input")) return;
 			selectItem(li);
 		});
 
 		input.addEventListener("keydown", function(e){
-			var isEnter = e.key === "Enter" || e.keyCode === 13;
+			const isEnter = e.key === "Enter" || e.keyCode === 13;
 			if (!isEnter) return;
 			e.stopPropagation();
 			e.preventDefault();
 
-			var val = input.value.trim();
+			const val = input.value.trim();
 			if (!val) return;
 
 			if (val.toLowerCase() === "default") {
-				var emptyLi = Array.from(list.querySelectorAll(".dropdown-item"))
+				const emptyLi = Array.from(list.querySelectorAll(".dropdown-item"))
 					.find(function(el){ return !el.dataset.value; });
 				if (emptyLi) selectItem(emptyLi);
 				input.value = "";
 				return;
 			}
 
-			var li = Array.from(list.querySelectorAll(".dropdown-item")).find(function(el){
+			let li = Array.from(list.querySelectorAll(".dropdown-item")).find(function(el){
 				return el.dataset.value && el.dataset.value.toLowerCase() === val.toLowerCase();
 			});
 			if (!li) {
@@ -210,26 +220,25 @@ local api = require "luci.passwall.api"
 			selectItem(li);
 		});
 		// 从tab中读取分组名称
-		var observer = new MutationObserver(function(mutations, obs){
-			var tabs = document.querySelectorAll(".cbi-tabmenu li");
-			if(!tabs.length) return;
+		function InsertGroup(list, input) {
+			const tabs = document.querySelectorAll(".cbi-tabmenu li");
+			if (!tabs.length) {
+				setTimeout(() => InsertGroup(list, input), 50);
+				return;
+			}
 
 			tabs.forEach(function(li){
-				var group = li.id.split('.').pop();
+				const group = li.id.split('.').pop();
 				if(group === "default") return;
 				if(Array.from(list.querySelectorAll(".dropdown-item")).some(el => el.dataset.value === group)) return;
-
-				var newLi = document.createElement("li");
+				const newLi = document.createElement("li");
 				newLi.className = "dropdown-item";
 				newLi.dataset.value = group;
 				newLi.textContent = group;
-
 				list.insertBefore(newLi, input.parentNode);
 			});
-
-			obs.disconnect();
-		});
-		observer.observe(document.body, {childList: true, subtree: true});
+		}
+		InsertGroup(list, input);
 
 		// 点击外部时自动收起
 		document.addEventListener("click", function(e) {
@@ -238,14 +247,6 @@ local api = require "luci.passwall.api"
 			}
 		});
 	}
-
-	document.addEventListener("DOMContentLoaded", function() {
-		dropdown_list_fun("addlink_group_custom");
-	});
-
-	document.addEventListener("DOMContentLoaded", function() {
-		dropdown_list_fun("reassign_group_custom");
-	});
 	//]]>
 </script>
 
@@ -264,10 +265,10 @@ local api = require "luci.passwall.api"
 				<div id="addlink_group_custom" class="custom-dropdown">
 					<div class="selected-display">
 						<span class="text"><%:default%></span>
-						<span class="arrow">▾</span>
+						<span class="arrow-down-small"></span>
 					</div>
 					<ul class="dropdown-list" style="display:none;">
-						<li class="dropdown-item" data-value=""><%:default%></li>
+						<li class="dropdown-item selected" data-value=""><%:default%></li>
 						<li class="dropdown-item custom-input">
 							<input type="text" placeholder="-- <%:custom%> --" class="create-item-input" inputmode="text" enterkeyhint="done">
 						</li>
@@ -292,10 +293,10 @@ local api = require "luci.passwall.api"
 				<div id="reassign_group_custom" class="custom-dropdown">
 					<div class="selected-display">
 						<span class="text"><%:default%></span>
-						<span class="arrow">▾</span>
+						<span class="arrow-down-small"></span>
 					</div>
 					<ul class="dropdown-list" style="display:none;">
-						<li class="dropdown-item" data-value=""><%:default%></li>
+						<li class="dropdown-item selected" data-value=""><%:default%></li>
 						<li class="dropdown-item custom-input">
 							<input type="text" placeholder="-- <%:custom%> --" class="create-item-input" inputmode="text" enterkeyhint="done">
 						</li>
@@ -461,7 +462,7 @@ local api = require "luci.passwall.api"
 		background-color: #f7f7f7;
 	}
 
-	.selected-display .arrow {
+	.selected-display {
 		font-size: 12px;
 		color: #666;
 	}
@@ -508,5 +509,15 @@ local api = require "luci.passwall.api"
 		line-height: 20px;
 		border: 1px solid #ccc;
 		text-align: left;
+	}
+
+	.arrow-down-small {
+		width: 0;
+		height: 0;
+		border-left: 4px solid transparent;
+		border-right: 4px solid transparent;
+		border-top: 5px solid #555;
+		display: inline-block;
+		vertical-align: middle;
 	}
 </style>
