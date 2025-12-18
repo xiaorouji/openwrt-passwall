@@ -1531,7 +1531,11 @@ function gen_config(var)
 		end
 
 		for index, value in ipairs(config.outbounds) do
-			if not value["_flag_proxy_tag"] and value["_id"] and value.server and value.server_port and not no_run then
+			local s = value.settings
+			if not value["_flag_proxy_tag"] and value["_id"] and s and not no_run and
+			((s.vnext and s.vnext[1] and s.vnext[1].address and s.vnext[1].port) or 
+			(s.servers and s.servers[1] and s.servers[1].address and s.servers[1].port) or
+			(s.peers and s.peers[1] and s.peers[1].endpoint)) then
 				sys.call(string.format("echo '%s' >> %s", value["_id"], api.TMP_PATH .. "/direct_node_list"))
 			end
 			for k, v in pairs(config.outbounds[index]) do
