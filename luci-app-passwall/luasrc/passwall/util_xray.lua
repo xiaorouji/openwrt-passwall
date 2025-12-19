@@ -753,12 +753,31 @@ function gen_config(var)
 					end
 				end
 				if is_new_blc_node then
-					local blc_node = uci:get_all(appname, blc_node_id)
-					local outbound = gen_outbound(flag, blc_node, blc_node_tag, { fragment = xray_settings.fragment == "1" or nil, noise = xray_settings.noise == "1" or nil, run_socks_instance = not no_run })
-					if outbound then
-						outbound.tag = outbound.tag .. ":" .. blc_node.remarks
-						table.insert(outbounds, outbound)
-						valid_nodes[#valid_nodes + 1] = outbound.tag
+					local blc_node
+					if blc_node_id:find("Socks_") then
+						local socks_id = blc_node_id:sub(1 + #"Socks_")
+						local socks_node = uci:get_all(appname, socks_id) or nil
+						if socks_node then
+							blc_node = {
+								type = "Xray",
+								protocol = "socks",
+								address = "127.0.0.1",
+								port = socks_node.port,
+								transport = "tcp",
+								stream_security = "none",
+								remarks = "Socks_" .. socks_node.port
+							}
+						end
+					else
+						blc_node = uci:get_all(appname, blc_node_id)
+					end
+					if blc_node then
+						local outbound = gen_outbound(flag, blc_node, blc_node_tag, { fragment = xray_settings.fragment == "1" or nil, noise = xray_settings.noise == "1" or nil, run_socks_instance = not no_run })
+						if outbound then
+							outbound.tag = outbound.tag .. ":" .. blc_node.remarks
+							table.insert(outbounds, outbound)
+							valid_nodes[#valid_nodes + 1] = outbound.tag
+						end
 					end
 				end
 			end
@@ -778,17 +797,36 @@ function gen_config(var)
 					end
 				end
 				if is_new_node then
-					local fallback_node = uci:get_all(appname, fallback_node_id)
-					if fallback_node.protocol ~= "_balancing" then
-						local outbound = gen_outbound(flag, fallback_node, fallback_node_id, { fragment = xray_settings.fragment == "1" or nil, noise = xray_settings.noise == "1" or nil, run_socks_instance = not no_run })
-						if outbound then
-							outbound.tag = outbound.tag .. ":" .. fallback_node.remarks
-							table.insert(outbounds, outbound)
-							fallback_node_tag = outbound.tag
+					local fallback_node
+					if fallback_node_id:find("Socks_") then
+						local socks_id = fallback_node_id:sub(1 + #"Socks_")
+						local socks_node = uci:get_all(appname, socks_id) or nil
+						if socks_node then
+							fallback_node = {
+								type = "Xray",
+								protocol = "socks",
+								address = "127.0.0.1",
+								port = socks_node.port,
+								transport = "tcp",
+								stream_security = "none",
+								remarks = "Socks_" .. socks_node.port
+							}
 						end
 					else
-						if gen_balancer(fallback_node) then
-							fallback_node_tag = fallback_node_id
+						fallback_node = uci:get_all(appname, fallback_node_id)
+					end
+					if fallback_node then
+						if fallback_node.protocol ~= "_balancing" then
+							local outbound = gen_outbound(flag, fallback_node, fallback_node_id, { fragment = xray_settings.fragment == "1" or nil, noise = xray_settings.noise == "1" or nil, run_socks_instance = not no_run })
+							if outbound then
+								outbound.tag = outbound.tag .. ":" .. fallback_node.remarks
+								table.insert(outbounds, outbound)
+								fallback_node_tag = outbound.tag
+							end
+						else
+							if gen_balancer(fallback_node) then
+								fallback_node_tag = fallback_node_id
+							end
 						end
 					end
 				end

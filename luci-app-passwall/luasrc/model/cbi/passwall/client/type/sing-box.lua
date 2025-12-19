@@ -114,6 +114,10 @@ o:depends({ [_n("protocol")] = "_urltest" })
 o.widget = "checkbox"
 o.template = appname .. "/cbi/nodes_multivalue"
 o.group = {}
+for k, v in pairs(socks_list) do
+	o:value(v.id, v.remark)
+	o.group[#o.group+1] = v.group or ""
+end
 for i, v in pairs(nodes_table) do
 	o:value(v.id, v.remark)
 	o.group[#o.group+1] = v.group or ""
