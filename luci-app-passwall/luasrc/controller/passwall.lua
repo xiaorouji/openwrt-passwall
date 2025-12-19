@@ -502,15 +502,11 @@ function delete_select_nodes()
 	local ids = http.formvalue("ids")
 	local redirect = http.formvalue("redirect")
 	string.gsub(ids, '[^' .. "," .. ']+', function(w)
-		if (uci:get(appname, "@global[0]", "tcp_node") or "") == w then
-			uci:delete(appname, '@global[0]', "tcp_node")
-		end
-		if (uci:get(appname, "@global[0]", "udp_node") or "") == w then
-			uci:delete(appname, '@global[0]', "udp_node")
-		end
+		local socks
 		uci:foreach(appname, "socks", function(t)
 			if t["node"] == w then
 				uci:delete(appname, t[".name"])
+				socks = "Socks_" .. t[".name"]
 			end
 			local auto_switch_node_list = uci:get(appname, t[".name"], "autoswitch_backup_node") or {}
 			for i = #auto_switch_node_list, 1, -1 do
@@ -520,16 +516,24 @@ function delete_select_nodes()
 			end
 			uci:set_list(appname, t[".name"], "autoswitch_backup_node", auto_switch_node_list)
 		end)
+		local tcp_node = uci:get(appname, "@global[0]", "tcp_node") or ""
+		if tcp_node == w or tcp_node == socks then
+			uci:delete(appname, '@global[0]', "tcp_node")
+		end
+		local udp_node = uci:get(appname, "@global[0]", "udp_node") or ""
+		if udp_node == w or udp_node == socks then
+			uci:delete(appname, '@global[0]', "udp_node")
+		end
 		uci:foreach(appname, "haproxy_config", function(t)
 			if t["lbss"] == w then
 				uci:delete(appname, t[".name"])
 			end
 		end)
 		uci:foreach(appname, "acl_rule", function(t)
-			if t["tcp_node"] == w then
+			if t["tcp_node"] == w or t["tcp_node"] == socks then
 				uci:delete(appname, t[".name"], "tcp_node")
 			end
-			if t["udp_node"] == w then
+			if t["udp_node"] == w or t["udp_node"] == socks then
 				uci:delete(appname, t[".name"], "udp_node")
 			end
 		end)
@@ -549,7 +553,7 @@ function delete_select_nodes()
 					local changed = false
 					local new_nodes = {}
 					for _, node in ipairs(nodes) do
-						if node ~= w then
+						if node ~= w and node ~= socks then
 							table.insert(new_nodes, node)
 						else
 							changed = true
@@ -560,7 +564,7 @@ function delete_select_nodes()
 					end
 				end
 			end
-			if t["fallback_node"] == w then
+			if t["fallback_node"] == w or t["fallback_node"] == socks then
 				uci:delete(appname, t[".name"], "fallback_node")
 			end
 		end)

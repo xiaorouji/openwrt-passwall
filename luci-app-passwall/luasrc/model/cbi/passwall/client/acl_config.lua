@@ -35,6 +35,17 @@ for _, v in pairs(nodes_table) do
 	end
 end
 
+local socks_list = {}
+m.uci:foreach(appname, "socks", function(s)
+	if s.enabled == "1" and s.node then
+		socks_list[#socks_list + 1] = {
+			id = "Socks_" .. s[".name"],
+			remark = translate("Socks Config") .. " " .. string.format("[%s %s]", s.port, translate("Port")),
+			group = "Socks"
+		}
+	end
+end)
+
 local dynamicList_write = function(self, section, value)
 	local t = {}
 	local t2 = {}
@@ -374,9 +385,7 @@ o:value("tcp", "TCP")
 o:value("tcp+doh", "TCP + DoH (" .. translate("A/AAAA type") .. ")")
 o:depends("dns_mode", "xray")
 o.cfgvalue = function(self, section)
-	local v = m:get(section, "v2ray_dns_mode")
-	local key = { udp = true, tcp = true, ["tcp+doh"] = true }
-	return (v and key[v]) and v or self.default
+	return m:get(section, "v2ray_dns_mode")
 end
 o.write = function(self, section, value)
 	if s.fields["dns_mode"]:formvalue(section) == "xray" then
@@ -391,9 +400,7 @@ o:value("tcp", "TCP")
 o:value("doh", "DoH")
 o:depends("dns_mode", "sing-box")
 o.cfgvalue = function(self, section)
-	local v = m:get(section, "v2ray_dns_mode")
-	local key = { udp = true, tcp = true, doh = true }
-	return (v and key[v]) and v or self.default
+	return m:get(section, "v2ray_dns_mode")
 end
 o.write = function(self, section, value)
 	if s.fields["dns_mode"]:formvalue(section) == "sing-box" then
@@ -489,6 +496,12 @@ o:depends({dns_shunt = "dnsmasq", tcp_proxy_mode = "proxy", chn_list = "direct"}
 
 local tcp = s.fields["tcp_node"]
 local udp = s.fields["udp_node"]
+for k, v in pairs(socks_list) do
+	tcp:value(v.id, v["remark"])
+	tcp.group[#tcp.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
+	udp:value(v.id, v["remark"])
+	udp.group[#udp.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
+end
 for k, v in pairs(nodes_table) do
 	if #normal_list == 0 then
 		s.fields["dns_mode"]:depends({ _tcp_node_bool = "1" })

@@ -256,8 +256,20 @@ load_acl() {
 			[ -n "$(get_cache_var "ACL_${sid}_udp_node")" ] && udp_node=$(get_cache_var "ACL_${sid}_udp_node")
 			[ -n "$(get_cache_var "ACL_${sid}_udp_redir_port")" ] && udp_port=$(get_cache_var "ACL_${sid}_udp_redir_port")
 			[ -n "$(get_cache_var "ACL_${sid}_dns_port")" ] && dns_redirect_port=$(get_cache_var "ACL_${sid}_dns_port")
-			[ -n "$tcp_node" ] && tcp_node_remark=$(config_n_get $tcp_node remarks)
-			[ -n "$udp_node" ] && udp_node_remark=$(config_n_get $udp_node remarks)
+			[ -n "$tcp_node" ] && {
+				if is_socks_wrap "$tcp_node"; then
+					tcp_node_remark="Socks 配置($(config_n_get ${tcp_node#Socks_} port) 端口)"
+				else
+					tcp_node_remark=$(config_n_get $tcp_node remarks)
+				fi
+			}
+			[ -n "$udp_node" ] && {
+				if is_socks_wrap "$udp_node"; then
+					udp_node_remark="Socks 配置($(config_n_get ${udp_node#Socks_} port) 端口)"
+				else
+					udp_node_remark=$(config_n_get $udp_node remarks)
+				fi
+			}
 
 			use_shunt_tcp=0
 			use_shunt_udp=0
@@ -265,8 +277,16 @@ load_acl() {
 			[ -n "$udp_node" ] && [ "$(config_n_get $udp_node protocol)" = "_shunt" ] && use_shunt_udp=1
 
 			[ "${use_global_config}" = "1" ] && {
-				tcp_node_remark=$(config_n_get $TCP_NODE remarks)
-				udp_node_remark=$(config_n_get $UDP_NODE remarks)
+				if is_socks_wrap "$TCP_NODE"; then
+					tcp_node_remark="Socks 配置($(config_n_get ${TCP_NODE#Socks_} port) 端口)"
+				else
+					tcp_node_remark=$(config_n_get $TCP_NODE remarks)
+				fi
+				if is_socks_wrap "$UDP_NODE"; then
+					udp_node_remark="Socks 配置($(config_n_get ${UDP_NODE#Socks_} port) 端口)"
+				else
+					udp_node_remark=$(config_n_get $UDP_NODE remarks)
+				fi
 				use_direct_list=${USE_DIRECT_LIST}
 				use_proxy_list=${USE_PROXY_LIST}
 				use_block_list=${USE_BLOCK_LIST}
@@ -638,7 +658,11 @@ load_acl() {
 		#  加载TCP默认代理模式
 		if [ -n "${TCP_PROXY_MODE}" ]; then
 			[ -n "$TCP_NODE" ] && {
-				msg2="${msg}使用 TCP 节点[$(config_n_get $TCP_NODE remarks)]"
+				if is_socks_wrap "$TCP_NODE"; then
+					msg2="${msg}使用 TCP 节点[Socks 配置($(config_n_get ${TCP_NODE#Socks_} port) 端口)]"
+				else
+					msg2="${msg}使用 TCP 节点[$(config_n_get $TCP_NODE remarks)]"
+				fi
 				if [ -n "${is_tproxy}" ]; then
 					msg2="${msg2}(TPROXY:${TCP_REDIR_PORT})"
 					ipt_j="-j PSW_RULE"
@@ -693,7 +717,11 @@ load_acl() {
 		#  加载UDP默认代理模式
 		if [ -n "${UDP_PROXY_MODE}" ]; then
 			[ -n "$UDP_NODE" -o "$TCP_UDP" = "1" ] && {
-				msg2="${msg}使用 UDP 节点[$(config_n_get $UDP_NODE remarks)](TPROXY:${UDP_REDIR_PORT})"
+				if is_socks_wrap "$UDP_NODE"; then
+					msg2="${msg}使用 UDP 节点[Socks 配置($(config_n_get ${UDP_NODE#Socks_} port) 端口)](TPROXY:${UDP_REDIR_PORT})"
+				else
+					msg2="${msg}使用 UDP 节点[$(config_n_get $UDP_NODE remarks)](TPROXY:${UDP_REDIR_PORT})"
+				fi
 
 				$ipt_m -A PSW $(comment "默认") -p udp -d $FAKE_IP -j PSW_RULE
 				[ "${USE_PROXY_LIST}" = "1" ] && add_port_rules "$ipt_m -A PSW $(comment "默认") -p udp" $UDP_REDIR_PORTS "$(dst $IPSET_BLACK) -j PSW_RULE"

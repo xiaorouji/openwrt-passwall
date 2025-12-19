@@ -480,9 +480,7 @@ o:value("tcp+doh", "TCP + DoH (" .. translate("A/AAAA type") .. ")")
 o:depends("dns_mode", "xray")
 o:depends("smartdns_dns_mode", "xray")
 o.cfgvalue = function(self, section)
-	local v = m:get(section, "v2ray_dns_mode")
-	local key = { udp = true, tcp = true, ["tcp+doh"] = true }
-	return (v and key[v]) and v or self.default
+	return m:get(section, "v2ray_dns_mode")
 end
 o.write = function(self, section, value)
 	if s.fields["dns_mode"]:formvalue(section) == "xray" or s.fields["smartdns_dns_mode"]:formvalue(section) == "xray" then
@@ -498,9 +496,7 @@ o:value("doh", "DoH")
 o:depends("dns_mode", "sing-box")
 o:depends("smartdns_dns_mode", "sing-box")
 o.cfgvalue = function(self, section)
-	local v = m:get(section, "v2ray_dns_mode")
-	local key = { udp = true, tcp = true, doh = true }
-	return (v and key[v]) and v or self.default
+	return m:get(section, "v2ray_dns_mode")
 end
 o.write = function(self, section, value)
 	if s.fields["dns_mode"]:formvalue(section) == "sing-box" or s.fields["smartdns_dns_mode"]:formvalue(section) == "sing-box" then
@@ -767,6 +763,52 @@ function s2.create(e, t)
 	TypedSection.create(e, t)
 	luci.http.redirect(e.extedit:format(t))
 end
+function s2.remove(e, t)
+	local socks = "Socks_" .. t
+	local new_node = ""
+	local node0 = m:get("@nodes[0]") or nil
+	if node0 then
+		new_node = node0[".name"]
+	end
+	if (m:get("@global[0]", "tcp_node") or "") == socks then
+		m:set('@global[0]', "tcp_node", new_node)
+	end
+	if (m:get("@global[0]", "udp_node") or "") == socks then
+		m:set('@global[0]', "udp_node", new_node)
+	end
+	m.uci:foreach(appname, "acl_rule", function(s)
+		if s["tcp_node"] and s["tcp_node"] == socks then
+			m:set(s[".name"], "tcp_node", "default")
+		end
+		if s["udp_node"] and s["udp_node"] == socks then
+			m:set(s[".name"], "udp_node", "default")
+		end
+	end)
+	m.uci:foreach(appname, "nodes", function(s)
+		local list_name = s["urltest_node"] and "urltest_node" or (s["balancing_node"] and "balancing_node")
+		if list_name then
+			local nodes = m.uci:get_list(appname, s[".name"], list_name)
+			if nodes then
+				local changed = false
+				local new_nodes = {}
+				for _, node in ipairs(nodes) do
+					if node ~= socks then
+						table.insert(new_nodes, node)
+					else
+						changed = true
+					end
+				end
+				if changed then
+					m.uci:set_list(appname, s[".name"], list_name, new_nodes)
+				end
+			end
+		end
+		if s["fallback_node"] == socks then
+			m:del(s[".name"], "fallback_node")
+		end
+	end)
+	TypedSection.remove(e, t)
+end
 
 o = s2:option(DummyValue, "status", translate("Status"))
 o.rawhtml = true
@@ -817,6 +859,12 @@ end
 local tcp = s.fields["tcp_node"]
 local udp = s.fields["udp_node"]
 local socks = s2.fields["node"]
+for k, v in pairs(socks_list) do
+	tcp:value(v.id, v["remark"])
+	tcp.group[#tcp.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
+	udp:value(v.id, v["remark"])
+	udp.group[#udp.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
+end
 for k, v in pairs(nodes_table) do
 	if #normal_list == 0 then
 		break
