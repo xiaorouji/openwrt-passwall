@@ -1006,8 +1006,7 @@ function gen_config(var)
 					tag = "redirect_tcp",
 					listen = "::",
 					listen_port = tonumber(tcp_redir_port),
-					sniff = true,
-					sniff_override_destination = (singbox_settings.sniff_override_destination == "1") and true or false,
+					sniff = true
 				}
 				table.insert(inbounds, inbound)
 			else
@@ -1017,8 +1016,7 @@ function gen_config(var)
 					network = "tcp",
 					listen = "::",
 					listen_port = tonumber(tcp_redir_port),
-					sniff = true,
-					sniff_override_destination = (singbox_settings.sniff_override_destination == "1") and true or false,
+					sniff = true
 				}
 				table.insert(inbounds, inbound)
 			end
@@ -1031,8 +1029,7 @@ function gen_config(var)
 				network = "udp",
 				listen = "::",
 				listen_port = tonumber(udp_redir_port),
-				sniff = true,
-				sniff_override_destination = (singbox_settings.sniff_override_destination == "1") and true or false,
+				sniff = true
 			}
 			table.insert(inbounds, inbound)
 		end
@@ -1970,7 +1967,6 @@ function gen_config(var)
 						action = "sniff"
 					})
 					value.sniff = nil
-					value.sniff_override_destination = nil
 				end
 				if value.domain_strategy then
 					table.insert(config.route.rules, 1, {
