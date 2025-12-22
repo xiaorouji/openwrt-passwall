@@ -254,7 +254,8 @@ check_ver() {
 }
 
 first_type() {
-	for p in "/bin/$1" "${TMP_BIN_PATH:-/tmp}/$1" "$1"; do
+	[ "${1#/}" != "$1" ] && [ -x "$1" ] && echo "$1" && return
+	for p in "/bin/$1" "/usr/bin/$1" "${TMP_BIN_PATH:-/tmp}/$1"; do
 		[ -x "$p" ] && echo "$p" && return
 	done
 	command -v "$1" 2>/dev/null || command -v "$2" 2>/dev/null
