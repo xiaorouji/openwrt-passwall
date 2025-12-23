@@ -35,59 +35,46 @@ local api = require "luci.passwall.api"
 		}
 
 		var global_id = null;
-		var global = document.getElementById("cbi-passwall-global");
+		var global = document.getElementById("cbi-<%=api.appname%>-global");
 		if (global) {
 			var node = global.getElementsByClassName("cbi-section-node")[0];
 			var node_id = node.getAttribute("id");
 			global_id = node_id;
-			var reg1 = new RegExp("(?<=" + node_id + "-).*?(?=(_node))");
+			var all_node = node.querySelectorAll("[id]");
+			var reg1 = /^cbid\..*node\.main$/;
 
-			for (var i = 0; i < node.childNodes.length; i++) {
-				var row = node.childNodes[i];
-				if (!row || !row.childNodes) continue;
+			for (var i = 0; i < all_node.length; i++) {
+				var el = all_node[i];
+				if (!reg1.test(el.id)) continue;
 
-				for (var k = 0; k < row.childNodes.length; k++) {
-					try {
-						var dom = row.childNodes[k];
-						if (!dom || !dom.id) continue;
-						var s = dom.id.match(reg1);
-						if (!s) continue;
-						var cbi_id = global_id + "-";
-						var cbid = dom.id.split(cbi_id).join(cbi_id.split("-").join(".")).split("cbi.").join("cbid.");
-						var dom_id = cbid + ".main";
-						if (!/_node\.main$/.test(dom_id)) continue;
-
-						var node_select = document.getElementById(dom_id);
-						if (!node_select) continue;
-
-						var hidden_select = document.getElementById(cbid);
-						var node_select_value = hidden_select ? hidden_select.options[0].value : "";
-						if (!node_select_value || node_select_value.indexOf("_default") === 0 || node_select_value.indexOf("_direct") === 0 || node_select_value.indexOf("_blackhole") === 0) {
-							continue;
-						}
-
-						var to_url = '<%=api.url("node_config")%>/' + node_select_value;
-						if (node_select_value.indexOf("Socks_") === 0) {
-							to_url = '<%=api.url("socks_config")%>/' +
-									 node_select_value.substring("Socks_".length);
-						}
-						var html = '<a href="#" onclick="location.href=\'' + to_url + '\'"><%:Edit%></a>';
-
-						if (s[0] === "tcp" || s[0] === "udp") {
-							html += '<a href="#" onclick="window.open(\'' + '<%=api.url("get_redir_log")%>?name=default&proto=' + s[0] + '\', \'_blank\')"><%:Log%></a>';
-						}
-
-						node_select.insertAdjacentHTML("beforeend",
-							'<div class="node-actions" style="display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap; margin-left:4px;">'  
-							+ html + '</div>'
-						);
-					} catch (e) {
-					}
+				var node_select = el;
+				if (!node_select) continue;
+				var cbid = el.id.replace(/\.main$/, "");
+				var hidden_select = document.getElementById(cbid);
+				var node_select_value = hidden_select ? hidden_select.options[0].value : "";
+				if (!node_select_value || node_select_value.indexOf("_default") === 0 || node_select_value.indexOf("_direct") === 0 || node_select_value.indexOf("_blackhole") === 0) {
+					continue;
 				}
+
+				var to_url = '<%=api.url("node_config")%>/' + node_select_value;
+				if (node_select_value.indexOf("Socks_") === 0) {
+					to_url = '<%=api.url("socks_config")%>/' + node_select_value.substring("Socks_".length);
+				}
+				var html = '<a href="#" onclick="location.href=\'' + to_url + '\'"><%:Edit%></a>';
+
+				var m = cbid.match(/\.(tcp|udp)_node$/);
+				if (m && (m[1] === "tcp" || m[1] === "udp")) {
+					html += '<a href="#" onclick="window.open(\'' + '<%=api.url("get_redir_log")%>?name=default&proto=' + m[1] + '\', \'_blank\')"><%:Log%></a>';
+				}
+
+				node_select.insertAdjacentHTML("beforeend",
+					'<div class="node-actions" style="display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap; margin-left:4px;">'  
+					+ html + '</div>'
+				);
 			}
 		}
 
-		var socks = document.getElementById("cbi-passwall-socks");
+		var socks = document.getElementById("cbi-<%=api.appname%>-socks");
 		if (socks) {
 			var socks_enabled_dom = document.getElementById(global_id + "-socks_enabled");
 			socks_enabled_dom.parentNode.removeChild(socks_enabled_dom);
