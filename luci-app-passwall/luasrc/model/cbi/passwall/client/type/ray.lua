@@ -730,6 +730,9 @@ o = s:option(Value, _n("xudp_concurrency"), translate("XUDP Mux concurrency"))
 o.default = 8
 o:depends({ [_n("mux")] = true })
 
+o = s:option(Flag, _n("tcp_fast_open"), "TCP " .. translate("Fast Open"))
+o.default = 0
+
 --[[tcpMptcp]]
 o = s:option(Flag, _n("tcpMptcp"), "tcpMptcp", translate("Enable Multipath TCP, need to be enabled in both server and client configuration."))
 o.default = 0
