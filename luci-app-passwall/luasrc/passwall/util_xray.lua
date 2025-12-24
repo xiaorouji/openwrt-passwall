@@ -229,14 +229,20 @@ function gen_outbound(flag, node, tag, proxy_table)
 					mode = node.xhttp_mode or "auto",
 					path = node.xhttp_path or "/",
 					host = node.xhttp_host,
-					-- 如果包含 "extra" 节，取 "extra" 内的内容，否则直接赋值给 extra
 					extra = node.xhttp_extra and (function()
 							local success, parsed = pcall(jsonc.parse, api.base64Decode(node.xhttp_extra))
-							if success then
-								return parsed.extra or parsed
-							else
-								return nil
+							if not success or not parsed then return nil end
+							-- 如果包含 "extra" 节，就使用它，否则直接使用
+							local tbl = parsed.extra or parsed
+							-- 枚举第1层字段，如果值为空表或nil就删除(简单容错)
+							for k, v in pairs(tbl) do
+								if type(v) == "table" and next(v) == nil then
+									tbl[k] = nil
+								elseif v == nil then
+									tbl[k] = nil
+								end
 							end
+							return tbl
 						end)() or nil
 				} or nil,
 			} or nil,
