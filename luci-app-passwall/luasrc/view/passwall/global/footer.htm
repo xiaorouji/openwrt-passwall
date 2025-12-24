@@ -108,32 +108,77 @@ local api = require "luci.passwall.api"
 				}
 			}
 		}
+	}
 
-		var selects = document.querySelectorAll("select[id*='dns_shunt']");
-		selects.forEach(function (select, index) {
-			if (select.value === "chinadns-ng") {
-				addLogLink(select);
+	(function () {
+		let lastCount = 0;
+		let stableTimes = 0;
+		const STABLE_THRESHOLD = 5;
+		function waitStable() {
+			const list = document.querySelectorAll('[id^="cbid.<%=api.appname%>."][id$="node.main"]');
+			const count = list.length;
+			if (count === lastCount && count > 0) {
+				stableTimes++;
+			} else {
+				stableTimes = 0;
+				lastCount = count;
 			}
-			select.addEventListener("change", function () {
-				var existingLogLink = select.parentElement.querySelector("a.log-link");
+			if (stableTimes >= STABLE_THRESHOLD) {
+				go();
+				return;
+			}
+			requestAnimationFrame(waitStable);
+		}
+		waitStable();
+	})();
+
+	(function () {
+		const startTime = Date.now();
+		const TIMEOUT = 3000;
+
+		const waitForDnsSelect = () => {
+			const dns_select = document.querySelector("select[id*='dns_shunt']");
+			if (dns_select) {
+				initDnsSelect(dns_select);
+				return;
+			}
+			if (Date.now() - startTime >= TIMEOUT) {
+				return;
+			}
+			requestAnimationFrame(waitForDnsSelect);
+		};
+		waitForDnsSelect();
+
+		const initDnsSelect = (dns_select) => {
+			if (dns_select.value === "chinadns-ng") {
+				addLogLink(dns_select);
+			}
+			if (dns_select._dnsLogBinded) return;
+			dns_select._dnsLogBinded = true;
+
+			dns_select.addEventListener("change", () => {
+				const existingLogLink = dns_select.parentElement.querySelector("a.dns-log-link");
 				if (existingLogLink) {
 					existingLogLink.remove();
 				}
-				if (select.value === "chinadns-ng") {
-					addLogLink(select);
+				if (dns_select.value === "chinadns-ng") {
+					addLogLink(dns_select);
 				}
 			});
-		});
-		function addLogLink(select) {
-			var logLink = document.createElement("a");
+		};
+
+		const addLogLink = (select) => {
+			if (select.parentElement.querySelector("a.dns-log-link")) {
+				return;
+			}
+			const logLink = document.createElement("a");
 			logLink.innerHTML = "<%:Log%>";
 			logLink.href = "#";
-			logLink.className = "log-link";
+			logLink.className = "dns-log-link";
 			logLink.style.marginLeft = "10px";
 			logLink.setAttribute("onclick", "window.open('" + '<%=api.url("get_chinadns_log")%>' + "?flag=default', '_blank')");
 			select.insertAdjacentElement("afterend", logLink);
-		}
-	}
-	setTimeout("go()", 1000);
+		};
+	})();
 	//]]>
 </script>
