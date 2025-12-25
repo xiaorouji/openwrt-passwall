@@ -755,6 +755,12 @@ table td, .table .td {
 			}
 		}
 	}
+
+	function escape_html(s) {
+		return s.replace(/[&<>"']/g, c => ({
+			"&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+		}[c]));
+	}
 </script>
 
 <script type="text/template" id="nodes-table-template">
@@ -938,7 +944,7 @@ table td, .table .td {
 
 				tab_ul_li_html +=
 					'<li group_name="' + group + '" id="tab.passwall.nodes.' + group + '" class="cbi-tab">' +
-						'<a onclick="this.blur(); return cbi_t_switch(\'passwall.nodes\', \'' + group + '\')" href="<%=REQUEST_URI%>?tab.passwall.nodes=' + group + '">' + group_name + " | " + "<font style='color: red'>" + group_nodes[group].length + '</font></a>' +
+						'<a onclick="this.blur(); return cbi_t_switch(\'passwall.nodes\', \'' + group + '\')" href="<%=REQUEST_URI%>?tab.passwall.nodes=' + group + '">' + escape_html(group_name) + " | " + "<font style='color: red'>" + group_nodes[group].length + '</font></a>' +
 					'</li>'
 				tab_content_html +=
 					'<div class="cbi-tabcontainer" id="container.passwall.nodes.' + group + '" style="display: none;">' +
