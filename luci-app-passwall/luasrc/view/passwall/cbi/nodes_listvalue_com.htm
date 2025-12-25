@@ -268,6 +268,13 @@ local appname = api.appname
 		}
 	}
 
+	function lv_idSafe(id) {
+		return id
+			.trim()
+			.replace(/\s+/g, "-")
+			.replace(/[\x00-\x1F\x7F]/g, "");
+	}
+
 	// 高亮当前选中的项
 	function lv_highlightSelectedItem(listContainer, hiddenSelect) {
 		const allItems = listContainer.querySelectorAll("li[data-key]");
@@ -367,7 +374,8 @@ local appname = api.appname
 
 	// 切换单个组（点击组标题）
 	function lv_toggleGroup(listContainer, cbid, g) {
-		const group = listContainer.querySelector(".lv-group[data-group='" + g.replace(/'/g, "\\'") + "']");
+		g = lv_idSafe(g);
+		const group = listContainer.querySelector(".lv-group[data-group='" + g + "']");
 		if (!group) return;
 		const ul = group.querySelector(".lv-group-list");
 		const arrow = document.getElementById("arrow-" + cbid + "-" + g);
@@ -568,14 +576,14 @@ local appname = api.appname
 			const items = data.groups[gname];
 
 			html += `
-			<div class="lv-group" data-group="${lv_escape_html(gname)}" style="margin-bottom:8px;">
-				<div class="lv-group-title" data-group-name="${lv_escape_html(gname)}">
-					<span class="lv-arrow-right" id="arrow-${cbid}-${gname}"></span>
+			<div class="lv-group" data-group="${lv_idSafe(gname)}" style="margin-bottom:8px;">
+				<div class="lv-group-title" data-group-name="${lv_idSafe(gname)}">
+					<span class="lv-arrow-right" id="arrow-${cbid}-${lv_idSafe(gname)}"></span>
 					<b style="margin-left:6px;">${lv_escape_html(gname)}</b>
-					<span id="group-count-${cbid}-${gname}"
+					<span id="group-count-${cbid}-${lv_idSafe(gname)}"
 						style="margin-left:8px;color:#666;">(0/${items.length})</span>
 				</div>
-				<ul id="group-${cbid}-${gname}" class="lv-group-list" style="display:none">
+				<ul id="group-${cbid}-${lv_idSafe(gname)}" class="lv-group-list" style="display:none">
 			`;
 
 			items.forEach(item => {

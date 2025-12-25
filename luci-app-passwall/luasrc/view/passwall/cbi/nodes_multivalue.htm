@@ -52,6 +52,15 @@ for _, item in ipairs(values) do
 		selected_count = selected_count + 1
 	end
 end
+
+local function idSafe(id)
+	return (id
+		:gsub("^%s+", "")
+		:gsub("%s+$", "")
+		:gsub("%s+", "-")
+		:gsub("[%z\1-\31\127]", "")
+	)
+end
 %>
 
 <div id="<%=cbid%>" class="cbi-input-select" style="display:inline-block;">
@@ -63,10 +72,10 @@ end
 	<div class="mv_list_container">
 		<ul class="cbi-multi mv_node_list" id="<%=cbid%>.node_list">
 			<% for _, gname in ipairs(group_order) do local items = groups[gname] %>
-			<li class="group-block" data-group="<%=gname%>">
+			<li class="group-block" data-group="<%=idSafe(gname)%>">
 				<!-- 组标题 -->
 				<div class="group-title">
-					<span id="arrow-<%=self.option%>-<%=gname%>" class="mv-arrow-right"></span>
+					<span id="arrow-<%=self.option%>-<%=idSafe(gname)%>" class="mv-arrow-right"></span>
 					<b style="margin-left:8px;"><%=gname%></b>
 					<%
 						local g_selected = 0
@@ -76,12 +85,12 @@ end
 							end
 						end
 					%>
-					<span id="group-count-<%=self.option%>-<%=gname%>" style="margin-left:8px;color:#007bff;">
+					<span id="group-count-<%=self.option%>-<%=idSafe(gname)%>" style="margin-left:8px;color:#007bff;">
 						(<%=g_selected%>/<%=#items%>)
 					</span>
 				</div>
 				<!-- 组内容 -->
-				<ul id="group-<%=self.option%>-<%=gname%>" class="group-items" style="display:none;"
+				<ul id="group-<%=self.option%>-<%=idSafe(gname)%>" class="group-items" style="display:none;"
 					data-items='<%=json.stringify(items)%>'
 					data-selected='<%=json.stringify(selected)%>'>
 				</ul>

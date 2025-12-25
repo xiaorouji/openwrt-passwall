@@ -100,10 +100,18 @@
 
 <script type="text/javascript">
 //<![CDATA[
+	function mv_idSafe(id) {
+		return id
+			.trim()
+			.replace(/\s+/g, "-")
+			.replace(/[\x00-\x1F\x7F]/g, "");
+	}
+
 	// 折叠组
 	function mv_toggleGroup(opt, nodeList, searchInput, g) {
-		const ul = nodeList.querySelector("#group-" + opt + "-" + g);
-		const arrow = nodeList.querySelector("#arrow-" + opt + "-" + g);
+		g = mv_idSafe(g);
+		const ul = document.getElementById("group-" + opt + "-" + g);
+		const arrow = document.getElementById("arrow-" + opt + "-" + g);
 		if (!ul) return;
 		// 判断是否在搜索状态
 		const keyword = searchInput.value.trim().toLowerCase();
@@ -226,7 +234,7 @@
 			const selected = JSON.parse(ul.dataset.selected || "{}");
 			// 清空
 			ul.innerHTML = "";
-			// 按你的原 HTML 完整渲染
+			// 列表渲染
 			items.forEach(function(item) {
 				// li
 				let li = document.createElement("li");
