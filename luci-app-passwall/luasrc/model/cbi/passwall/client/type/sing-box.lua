@@ -641,18 +641,12 @@ o = s:option(DynamicList, _n("tcp_guise_http_path"), translate("HTTP Path"))
 o.placeholder = "/"
 o:depends({ [_n("tcp_guise")] = "http" })
 
-o = s:option(Value, _n("tcp_guise_http_user_agent"), translate("User-Agent"))
-o:depends({ [_n("tcp_guise")] = "http" })
-
 -- [[ HTTP部分 ]]--
 o = s:option(DynamicList, _n("http_host"), translate("HTTP Host"))
 o:depends({ [_n("transport")] = "http" })
 
 o = s:option(Value, _n("http_path"), translate("HTTP Path"))
 o.placeholder = "/"
-o:depends({ [_n("transport")] = "http" })
-
-o = s:option(Value, _n("http_user_agent"), translate("User-Agent"))
 o:depends({ [_n("transport")] = "http" })
 
 o = s:option(Flag, _n("http_h2_health_check"), translate("Health check"))
@@ -674,9 +668,6 @@ o = s:option(Value, _n("ws_path"), translate("WebSocket Path"))
 o.placeholder = "/"
 o:depends({ [_n("transport")] = "ws" })
 
-o = s:option(Value, _n("ws_user_agent"), translate("User-Agent"))
-o:depends({ [_n("transport")] = "ws" })
-
 o = s:option(Flag, _n("ws_enableEarlyData"), translate("Enable early data"))
 o:depends({ [_n("transport")] = "ws" })
 
@@ -693,9 +684,6 @@ o:depends({ [_n("transport")] = "httpupgrade" })
 
 o = s:option(Value, _n("httpupgrade_path"), translate("HTTPUpgrade Path"))
 o.placeholder = "/"
-o:depends({ [_n("transport")] = "httpupgrade" })
-
-o = s:option(Value, _n("httpupgrade_user_agent"), translate("User-Agent"))
 o:depends({ [_n("transport")] = "httpupgrade" })
 
 -- [[ gRPC部分 ]]--
@@ -716,6 +704,13 @@ o:depends({ [_n("grpc_health_check")] = true })
 o = s:option(Flag, _n("grpc_permit_without_stream"), translate("Permit without stream"))
 o.default = "0"
 o:depends({ [_n("grpc_health_check")] = true })
+
+-- [[ User-Agent ]]--
+o = s:option(Value, _n("user_agent"), translate("User-Agent"))
+o:depends({ [_n("tcp_guise")] = "http" })
+o:depends({ [_n("transport")] = "http" })
+o:depends({ [_n("transport")] = "ws" })
+o:depends({ [_n("transport")] = "httpupgrade" })
 
 -- [[ Mux ]]--
 o = s:option(Flag, _n("mux"), translate("Mux"))

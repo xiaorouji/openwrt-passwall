@@ -179,9 +179,9 @@ function gen_outbound(flag, node, tag, proxy_table)
 									end
 									return r
 								end)() or {"/"},
-							headers = (node.tcp_guise_http_host or node.tcp_guise_http_user_agent) and {
+							headers = (node.tcp_guise_http_host or node.user_agent) and {
 								Host = node.tcp_guise_http_host,
-								["User-Agent"] = node.tcp_guise_http_user_agent and {node.tcp_guise_http_user_agent} or nil
+								["User-Agent"] = node.user_agent and {node.user_agent} or nil
 							} or nil
 						} or nil
 					}
@@ -203,8 +203,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 				wsSettings = (node.transport == "ws") and {
 					path = node.ws_path or "/",
 					host = node.ws_host,
-					headers = node.ws_user_agent and {
-						["User-Agent"] = node.ws_user_agent
+					headers = node.user_agent and {
+						["User-Agent"] = node.user_agent
 					} or nil,
 					maxEarlyData = tonumber(node.ws_maxEarlyData) or nil,
 					earlyDataHeaderName = (node.ws_earlyDataHeaderName) and node.ws_earlyDataHeaderName or nil,
@@ -221,29 +221,41 @@ function gen_outbound(flag, node, tag, proxy_table)
 				httpupgradeSettings = (node.transport == "httpupgrade") and {
 					path = node.httpupgrade_path or "/",
 					host = node.httpupgrade_host,
-					headers =  node.httpupgrade_user_agent and {
-						["User-Agent"] = node.httpupgrade_user_agent
+					headers =  node.user_agent and {
+						["User-Agent"] = node.user_agent
 					} or nil
 				} or nil,
 				xhttpSettings = (node.transport == "xhttp") and {
 					mode = node.xhttp_mode or "auto",
 					path = node.xhttp_path or "/",
 					host = node.xhttp_host,
-					extra = node.xhttp_extra and (function()
+					extra = (function()
+						local extra_tbl = {}
+						-- 解析 xhttp_extra 并做简单容错处理
+						if node.xhttp_extra then
 							local success, parsed = pcall(jsonc.parse, api.base64Decode(node.xhttp_extra))
-							if not success or not parsed then return nil end
-							-- 如果包含 "extra" 节，就使用它，否则直接使用
-							local tbl = parsed.extra or parsed
-							-- 枚举第1层字段，如果值为空表或nil就删除(简单容错)
-							for k, v in pairs(tbl) do
-								if type(v) == "table" and next(v) == nil then
-									tbl[k] = nil
-								elseif v == nil then
-									tbl[k] = nil
+							if success and parsed then
+								extra_tbl = parsed.extra or parsed
+								for k, v in pairs(extra_tbl) do
+									if (type(v) == "table" and next(v) == nil) or v == nil then
+										extra_tbl[k] = nil
+									end
 								end
 							end
-							return tbl
-						end)() or nil
+						end
+						-- 处理 User-Agent
+						if node.user_agent and node.user_agent ~= "" then
+							extra_tbl.headers = extra_tbl.headers or {}
+							if not extra_tbl.headers["User-Agent"] and not extra_tbl.headers["user-agent"] then
+								extra_tbl.headers["User-Agent"] = node.user_agent
+							end
+						end
+						-- 清理空的 headers
+						if extra_tbl.headers and next(extra_tbl.headers) == nil then
+							extra_tbl.headers = nil
+						end
+						return next(extra_tbl) ~= nil and extra_tbl or nil
+					end)()
 				} or nil,
 			} or nil,
 			settings = {
