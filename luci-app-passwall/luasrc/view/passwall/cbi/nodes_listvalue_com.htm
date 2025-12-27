@@ -642,6 +642,13 @@ local appname = api.appname
 			lv_filterList(this.value, cbid, listContainer, hiddenSelect, searchInput);
 			lv_repositionPanel(panel, display);
 		});
+		searchInput.addEventListener('keydown', function(e) {
+			const isEnter = e.key === "Enter" || e.keyCode === 13;
+			if (!isEnter) return;
+			e.stopPropagation();
+			e.preventDefault();
+			searchInput.blur();
+		});
 
 		// 切换组
 		listContainer.querySelectorAll(".lv-group-title").forEach(title => {

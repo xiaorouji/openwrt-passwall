@@ -151,7 +151,7 @@
 		// 更新总计
 		const totalSpan = document.getElementById("count-" + opt);
 		if (totalSpan) {
-			totalSpan.innerHTML = "<%:Selected:%> <span style='color:red;'>" + checked + " / " + cbs.length + "</span>";
+			totalSpan.innerHTML = "<%:Selected:%> <span style='color:red;'>" + checked + "/" + cbs.length + "</span>";
 		}
 		// 更新每个组计数
 		nodeList.querySelectorAll(".group-block").forEach(group => {
@@ -268,7 +268,14 @@
 		window.mv_nodeitem_rendered[cbid] = true;
 		searchInput.addEventListener("input", function() {
 			mv_filterGroups(searchInput, opt, nodeList);
-		})
+		});
+		searchInput.addEventListener('keydown', function(e) {
+			const isEnter = e.key === "Enter" || e.keyCode === 13;
+			if (!isEnter) return;
+			e.stopPropagation();
+			e.preventDefault();
+			searchInput.blur();
+		});
 		// checkbox 改变时更新计数
 		nodeList.addEventListener("change", () => {
 			mv_updateCount(opt, nodeList, searchInput);

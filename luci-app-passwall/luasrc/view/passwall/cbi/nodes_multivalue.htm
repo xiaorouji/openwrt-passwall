@@ -67,7 +67,7 @@ end
 	<!-- 搜索框 -->
 	<input type="text" id="<%=cbid%>.search"
 		class="mv_search_input cbi-input-text"
-		placeholder="<%:Search nodes...%>" />
+		placeholder="🔍 <%:Search nodes...%>" inputmode="search" enterkeyhint="done" />
 	<!-- 主容器 -->
 	<div class="mv_list_container">
 		<ul class="cbi-multi mv_node_list" id="<%=cbid%>.node_list">
@@ -76,7 +76,7 @@ end
 				<!-- 组标题 -->
 				<div class="group-title">
 					<span id="arrow-<%=self.option%>-<%=idSafe(gname)%>" class="mv-arrow-right"></span>
-					<b style="margin-left:8px;"><%=gname%></b>
+					<b style="margin-left:8px;"><%=pcdata(gname)%></b>
 					<%
 						local g_selected = 0
 						for _, it in ipairs(items) do
