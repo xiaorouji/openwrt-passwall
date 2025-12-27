@@ -249,12 +249,16 @@
 
 			const styleNode = document.createElement('style')
 			const styleNames = ["width", "color", "height", "padding", "margin", "lineHeight", "border", "borderRadius", "minWidth", "minHeight"]
+			if (styleSelect.borderBottomStyle !== "none") {
+				styleNames.push("borderBottomWidth", "borderBottomStyle", "borderBottomColor");
+			}
 			document.head.appendChild(styleNode)
 			// trace back from option -> select -> body for background color
+			const panelRadius = styleSelect.borderRadius;
 			const optionColor = !v_isTransparent(styleOption.backgroundColor) ? styleOption.backgroundColor : !v_isTransparent(styleSelect.backgroundColor) ? styleSelect.backgroundColor : styleBody.backgroundColor
 			const titleColor = v_getColorSchema(optionColor) === "light" ? v_darker(optionColor, 30) : v_lighter(optionColor, 30)
 			const selectStyleCSS = [`#${CSS.escape(cbid + ".display")} {`, v_style2Css(styleSelect, styleNames), v_style2Css(styleSelect, ["backgroundColor"]), "}"]
-			const optionStyleCSS = [`#${CSS.escape(cbid + ".panel")}  {`, v_style2Css(styleOption, styleNames), `background-color: ${optionColor};`, "}"]
+			const optionStyleCSS = [`#${CSS.escape(cbid + ".panel")}  {`, v_style2Css(styleOption, styleNames), `background-color: ${optionColor};`, `border-radius: ${panelRadius};`, "}"]
 			const titleStyleCSS = [`#${CSS.escape(cbid + ".panel")} .v-group-title  {`, `background-color: ${titleColor} !important;`, "}"]
 			styleNode.textContent = [].concat(selectStyleCSS, optionStyleCSS, titleStyleCSS).join("\n")
 		}
