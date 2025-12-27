@@ -886,6 +886,9 @@ msgstr "节点"
 msgid "Node Address"
 msgstr "节点地址"
 
+msgid "Node address cannot be empty."
+msgstr "节点地址不能为空。"
+
 msgid "Node Port"
 msgstr "节点端口"
 

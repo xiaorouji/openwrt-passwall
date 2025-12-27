@@ -1,5 +1,5 @@
 local api = require "luci.passwall.api"
-local appname = "passwall"
+local appname = api.appname
 local datatypes = api.datatypes
 local net = require "luci.model.network".init()
 
@@ -9,13 +9,16 @@ for k, e in ipairs(api.get_valid_nodes()) do
 		nodes_table[#nodes_table + 1] = {
 			id = e[".name"],
 			obj = e,
-			remarks = e["remark"]
+			remarks = e["remark"],
+			group = e["group"]
 		}
 	end
 end
 
 m = Map(appname)
 api.set_apply_on_parse(m)
+
+m:append(Template(appname .. "/cbi/nodes_value_com"))
 
 -- [[ Haproxy Settings ]]--
 s = m:section(TypedSection, "global_haproxy", translate("Basic Settings"))
@@ -115,10 +118,15 @@ o.rmempty = false
 
 ---- Node Address
 o = s:option(Value, "lbss", translate("Node Address"))
-for k, v in pairs(nodes_table) do o:value(v.id, v.remarks) end
+o.template = appname .. "/cbi/nodes_value"
+o.group = {}
+for k, v in pairs(nodes_table) do
+	o:value(v.id, v.remarks)
+	o.group[#o.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
+end
 o.rmempty = false
 o.validate = function(self, value)
-	if not value then return nil end
+	if not value then return nil, translate("Node address cannot be empty.") end
 	local t = m:get(value) or nil
 	if t and t[".type"] == "nodes" then
 		return value
@@ -129,7 +137,7 @@ o.validate = function(self, value)
 	if api.is_ipv6addrport(value) then
 		return value
 	end
-	return nil, value
+	return nil, translate("Not valid IP format, please re-enter!") .. " (IP:Port)"
 end
 
 ---- Haproxy Port
