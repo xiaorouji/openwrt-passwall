@@ -5,10 +5,6 @@
 --	Copyright: copyright(c)2025–2027
 --	Description: Passwall(2) UI template
 -- It is the common part of the template and cannot be used independently
-
-local api = require "luci.passwall.api"
-local appname = api.appname
-
 %>
 <style>
 /* 主下拉按钮的下箭头 */
@@ -73,6 +69,18 @@ local appname = api.appname
 	min-width: 220px;
 	white-space: nowrap;
 }
+@media (max-width: 1152px) {
+	.lv-dropdown-container {
+		white-space: normal;
+	}
+}
+@media (max-width: 600px) {
+	.lv-dropdown-container {
+		display: block;
+		white-space: normal;
+	}
+}
+
 .lv-dropdown-display {
 	cursor: pointer;
 	display: inline-flex;
@@ -128,9 +136,6 @@ local appname = api.appname
 	overflow: hidden;
 	text-overflow: ellipsis;
 	text-align: left !important;
-}
- #cbi-<%=appname%>-socks .td.cbi-value-field > div { 
-	white-space: nowrap;
 }
 </style>
 
@@ -257,12 +262,16 @@ local appname = api.appname
 
 			const styleNode = document.createElement('style')
 			const styleNames = ["width", "color", "height", "padding", "margin", "lineHeight", "border", "borderRadius", "minWidth", "minHeight"]
+			if (styleSelect.borderBottomStyle !== "none") {
+				styleNames.push("borderBottomWidth", "borderBottomStyle", "borderBottomColor");
+			}
 			document.head.appendChild(styleNode)
 			// trace back from option -> select -> body for background color
+			const panelRadius = styleSelect.borderRadius;
 			const optionColor = !lv_isTransparent(styleOption.backgroundColor) ? styleOption.backgroundColor : !lv_isTransparent(styleSelect.backgroundColor) ? styleSelect.backgroundColor : styleBody.backgroundColor
 			const titleColor = lv_getColorSchema(optionColor) === "light" ? lv_darker(optionColor, 30) : lv_lighter(optionColor, 30)
 			const selectStyleCSS = [`#${CSS.escape(cbid + ".display")} {`, lv_style2Css(styleSelect, styleNames), lv_style2Css(styleSelect, ["backgroundColor"]), "}"]
-			const optionStyleCSS = [`#${CSS.escape(cbid + ".panel")}  {`, lv_style2Css(styleOption, styleNames), `background-color: ${optionColor};`, "}"]
+			const optionStyleCSS = [`#${CSS.escape(cbid + ".panel")}  {`, lv_style2Css(styleOption, styleNames), `background-color: ${optionColor};`, `border-radius: ${panelRadius};`, "}"]
 			const titleStyleCSS = [`#${CSS.escape(cbid + ".panel")} .lv-group-title  {`, `background-color: ${titleColor} !important;`, "}"]
 			styleNode.textContent = [].concat(selectStyleCSS, optionStyleCSS, titleStyleCSS).join("\n")
 		}

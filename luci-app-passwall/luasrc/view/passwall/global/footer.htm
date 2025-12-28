@@ -1,6 +1,16 @@
 <%
 local api = require "luci.passwall.api"
 -%>
+<style>
+ #cbi-<%=api.appname%>-socks .td.cbi-value-field > div { 
+	white-space: nowrap;
+}
+@media (max-width: 1152px) {
+	 #cbi-<%=api.appname%>-socks .td.cbi-value-field > div {
+		white-space: normal;
+	}
+}
+</style>
 <script type="text/javascript">
 	//<![CDATA[
 	function go() {
