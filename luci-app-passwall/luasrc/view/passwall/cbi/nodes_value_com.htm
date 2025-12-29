@@ -63,15 +63,10 @@
 }
 
 .v-dropdown-container {
-	display: inline-block;
+	display: block;
 	position: relative;
-	min-width: 220px;
 	white-space: nowrap;
-}
-@media (max-width: 1152px) {
-	.v-dropdown-container {
-		display: block;
-	}
+	width: 100%;
 }
 .v-dropdown-display {
 	cursor: pointer;
@@ -253,7 +248,7 @@
 			const styleBody = window.getComputedStyle(document.body)
 
 			const styleNode = document.createElement('style')
-			const styleNames = ["width", "color", "height", "padding", "margin", "lineHeight", "border", "borderRadius", "minWidth", "minHeight"]
+			const styleNames = ["color", "height", "padding", "margin", "lineHeight", "border", "borderRadius","minHeight"]
 			if (styleSelect.borderBottomStyle !== "none") {
 				styleNames.push("borderBottomWidth", "borderBottomStyle", "borderBottomColor");
 			}
@@ -262,7 +257,7 @@
 			const panelRadius = styleSelect.borderRadius;
 			const optionColor = !v_isTransparent(styleOption.backgroundColor) ? styleOption.backgroundColor : !v_isTransparent(styleSelect.backgroundColor) ? styleSelect.backgroundColor : styleBody.backgroundColor
 			const titleColor = v_getColorSchema(optionColor) === "light" ? v_darker(optionColor, 30) : v_lighter(optionColor, 30)
-			const selectStyleCSS = [`#${CSS.escape(cbid + ".display")} {`, v_style2Css(styleSelect, styleNames), v_style2Css(styleSelect, ["backgroundColor"]), "}"]
+			const selectStyleCSS = [`#${CSS.escape(cbid + ".display")} {`, v_style2Css(styleSelect, styleNames), v_style2Css(styleSelect, ["backgroundColor"]), `width:100%;min-width:7rem;`, "}"]
 			const optionStyleCSS = [`#${CSS.escape(cbid + ".panel")}  {`, v_style2Css(styleOption, styleNames), `background-color: ${optionColor};`, `border-radius: ${panelRadius};`, "}"]
 			const titleStyleCSS = [`#${CSS.escape(cbid + ".panel")} .v-group-title  {`, `background-color: ${titleColor} !important;`, "}"]
 			styleNode.textContent = [].concat(selectStyleCSS, optionStyleCSS, titleStyleCSS).join("\n")
@@ -459,7 +454,7 @@
 		panel.style.visibility = "hidden";
 		panel.style.display = "block";
 		panel.style.minHeight = "100px";
-		panel.style.maxHeight = Math.min(0.5*viewportHeight, 500) + "px";
+		panel.style.maxHeight = Math.min(0.48*viewportHeight, 500) + "px";
 		const panelHeight = panel.offsetHeight;
 		const spaceBelow = viewportHeight - rect.bottom;
 		const spaceAbove = rect.top;
@@ -486,7 +481,7 @@
 		const remainingWidth = window.innerWidth - panelRect.left - 12;
 		const maxWidth = Math.max(displayWidth, Math.floor(remainingWidth));
 		panel.style.maxWidth = maxWidth + "px";
-		panel.style.minWidth = displayWidth + "px";
+		panel.style.minWidth = Math.max(displayWidth, 240) + "px";
 		panel.style.width = "auto";
 		panel.style.visibility = "";
 	}
