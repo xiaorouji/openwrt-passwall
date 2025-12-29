@@ -1,0 +1,159 @@
+<%+cbi/valueheader%>
+<%
+--	Template Developers:
+--		- lwb1978
+--	Copyright: copyright(c)2025–2027
+--	Description: Passwall(2) UI template
+
+local json = require "luci.jsonc"
+
+-- 读取值（keylist/vallist/group）
+local values = {{key = "", label = translate("-- Please choose --")}}
+for i, key in pairs(self.keylist) do
+	if key and key ~= "" then
+		values[#values + 1] = {
+			key = key,
+			label = self.vallist[i] or key,
+			group = self.group and self.group[i] or nil
+		}
+	end
+end
+
+-- 获取当前配置值（单值）
+local current_key = nil
+local cval = self:cfgvalue(section)
+if type(cval) == "table" then
+	-- 若意外为table，取第一个
+	for k,_ in pairs(cval) do
+		current_key = k
+		break
+	end
+elseif type(cval) == "string" then
+	current_key = (cval:match("%S+")) -- 取第一个 token
+end
+
+-- 分离无组节点（ungrouped）与有组节点（grouped），并保持原有顺序
+local ungrouped = {}
+local groups = {}
+local group_order = {}
+local current_key_added = false
+for _, item in ipairs(values) do
+	if not current_key_added and current_key and current_key ~= "" and item.key == current_key then
+		current_key_added = true
+	end
+	if not item.group or item.group == "" then
+		table.insert(ungrouped, item)
+	else
+		local g = item.group
+		if not groups[g] then
+			groups[g] = {}
+			table.insert(group_order, g)
+		end
+		table.insert(groups[g], item)
+	end
+end
+if not current_key_added and current_key and current_key ~= "" then
+	table.insert(ungrouped, {key = current_key, label = current_key})
+end
+
+-- 如果没有配置值，默认取第一个（优先无组第一项，否则第一组第一项）
+if not current_key then
+	if #ungrouped > 0 then
+		current_key = ungrouped[1].key
+	else
+		-- 找到 group_order 第一个有节点的项
+		for _, g in ipairs(group_order) do
+			if groups[g] and #groups[g] > 0 then
+				current_key = groups[g][1].key
+				break
+			end
+		end
+	end
+end
+
+-- 获取当前 label（用于主控件显示）
+local function find_label_by_key(k)
+	if not k then return "" end
+	for _, v in ipairs(values) do
+		if v.key == k then return v.label end
+	end
+	return ""
+end
+local current_label = find_label_by_key(current_key) or ""
+
+-- 打包数据给 JS
+local dropdown_data = {
+	current_key = current_key,
+	current_label = current_label,
+	ungrouped = ungrouped,
+	groups = groups,
+	group_order = group_order,
+	cbid = cbid,
+}
+%>
+<script>
+window.v_dropdown_data = window.v_dropdown_data || {};
+window.v_dropdown_data["<%=cbid%>"] = <%=json.stringify(dropdown_data)%>;
+</script>
+
+<div id="<%=cbid%>.v-main" class="v-dropdown-container">
+	<select id="<%=cbid%>.ref" class="cbi-input-select" style="display:none !important;">
+		<option value>placeholder</option>
+	</select>
+	<!-- 隐藏 input（保存实际配置值） -->
+ 	<input type="text" id="<%=cbid%>" name="<%=cbid%>" value="<%=current_key%>" data-update="change" style="display:none !important;" />
+	<!-- 模拟 ListValue 控件外观 -->
+	<div class="cbi-input-value cbi-input-select v-dropdown-display" id="<%=cbid%>.display" tabindex="0">
+		<span id="<%=cbid%>.label" class="v-dropdown-label" title="<%=pcdata(current_label)%>">
+			<%=pcdata(current_label ~= "" and current_label or current_key)%>
+		</span>
+		<span class="v-arrow-down"></span>
+	</div>
+	<!-- 下拉面板 -->
+	<div id="<%=cbid%>.panel" class="cbi-listvalue-panel v-dropdown-panel" style="display:none;">
+		<!-- 搜索框 -->
+		<div style="padding:8px;border-bottom:1px solid #f0f0f0;">
+			<input id="<%=cbid%>.search" class="cbi-input-text v-dropdown-search" type="text" placeholder="🔍 <%:Search nodes...%>" inputmode="search" enterkeyhint="done" />
+		</div>
+		<!-- 列表容器 -->
+		<div id="<%=cbid%>.list" style="padding:8px;padding-bottom:0;">
+			<!-- 首次点击 display 时由 JS 填充 -->
+		</div>
+		<!-- 自定义 -->
+		<div style="padding:8px;padding-top:0;margin-top:0;">
+			<input id="<%=cbid%>.custom" class="cbi-input-text v-dropdown-custom" type="text" placeholder="<%=translate("-- custom --")%>" inputmode="text" enterkeyhint="done" />
+		</div>
+	</div>
+</div>
+
+<%+cbi/valuefooter%>
+
+<script type="text/javascript">
+//<![CDATA[
+(function(){
+	const cbid = "<%=cbid%>";
+	const hiddenInput = document.getElementById(cbid);
+	const panel = document.getElementById(cbid + ".panel");
+	const display = document.getElementById(cbid + ".display");
+	const labelSpan = document.getElementById(cbid + ".label");
+	const searchInput = document.getElementById(cbid + ".search");
+	const listContainer = document.getElementById(cbid + ".list");
+	const customInput = document.getElementById(cbid + ".custom");
+
+	// 点击 display
+	display.addEventListener("click", function(e){
+		e.stopPropagation();
+		v_render_dropdown_list(cbid,panel,listContainer,hiddenInput,labelSpan,searchInput,display,customInput);
+		document.querySelectorAll(".cbi-listvalue-panel").forEach(p=>{
+			if (p !== panel) p.style.display = "none";
+		});
+		if (panel.style.display !== "none") {
+			v_closePanel(cbid,panel,listContainer,hiddenInput,searchInput,customInput);
+		} else {
+			v_openPanel(cbid,display,panel,listContainer,hiddenInput,searchInput,customInput);
+		}
+	});
+	v_registerAdaptive(cbid);
+})();
+//]]>
+</script>
