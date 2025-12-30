@@ -13,6 +13,13 @@ local api = require "luci.passwall.api"
 		margin-bottom: 0.8rem;
 		line-height:1.2rem;
 	}
+
+	.geoview-search {
+		display: flex;
+		gap: 2px;
+		align-items: center;
+		white-space: nowrap;
+	}
 </style>
 
 <div class="cbi-value">
@@ -23,28 +30,32 @@ local api = require "luci.passwall.api"
 		<li class="faq-item">3. <span><%:Use the GeoIP/Geosite query function to verify if the entered Geo rules are correct.%></span></li>
 	</ul>
 </div>
-<div class="cbi-value" id="cbi-passwall-geoview-lookup"><label class="cbi-value-title" for="geoview.lookup"><%:Domain/IP Query%></label>
+<div class="cbi-value" id="cbi-passwall-geoview-lookup">
+	<label class="cbi-value-title" for="geoview.lookup"><%:Domain/IP Query%></label>
 	<div class="cbi-value-field">
-	<input type="text" class="cbi-textfield" id="geoview.lookup" name="geoview.lookup" />
-	<input class="btn cbi-button cbi-button-apply" type="button" id="lookup-view_btn"
-		onclick='do_geoview(this, "lookup", document.getElementById("geoview.lookup").value)'
-		value="<%:Query%>" />
-	<br />
-	<div class="cbi-value-description">
-		<%:Enter a domain or IP to query the Geo rule list they belong to.%>
-	</div>
+		<div class="geoview-search">
+			<input type="text" class="password-input cbi-input-text" id="geoview.lookup" name="geoview.lookup" inputmode="search" enterkeyhint="search" />
+			<input class="btn cbi-button cbi-button-apply" type="button" id="lookup-view_btn"
+				onclick='do_geoview(this, "lookup", lookupInput.value)'
+				value="<%:Query%>" />
+		</div>
+		<div class="cbi-value-description">
+			<%:Enter a domain or IP to query the Geo rule list they belong to.%>
+		</div>
 	</div>
 </div>
-<div class="cbi-value" id="cbi-passwall-geoview-extract"><label class="cbi-value-title" for="geoview.extract"><%:GeoIP/Geosite Query%></label>
+<div class="cbi-value" id="cbi-passwall-geoview-extract">
+	<label class="cbi-value-title" for="geoview.extract"><%:GeoIP/Geosite Query%></label>
 	<div class="cbi-value-field">
-	<input type="text" class="cbi-textfield" id="geoview.extract" name="geoview.extract" />
-	<input class="btn cbi-button cbi-button-apply" type="button" id="extract-view_btn"
-		onclick='do_geoview(this, "extract", document.getElementById("geoview.extract").value)'
-		value="<%:Query%>" />
-	<br />
-	<div class="cbi-value-description">
-		<%:Enter a GeoIP or Geosite to extract the domains/IPs they contain. Format: geoip:cn or geosite:gfw%>
-	</div>
+		<div class="geoview-search">
+			<input type="text" class="password-input cbi-input-text" id="geoview.extract" name="geoview.extract" inputmode="search" enterkeyhint="search" />
+			<input class="btn cbi-button cbi-button-apply" type="button" id="extract-view_btn"
+				onclick='do_geoview(this, "extract", extractInput.value)'
+				value="<%:Query%>" />
+		</div>
+		<div class="cbi-value-description">
+			<%:Enter a GeoIP or Geosite to extract the domains/IPs they contain. Format: geoip:cn or geosite:gfw%>
+		</div>
 	</div>
 </div>
 <div class="cbi-value">
@@ -53,10 +64,10 @@ local api = require "luci.passwall.api"
 
 <script type="text/javascript">
 	//<![CDATA[
-	var lookup_btn = document.getElementById("lookup-view_btn");
-	var extract_btn = document.getElementById("extract-view_btn");
-	var QueryText = '<%:Query%>';
-	var QueryingText = '<%:Querying%>';
+	const lookupInput = document.getElementById("geoview.lookup");
+	const extractInput = document.getElementById("geoview.extract");
+	const lookup_btn = document.getElementById("lookup-view_btn");
+	const extract_btn = document.getElementById("extract-view_btn");
 
 	function do_geoview(btn,action,value) {
 		value = value.trim();
@@ -66,8 +77,8 @@ local api = require "luci.passwall.api"
         }
 		lookup_btn.disabled = true;
 		extract_btn.disabled = true;
-		btn.value = QueryingText;
-		var textarea = document.getElementById('geoview_textarea');
+		btn.value = '<%:Querying%>';
+		const textarea = document.getElementById('geoview_textarea');
 		textarea.textContent = "";
 		fetch('<%= api.url("geo_view") %>?action=' + action + '&value=' + encodeURIComponent(value))
 			.then(response => response.text())
@@ -75,22 +86,26 @@ local api = require "luci.passwall.api"
 				textarea.textContent = data;
 				lookup_btn.disabled = false;
 				extract_btn.disabled = false;
-				btn.value = QueryText;
+				btn.value = '<%:Query%>';
 			})
 	}
 
-	document.getElementById("geoview.lookup").addEventListener("keydown", function(event) {
-		if (event.key === "Enter") {
-			event.preventDefault();
-			lookup_btn.click();
-		}
+	lookupInput.addEventListener("keydown", function(e) {
+		const isEnter = e.key === "Enter" || e.keyCode === 13;
+		if (!isEnter) return;
+		e.stopPropagation();
+		e.preventDefault();
+		lookupInput.blur();
+		lookup_btn.click();
 	});
 
-	document.getElementById("geoview.extract").addEventListener("keydown", function(event) {
-		if (event.key === "Enter") {
-			event.preventDefault();
-			extract_btn.click();
-		}
+	extractInput.addEventListener("keydown", function(e) {
+		const isEnter = e.key === "Enter" || e.keyCode === 13;
+		if (!isEnter) return;
+		e.stopPropagation();
+		e.preventDefault();
+		extractInput.blur();
+		extract_btn.click();
 	});
 	//]]>
 </script>
