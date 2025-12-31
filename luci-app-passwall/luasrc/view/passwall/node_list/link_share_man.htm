@@ -1652,14 +1652,46 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 	}
 
 //]]></script>
-<input type="button" class="btn cbi-button cbi-button-apply" value='<%:From Share URL%>' onclick="return fromUrl(this, '<%=self.option%>', '<%=self.value%>')" />
-<input type="button" class="btn cbi-button cbi-button-apply" value='<%:Build Share URL%>' onclick="return exportUrl(this, '<%=self.option%>', '<%=self.value%>')" />
-<input type="button" class="btn cbi-button cbi-button-apply" value='<%:Generate QRCode%>' onclick="return genQrcode(this, '<%=self.option%>', '<%=self.value%>')" />
-<input type="button" class="btn cbi-button cbi-button-apply" value='<%:Export Config File%>' onclick="return exportConfigFile(this, '<%=self.value%>')" />
-<div id="qrcode_div" style="margin-top: 1rem;display:none">
-	<div id="qrcode" style="display:flex;justify-content:center;"></div>
-</div>
-<div style="text-align:center;"> 
-	<span id="<%=self.option%>-status"></span>
+<style>
+.share-toolbar {
+	display: inline-block;
+	text-align: center;
+	padding: 5px 0 5px;
+	white-space: nowrap;
+}
+@media screen and (max-width: 500px) {
+	.share-toolbar {
+		white-space: normal;
+	}
+}
+.toolbar-buttons .cbi-button {
+	margin-right: 2px;
+	margin-bottom: 2px;
+}
+.toolbar-buttons .cbi-button:last-child {
+	margin-right: 0;
+}
+.status-text {
+	display: none;
+}
+.status-text:not(:empty) {
+	display: inline-block;
+	line-height: 1;
+	padding: 5px 0;
+}
+</style>
+<div class="share-toolbar">
+	<div class="toolbar-buttons">
+		<input type="button" class="btn cbi-button cbi-button-apply" value='<%:From Share URL%>' onclick="return fromUrl(this, '<%=self.option%>', '<%=self.value%>')" />
+		<input type="button" class="btn cbi-button cbi-button-apply" value='<%:Build Share URL%>' onclick="return exportUrl(this, '<%=self.option%>', '<%=self.value%>')" />
+		<input type="button" class="btn cbi-button cbi-button-apply" value='<%:Generate QRCode%>' onclick="return genQrcode(this, '<%=self.option%>', '<%=self.value%>')" />
+		<input type="button" class="btn cbi-button cbi-button-apply" value='<%:Export Config File%>' onclick="return exportConfigFile(this, '<%=self.value%>')" />
+	</div>
+	<div id="qrcode_div" style="padding:5px 0;display:none">
+		<div id="qrcode" style="display:flex;justify-content:center;"></div>
+	</div>
+	<div style="text-align:center;padding:0;min-height:0;line-height:1;">
+		<span id="<%=self.option%>-status" class="status-text"></span>
+	</div>
 </div>
 <%+cbi/valuefooter%>
