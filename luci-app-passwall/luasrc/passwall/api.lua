@@ -289,9 +289,9 @@ function url(...)
 end
 
 function trim(s)
-	local len = #s
-	local i, j = 1, len
-	while i <= len and s:byte(i) <= 32 do i = i + 1 end
+	if type(s) ~= "string" then return "" end
+	local i, j = 1, #s
+	while i <= j and s:byte(i) <= 32 do i = i + 1 end
 	while j >= i and s:byte(j) <= 32 do j = j - 1 end
 	if i > j then return "" end
 	return s:sub(i, j)
