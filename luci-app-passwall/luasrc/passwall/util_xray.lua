@@ -869,23 +869,29 @@ function gen_config(var)
 				fallbackTag = fallback_node_tag,
 				strategy = strategy
 			})
-			if _node.balancingStrategy == "leastPing" and not observatory then
-				observatory = {
-					subjectSelector = { "blc-" },
-					probeUrl = _node.useCustomProbeUrl and _node.probeUrl or nil,
-					probeInterval = (api.format_go_time(_node.probeInterval) ~= "0s") and api.format_go_time(_node.probeInterval) or "1m",
-					enableConcurrency = true
-				}
-			elseif _node.balancingStrategy == "leastLoad" and not burstObservatory then
-				burstObservatory = {
-					subjectSelector = { "blc-" },
-					pingConfig = {
-						destination = _node.useCustomProbeUrl and _node.probeUrl or nil,
-						interval = (api.format_go_time(_node.probeInterval) ~= "0s") and api.format_go_time(_node.probeInterval) or "1m",
-						sampling = 3,
-						timeout = "5s"
-					}
-				}
+			if _node.balancingStrategy == "leastPing" or _node.balancingStrategy == "leastLoad" or fallback_node_tag then
+				if _node.balancingStrategy == "leastLoad" then
+					if not burstObservatory then
+						burstObservatory = {
+							subjectSelector = { "blc-" },
+							pingConfig = {
+								destination = _node.useCustomProbeUrl and _node.probeUrl or nil,
+								interval = (api.format_go_time(_node.probeInterval) ~= "0s") and api.format_go_time(_node.probeInterval) or "1m",
+								sampling = 3,
+								timeout = "5s"
+							}
+						}
+					end
+				else
+					if not observatory then
+						observatory = {
+							subjectSelector = { "blc-" },
+							probeUrl = _node.useCustomProbeUrl and _node.probeUrl or nil,
+							probeInterval = (api.format_go_time(_node.probeInterval) ~= "0s") and api.format_go_time(_node.probeInterval) or "1m",
+							enableConcurrency = true
+						}
+					end
+				end
 			end
 			local inbound_tag = gen_loopback(loopback_tag, loopback_dst)
 			table.insert(rules, { inboundTag = { inbound_tag }, balancerTag = balancer_tag })
