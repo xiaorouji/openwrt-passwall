@@ -865,7 +865,7 @@ function gen_config(var)
 			end
 			table.insert(balancers, {
 				tag = balancer_tag,
-				selector = valid_nodes,
+				selector = api.clone(valid_nodes),
 				fallbackTag = fallback_node_tag,
 				strategy = strategy
 			})
@@ -1197,6 +1197,21 @@ function gen_config(var)
 					end
 				end
 			end)
+
+			if default_outboundTag or default_balancerTag then
+				local rule = {
+					_flag = "default",
+					type = "field",
+					outboundTag = default_outboundTag,
+					balancerTag = default_balancerTag
+				}
+				if node.domainStrategy == "IPIfNonMatch" then
+					rule.ip = { "0.0.0.0/0", "::/0" }
+				else
+					rule.network = "tcp,udp"
+				end
+				table.insert(rules, rule)
+			end
 
 			routing = {
 				domainStrategy = node.domainStrategy or "AsIs",
