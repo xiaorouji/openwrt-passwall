@@ -1055,7 +1055,16 @@ function gen_config(var)
 					end
 					return outbound_tag, nil
 				elseif _node.protocol == "_balancing" then
-					return nil, gen_balancer(_node, rule_name)
+					local blc_tag = gen_balancer(_node, rule_name)
+					if rule_name == "default" then
+						for i, ob in ipairs(outbounds) do
+							if ob.protocol == "loopback" and ob.tag == "default" then
+								if i > 1 then table.insert(outbounds, 1, table.remove(outbounds, i)) end
+								break
+							end
+						end
+					end
+					return nil, blc_tag
 				elseif _node.protocol == "_iface" then
 					local outbound_tag
 					if _node.iface then
@@ -1070,7 +1079,11 @@ function gen_config(var)
 							}
 						}
 						outbound_tag = outbound.tag
-						table.insert(outbounds, outbound)
+						if rule_name == "default" then
+							table.insert(outbounds, 1, outbound)
+						else
+							table.insert(outbounds, outbound)
+						end
 						sys.call(string.format("mkdir -p %s && touch %s/%s", api.TMP_IFACE_PATH, api.TMP_IFACE_PATH, _node.iface))
 					end
 					return outbound_tag, nil
