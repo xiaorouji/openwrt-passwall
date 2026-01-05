@@ -18,6 +18,9 @@ env:
   package_names: "chinadns-ng dns2socks geoview hysteria ipt2socks microsocks naiveproxy tcping trojan-plus tuic-client shadowsocks-rust shadowsocksr-libev simple-obfs sing-box v2ray-geodata v2ray-plugin xray-core xray-plugin shadow-tls"
   package_release: "chinadns-ng dns2socks geoview hysteria ipt2socks microsocks naiveproxy tcping trojan-plus tuic-client shadowsocks-rust shadowsocksr-libev simple-obfs sing-box v2ray-geoip v2ray-plugin v2ray-geosite xray-core xray-plugin shadow-tls"
 
+permissions:
+  contents: write
+  actions: write
 
 jobs:
   job_check:
