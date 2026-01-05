@@ -272,7 +272,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 								encryption = (node.protocol == "vless") and ((node.encryption and node.encryption ~= "") and node.encryption or "none") or nil,
 								flow = (node.protocol == "vless"
 									and (node.tls == "1" or (node.encryption and node.encryption ~= "" and node.encryption ~= "none"))
-									and (node.transport == "raw" or node.transport == "tcp" or node.transport == "xhttp")
+									and (node.transport == "raw" or node.transport == "tcp" or node.transport == "ws" or node.transport == "grpc" or node.transport == "httpupgrade" or node.transport == "xhttp")
 									and node.flow and node.flow ~= ""
 								) and node.flow or nil
 							}
