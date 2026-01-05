@@ -1530,6 +1530,7 @@ local function processData(szType, content, add_mode, group)
 end
 
 local function curl(url, file, ua, mode)
+	if not url or url == "" then return 404 end
 	local curl_args = {
 		"-skL", "-w %{http_code}", "--retry 3", "--connect-timeout 3"
 	}
@@ -1916,8 +1917,8 @@ local execute = function()
 
 		for index, value in ipairs(subscribe_list) do
 			local cfgid = value[".name"]
-			local remark = value.remark
-			local url = value.url
+			local remark = value.remark or ""
+			local url = value.url or ""
 			if value.allowInsecure and value.allowInsecure == "1" then
 				allowInsecure_default = true
 			end
