@@ -272,9 +272,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 								encryption = (node.protocol == "vless") and ((node.encryption and node.encryption ~= "") and node.encryption or "none") or nil,
 								flow = (node.protocol == "vless"
 									and (node.tls == "1" or (node.encryption and node.encryption ~= "" and node.encryption ~= "none"))
-									and (node.transport == "raw" or node.transport == "tcp" or node.transport == "xhttp")
-									and node.flow and node.flow ~= ""
-								) and node.flow or nil
+									and node.flow and node.flow ~= "") and node.flow or nil
 							}
 						}
 					}
@@ -344,7 +342,9 @@ function gen_config_server(node)
 			for i = 1, #node.uuid do
 				clients[i] = {
 					id = node.uuid[i],
-					flow = (node.protocol == "vless" and node.tls == "1" and (node.transport == "raw" or node.transport == "xhttp") and node.flow and node.flow ~= "") and node.flow or nil
+					flow = (node.protocol == "vless"
+					and (node.tls == "1" or (node.decryption and node.decryption ~= "" and node.decryption ~= "none")) 
+					and node.flow and node.flow ~= "") and node.flow or nil
 				}
 			end
 			settings = {
