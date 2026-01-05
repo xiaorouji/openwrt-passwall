@@ -1,26 +1,17 @@
 #!/bin/sh
 
 CONFIG=passwall
-LOG_FILE=/tmp/log/$CONFIG.log
-
-echolog() {
-	local d="$(date "+%Y-%m-%d %H:%M:%S")"
-	#echo -e "$d: $1"
-	echo -e "$d: $1" >> $LOG_FILE
-}
 
 config_n_get() {
 	local ret=$(uci -q get "${CONFIG}.${1}.${2}" 2>/dev/null)
 	echo "${ret:=$3}"
 }
 
-lua_api() {
-	local func=${1}
-	[ -z "${func}" ] && {
-		echo "nil"
-		return
-	}
-	echo $(lua -e "local api = require 'luci.passwall.api' print(api.${func})")
+config_t_get() {
+	local index=0
+	[ -n "$4" ] && index=$4
+	local ret=$(uci -q get $CONFIG.@$1[$index].$2 2>/dev/null)
+	echo ${ret:=$3}
 }
 
 test_url() {
@@ -82,18 +73,8 @@ url_test_node() {
 			local curlx="socks5h://127.0.0.1:${_tmp_port}"
 		fi
 		sleep 1s
-		# 兼容 curl 8.6 time_starttransfer 错误
-		local _cmd="-V 2>/dev/null | head -n 1 | awk '{print \$2}' | cut -d. -f1,2 | tr -d ' \\n'"
-		local _curl="/usr/bin/curl"
-		local curl_ver=$(lua_api "get_bin_version_cache(\"${_curl}\", \"${_cmd}\")")
-
-		local curl_arg="-w %{http_code}:%{time_starttransfer} http://"
-		[ "${curl_ver}" = "8.6" ] && curl_arg="-w %{http_code}:%{time_appconnect} https://"
-
-		local chn_list=$(config_n_get @global[0] chn_list direct)
-		local probeUrl="www.google.com/generate_204"
-		[ "${chn_list}" = "proxy" ] && probeUrl="www.baidu.com"
-		result=$(${_curl} --max-time 5 -o /dev/null -I -skL -x ${curlx} ${curl_arg}${probeUrl})
+		local probeUrl=$(config_t_get global_other url_test_url https://www.google.com/generate_204)
+		result=$(curl --connect-timeout 3 --max-time 5 -o /dev/null -I -skL -w "%{http_code}:%{time_starttransfer}" -x ${curlx} "${probeUrl}")
 		# 结束 SS 插件进程
 		local pid_file="/tmp/etc/${CONFIG}/url_test_${node_id}_plugin.pid"
 		[ -s "$pid_file" ] && kill -9 "$(head -n 1 "$pid_file")" >/dev/null 2>&1

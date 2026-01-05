@@ -670,6 +670,9 @@ msgstr "自动检测延迟"
 msgid "Show server address and port"
 msgstr "显示服务器地址和端口"
 
+msgid "URL Test Address"
+msgstr "URL 测试地址"
+
 msgid "URL Test"
 msgstr "URL 测试"
 
