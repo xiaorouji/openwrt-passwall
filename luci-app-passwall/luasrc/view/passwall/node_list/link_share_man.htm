@@ -288,6 +288,13 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 					params += opt.query("path", dom_prefix + "grpc_serviceName");
 					params += opt.query("serviceName", dom_prefix + "grpc_serviceName");
 					params += opt.query("mode", dom_prefix + "grpc_mode");
+				} else if (v_transport === "xhttp") {
+					params += opt.query("host", dom_prefix + "xhttp_host");
+					params += opt.query("path", dom_prefix + "xhttp_path");
+					params += opt.query("mode", dom_prefix + "xhttp_mode");
+					if (opt.get(dom_prefix + "use_xhttp_extra").checked) {
+						params += opt.query("extra", dom_prefix + "xhttp_extra");
+					}
 				}
 				params += "&type=" + v_transport;
 
@@ -915,7 +922,7 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 				pluginOpts = pluginParams.join(";");
 			}
 
-			if (has_xray && ((ss_type !== "xray" && ss_type !== "sing-box" && queryParam.type) || ss_type == "xray")) {
+			if (has_xray && ((ss_type !== "xray" && ss_type !== "sing-box" && queryParam.type) || ss_type == "xray" || queryParam.type == "xhttp")) {
 				dom_prefix = "xray_"
 				opt.set('type', "Xray");
 				opt.set(dom_prefix + 'protocol', "shadowsocks");
@@ -1076,6 +1083,12 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 				} else if (queryParam.type === "grpc") {
 					opt.set(dom_prefix + 'grpc_serviceName', (queryParam.serviceName || queryParam.path) || "");
 					opt.set(dom_prefix + 'grpc_mode', queryParam.mode || "gun");
+				} else if (queryParam.type === "xhttp") {
+					opt.set(dom_prefix + 'xhttp_host', queryParam.host || "");
+					opt.set(dom_prefix + 'xhttp_path', queryParam.path || "");
+					opt.set(dom_prefix + 'xhttp_mode', queryParam.mode || "auto");
+					opt.set(dom_prefix + 'use_xhttp_extra', !!queryParam.extra);
+					opt.set(dom_prefix + 'xhttp_extra', queryParam.extra || "");
 				}
 			
 				if (queryParam["shadow-tls"]) {
