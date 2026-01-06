@@ -66,13 +66,13 @@ o:depends("balancing_enable", true)
 
 ---- Passwall Inner implement Probe URL
 o = s:option(Value, "health_probe_url", translate("Probe URL"))
-o.default = "https://www.google.com/generate_204"
 o:value("https://cp.cloudflare.com/", "Cloudflare")
 o:value("https://www.gstatic.com/generate_204", "Gstatic")
 o:value("https://www.google.com/generate_204", "Google")
 o:value("https://www.youtube.com/generate_204", "YouTube")
 o:value("https://connect.rom.miui.com/generate_204", "MIUI (CN)")
 o:value("https://connectivitycheck.platform.hicloud.com/generate_204", "HiCloud (CN)")
+o.default = o.keylist[3]
 o.description = translate("The URL used to detect the connection status.")
 o:depends("health_check_type", "passwall_logic")
 

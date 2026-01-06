@@ -94,10 +94,10 @@ o.validate = port_validate
 
 ---- TCP Redir Ports
 o = s:option(Value, "tcp_redir_ports", translate("TCP Redir Ports"))
-o.default = "22,25,53,80,143,443,465,587,853,873,993,995,5222,8080,8443,9418"
 o:value("1:65535", translate("All"))
 o:value("22,25,53,80,143,443,465,587,853,873,993,995,5222,8080,8443,9418", translate("Common Use"))
 o:value("80,443", translate("Only Web"))
+o.default = o.keylist[2]
 o.validate = port_validate
 
 ---- UDP Redir Ports
