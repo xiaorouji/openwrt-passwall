@@ -227,24 +227,36 @@ gen_lanlist_6() {
 }
 
 get_wan_ip() {
-	local NET_IF
 	local NET_ADDR
-	
-	network_flush_cache
-	network_find_wan NET_IF
-	network_get_ipaddr NET_ADDR "${NET_IF}"
-	
+	local iface
+	local INTERFACES=$(ubus call network.interface dump | jsonfilter -e '@.interface[@.route[0]].interface')
+	for iface in $INTERFACES; do
+		local ipv4
+		network_get_ipaddr ipv4 "$iface"
+		if [ -n "$ipv4" ] && [ "$ipv4" != "0.0.0.0" ]; then
+			case " $NET_ADDR " in
+				*" $ipv4 "*) ;;
+				*) NET_ADDR="${NET_ADDR:+$NET_ADDR }$ipv4" ;;
+			esac
+		fi
+	done
 	echo $NET_ADDR
 }
 
 get_wan6_ip() {
-	local NET_IF
 	local NET_ADDR
-	
-	network_flush_cache
-	network_find_wan6 NET_IF
-	network_get_ipaddr6 NET_ADDR "${NET_IF}"
-	
+	local iface
+	local INTERFACES=$(ubus call network.interface dump | jsonfilter -e '@.interface[@.route[0]].interface')
+	for iface in $INTERFACES; do
+		local ipv6
+		network_get_ipaddr6 ipv6 "$iface"
+		if [ -n "$ipv6" ] && ! echo "$ipv6" | grep -q "^fe80:"; then
+			case " $NET_ADDR " in
+				*" $ipv6 "*) ;;
+				*) NET_ADDR="${NET_ADDR:+$NET_ADDR }$ipv6" ;;
+			esac
+		fi
+	done
 	echo $NET_ADDR
 }
 
@@ -1091,11 +1103,13 @@ add_firewall_rule() {
 
 	WAN_IP=$(get_wan_ip)
 	if [ -n "${WAN_IP}" ]; then
-		[ -z "${is_tproxy}" ] && nft "add rule $NFTABLE_NAME PSW_NAT ip daddr ${WAN_IP} counter return comment \"WAN_IP_RETURN\""
-		nft "add rule $NFTABLE_NAME PSW_MANGLE ip daddr ${WAN_IP} counter return comment \"WAN_IP_RETURN\""
-		echolog "  - [$?]追加WAN IP到nftables：${WAN_IP}"
+		for wan_ip in $WAN_IP; do
+			[ -z "${is_tproxy}" ] && nft "add rule $NFTABLE_NAME PSW_NAT ip daddr ${wan_ip} counter return comment \"WAN_IP_RETURN\""
+			nft "add rule $NFTABLE_NAME PSW_MANGLE ip daddr ${wan_ip} counter return comment \"WAN_IP_RETURN\""
+			echolog "  - [$?]追加WAN IPv4到nftables：${wan_ip}"
+		done
 	fi
-	unset WAN_IP
+	unset WAN_IP wan_ip
 
 	ip rule add fwmark 1 lookup 100
 	ip route add local 0.0.0.0/0 dev lo table 100
@@ -1137,8 +1151,13 @@ add_firewall_rule() {
 		nft "add rule $NFTABLE_NAME mangle_output meta nfproto {ipv6} counter jump PSW_OUTPUT_MANGLE_V6 comment \"PSW_OUTPUT_MANGLE\""
 
 		WAN6_IP=$(get_wan6_ip)
-		[ -n "${WAN6_IP}" ] && nft "add rule $NFTABLE_NAME PSW_MANGLE_V6 ip6 daddr ${WAN6_IP} counter return comment \"WAN6_IP_RETURN\""
-		unset WAN6_IP
+		[ -n "${WAN6_IP}" ] && {
+			for wan6_ip in $WAN6_IP; do
+				nft "add rule $NFTABLE_NAME PSW_MANGLE_V6 ip6 daddr ${wan6_ip} counter return comment \"WAN6_IP_RETURN\""
+				echolog "  - [$?]追加WAN IPv6到nftables：${wan6_ip}"
+			done
+		}
+		unset WAN6_IP wan6_ip
 
 		ip -6 rule add fwmark 1 table 100
 		ip -6 route add local ::/0 dev lo table 100
@@ -1430,21 +1449,33 @@ gen_include() {
 			PR_INDEX=\$(sh ${MY_PATH} RULE_LAST_INDEX "$NFTABLE_NAME" PSW_NAT WAN_IP_RETURN -1)
 			if [ \$PR_INDEX -ge 0 ]; then
 				WAN_IP=\$(sh ${MY_PATH} get_wan_ip)
-				[ ! -z "\${WAN_IP}" ] && nft "replace rule $NFTABLE_NAME PSW_NAT handle \$PR_INDEX ip daddr "\${WAN_IP}" counter return comment \"WAN_IP_RETURN\""
+				[ ! -z "\${WAN_IP}" ] && {
+					for wan_ip in \$WAN_IP; do
+						nft "replace rule $NFTABLE_NAME PSW_NAT handle \$PR_INDEX ip daddr "\${wan_ip}" counter return comment \"WAN_IP_RETURN\""
+					done
+				}
 			fi
 		}
 
 		PR_INDEX=\$(sh ${MY_PATH} RULE_LAST_INDEX "$NFTABLE_NAME" PSW_MANGLE WAN_IP_RETURN -1)
 		if [ \$PR_INDEX -ge 0 ]; then
 			WAN_IP=\$(sh ${MY_PATH} get_wan_ip)
-			[ ! -z "\${WAN_IP}" ] && nft "replace rule $NFTABLE_NAME PSW_MANGLE handle \$PR_INDEX ip daddr "\${WAN_IP}" counter return comment \"WAN_IP_RETURN\""
+			[ ! -z "\${WAN_IP}" ] && {
+				for wan_ip in \$WAN_IP; do
+					nft "replace rule $NFTABLE_NAME PSW_MANGLE handle \$PR_INDEX ip daddr "\${wan_ip}" counter return comment \"WAN_IP_RETURN\""
+				done
+			}
 		fi
 
 		[ "$PROXY_IPV6" == "1" ] && {
 			PR_INDEX=\$(sh ${MY_PATH} RULE_LAST_INDEX "$NFTABLE_NAME" PSW_MANGLE_V6 WAN6_IP_RETURN -1)
 			if [ \$PR_INDEX -ge 0 ]; then
 				WAN6_IP=\$(sh ${MY_PATH} get_wan6_ip)
-				[ ! -z "\${WAN6_IP}" ] && nft "replace rule $NFTABLE_NAME PSW_MANGLE_V6 handle \$PR_INDEX ip6 daddr "\${WAN6_IP}" counter return comment \"WAN6_IP_RETURN\""
+				[ ! -z "\${WAN6_IP}" ] && {
+					for wan6_ip in \$WAN6_IP; do
+						nft "replace rule $NFTABLE_NAME PSW_MANGLE_V6 handle \$PR_INDEX ip6 daddr "\${wan6_ip}" counter return comment \"WAN6_IP_RETURN\""
+					done
+				}
 			fi
 		}
 	EOF

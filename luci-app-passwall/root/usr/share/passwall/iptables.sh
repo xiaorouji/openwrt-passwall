@@ -202,24 +202,36 @@ gen_lanlist_6() {
 }
 
 get_wan_ip() {
-	local NET_IF
 	local NET_ADDR
-	
-	network_flush_cache
-	network_find_wan NET_IF
-	network_get_ipaddr NET_ADDR "${NET_IF}"
-	
+	local iface
+	local INTERFACES=$(ubus call network.interface dump | jsonfilter -e '@.interface[@.route[0]].interface')
+	for iface in $INTERFACES; do
+		local ipv4
+		network_get_ipaddr ipv4 "$iface"
+		if [ -n "$ipv4" ] && [ "$ipv4" != "0.0.0.0" ]; then
+			case " $NET_ADDR " in
+				*" $ipv4 "*) ;;
+				*) NET_ADDR="${NET_ADDR:+$NET_ADDR }$ipv4" ;;
+			esac
+		fi
+	done
 	echo $NET_ADDR
 }
 
 get_wan6_ip() {
-	local NET_IF
 	local NET_ADDR
-	
-	network_flush_cache
-	network_find_wan6 NET_IF
-	network_get_ipaddr6 NET_ADDR "${NET_IF}"
-	
+	local iface
+	local INTERFACES=$(ubus call network.interface dump | jsonfilter -e '@.interface[@.route[0]].interface')
+	for iface in $INTERFACES; do
+		local ipv6
+		network_get_ipaddr6 ipv6 "$iface"
+		if [ -n "$ipv6" ] && ! echo "$ipv6" | grep -q "^fe80:"; then
+			case " $NET_ADDR " in
+				*" $ipv6 "*) ;;
+				*) NET_ADDR="${NET_ADDR:+$NET_ADDR }$ipv6" ;;
+			esac
+		fi
+	done
 	echo $NET_ADDR
 }
 
@@ -989,7 +1001,11 @@ add_firewall_rule() {
 	$ipt_n -A PSW $(dst $IPSET_VPS) -j RETURN
 
 	WAN_IP=$(get_wan_ip)
-	[ ! -z "${WAN_IP}" ] && $ipt_n -A PSW $(comment "WAN_IP_RETURN") -d "${WAN_IP}" -j RETURN
+	[ ! -z "${WAN_IP}" ] && {
+		for wan_ip in $WAN_IP; do
+			$ipt_n -A PSW $(comment "WAN_IP_RETURN") -d "${wan_ip}" -j RETURN
+		done
+	}
 	
 	[ "$accept_icmp" = "1" ] && insert_rule_after "$ipt_n" "PREROUTING" "prerouting_rule" "-p icmp -j PSW"
 	[ -z "${is_tproxy}" ] && insert_rule_after "$ipt_n" "PREROUTING" "prerouting_rule" "-p tcp -j PSW"
@@ -1024,10 +1040,12 @@ add_firewall_rule() {
 	$ipt_m -A PSW $(dst $IPSET_VPS) -j RETURN
 	
 	[ ! -z "${WAN_IP}" ] && {
-		$ipt_m -A PSW $(comment "WAN_IP_RETURN") -d "${WAN_IP}" -j RETURN
-		echolog "  - [$?]追加WAN IP到iptables：${WAN_IP}"
+		for wan_ip in $WAN_IP; do
+			$ipt_m -A PSW $(comment "WAN_IP_RETURN") -d "${wan_ip}" -j RETURN
+			echolog "  - [$?]追加WAN IPv4到iptables：${wan_ip}"
+		done
 	}
-	unset WAN_IP
+	unset WAN_IP wan_ip
 
 	insert_rule_before "$ipt_m" "PREROUTING" "mwan3" "-j PSW"
 	insert_rule_before "$ipt_m" "PREROUTING" "PSW" "-p tcp -m socket -j PSW_DIVERT"
@@ -1097,8 +1115,13 @@ add_firewall_rule() {
 	$ip6t_m -A PSW $(dst $IPSET_VPS6) -j RETURN
 	
 	WAN6_IP=$(get_wan6_ip)
-	[ ! -z "${WAN6_IP}" ] && $ip6t_m -A PSW $(comment "WAN6_IP_RETURN") -d ${WAN6_IP} -j RETURN
-	unset WAN6_IP
+	[ ! -z "${WAN6_IP}" ] && {
+		for wan6_ip in $WAN6_IP; do
+			$ip6t_m -A PSW $(comment "WAN6_IP_RETURN") -d ${wan6_ip} -j RETURN
+			echolog "  - [$?]追加WAN IPv6到iptables：${wan6_ip}"
+		done
+	}
+	unset WAN6_IP wan6_ip
 
 	insert_rule_before "$ip6t_m" "PREROUTING" "mwan3" "-j PSW"
 	insert_rule_before "$ip6t_m" "PREROUTING" "PSW" "-p tcp -m socket -j PSW_DIVERT"
@@ -1424,12 +1447,20 @@ gen_include() {
 
 			PR_INDEX=\$(${MY_PATH} RULE_LAST_INDEX "$ipt_n" PSW WAN_IP_RETURN -1)
 			if [ \$PR_INDEX -ge 0 ]; then
-				[ ! -z "\${WAN_IP}" ] && $ipt_n -R PSW \$PR_INDEX $(comment "WAN_IP_RETURN") -d "\${WAN_IP}" -j RETURN
+				[ ! -z "\${WAN_IP}" ] && {
+					for wan_ip in \$WAN_IP; do
+						$ipt_n -R PSW \$PR_INDEX $(comment "WAN_IP_RETURN") -d "\${wan_ip}" -j RETURN
+					done
+				}
 			fi
 
 			PR_INDEX=\$(${MY_PATH} RULE_LAST_INDEX "$ipt_m" PSW WAN_IP_RETURN -1)
 			if [ \$PR_INDEX -ge 0 ]; then
-				[ ! -z "\${WAN_IP}" ] && $ipt_m -R PSW \$PR_INDEX $(comment "WAN_IP_RETURN") -d "\${WAN_IP}" -j RETURN
+				[ ! -z "\${WAN_IP}" ] && {
+					for wan_ip in \$WAN_IP; do
+						$ipt_m -R PSW \$PR_INDEX $(comment "WAN_IP_RETURN") -d "\${wan_ip}" -j RETURN
+					done
+				}
 			fi
 		EOF
 		)
@@ -1456,7 +1487,11 @@ gen_include() {
 			PR_INDEX=\$(${MY_PATH} RULE_LAST_INDEX "$ip6t_m" PSW WAN6_IP_RETURN -1)
 			if [ \$PR_INDEX -ge 0 ]; then
 				WAN6_IP=\$(${MY_PATH} get_wan6_ip)
-				[ ! -z "\${WAN6_IP}" ] && $ip6t_m -R PSW \$PR_INDEX $(comment "WAN6_IP_RETURN") -d "\${WAN6_IP}" -j RETURN
+				[ ! -z "\${WAN6_IP}" ] && {
+					for wan6_ip in \$WAN6_IP; do
+						$ip6t_m -R PSW \$PR_INDEX $(comment "WAN6_IP_RETURN") -d "\${wan6_ip}" -j RETURN
+					done
+				}
 			fi
 		EOF
 		)
