@@ -136,16 +136,16 @@ o = s:option(Flag, "autoswitch_restore_switch", translate("Restore Switch"), tra
 o:depends("enable_autoswitch", true)
 
 o = s:option(Value, "autoswitch_probe_url", translate("Probe URL"), translate("The URL used to detect the connection status."))
-o.default = "https://www.google.com/generate_204"
 o:value("https://cp.cloudflare.com/", "Cloudflare")
 o:value("https://www.gstatic.com/generate_204", "Gstatic")
 o:value("https://www.google.com/generate_204", "Google")
 o:value("https://www.youtube.com/generate_204", "YouTube")
 o:value("https://connect.rom.miui.com/generate_204", "MIUI (CN)")
 o:value("https://connectivitycheck.platform.hicloud.com/generate_204", "HiCloud (CN)")
+o.default = o.keylist[3]
 o:depends("enable_autoswitch", true)
 
-o = s:option(DummyValue, "btn", "　")
+o = s:option(DummyValue, "btn")
 o.template = appname .. "/socks_auto_switch/btn"
 o:depends("enable_autoswitch", true)
 

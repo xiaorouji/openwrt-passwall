@@ -19,9 +19,26 @@ local api = require "luci.passwall.api"
 	}
 	//]]>
 </script>
-<div id="cbi-<%=self.config.."-"..section.."-"..self.option%>" data-index="<%=self.index%>" data-depends="<%=pcdata(self:deplist2json(section))%>">
-	<label class="cbi-value-title"></label>
-	<div class="cbi-value-field">
+<style>
+.key-btn-div {
+	display: table-cell;
+	padding: 5px 0 5px;
+}
+@media screen and (max-width: 600px) {
+	.key-btn-div {
+		display: block;
+	}
+	.key-label {
+		display: none !important;
+	}
+}
+.key-btn-div .cbi-button {
+	margin-bottom: 2px;
+}
+</style>
+<div class="cbi-value" id="cbi-<%=self.config.."-"..section.."-"..self.option%>" data-index="<%=self.index%>" data-depends="<%=pcdata(self:deplist2json(section))%>">
+	<label class="cbi-value-title key-label">　</label>
+	<div class="key-btn-div">
 		<input class="btn cbi-button cbi-button-add" type="button" onclick="add_node_by_key()" value="<%:Add nodes to the standby node list by keywords%>" />
 		<input class="btn cbi-button cbi-button-remove" type="button" onclick="remove_node_by_key()" value="<%:Delete nodes in the standby node list by keywords%>" />
 	</div>
