@@ -690,14 +690,25 @@ if geo2rule == "1" then
 		remove_tmp_geofile("geosite")
 	end
 
-	if geoip_update_ok then
-		safe_call(fetch_chnroute, "生成chnroute发生错误...")
-		safe_call(fetch_chnroute6, "生成chnroute6发生错误...")
+	-- 如果是手动更新(arg2存在)始终生成规则
+	local force_generate = (arg2 ~= nil)
+
+	if geoip_update_ok or force_generate then
+		if fs.access(asset_location .. "geoip.dat") then
+			safe_call(fetch_chnroute, "生成chnroute发生错误...")
+			safe_call(fetch_chnroute6, "生成chnroute6发生错误...")
+		else
+			log("geoip.dat 文件不存在,跳过规则生成。")
+		end
 	end
 
-	if geosite_update_ok then
-		safe_call(fetch_gfwlist, "生成gfwlist发生错误...")
-		safe_call(fetch_chnlist, "生成chnlist发生错误...")
+	if geosite_update_ok or force_generate then
+		if fs.access(asset_location .. "geosite.dat") then
+			safe_call(fetch_gfwlist, "生成gfwlist发生错误...")
+			safe_call(fetch_chnlist, "生成chnlist发生错误...")
+		else
+			log("geosite.dat 文件不存在,跳过规则生成。")
+		end
 	end
 else
 	if gfwlist_update == "1" then

@@ -1009,6 +1009,9 @@ msgstr "从 Geo 文件生成规则"
 msgid "Generate rule lists such as GFW, China domains, and China IP ranges based on Geo files."
 msgstr "根据 Geo 文件生成规则列表，包括 GFW、中国域名和中国 IP 段等。"
 
+msgid "When manually updating with this option enabled, rules will be regenerated from existing Geo files even if no new version is available."
+msgstr "启用此选项后手动更新时,即使没有新版本也会从现有 Geo 文件重新生成规则。"
+
 msgid "Enable Geo Data Parsing"
 msgstr "开启 Geo 数据解析"
 

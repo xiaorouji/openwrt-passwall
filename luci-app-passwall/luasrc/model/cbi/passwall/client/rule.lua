@@ -72,9 +72,11 @@ if has_xray or has_singbox then
 	o.rmempty = false
 
 	if api.is_finded("geoview") then
-		o = s:option(Flag, "geo2rule", translate("Generate Rule List from Geo"), translate("Generate rule lists such as GFW, China domains, and China IP ranges based on Geo files."))
+		o = s:option(Flag, "geo2rule", translate("Generate Rule List from Geo"))
 		o.default = 0
 		o.rmempty = false
+		o.description = translate("Generate rule lists such as GFW, China domains, and China IP ranges based on Geo files.") .. "<br><font color='red'>" ..
+			translate("When manually updating with this option enabled, rules will be regenerated from existing Geo files even if no new version is available.") .. "</font>"
 
 		o = s:option(Flag, "enable_geoview", translate("Enable Geo Data Parsing"))
 		o.default = 0
