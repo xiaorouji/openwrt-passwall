@@ -678,41 +678,38 @@ local function remove_tmp_geofile(name)
 end
 
 if geo2rule == "1" then
-    if geoip_update == "1" then
-        log("geoip 开始更新...")
-        safe_call(fetch_geoip, "更新geoip发生错误...")
-        remove_tmp_geofile("geoip")
-    end
+	if geoip_update == "1" then
+		log("geoip 开始更新...")
+		safe_call(fetch_geoip, "更新geoip发生错误...")
+		remove_tmp_geofile("geoip")
+	end
 
-    if geosite_update == "1" then
-        log("geosite 开始更新...")
-        safe_call(fetch_geosite, "更新geosite发生错误...")
-        remove_tmp_geofile("geosite")
-    end
+	if geosite_update == "1" then
+		log("geosite 开始更新...")
+		safe_call(fetch_geosite, "更新geosite发生错误...")
+		remove_tmp_geofile("geosite")
+	end
 
-    -- 修改判断逻辑:检查文件是否存在,而不是是否有更新
-    -- 如果是手动更新(arg2存在)且文件存在,强制执行规则生成
-    local force_generate = (arg2 ~= nil)
-    
-    if geoip_update == "1" then
-        local geoip_exists = fs.access(asset_location .. "geoip.dat")
-        if not geoip_exists then
-            log("geoip.dat 文件不存在,跳过规则生成。")
-        elseif geoip_update_ok or force_generate then
-            safe_call(fetch_chnroute, "生成chnroute发生错误...")
-            safe_call(fetch_chnroute6, "生成chnroute6发生错误...")
-        end
-    end
+	-- 如果是手动更新(arg2存在)始终生成规则
+	local force_generate = (arg2 ~= nil)
 
-    if geosite_update == "1" then
-        local geosite_exists = fs.access(asset_location .. "geosite.dat")
-        if not geosite_exists then
-            log("geosite.dat 文件不存在,跳过规则生成。")
-        elseif geosite_update_ok or force_generate then
-            safe_call(fetch_gfwlist, "生成gfwlist发生错误...")
-            safe_call(fetch_chnlist, "生成chnlist发生错误...")
-        end
-    end
+	if geoip_update_ok or force_generate then
+		if fs.access(asset_location .. "geoip.dat") then
+			safe_call(fetch_chnroute, "生成chnroute发生错误...")
+			safe_call(fetch_chnroute6, "生成chnroute6发生错误...")
+		else
+			log("geoip.dat 文件不存在,跳过规则生成。")
+		end
+	end
+
+	if geosite_update_ok or force_generate then
+		if fs.access(asset_location .. "geosite.dat") then
+			safe_call(fetch_gfwlist, "生成gfwlist发生错误...")
+			safe_call(fetch_chnlist, "生成chnlist发生错误...")
+		else
+			log("geosite.dat 文件不存在,跳过规则生成。")
+		end
+	end
 else
 	if gfwlist_update == "1" then
 		safe_call(fetch_gfwlist, "更新gfwlist发生错误...")
