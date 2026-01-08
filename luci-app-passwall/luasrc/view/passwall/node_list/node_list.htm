@@ -26,10 +26,6 @@ table td, .table .td {
 	box-shadow: darkgrey 10px 10px 30px 5px;
 }
 
-._now_use {
-	color: red !important;
-}
-
 ._now_use_bg {
 	background: #5e72e445 !important;
 }
@@ -493,9 +489,9 @@ table td, .table .td {
 						dom.classList.add("_now_use_bg");
 						//var v = "<a style='color: red'>当前TCP节点：</a>" + document.getElementById("cbid.passwall." + id + ".remarks").value;
 						//document.getElementById("cbi-passwall-" + id + "-remarks").innerHTML = v;
-						var dom_remarks = document.getElementById("cbi-passwall-" + id + "-remarks");
+						var dom_remarks = dom.querySelector("td.pw-remark");
 						if (dom_remarks) {
-							dom_remarks.classList.add("_now_use");
+							dom_remarks.style.color = 'red';
 						}
 					}
 				}
@@ -509,9 +505,9 @@ table td, .table .td {
 							dom.title = '<%=api.i18n.translatef("Currently using %s node", "UDP")%>';
 						}
 						dom.classList.add("_now_use_bg");
-						var dom_remarks = document.getElementById("cbi-passwall-" + id + "-remarks");
+						var dom_remarks = dom.querySelector("td.pw-remark");
 						if (dom_remarks) {
-							dom_remarks.classList.add("_now_use");
+							dom_remarks.style.color = 'red';
 						}
 					}
 				}
