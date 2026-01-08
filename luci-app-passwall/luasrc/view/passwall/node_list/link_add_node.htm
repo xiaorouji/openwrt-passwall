@@ -40,10 +40,21 @@ local api = require "luci.passwall.api"
 		sendNextChunk();
 	}
 
+	function getBg(el) {
+		if (!el) return null;
+		const style = getComputedStyle(el);
+		const bgImage = style.backgroundImage;
+		const bgColor = style.backgroundColor;
+		return (bgImage !== 'none' || !/rgba\([^,]+,[^,]+,[^,]+,\s*0\)/.test(bgColor) && bgColor !== 'transparent')
+			? style.background
+			: null;
+	};
+
 	function open_add_link_div() {
 		document.body.classList.add('modal-open');
 		document.getElementById('modal-mask').style.display = 'block';
 		const addLinkDiv = document.getElementById("add_link_div");
+		addLinkDiv.style.background = getBg(document.querySelector('.cbi-section')) || getBg(document.body) || '';
 		addLinkDiv.style.display = "block";
 		if (!addLinkDiv._dropdown_inited) {
 			addLinkDiv._dropdown_inited = true;
@@ -105,6 +116,7 @@ local api = require "luci.passwall.api"
 				document.body.classList.add('modal-open');
 				document.getElementById('modal-mask').style.display = 'block';
 				const reassignGroupDiv = document.getElementById("reassign_group_div");
+				reassignGroupDiv.style.background = getBg(document.querySelector('.cbi-section')) || getBg(document.body) || '';
 				reassignGroupDiv.style.display = "block";
 				if (!reassignGroupDiv._dropdown_inited) {
 					reassignGroupDiv._dropdown_inited = true;
@@ -394,6 +406,11 @@ local api = require "luci.passwall.api"
 		padding: 5px;
 		border: 1px solid #ccc;
 		border-radius: 5px;
+	}
+
+	#add_link_div h3,
+	#reassign_group_div h3 {
+		background: inherit;
 	}
 
 	#nodes_link_text {

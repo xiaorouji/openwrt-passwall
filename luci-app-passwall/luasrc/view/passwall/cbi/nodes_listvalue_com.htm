@@ -333,7 +333,7 @@
 					span.style.color = "#007bff";
 					span.style.fontWeight = "600";
 				} else {
-					span.style.color = "#666";
+					span.style.color = "";
 					span.style.fontWeight = "normal";
 				}
 			}
@@ -590,7 +590,7 @@
 					<span class="lv-arrow-right" id="arrow-${cbid}-${lv_idSafe(gname)}"></span>
 					<b style="margin-left:6px;">${lv_escape_html(gname)}</b>
 					<span id="group-count-${cbid}-${lv_idSafe(gname)}"
-						style="margin-left:8px;color:#666;">(0/${items.length})</span>
+						style="margin-left:8px;">(0/${items.length})</span>
 				</div>
 				<ul id="group-${cbid}-${lv_idSafe(gname)}" class="lv-group-list" style="display:none">
 			`;

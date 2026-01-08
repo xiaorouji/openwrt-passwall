@@ -58,7 +58,6 @@
 	align-items: center;
 	padding: 6px;
 	margin-bottom: 4px;
-	background: #f0f0f0;
 	border-radius: 4px;
 	white-space: nowrap;
 }
@@ -100,6 +99,140 @@
 
 <script type="text/javascript">
 //<![CDATA[
+	// css helper functions
+	function mv_camelToKebab(str) {
+		return str.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase()
+	}
+
+	function mv_style2Css(styleDeclaration, properties) {
+		const cssRules = properties.map(prop => {
+			const kebabCaseProp = mv_camelToKebab(prop);[1, 5]
+			const value = styleDeclaration[prop]
+			if (value) {
+				return `${kebabCaseProp}: ${value};`
+			}
+			return ''
+		})
+		// Filter out any empty strings and join the rules
+		return cssRules.filter(Boolean).join(' ')
+	}
+
+	function mv_parseColorToRgba(color) {
+			if (!color) return null;
+
+			const ctx = document.createElement('canvas').getContext('2d');
+			if (!ctx) return null;
+
+			ctx.fillStyle = color;
+			const computedColor = ctx.fillStyle;
+			// Match #RRGGBB or #RRGGBBAA format
+			if (computedColor.startsWith('#')) {
+					const hex = computedColor.substring(1);
+					// #RRGGBB (6 digits)
+					if (hex.length === 6) {
+							return {
+									r: parseInt(hex.substring(0, 2), 16),
+									g: parseInt(hex.substring(2, 4), 16),
+									b: parseInt(hex.substring(4, 6), 16),
+									a: 1
+							};
+					}
+					// #RRGGBBAA (8 digits)
+					if (hex.length === 8) {
+							return {
+									r: parseInt(hex.substring(0, 2), 16),
+									g: parseInt(hex.substring(2, 4), 16),
+									b: parseInt(hex.substring(4, 6), 16),
+									a: parseInt(hex.substring(6, 8), 16) / 255
+							};
+					}
+			}
+			// Match rgba() or rgb() format (for browsers that return this format)
+			const rgbaMatch = computedColor.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)$/);
+			if (rgbaMatch) {
+					return {
+							r: parseInt(rgbaMatch[1], 10),
+							g: parseInt(rgbaMatch[2], 10),
+							b: parseInt(rgbaMatch[3], 10),
+							a: rgbaMatch[4] !== undefined ? parseFloat(rgbaMatch[4]) : 1
+					};
+			}
+
+			return null; // Invalid color
+	}
+
+	// Helper to convert back to Hex (for output consistency)
+	function mv_rgbToHex(r, g, b) {
+		const toHex = (n) => {
+			const hex = Math.max(0, Math.min(255, n)).toString(16)
+			return hex.length === 1 ? '0' + hex : hex
+		}
+		return `#${toHex(r)}${toHex(g)}${toHex(b)}`
+	}
+
+	function mv_isTransparent(color) {
+		const cleanColor = mv_parseColorToRgba(color);
+		// check #RRGGBBAA for transparency
+		return !cleanColor || (cleanColor.a !== undefined && !cleanColor.a);
+	}
+
+	function mv_getColorSchema(color) {
+		const rgb = mv_parseColorToRgba(color);
+		if (!rgb) return 'unknown'; // Handle invalid colors
+		// Calculate YIQ brightness (human eye perception)
+		const brightness = ((rgb.r * 299) + (rgb.g * 587) + (rgb.b * 114)) / 1000;
+		
+		return brightness > 128 ? 'light' : 'dark';
+	}
+
+	function mv_lighter(color, amount) {
+		const rgb = mv_parseColorToRgba(color);
+		if (!rgb) return color;
+		// Add amount to each channel
+		const r = rgb.r + amount;
+		const g = rgb.g + amount;
+		const b = rgb.b + amount;
+		// Convert back to Hex (clamping happens inside rgbToHex)
+		return mv_rgbToHex(r, g, b);
+	}
+
+	function mv_darker(color, amount) {
+		const rgb = mv_parseColorToRgba(color);
+		if (!rgb) return color;
+		// Subtract amount from each channel
+		const r = rgb.r - amount;
+		const g = rgb.g - amount;
+		const b = rgb.b - amount;
+
+		return mv_rgbToHex(r, g, b);
+	}
+
+	// copy select styles
+	function mv_adaptiveStyle(cbid) {
+		const mainDiv = document.getElementById(cbid);
+		const hiddenRef = document.getElementById(cbid + ".ref");
+		const panel = document.getElementById(cbid + ".panel");
+		if (hiddenRef && mainDiv) {
+			const elOption = hiddenRef.getElementsByTagName("option")[0]
+			const styleSelect = window.getComputedStyle(hiddenRef)
+			const styleOption = window.getComputedStyle(elOption)
+			const styleBody = window.getComputedStyle(document.body)
+
+			const styleNode = document.createElement('style')
+			const styleNames = ["width", "color", "height", "margin", "lineHeight", "borderRadius", "minWidth", "minHeight"]
+
+			document.head.appendChild(styleNode)
+			// trace back from option -> select -> body for background color
+			const panelRadius = styleSelect.borderRadius;
+			const optionColor = !mv_isTransparent(styleOption.backgroundColor) ? styleOption.backgroundColor : !mv_isTransparent(styleSelect.backgroundColor) ? styleSelect.backgroundColor : styleBody.backgroundColor
+			const titleColor = mv_getColorSchema(optionColor) === "light" ? mv_darker(optionColor, 30) : mv_lighter(optionColor, 30)
+			const selectStyleCSS = [`#${CSS.escape(cbid)} {`, mv_style2Css(styleSelect, styleNames), "}"]
+			const optionStyleCSS = [`#${CSS.escape(cbid + ".panel")}  {`, mv_style2Css(styleOption, styleNames), `background-color: ${optionColor};`, `border-radius: ${panelRadius};`, "}"]
+			const titleStyleCSS = [`#${CSS.escape(cbid + ".panel")} .group-title  {`, `background-color: ${titleColor} !important;`, "}"]
+			styleNode.textContent = [].concat(selectStyleCSS, optionStyleCSS, titleStyleCSS).join("\n")
+		}
+	}
+
 	function mv_idSafe(id) {
 		return id
 			.trim()
@@ -323,6 +456,23 @@
 			root.dataset.rendered = "1";
 			mv_render_multivalue_list(cbid, opt, nodeList, searchInput)
 		});
+		mv_registerAdaptive(cbid);
 	}
+
+	const mv_adaptiveControls = new Set();
+	function mv_registerAdaptive(cbid) {
+		mv_adaptiveControls.add(cbid);
+		mv_adaptiveStyle(cbid);
+	}
+	let mv_adaptiveTicking = false;
+	window.addEventListener("resize", () => {
+		if (!mv_adaptiveTicking) {
+			mv_adaptiveTicking = true;
+			requestAnimationFrame(() => {
+				mv_adaptiveControls.forEach(cbid => mv_adaptiveStyle(cbid));
+				mv_adaptiveTicking = false;
+			});
+		}
+	});
 //]]>
 </script>

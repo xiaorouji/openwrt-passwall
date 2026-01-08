@@ -88,11 +88,28 @@ local api = require "luci.passwall.api"
 		margin-top: 15px;
 		margin-bottom: 30px;
 	}
+
+	.up-modal h3 {
+		background: inherit;
+	}
 </style>
 
 <script>
+	function getBg(el) {
+		if (!el) return null;
+		const style = getComputedStyle(el);
+		const bgImage = style.backgroundImage;
+		const bgColor = style.backgroundColor;
+		return (bgImage !== 'none' || !/rgba\([^,]+,[^,]+,[^,]+,\s*0\)/.test(bgColor) && bgColor !== 'transparent')
+			? style.background
+			: null;
+	};
+
 	function show_upload_win(btn) {
-		document.getElementById("upload-modal").style.display = "block";
+		const uploadDiv = document.getElementById("upload-modal");
+		uploadDiv.style.background = getBg(document.querySelector('.cbi-section')) || getBg(document.body) || '';
+		uploadDiv.style.display = "block";
+		document.getElementById("ulfile").focus();
 	}
 
 	function close_upload_win(btn) {
