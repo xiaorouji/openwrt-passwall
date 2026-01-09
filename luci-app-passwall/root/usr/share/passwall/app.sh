@@ -691,7 +691,7 @@ run_socks() {
 
 	case "$type" in
 	socks)
-		local _socks_address _socks_port _socks_username _socks_password _extra_param microsocks_fwd
+		local _socks_address _socks_port _socks_username _socks_password
 		if [ "$node2socks_port" = "0" ]; then
 			_socks_address=$(config_n_get $node address)
 			_socks_port=$(config_n_get $node port)
@@ -701,24 +701,13 @@ run_socks() {
 			_socks_address="127.0.0.1"
 			_socks_port=$node2socks_port
 		fi
-		if [ "$http_port" != "0" ]; then
+		[ "$http_port" != "0" ] && {
 			http_flag=1
 			config_file="${config_file//SOCKS/HTTP_SOCKS}"
-			_extra_param="-local_http_address $bind -local_http_port $http_port"
-		else
-			# 仅 passwall-packages 专用的 microsocks 才支持 socks 转发规则！
-			microsocks_fwd="$($(first_type microsocks) -V 2>/dev/null | grep -i forward)"
-		fi
+			local _extra_param="-local_http_address $bind -local_http_port $http_port"
+		}
 		local bin=$(first_type $(config_t_get global_app sing_box_file) sing-box)
-		if [ -n "$microsocks_fwd" ]; then
-			local ext_name=$(echo "$config_file" | sed "s|^${TMP_PATH}/||; s|\.json\$||; s|/|_|g")
-			if [ -n "$_socks_username" ] && [ -n "$_socks_password" ]; then
-				_extra_param="-f \"0.0.0.0:0,${_socks_username}:${_socks_password}@${_socks_address}:${_socks_port},0.0.0.0:0\""
-			else
-				_extra_param="-f \"0.0.0.0:0,${_socks_address}:${_socks_port},0.0.0.0:0\""
-			fi
-			ln_run "$(first_type microsocks)" "microsocks_${ext_name}" $log_file -i $bind -p $socks_port ${_extra_param}
-		elif [ -n "$bin" ]; then
+		if [ -n "$bin" ]; then
 			type="sing-box"
 			lua $UTIL_SINGBOX gen_proto_config -local_socks_address $bind -local_socks_port $socks_port ${_extra_param} -server_proto socks -server_address ${_socks_address} -server_port ${_socks_port} -server_username ${_socks_username} -server_password ${_socks_password} > $config_file
 			ln_run "$bin" ${type} $log_file run -c "$config_file"
