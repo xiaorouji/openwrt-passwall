@@ -166,6 +166,6 @@ o:value(0, translate("Primary"))
 o:value(1, translate("Standby"))
 o.rmempty = false
 
-s:append(Template(appname .. "/haproxy/js"))
+m:append(Template(appname .. "/haproxy/js"))
 
 return m
