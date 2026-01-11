@@ -77,6 +77,7 @@ for k, e in ipairs(api.get_valid_nodes()) do
 			id = e[".name"],
 			remark = e["remark"],
 			type = e["type"],
+			address = e["address"],
 			chain_proxy = e["chain_proxy"],
 			group = e["group"]
 		}
@@ -242,7 +243,9 @@ m.uci:foreach(appname, "shunt_rules", function(e)
 			for k, v in pairs(nodes_table) do
 				o:value(v.id, v.remark)
 				o.group[#o.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
-				pt:depends({ [_n("protocol")] = "_shunt", [_n("preproxy_enabled")] = true, [_n(e[".name"])] = v.id })
+				if not api.is_local_ip(v.address) then  --本地节点禁止使用前置
+					pt:depends({ [_n("protocol")] = "_shunt", [_n("preproxy_enabled")] = true, [_n(e[".name"])] = v.id })
+				end
 			end
 		end
 	end
@@ -282,7 +285,9 @@ if #nodes_table > 0 then
 	for k, v in pairs(nodes_table) do
 		o:value(v.id, v.remark)
 		o.group[#o.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
-		dpt:depends({ [_n("protocol")] = "_shunt", [_n("preproxy_enabled")] = true, [_n("default_node")] = v.id })
+		if not api.is_local_ip(v.address) then
+			dpt:depends({ [_n("protocol")] = "_shunt", [_n("preproxy_enabled")] = true, [_n("default_node")] = v.id })
+		end
 	end
 end
 

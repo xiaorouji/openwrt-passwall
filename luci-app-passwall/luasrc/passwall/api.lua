@@ -421,7 +421,7 @@ function is_ipv6(val)
 end
 
 function is_local_ip(ip)
-	ip = tostring(ip or ""):lower()
+	ip = trim(ip):lower()
 	ip = ip:gsub("^[%w%d]+://", "")   -- 去掉协议头
 		:gsub("/.*$", "")          -- 去掉路径
 		:gsub("^%[", ""):gsub("%]$", "") -- 去掉IPv6方括号
