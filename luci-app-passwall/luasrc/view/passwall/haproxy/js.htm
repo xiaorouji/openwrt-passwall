@@ -4,10 +4,12 @@ local api = require "luci.passwall.api"
 <script src="<%=resource%>/view/<%=api.appname%>/Sortable.min.js?v=26.1.9"></script>
 
 <style>
+<% if api.is_js_luci() then -%>
 table .cbi-button-up,
 table .cbi-button-down {
 	display: none !important;
 }
+<%- end %>
 
 .drag-handle {
 	cursor: grab !important;
